@@ -5,9 +5,13 @@ project(${PROJECT_NAME})
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wpedantic")
 
-include_directories("./Include/Core")
+include_directories(
+			"./Include/"
+			"./Source/"
+		    )
 
 set(SOURCE
+	# Core files (dependant on vulkan) 
 	"Source/Core/RenderInstance.cpp"
 	"Source/Core/RenderDevice.cpp"
 	"Source/Core/Image.cpp"
@@ -15,6 +19,10 @@ set(SOURCE
 	"Source/Core/MemoryManager.cpp"
 	"Source/Core/BarrierManager.cpp"
 	"Source/Core/SwapChain.cpp"
+
+	#RenderGraph files (backend independant)
+	"Source/RenderGraph/GraphicsTask.cpp"
+	"Source/RenderGraph/ComputeTask.cpp"
 	)
 
 # Allows glm::perspective to work with vulkans coordinate system.
