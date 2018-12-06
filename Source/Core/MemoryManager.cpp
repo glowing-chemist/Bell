@@ -199,7 +199,7 @@ void MemoryManager::MergePool(std::vector<std::list<PoolFragment> > &pools) { //
         }
 
         // Now loop backwards over the list and merge all fragments marked as can be merged
-        uint32_t sizeToAdd = 0;
+        uint64_t sizeToAdd = 0;
         bool fragmentMerged = false;
         std::vector<std::list<PoolFragment>::reverse_iterator> fragmentsToRemove;
         for(auto fragment = pool.rbegin(); fragment != pool.rend(); ++fragment) {

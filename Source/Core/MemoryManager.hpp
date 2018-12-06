@@ -56,7 +56,7 @@ public:
     MemoryManager() = default; // constructor that doens't allocate pools
     explicit MemoryManager(RenderDevice*); // one that does
 
-    Allocation Allocate(uint64_t size, unsigned allignment, bool deviceLocal);
+    Allocation Allocate(uint64_t size, unsigned allignment, bool hostMappable);
     void       Free(Allocation alloc);
 
     void       BindImage(vk::Image& image, Allocation alloc);
