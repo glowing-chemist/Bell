@@ -21,7 +21,8 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallbackFunc(
     int32_t,
     const char*,
     const char* msg,
-    void*) {
+    void*)
+{
 
     std::cerr << "validation layer: " << msg << std::endl;
 
@@ -35,7 +36,8 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallbackFunc(
 
 }
 
-const QueueIndicies getAvailableQueues(vk::SurfaceKHR windowSurface, vk::PhysicalDevice& dev) {
+const QueueIndicies getAvailableQueues(vk::SurfaceKHR windowSurface, vk::PhysicalDevice& dev)
+{
     int graphics = -1;
     int transfer = -1;
     int compute  = -1;
@@ -56,7 +58,8 @@ const QueueIndicies getAvailableQueues(vk::SurfaceKHR windowSurface, vk::Physica
 }
 
 
-VKInstance::VKInstance(GLFWwindow* window) {
+RenderInstance::RenderInstance(GLFWwindow* window)
+{
 
     mWindow = window;
 
@@ -105,12 +108,21 @@ VKInstance::VKInstance(GLFWwindow* window) {
 
 
     VkSurfaceKHR surface;
-    glfwCreateWindowSurface(static_cast<VkInstance>(mInstance), mWindow, nullptr, &surface); // use glfw as is platform agnostic
+    glfwCreateWindowSurface(static_cast<vk::Instance>(mInstance), mWindow, nullptr, &surface); // use glfw as is platform agnostic
     mWindowSurface = vk::SurfaceKHR(surface);
 }
 
 
-std::pair<vk::PhysicalDevice, vk::Device> VKInstance::findSuitableDevices(int DeviceFeatureFlags) {
+RenderDevice RenderInstance::createRenderDevice(const int DeviceFeatureFlags)
+{
+    auto [physDev, dev] = findSuitableDevices(DeviceFeatureFlags);
+
+    return RenderDevice{physDev, dev, mWindowSurface, mWindow};
+}
+
+
+std::pair<vk::PhysicalDevice, vk::Device> RenderInstance::findSuitableDevices(int DeviceFeatureFlags)
+{
     bool GeometryWanted = DeviceFeatureFlags & DeviceFeaturesFlags::Geometry;
     bool TessWanted     = DeviceFeatureFlags & DeviceFeaturesFlags::Tessalation;
     bool DiscreteWanted = DeviceFeatureFlags & DeviceFeaturesFlags::Discrete;
@@ -175,14 +187,16 @@ std::pair<vk::PhysicalDevice, vk::Device> VKInstance::findSuitableDevices(int De
     return {physicalDevice, logicalDevice};
 }
 
-VKInstance::~VKInstance() {
+RenderInstance::~RenderInstance()
+{
     mInstance.destroySurfaceKHR(mWindowSurface);
     mInstance.destroy();
     glfwDestroyWindow(mWindow);
     glfwTerminate();
 }
 
-void VKInstance::addDebugCallback() {
+void RenderInstance::addDebugCallback()
+{
     VkDebugReportCallbackCreateInfoEXT callbackCreateInfo{};
     callbackCreateInfo.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CREATE_INFO_EXT;
     callbackCreateInfo.flags = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT | VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT;
@@ -193,31 +207,36 @@ void VKInstance::addDebugCallback() {
         std::cerr << "Inserting debug callback \n";
 
         auto call = static_cast<VkDebugReportCallbackEXT>(debugCallback);
-        func(static_cast<VkInstance>(mInstance), &callbackCreateInfo, nullptr, &call);
+        func(static_cast<vk::Instance>(mInstance), &callbackCreateInfo, nullptr, &call);
     }
 
 }
 
-GLFWwindow* VKInstance::getWindow() const {
+GLFWwindow* RenderInstance::getWindow() const
+{
     return mWindow;
 }
 
 
-vk::SurfaceKHR VKInstance::getSurface() const {
+vk::SurfaceKHR RenderInstance::getSurface() const
+{
     return mWindowSurface;
 }
 
 
-int operator|(DeviceFeaturesFlags lhs, DeviceFeaturesFlags rhs) {
+int operator|(DeviceFeaturesFlags lhs, DeviceFeaturesFlags rhs)
+{
     return static_cast<int>(lhs) | static_cast<int>(rhs);
 }
 
 
-int operator|(int lhs, DeviceFeaturesFlags rhs) {
+int operator|(int lhs, DeviceFeaturesFlags rhs)
+{
 	return lhs | static_cast<int>(rhs);
 }
 
 
-bool operator&(int flags, DeviceFeaturesFlags rhs) {
+bool operator&(int flags, DeviceFeaturesFlags rhs)
+{
     return flags & static_cast<int>(rhs);
 }
