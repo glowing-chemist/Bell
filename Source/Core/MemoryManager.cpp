@@ -8,19 +8,6 @@
 #include <iostream>
 #include <algorithm>
 
-bool operator<(const Buffer& lhs, const Buffer& rhs) {
-    return lhs.mBuffer < rhs.mBuffer;
-}
-
-bool operator==(const VKImage& lhs, const VKImage& rhs) {
-	return lhs.mImage == rhs.mImage;
-}
-
-
-bool operator!=(const VKImage& lhs, const VKImage& rhs) {
-	return !(lhs == rhs);
-}
-
 
 bool operator==(const PoolFragment& lhs, const PoolFragment& rhs) {
     return lhs.DeviceLocal == rhs.DeviceLocal
@@ -273,7 +260,7 @@ Allocation MemoryManager::AttemptToAllocate(uint64_t size, unsigned int allignme
 }
 
 
-Allocation MemoryManager::Allocate(uint64_t size, unsigned allignment,  bool hostMappable) {
+Allocation MemoryManager::Allocate(uint64_t size, unsigned long allignment,  bool hostMappable) {
 
     Allocation alloc = AttemptToAllocate(size, allignment, hostMappable);
     if(alloc.size != 0) return alloc;
