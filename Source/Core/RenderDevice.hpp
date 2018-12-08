@@ -14,9 +14,9 @@ class RenderDevice {
 public:
     RenderDevice(vk::PhysicalDevice, vk::Device, vk::SurfaceKHR, GLFWwindow*);
 
-    vk::Image                          createImage(vk::Format,
-                                                   vk::ImageUsageFlags,
-                                                   vk::ImageType,
+    vk::Image                          createImage(const vk::Format,
+                                                   const vk::ImageUsageFlags,
+                                                   const vk::ImageType,
                                                    const uint32_t,
                                                    const uint32_t,
                                                    const uint32_t);
@@ -30,9 +30,14 @@ public:
     void                               destroyImageView(vk::ImageView& view)
                                             { mDevice.destroyImageView(view); }
 
+    vk::Buffer                         createBuffer(const uint32_t, const vk::BufferUsageFlags);
+
+    void                               destroyBuffer(vk::Buffer& buffer )
+                                            { mDevice.destroyBuffer(buffer); }
+
     // Accessors
-    SwapChain*                          getSwapChain() { return &mSwapChain; }
-    MemoryManager*                      getMemoryManager() { return &mMemoryManager; }
+    SwapChain*                         getSwapChain() { return &mSwapChain; }
+    MemoryManager*                     getMemoryManager() { return &mMemoryManager; }
 
     // Memory management functions
     vk::MemoryRequirements             getMemoryRequirements(vk::Image image)

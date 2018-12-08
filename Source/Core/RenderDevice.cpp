@@ -10,9 +10,9 @@ RenderDevice::RenderDevice(vk::PhysicalDevice physDev, vk::Device dev, vk::Surfa
     mSwapChain{mDevice, mPhysicalDevice, surface, window},
     mMemoryManager{this} {}
 
-vk::Image   RenderDevice::createImage(vk::Format format,
-                                      vk::ImageUsageFlags usage,
-                                      vk::ImageType type,
+vk::Image   RenderDevice::createImage(const vk::Format format,
+                                      const vk::ImageUsageFlags usage,
+                                      const vk::ImageType type,
                                       const uint32_t x,
                                       const uint32_t y,
                                       const uint32_t z)
@@ -33,6 +33,16 @@ vk::Image   RenderDevice::createImage(vk::Format format,
                                   vk::ImageLayout::eUndefined);
 
     return mDevice.createImage(createInfo);
+}
+
+
+vk::Buffer  RenderDevice::createBuffer(const uint32_t size, const vk::BufferUsageFlags usage)
+{
+    vk::BufferCreateInfo createInfo{};
+    createInfo.setSize(size);
+    createInfo.setUsage(usage);
+
+    return mDevice.createBuffer(createInfo);
 }
 
 
