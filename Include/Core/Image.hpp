@@ -8,15 +8,13 @@
 #include "Core/GPUResource.hpp"
 #include "Core/DeviceChild.hpp"
 #include "Core/MemoryManager.hpp"
-#include "Core/BarrierManager.hpp"
 
 
 class RenderDevice;
 
 
-class Image : public GPUResource, public DeviceChild
+class Image final : public GPUResource, public DeviceChild
 {
-    friend BarrierManager;
 public:
 
     Image(RenderDevice*,

@@ -7,13 +7,12 @@
 #include "Core/GPUResource.hpp"
 #include "Core/DeviceChild.hpp"
 #include "Core/MemoryManager.hpp"
-#include "Core/BarrierManager.hpp"
 
 
 class RenderDevice;
 
 
-class Buffer : public GPUResource, public DeviceChild
+class Buffer final : public GPUResource, public DeviceChild
 {
 public:
     Buffer(RenderDevice*,
