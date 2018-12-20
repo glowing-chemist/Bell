@@ -65,6 +65,10 @@ private:
     vk::Device mDevice;
     vk::PhysicalDevice mPhysicalDevice;
 
+    vk::Queue mGraphicsQueue;
+    vk::Queue mComputeQueue;
+    vk::Queue mTransferQueue;
+
     SwapChain mSwapChain;
     MemoryManager mMemoryManager;
 };

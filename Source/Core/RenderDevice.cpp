@@ -1,5 +1,5 @@
 #include "RenderDevice.hpp"
-
+#include "RenderInstance.hpp"
 #include <vulkan/vulkan.hpp>
 
 RenderDevice::RenderDevice(vk::PhysicalDevice physDev, vk::Device dev, vk::SurfaceKHR surface, GLFWwindow* window) :
@@ -8,7 +8,13 @@ RenderDevice::RenderDevice(vk::PhysicalDevice physDev, vk::Device dev, vk::Surfa
     mDevice{dev},
     mPhysicalDevice{physDev},
     mSwapChain{mDevice, mPhysicalDevice, surface, window},
-    mMemoryManager{this} {}
+    mMemoryManager{this} {
+
+    const auto queueIndicies = getAvailableQueues(surface, mPhysicalDevice);
+    mGraphicsQueue = mDevice.getQueue(queueIndicies.GraphicsQueueIndex, 0);
+    mComputeQueue  = mDevice.getQueue(queueIndicies.ComputeQueueIndex, 0);
+    mTransferQueue = mDevice.getQueue(queueIndicies.TransferQueueIndex, 0);
+}
 
 vk::Image   RenderDevice::createImage(const vk::Format format,
                                       const vk::ImageUsageFlags usage,
