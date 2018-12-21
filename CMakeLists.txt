@@ -6,8 +6,8 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wpedantic")
 
 include_directories(
-			"./Include/"
-			"./Source/"
+                        "${CMAKE_CURRENT_LIST_DIR}/Include/"
+                        "${CMAKE_CURRENT_LIST_DIR}/Source/"
 		    )
 
 set(SOURCE
