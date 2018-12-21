@@ -45,6 +45,8 @@ public:
     vk::MemoryRequirements             getMemoryRequirements(vk::Buffer buffer)
                                             { return mDevice.getBufferMemoryRequirements(buffer); }
 
+    vk::Queue&                         getQueue(const QueueType);
+
     vk::PhysicalDeviceMemoryProperties getMemoryProperties() const;
     vk::DeviceMemory                   allocateMemory(vk::MemoryAllocateInfo);
     void                               freeMemory(const vk::DeviceMemory);

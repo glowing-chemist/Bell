@@ -52,6 +52,21 @@ vk::Buffer  RenderDevice::createBuffer(const uint32_t size, const vk::BufferUsag
 }
 
 
+vk::Queue&  RenderDevice::getQueue(const QueueType type)
+{
+    switch(type)
+    {
+        case QueueType::Graphics:
+            return mGraphicsQueue;
+        case QueueType::Compute:
+            return mComputeQueue;
+        case QueueType::Transfer:
+            return mTransferQueue;
+    }
+    return mGraphicsQueue; // This should be unreachable unless I add more queue types.
+}
+
+
 // Memory management functions
 vk::PhysicalDeviceMemoryProperties RenderDevice::getMemoryProperties() const
 {
