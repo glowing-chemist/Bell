@@ -31,11 +31,14 @@ class GPUResource {
 public:
     GPUResource(const uint64_t lastAccessed) : mNeedsUpdating{false}, mLastAccessed{lastAccessed} {}
 
-    inline uint64_t getLastAccessed() const { return mLastAccessed; }
-    inline void     updateLastAccessed(const uint64_t updatedAccess) { mLastAccessed = updatedAccess; }
+    inline uint64_t		getLastAccessed() const { return mLastAccessed; }
+    inline void			updateLastAccessed(const uint64_t updatedAccess) { mLastAccessed = updatedAccess; }
 
-    inline bool     needsUpdating() const { return mNeedsUpdating; }
-    inline void     markNeedingUpdate() { mNeedsUpdating = true; }
+    inline bool			needsUpdating() const { return mNeedsUpdating; }
+    inline void			markNeedingUpdate() { mNeedsUpdating = true; }
+
+	inline QueueType	getOwningQueueType() const { return mCurrentQueue; }
+	inline void			setOwningQueueType(const QueueType queueType) { mCurrentQueue = queueType; }
 
 private:
     bool mNeedsUpdating;

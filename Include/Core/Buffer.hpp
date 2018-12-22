@@ -22,6 +22,9 @@ public:
 
     ~Buffer();
 
+	vk::Buffer getBuffer() const
+		{ return mBuffer; }
+
 
     void*   map();
     void    unmap();

@@ -46,6 +46,7 @@ public:
                                             { return mDevice.getBufferMemoryRequirements(buffer); }
 
     vk::Queue&                         getQueue(const QueueType);
+	uint32_t						   getQueueFamilyIndex(const QueueType) const;
 
     vk::PhysicalDeviceMemoryProperties getMemoryProperties() const;
     vk::DeviceMemory                   allocateMemory(vk::MemoryAllocateInfo);

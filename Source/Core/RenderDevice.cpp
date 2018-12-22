@@ -67,6 +67,21 @@ vk::Queue&  RenderDevice::getQueue(const QueueType type)
 }
 
 
+uint32_t RenderDevice::getQueueFamilyIndex(const QueueType type) const
+{
+	switch(type)
+	{
+	case QueueType::Graphics:
+		return mQueueFamilyIndicies.GraphicsQueueIndex;
+	case QueueType::Compute:
+		return mQueueFamilyIndicies.ComputeQueueIndex;
+	case QueueType::Transfer:
+		return mQueueFamilyIndicies.TransferQueueIndex;
+	}
+	return mQueueFamilyIndicies.GraphicsQueueIndex; // This should be unreachable unless I add more queue types.
+}
+
+
 // Memory management functions
 vk::PhysicalDeviceMemoryProperties RenderDevice::getMemoryProperties() const
 {
