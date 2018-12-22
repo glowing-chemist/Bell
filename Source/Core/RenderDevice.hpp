@@ -10,6 +10,12 @@
 
 class GLFWwindow;
 
+struct QueueIndicies {
+	int GraphicsQueueIndex;
+	int TransferQueueIndex;
+	int ComputeQueueIndex;
+};
+
 class RenderDevice {
 public:
     RenderDevice(vk::PhysicalDevice, vk::Device, vk::SurfaceKHR, GLFWwindow*);
@@ -71,6 +77,7 @@ private:
     vk::Queue mGraphicsQueue;
     vk::Queue mComputeQueue;
     vk::Queue mTransferQueue;
+	QueueIndicies mQueueFamilyIndicies;
 
     SwapChain mSwapChain;
     MemoryManager mMemoryManager;

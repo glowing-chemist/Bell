@@ -2,6 +2,7 @@
 #include "RenderInstance.hpp"
 #include <vulkan/vulkan.hpp>
 
+
 RenderDevice::RenderDevice(vk::PhysicalDevice physDev, vk::Device dev, vk::SurfaceKHR surface, GLFWwindow* window) :
     mCurrentSubmission{0},
     mFinishedSubmission{0},
@@ -10,10 +11,10 @@ RenderDevice::RenderDevice(vk::PhysicalDevice physDev, vk::Device dev, vk::Surfa
     mSwapChain{mDevice, mPhysicalDevice, surface, window},
     mMemoryManager{this} {
 
-    const auto queueIndicies = getAvailableQueues(surface, mPhysicalDevice);
-    mGraphicsQueue = mDevice.getQueue(queueIndicies.GraphicsQueueIndex, 0);
-    mComputeQueue  = mDevice.getQueue(queueIndicies.ComputeQueueIndex, 0);
-    mTransferQueue = mDevice.getQueue(queueIndicies.TransferQueueIndex, 0);
+    mQueueFamilyIndicies = getAvailableQueues(surface, mPhysicalDevice);
+    mGraphicsQueue = mDevice.getQueue(mQueueFamilyIndicies.GraphicsQueueIndex, 0);
+    mComputeQueue  = mDevice.getQueue(mQueueFamilyIndicies.ComputeQueueIndex, 0);
+    mTransferQueue = mDevice.getQueue(mQueueFamilyIndicies.TransferQueueIndex, 0);
 }
 
 vk::Image   RenderDevice::createImage(const vk::Format format,

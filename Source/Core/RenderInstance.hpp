@@ -20,12 +20,6 @@ int operator|(DeviceFeaturesFlags, DeviceFeaturesFlags);
 int operator|(int, DeviceFeaturesFlags);
 bool operator&(int, DeviceFeaturesFlags);
 
-struct QueueIndicies {
-    int GraphicsQueueIndex;
-    int TransferQueueIndex;
-    int ComputeQueueIndex;
-};
-
 
 const QueueIndicies getAvailableQueues(vk::SurfaceKHR windowSurface, vk::PhysicalDevice& dev);
 
