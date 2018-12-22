@@ -31,20 +31,6 @@ private:
     bool hostMappable;
 };
 
-struct Buffer {
-    vk::Buffer mBuffer;
-    Allocation mBufferMemory;
-};
-
-bool operator<(const Buffer&, const Buffer&);
-
-struct VKImage {
-    vk::Image mImage;
-    Allocation mImageMemory;
-};
-
-bool operator==(const VKImage&, const VKImage&);
-bool operator!=(const VKImage&, const VKImage&);
 
 // This class will be used for keeping track of GPU allocations for buffers and
 // images. this will be done by maintaing 2 pools of gpu memory, one device local
@@ -56,7 +42,7 @@ public:
     MemoryManager() = default; // constructor that doens't allocate pools
     explicit MemoryManager(RenderDevice*); // one that does
 
-    Allocation Allocate(uint64_t size, unsigned allignment, bool deviceLocal);
+    Allocation Allocate(uint64_t size, unsigned long allignment, bool hostMappable);
     void       Free(Allocation alloc);
 
     void       BindImage(vk::Image& image, Allocation alloc);

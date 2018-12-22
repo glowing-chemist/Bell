@@ -11,8 +11,8 @@ else()
 endif(win32)
 
 include_directories(
-			"./Include/"
-			"./Source/"
+                        "${CMAKE_CURRENT_LIST_DIR}/Include/"
+                        "${CMAKE_CURRENT_LIST_DIR}/Source/"
 		    )
 
 set(SOURCE

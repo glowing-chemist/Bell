@@ -1,6 +1,7 @@
 #ifndef RENDERTASK_HPP
 #define RENDERTASK_HPP
 
+#include <map>
 #include <string>
 #include <vector>
 #include <map>

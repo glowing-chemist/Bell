@@ -7,6 +7,8 @@
 
 #include <tuple>
 
+#include "RenderDevice.hpp"
+
 enum class DeviceFeaturesFlags {
     Geometry = 1,
     Tessalation = 2,
@@ -27,18 +29,20 @@ struct QueueIndicies {
 
 const QueueIndicies getAvailableQueues(vk::SurfaceKHR windowSurface, vk::PhysicalDevice& dev);
 
-class VKInstance {
+class RenderInstance {
 public:
-    VKInstance(GLFWwindow*);
-    ~VKInstance();
+    RenderInstance(GLFWwindow*);
+    ~RenderInstance();
+
+    RenderDevice createRenderDevice(const int DeviceFeatureFlags = 0);
 
     void addDebugCallback();
 
-    std::pair<vk::PhysicalDevice, vk::Device> findSuitableDevices(int DeviceFeatureFlags = 0);
     GLFWwindow* getWindow() const;
     vk::SurfaceKHR getSurface() const;
 
 private:
+    std::pair<vk::PhysicalDevice, vk::Device> findSuitableDevices(const int DeviceFeatureFlags = 0);
 
     vk::Instance mInstance;
     vk::DebugReportCallbackEXT debugCallback;
