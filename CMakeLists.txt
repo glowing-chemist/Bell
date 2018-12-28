@@ -35,6 +35,7 @@ set(SOURCE
 	"Source/Core/MemoryManager.cpp"
 	"Source/Core/BarrierManager.cpp"
 	"Source/Core/SwapChain.cpp"
+	"Source/Core/CommandPool.cpp"
 
 	#RenderGraph files (backend independant)
 	"Source/RenderGraph/GraphicsTask.cpp"

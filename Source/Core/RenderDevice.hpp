@@ -41,6 +41,18 @@ public:
     void                               destroyBuffer(vk::Buffer& buffer )
                                             { mDevice.destroyBuffer(buffer); }
 
+	vk::CommandPool					   createCommandPool(vk::CommandPoolCreateInfo& info)
+											{ return mDevice.createCommandPool(info); }
+
+	void							   destroyCommandPool(vk::CommandPool& pool)
+											{ mDevice.destroyCommandPool(pool); }
+
+	std::vector<vk::CommandBuffer>	   allocateCommandBuffers(vk::CommandBufferAllocateInfo& info)
+											{ return mDevice.allocateCommandBuffers(info); }
+
+	void							   resetCommandPool(vk::CommandPool& pool)
+											{ mDevice.resetCommandPool(pool, vk::CommandPoolResetFlags{}); }
+
     // Accessors
     SwapChain*                         getSwapChain() { return &mSwapChain; }
     MemoryManager*                     getMemoryManager() { return &mMemoryManager; }
