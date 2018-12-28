@@ -27,6 +27,8 @@ void BarrierManager::transferResourceToQueue(Image& image, const QueueType queue
 
 	mImageMemoryBarriers.push_back({image.getOwningQueueType(), releaseBarrier});
 	mImageMemoryBarriers.push_back({ queueType, aquireBarrier });
+
+	image.setOwningQueueType(queueType);
 }
 
 
@@ -51,4 +53,30 @@ void BarrierManager::transferResourceToQueue(Buffer& buffer, const QueueType que
 
 	mBufferMemoryBarriers.push_back({ buffer.getOwningQueueType(), releaseBarrier });
 	mBufferMemoryBarriers.push_back({ queueType, aquireBarrier });
+
+	buffer.setOwningQueueType(queueType);
+}
+
+
+void BarrierManager::transitionImageLayout(Image& image, const vk::ImageLayout layout)
+{
+	if (layout == image.getLayout())
+		return;
+
+	vk::ImageMemoryBarrier barrier{};
+	barrier.setSrcAccessMask(vk::AccessFlagBits::eMemoryWrite);
+	barrier.setDstAccessMask(vk::AccessFlagBits::eMemoryRead);
+	barrier.setOldLayout(image.getLayout());
+	barrier.setNewLayout(layout);
+	barrier.setImage(image.getImage());
+
+	mImageMemoryBarriers.push_back({image.getOwningQueueType(), barrier});
+
+	image.mLayout = layout;
+}
+
+
+void BarrierManager::flushAllBarriers()
+{
+	// Need to implement command pool stuff.
 }
