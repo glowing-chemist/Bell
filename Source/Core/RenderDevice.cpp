@@ -9,12 +9,19 @@ RenderDevice::RenderDevice(vk::PhysicalDevice physDev, vk::Device dev, vk::Surfa
     mDevice{dev},
     mPhysicalDevice{physDev},
     mSwapChain{mDevice, mPhysicalDevice, surface, window},
-    mMemoryManager{this} {
+    mMemoryManager{this} 
+{
 
     mQueueFamilyIndicies = getAvailableQueues(surface, mPhysicalDevice);
     mGraphicsQueue = mDevice.getQueue(mQueueFamilyIndicies.GraphicsQueueIndex, 0);
     mComputeQueue  = mDevice.getQueue(mQueueFamilyIndicies.ComputeQueueIndex, 0);
     mTransferQueue = mDevice.getQueue(mQueueFamilyIndicies.TransferQueueIndex, 0);
+
+	// Create a command pool for each frame.
+	for (uint32_t i = 0; i < mSwapChain.getNumberOfSwapChainImages(); ++i)
+	{
+		mCommandPools.push_back(CommandPool{ this });
+	}
 }
 
 vk::Image   RenderDevice::createImage(const vk::Format format,

@@ -6,6 +6,7 @@
 
 #include "MemoryManager.hpp"
 #include "SwapChain.hpp"
+#include "CommandPool.h"
 #include "Core/Image.hpp"
 
 class GLFWwindow;
@@ -56,6 +57,7 @@ public:
     // Accessors
     SwapChain*                         getSwapChain() { return &mSwapChain; }
     MemoryManager*                     getMemoryManager() { return &mMemoryManager; }
+	CommandPool*					   getCurrentCommandPool() { return &mCommandPools[mSwapChain.getCurrentImageIndex()]; }
 
     // Memory management functions
     vk::MemoryRequirements             getMemoryRequirements(vk::Image image)
@@ -92,6 +94,7 @@ private:
 	QueueIndicies mQueueFamilyIndicies;
 
     SwapChain mSwapChain;
+	std::vector<CommandPool> mCommandPools;
     MemoryManager mMemoryManager;
 };
 
