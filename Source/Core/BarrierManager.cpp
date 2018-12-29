@@ -3,6 +3,9 @@
 #include "Core/Buffer.hpp"
 #include "RenderDevice.hpp"
 
+#include <algorithm>
+
+
 BarrierManager::BarrierManager(RenderDevice* device) : DeviceChild(device) {}
 
 
@@ -78,5 +81,44 @@ void BarrierManager::transitionImageLayout(Image& image, const vk::ImageLayout l
 
 void BarrierManager::flushAllBarriers()
 {
-	// Need to implement command pool stuff.
+	auto* commandPool = getDevice()->getCurrentCommandPool();
+
+	std::vector<vk::ImageMemoryBarrier> imageBarriers;
+	
+	for (uint8_t i = 0; i < static_cast<uint8_t>(QueueType::MaxQueues); ++i)
+	{
+		const QueueType queueIndex = static_cast<QueueType>(i);
+
+		std::for_each(mImageMemoryBarriers.begin(), mImageMemoryBarriers.end(),
+			[&imageBarriers, queueIndex](const std::pair<QueueType, vk::ImageMemoryBarrier>& barrier) { if (barrier.first == queueIndex) imageBarriers.push_back(barrier.second); });
+
+
+		commandPool->getBufferForQueue(queueIndex).pipelineBarrier(vk::PipelineStageFlagBits::eTopOfPipe, vk::PipelineStageFlagBits::eFragmentShader,
+			vk::DependencyFlagBits::eByRegion,
+			0, nullptr,
+			0, nullptr,
+			imageBarriers.size(), imageBarriers.data());
+
+		imageBarriers.clear();
+	}
+
+
+	std::vector<vk::BufferMemoryBarrier> bufferBarriers;
+
+	for (uint8_t i = 0; i < static_cast<uint8_t>(QueueType::MaxQueues); ++i)
+	{
+		const QueueType queueIndex = static_cast<QueueType>(i);
+
+		std::for_each(mBufferMemoryBarriers.begin(), mBufferMemoryBarriers.end(),
+			[&bufferBarriers, queueIndex](const std::pair<QueueType, vk::BufferMemoryBarrier>& barrier) { if (barrier.first == queueIndex) bufferBarriers.push_back(barrier.second); });
+
+
+		commandPool->getBufferForQueue(queueIndex).pipelineBarrier(vk::PipelineStageFlagBits::eTopOfPipe, vk::PipelineStageFlagBits::eFragmentShader,
+			vk::DependencyFlagBits::eByRegion,
+			0, nullptr,
+			bufferBarriers.size(), bufferBarriers.data(),
+			0, nullptr);
+
+		bufferBarriers.clear();
+	}
 }
