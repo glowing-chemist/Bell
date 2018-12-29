@@ -5,7 +5,7 @@
 #include <cstdint>
 
 enum class ImageType {
-    Texture1D,
+    Texture1D = 0,
     Texture2D,
     Texture3D,
     RenderTarget1D,
@@ -14,16 +14,17 @@ enum class ImageType {
 };
 
 enum class BufferType {
-    VertexBuffer,
+    VertexBuffer = 0,
     IndexBuffer,
     UniformBuffer,
     DataBuffer
 };
 
 enum class QueueType {
-    Graphics,
+    Graphics = 0,
     Compute,
-    Transfer
+    Transfer,
+	MaxQueues
 };
 
 
