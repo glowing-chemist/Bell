@@ -12,6 +12,10 @@ enum class AttatchmentType
     Texture1D,
     Texture2D,
     Texture3D,
+	RenderTarget1D,
+	RenderTarget2D,
+	RenderTarget3D,
+	Depth,
     UniformBuffer,
     DataBuffer,
     PushConstants
