@@ -90,6 +90,24 @@ uint32_t RenderDevice::getQueueFamilyIndex(const QueueType type) const
 }
 
 
+std::pair<vk::Pipeline, vk::PipelineLayout>	RenderDevice::generatePipelineFromTask(GraphicsTask&)
+{
+	
+}
+
+
+std::pair<vk::Pipeline, vk::PipelineLayout>	RenderDevice::generatePipelineFromTask(ComputeTask&)
+{
+
+}
+
+
+vk::RenderPass								RenderDevice::generateRenderPassFromTask(GraphicsTask&)
+{
+
+}
+
+
 // Memory management functions
 vk::PhysicalDeviceMemoryProperties RenderDevice::getMemoryProperties() const
 {

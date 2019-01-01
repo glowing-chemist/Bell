@@ -4,7 +4,7 @@
 #include "RenderTask.hpp"
 
 #include <string>
-#include <map>
+#include <unordered_map>
 #include <vector>
 #include <tuple>
 #include <cstdint>
@@ -29,12 +29,34 @@ enum class BlendMode
     Max
 };
 
+enum class VertexAssemblyType
+{
+	vec1 = 1,
+	vec2 = 2,
+	vec3 = 3,
+	vec4 = 4,
+	ivec1 = 1,
+	ivec2 = 2,
+	ivec3 = 3,
+	ivec4 = 4,
+	f = 1,
+	i = 1
+};
+
+enum VertexAttributes
+{
+	Position = 1 << 1,
+	TextureCoordinates = 1 << 2,
+	Normals = 1 << 3,
+	Aledo = 1 << 4
+};
+
 struct Rect
 {
     uint32_t x, y;
 };
 
-struct RenderPipelineDescription
+struct GraphicsPipelineDescription
 {
     std::string mVertexShaderName;
     std::string mGeometryShaderName;
@@ -44,19 +66,35 @@ struct RenderPipelineDescription
 
     Rect mScissorRect;
     Rect mViewport;
+	bool mUseBackFaceCulling;
 
     BlendMode mBlendMode;
 };
-
+// needed in order to use unordered_map
+namespace std
+{
+	template<>
+	struct hash<GraphicsPipelineDescription> 
+	{
+		size_t operator()(const GraphicsPipelineDescription&) const noexcept;
+	};
+}
 
 // This class describes a renderpass with all of it's inputs and
 // outputs.
 class GraphicsTask : public RenderTask
 {
 public:
-	GraphicsTask(const std::string& name, const RenderPipelineDescription& desc) : mName{ name }, mPipelineDescription{ desc } {}
+	GraphicsTask(const std::string& name, const GraphicsPipelineDescription& desc) : mName{ name }, mPipelineDescription{ desc } {}
 
 	const std::string& getName() { return mName;  }
+	
+	GraphicsPipelineDescription getPipelineDescription() const { return mPipelineDescription; }
+
+	void setVertexAttributes(int vertexAttributes)
+		{ mVertexAttributes = vertexAttributes; }
+
+	int getVertexAttributes() const { return mVertexAttributes; }
 
 	void addDrawCall(const uint32_t vertexOffset, const uint32_t numberOfVerticies) 
 	{ 
@@ -93,7 +131,9 @@ private:
 	};
 	std::vector<thunkedDraw> mDrawCalls;
 
-	RenderPipelineDescription mPipelineDescription;
+	GraphicsPipelineDescription mPipelineDescription;
+	
+	int mVertexAttributes;
 };
 
 #endif

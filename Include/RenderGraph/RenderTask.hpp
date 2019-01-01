@@ -35,8 +35,11 @@ public:
 	RenderTask() = default;
 	virtual ~RenderTask() = default;
 
-	void addInput(const std::string& name, std::tuple<uint32_t, AttatchmentType> bindingInfo);
-	void addOutput(const std::string& name, std::tuple<uint32_t, AttatchmentType> bindingInfo);
+	void addInput(const std::string& name, std::tuple<uint32_t, AttatchmentType> bindingInfo)
+		{ mAttatchments[name] = bindingInfo; }
+
+	void addOutput(const std::string& name, std::tuple<uint32_t, AttatchmentType> bindingInfo)
+		{ mInputs[name] = bindingInfo; }
 
 	virtual void clearCalls() = 0;
 

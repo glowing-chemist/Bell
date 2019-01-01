@@ -2,12 +2,15 @@
 #define RENDERDEVICE_HPP
 
 #include <cstddef>
+#include <unordered_map>
 #include <vulkan/vulkan.hpp>
 
 #include "MemoryManager.hpp"
 #include "SwapChain.hpp"
 #include "CommandPool.h"
 #include "Core/Image.hpp"
+#include "RenderGraph/GraphicsTask.hpp"
+#include "RenderGraph/ComputeTask.hpp"
 
 class GLFWwindow;
 
@@ -54,6 +57,11 @@ public:
 	void							   resetCommandPool(vk::CommandPool& pool)
 											{ mDevice.resetCommandPool(pool, vk::CommandPoolResetFlags{}); }
 
+
+	std::pair<vk::Pipeline, vk::PipelineLayout>	generatePipelineFromTask(GraphicsTask&);
+	std::pair<vk::Pipeline, vk::PipelineLayout>	generatePipelineFromTask(ComputeTask&);
+	vk::RenderPass								generateRenderPassFromTask(GraphicsTask&);
+
     // Accessors
     SwapChain*                         getSwapChain() { return &mSwapChain; }
     MemoryManager*                     getMemoryManager() { return &mMemoryManager; }
@@ -92,6 +100,9 @@ private:
     vk::Queue mComputeQueue;
     vk::Queue mTransferQueue;
 	QueueIndicies mQueueFamilyIndicies;
+
+	std::unordered_map<GraphicsPipelineDescription, std::pair<vk::Pipeline, vk::PipelineLayout>> mGraphicsPipelineCache;
+	std::unordered_map<ComputePipelineDescription, std::pair<vk::Pipeline, vk::PipelineLayout>> mComputePipelineCache;
 
     SwapChain mSwapChain;
 	std::vector<CommandPool> mCommandPools;
