@@ -77,7 +77,7 @@ public:
     void                               bindBufferMemory(vk::Buffer&, vk::DeviceMemory, const uint64_t);
     void                               bindImageMemory(vk::Image&, vk::DeviceMemory, const uint64_t);
 
-    uint64_t                     getCurrentFrameIndex() const { return mCurrentSubmission; }
+    uint64_t						   getCurrentFrameIndex() const { return mCurrentSubmission; }
 private:
 
     // Keep track of when resources can be freed
