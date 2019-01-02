@@ -8,7 +8,7 @@
 #include "Core/GPUResource.hpp"
 #include "Core/DeviceChild.hpp"
 #include "Core/MemoryManager.hpp"
-#include "BarrierManager.hpp"
+#include "Core/BarrierManager.hpp"
 
 class RenderDevice;
 
