@@ -36,24 +36,24 @@ public:
 	RenderTask() = default;
 	virtual ~RenderTask() = default;
 
-    void addInput(const std::string& name, std::pair<uint32_t, AttachmentType> bindingInfo)
-        { mOutputAttachments[name] = bindingInfo; }
+    void addInput(const std::string& name, AttachmentType attachmentType)
+        { mOutputAttachments[mOutputAttachments.size()] = {name, attachmentType}; }
 
-    void addOutput(const std::string& name, std::pair<uint32_t, AttachmentType> bindingInfo)
-        { mInputAttachments[name] = bindingInfo; }
+    void addOutput(const std::string& name, AttachmentType attachmentType)
+        { mInputAttachments[mInputAttachments.size()] = {name, attachmentType}; }
 
-    const std::map<std::string, std::pair<uint32_t, AttachmentType>>& getInputAttachments() const
+    const std::map<uint32_t, std::pair<std::string, AttachmentType>>& getInputAttachments() const
         { return mInputAttachments; }
 
-    const std::map<std::string, std::pair<uint32_t, AttachmentType>>& getOuputAttachments() const
+    const std::map<uint32_t, std::pair<std::string, AttachmentType>>& getOuputAttachments() const
         { return mOutputAttachments; }
 
 	virtual void clearCalls() = 0;
 
 
 protected:
-    std::map<std::string, std::pair<uint32_t, AttachmentType>> mOutputAttachments;
-    std::map<std::string, std::pair<uint32_t, AttachmentType>> mInputAttachments;
+    std::map<uint32_t, std::pair<std::string, AttachmentType>> mOutputAttachments;
+    std::map<uint32_t, std::pair<std::string, AttachmentType>> mInputAttachments;
 };
 
 #endif

@@ -109,15 +109,11 @@ vk::RenderPass	RenderDevice::generateRenderPassFromTask(GraphicsTask& task)
     const auto& inputAttachments = task.getInputAttachments();
     const auto& outputAttachments = task.getOuputAttachments();
 
-    std::vector<std::pair<uint32_t, AttachmentType>> sortedAttachments;
-    std::for_each(inputAttachments.begin(), inputAttachments.end(), [&sortedAttachments](const auto& pair)
-        {sortedAttachments.push_back(pair.second);});
-
-    std::sort(sortedAttachments.begin(), sortedAttachments.end());
-
     std::vector<vk::AttachmentDescription> attachmentDescriptions;
-    for(const auto& [index, type] : sortedAttachments)
+    for(const auto& [index, attachmentInfo] : inputAttachments)
     {
+        const auto&[name, type] = attachmentInfo;
+
         // We only care about images here.
         if(type == AttachmentType::DataBuffer ||
            type == AttachmentType::PushConstants ||
@@ -160,14 +156,10 @@ vk::RenderPass	RenderDevice::generateRenderPassFromTask(GraphicsTask& task)
         attachmentDescriptions.push_back((attachmentDesc));
     }
 
-    sortedAttachments.clear();
-    std::for_each(outputAttachments.begin(), outputAttachments.end(), [&sortedAttachments](const auto& pair)
-        {sortedAttachments.push_back(pair.second);});
-
-    std::sort(sortedAttachments.begin(), sortedAttachments.end());
-
-    for(const auto& [index, type] : sortedAttachments)
+    for(const auto& [index, attachmentInfo] : outputAttachments)
     {
+        const auto&[name, type] = attachmentInfo;
+
         // We only care about images here.
         if(type == AttachmentType::DataBuffer ||
            type == AttachmentType::PushConstants ||
