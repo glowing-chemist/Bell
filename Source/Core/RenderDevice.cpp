@@ -118,6 +118,12 @@ vk::RenderPass	RenderDevice::generateRenderPassFromTask(GraphicsTask& task)
     std::vector<vk::AttachmentDescription> attachmentDescriptions;
     for(const auto& [index, type] : sortedAttachments)
     {
+        // We only care about images here.
+        if(type == AttachmentType::DataBuffer ||
+           type == AttachmentType::PushConstants ||
+           type == AttachmentType::UniformBuffer)
+                continue;
+
         vk::AttachmentDescription attachmentDesc{};
 
         // get the needed format
@@ -162,6 +168,12 @@ vk::RenderPass	RenderDevice::generateRenderPassFromTask(GraphicsTask& task)
 
     for(const auto& [index, type] : sortedAttachments)
     {
+        // We only care about images here.
+        if(type == AttachmentType::DataBuffer ||
+           type == AttachmentType::PushConstants ||
+           type == AttachmentType::UniformBuffer)
+                continue;
+
         vk::AttachmentDescription attachmentDesc{};
 
         // get the needed format
