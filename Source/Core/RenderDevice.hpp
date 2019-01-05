@@ -88,6 +88,8 @@ public:
     uint64_t						   getCurrentFrameIndex() const { return mCurrentSubmission; }
 private:
 
+    std::pair<vk::VertexInputBindingDescription, vk::VertexInputAttributeDescription> generateVertexInputFromTask(const GraphicsTask&);
+
     // Keep track of when resources can be freed
     uint64_t mCurrentSubmission;
     uint64_t mFinishedSubmission;

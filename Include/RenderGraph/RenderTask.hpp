@@ -7,7 +7,7 @@
 #include <map>
 #include <tuple>
 
-enum class AttatchmentType
+enum class AttachmentType
 {
     Texture1D,
     Texture2D,
@@ -15,6 +15,7 @@ enum class AttatchmentType
 	RenderTarget1D,
 	RenderTarget2D,
 	RenderTarget3D,
+    SwapChain,
 	Depth,
     UniformBuffer,
     DataBuffer,
@@ -35,18 +36,24 @@ public:
 	RenderTask() = default;
 	virtual ~RenderTask() = default;
 
-	void addInput(const std::string& name, std::tuple<uint32_t, AttatchmentType> bindingInfo)
-		{ mAttatchments[name] = bindingInfo; }
+    void addInput(const std::string& name, std::pair<uint32_t, AttachmentType> bindingInfo)
+        { mOutputAttachments[name] = bindingInfo; }
 
-	void addOutput(const std::string& name, std::tuple<uint32_t, AttatchmentType> bindingInfo)
-		{ mInputs[name] = bindingInfo; }
+    void addOutput(const std::string& name, std::pair<uint32_t, AttachmentType> bindingInfo)
+        { mInputAttachments[name] = bindingInfo; }
+
+    const std::map<std::string, std::pair<uint32_t, AttachmentType>>& getInputAttachments() const
+        { return mInputAttachments; }
+
+    const std::map<std::string, std::pair<uint32_t, AttachmentType>>& getOuputAttachments() const
+        { return mOutputAttachments; }
 
 	virtual void clearCalls() = 0;
 
 
 protected:
-	std::map<std::string, std::tuple<uint32_t, AttatchmentType>> mAttatchments;
-	std::map<std::string, std::tuple<uint32_t, AttatchmentType>> mInputs;
+    std::map<std::string, std::pair<uint32_t, AttachmentType>> mOutputAttachments;
+    std::map<std::string, std::pair<uint32_t, AttachmentType>> mInputAttachments;
 };
 
 #endif

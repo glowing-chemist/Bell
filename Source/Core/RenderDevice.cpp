@@ -90,21 +90,193 @@ uint32_t RenderDevice::getQueueFamilyIndex(const QueueType type) const
 }
 
 
-std::pair<vk::Pipeline, vk::PipelineLayout>	RenderDevice::generatePipelineFromTask(GraphicsTask&)
+std::pair<vk::Pipeline, vk::PipelineLayout>	RenderDevice::generatePipelineFromTask(GraphicsTask& task)
 {
-	
+    return {nullptr, nullptr};
 }
 
 
-std::pair<vk::Pipeline, vk::PipelineLayout>	RenderDevice::generatePipelineFromTask(ComputeTask&)
+std::pair<vk::Pipeline, vk::PipelineLayout>	RenderDevice::generatePipelineFromTask(ComputeTask& task)
 {
-
+    return {nullptr, nullptr};
 }
 
 
-vk::RenderPass								RenderDevice::generateRenderPassFromTask(GraphicsTask&)
+vk::RenderPass	RenderDevice::generateRenderPassFromTask(GraphicsTask& task)
 {
+    // TODO implement a renderpass cache.
 
+    const auto& inputAttachments = task.getInputAttachments();
+    const auto& outputAttachments = task.getOuputAttachments();
+
+    std::vector<std::pair<uint32_t, AttachmentType>> sortedAttachments;
+    std::for_each(inputAttachments.begin(), inputAttachments.end(), [&sortedAttachments](const auto& pair)
+        {sortedAttachments.push_back(pair.second);});
+
+    std::sort(sortedAttachments.begin(), sortedAttachments.end());
+
+    std::vector<vk::AttachmentDescription> attachmentDescriptions;
+    for(const auto& [index, type] : sortedAttachments)
+    {
+        vk::AttachmentDescription attachmentDesc{};
+
+        // get the needed format
+        const std::pair<vk::Format, vk::ImageLayout> formatandLayout = [type, this]()
+        {
+            switch(type)
+            {
+                case AttachmentType::Texture1D:
+                case AttachmentType::Texture2D:
+                case AttachmentType::Texture3D:
+                    return std::make_pair(vk::Format::eR8G8B8A8Srgb, vk::ImageLayout::eShaderReadOnlyOptimal);
+                case AttachmentType::Depth:
+                    return std::make_pair(vk::Format::eD32Sfloat, vk::ImageLayout::eDepthStencilReadOnlyOptimal);
+                case AttachmentType::SwapChain:
+                    return std::make_pair(this->getSwapChain()->getSwapChainImageFormat(),
+                                          vk::ImageLayout::eShaderReadOnlyOptimal);
+                default:
+                    return std::make_pair(vk::Format::eR8Sint, vk::ImageLayout::eUndefined); // should be obvious that something has gone wrong.
+            }
+        }();
+
+        attachmentDesc.setFormat(formatandLayout.first);
+
+        // eventually I will implment a render pass system that is aware of what comes beofer and after it
+        // in order to avoid having to do manula barriers for all transitions.
+        attachmentDesc.setInitialLayout((formatandLayout.second));
+        attachmentDesc.setFinalLayout(formatandLayout.second);
+
+        attachmentDesc.setLoadOp(vk::AttachmentLoadOp::eLoad); // we are going to overwrite all pixles
+        attachmentDesc.setStoreOp(vk::AttachmentStoreOp::eStore);
+        attachmentDesc.setStencilLoadOp(vk::AttachmentLoadOp::eLoad);
+        attachmentDesc.setStencilStoreOp(vk::AttachmentStoreOp::eStore);
+
+        attachmentDescriptions.push_back((attachmentDesc));
+    }
+
+    sortedAttachments.clear();
+    std::for_each(outputAttachments.begin(), outputAttachments.end(), [&sortedAttachments](const auto& pair)
+        {sortedAttachments.push_back(pair.second);});
+
+    std::sort(sortedAttachments.begin(), sortedAttachments.end());
+
+    for(const auto& [index, type] : sortedAttachments)
+    {
+        vk::AttachmentDescription attachmentDesc{};
+
+        // get the needed format
+        const std::pair<vk::Format, vk::ImageLayout> formatandLayout = [type, this]()
+        {
+            switch(type)
+            {
+                case AttachmentType::RenderTarget1D:
+                case AttachmentType::RenderTarget2D:
+                case AttachmentType::RenderTarget3D:
+                    return std::make_pair(vk::Format::eR8G8B8A8Srgb, vk::ImageLayout::eColorAttachmentOptimal);
+                case AttachmentType::Depth:
+                    return std::make_pair(vk::Format::eD32Sfloat, vk::ImageLayout::eDepthStencilAttachmentOptimal);
+                case AttachmentType::SwapChain:
+                    return std::make_pair(this->getSwapChain()->getSwapChainImageFormat(),
+                                          vk::ImageLayout::eColorAttachmentOptimal);
+                default:
+                    return std::make_pair(vk::Format::eR8Sint, vk::ImageLayout::eUndefined); // should be obvious that something has gone wrong.
+            }
+        }();
+
+        attachmentDesc.setFormat(formatandLayout.first);
+
+        // eventually I will implment a render pass system that is aware of what comes beofer and after it
+        // in order to avoid having to do manula barriers for all transitions.
+        attachmentDesc.setInitialLayout((formatandLayout.second));
+        attachmentDesc.setFinalLayout(formatandLayout.second);
+
+        attachmentDesc.setLoadOp(vk::AttachmentLoadOp::eLoad); // we are going to overwrite all pixles
+        attachmentDesc.setStoreOp(vk::AttachmentStoreOp::eStore);
+        attachmentDesc.setStencilLoadOp(vk::AttachmentLoadOp::eLoad);
+        attachmentDesc.setStencilStoreOp(vk::AttachmentStoreOp::eStore);
+
+        attachmentDescriptions.push_back((attachmentDesc));
+    }
+
+    vk::RenderPassCreateInfo renderPassInfo{};
+    renderPassInfo.setAttachmentCount(attachmentDescriptions.size());
+    renderPassInfo.setPAttachments(attachmentDescriptions.data());
+
+    return mDevice.createRenderPass(renderPassInfo);
+}
+
+
+std::pair<vk::VertexInputBindingDescription, std::vector<vk::VertexInputAttributeDescription>> generateVertexInputFromTask(const GraphicsTask& task)
+{
+    const int vertexInputs = task.getVertexAttributes();
+
+    const bool hasPosition = vertexInputs & VertexAttributes::Position;
+    const bool hasTextureCoords = vertexInputs & VertexAttributes::TextureCoordinates;
+    const bool hasNormals = vertexInputs & VertexAttributes::Normals;
+    const bool hasAlbedo = vertexInputs & VertexAttributes::Aledo;
+
+    const uint32_t vertexStride = (hasPosition ? 4 : 0) + (hasTextureCoords ? 2 : 0) + (hasNormals ? 4 : 0) + (hasAlbedo ? 1 : 0);
+
+    vk::VertexInputBindingDescription bindingDesc{};
+    bindingDesc.setStride(vertexStride);
+    bindingDesc.setBinding(0);
+    bindingDesc.setInputRate(vk::VertexInputRate::eVertex); // only support the same model for instances draws currently.
+
+    std::vector<vk::VertexInputAttributeDescription> attribs;
+    uint8_t currentOffset = 0;
+    uint8_t currentLocation  = 0;
+
+    if(hasPosition)
+    {
+        vk::VertexInputAttributeDescription attribDescPos{};
+        attribDescPos.setBinding(0);
+        attribDescPos.setLocation(currentLocation);
+        attribDescPos.setFormat(vk::Format::eR32G32B32A32Sfloat);
+        attribDescPos.setOffset(currentOffset);
+
+        attribs.push_back(attribDescPos);
+        currentOffset += 16;
+        ++currentLocation;
+    }
+
+    if(hasTextureCoords)
+    {
+        vk::VertexInputAttributeDescription attribDescTex{};
+        attribDescTex.setBinding(0);
+        attribDescTex.setLocation(currentLocation);
+        attribDescTex.setFormat(vk::Format::eR32G32Sfloat);
+        attribDescTex.setOffset(currentOffset);
+
+        attribs.push_back(attribDescTex);
+        currentOffset += 8;
+        ++currentLocation;
+    }
+
+    if(hasNormals)
+    {
+        vk::VertexInputAttributeDescription attribDescNormal{};
+        attribDescNormal.setBinding(0);
+        attribDescNormal.setLocation(currentLocation);
+        attribDescNormal.setFormat(vk::Format::eR32G32B32A32Sfloat);
+        attribDescNormal.setOffset(currentOffset);
+
+        attribs.push_back(attribDescNormal);
+        currentOffset += 16;
+        ++currentLocation;
+    }
+
+    if(hasAlbedo)
+    {
+        vk::VertexInputAttributeDescription attribDescAlbedo{};
+        attribDescAlbedo.setBinding(0);
+        attribDescAlbedo.setLocation(currentLocation);
+        attribDescAlbedo.setFormat(vk::Format::eR32Sfloat);
+        attribDescAlbedo.setOffset(currentOffset);
+
+        attribs.push_back(attribDescAlbedo);
+    }
+
+    return {bindingDesc, attribs};
 }
 
 
