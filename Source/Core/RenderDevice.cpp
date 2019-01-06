@@ -110,10 +110,9 @@ vk::RenderPass	RenderDevice::generateRenderPassFromTask(GraphicsTask& task)
     const auto& outputAttachments = task.getOuputAttachments();
 
     std::vector<vk::AttachmentDescription> attachmentDescriptions;
-    for(const auto& [index, attachmentInfo] : inputAttachments)
-    {
-        const auto&[name, type] = attachmentInfo;
 
+    for(const auto& [name, type] : inputAttachments)
+    {
         // We only care about images here.
         if(type == AttachmentType::DataBuffer ||
            type == AttachmentType::PushConstants ||
@@ -156,10 +155,8 @@ vk::RenderPass	RenderDevice::generateRenderPassFromTask(GraphicsTask& task)
         attachmentDescriptions.push_back((attachmentDesc));
     }
 
-    for(const auto& [index, attachmentInfo] : outputAttachments)
+    for(const auto& [name, type] : outputAttachments)
     {
-        const auto&[name, type] = attachmentInfo;
-
         // We only care about images here.
         if(type == AttachmentType::DataBuffer ||
            type == AttachmentType::PushConstants ||
