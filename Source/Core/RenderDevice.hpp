@@ -20,7 +20,8 @@ struct QueueIndicies {
 	int ComputeQueueIndex;
 };
 
-class RenderDevice {
+class RenderDevice
+{
 public:
     RenderDevice(vk::PhysicalDevice, vk::Device, vk::SurfaceKHR, GLFWwindow*);
 
@@ -56,6 +57,12 @@ public:
 
 	void							   resetCommandPool(vk::CommandPool& pool)
 											{ mDevice.resetCommandPool(pool, vk::CommandPoolResetFlags{}); }
+
+    vk::ShaderModule                   createShaderModule(vk::ShaderModuleCreateInfo& info)
+                                            { return mDevice.createShaderModule(info); }
+
+    void                               destroyShaderModule(vk::ShaderModule module)
+                                            { mDevice.destroyShaderModule(module); }
 
 
 	std::pair<vk::Pipeline, vk::PipelineLayout>	generatePipelineFromTask(GraphicsTask&);

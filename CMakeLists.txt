@@ -17,6 +17,12 @@ set(GLFW_BUILD_DOCS 0)
 set(GLFW_BUILD_EXAMPLES 0)
 add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/ThirdParty/GLFW3/glfw-3.2.1")
 
+if(WIN32)
+    # TODO
+else()
+    set(glslangLibs /usr/lib/libglslang.so /usr/lib/libglslang-default-resource-limits.so)
+endif(WIN32)
+
 include_directories(
                         "${CMAKE_CURRENT_LIST_DIR}/Include/"
                         "${CMAKE_CURRENT_LIST_DIR}/Source/"
@@ -36,14 +42,12 @@ set(SOURCE
 	"Source/Core/BarrierManager.cpp"
 	"Source/Core/SwapChain.cpp"
 	"Source/Core/CommandPool.cpp"
+	"Source/Core/Shader.cpp"
 
 	#RenderGraph files (backend independant)
 	"Source/RenderGraph/GraphicsTask.cpp"
 	"Source/RenderGraph/ComputeTask.cpp"
 	)
 
-# Allows glm::perspective to work with vulkans coordinate system.
-add_definitions(-DGLM_FORCE_DEPTH_ZERO_TO_ONE)
-
 add_library(${PROJECT_NAME} ${SOURCE})
-target_link_libraries(${PROJECT_NAME} ${Vulkan_LIBRARIES} glfw3)
+target_link_libraries(${PROJECT_NAME} ${Vulkan_LIBRARIES} glfw3 ${glslangLibs})
