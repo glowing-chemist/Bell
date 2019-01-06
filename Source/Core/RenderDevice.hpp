@@ -89,6 +89,7 @@ public:
 private:
 
     std::pair<vk::VertexInputBindingDescription, vk::VertexInputAttributeDescription> generateVertexInputFromTask(const GraphicsTask&);
+    vk::DescriptorSetLayout                                                           generateDescriptorSetLayoutFromTask(const RenderTask&);
 
     // Keep track of when resources can be freed
     uint64_t mCurrentSubmission;

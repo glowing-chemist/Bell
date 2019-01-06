@@ -207,6 +207,51 @@ vk::RenderPass	RenderDevice::generateRenderPassFromTask(GraphicsTask& task)
 }
 
 
+vk::DescriptorSetLayout RenderDevice::generateDescriptorSetLayoutFromTask(const RenderTask& task)
+{
+    const auto& inputAttachments = task.getInputAttachments();
+
+    std::vector<vk::DescriptorSetLayoutBinding> layoutBindings;
+    uint32_t curretnBinding = 0;
+    for(const auto& [name, type] : inputAttachments)
+    {
+        vk::DescriptorType descriptorType = [type]()
+        {
+            switch(type)
+            {
+            case AttachmentType::RenderTarget1D:
+            case AttachmentType::RenderTarget2D:
+            case AttachmentType::RenderTarget3D:
+                return vk::DescriptorType::eCombinedImageSampler;
+
+           case AttachmentType::DataBuffer:
+                return vk::DescriptorType::eStorageBufferDynamic;
+
+           case AttachmentType::UniformBuffer:
+                return vk::DescriptorType::eUniformBuffer;
+
+           // Ignore push constants for now.
+            }
+
+            return vk::DescriptorType::eSampler; // For now use this to indicate push_constants (terrible I know)
+        }();
+
+        vk::DescriptorSetLayoutBinding layoutBinding{};
+        layoutBinding.setBinding(curretnBinding++);
+        layoutBinding.setDescriptorType(descriptorType);
+        layoutBinding.setDescriptorCount(1);
+
+        layoutBindings.push_back(layoutBinding);
+    }
+
+    vk::DescriptorSetLayoutCreateInfo descSetLayoutInfo{};
+    descSetLayoutInfo.setPBindings(layoutBindings.data());
+    descSetLayoutInfo.setBindingCount(layoutBindings.size());
+
+    return mDevice.createDescriptorSetLayout(descSetLayoutInfo);
+}
+
+
 std::pair<vk::VertexInputBindingDescription, std::vector<vk::VertexInputAttributeDescription>> generateVertexInputFromTask(const GraphicsTask& task)
 {
     const int vertexInputs = task.getVertexAttributes();
