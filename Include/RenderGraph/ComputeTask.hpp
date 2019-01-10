@@ -2,6 +2,7 @@
 #define COMPUTETASK_HPP
 
 #include "RenderTask.hpp"
+#include "Core/Shader.hpp"
 
 #include <string>
 #include <vector>
@@ -15,7 +16,7 @@ enum class DispatchType
 
 struct ComputePipelineDescription 
 {
-	std::string mComputeShader;
+    Shader mComputeShader;
 };
 // needed in order to use unordered_map
 namespace std
@@ -32,7 +33,10 @@ namespace std
 class ComputeTask : public RenderTask 
 {
 public:
-	ComputeTask(const std::string& name, ComputePipelineDescription desc) : mName{ name }, mPipelineDescription{ desc } {}
+    ComputeTask(const std::string& name, ComputePipelineDescription desc) : mName{ name }, mPipelineDescription{ desc } {}
+
+    ComputePipelineDescription getPipelineDescription() const
+        { return mPipelineDescription; }
 
 	void addDispatch(const uint32_t x, const uint32_t y, const uint32_t z) { mComputeCalls.push_back({DispatchType::Standard, x, y, z}); }
 	void addIndirectDispatch(const uint32_t x, const uint32_t y, const uint32_t z) { mComputeCalls.push_back({DispatchType::Indirect, x, y, z}); }

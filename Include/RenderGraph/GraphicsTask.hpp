@@ -2,6 +2,7 @@
 #define GRAPHICSTASK_HPP
 
 #include "RenderTask.hpp"
+#include "Core/Shader.hpp"
 
 #include <string>
 #include <unordered_map>
@@ -23,10 +24,21 @@ enum class DrawType
 enum class BlendMode
 {
     None,
-    Add,
-    Subtract,
-    Min,
-    Max
+    Or,
+    Nor,
+    Xor,
+    And,
+    Nand
+};
+
+enum class DepthTest
+{
+    None,
+    Less,
+    LessEqual,
+    Equal,
+    GreaterEqual,
+    Greater
 };
 
 enum class VertexAssemblyType
@@ -58,17 +70,18 @@ struct Rect
 
 struct GraphicsPipelineDescription
 {
-    std::string mVertexShaderName;
-    std::string mGeometryShaderName;
-    std::string mHullShaderName;
-    std::string mTesselationControlShaderName;
-    std::string mFragmentShaderName;
+    Shader mVertexShader;
+    std::optional<Shader> mGeometryShader;
+    std::optional<Shader> mHullShader;
+    std::optional<Shader> mTesselationControlShader;
+    Shader mFragmentShader;
 
     Rect mScissorRect;
     Rect mViewport;
 	bool mUseBackFaceCulling;
 
     BlendMode mBlendMode;
+    DepthTest mDepthTest;
 };
 // needed in order to use unordered_map
 namespace std

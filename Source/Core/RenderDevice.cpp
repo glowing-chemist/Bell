@@ -24,6 +24,7 @@ RenderDevice::RenderDevice(vk::PhysicalDevice physDev, vk::Device dev, vk::Surfa
 	}
 }
 
+
 vk::Image   RenderDevice::createImage(const vk::Format format,
                                       const vk::ImageUsageFlags usage,
                                       const vk::ImageType type,
@@ -90,19 +91,130 @@ uint32_t RenderDevice::getQueueFamilyIndex(const QueueType type) const
 }
 
 
-std::pair<vk::Pipeline, vk::PipelineLayout>	RenderDevice::generatePipelineFromTask(GraphicsTask& task)
+vk::Pipeline RenderDevice::generatePipeline(const GraphicsTask& task,
+                                            vk::PipelineLayout pipelineLayout,
+                                            vk::VertexInputBindingDescription& vertexBinding,
+                                            std::vector<vk::VertexInputAttributeDescription>& vertexAttributes,
+                                            vk::RenderPass renderPass)
 {
-    return {nullptr, nullptr};
+    const GraphicsPipelineDescription& pipelineDesc = task.getPipelineDescription();
+    vk::PipelineRasterizationStateCreateInfo rasterInfo = generateRasterizationInfo(task);
+    std::vector<vk::PipelineShaderStageCreateInfo> shaderInfo = generateShaderStagesInfo(task);
+
+    vk::PipelineInputAssemblyStateCreateInfo inputAssemblyInfo{};
+    inputAssemblyInfo.setTopology(vk::PrimitiveTopology::eTriangleList);
+    inputAssemblyInfo.setPrimitiveRestartEnable(false);
+
+    vk::PipelineVertexInputStateCreateInfo vertexInputInfo{};
+    vertexInputInfo.setVertexAttributeDescriptionCount(vertexAttributes.size());
+    vertexInputInfo.setPVertexAttributeDescriptions(vertexAttributes.data());
+    vertexInputInfo.setVertexBindingDescriptionCount(1);
+    vertexInputInfo.setPVertexBindingDescriptions(&vertexBinding);
+
+    // Viewport and scissor Rects
+    vk::Extent2D viewportExtent{pipelineDesc.mViewport.x, pipelineDesc.mViewport.y};
+    vk::Extent2D scissorExtent{pipelineDesc.mScissorRect.x, pipelineDesc.mScissorRect.y};
+
+    vk::Viewport viewPort{0.0f, 0.0f, static_cast<float>(viewportExtent.width), static_cast<float>(viewportExtent.height), 0.0f, 1.0f};
+
+    vk::Offset2D offset{0, 0};
+
+    vk::Rect2D scissor{offset, scissorExtent};
+
+    vk::PipelineViewportStateCreateInfo viewPortInfo{};
+    viewPortInfo.setPScissors(&scissor);
+    viewPortInfo.setPViewports(&viewPort);
+    viewPortInfo.setScissorCount(1);
+    viewPortInfo.setViewportCount(1);
+
+    vk::PipelineMultisampleStateCreateInfo multiSampInfo{};
+    multiSampInfo.setSampleShadingEnable(false);
+    multiSampInfo.setRasterizationSamples(vk::SampleCountFlagBits::e1);
+
+    vk::PipelineColorBlendAttachmentState colorAttachState{};
+    colorAttachState.setColorWriteMask(vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG |  vk::ColorComponentFlagBits::eB |  vk::ColorComponentFlagBits::eA); // write to all color components
+    colorAttachState.setBlendEnable(false);
+
+    vk::PipelineColorBlendStateCreateInfo blendStateInfo{};
+    blendStateInfo.setLogicOpEnable(pipelineDesc.mBlendMode != BlendMode::None);
+    blendStateInfo.setAttachmentCount(1);
+    blendStateInfo.setPAttachments(&colorAttachState);
+    blendStateInfo.setLogicOp([op = pipelineDesc.mBlendMode] {
+       switch(op)
+       {
+            case BlendMode::None:
+            case BlendMode::Or:
+                return vk::LogicOp::eOr;
+            case BlendMode::Nor:
+                return vk::LogicOp::eNor;
+            case BlendMode::Xor:
+                return vk::LogicOp::eXor;
+            case BlendMode::And:
+                return vk::LogicOp::eAnd;
+            case BlendMode::Nand:
+                return vk::LogicOp::eNand;
+       }
+    }());
+
+    vk::PipelineDepthStencilStateCreateInfo depthStencilInfo{};
+    depthStencilInfo.setDepthTestEnable(pipelineDesc.mDepthTest != DepthTest::None);
+    depthStencilInfo.setDepthWriteEnable(true);
+    depthStencilInfo.setDepthCompareOp([testOp = pipelineDesc.mDepthTest] {
+       switch(testOp)
+       {
+            case DepthTest::Less:
+                return vk::CompareOp::eLess;
+            case DepthTest::None:
+                return vk::CompareOp::eNever;
+            case DepthTest::LessEqual:
+                return vk::CompareOp::eLessOrEqual;
+            case DepthTest::Equal:
+                return vk::CompareOp::eEqual;
+            case DepthTest::GreaterEqual:
+                return vk::CompareOp::eGreaterOrEqual;
+            case DepthTest::Greater:
+                return vk::CompareOp::eGreater;
+       }
+    }());
+    depthStencilInfo.setDepthBoundsTestEnable(false);
+
+    vk::GraphicsPipelineCreateInfo pipelineCreateInfo{};
+    pipelineCreateInfo.setStageCount(shaderInfo.size());
+    pipelineCreateInfo.setPStages(shaderInfo.data());
+    pipelineCreateInfo.setPVertexInputState(&vertexInputInfo);
+    pipelineCreateInfo.setPInputAssemblyState(&inputAssemblyInfo);
+    pipelineCreateInfo.setPTessellationState(nullptr); // We don't handle tesselation shaders yet
+    pipelineCreateInfo.setPViewportState(&viewPortInfo);
+    pipelineCreateInfo.setPRasterizationState(&rasterInfo);
+    pipelineCreateInfo.setPMultisampleState(&multiSampInfo);
+    pipelineCreateInfo.setPDepthStencilState(&depthStencilInfo);
+    pipelineCreateInfo.setPDynamicState(nullptr);
+    pipelineCreateInfo.setLayout(pipelineLayout);
+    pipelineCreateInfo.setRenderPass(renderPass);
+
+    return mDevice.createGraphicsPipeline(nullptr, pipelineCreateInfo);
 }
 
 
-std::pair<vk::Pipeline, vk::PipelineLayout>	RenderDevice::generatePipelineFromTask(ComputeTask& task)
+vk::Pipeline RenderDevice::generatePipeline(const ComputeTask& task,
+                                            vk::PipelineLayout pipelineLayout)
 {
-    return {nullptr, nullptr};
+    const ComputePipelineDescription PipelineDesc = task.getPipelineDescription();
+
+    vk::PipelineShaderStageCreateInfo computeShaderInfo{};
+    computeShaderInfo.setModule(PipelineDesc.mComputeShader.getShaderModule());
+    computeShaderInfo.setPName("main");
+    computeShaderInfo.setStage(vk::ShaderStageFlagBits::eCompute);
+
+    vk::ComputePipelineCreateInfo pipelineInfo{};
+    pipelineInfo.setStage(computeShaderInfo);
+    pipelineInfo.setLayout(pipelineLayout);
+
+    return mDevice.createComputePipeline(nullptr, pipelineInfo);
 }
 
 
-vk::RenderPass	RenderDevice::generateRenderPassFromTask(GraphicsTask& task)
+vk::RenderPass	RenderDevice::generateRenderPass(const GraphicsTask& task)
 {
     // TODO implement a renderpass cache.
 
@@ -207,7 +319,77 @@ vk::RenderPass	RenderDevice::generateRenderPassFromTask(GraphicsTask& task)
 }
 
 
-vk::DescriptorSetLayout RenderDevice::generateDescriptorSetLayoutFromTask(const RenderTask& task)
+vk::PipelineRasterizationStateCreateInfo RenderDevice::generateRasterizationInfo(const GraphicsTask& task)
+{
+    const GraphicsPipelineDescription pipelineDesc = task.getPipelineDescription();
+
+    vk::PipelineRasterizationStateCreateInfo rastInfo{};
+    rastInfo.setRasterizerDiscardEnable(false);
+    rastInfo.setDepthBiasClamp(false);
+    rastInfo.setPolygonMode(vk::PolygonMode::eFill); // output filled in fragments
+    rastInfo.setLineWidth(1.0f);
+    if(pipelineDesc.mUseBackFaceCulling){
+        rastInfo.setCullMode(vk::CullModeFlagBits::eBack); // cull fragments from the back
+        rastInfo.setFrontFace(vk::FrontFace::eClockwise);
+    } else {
+        rastInfo.setCullMode(vk::CullModeFlagBits::eNone);
+    }
+    rastInfo.setDepthBiasEnable(false);
+
+    return rastInfo;
+}
+
+
+std::vector<vk::PipelineShaderStageCreateInfo> generateShaderStagesInfo(const GraphicsTask& task)
+{
+    const GraphicsPipelineDescription pipelineDesc = task.getPipelineDescription();
+
+    std::vector<vk::PipelineShaderStageCreateInfo> shaderStages;
+
+    vk::PipelineShaderStageCreateInfo vertexStage{};
+    vertexStage.setStage(vk::ShaderStageFlagBits::eVertex);
+    vertexStage.setPName("main"); //entry point of the shader
+    vertexStage.setModule(pipelineDesc.mVertexShader.getShaderModule());
+    shaderStages.push_back(vertexStage);
+
+    if(pipelineDesc.mGeometryShader)
+    {
+        vk::PipelineShaderStageCreateInfo geometryStage{};
+        geometryStage.setStage(vk::ShaderStageFlagBits::eGeometry);
+        geometryStage.setPName("main"); //entry point of the shader
+        geometryStage.setModule(pipelineDesc.mGeometryShader.value().getShaderModule());
+        shaderStages.push_back(geometryStage);
+    }
+
+    if(pipelineDesc.mHullShader)
+    {
+        vk::PipelineShaderStageCreateInfo hullStage{};
+        hullStage.setStage(vk::ShaderStageFlagBits::eTessellationControl);
+        hullStage.setPName("main"); //entry point of the shader
+        hullStage.setModule(pipelineDesc.mHullShader.value().getShaderModule());
+        shaderStages.push_back(hullStage);
+    }
+
+    if(pipelineDesc.mHullShader)
+    {
+        vk::PipelineShaderStageCreateInfo tesseStage{};
+        tesseStage.setStage(vk::ShaderStageFlagBits::eTessellationEvaluation);
+        tesseStage.setPName("main"); //entry point of the shader
+        tesseStage.setModule(pipelineDesc.mTesselationControlShader.value().getShaderModule());
+        shaderStages.push_back(tesseStage);
+    }
+
+    vk::PipelineShaderStageCreateInfo fragmentStage{};
+    fragmentStage.setStage(vk::ShaderStageFlagBits::eFragment);
+    fragmentStage.setPName("main"); //entry point of the shader
+    fragmentStage.setModule(pipelineDesc.mFragmentShader.getShaderModule());
+    shaderStages.push_back(fragmentStage);
+
+    return shaderStages;
+}
+
+
+vk::DescriptorSetLayout RenderDevice::generateDescriptorSetLayout(const RenderTask& task)
 {
     const auto& inputAttachments = task.getInputAttachments();
 
@@ -252,7 +434,7 @@ vk::DescriptorSetLayout RenderDevice::generateDescriptorSetLayoutFromTask(const 
 }
 
 
-std::pair<vk::VertexInputBindingDescription, std::vector<vk::VertexInputAttributeDescription>> generateVertexInputFromTask(const GraphicsTask& task)
+std::pair<vk::VertexInputBindingDescription, std::vector<vk::VertexInputAttributeDescription>> generateVertexInput(const GraphicsTask& task)
 {
     const int vertexInputs = task.getVertexAttributes();
 
@@ -323,6 +505,16 @@ std::pair<vk::VertexInputBindingDescription, std::vector<vk::VertexInputAttribut
     }
 
     return {bindingDesc, attribs};
+}
+
+
+vk::PipelineLayout RenderDevice::generatePipelineLayout(vk::DescriptorSetLayout descLayout)
+{
+    vk::PipelineLayoutCreateInfo info{};
+    info.setSetLayoutCount(1);
+    info.setPSetLayouts(&descLayout);
+
+    mDevice.createPipelineLayout(info);
 }
 
 
