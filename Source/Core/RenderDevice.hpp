@@ -28,7 +28,7 @@ struct GraphicsPipelineHandles
     vk::PipelineLayout mPipelineLayout;
     vk::RenderPass mRenderPass;
     vk::VertexInputBindingDescription mVertexBindingDescription;
-    vk::VertexInputAttributeDescription mVertexAttributeDescription;
+    std::vector<vk::VertexInputAttributeDescription> mVertexAttributeDescription;
     vk::DescriptorSetLayout mDescriptorSetLayout;
 };
 
@@ -36,6 +36,7 @@ struct ComputePipelineHandles
 {
     vk::Pipeline mPipeline;
     vk::PipelineLayout mPipelineLayout;
+    vk::DescriptorSetLayout mDescriptorSetLayout;
 };
 
 
@@ -83,6 +84,9 @@ public:
     void                               destroyShaderModule(vk::ShaderModule module)
                                             { mDevice.destroyShaderModule(module); }
 
+    GraphicsPipelineHandles            createPipelineHandles(GraphicsTask&);
+    ComputePipelineHandles             createPipelineHandles(ComputeTask&);
+
     // Accessors
     SwapChain*                         getSwapChain() { return &mSwapChain; }
     MemoryManager*                     getMemoryManager() { return &mMemoryManager; }
@@ -110,19 +114,19 @@ public:
 private:
 
     std::pair<vk::VertexInputBindingDescription,
-              vk::VertexInputAttributeDescription> generateVertexInput(const GraphicsTask&);
-    vk::DescriptorSetLayout                        generateDescriptorSetLayout(const RenderTask&);
-    vk::PipelineLayout                             generatePipelineLayout(vk::DescriptorSetLayout);
-    vk::RenderPass                                 generateRenderPass(const GraphicsTask&);
-    vk::PipelineRasterizationStateCreateInfo       generateRasterizationInfo(const GraphicsTask&);
-    std::vector<vk::PipelineShaderStageCreateInfo> generateShaderStagesInfo(const GraphicsTask&);
-    vk::Pipeline                                   generatePipeline(const GraphicsTask&,
-                                                                    vk::PipelineLayout,
-                                                                    vk::VertexInputBindingDescription &,
-                                                                    std::vector<vk::VertexInputAttributeDescription> &,
-                                                                    vk::RenderPass);
-    vk::Pipeline                                   generatePipeline(const ComputeTask&,
-                                                                   vk::PipelineLayout);
+              std::vector<vk::VertexInputAttributeDescription>> generateVertexInput(const GraphicsTask&);
+    vk::DescriptorSetLayout                                     generateDescriptorSetLayout(const RenderTask&);
+    vk::PipelineLayout                                          generatePipelineLayout(vk::DescriptorSetLayout);
+    vk::RenderPass                                              generateRenderPass(const GraphicsTask&);
+    vk::PipelineRasterizationStateCreateInfo                    generateRasterizationInfo(const GraphicsTask&);
+    std::vector<vk::PipelineShaderStageCreateInfo>              generateShaderStagesInfo(const GraphicsTask&);
+    vk::Pipeline                                                generatePipeline(const GraphicsTask&,
+                                                                                 const vk::PipelineLayout&,
+                                                                                 const vk::VertexInputBindingDescription &,
+                                                                                 const std::vector<vk::VertexInputAttributeDescription> &,
+                                                                                 const vk::RenderPass&);
+    vk::Pipeline                                                generatePipeline(const ComputeTask&,
+                                                                                 const vk::PipelineLayout&);
 
     // Keep track of when resources can be freed
     uint64_t mCurrentSubmission;

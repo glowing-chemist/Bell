@@ -91,11 +91,37 @@ uint32_t RenderDevice::getQueueFamilyIndex(const QueueType type) const
 }
 
 
+GraphicsPipelineHandles RenderDevice::createPipelineHandles(GraphicsTask& task)
+{
+    const auto [vertexBindings, vertexAttributes] = generateVertexInput(task);
+    const vk::DescriptorSetLayout descSetLayout = generateDescriptorSetLayout(task);
+    const vk::PipelineLayout pipelineLayout = generatePipelineLayout(descSetLayout);
+    const vk::RenderPass renderPass = generateRenderPass(task);
+    const vk::Pipeline pipeline = generatePipeline( task,
+                                                    pipelineLayout,
+                                                    vertexBindings,
+                                                    vertexAttributes,
+                                                    renderPass);
+
+    return {pipeline, pipelineLayout, renderPass, vertexBindings, vertexAttributes, descSetLayout};
+}
+
+
+ComputePipelineHandles RenderDevice::createPipelineHandles(ComputeTask& task)
+{
+    const vk::DescriptorSetLayout descSetLayout = generateDescriptorSetLayout(task);
+    const vk::PipelineLayout pipelineLayout = generatePipelineLayout(descSetLayout);
+    const vk::Pipeline pipeline = generatePipeline(task, pipelineLayout);
+
+    return {pipeline, pipelineLayout, descSetLayout};
+}
+
+
 vk::Pipeline RenderDevice::generatePipeline(const GraphicsTask& task,
-                                            vk::PipelineLayout pipelineLayout,
-                                            vk::VertexInputBindingDescription& vertexBinding,
-                                            std::vector<vk::VertexInputAttributeDescription>& vertexAttributes,
-                                            vk::RenderPass renderPass)
+                                            const vk::PipelineLayout &pipelineLayout,
+                                            const vk::VertexInputBindingDescription &vertexBinding,
+                                            const std::vector<vk::VertexInputAttributeDescription> &vertexAttributes,
+                                            const vk::RenderPass &renderPass)
 {
     const GraphicsPipelineDescription& pipelineDesc = task.getPipelineDescription();
     vk::PipelineRasterizationStateCreateInfo rasterInfo = generateRasterizationInfo(task);
@@ -197,7 +223,7 @@ vk::Pipeline RenderDevice::generatePipeline(const GraphicsTask& task,
 
 
 vk::Pipeline RenderDevice::generatePipeline(const ComputeTask& task,
-                                            vk::PipelineLayout pipelineLayout)
+                                            const vk::PipelineLayout& pipelineLayout)
 {
     const ComputePipelineDescription PipelineDesc = task.getPipelineDescription();
 
