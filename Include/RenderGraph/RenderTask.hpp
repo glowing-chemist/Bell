@@ -33,7 +33,7 @@ enum class TaskType
 class RenderTask 
 {
 public:
-	RenderTask() = default;
+    RenderTask(const std::string& name) : mName{name} {}
 	virtual ~RenderTask() = default;
 
     void addInput(const std::string& name, const AttachmentType attachmentType)
@@ -50,8 +50,14 @@ public:
 
 	virtual void clearCalls() = 0;
 
+    const std::string& getName() const
+        { return mName; }
+
 
 protected:
+
+    std::string mName;
+
     std::vector<std::pair<std::string, AttachmentType>> mOutputAttachments;
     std::vector<std::pair<std::string, AttachmentType>> mInputAttachments;
 };

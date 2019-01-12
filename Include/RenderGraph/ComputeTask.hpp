@@ -33,7 +33,7 @@ namespace std
 class ComputeTask : public RenderTask 
 {
 public:
-    ComputeTask(const std::string& name, ComputePipelineDescription desc) : mName{ name }, mPipelineDescription{ desc } {}
+    ComputeTask(const std::string& name, ComputePipelineDescription desc) : RenderTask{ name }, mPipelineDescription{ desc } {}
 
     ComputePipelineDescription getPipelineDescription() const
         { return mPipelineDescription; }
@@ -44,7 +44,6 @@ public:
 	void clearCalls() override { mComputeCalls.clear(); }
 
 private:
-	std::string mName;
 
 	struct thunkedCompute
 	{

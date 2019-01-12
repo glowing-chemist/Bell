@@ -98,7 +98,7 @@ namespace std
 class GraphicsTask : public RenderTask
 {
 public:
-	GraphicsTask(const std::string& name, const GraphicsPipelineDescription& desc) : mName{ name }, mPipelineDescription{ desc } {}
+    GraphicsTask(const std::string& name, const GraphicsPipelineDescription& desc) : RenderTask{name}, mPipelineDescription{ desc } {}
 
 	const std::string& getName() { return mName;  }
 	
@@ -132,7 +132,6 @@ public:
 	void clearCalls() override { mDrawCalls.clear(); }
 
 private:
-	std::string mName;
 
 	struct thunkedDraw {
 		DrawType mDrawType;

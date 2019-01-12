@@ -47,6 +47,7 @@ set(SOURCE
 	#RenderGraph files (backend independant)
 	"Source/RenderGraph/GraphicsTask.cpp"
 	"Source/RenderGraph/ComputeTask.cpp"
+	"Source/RenderGraph/RenderGraph.cpp"
 	)
 
 add_library(${PROJECT_NAME} ${SOURCE})
