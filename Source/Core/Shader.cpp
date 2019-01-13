@@ -26,7 +26,11 @@ Shader::Shader(RenderDevice* device, const std::string& path) :
     std::string source{std::istreambuf_iterator<char>(sourceFile), std::istreambuf_iterator<char>()};
     mGLSLSource = std::move(source);
 
+#ifdef _MSC_VER // std::filesystem is still experimental in msvc...
+	mLastFileAccessTime = std::experimental::filesystem::last_write_time(path);
+#else
     mLastFileAccessTime = std::filesystem::last_write_time(path);
+#endif
 }
 
 
@@ -78,8 +82,12 @@ bool Shader::compile()
 
 bool Shader::reload()
 {
+#ifdef _MSC_VER // MSVC still doesn't support std::filesystem ...
+	if (std::experimental::filesystem::last_write_time(mFilePath) > mLastFileAccessTime)
+#else
     if(std::filesystem::last_write_time(mFilePath) > mLastFileAccessTime)
-    {
+#endif
+	{
         // Reload the modified source
         std::ifstream sourceFile{mFilePath};
         std::string source{std::istreambuf_iterator<char>(sourceFile), std::istreambuf_iterator<char>()};

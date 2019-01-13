@@ -41,7 +41,11 @@ private:
 
     bool mCompiled;
     static thread_local bool mGLSLangInitialised;
+#ifdef _MSC_VER  // MSVC still doesn't support std::filesystem ...
+	std::experimental::filesystem::file_time_type mLastFileAccessTime;
+#else
     std::filesystem::file_time_type mLastFileAccessTime;
+#endif
 };
 
 

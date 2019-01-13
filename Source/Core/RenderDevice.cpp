@@ -540,7 +540,7 @@ vk::PipelineLayout RenderDevice::generatePipelineLayout(vk::DescriptorSetLayout 
     info.setSetLayoutCount(1);
     info.setPSetLayouts(&descLayout);
 
-    mDevice.createPipelineLayout(info);
+    return mDevice.createPipelineLayout(info);
 }
 
 

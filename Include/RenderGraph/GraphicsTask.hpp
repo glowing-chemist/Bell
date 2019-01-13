@@ -6,6 +6,7 @@
 
 #include <string>
 #include <unordered_map>
+#include <optional>
 #include <vector>
 #include <tuple>
 #include <cstdint>
