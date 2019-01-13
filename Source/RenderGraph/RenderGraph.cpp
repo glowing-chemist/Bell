@@ -146,7 +146,7 @@ void RenderGraph::bindImage(const std::string& name, Buffer& buffer)
     const uint32_t currentBufferIndex = mBuffers.size();
     mBuffers.push_back({name, buffer});
 
-    bindResource<ResourceType::Buffer>(name, currentBufferIndex);
+    bindResource(name, currentBufferIndex, ResourceType::Image);
 }
 
 void RenderGraph::bindBuffer(const std::string& name , Image& image)
@@ -154,7 +154,7 @@ void RenderGraph::bindBuffer(const std::string& name , Image& image)
     const uint32_t currentImageIndex = mImages.size();
     mImages.push_back({name, image});
 
-    bindResource<ResourceType::Image>(name, currentImageIndex);
+    bindResource(name, currentImageIndex, ResourceType::Image);
 }
 
 void RenderGraph::bindVertexBuffer(const Buffer& buffer)
