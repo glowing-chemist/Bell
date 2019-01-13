@@ -18,7 +18,8 @@ set(GLFW_BUILD_EXAMPLES 0)
 add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/ThirdParty/GLFW3/glfw-3.2.1")
 
 if(WIN32)
-    # TODO
+    set(glslangIncludeDirs "C:\\Program Files (x86)\\glslang\\include" )
+	set(glslangLibs "C:\\Program Files (x86)\\glslang\\lib\\glslang.lib")
 else()
     set(glslangLibs /usr/lib/libglslang.so /usr/lib/libglslang-default-resource-limits.so)
 endif(WIN32)
@@ -30,6 +31,7 @@ include_directories(
 						# ThirdParty header search paths
 						${Vulkan_INCLUDE_DIRS}
 						"${CMAKE_CURRENT_LIST_DIR}/ThirdParty/GLFW3/glfw-3.2.1/include"
+						${glslangIncludeDirs}
 		    )
 
 set(SOURCE
