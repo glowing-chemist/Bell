@@ -98,8 +98,7 @@ void RenderGraph::addDependancy(const std::string& dependancy, const std::string
 }
 
 
-template<RenderGraph::ResourceType resourcetype>
-void RenderGraph::bindResource(const std::string& name, const uint32_t index)
+void RenderGraph::bindResource(const std::string& name, const uint32_t index, const ResourceType resourcetype)
 {
     uint32_t taskOrderIndex = 0;
     for(const auto [taskType, taskIndex] : mTaskOrder)

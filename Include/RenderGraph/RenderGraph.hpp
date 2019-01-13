@@ -68,8 +68,7 @@ private:
     void reorderTasks();
     void mergeTasks();
 
-    template<ResourceType resourcetype>
-    void bindResource(const std::string&, const uint32_t);
+    void bindResource(const std::string&, const uint32_t, const ResourceType);
 
     std::vector<GraphicsTask> mGraphicsTasks;
     std::vector<ComputeTask>  mComputeTask;
