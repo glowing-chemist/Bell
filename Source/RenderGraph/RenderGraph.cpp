@@ -18,6 +18,11 @@ void RenderGraph::addTask(const ComputeTask& task)
     mComputeTask.push_back(task);
 
     mTaskOrder.push_back({TaskType::Compute, taskIndex});
+
+    // Also add a vulkan resources and inputs/outputs for each task, zero initialised
+    mVulkanResources.emplace_back();
+    mInputResources.emplace_back();
+    mOutputResources.emplace_back();
 }
 
 
@@ -120,7 +125,8 @@ void RenderGraph::bindResource(const std::string& name, const uint32_t index, co
             if(input.first == name)
             {
                 mInputResources[taskOrderIndex][inputAttachmentIndex] = {resourcetype, index};
-                break; // Assume a resource is only bound once.
+                mVulkanResources[taskOrderIndex].mDescSetNeedsUpdating = true;
+                break; // Assume a resource is only bound once per task.
             }
             ++inputAttachmentIndex;
         }
@@ -131,6 +137,7 @@ void RenderGraph::bindResource(const std::string& name, const uint32_t index, co
             if(input.first == name)
             {
                 mOutputResources[taskOrderIndex][outputAttachmentIndex] = {resourcetype, index};
+                mVulkanResources[taskOrderIndex].mFrameBufferNeedsUpdating = true;
                 break;
             }
             ++outputAttachmentIndex;
