@@ -14,27 +14,13 @@
 #include <tuple>
 
 
-struct vulkanResources
-{
-    vk::Pipeline mPipeline;
-    vk::PipelineLayout mPipelineLayout;
-    vk::DescriptorSetLayout mDescSetLayout;
-    // Only needed for graphics tasks
-    std::optional<vk::RenderPass> mRenderPass;
-    std::optional<vk::VertexInputBindingDescription> mVertexBindingDescription;
-    std::optional<std::vector<vk::VertexInputAttributeDescription>> mVertexAttributeDescription;
-
-    vk::Framebuffer mFrameBuffer;
-    bool mFrameBufferNeedsUpdating;
-    vk::DescriptorSet mDescSet;
-    bool mDescSetNeedsUpdating;
-
-};
+class DescriptorManager;
 
 
 class RenderGraph
 {
     friend RenderDevice;
+    friend DescriptorManager;
 public:
 
     RenderGraph() = default;
@@ -65,8 +51,27 @@ private:
         Compute
     };
 
+    struct vulkanResources
+    {
+        vk::Pipeline mPipeline;
+        vk::PipelineLayout mPipelineLayout;
+        vk::DescriptorSetLayout mDescSetLayout;
+        // Only needed for graphics tasks
+        std::optional<vk::RenderPass> mRenderPass;
+        std::optional<vk::VertexInputBindingDescription> mVertexBindingDescription;
+        std::optional<std::vector<vk::VertexInputAttributeDescription>> mVertexAttributeDescription;
+
+        std::optional<vk::Framebuffer> mFrameBuffer;
+        bool mFrameBufferNeedsUpdating;
+        vk::DescriptorSet mDescSet;
+        bool mDescSetNeedsUpdating;
+
+    };
+
     void reorderTasks();
     void mergeTasks();
+
+    RenderTask& getTask(TaskType, uint32_t);
 
     void bindResource(const std::string&, const uint32_t, const ResourceType);
 

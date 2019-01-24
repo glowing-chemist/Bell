@@ -9,6 +9,10 @@ void RenderGraph::addTask(const GraphicsTask& task)
     mGraphicsTasks.push_back(task);
 
     mTaskOrder.push_back({TaskType::Graphics, taskIndex});
+    // Also add a vulkan resources and inputs/outputs for each task, zero initialised
+    mVulkanResources.emplace_back();
+    mInputResources.emplace_back();
+    mOutputResources.emplace_back();
 }
 
 
@@ -108,16 +112,7 @@ void RenderGraph::bindResource(const std::string& name, const uint32_t index, co
     uint32_t taskOrderIndex = 0;
     for(const auto [taskType, taskIndex] : mTaskOrder)
     {
-        RenderTask& task = [taskType, taskIndex, this]() -> RenderTask&
-        {
-            switch(taskType)
-            {
-                case TaskType::Graphics:
-                    return mGraphicsTasks[taskIndex];
-                case TaskType::Compute:
-                    return mComputeTask[taskIndex];
-            }
-        }();
+        RenderTask& task = getTask(taskType, taskIndex);
 
         uint32_t inputAttachmentIndex = 0;
         for(const auto& input : task.getInputAttachments())
@@ -185,5 +180,22 @@ void RenderGraph::reorderTasks()
 void RenderGraph::mergeTasks()
 {
     // TODO
+}
+
+
+RenderTask& RenderGraph::getTask(TaskType taskType, uint32_t taskIndex)
+{
+    RenderTask& task = [taskType, taskIndex, this]() -> RenderTask&
+    {
+        switch(taskType)
+        {
+            case TaskType::Graphics:
+                return mGraphicsTasks[taskIndex];
+            case TaskType::Compute:
+                return mComputeTask[taskIndex];
+        }
+    }();
+
+    return task;
 }
 
