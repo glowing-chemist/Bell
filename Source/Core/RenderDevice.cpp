@@ -544,6 +544,48 @@ vk::PipelineLayout RenderDevice::generatePipelineLayout(vk::DescriptorSetLayout 
 }
 
 
+void RenderDevice::generateVulkanResources(RenderGraph& graph)
+{
+    uint32_t taskOrderIndex = 0;
+    for(const auto [taskType, taskIndex] : graph.mTaskOrder)
+    {
+        if(graph.mVulkanResources[taskOrderIndex].mPipeline == vk::Pipeline{nullptr})
+        {
+            ++taskOrderIndex;
+            continue;
+        }
+
+        RenderTask& task = graph.getTask(taskType, taskIndex);
+
+        if(taskType == RenderGraph::TaskType::Graphics)
+        {
+            GraphicsTask& graphicsTask = static_cast<GraphicsTask&>(task);
+            GraphicsPipelineHandles pipelineHandles = createPipelineHandles(graphicsTask);
+
+            RenderGraph::vulkanResources& taskResources = graph.mVulkanResources[taskOrderIndex];
+            taskResources.mPipeline = pipelineHandles.mPipeline;
+            taskResources.mPipelineLayout = pipelineHandles.mPipelineLayout;
+            taskResources.mDescSetLayout = pipelineHandles.mDescriptorSetLayout;
+            taskResources.mRenderPass = pipelineHandles.mRenderPass;
+            taskResources.mVertexBindingDescription = pipelineHandles.mVertexBindingDescription;
+            taskResources.mVertexAttributeDescription = pipelineHandles.mVertexAttributeDescription;
+            // Frame buffers and descset get created/written in a diferent place.
+        }
+        else
+        {
+            ComputeTask& computeTask = static_cast<ComputeTask&>(task);
+            ComputePipelineHandles pipelineHandles = createPipelineHandles(computeTask);
+
+            RenderGraph::vulkanResources& taskResources = graph.mVulkanResources[taskOrderIndex];
+            taskResources.mPipeline = pipelineHandles.mPipeline;
+            taskResources.mPipelineLayout = pipelineHandles.mPipelineLayout;
+            taskResources.mDescSetLayout = pipelineHandles.mDescriptorSetLayout;
+        }
+        ++taskOrderIndex;
+    }
+}
+
+
 // Memory management functions
 vk::PhysicalDeviceMemoryProperties RenderDevice::getMemoryProperties() const
 {
