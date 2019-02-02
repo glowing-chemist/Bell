@@ -37,7 +37,14 @@ public:
 	virtual ~RenderTask() = default;
 
     void addInput(const std::string& name, const AttachmentType attachmentType)
-        { mOutputAttachments.push_back({name, attachmentType}); }
+        {
+            // In glsl/vulkan data buffers are declared as part of the descriptor sets
+            // so need to be treated as input even if they are written to.
+            if(attachmentType == AttachmentType::DataBuffer)
+                mInputAttachments.push_back({name, attachmentType});
+            else
+                mOutputAttachments.push_back({name, attachmentType});
+        }
 
     void addOutput(const std::string& name, const AttachmentType attachmentType)
         { mInputAttachments.push_back({name, attachmentType}); }
