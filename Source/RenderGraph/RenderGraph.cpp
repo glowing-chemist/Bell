@@ -199,3 +199,21 @@ RenderTask& RenderGraph::getTask(TaskType taskType, uint32_t taskIndex)
     return task;
 }
 
+
+const RenderTask& RenderGraph::getTask(TaskType taskType, uint32_t taskIndex) const
+{
+    const RenderTask& task = [taskType, taskIndex, this]() -> const RenderTask&
+    {
+        switch(taskType)
+        {
+            case TaskType::Graphics:
+                return mGraphicsTasks[taskIndex];
+            case TaskType::Compute:
+                return mComputeTask[taskIndex];
+        }
+    }();
+
+    return task;
+}
+
+
