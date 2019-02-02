@@ -72,6 +72,8 @@ private:
     void mergeTasks();
 
     RenderTask& getTask(TaskType, uint32_t);
+    const RenderTask& getTask(TaskType, uint32_t) const;
+
 
     void bindResource(const std::string&, const uint32_t, const ResourceType);
 
