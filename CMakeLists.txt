@@ -45,6 +45,7 @@ set(SOURCE
 	"Source/Core/SwapChain.cpp"
 	"Source/Core/CommandPool.cpp"
 	"Source/Core/Shader.cpp"
+	"Source/Core/DescriptorManager.cpp"
 
 	#RenderGraph files (backend independant)
 	"Source/RenderGraph/GraphicsTask.cpp"

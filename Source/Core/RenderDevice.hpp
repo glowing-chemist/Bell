@@ -11,6 +11,7 @@
 #include "Core/Image.hpp"
 #include "RenderGraph/GraphicsTask.hpp"
 #include "RenderGraph/ComputeTask.hpp"
+#include "RenderGraph/RenderGraph.hpp"
 
 class GLFWwindow;
 
@@ -83,6 +84,15 @@ public:
 
     void                               destroyShaderModule(vk::ShaderModule module)
                                             { mDevice.destroyShaderModule(module); }
+
+    vk::DescriptorPool                 createDescriptorPool(vk::DescriptorPoolCreateInfo& info)
+                                            { return mDevice.createDescriptorPool(info); }
+
+    void                               destroyDescriptorPool(vk::DescriptorPool& pool)
+                                            { mDevice.destroyDescriptorPool(pool); }
+
+    std::vector<vk::DescriptorSet>     allocateDescriptorSet(vk::DescriptorSetAllocateInfo& info)
+                                            { return mDevice.allocateDescriptorSets(info); }
 
     GraphicsPipelineHandles            createPipelineHandles(GraphicsTask&);
     ComputePipelineHandles             createPipelineHandles(ComputeTask&);
