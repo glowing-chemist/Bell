@@ -2,7 +2,8 @@
 #include "RenderDevice.hpp"
 
 #include <iostream>
-
+#include <numeric>
+#include <cstdint>
 
 DescriptorManager::~DescriptorManager()
 {
@@ -40,6 +41,56 @@ std::vector<vk::DescriptorSet> DescriptorManager::getDescriptors(const RenderGra
 
 void DescriptorManager::writeDescriptors(std::vector<vk::DescriptorSet>& descSets, RenderGraph& graph)
 {
+    std::vector<vk::WriteDescriptorSet> descSetWrites;
+    std::vector<vk::DescriptorImageInfo> imageInfos;
+    std::vector<vk::DescriptorBufferInfo> bufferInfos;
+
+    const uint64_t maxDescWrites = std::accumulate(graph.mInputResources.begin(), graph.mInputResources.end(), 0,
+                    [](uint64_t accu, auto& vec) {return accu + vec.size(); });
+
+    imageInfos.reserve(maxDescWrites);
+    bufferInfos.reserve(maxDescWrites);
+    uint32_t currentDescriptorIndex = 0;
+
+    for(const auto& inputs : graph.mInputResources)
+    {
+        for(const auto& bindingInfo : inputs)
+        {
+            vk::WriteDescriptorSet descWrite{};
+            descWrite.setDescriptorCount(1);
+            descWrite.setDstSet(descSets[currentDescriptorIndex]);
+            descWrite.setDstBinding(bindingInfo.mResourceBinding);
+
+            switch(bindingInfo.mResourcetype)
+            {
+                case RenderGraph::ResourceType::Image:
+                {
+                    auto& image = static_cast<Image&>(graph.getResource(bindingInfo.mResourcetype, bindingInfo.mResourceIndex));
+                    vk::DescriptorImageInfo info = generateDescriptorImageInfo(image);
+                    imageInfos.push_back(info);
+
+                    descWrite.setPImageInfo(&imageInfos.back());
+                    break;
+                }
+                case RenderGraph::ResourceType::Buffer:
+                {
+                    auto& buffer = static_cast<Buffer&>(graph.getResource(bindingInfo.mResourcetype, bindingInfo.mResourceIndex));
+                    vk::DescriptorBufferInfo info = generateDescriptorBufferInfo(buffer);
+                    bufferInfos.push_back(info);
+
+                    descWrite.setPBufferInfo(&bufferInfos.back());
+                    break;
+                }
+
+            }
+
+            descSetWrites.push_back(descWrite);
+        }
+
+        ++currentDescriptorIndex;
+    }
+
+    getDevice()->writeDescriptorSets(descSetWrites);
 
 }
 
@@ -114,4 +165,26 @@ vk::DescriptorPool DescriptorManager::createDescriptorPool()
     uniformBufferDescPoolInfo.setMaxSets(100);
 
     return getDevice()->createDescriptorPool(uniformBufferDescPoolInfo);
+}
+
+
+vk::DescriptorImageInfo DescriptorManager::generateDescriptorImageInfo(Image& image) const
+{
+    vk::DescriptorImageInfo imageInfo{};
+    imageInfo.setSampler(image.getCurrentSampler());
+    imageInfo.setImageView(image.getCurrentImageView());
+    imageInfo.setImageLayout(image.getLayout());
+
+    return imageInfo;
+}
+
+
+vk::DescriptorBufferInfo DescriptorManager::generateDescriptorBufferInfo(Buffer& buffer) const
+{
+    vk::DescriptorBufferInfo bufferInfo{};
+    bufferInfo.setBuffer(buffer.getBuffer());
+    bufferInfo.setOffset(buffer.getCurrentOffset());
+    bufferInfo.setRange(VK_WHOLE_SIZE);
+
+    return bufferInfo;
 }

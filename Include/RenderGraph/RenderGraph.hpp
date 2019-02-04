@@ -75,6 +75,8 @@ private:
     const RenderTask& getTask(TaskType, uint32_t) const;
 
 
+    GPUResource& getResource(const ResourceType, const uint32_t);
+
     void bindResource(const std::string&, const uint32_t, const ResourceType);
 
     std::vector<GraphicsTask> mGraphicsTasks;
@@ -88,8 +90,15 @@ private:
 
     std::vector<std::pair<uint32_t, uint32_t>> mTaskDependancies;
 
-    std::vector<std::vector<std::pair<ResourceType, uint32_t>>> mInputResources;
-    std::vector<std::vector<std::pair<ResourceType, uint32_t>>> mOutputResources;
+    struct ResourceBindingInfo
+    {
+        ResourceType mResourcetype;
+        uint32_t mResourceIndex;
+        uint32_t mResourceBinding;
+    };
+
+    std::vector<std::vector<ResourceBindingInfo>> mInputResources;
+    std::vector<std::vector<ResourceBindingInfo>> mOutputResources;
 
     std::vector<std::pair<std::string, Image>> mImages;
     std::vector<std::pair<std::string, Buffer>> mBuffers;

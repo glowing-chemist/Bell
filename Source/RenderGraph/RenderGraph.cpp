@@ -217,3 +217,20 @@ const RenderTask& RenderGraph::getTask(TaskType taskType, uint32_t taskIndex) co
 }
 
 
+GPUResource& RenderGraph::getResource(const ResourceType resourceType, const uint32_t resourceIndex)
+{
+    GPUResource& resource = [resourceType, resourceIndex, this]() -> GPUResource&
+    {
+        switch(resourceType)
+        {
+            case ResourceType::Image:
+                return mImages[resourceIndex].second;
+
+            case ResourceType::Buffer:
+                return mBuffers[resourceIndex].second;
+        }
+    }();
+
+    return resource;
+}
+

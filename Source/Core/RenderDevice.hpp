@@ -94,6 +94,12 @@ public:
     std::vector<vk::DescriptorSet>     allocateDescriptorSet(vk::DescriptorSetAllocateInfo& info)
                                             { return mDevice.allocateDescriptorSets(info); }
 
+    void                               writeDescriptorSets(std::vector<vk::WriteDescriptorSet>& writes)
+                                            { mDevice.updateDescriptorSets(writes, {}); }
+
+    vk::Sampler                        createSampler(vk::SamplerCreateInfo& info)
+                                            { return mDevice.createSampler(info); }
+
     GraphicsPipelineHandles            createPipelineHandles(GraphicsTask&);
     ComputePipelineHandles             createPipelineHandles(ComputeTask&);
 

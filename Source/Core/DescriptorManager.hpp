@@ -26,6 +26,9 @@ public:
 
 private:
 
+    vk::DescriptorImageInfo     generateDescriptorImageInfo(Image&) const;
+    vk::DescriptorBufferInfo    generateDescriptorBufferInfo(Buffer&) const;
+
     vk::DescriptorSet			allocateDescriptorSet(const RenderGraph&, const RenderTask&, const uint32_t);
 
     vk::DescriptorPool			createDescriptorPool();

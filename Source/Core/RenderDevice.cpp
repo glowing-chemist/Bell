@@ -448,6 +448,8 @@ vk::DescriptorSetLayout RenderDevice::generateDescriptorSetLayout(const RenderTa
         layoutBinding.setBinding(curretnBinding++);
         layoutBinding.setDescriptorType(descriptorType);
         layoutBinding.setDescriptorCount(1);
+        // TODO make this less general in the future/effiecent.
+        layoutBinding.setStageFlags(vk::ShaderStageFlagBits::eAll);
 
         layoutBindings.push_back(layoutBinding);
     }
