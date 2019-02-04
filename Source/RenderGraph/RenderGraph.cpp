@@ -119,7 +119,7 @@ void RenderGraph::bindResource(const std::string& name, const uint32_t index, co
         {
             if(input.first == name)
             {
-                mInputResources[taskOrderIndex][inputAttachmentIndex] = {resourcetype, index};
+                mInputResources[taskOrderIndex][inputAttachmentIndex] = {resourcetype, index, inputAttachmentIndex};
                 mVulkanResources[taskOrderIndex].mDescSetNeedsUpdating = true;
                 break; // Assume a resource is only bound once per task.
             }
@@ -131,7 +131,7 @@ void RenderGraph::bindResource(const std::string& name, const uint32_t index, co
         {
             if(input.first == name)
             {
-                mOutputResources[taskOrderIndex][outputAttachmentIndex] = {resourcetype, index};
+                mOutputResources[taskOrderIndex][outputAttachmentIndex] = {resourcetype, index, outputAttachmentIndex};
                 mVulkanResources[taskOrderIndex].mFrameBufferNeedsUpdating = true;
                 break;
             }
@@ -143,21 +143,23 @@ void RenderGraph::bindResource(const std::string& name, const uint32_t index, co
 }
 
 
-void RenderGraph::bindImage(const std::string& name, Buffer& buffer)
-{
-    const uint32_t currentBufferIndex = mBuffers.size();
-    mBuffers.push_back({name, buffer});
-
-    bindResource(name, currentBufferIndex, ResourceType::Image);
-}
-
-void RenderGraph::bindBuffer(const std::string& name , Image& image)
+void RenderGraph::bindImage(const std::string& name, Image& buffer)
 {
     const uint32_t currentImageIndex = mImages.size();
-    mImages.push_back({name, image});
+    mImages.push_back({name, buffer});
 
-    bindResource(name, currentImageIndex, ResourceType::Buffer);
+    bindResource(name, currentImageIndex, ResourceType::Image);
 }
+
+
+void RenderGraph::bindBuffer(const std::string& name , Buffer& image)
+{
+    const uint32_t currentBufferIndex = mBuffers.size();
+    mBuffers.push_back({name, image});
+
+    bindResource(name, currentBufferIndex, ResourceType::Buffer);
+}
+
 
 void RenderGraph::bindVertexBuffer(const Buffer& buffer)
 {
