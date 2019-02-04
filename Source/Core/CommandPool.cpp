@@ -48,7 +48,7 @@ vk::CommandBuffer& CommandPool::getBufferForQueue(const QueueType queueType, con
 	{
 		vk::CommandBufferAllocateInfo info{};
 		info.setCommandPool(commandPool);
-		info.setLevel(vk::CommandBufferLevel::ePrimary);
+        info.setLevel(index == 0 ? vk::CommandBufferLevel::ePrimary : vk::CommandBufferLevel::eSecondary);
 		info.setCommandBufferCount((index + 1) - bufferPool.size());
 
 		const auto newBuffers = getDevice()->allocateCommandBuffers(info);
@@ -72,6 +72,8 @@ uint32_t	CommandPool::getNumberOfBuffersForQueue(const QueueType queueType)
 			return mComputeBuffers;
 		case QueueType::Transfer:
 			return mTransferBuffers;
+        default:
+            return mGraphicsBuffers;
 		}
 	}();
 
