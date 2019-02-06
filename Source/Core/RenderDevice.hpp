@@ -2,6 +2,7 @@
 #define RENDERDEVICE_HPP
 
 #include <cstddef>
+#include <cstdint>
 #include <unordered_map>
 #include <vulkan/vulkan.hpp>
 
@@ -143,6 +144,7 @@ private:
                                                                                  const vk::RenderPass&);
     vk::Pipeline                                                generatePipeline(const ComputeTask&,
                                                                                  const vk::PipelineLayout&);
+	void														generateVulkanResources(RenderGraph&);
 
     // Keep track of when resources can be freed
     uint64_t mCurrentSubmission;
