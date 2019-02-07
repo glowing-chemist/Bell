@@ -49,11 +49,11 @@ public:
 
     void           setCurrentSampler(vk::Sampler& sampler)
                     { mCurrentSampler = sampler;}
-    vk::Sampler    getCurrentSampler() const
+    const vk::Sampler&    getCurrentSampler() const
                     { return mCurrentSampler; }
     void            setCurrentImageView(vk::ImageView& view)
                     { mImageView = view; }
-    vk::ImageView   getCurrentImageView() const
+    const vk::ImageView&   getCurrentImageView() const
                     { return mImageView; }
 
     uint32_t        numberOfMips() const { return mNumberOfMips; }
@@ -64,6 +64,9 @@ public:
 
 	vk::ImageLayout getLayout() const
 						{ return mLayout; }
+
+    vk::Extent3D    getExtent() const
+                        { return mExtent; }
 
     void            clear();
 
