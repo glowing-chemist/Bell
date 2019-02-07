@@ -7,6 +7,7 @@
 #include <vulkan/vulkan.hpp>
 
 #include "MemoryManager.hpp"
+#include "DescriptorManager.hpp"
 #include "SwapChain.hpp"
 #include "CommandPool.h"
 #include "Core/Image.hpp"
@@ -145,10 +146,13 @@ private:
     vk::Pipeline                                                generatePipeline(const ComputeTask&,
                                                                                  const vk::PipelineLayout&);
 	void														generateVulkanResources(RenderGraph&);
+    void                                                        generateDescriptorSets(RenderGraph&);
+    void                                                        generateFrameBuffers(RenderGraph&);
 
     // Keep track of when resources can be freed
     uint64_t mCurrentSubmission;
     uint64_t mFinishedSubmission;
+    std::vector<std::pair<uint64_t, vk::Framebuffer>> mFramebuffersPendingDestruction;
 
     // underlying devices
     vk::Device mDevice;
@@ -165,6 +169,7 @@ private:
     SwapChain mSwapChain;
 	std::vector<CommandPool> mCommandPools;
     MemoryManager mMemoryManager;
+    DescriptorManager mDescriptorManager;
 };
 
 #endif

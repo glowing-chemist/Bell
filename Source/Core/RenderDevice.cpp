@@ -9,7 +9,8 @@ RenderDevice::RenderDevice(vk::PhysicalDevice physDev, vk::Device dev, vk::Surfa
     mDevice{dev},
     mPhysicalDevice{physDev},
     mSwapChain{mDevice, mPhysicalDevice, surface, window},
-    mMemoryManager{this} 
+    mMemoryManager{this},
+    mDescriptorManager{this}
 {
 
     mQueueFamilyIndicies = getAvailableQueues(surface, mPhysicalDevice);
@@ -585,6 +586,43 @@ void RenderDevice::generateVulkanResources(RenderGraph& graph)
         }
         ++taskOrderIndex;
     }
+}
+
+
+void RenderDevice::generateFrameBuffers(RenderGraph& graph)
+{
+    uint32_t currentTaskIndex = 0;
+    for(const auto& outputs : graph.mOutputResources)
+    {
+        if(!graph.mVulkanResources[currentTaskIndex].mFrameBufferNeedsUpdating)
+            continue;
+
+        std::vector<vk::ImageView> imageViews{};
+        vk::Extent3D imageExtent;
+
+        for(const auto& bindingInfo : outputs)
+        {
+            const auto& image = static_cast<Image&>(graph.getResource(bindingInfo.mResourcetype, bindingInfo.mResourceIndex));
+            imageExtent = image.getExtent();
+            imageViews.push_back(image.getCurrentImageView());
+        }
+
+        vk::FramebufferCreateInfo info{};
+        info.setRenderPass(*graph.mVulkanResources[currentTaskIndex].mRenderPass);
+        info.setPAttachments(imageViews.data());
+        info.setWidth(imageExtent.width);
+        info.setHeight(imageExtent.height);
+        info.setLayers(imageExtent.depth);
+
+        graph.mVulkanResources[currentTaskIndex].mFrameBuffer = mDevice.createFramebuffer(info);
+    }
+}
+
+
+void RenderDevice::generateDescriptorSets(RenderGraph & graph)
+{
+    auto descriptorSets = mDescriptorManager.getDescriptors(graph);
+    mDescriptorManager.writeDescriptors(descriptorSets, graph);
 }
 
 
