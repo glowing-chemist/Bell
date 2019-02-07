@@ -19,9 +19,15 @@ public:
 	vk::CommandBuffer& getBufferForQueue(const QueueType, const uint32_t = 0);
 	uint32_t		   getNumberOfBuffersForQueue(const QueueType);
 
+    void               reserve(const uint32_t, const QueueType);
+
 	void			   reset();
 
 private:
+    std::vector<vk::CommandBuffer> allocateCommandBuffers(const uint32_t, const QueueType, const bool);
+    const vk::CommandPool& getCommandPool(const QueueType) const;
+    std::vector<vk::CommandBuffer>& getCommandBuffers(const QueueType);
+
 	vk::CommandPool mGraphicsPool;
 	std::vector<vk::CommandBuffer> mGraphicsBuffers;
 	
