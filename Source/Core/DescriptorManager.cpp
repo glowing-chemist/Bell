@@ -54,6 +54,9 @@ void DescriptorManager::writeDescriptors(std::vector<vk::DescriptorSet>& descSet
 
     for(const auto& inputs : graph.mInputResources)
     {
+        if(!graph.mVulkanResources[currentDescriptorIndex].mDescSetNeedsUpdating)
+            continue;
+
         for(const auto& bindingInfo : inputs)
         {
             vk::WriteDescriptorSet descWrite{};
