@@ -61,7 +61,7 @@ public:
         { return mName; }
 
 
-protected:
+private:
 
     std::string mName;
 
