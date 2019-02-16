@@ -92,7 +92,7 @@ uint32_t RenderDevice::getQueueFamilyIndex(const QueueType type) const
 }
 
 
-GraphicsPipelineHandles RenderDevice::createPipelineHandles(GraphicsTask& task)
+GraphicsPipelineHandles RenderDevice::createPipelineHandles(const GraphicsTask& task)
 {
     const auto [vertexBindings, vertexAttributes] = generateVertexInput(task);
     const vk::DescriptorSetLayout descSetLayout = generateDescriptorSetLayout(task);
@@ -108,7 +108,7 @@ GraphicsPipelineHandles RenderDevice::createPipelineHandles(GraphicsTask& task)
 }
 
 
-ComputePipelineHandles RenderDevice::createPipelineHandles(ComputeTask& task)
+ComputePipelineHandles RenderDevice::createPipelineHandles(const ComputeTask& task)
 {
     const vk::DescriptorSetLayout descSetLayout = generateDescriptorSetLayout(task);
     const vk::PipelineLayout pipelineLayout = generatePipelineLayout(descSetLayout);
@@ -549,23 +549,24 @@ vk::PipelineLayout RenderDevice::generatePipelineLayout(vk::DescriptorSetLayout 
 
 void RenderDevice::generateVulkanResources(RenderGraph& graph)
 {
-    uint32_t taskOrderIndex = 0;
-    for(const auto [taskType, taskIndex] : graph.mTaskOrder)
+	auto task = graph.taskBegin();
+	auto resource = graph.resourceBegin();
+    
+	while( task != graph.taskEnd())
     {
-        if(graph.mVulkanResources[taskOrderIndex].mPipeline == vk::Pipeline{nullptr})
-        {
-            ++taskOrderIndex;
-            continue;
-        }
+		if ((*resource).mPipeline != vk::Pipeline{ nullptr })
+		{
+			++task;
+			++resource;
+			continue;
+		}
 
-        RenderTask& task = graph.getTask(taskType, taskIndex);
-
-        if(taskType == RenderGraph::TaskType::Graphics)
+        if((*task).taskType() == TaskType::Graphics)
         {
-            GraphicsTask& graphicsTask = static_cast<GraphicsTask&>(task);
+            const GraphicsTask& graphicsTask = static_cast<const GraphicsTask&>(*task);
             GraphicsPipelineHandles pipelineHandles = createPipelineHandles(graphicsTask);
 
-            RenderGraph::vulkanResources& taskResources = graph.mVulkanResources[taskOrderIndex];
+            RenderGraph::vulkanResources& taskResources = *resource;
             taskResources.mPipeline = pipelineHandles.mPipeline;
             taskResources.mPipelineLayout = pipelineHandles.mPipelineLayout;
             taskResources.mDescSetLayout = pipelineHandles.mDescriptorSetLayout;
@@ -576,31 +577,34 @@ void RenderDevice::generateVulkanResources(RenderGraph& graph)
         }
         else
         {
-            ComputeTask& computeTask = static_cast<ComputeTask&>(task);
+            const ComputeTask& computeTask = static_cast<const ComputeTask&>(*task);
             ComputePipelineHandles pipelineHandles = createPipelineHandles(computeTask);
 
-            RenderGraph::vulkanResources& taskResources = graph.mVulkanResources[taskOrderIndex];
+            RenderGraph::vulkanResources& taskResources = *resource;
             taskResources.mPipeline = pipelineHandles.mPipeline;
             taskResources.mPipelineLayout = pipelineHandles.mPipelineLayout;
             taskResources.mDescSetLayout = pipelineHandles.mDescriptorSetLayout;
         }
-        ++taskOrderIndex;
+		++task;
+		++resource;
     }
 }
 
 
 void RenderDevice::generateFrameBuffers(RenderGraph& graph)
 {
-    uint32_t currentTaskIndex = 0;
-    for(const auto& outputs : graph.mOutputResources)
+	auto outputBindings = graph.outputBindingBegin();
+	auto resource = graph.resourceBegin();
+
+	while(outputBindings != graph.outputBindingEnd())
     {
-        if(!graph.mVulkanResources[currentTaskIndex].mFrameBufferNeedsUpdating)
+        if(!(*resource).mFrameBufferNeedsUpdating)
             continue;
 
         std::vector<vk::ImageView> imageViews{};
         vk::Extent3D imageExtent;
 
-        for(const auto& bindingInfo : outputs)
+        for(const auto& bindingInfo : *outputBindings)
         {
             const auto& image = static_cast<Image&>(graph.getResource(bindingInfo.mResourcetype, bindingInfo.mResourceIndex));
             imageExtent = image.getExtent();
@@ -608,13 +612,16 @@ void RenderDevice::generateFrameBuffers(RenderGraph& graph)
         }
 
         vk::FramebufferCreateInfo info{};
-        info.setRenderPass(*graph.mVulkanResources[currentTaskIndex].mRenderPass);
+        info.setRenderPass(*(*resource).mRenderPass);
         info.setPAttachments(imageViews.data());
         info.setWidth(imageExtent.width);
         info.setHeight(imageExtent.height);
         info.setLayers(imageExtent.depth);
 
-        graph.mVulkanResources[currentTaskIndex].mFrameBuffer = mDevice.createFramebuffer(info);
+        (*resource).mFrameBuffer = mDevice.createFramebuffer(info);
+
+		++resource;
+		++outputBindings;
     }
 }
 
@@ -623,6 +630,22 @@ void RenderDevice::generateDescriptorSets(RenderGraph & graph)
 {
     auto descriptorSets = mDescriptorManager.getDescriptors(graph);
     mDescriptorManager.writeDescriptors(descriptorSets, graph);
+}
+
+
+void RenderDevice::executeGraph(const RenderGraph& graph)
+{
+	CommandPool* currentCommandPool = getCurrentCommandPool();
+	currentCommandPool->reserve(graph.taskCount() + 1, QueueType::Graphics); // +1 for the primary cmd buffer all the secondaries will be recorded in to.
+
+	vk::CommandBufferBeginInfo primaryBegin{};
+	primaryBegin.setFlags(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
+	
+	vk::CommandBuffer primaryCmdBuffer = currentCommandPool->getBufferForQueue(QueueType::Graphics);
+	
+
+	// TODO start the secondary command buffers and respective renderpasses and record all command in to them.
+	// Quality of life fixes coming first.
 }
 
 

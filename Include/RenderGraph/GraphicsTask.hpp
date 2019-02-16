@@ -131,6 +131,7 @@ public:
 	}
 
 	void clearCalls() override { mDrawCalls.clear(); }
+	TaskType taskType() const override { return TaskType::Graphics; }
 
 private:
 

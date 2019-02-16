@@ -19,7 +19,7 @@ public:
     DescriptorManager(RenderDevice* dev) : DeviceChild{dev} {}
     ~DescriptorManager();
 
-    std::vector<vk::DescriptorSet> getDescriptors(const RenderGraph&);
+    std::vector<vk::DescriptorSet> getDescriptors(RenderGraph&);
     void                           writeDescriptors(std::vector<vk::DescriptorSet>&, RenderGraph&);
 
     void                           freeDescriptorSets(RenderGraph&);
@@ -29,7 +29,7 @@ private:
     vk::DescriptorImageInfo     generateDescriptorImageInfo(Image&) const;
     vk::DescriptorBufferInfo    generateDescriptorBufferInfo(Buffer&) const;
 
-    vk::DescriptorSet			allocateDescriptorSet(const RenderGraph&, const RenderTask&, const uint32_t);
+    vk::DescriptorSet			allocateDescriptorSet(const RenderGraph&, const RenderTask&, const RenderGraph::vulkanResources&);
 
     vk::DescriptorPool			createDescriptorPool();
 

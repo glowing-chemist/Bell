@@ -102,13 +102,13 @@ public:
     vk::Sampler                        createSampler(vk::SamplerCreateInfo& info)
                                             { return mDevice.createSampler(info); }
 
-    GraphicsPipelineHandles            createPipelineHandles(GraphicsTask&);
-    ComputePipelineHandles             createPipelineHandles(ComputeTask&);
+    GraphicsPipelineHandles            createPipelineHandles(const GraphicsTask&);
+    ComputePipelineHandles             createPipelineHandles(const ComputeTask&);
 
     // Accessors
     SwapChain*                         getSwapChain() { return &mSwapChain; }
     MemoryManager*                     getMemoryManager() { return &mMemoryManager; }
-	CommandPool*					   getCurrentCommandPool() { return &mCommandPools[mSwapChain.getCurrentImageIndex()]; }
+	CommandPool*					   getCurrentCommandPool() { return &mCommandPools[getCurrentFrameIndex()]; }
 
     // Memory management functions
     vk::MemoryRequirements             getMemoryRequirements(vk::Image image)
@@ -128,7 +128,11 @@ public:
     void                               bindBufferMemory(vk::Buffer&, vk::DeviceMemory, const uint64_t);
     void                               bindImageMemory(vk::Image&, vk::DeviceMemory, const uint64_t);
 
-    uint64_t						   getCurrentFrameIndex() const { return mCurrentSubmission; }
+    uint64_t						   getCurrentSubmissionIndex() const { return mCurrentSubmission; }
+	uint64_t						   getCurrentFrameIndex() const { return mSwapChain.getCurrentImageIndex(); }
+
+	void							   executeGraph(const RenderGraph&);
+
 private:
 
     std::pair<vk::VertexInputBindingDescription,

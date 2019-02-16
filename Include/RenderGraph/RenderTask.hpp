@@ -57,6 +57,8 @@ public:
 
 	virtual void clearCalls() = 0;
 
+	virtual TaskType taskType() const = 0;
+
     const std::string& getName() const
         { return mName; }
 

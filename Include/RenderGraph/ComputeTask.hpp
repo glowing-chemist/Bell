@@ -42,6 +42,7 @@ public:
 	void addIndirectDispatch(const uint32_t x, const uint32_t y, const uint32_t z) { mComputeCalls.push_back({DispatchType::Indirect, x, y, z}); }
 
 	void clearCalls() override { mComputeCalls.clear(); }
+	TaskType taskType() const override { return TaskType::Compute; }
 
 private:
 

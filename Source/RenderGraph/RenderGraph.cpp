@@ -236,3 +236,71 @@ GPUResource& RenderGraph::getResource(const ResourceType resourceType, const uin
     return resource;
 }
 
+
+TaskIterator RenderGraph::taskBegin()
+{
+	auto[taskType, taskIndex] = mTaskOrder[0];
+	RenderTask& task = getTask(taskType, taskIndex);
+
+	return TaskIterator{*this};
+}
+
+
+TaskIterator RenderGraph::taskEnd()
+{
+	auto[taskType, taskIndex] = mTaskOrder[0];
+	RenderTask& task = getTask(taskType, taskIndex);
+
+	return TaskIterator{*this, mTaskOrder.size()};
+}
+
+
+ResourceIterator RenderGraph::resourceBegin()
+{
+	return ResourceIterator{mVulkanResources, *this};
+}
+
+
+ResourceIterator RenderGraph::resourceEnd()
+{
+	return ResourceIterator{ mVulkanResources, *this, mVulkanResources.size()};
+}
+
+
+BindingIterator<BindingIteratorType::Input> RenderGraph::inputBindingBegin()
+{
+	return BindingIterator<BindingIteratorType::Input>{mInputResources, *this};
+}
+
+
+BindingIterator<BindingIteratorType::Input> RenderGraph::inputBindingEnd()
+{
+	return BindingIterator<BindingIteratorType::Input>{mInputResources, *this, mInputResources.size()};
+}
+
+
+BindingIterator< BindingIteratorType::Output> RenderGraph::outputBindingBegin()
+{
+	return BindingIterator<BindingIteratorType::Output>{mInputResources, *this};
+}
+
+
+BindingIterator< BindingIteratorType::Output> RenderGraph::outputBindingEnd()
+{
+	return BindingIterator<BindingIteratorType::Output>{mInputResources, *this, mOutputResources.size()};
+}
+
+
+TaskIterator& TaskIterator::operator++()
+{
+	++mCurrentIndex;
+
+	return *this;
+}
+
+
+const RenderTask& TaskIterator::operator*() const
+{
+	auto[taskType, taskIndex] = mGraph.mTaskOrder[mCurrentIndex];
+	return mGraph.getTask(taskType, taskIndex);
+}

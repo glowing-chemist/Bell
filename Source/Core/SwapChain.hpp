@@ -31,7 +31,7 @@ public:
     vk::Image& getImage(const size_t);
 
 	uint32_t getNextImageIndex(vk::Device&, vk::Semaphore&);
-	uint32_t getCurrentImageIndex() { return mCurrentImageIndex; };
+	uint32_t getCurrentImageIndex() const { return mCurrentImageIndex; };
 
 	void present(vk::Queue&, vk::Semaphore&);
 

@@ -14,24 +14,29 @@ DescriptorManager::~DescriptorManager()
 }
 
 
-std::vector<vk::DescriptorSet> DescriptorManager::getDescriptors(const RenderGraph& graph)
+std::vector<vk::DescriptorSet> DescriptorManager::getDescriptors(RenderGraph& graph)
 {
     std::vector<vk::DescriptorSet> descSets;
+	uint32_t resourceIndex = 0;
 
-    uint32_t resourcesIndex = 0;
-    for(auto [taskType, taskIndex] : graph.mTaskOrder)
+	auto task = graph.taskBegin();
+	auto resource = graph.resourceBegin();
+
+    while(task != graph.taskEnd())
     {
-        if(graph.mVulkanResources[resourcesIndex].mDescSet == vk::DescriptorSet{nullptr})
+        if((*resource).mDescSet == vk::DescriptorSet{nullptr})
         {
-            const RenderTask& task = graph.getTask(taskType, taskIndex);
-            vk::DescriptorSet descSet = allocateDescriptorSet(graph, task, resourcesIndex);
+            vk::DescriptorSet descSet = allocateDescriptorSet(graph, *task, *resource);
             descSets.push_back(descSet);
         }
         else
         {
-            descSets.push_back(graph.mVulkanResources[resourcesIndex].mDescSet);
+            descSets.push_back((*resource).mDescSet);
         }
-        ++resourcesIndex;
+
+		++task;
+		++resource;
+		++resourceIndex;
     }
 
     return descSets;
@@ -45,23 +50,26 @@ void DescriptorManager::writeDescriptors(std::vector<vk::DescriptorSet>& descSet
     std::vector<vk::DescriptorImageInfo> imageInfos;
     std::vector<vk::DescriptorBufferInfo> bufferInfos;
 
-    const uint64_t maxDescWrites = std::accumulate(graph.mInputResources.begin(), graph.mInputResources.end(), 0,
+    const uint64_t maxDescWrites = std::accumulate(graph.inputBindingBegin(), graph.inputBindingEnd(), 0,
                     [](uint64_t accu, auto& vec) {return accu + vec.size(); });
 
     imageInfos.reserve(maxDescWrites);
     bufferInfos.reserve(maxDescWrites);
-    uint32_t currentDescriptorIndex = 0;
+	uint32_t descIndex = 0;
 
-    for(const auto& inputs : graph.mInputResources)
+	auto inputBindings = graph.inputBindingBegin();
+	auto resource = graph.resourceBegin();
+
+    while(inputBindings != graph.inputBindingEnd())
     {
-        if(!graph.mVulkanResources[currentDescriptorIndex].mDescSetNeedsUpdating)
+        if(!(*resource).mDescSetNeedsUpdating)
             continue;
 
-        for(const auto& bindingInfo : inputs)
+        for(const auto& bindingInfo : *inputBindings)
         {
             vk::WriteDescriptorSet descWrite{};
             descWrite.setDescriptorCount(1);
-            descWrite.setDstSet(descSets[currentDescriptorIndex]);
+            descWrite.setDstSet(descSets[descIndex]);
             descWrite.setDstBinding(bindingInfo.mResourceBinding);
 
             switch(bindingInfo.mResourcetype)
@@ -90,7 +98,9 @@ void DescriptorManager::writeDescriptors(std::vector<vk::DescriptorSet>& descSet
             descSetWrites.push_back(descWrite);
         }
 
-        ++currentDescriptorIndex;
+		++resource;
+		++inputBindings;
+		++descIndex;
     }
 
     getDevice()->writeDescriptorSets(descSetWrites);
@@ -106,7 +116,7 @@ void DescriptorManager::freeDescriptorSets(RenderGraph& graph)
 
 vk::DescriptorSet DescriptorManager::allocateDescriptorSet(const RenderGraph& graph,
                                                            const RenderTask& task,
-                                                           const uint32_t taskIndex)
+                                                           const RenderGraph::vulkanResources& resources)
 {    
     // Find a better/more efficient way to do this.
     std::vector<AttachmentType> attachments(task.getInputAttachments().size());
@@ -126,7 +136,7 @@ vk::DescriptorSet DescriptorManager::allocateDescriptorSet(const RenderGraph& gr
         vk::DescriptorSetAllocateInfo allocInfo{};
         allocInfo.setDescriptorPool(pool);
         allocInfo.setDescriptorSetCount(1);
-        allocInfo.setPSetLayouts(&graph.mVulkanResources[taskIndex].mDescSetLayout);
+        allocInfo.setPSetLayouts(&resources.mDescSetLayout);
 
         try
         {
