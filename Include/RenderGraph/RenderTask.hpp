@@ -7,6 +7,8 @@
 #include <map>
 #include <tuple>
 
+#include <vulkan/vulkan.hpp>
+
 enum class AttachmentType
 {
     Texture1D,
@@ -36,18 +38,19 @@ public:
     RenderTask(const std::string& name) : mName{name} {}
 	virtual ~RenderTask() = default;
 
-    void addInput(const std::string& name, const AttachmentType attachmentType)
-        {
-            // In glsl/vulkan data buffers are declared as part of the descriptor sets
-            // so need to be treated as input even if they are written to.
-            if(attachmentType == AttachmentType::DataBuffer)
-                mInputAttachments.push_back({name, attachmentType});
-            else
-                mOutputAttachments.push_back({name, attachmentType});
-        }
+    virtual void addInput(const std::string& name, const AttachmentType attachmentType)
+    {
+       mInputAttachments.push_back({name, attachmentType});
+    }
 
-    void addOutput(const std::string& name, const AttachmentType attachmentType)
-        { mInputAttachments.push_back({name, attachmentType}); }
+    virtual void addOutput(const std::string& name, const AttachmentType attachmentType)
+    {
+       mOutputAttachments.push_back({name, attachmentType});
+    }
+
+
+    virtual void recordCommands(vk::CommandBuffer) = 0;
+
 
     const std::vector<std::pair<std::string, AttachmentType>>& getInputAttachments() const
         { return mInputAttachments; }
@@ -63,7 +66,7 @@ public:
         { return mName; }
 
 
-private:
+protected:
 
     std::string mName;
 

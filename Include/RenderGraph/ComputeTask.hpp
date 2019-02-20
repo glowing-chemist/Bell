@@ -41,6 +41,15 @@ public:
 	void addDispatch(const uint32_t x, const uint32_t y, const uint32_t z) { mComputeCalls.push_back({DispatchType::Standard, x, y, z}); }
 	void addIndirectDispatch(const uint32_t x, const uint32_t y, const uint32_t z) { mComputeCalls.push_back({DispatchType::Indirect, x, y, z}); }
 
+    void addOutput(const std::string& name, const AttachmentType attachmentType) override
+    {
+        // All outputs needs to be part of the descriptor set for compute pipelies
+        // as compuite shaders writes don't go to the framebuffer.
+        mInputAttachments.push_back({name, attachmentType});
+    }
+
+    void recordCommands(vk::CommandBuffer) override;
+
 	void clearCalls() override { mComputeCalls.clear(); }
 	TaskType taskType() const override { return TaskType::Compute; }
 
