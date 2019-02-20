@@ -48,6 +48,8 @@ class RenderDevice
 public:
     RenderDevice(vk::PhysicalDevice, vk::Device, vk::SurfaceKHR, GLFWwindow*);
 
+    void                               execute(RenderGraph&);
+
     vk::Image                          createImage(const vk::Format,
                                                    const vk::ImageUsageFlags,
                                                    const vk::ImageType,
