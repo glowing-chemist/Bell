@@ -152,6 +152,13 @@ vk::DescriptorSet DescriptorManager::allocateDescriptorSet(const RenderGraph& gr
             std::cerr << "pool exhausted trying next descriptor pool \n";
         }
     }
+
+
+	// We have failed to allocate from any of the exhisting pools
+	// so allocate create a new one and allocate a set from it.
+	mPools.insert(mPools.begin(), createDescriptorPool());
+
+	return allocateDescriptorSet(graph, task, resources);
 }
 
 
