@@ -48,7 +48,7 @@ public:
         mInputAttachments.push_back({name, attachmentType});
     }
 
-    void recordCommands(vk::CommandBuffer) override;
+    void recordCommands(vk::CommandBuffer) const override;
 
 	void clearCalls() override { mComputeCalls.clear(); }
 	TaskType taskType() const override { return TaskType::Compute; }

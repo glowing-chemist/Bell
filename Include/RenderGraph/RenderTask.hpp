@@ -49,7 +49,7 @@ public:
     }
 
 
-    virtual void recordCommands(vk::CommandBuffer) = 0;
+    virtual void recordCommands(vk::CommandBuffer) const = 0;
 
 
     const std::vector<std::pair<std::string, AttachmentType>>& getInputAttachments() const

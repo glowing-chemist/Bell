@@ -130,7 +130,7 @@ public:
 		mDrawCalls.push_back({ DrawType::IndexedInstanced, vertexOffset, 0, indexOffset, numberOfIndicies, numberOfInstances });
 	}
 
-    void recordCommands(vk::CommandBuffer) override;
+    void recordCommands(vk::CommandBuffer) const override;
 
 	void clearCalls() override { mDrawCalls.clear(); }
 	TaskType taskType() const override { return TaskType::Graphics; }

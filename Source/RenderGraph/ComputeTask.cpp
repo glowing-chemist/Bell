@@ -1,7 +1,7 @@
 #include "RenderGraph/ComputeTask.hpp"
 
 
-void ComputeTask::recordCommands(vk::CommandBuffer CmdBuffer)
+void ComputeTask::recordCommands(vk::CommandBuffer CmdBuffer) const
 {
     for(const auto& thunk : mComputeCalls)
     {

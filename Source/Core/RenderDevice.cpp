@@ -633,7 +633,7 @@ void RenderDevice::generateDescriptorSets(RenderGraph & graph)
 }
 
 
-void RenderDevice::executeGraph(const RenderGraph& graph)
+void RenderDevice::execute(RenderGraph& graph)
 {
 	CommandPool* currentCommandPool = getCurrentCommandPool();
 	currentCommandPool->reserve(graph.taskCount() + 1, QueueType::Graphics); // +1 for the primary cmd buffer all the secondaries will be recorded in to.
@@ -642,10 +642,55 @@ void RenderDevice::executeGraph(const RenderGraph& graph)
 	primaryBegin.setFlags(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
 	
 	vk::CommandBuffer primaryCmdBuffer = currentCommandPool->getBufferForQueue(QueueType::Graphics);
-	
+	primaryCmdBuffer.begin(primaryBegin);
 
-	// TODO start the secondary command buffers and respective renderpasses and record all command in to them.
-	// Quality of life fixes coming first.
+	uint32_t cmdBufferIndex = 1;
+	auto vulkanResource = graph.resourceBegin();
+	for (auto task = graph.taskBegin(); task != graph.taskEnd(); ++task, ++vulkanResource)
+	{
+		vk::CommandBufferBeginInfo secondaryBegin{};
+		secondaryBegin.setFlags(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
+
+		vk::CommandBuffer secondaryCmdBuffer = currentCommandPool->getBufferForQueue(QueueType::Graphics, cmdBufferIndex);
+		secondaryCmdBuffer.begin(secondaryBegin);
+		
+		const auto& resources = *vulkanResource;
+		
+		vk::PipelineBindPoint bindPoint = vk::PipelineBindPoint::eCompute;
+
+
+		if (resources.mRenderPass)
+		{
+			const auto& graphicsTask = static_cast<const GraphicsTask&>(*task);
+			const auto pipelineDesc = graphicsTask.getPipelineDescription();
+			vk::Rect2D renderArea{ {0, 0}, {pipelineDesc.mViewport.x, pipelineDesc.mViewport.y} };
+
+			vk::RenderPassBeginInfo passBegin{};
+			passBegin.setRenderPass(*resources.mRenderPass);
+			passBegin.setFramebuffer(*resources.mFrameBuffer);
+			passBegin.setRenderArea(renderArea);
+
+			secondaryCmdBuffer.beginRenderPass(passBegin, vk::SubpassContents::eInline);
+
+			bindPoint = vk::PipelineBindPoint::eGraphics;
+		}
+
+		secondaryCmdBuffer.bindVertexBuffers(0, { graph.getVertexBuffer().getBuffer() }, {});
+		secondaryCmdBuffer.bindIndexBuffer(graph.getIndexBuffer().getBuffer(), 0, vk::IndexType::eUint32);
+		secondaryCmdBuffer.bindDescriptorSets(bindPoint, resources.mPipelineLayout, 0, 1,  &resources.mDescSet, 0, nullptr);
+		secondaryCmdBuffer.bindPipeline(bindPoint, resources.mPipeline);
+
+		(*task).recordCommands(secondaryCmdBuffer);
+
+		secondaryCmdBuffer.endRenderPass();
+		secondaryCmdBuffer.end();
+
+		primaryCmdBuffer.executeCommands(secondaryCmdBuffer);
+
+		++cmdBufferIndex;
+	}
+
+	primaryCmdBuffer.end();
 }
 
 

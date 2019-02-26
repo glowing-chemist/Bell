@@ -50,6 +50,9 @@ public:
     void bindVertexBuffer(const Buffer&);
     void bindIndexBuffer(const Buffer&);
 
+	Buffer& getVertexBuffer() { return mVertexBuffer; }
+	Buffer& getIndexBuffer() { return mIndexBuffer; }
+
 	RenderTask& getTask(TaskType, uint32_t);
 	const RenderTask& getTask(TaskType, uint32_t) const;
 

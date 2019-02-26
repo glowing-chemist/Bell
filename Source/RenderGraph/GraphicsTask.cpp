@@ -1,7 +1,7 @@
 #include "RenderGraph/GraphicsTask.hpp"
 
 
-void GraphicsTask::recordCommands(vk::CommandBuffer CmdBuffer)
+void GraphicsTask::recordCommands(vk::CommandBuffer CmdBuffer) const
 {
     for(const auto& thunk : mDrawCalls)
     {
