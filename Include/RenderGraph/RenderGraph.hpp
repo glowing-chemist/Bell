@@ -161,7 +161,7 @@ public:
 
 	RenderGraph::vulkanResources& operator*() { return mResources[mCurrentIndex]; }
 	ResourceIterator& operator++() { ++mCurrentIndex; return *this; }
-	bool operator==(const ResourceIterator& rhs) { mCurrentIndex == rhs.mCurrentIndex; }
+    bool operator==(const ResourceIterator& rhs) { return mCurrentIndex == rhs.mCurrentIndex; }
 	bool operator!=(const ResourceIterator& rhs) { return !(*this == rhs); }
 };
 

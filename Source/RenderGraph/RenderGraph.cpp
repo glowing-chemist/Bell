@@ -119,7 +119,7 @@ void RenderGraph::bindResource(const std::string& name, const uint32_t index, co
         {
             if(input.first == name)
             {
-                mInputResources[taskOrderIndex][inputAttachmentIndex] = {resourcetype, index, inputAttachmentIndex};
+                mInputResources[taskOrderIndex][inputAttachmentIndex] = {name, resourcetype, index, inputAttachmentIndex};
                 mVulkanResources[taskOrderIndex].mDescSetNeedsUpdating = true;
                 break; // Assume a resource is only bound once per task.
             }
@@ -131,7 +131,7 @@ void RenderGraph::bindResource(const std::string& name, const uint32_t index, co
         {
             if(input.first == name)
             {
-                mOutputResources[taskOrderIndex][outputAttachmentIndex] = {resourcetype, index, outputAttachmentIndex};
+                mOutputResources[taskOrderIndex][outputAttachmentIndex] = {name, resourcetype, index, outputAttachmentIndex};
                 mVulkanResources[taskOrderIndex].mFrameBufferNeedsUpdating = true;
                 break;
             }
@@ -239,18 +239,12 @@ GPUResource& RenderGraph::getResource(const ResourceType resourceType, const uin
 
 TaskIterator RenderGraph::taskBegin()
 {
-	auto[taskType, taskIndex] = mTaskOrder[0];
-	RenderTask& task = getTask(taskType, taskIndex);
-
 	return TaskIterator{*this};
 }
 
 
 TaskIterator RenderGraph::taskEnd()
 {
-	auto[taskType, taskIndex] = mTaskOrder[0];
-	RenderTask& task = getTask(taskType, taskIndex);
-
 	return TaskIterator{*this, mTaskOrder.size()};
 }
 
