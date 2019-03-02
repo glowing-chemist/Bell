@@ -606,9 +606,21 @@ void RenderDevice::generateFrameBuffers(RenderGraph& graph)
 
         for(const auto& bindingInfo : *outputBindings)
         {
-            const auto& image = static_cast<Image&>(graph.getResource(bindingInfo.mResourcetype, bindingInfo.mResourceIndex));
-            imageExtent = image.getExtent();
-            imageViews.push_back(image.getCurrentImageView());
+            if(bindingInfo.mName == "Framebuffer")
+            {
+                imageExtent = vk::Extent3D{getSwapChain()->getSwapChainImageWidth(),
+                                           getSwapChain()->getSwapChainImageHeight(),
+                                            1};
+
+                const size_t currentSwapchainIndex = getSwapChain()->getCurrentImageIndex();
+                imageViews.push_back(getSwapChain()->getImageView(currentSwapchainIndex));
+            }
+            else
+            {
+                const auto& image = static_cast<Image&>(graph.getResource(bindingInfo.mResourcetype, bindingInfo.mResourceIndex));
+                imageExtent = image.getExtent();
+                imageViews.push_back(image.getCurrentImageView());
+            }
         }
 
         vk::FramebufferCreateInfo info{};

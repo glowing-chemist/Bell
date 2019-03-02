@@ -97,6 +97,7 @@ public:
 
 	struct ResourceBindingInfo
 	{
+        std::string mName;
 		ResourceType mResourcetype;
 		uint32_t mResourceIndex;
 		uint32_t mResourceBinding;
