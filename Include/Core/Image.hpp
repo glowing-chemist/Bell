@@ -68,6 +68,9 @@ public:
     vk::Extent3D    getExtent() const
                         { return mExtent; }
 
+    Allocation      getMemory() const
+                        { return mImageMemory; }
+
     void            clear();
 
 private:

@@ -31,8 +31,9 @@ Image::Image(RenderDevice* dev,
 
 Image::~Image()
 {
-    getDevice()->getMemoryManager()->Free(mImageMemory);
-    getDevice()->destroyImage(mImage);
+    const bool shouldDestroy = release();
+    if(shouldDestroy)
+        getDevice()->destroyImage(*this);
 }
 
 

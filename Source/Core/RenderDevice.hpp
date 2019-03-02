@@ -57,8 +57,7 @@ public:
                                                    const uint32_t,
                                                    const uint32_t);
 
-    void                               destroyImage(vk::Image& image)
-                                            { mDevice.destroyImage(image); }
+    void                               destroyImage(Image& image) { mImagesPendingDestruction.push_back({image.getLastAccessed(), image.getImage(), image.getMemory()}); }
 
     vk::ImageView                      createImageView(const vk::ImageViewCreateInfo& info)
                                             { return mDevice.createImageView(info); }
@@ -68,8 +67,7 @@ public:
 
     vk::Buffer                         createBuffer(const uint32_t, const vk::BufferUsageFlags);
 
-    void                               destroyBuffer(vk::Buffer& buffer )
-                                            { mDevice.destroyBuffer(buffer); }
+    void                               destroyBuffer(Buffer& buffer) { mBuffersPendingDestruction.push_back({buffer.getLastAccessed(), buffer.getBuffer(), buffer.getMemory()}); }
 
 	vk::CommandPool					   createCommandPool(vk::CommandPoolCreateInfo& info)
 											{ return mDevice.createCommandPool(info); }
@@ -155,10 +153,32 @@ private:
     void                                                        generateDescriptorSets(RenderGraph&);
     void                                                        generateFrameBuffers(RenderGraph&);
 
+    void                               destroyImage(vk::Image& image)
+                                            { mDevice.destroyImage(image); }
+
+    void                               destroyBuffer(vk::Buffer& buffer )
+                                            { mDevice.destroyBuffer(buffer); }
+
     // Keep track of when resources can be freed
     uint64_t mCurrentSubmission;
     uint64_t mFinishedSubmission;
     std::vector<std::pair<uint64_t, vk::Framebuffer>> mFramebuffersPendingDestruction;
+
+    struct ImageDestructionInfo
+    {
+        uint64_t mLastUsed;
+        vk::Image mImageHandle;
+        Allocation mImageMemory;
+    };
+    std::vector<ImageDestructionInfo> mImagesPendingDestruction;
+
+    struct BufferDestructionInfo
+    {
+        uint64_t mLastUsed;
+        vk::Buffer mBufferHandle;
+        Allocation mBufferMemory;
+    };
+    std::vector<BufferDestructionInfo> mBuffersPendingDestruction;
 
     // underlying devices
     vk::Device mDevice;

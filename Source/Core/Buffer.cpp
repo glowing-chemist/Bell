@@ -19,8 +19,9 @@ Buffer::Buffer(RenderDevice* dev,
 
 Buffer::~Buffer()
 {
-    getDevice()->destroyBuffer(mBuffer);
-    getDevice()->getMemoryManager()->Free(mBufferMemory);
+    const bool shouldDestroy = release();
+    if(shouldDestroy)
+        getDevice()->destroyBuffer(*this);
 }
 
 

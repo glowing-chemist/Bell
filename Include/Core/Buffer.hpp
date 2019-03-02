@@ -30,6 +30,9 @@ public:
     uint64_t getCurrentOffset() const
         { return mCurrentOffset; }
 
+    Allocation getMemory()
+        { return mBufferMemory; }
+
 
 
     void*   map();
