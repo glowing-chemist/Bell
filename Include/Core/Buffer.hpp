@@ -15,9 +15,10 @@ class RenderDevice;
 class Buffer final : public GPUResource, public DeviceChild
 {
 public:
-    Buffer(RenderDevice*,
-           vk::BufferUsageFlags,
-           const uint32_t,
+    Buffer(RenderDevice* dev,
+           vk::BufferUsageFlags usage,
+           const uint32_t size,
+           const uint32_t stride,
            std::string = "");
 
     ~Buffer();
@@ -33,6 +34,9 @@ public:
     Allocation getMemory()
         { return mBufferMemory; }
 
+    void setContents(const void* data,
+                     const uint32_t size,
+                     const uint32_t offset = 0);
 
 
     void*   map();
@@ -46,6 +50,8 @@ private:
 
     vk::BufferUsageFlags mUsage;
     uint32_t mSize;
+    uint32_t mStride;
+    uint32_t mAllignment;
     std::string mName;
 };
 

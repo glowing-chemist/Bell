@@ -6,6 +6,7 @@
 #include <unordered_map>
 #include <vulkan/vulkan.hpp>
 
+#include "BarrierManager.hpp"
 #include "MemoryManager.hpp"
 #include "DescriptorManager.hpp"
 #include "SwapChain.hpp"
@@ -47,6 +48,8 @@ class RenderDevice
 {
 public:
     RenderDevice(vk::PhysicalDevice, vk::Device, vk::SurfaceKHR, GLFWwindow*);
+
+    vk::PhysicalDeviceLimits           getLimits() const { return mLimits; }
 
     void                               execute(RenderGraph&);
 
@@ -109,6 +112,7 @@ public:
     SwapChain*                         getSwapChain() { return &mSwapChain; }
     MemoryManager*                     getMemoryManager() { return &mMemoryManager; }
 	CommandPool*					   getCurrentCommandPool() { return &mCommandPools[getCurrentFrameIndex()]; }
+    BarrierManager*                    getBarrierManager() { return &mBarrierManager; }
 
     // Memory management functions
     vk::MemoryRequirements             getMemoryRequirements(vk::Image image)
@@ -189,6 +193,8 @@ private:
     vk::Queue mTransferQueue;
 	QueueIndicies mQueueFamilyIndicies;
 
+    vk::PhysicalDeviceLimits mLimits;
+
 	std::unordered_map<GraphicsPipelineDescription, std::pair<vk::Pipeline, vk::PipelineLayout>> mGraphicsPipelineCache;
 	std::unordered_map<ComputePipelineDescription, std::pair<vk::Pipeline, vk::PipelineLayout>> mComputePipelineCache;
 
@@ -196,6 +202,7 @@ private:
 	std::vector<CommandPool> mCommandPools;
     MemoryManager mMemoryManager;
     DescriptorManager mDescriptorManager;
+    BarrierManager mBarrierManager;
 };
 
 #endif

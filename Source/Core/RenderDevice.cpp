@@ -10,13 +10,16 @@ RenderDevice::RenderDevice(vk::PhysicalDevice physDev, vk::Device dev, vk::Surfa
     mPhysicalDevice{physDev},
     mSwapChain{mDevice, mPhysicalDevice, surface, window},
     mMemoryManager{this},
-    mDescriptorManager{this}
+    mDescriptorManager{this},
+    mBarrierManager{this}
 {
 
     mQueueFamilyIndicies = getAvailableQueues(surface, mPhysicalDevice);
     mGraphicsQueue = mDevice.getQueue(mQueueFamilyIndicies.GraphicsQueueIndex, 0);
     mComputeQueue  = mDevice.getQueue(mQueueFamilyIndicies.ComputeQueueIndex, 0);
     mTransferQueue = mDevice.getQueue(mQueueFamilyIndicies.TransferQueueIndex, 0);
+
+    mLimits = mPhysicalDevice.getProperties().limits;
 
 	// Create a command pool for each frame.
 	for (uint32_t i = 0; i < mSwapChain.getNumberOfSwapChainImages(); ++i)
@@ -655,6 +658,9 @@ void RenderDevice::execute(RenderGraph& graph)
 	
 	vk::CommandBuffer primaryCmdBuffer = currentCommandPool->getBufferForQueue(QueueType::Graphics);
 	primaryCmdBuffer.begin(primaryBegin);
+
+    // Make sure that all resources will have the proper visibility and format.
+    getBarrierManager()->flushAllBarriers();
 
 	uint32_t cmdBufferIndex = 1;
 	auto vulkanResource = graph.resourceBegin();

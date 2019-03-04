@@ -56,6 +56,16 @@ public:
     const vk::ImageView&   getCurrentImageView() const
                     { return mImageView; }
 
+
+    void setContents(const void* data,
+                     const uint32_t xsize,
+                    const uint32_t ysize,
+                    const uint32_t zsize,
+                    const int32_t offsetx = 0,
+                    const int32_t offsety = 0,
+                    const int32_t offsetz = 0);
+
+
     uint32_t        numberOfMips() const { return mNumberOfMips; }
     void            generateMips(const uint32_t);
 
