@@ -28,6 +28,9 @@ public:
 
     const vk::ShaderModule&           getShaderModule() const;
 
+    const std::string& getFilePath() const
+        { return mFilePath; }
+
 private:
 
     EShLanguage getShaderStage(const std::string&) const;

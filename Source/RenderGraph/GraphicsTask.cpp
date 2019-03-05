@@ -47,3 +47,32 @@ void GraphicsTask::recordCommands(vk::CommandBuffer CmdBuffer) const
         }
     }
 }
+
+
+namespace std
+{
+
+    size_t hash<GraphicsPipelineDescription>::operator()(const GraphicsPipelineDescription& desc) const noexcept
+    {
+        std::hash<std::string> stringHasher{};
+
+        size_t hash = 0;
+        hash ^= stringHasher(desc.mVertexShader.getFilePath());
+
+        if(desc.mGeometryShader)
+            hash ^= stringHasher((desc.mGeometryShader->getFilePath()));
+
+        if(desc.mHullShader)
+            hash ^= stringHasher((desc.mHullShader->getFilePath()));
+
+        if(desc.mTesselationControlShader)
+            hash ^= stringHasher((desc.mTesselationControlShader->getFilePath()));
+
+        hash ^= stringHasher(desc.mFragmentShader.getFilePath());
+
+
+        return hash;
+    }
+
+}
+
