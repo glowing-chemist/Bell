@@ -666,13 +666,18 @@ void RenderDevice::execute(RenderGraph& graph)
 	auto vulkanResource = graph.resourceBegin();
 	for (auto task = graph.taskBegin(); task != graph.taskEnd(); ++task, ++vulkanResource)
 	{
+        const auto& resources = *vulkanResource;
+
+        vk::CommandBufferInheritanceInfo secondaryInherit{};
+        secondaryInherit.setRenderPass(*resources.mRenderPass);
+        secondaryInherit.setFramebuffer(*resources.mFrameBuffer);
+
 		vk::CommandBufferBeginInfo secondaryBegin{};
 		secondaryBegin.setFlags(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
+        secondaryBegin.setPInheritanceInfo(&secondaryInherit);
 
 		vk::CommandBuffer secondaryCmdBuffer = currentCommandPool->getBufferForQueue(QueueType::Graphics, cmdBufferIndex);
 		secondaryCmdBuffer.begin(secondaryBegin);
-		
-		const auto& resources = *vulkanResource;
 		
 		vk::PipelineBindPoint bindPoint = vk::PipelineBindPoint::eCompute;
 
@@ -688,7 +693,7 @@ void RenderDevice::execute(RenderGraph& graph)
 			passBegin.setFramebuffer(*resources.mFrameBuffer);
 			passBegin.setRenderArea(renderArea);
 
-			secondaryCmdBuffer.beginRenderPass(passBegin, vk::SubpassContents::eInline);
+            primaryCmdBuffer.beginRenderPass(passBegin, vk::SubpassContents::eSecondaryCommandBuffers);
 
 			bindPoint = vk::PipelineBindPoint::eGraphics;
 		}
@@ -700,8 +705,8 @@ void RenderDevice::execute(RenderGraph& graph)
 
 		(*task).recordCommands(secondaryCmdBuffer);
 
-		secondaryCmdBuffer.endRenderPass();
-		secondaryCmdBuffer.end();
+        secondaryCmdBuffer.end();
+        primaryCmdBuffer.endRenderPass();
 
 		primaryCmdBuffer.executeCommands(secondaryCmdBuffer);
 
