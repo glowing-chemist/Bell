@@ -21,7 +21,7 @@ if(WIN32)
     set(glslangIncludeDirs "C:\\Program Files (x86)\\glslang\\include" )
 	set(glslangLibs "C:\\Program Files (x86)\\glslang\\lib\\glslang.lib")
 else()
-    set(glslangLibs /usr/lib/libglslang.so /usr/lib/libglslang-default-resource-limits.so)
+    set(glslangLibs /usr/lib/libglslang.so /usr/lib/libglslang-default-resource-limits.so  /usr/lib/libSPIRV.so)
 endif(WIN32)
 
 include_directories(
@@ -54,4 +54,4 @@ set(SOURCE
 	)
 
 add_library(${PROJECT_NAME} ${SOURCE})
-target_link_libraries(${PROJECT_NAME} ${Vulkan_LIBRARIES} glfw3 ${glslangLibs})
+target_link_libraries(${PROJECT_NAME} ${Vulkan_LIBRARIES} glfw stdc++fs ${glslangLibs})
