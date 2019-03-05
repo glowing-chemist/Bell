@@ -1,6 +1,7 @@
 #include "Core/Shader.hpp"
 #include "Core/RenderDevice.hpp"
 
+#include <filesystem>
 #include <fstream>
 #include <iterator>
 

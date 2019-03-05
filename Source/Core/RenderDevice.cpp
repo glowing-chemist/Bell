@@ -370,7 +370,7 @@ vk::PipelineRasterizationStateCreateInfo RenderDevice::generateRasterizationInfo
 }
 
 
-std::vector<vk::PipelineShaderStageCreateInfo> generateShaderStagesInfo(const GraphicsTask& task)
+std::vector<vk::PipelineShaderStageCreateInfo> RenderDevice::generateShaderStagesInfo(const GraphicsTask& task)
 {
     const GraphicsPipelineDescription pipelineDesc = task.getPipelineDescription();
 
@@ -466,7 +466,7 @@ vk::DescriptorSetLayout RenderDevice::generateDescriptorSetLayout(const RenderTa
 }
 
 
-std::pair<vk::VertexInputBindingDescription, std::vector<vk::VertexInputAttributeDescription>> generateVertexInput(const GraphicsTask& task)
+std::pair<vk::VertexInputBindingDescription, std::vector<vk::VertexInputAttributeDescription>> RenderDevice::generateVertexInput(const GraphicsTask& task)
 {
     const int vertexInputs = task.getVertexAttributes();
 
