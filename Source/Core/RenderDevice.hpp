@@ -48,6 +48,7 @@ class RenderDevice
 {
 public:
     RenderDevice(vk::PhysicalDevice, vk::Device, vk::SurfaceKHR, GLFWwindow*);
+    ~RenderDevice();
 
     vk::PhysicalDeviceLimits           getLimits() const { return mLimits; }
 
@@ -199,7 +200,7 @@ private:
 	std::unordered_map<ComputePipelineDescription, std::pair<vk::Pipeline, vk::PipelineLayout>> mComputePipelineCache;
 
     SwapChain mSwapChain;
-	std::vector<CommandPool> mCommandPools;
+    std::vector<CommandPool> mCommandPools;
     MemoryManager mMemoryManager;
     DescriptorManager mDescriptorManager;
     BarrierManager mBarrierManager;

@@ -7,7 +7,7 @@
 CommandPool::CommandPool(RenderDevice* renderDevice) :
 	DeviceChild{renderDevice}
 {
-	std::array<vk::CommandPoolCreateInfo, 3> poolCreateInfos;
+    std::array<vk::CommandPoolCreateInfo, 3> poolCreateInfos{};
 	uint8_t queueFamiltTypeIndex = 0;
 	for (auto& createInfo : poolCreateInfos)
 	{
@@ -18,14 +18,18 @@ CommandPool::CommandPool(RenderDevice* renderDevice) :
 	mGraphicsPool = getDevice()->createCommandPool(poolCreateInfos[0]);
 	mComputePool  = getDevice()->createCommandPool(poolCreateInfos[1]);
 	mTransferPool = getDevice()->createCommandPool(poolCreateInfos[2]);
+
+    reset();
 }
 
 
 CommandPool::~CommandPool()
 {
+    reset();
+
 	getDevice()->destroyCommandPool(mGraphicsPool);
-	getDevice()->destroyCommandPool(mComputePool);
-	getDevice()->destroyCommandPool(mTransferPool);
+    getDevice()->destroyCommandPool(mComputePool);
+    getDevice()->destroyCommandPool(mTransferPool);
 }
 
 
@@ -109,7 +113,7 @@ std::vector<vk::CommandBuffer> CommandPool::allocateCommandBuffers(const uint32_
 
 const vk::CommandPool& CommandPool::getCommandPool(const QueueType queueType) const
 {
-    const auto& bufferPool = [this, queueType]()
+    const auto& bufferPool = [this, queueType]() -> const vk::CommandPool&
     {
         switch (queueType)
         {

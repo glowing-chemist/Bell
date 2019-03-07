@@ -22,10 +22,33 @@ RenderDevice::RenderDevice(vk::PhysicalDevice physDev, vk::Device dev, vk::Surfa
     mLimits = mPhysicalDevice.getProperties().limits;
 
 	// Create a command pool for each frame.
+    mCommandPools.reserve(mSwapChain.getNumberOfSwapChainImages());
 	for (uint32_t i = 0; i < mSwapChain.getNumberOfSwapChainImages(); ++i)
 	{
-		mCommandPools.push_back(CommandPool{ this });
+        mCommandPools.emplace_back(this);
 	}
+}
+
+
+RenderDevice::~RenderDevice()
+{
+    mDevice.waitIdle();
+
+    // We can ignore lastUsed as we have just waited till all work has finished.
+    for(auto& [lastUsed, handle, memory] : mImagesPendingDestruction)
+    {
+        mDevice.destroyImage(handle);
+        mMemoryManager.Free(memory);
+    }
+
+    for(auto& [lastUsed, handle, memory] : mBuffersPendingDestruction)
+    {
+        mDevice.destroyBuffer(handle);
+        mMemoryManager.Free(memory);
+    }
+
+    mSwapChain.destroy(mDevice);
+    mMemoryManager.Destroy();
 }
 
 
