@@ -2,6 +2,7 @@
 #include "RenderInstance.hpp"
 #include <vulkan/vulkan.hpp>
 
+#include <limits>
 
 RenderDevice::RenderDevice(vk::PhysicalDevice physDev, vk::Device dev, vk::SurfaceKHR surface, GLFWwindow* window) :
     mCurrentSubmission{0},
@@ -27,6 +28,15 @@ RenderDevice::RenderDevice(vk::PhysicalDevice physDev, vk::Device dev, vk::Surfa
 	{
         mCommandPools.emplace_back(this);
 	}
+
+    mFrameFinished.reserve(mSwapChain.getNumberOfSwapChainImages());
+    for (uint32_t i = 0; i < mSwapChain.getNumberOfSwapChainImages(); ++i)
+    {
+        mFrameFinished.push_back(createFence(true));
+    }
+
+    vk::SemaphoreCreateInfo semInfo{};
+    mImageAquired = mDevice.createSemaphore(semInfo);
 }
 
 
@@ -671,9 +681,21 @@ void RenderDevice::generateDescriptorSets(RenderGraph & graph)
 }
 
 
+vk::Fence RenderDevice::createFence(const bool signaled)
+{
+    vk::FenceCreateInfo info{};
+    info.setFlags(signaled ? vk::FenceCreateFlagBits::eSignaled : static_cast<vk::FenceCreateFlags>(0));
+
+    return mDevice.createFence(info);
+}
+
+
 void RenderDevice::execute(RenderGraph& graph)
 {
+    frameSyncSetup();
+
 	CommandPool* currentCommandPool = getCurrentCommandPool();
+    currentCommandPool->reset();
 	currentCommandPool->reserve(graph.taskCount() + 1, QueueType::Graphics); // +1 for the primary cmd buffer all the secondaries will be recorded in to.
 
 	vk::CommandBufferBeginInfo primaryBegin{};
@@ -737,6 +759,41 @@ void RenderDevice::execute(RenderGraph& graph)
 	}
 
 	primaryCmdBuffer.end();
+
+    submitFrame();
+    swap();
+}
+
+
+void RenderDevice::submitFrame()
+{
+    vk::SubmitInfo submitInfo{};
+    submitInfo.setCommandBufferCount(1);
+    submitInfo.setPCommandBuffers(&getCurrentCommandPool()->getBufferForQueue(QueueType::Graphics));
+    submitInfo.setWaitSemaphoreCount(1);
+    submitInfo.setPWaitSemaphores(&mImageAquired);
+    submitInfo.setPSignalSemaphores(&mImageRendered);
+    submitInfo.setSignalSemaphoreCount(1);
+    auto const waitStage = vk::PipelineStageFlags(vk::PipelineStageFlagBits::eTransfer);
+    submitInfo.setPWaitDstStageMask(&waitStage);
+
+    mGraphicsQueue.submit(submitInfo, mFrameFinished[getCurrentFrameIndex()]);
+}
+
+
+void RenderDevice::swap()
+{
+    mSwapChain.present(mGraphicsQueue, mImageRendered);
+}
+
+
+void RenderDevice::frameSyncSetup()
+{
+    // wait for the previous frame using this swapchain image to be finished.
+    auto& fence = mFrameFinished[getCurrentFrameIndex()];
+    mDevice.waitForFences(1, &fence, true, std::numeric_limits<uint64_t>::max());
+
+    mSwapChain.getNextImageIndex(mDevice, mImageAquired);
 }
 
 

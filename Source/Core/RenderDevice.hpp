@@ -158,6 +158,12 @@ private:
     void                                                        generateDescriptorSets(RenderGraph&);
     void                                                        generateFrameBuffers(RenderGraph&);
 
+    void frameSyncSetup();
+    void submitFrame();
+    void swap();
+
+    vk::Fence                          createFence(const bool signaled);
+
     void                               destroyImage(vk::Image& image)
                                             { mDevice.destroyImage(image); }
 
@@ -193,6 +199,10 @@ private:
     vk::Queue mComputeQueue;
     vk::Queue mTransferQueue;
 	QueueIndicies mQueueFamilyIndicies;
+
+    std::vector<vk::Fence> mFrameFinished;
+    vk::Semaphore          mImageAquired;
+    vk::Semaphore          mImageRendered;
 
     vk::PhysicalDeviceLimits mLimits;
 
