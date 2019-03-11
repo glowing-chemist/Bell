@@ -2,10 +2,14 @@
 #include "RenderDevice.hpp"
 
 #include <array>
+#include <functional>
 #include <tuple>
 
 CommandPool::CommandPool(RenderDevice* renderDevice) :
-	DeviceChild{renderDevice}
+    DeviceChild{renderDevice},
+    mGraphicsBuffers{},
+    mComputeBuffers{},
+    mTransferBuffers{}
 {
     std::array<vk::CommandPoolCreateInfo, 3> poolCreateInfos{};
 	uint8_t queueFamiltTypeIndex = 0;
