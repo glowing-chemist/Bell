@@ -47,7 +47,9 @@ bool Shader::compile()
     // Make sure the compiler process has been initialised.
     if(!mGLSLangInitialised)
     {
-        glslang::InitializeProcess();
+        const bool success = glslang::InitializeProcess();
+        if(!success)
+            return success;
         mGLSLangInitialised = true;
     }
 
