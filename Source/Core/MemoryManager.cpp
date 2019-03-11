@@ -308,7 +308,7 @@ void MemoryManager::BindImage(vk::Image &image, Allocation alloc) {
 void* MemoryManager::MapAllocation(Allocation alloc) {
 	std::vector<vk::DeviceMemory> pools = alloc.hostMappable ? hostMappableMemoryBackers : deviceMemoryBackers;
 
-    return getDevice()->mapMemory(pools[alloc.pool], alloc.offset, alloc.size);
+    return getDevice()->mapMemory(pools[alloc.pool], alloc.size, alloc.offset);
 }
 
 
