@@ -59,7 +59,9 @@ vk::Extent2D SwapChain::chooseSwapExtent(const vk::SurfaceCapabilitiesKHR&, GLFW
     return vk::Extent2D{static_cast<uint32_t>(width), static_cast<uint32_t>(height)};
 }
 
-SwapChain::SwapChain(vk::Device& Device, vk::PhysicalDevice physDevice, vk::SurfaceKHR windowSurface, GLFWwindow* window) {
+SwapChain::SwapChain(vk::Device& Device, vk::PhysicalDevice physDevice, vk::SurfaceKHR windowSurface, GLFWwindow* window) :
+ mCurrentImageIndex{0}
+{
     SwapChainSupportDetails swapDetails = querySwapchainSupport(physDevice, windowSurface);
     vk::SurfaceFormatKHR swapFormat = chooseSurfaceFormat(swapDetails.formats);
     vk::PresentModeKHR presMode = choosePresentMode(swapDetails.presentModes);
