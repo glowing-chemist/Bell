@@ -66,7 +66,7 @@ RenderInstance::RenderInstance(GLFWwindow* window)
     vk::ApplicationInfo appInfo{};
     appInfo.setPApplicationName("Quango");
     appInfo.setApiVersion(VK_MAKE_VERSION(0, 1, 0));
-    appInfo.setPEngineName("VK");
+    appInfo.setPEngineName("Bell");
     appInfo.setEngineVersion(VK_MAKE_VERSION(0, 1, 0));
     appInfo.setApiVersion(VK_API_VERSION_1_0);
 
