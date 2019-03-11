@@ -136,7 +136,7 @@ public:
     uint64_t						   getCurrentSubmissionIndex() const { return mCurrentSubmission; }
 	uint64_t						   getCurrentFrameIndex() const { return mSwapChain.getCurrentImageIndex(); }
 
-	void							   executeGraph(const RenderGraph&);
+    void                               flushWait() const { mDevice.waitIdle(); }
 
 private:
 
