@@ -13,13 +13,13 @@ Image::Image(RenderDevice* dev,
     mFormat{format},
 	mLayout{vk::ImageLayout::eUndefined},
     mUsage{usage},
-    mNumberOfMips{0},
+    mNumberOfMips{1},
     mExtent{x, y, z},
     mDebugName{debugName}
 {
     if(x != 0 && y == 0 && z == 0) mType = vk::ImageType::e1D;
-    if(x != 0 && y != 0 && z == 0) mType = vk::ImageType::e2D;
-    if(x != 0 && y != 0 && z != 0) mType = vk::ImageType::e3D;
+    if(x != 0 && y != 0 && z == 1) mType = vk::ImageType::e2D;
+    if(x != 0 && y != 0 && z >  1) mType = vk::ImageType::e3D;
 
     mImage = getDevice()->createImage(format, usage, mType, x, y, z);
     vk::MemoryRequirements imageRequirements = getDevice()->getMemoryRequirements(mImage);
