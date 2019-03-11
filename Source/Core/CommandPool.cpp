@@ -35,20 +35,9 @@ CommandPool::~CommandPool()
 
 vk::CommandBuffer& CommandPool::getBufferForQueue(const QueueType queueType, const uint32_t index)
 {
-    auto [bufferPool, commandPool] = [this, queueType]()
-	{
-		switch (queueType)
-		{
-		case QueueType::Graphics:
-            return std::make_pair<std::vector<vk::CommandBuffer>&, vk::CommandPool&>(mGraphicsBuffers, mGraphicsPool);
-		case QueueType::Compute:
-            return std::make_pair<std::vector<vk::CommandBuffer>&, vk::CommandPool&>(mComputeBuffers, mComputePool);
-		case QueueType::Transfer:
-            return std::make_pair<std::vector<vk::CommandBuffer>&, vk::CommandPool&>(mTransferBuffers, mTransferPool);
-		}
-	}();
+    auto& bufferPool = getCommandBuffers(queueType);
 
-	if (bufferPool.size() > (index + 1))
+    if (bufferPool.size() < (index + 1))
 	{
         uint32_t needed_buffers = (index + 1) - bufferPool.size();
         const auto newBuffers = allocateCommandBuffers(needed_buffers, queueType, index ==0);
