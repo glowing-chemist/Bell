@@ -50,8 +50,8 @@ public:
     void bindVertexBuffer(const Buffer&);
     void bindIndexBuffer(const Buffer&);
 
-	Buffer& getVertexBuffer() { return mVertexBuffer; }
-	Buffer& getIndexBuffer() { return mIndexBuffer; }
+    std::optional<Buffer>& getVertexBuffer() { return mVertexBuffer; }
+    std::optional<Buffer>& getIndexBuffer() { return mIndexBuffer; }
 
 	RenderTask& getTask(TaskType, uint32_t);
 	const RenderTask& getTask(TaskType, uint32_t) const;
@@ -113,8 +113,8 @@ private:
     std::vector<GraphicsTask> mGraphicsTasks;
     std::vector<ComputeTask>  mComputeTask;
 
-    Buffer mVertexBuffer;
-    Buffer mIndexBuffer;
+    std::optional<Buffer> mVertexBuffer;
+    std::optional<Buffer> mIndexBuffer;
 
     std::vector<std::pair<TaskType, uint32_t>> mTaskOrder;
     std::vector<vulkanResources> mVulkanResources;

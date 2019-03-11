@@ -721,9 +721,13 @@ void RenderDevice::execute(RenderGraph& graph)
 			bindPoint = vk::PipelineBindPoint::eGraphics;
 		}
 
-		secondaryCmdBuffer.bindVertexBuffers(0, { graph.getVertexBuffer().getBuffer() }, {});
-		secondaryCmdBuffer.bindIndexBuffer(graph.getIndexBuffer().getBuffer(), 0, vk::IndexType::eUint32);
-		secondaryCmdBuffer.bindDescriptorSets(bindPoint, resources.mPipelineLayout, 0, 1,  &resources.mDescSet, 0, nullptr);
+        if(graph.getIndexBuffer())
+        {
+            secondaryCmdBuffer.bindVertexBuffers(0, { graph.getVertexBuffer()->getBuffer() }, {});
+            secondaryCmdBuffer.bindIndexBuffer(graph.getIndexBuffer()->getBuffer(), 0, vk::IndexType::eUint32);
+        }
+
+        secondaryCmdBuffer.bindDescriptorSets(bindPoint, resources.mPipelineLayout, 0, 1,  &resources.mDescSet, 0, nullptr);
 		secondaryCmdBuffer.bindPipeline(bindPoint, resources.mPipeline);
 
 		(*task).recordCommands(secondaryCmdBuffer);
