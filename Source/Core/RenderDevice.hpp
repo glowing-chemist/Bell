@@ -73,40 +73,40 @@ public:
 
     void                               destroyBuffer(Buffer& buffer) { mBuffersPendingDestruction.push_back({buffer.getLastAccessed(), buffer.getBuffer(), buffer.getMemory()}); }
 
-	vk::CommandPool					   createCommandPool(vk::CommandPoolCreateInfo& info)
+    vk::CommandPool					   createCommandPool(const vk::CommandPoolCreateInfo& info)
 											{ return mDevice.createCommandPool(info); }
 
 	void							   destroyCommandPool(vk::CommandPool& pool)
 											{ mDevice.destroyCommandPool(pool); }
 
-	std::vector<vk::CommandBuffer>	   allocateCommandBuffers(vk::CommandBufferAllocateInfo& info)
+    std::vector<vk::CommandBuffer>	   allocateCommandBuffers(const vk::CommandBufferAllocateInfo& info)
 											{ return mDevice.allocateCommandBuffers(info); }
 
 	void							   resetCommandPool(vk::CommandPool& pool)
 											{ mDevice.resetCommandPool(pool, vk::CommandPoolResetFlags{}); }
 
-    vk::ShaderModule                   createShaderModule(vk::ShaderModuleCreateInfo& info)
+    vk::ShaderModule                   createShaderModule(const vk::ShaderModuleCreateInfo& info)
                                             { return mDevice.createShaderModule(info); }
 
     void                               destroyShaderModule(vk::ShaderModule module)
                                             { mDevice.destroyShaderModule(module); }
 
-    vk::DescriptorPool                 createDescriptorPool(vk::DescriptorPoolCreateInfo& info)
+    vk::DescriptorPool                 createDescriptorPool(const vk::DescriptorPoolCreateInfo& info)
                                             { return mDevice.createDescriptorPool(info); }
 
     void                               destroyDescriptorPool(vk::DescriptorPool& pool)
                                             { mDevice.destroyDescriptorPool(pool); }
 
-    std::vector<vk::DescriptorSet>     allocateDescriptorSet(vk::DescriptorSetAllocateInfo& info)
+    std::vector<vk::DescriptorSet>     allocateDescriptorSet(const vk::DescriptorSetAllocateInfo& info)
                                             { return mDevice.allocateDescriptorSets(info); }
 
     void                               writeDescriptorSets(std::vector<vk::WriteDescriptorSet>& writes)
                                             { mDevice.updateDescriptorSets(writes, {}); }
 
-    vk::Sampler                        createSampler(vk::SamplerCreateInfo& info)
+    vk::Sampler                        createSampler(const vk::SamplerCreateInfo& info)
                                             { return mDevice.createSampler(info); }
 
-    vk::SwapchainKHR                   createSwapchain(vk::SwapchainCreateInfoKHR& info)
+    vk::SwapchainKHR                   createSwapchain(const vk::SwapchainCreateInfoKHR& info)
                                             { return mDevice.createSwapchainKHR(info); }
 
     void                               destroySwapchain(vk::SwapchainKHR& swap)
