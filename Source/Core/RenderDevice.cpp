@@ -9,7 +9,7 @@ RenderDevice::RenderDevice(vk::PhysicalDevice physDev, vk::Device dev, vk::Surfa
     mFinishedSubmission{0},
     mDevice{dev},
     mPhysicalDevice{physDev},
-    mSwapChain{mDevice, mPhysicalDevice, surface, window},
+    mSwapChain{this, surface, window},
     mMemoryManager{this},
     mDescriptorManager{this},
     mBarrierManager{this}
@@ -58,7 +58,7 @@ RenderDevice::~RenderDevice()
         mMemoryManager.Free(memory);
     }
 
-    mSwapChain.destroy(mDevice);
+    mSwapChain.destroy();
     mMemoryManager.Destroy();
 }
 
@@ -842,7 +842,7 @@ void RenderDevice::frameSyncSetup()
     mDevice.waitForFences(1, &fence, true, std::numeric_limits<uint64_t>::max());
     mDevice.resetFences(1, &fence);
 
-    mSwapChain.getNextImageIndex(mDevice, mImageAquired);
+    mSwapChain.getNextImageIndex(mImageAquired);
 }
 
 

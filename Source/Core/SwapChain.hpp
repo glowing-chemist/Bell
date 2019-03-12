@@ -1,6 +1,8 @@
 #ifndef SWAPCHAIN_HPP
 #define SWAPCHAIN_HPP
 
+#include "DeviceChild.hpp"
+
 #include <vulkan/vulkan.hpp>
 #include <GLFW/glfw3.h>
 
@@ -14,11 +16,12 @@ struct SwapChainSupportDetails { // represent swapchain capabilities
 };
 
 
-class SwapChain {
+class SwapChain : public DeviceChild
+{
 public:
-    SwapChain(vk::Device& Device, vk::PhysicalDevice physDevice, vk::SurfaceKHR windowSurface, GLFWwindow* window);
+    SwapChain(RenderDevice* Device, vk::SurfaceKHR windowSurface, GLFWwindow* window);
 
-    void destroy(vk::Device&);
+    void destroy();
 
     vk::Format getSwapChainImageFormat() const;
 
@@ -30,7 +33,7 @@ public:
     const vk::ImageView& getImageView(const size_t) const;
     vk::Image& getImage(const size_t);
 
-	uint32_t getNextImageIndex(vk::Device&, vk::Semaphore&);
+    uint32_t getNextImageIndex(vk::Semaphore&);
 	uint32_t getCurrentImageIndex() const { return mCurrentImageIndex; };
 
 	void present(vk::Queue&, vk::Semaphore&);
@@ -39,14 +42,14 @@ private:
     SwapChainSupportDetails querySwapchainSupport(vk::PhysicalDevice, vk::SurfaceKHR);
     vk::Extent2D chooseSwapExtent(const vk::SurfaceCapabilitiesKHR&, GLFWwindow*);
 
-    void createSwapChainImageViews(vk::Device&);
+    void createSwapChainImageViews();
 
 	uint32_t mCurrentImageIndex;
-    vk::SwapchainKHR swapChain;
-    std::vector<vk::Image> swapChainImages;
-    std::vector<vk::ImageView> swapChainImageViews;
-    vk::Extent2D swapChainExtent;
-    vk::Format swapChainFormat;
+    vk::SwapchainKHR mSwapChain;
+    std::vector<vk::Image> mSwapChainImages;
+    std::vector<vk::ImageView> mSwapChainImageViews;
+    vk::Extent2D mSwapChainExtent;
+    vk::Format mSwapChainFormat;
 };
 
 #endif

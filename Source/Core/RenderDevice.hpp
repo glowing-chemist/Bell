@@ -106,6 +106,21 @@ public:
     vk::Sampler                        createSampler(vk::SamplerCreateInfo& info)
                                             { return mDevice.createSampler(info); }
 
+    vk::SwapchainKHR                   createSwapchain(vk::SwapchainCreateInfoKHR& info)
+                                            { return mDevice.createSwapchainKHR(info); }
+
+    void                               destroySwapchain(vk::SwapchainKHR& swap)
+                                            { mDevice.destroySwapchainKHR(swap); }
+
+    std::vector<vk::Image>             getSwapchainImages(vk::SwapchainKHR& swap)
+                                            { return mDevice.getSwapchainImagesKHR(swap); }
+
+    void                               aquireNextSwapchainImage(vk::SwapchainKHR& swap,
+                                                                uint64_t timout,
+                                                                vk::Semaphore semaphore,
+                                                                uint32_t& imageIndex)
+                                            { mDevice.acquireNextImageKHR(swap, timout, semaphore, nullptr, &imageIndex); }
+
     GraphicsPipelineHandles            createPipelineHandles(const GraphicsTask&);
     ComputePipelineHandles             createPipelineHandles(const ComputeTask&);
 
@@ -114,6 +129,7 @@ public:
     MemoryManager*                     getMemoryManager() { return &mMemoryManager; }
 	CommandPool*					   getCurrentCommandPool() { return &mCommandPools[getCurrentFrameIndex()]; }
     BarrierManager*                    getBarrierManager() { return &mBarrierManager; }
+    vk::PhysicalDevice*                getPhysicalDevice() { return &mPhysicalDevice; }
 
     // Memory management functions
     vk::MemoryRequirements             getMemoryRequirements(vk::Image image)

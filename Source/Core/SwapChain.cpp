@@ -19,17 +19,17 @@ vk::SurfaceFormatKHR chooseSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>
 }
 
 unsigned int SwapChain::getSwapChainImageWidth() const {
-    return swapChainExtent.width;
+    return mSwapChainExtent.width;
 }
 
 
 unsigned int SwapChain::getSwapChainImageHeight() const {
-    return swapChainExtent.height;
+    return mSwapChainExtent.height;
 }
 
 
 unsigned int SwapChain::getNumberOfSwapChainImages() const {
-    return swapChainImages.size();
+    return mSwapChainImages.size();
 }
 
 
@@ -59,10 +59,11 @@ vk::Extent2D SwapChain::chooseSwapExtent(const vk::SurfaceCapabilitiesKHR&, GLFW
     return vk::Extent2D{static_cast<uint32_t>(width), static_cast<uint32_t>(height)};
 }
 
-SwapChain::SwapChain(vk::Device& Device, vk::PhysicalDevice physDevice, vk::SurfaceKHR windowSurface, GLFWwindow* window) :
- mCurrentImageIndex{0}
+SwapChain::SwapChain(RenderDevice* Device, vk::SurfaceKHR windowSurface, GLFWwindow* window) :
+    DeviceChild{Device},
+    mCurrentImageIndex{0}
 {
-    SwapChainSupportDetails swapDetails = querySwapchainSupport(physDevice, windowSurface);
+    SwapChainSupportDetails swapDetails = querySwapchainSupport(*getDevice()->getPhysicalDevice(), windowSurface);
     vk::SurfaceFormatKHR swapFormat = chooseSurfaceFormat(swapDetails.formats);
     vk::PresentModeKHR presMode = choosePresentMode(swapDetails.presentModes);
     vk::Extent2D swapExtent = chooseSwapExtent(swapDetails.capabilities, window);
@@ -89,59 +90,59 @@ SwapChain::SwapChain(vk::Device& Device, vk::PhysicalDevice physDevice, vk::Surf
     info.setPresentMode(presMode);
     info.setClipped(true);
 
-    swapChain = Device.createSwapchainKHR(info);
+    mSwapChain = getDevice()->createSwapchain(info);
 
-    swapChainImages = Device.getSwapchainImagesKHR(swapChain);
+    mSwapChainImages = getDevice()->getSwapchainImages(mSwapChain);
 
-    swapChainExtent = swapExtent;
-    swapChainFormat = swapFormat.format;
+    mSwapChainExtent = swapExtent;
+    mSwapChainFormat = swapFormat.format;
 
-    createSwapChainImageViews(Device);
+    createSwapChainImageViews();
 }
 
 
-void SwapChain::destroy(vk::Device& dev) {
-    for(auto& imageView : swapChainImageViews) {
-        dev.destroyImageView(imageView);
+void SwapChain::destroy() {
+    for(auto& imageView : mSwapChainImageViews) {
+        getDevice()->destroyImageView(imageView);
     }
-    dev.destroySwapchainKHR(swapChain);
+    getDevice()->destroySwapchain(mSwapChain);
 }
 
 
 vk::Format SwapChain::getSwapChainImageFormat() const {
-    return swapChainFormat;
+    return mSwapChainFormat;
 }
 
 
-void SwapChain::createSwapChainImageViews(vk::Device &Device) {
-    swapChainImageViews.resize(swapChainImages.size());
-    for(size_t i = 0; i < swapChainImages.size(); i++) {
+void SwapChain::createSwapChainImageViews() {
+    mSwapChainImageViews.resize(mSwapChainImages.size());
+    for(size_t i = 0; i < mSwapChainImages.size(); i++) {
         vk::ImageViewCreateInfo info{};
-        info.setImage(swapChainImages[i]);
+        info.setImage(mSwapChainImages[i]);
         info.setViewType(vk::ImageViewType::e2D);
-        info.setFormat(swapChainFormat);
+        info.setFormat(mSwapChainFormat);
 
         info.setComponents(vk::ComponentMapping()); // set swizzle components to identity
         info.setSubresourceRange(vk::ImageSubresourceRange{vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1});
 
-        swapChainImageViews[i] = Device.createImageView(info);
+        mSwapChainImageViews[i] = getDevice()->createImageView(info);
     }
-    std::cerr << "created " << swapChainImageViews.size() << " image views" << std::endl;
+    std::cerr << "created " << mSwapChainImageViews.size() << " image views" << std::endl;
 }
 
 
 const vk::ImageView& SwapChain::getImageView(const size_t index) const {
-    return swapChainImageViews[index];
+    return mSwapChainImageViews[index];
 }
 
 
 vk::Image& SwapChain::getImage(const size_t index) {
-    return swapChainImages[index];
+    return mSwapChainImages[index];
 }
 
 
-uint32_t SwapChain::getNextImageIndex(vk::Device& dev, vk::Semaphore& sem) {
-	dev.acquireNextImageKHR(swapChain, std::numeric_limits<uint64_t>::max(), sem, nullptr, &mCurrentImageIndex);
+uint32_t SwapChain::getNextImageIndex(vk::Semaphore& sem) {
+    getDevice()->aquireNextSwapchainImage(mSwapChain, std::numeric_limits<uint64_t>::max(), sem, mCurrentImageIndex);
 	
 	return mCurrentImageIndex;
 }
@@ -149,7 +150,7 @@ uint32_t SwapChain::getNextImageIndex(vk::Device& dev, vk::Semaphore& sem) {
 
 void SwapChain::present(vk::Queue& presentQueue, vk::Semaphore& waitSemaphore) {
 	vk::PresentInfoKHR info{};
-	info.setPSwapchains(&swapChain);
+    info.setPSwapchains(&mSwapChain);
 	info.setSwapchainCount(1);
 	info.setPWaitSemaphores(&waitSemaphore);
 	info.setWaitSemaphoreCount(1);
