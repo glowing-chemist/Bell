@@ -89,10 +89,10 @@ public:
         std::optional<std::vector<vk::VertexInputAttributeDescription>> mVertexAttributeDescription;
 
         std::optional<vk::Framebuffer> mFrameBuffer;
-        bool mFrameBufferNeedsUpdating;
+        bool mFrameBufferNeedsUpdating = true;
         vk::DescriptorSet mDescSet;
         bool mDescSetNeedsUpdating;
-
+        bool mDescriptorsWritten = false;
     };
 
 	struct ResourceBindingInfo

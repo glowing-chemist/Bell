@@ -37,6 +37,7 @@ RenderDevice::RenderDevice(vk::PhysicalDevice physDev, vk::Device dev, vk::Surfa
 
     vk::SemaphoreCreateInfo semInfo{};
     mImageAquired = mDevice.createSemaphore(semInfo);
+    mImageRendered = mDevice.createSemaphore(semInfo);
 }
 
 
@@ -249,6 +250,7 @@ vk::Pipeline RenderDevice::generatePipeline(const GraphicsTask& task,
     pipelineCreateInfo.setPTessellationState(nullptr); // We don't handle tesselation shaders yet
     pipelineCreateInfo.setPViewportState(&viewPortInfo);
     pipelineCreateInfo.setPRasterizationState(&rasterInfo);
+    pipelineCreateInfo.setPColorBlendState(&blendStateInfo);
     pipelineCreateInfo.setPMultisampleState(&multiSampInfo);
     pipelineCreateInfo.setPDepthStencilState(&depthStencilInfo);
     pipelineCreateInfo.setPDynamicState(nullptr);
@@ -285,7 +287,9 @@ vk::RenderPass	RenderDevice::generateRenderPass(const GraphicsTask& task)
     const auto& outputAttachments = task.getOuputAttachments();
 
     std::vector<vk::AttachmentDescription> attachmentDescriptions;
+    std::vector<vk::AttachmentReference> inputAttachmentsRefs{};
 
+    uint32_t inputAttachmentCounter = 0;
     for(const auto& [name, type] : inputAttachments)
     {
         // We only care about images here.
@@ -297,7 +301,7 @@ vk::RenderPass	RenderDevice::generateRenderPass(const GraphicsTask& task)
         vk::AttachmentDescription attachmentDesc{};
 
         // get the needed format
-        const std::pair<vk::Format, vk::ImageLayout> formatandLayout = [type, this]()
+        const auto [format, layout] = [type, this]()
         {
             switch(type)
             {
@@ -315,12 +319,14 @@ vk::RenderPass	RenderDevice::generateRenderPass(const GraphicsTask& task)
             }
         }();
 
-        attachmentDesc.setFormat(formatandLayout.first);
+        inputAttachmentsRefs.push_back({inputAttachmentCounter, layout});
+
+        attachmentDesc.setFormat(format);
 
         // eventually I will implment a render pass system that is aware of what comes beofer and after it
         // in order to avoid having to do manula barriers for all transitions.
-        attachmentDesc.setInitialLayout((formatandLayout.second));
-        attachmentDesc.setFinalLayout(formatandLayout.second);
+        attachmentDesc.setInitialLayout((layout));
+        attachmentDesc.setFinalLayout(layout);
 
         attachmentDesc.setLoadOp(vk::AttachmentLoadOp::eLoad); // we are going to overwrite all pixles
         attachmentDesc.setStoreOp(vk::AttachmentStoreOp::eStore);
@@ -329,6 +335,12 @@ vk::RenderPass	RenderDevice::generateRenderPass(const GraphicsTask& task)
 
         attachmentDescriptions.push_back((attachmentDesc));
     }
+
+    // needed for subpass createInfo;
+    bool hasDepthAttachment = false;
+    std::vector<vk::AttachmentReference> outputAttachmentRefs{};
+    std::vector<vk::AttachmentReference> depthAttachmentRef{};
+    uint32_t outputAttatchmentCounter = 0;
 
     for(const auto& [name, type] : outputAttachments)
     {
@@ -336,22 +348,26 @@ vk::RenderPass	RenderDevice::generateRenderPass(const GraphicsTask& task)
         if(type == AttachmentType::DataBuffer ||
            type == AttachmentType::PushConstants ||
            type == AttachmentType::UniformBuffer)
+        {
+                ++outputAttatchmentCounter;
                 continue;
-
-        vk::AttachmentDescription attachmentDesc{};
-
+        }
         // get the needed format
-        const std::pair<vk::Format, vk::ImageLayout> formatandLayout = [type, this]()
+        const auto[format, layout] = [&, this]()
         {
             switch(type)
             {
                 case AttachmentType::RenderTarget1D:
                 case AttachmentType::RenderTarget2D:
                 case AttachmentType::RenderTarget3D:
+                    outputAttachmentRefs.push_back({outputAttatchmentCounter, vk::ImageLayout::eColorAttachmentOptimal});
                     return std::make_pair(vk::Format::eR8G8B8A8Srgb, vk::ImageLayout::eColorAttachmentOptimal);
                 case AttachmentType::Depth:
+                    hasDepthAttachment = true;
+                    depthAttachmentRef.push_back({outputAttatchmentCounter, vk::ImageLayout::eDepthStencilAttachmentOptimal});
                     return std::make_pair(vk::Format::eD32Sfloat, vk::ImageLayout::eDepthStencilAttachmentOptimal);
                 case AttachmentType::SwapChain:
+                    outputAttachmentRefs.push_back({outputAttatchmentCounter, vk::ImageLayout::eColorAttachmentOptimal});
                     return std::make_pair(this->getSwapChain()->getSwapChainImageFormat(),
                                           vk::ImageLayout::eColorAttachmentOptimal);
                 default:
@@ -359,12 +375,16 @@ vk::RenderPass	RenderDevice::generateRenderPass(const GraphicsTask& task)
             }
         }();
 
-        attachmentDesc.setFormat(formatandLayout.first);
+        vk::AttachmentDescription attachmentDesc{};
+        attachmentDesc.setFormat(format);
 
         // eventually I will implment a render pass system that is aware of what comes beofer and after it
         // in order to avoid having to do manula barriers for all transitions.
-        attachmentDesc.setInitialLayout((formatandLayout.second));
-        attachmentDesc.setFinalLayout(formatandLayout.second);
+        attachmentDesc.setInitialLayout((layout));
+        if(type == AttachmentType::SwapChain)
+            attachmentDesc.setFinalLayout(vk::ImageLayout::ePresentSrcKHR);
+        else
+            attachmentDesc.setFinalLayout(layout);
 
         attachmentDesc.setLoadOp(vk::AttachmentLoadOp::eLoad); // we are going to overwrite all pixles
         attachmentDesc.setStoreOp(vk::AttachmentStoreOp::eStore);
@@ -372,11 +392,26 @@ vk::RenderPass	RenderDevice::generateRenderPass(const GraphicsTask& task)
         attachmentDesc.setStencilStoreOp(vk::AttachmentStoreOp::eStore);
 
         attachmentDescriptions.push_back((attachmentDesc));
+
+        ++outputAttatchmentCounter;
+    }
+
+    vk::SubpassDescription subpassDesc{};
+    subpassDesc.setPipelineBindPoint(vk::PipelineBindPoint::eGraphics);
+    subpassDesc.setColorAttachmentCount(outputAttachmentRefs.size());
+    subpassDesc.setPColorAttachments(outputAttachmentRefs.data());
+    subpassDesc.setInputAttachmentCount(inputAttachmentsRefs.size());
+    subpassDesc.setPInputAttachments(inputAttachmentsRefs.data());
+    if(hasDepthAttachment)
+    {
+        subpassDesc.setPDepthStencilAttachment(depthAttachmentRef.data());
     }
 
     vk::RenderPassCreateInfo renderPassInfo{};
     renderPassInfo.setAttachmentCount(attachmentDescriptions.size());
     renderPassInfo.setPAttachments(attachmentDescriptions.data());
+    renderPassInfo.setSubpassCount(1);
+    renderPassInfo.setPSubpasses(&subpassDesc);
 
     return mDevice.createRenderPass(renderPassInfo);
 }
@@ -624,6 +659,8 @@ void RenderDevice::generateVulkanResources(RenderGraph& graph)
 		++task;
 		++resource;
     }
+    generateFrameBuffers(graph);
+    generateDescriptorSets(graph);
 }
 
 
@@ -635,7 +672,11 @@ void RenderDevice::generateFrameBuffers(RenderGraph& graph)
 	while(outputBindings != graph.outputBindingEnd())
     {
         if(!(*resource).mFrameBufferNeedsUpdating)
+        {
+            ++resource;
+            ++outputBindings;
             continue;
+        }
 
         std::vector<vk::ImageView> imageViews{};
         vk::Extent3D imageExtent;
@@ -661,6 +702,7 @@ void RenderDevice::generateFrameBuffers(RenderGraph& graph)
 
         vk::FramebufferCreateInfo info{};
         info.setRenderPass(*(*resource).mRenderPass);
+        info.setAttachmentCount(imageViews.size());
         info.setPAttachments(imageViews.data());
         info.setWidth(imageExtent.width);
         info.setHeight(imageExtent.height);
@@ -670,6 +712,7 @@ void RenderDevice::generateFrameBuffers(RenderGraph& graph)
 
 		++resource;
 		++outputBindings;
+        (*resource).mFrameBufferNeedsUpdating = false;
     }
 }
 
@@ -694,15 +737,13 @@ void RenderDevice::execute(RenderGraph& graph)
 {
     frameSyncSetup();
 
+    generateVulkanResources(graph);
+
 	CommandPool* currentCommandPool = getCurrentCommandPool();
     currentCommandPool->reset();
 	currentCommandPool->reserve(graph.taskCount() + 1, QueueType::Graphics); // +1 for the primary cmd buffer all the secondaries will be recorded in to.
 
-	vk::CommandBufferBeginInfo primaryBegin{};
-	primaryBegin.setFlags(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
-	
-	vk::CommandBuffer primaryCmdBuffer = currentCommandPool->getBufferForQueue(QueueType::Graphics);
-	primaryCmdBuffer.begin(primaryBegin);
+    vk::CommandBuffer primaryCmdBuffer = currentCommandPool->getBufferForQueue(QueueType::Graphics);
 
     // Make sure that all resources will have the proper visibility and format.
     getBarrierManager()->flushAllBarriers();
@@ -712,44 +753,47 @@ void RenderDevice::execute(RenderGraph& graph)
 	for (auto task = graph.taskBegin(); task != graph.taskEnd(); ++task, ++vulkanResource)
 	{
         const auto& resources = *vulkanResource;
+		
+		vk::PipelineBindPoint bindPoint = vk::PipelineBindPoint::eCompute;
+
+
+        if (resources.mRenderPass)
+        {
+            const auto& graphicsTask = static_cast<const GraphicsTask&>(*task);
+            const auto pipelineDesc = graphicsTask.getPipelineDescription();
+            vk::Rect2D renderArea{ {0, 0}, {pipelineDesc.mViewport.x, pipelineDesc.mViewport.y} };
+
+            vk::RenderPassBeginInfo passBegin{};
+            passBegin.setRenderPass(*resources.mRenderPass);
+            passBegin.setFramebuffer(*resources.mFrameBuffer);
+            passBegin.setRenderArea(renderArea);
+
+            primaryCmdBuffer.beginRenderPass(passBegin, vk::SubpassContents::eSecondaryCommandBuffers);
+
+            bindPoint = vk::PipelineBindPoint::eGraphics;
+        }
 
         vk::CommandBufferInheritanceInfo secondaryInherit{};
         secondaryInherit.setRenderPass(*resources.mRenderPass);
         secondaryInherit.setFramebuffer(*resources.mFrameBuffer);
 
-		vk::CommandBufferBeginInfo secondaryBegin{};
-		secondaryBegin.setFlags(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
+        vk::CommandBufferBeginInfo secondaryBegin{};
+        secondaryBegin.setFlags(vk::CommandBufferUsageFlagBits::eRenderPassContinue);
         secondaryBegin.setPInheritanceInfo(&secondaryInherit);
 
-		vk::CommandBuffer secondaryCmdBuffer = currentCommandPool->getBufferForQueue(QueueType::Graphics, cmdBufferIndex);
-		secondaryCmdBuffer.begin(secondaryBegin);
-		
-		vk::PipelineBindPoint bindPoint = vk::PipelineBindPoint::eCompute;
+        vk::CommandBuffer secondaryCmdBuffer = currentCommandPool->getBufferForQueue(QueueType::Graphics, cmdBufferIndex);
+        secondaryCmdBuffer.begin(secondaryBegin);
 
+        if(graph.getVertexBuffer())
+            secondaryCmdBuffer.bindVertexBuffers(0, { graph.getVertexBuffer()->getBuffer() }, {0});
 
-		if (resources.mRenderPass)
-		{
-			const auto& graphicsTask = static_cast<const GraphicsTask&>(*task);
-			const auto pipelineDesc = graphicsTask.getPipelineDescription();
-			vk::Rect2D renderArea{ {0, 0}, {pipelineDesc.mViewport.x, pipelineDesc.mViewport.y} };
-
-			vk::RenderPassBeginInfo passBegin{};
-			passBegin.setRenderPass(*resources.mRenderPass);
-			passBegin.setFramebuffer(*resources.mFrameBuffer);
-			passBegin.setRenderArea(renderArea);
-
-            primaryCmdBuffer.beginRenderPass(passBegin, vk::SubpassContents::eSecondaryCommandBuffers);
-
-			bindPoint = vk::PipelineBindPoint::eGraphics;
-		}
 
         if(graph.getIndexBuffer())
-        {
-            secondaryCmdBuffer.bindVertexBuffers(0, { graph.getVertexBuffer()->getBuffer() }, {});
             secondaryCmdBuffer.bindIndexBuffer(graph.getIndexBuffer()->getBuffer(), 0, vk::IndexType::eUint32);
-        }
 
-        secondaryCmdBuffer.bindDescriptorSets(bindPoint, resources.mPipelineLayout, 0, 1,  &resources.mDescSet, 0, nullptr);
+        // Don't bind descriptor sets is we have no input attachments.
+        if(resources.mDescriptorsWritten)
+            secondaryCmdBuffer.bindDescriptorSets(bindPoint, resources.mPipelineLayout, 0, 1,  &resources.mDescSet, 0, nullptr);
 		secondaryCmdBuffer.bindPipeline(bindPoint, resources.mPipeline);
 
 		(*task).recordCommands(secondaryCmdBuffer);
@@ -796,6 +840,7 @@ void RenderDevice::frameSyncSetup()
     // wait for the previous frame using this swapchain image to be finished.
     auto& fence = mFrameFinished[getCurrentFrameIndex()];
     mDevice.waitForFences(1, &fence, true, std::numeric_limits<uint64_t>::max());
+    mDevice.resetFences(1, &fence);
 
     mSwapChain.getNextImageIndex(mDevice, mImageAquired);
 }

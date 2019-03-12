@@ -13,6 +13,16 @@ void RenderGraph::addTask(const GraphicsTask& task)
     mVulkanResources.emplace_back();
     mInputResources.emplace_back();
     mOutputResources.emplace_back();
+
+    // This makes sure that the frameBuffer attahcment is registered properly.
+    auto& outputResources = mOutputResources.back();
+    for(const auto& resource : task.getOuputAttachments())
+    {
+        ResourceBindingInfo info{};
+        info.mName = resource.first;
+
+        outputResources.push_back(info);
+    }
 }
 
 
@@ -143,19 +153,19 @@ void RenderGraph::bindResource(const std::string& name, const uint32_t index, co
 }
 
 
-void RenderGraph::bindImage(const std::string& name, Image& buffer)
+void RenderGraph::bindImage(const std::string& name, Image& image)
 {
     const uint32_t currentImageIndex = mImages.size();
-    mImages.push_back({name, buffer});
+    mImages.push_back({name, image});
 
     bindResource(name, currentImageIndex, ResourceType::Image);
 }
 
 
-void RenderGraph::bindBuffer(const std::string& name , Buffer& image)
+void RenderGraph::bindBuffer(const std::string& name , Buffer& buffer)
 {
     const uint32_t currentBufferIndex = mBuffers.size();
-    mBuffers.push_back({name, image});
+    mBuffers.push_back({name, buffer});
 
     bindResource(name, currentBufferIndex, ResourceType::Buffer);
 }
@@ -275,13 +285,13 @@ BindingIterator<BindingIteratorType::Input> RenderGraph::inputBindingEnd()
 
 BindingIterator< BindingIteratorType::Output> RenderGraph::outputBindingBegin()
 {
-	return BindingIterator<BindingIteratorType::Output>{mInputResources, *this};
+    return BindingIterator<BindingIteratorType::Output>{mOutputResources, *this};
 }
 
 
 BindingIterator< BindingIteratorType::Output> RenderGraph::outputBindingEnd()
 {
-	return BindingIterator<BindingIteratorType::Output>{mInputResources, *this, mOutputResources.size()};
+    return BindingIterator<BindingIteratorType::Output>{mOutputResources, *this, mOutputResources.size()};
 }
 
 

@@ -44,9 +44,7 @@ vk::CommandBuffer& CommandPool::getBufferForQueue(const QueueType queueType, con
     if (bufferPool.size() < (index + 1))
 	{
         uint32_t needed_buffers = (index + 1) - bufferPool.size();
-        const auto newBuffers = allocateCommandBuffers(needed_buffers, queueType, index ==0);
-
-		bufferPool.insert(bufferPool.end(), newBuffers.begin(), newBuffers.end());
+        reserve(needed_buffers, queueType);
 	}
 
 	return bufferPool[index];
@@ -64,7 +62,7 @@ uint32_t CommandPool::getNumberOfBuffersForQueue(const QueueType queueType)
 void CommandPool::reserve(const uint32_t number, const QueueType queueType)
 {
     const uint32_t existingBuffers = getNumberOfBuffersForQueue(queueType);
-    int32_t needed = number - existingBuffers;
+    uint32_t needed = number - existingBuffers;
 
     if(needed <= 0)
         return;
@@ -73,8 +71,18 @@ void CommandPool::reserve(const uint32_t number, const QueueType queueType)
     if(existingBuffers == 0)
     {
         --needed;
-        commandBuffers.push_back(allocateCommandBuffers(1, queueType, true)[0]);
+        auto commandBuffer = allocateCommandBuffers(1, queueType, true)[0];
+
+        vk::CommandBufferBeginInfo primaryBegin{};
+        primaryBegin.setFlags(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
+
+        commandBuffer.begin(primaryBegin);
+
+        commandBuffers.push_back(commandBuffer);
     }
+
+    if(needed == 0)
+        return;
 
     std::vector<vk::CommandBuffer> newBuffers = allocateCommandBuffers(needed, queueType, false);
     commandBuffers.insert(commandBuffers.end(), newBuffers.begin(), newBuffers.end());

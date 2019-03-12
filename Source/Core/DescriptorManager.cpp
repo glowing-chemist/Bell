@@ -63,7 +63,12 @@ void DescriptorManager::writeDescriptors(std::vector<vk::DescriptorSet>& descSet
     while(inputBindings != graph.inputBindingEnd())
     {
         if(!(*resource).mDescSetNeedsUpdating)
+        {
+            ++resource;
+            ++inputBindings;
+            ++descIndex;
             continue;
+        }
 
         for(const auto& bindingInfo : *inputBindings)
         {
@@ -96,6 +101,8 @@ void DescriptorManager::writeDescriptors(std::vector<vk::DescriptorSet>& descSet
             }
 
             descSetWrites.push_back(descWrite);
+
+            (*resource).mDescriptorsWritten = true;
         }
 
 		++resource;

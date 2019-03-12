@@ -37,8 +37,8 @@ Shader::Shader(RenderDevice* device, const std::string& path) :
 
 Shader::~Shader()
 {
-    if(mCompiled)
-        getDevice()->destroyShaderModule(mShaderModule);
+    //if(mCompiled)
+        //getDevice()->destroyShaderModule(mShaderModule);
 }
 
 
@@ -78,6 +78,13 @@ bool Shader::compile()
     spv::SpvBuildLogger logger;
     glslang::SpvOptions spvOptions;
     glslang::GlslangToSpv(*program.getIntermediate(mShaderStage), mSPIRV, &logger, &spvOptions);
+
+    vk::ShaderModuleCreateInfo shaderModuleInfo{};
+    shaderModuleInfo.setPCode(mSPIRV.data());
+    shaderModuleInfo.setCodeSize(mSPIRV.size() * 4);
+    mShaderModule = getDevice()->createShaderModule(shaderModuleInfo);
+
+    mCompiled = true;
 
     return true;
 }

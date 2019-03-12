@@ -16,7 +16,7 @@ class RenderDevice;
 class DescriptorManager : public DeviceChild
 {
 public:
-    DescriptorManager(RenderDevice* dev) : DeviceChild{dev} {}
+    DescriptorManager(RenderDevice* dev) : DeviceChild{dev} { createDescriptorPool(); }
     ~DescriptorManager();
 
     std::vector<vk::DescriptorSet> getDescriptors(RenderGraph&);
