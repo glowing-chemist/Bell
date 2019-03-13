@@ -287,9 +287,7 @@ vk::RenderPass	RenderDevice::generateRenderPass(const GraphicsTask& task)
     const auto& outputAttachments = task.getOuputAttachments();
 
     std::vector<vk::AttachmentDescription> attachmentDescriptions;
-    std::vector<vk::AttachmentReference> inputAttachmentsRefs{};
 
-    uint32_t inputAttachmentCounter = 0;
     for(const auto& [name, type] : inputAttachments)
     {
         // We only care about images here.
@@ -318,8 +316,6 @@ vk::RenderPass	RenderDevice::generateRenderPass(const GraphicsTask& task)
                     return std::make_pair(vk::Format::eR8Sint, vk::ImageLayout::eUndefined); // should be obvious that something has gone wrong.
             }
         }();
-
-        inputAttachmentsRefs.push_back({inputAttachmentCounter, layout});
 
         attachmentDesc.setFormat(format);
 
@@ -399,9 +395,7 @@ vk::RenderPass	RenderDevice::generateRenderPass(const GraphicsTask& task)
     vk::SubpassDescription subpassDesc{};
     subpassDesc.setPipelineBindPoint(vk::PipelineBindPoint::eGraphics);
     subpassDesc.setColorAttachmentCount(outputAttachmentRefs.size());
-    subpassDesc.setPColorAttachments(outputAttachmentRefs.data());
-    subpassDesc.setInputAttachmentCount(inputAttachmentsRefs.size());
-    subpassDesc.setPInputAttachments(inputAttachmentsRefs.data());
+	subpassDesc.setPColorAttachments(outputAttachmentRefs.data());
     if(hasDepthAttachment)
     {
         subpassDesc.setPDepthStencilAttachment(depthAttachmentRef.data());
