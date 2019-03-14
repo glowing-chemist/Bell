@@ -1,8 +1,8 @@
 #ifndef BARRIERMANAGER_HPP
 #define BARRIERMANAGER_HPP
 
-#include "DeviceChild.hpp"
 #include "GPUResource.hpp"
+#include "DeviceChild.hpp"
 
 #include <vector>
 #include <tuple>
@@ -12,17 +12,21 @@
 class Image;
 class Buffer;
 
-class BarrierManager : public DeviceChild
+class BarrierRecorder : DeviceChild
 {
 public:
-	BarrierManager(RenderDevice*);
+	BarrierRecorder(RenderDevice* device);
 
 	void transferResourceToQueue(Image&, const QueueType);
 	void transferResourceToQueue(Buffer&, const QueueType);
 
 	void transitionImageLayout(Image&, const vk::ImageLayout);
 
-	void flushAllBarriers();
+	std::vector<vk::ImageMemoryBarrier> getImageBarriers(QueueType);
+	std::vector<vk::BufferMemoryBarrier> getBufferBarriers(QueueType);
+
+	bool empty() const 
+	{ return mImageMemoryBarriers.empty() && mBufferMemoryBarriers.empty(); }
 
 private:
 

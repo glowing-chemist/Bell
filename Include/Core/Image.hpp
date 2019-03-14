@@ -15,7 +15,7 @@ class RenderDevice;
 
 class Image final : public GPUResource, public DeviceChild
 {
-	friend BarrierManager;
+	friend BarrierRecorder;
 public:
 
     Image(RenderDevice*,

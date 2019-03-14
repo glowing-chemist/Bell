@@ -11,8 +11,7 @@ RenderDevice::RenderDevice(vk::PhysicalDevice physDev, vk::Device dev, vk::Surfa
     mPhysicalDevice{physDev},
     mSwapChain{this, surface, window},
     mMemoryManager{this},
-    mDescriptorManager{this},
-    mBarrierManager{this}
+    mDescriptorManager{this}
 {
 
     mQueueFamilyIndicies = getAvailableQueues(surface, mPhysicalDevice);
@@ -731,6 +730,9 @@ void RenderDevice::execute(RenderGraph& graph)
 {
     frameSyncSetup();
 
+	graph.reorderTasks();
+	graph.mergeTasks();
+
     generateVulkanResources(graph);
 
 	CommandPool* currentCommandPool = getCurrentCommandPool();
@@ -738,9 +740,6 @@ void RenderDevice::execute(RenderGraph& graph)
 	currentCommandPool->reserve(graph.taskCount() + 1, QueueType::Graphics); // +1 for the primary cmd buffer all the secondaries will be recorded in to.
 
     vk::CommandBuffer primaryCmdBuffer = currentCommandPool->getBufferForQueue(QueueType::Graphics);
-
-    // Make sure that all resources will have the proper visibility and format.
-    getBarrierManager()->flushAllBarriers();
 
 	uint32_t cmdBufferIndex = 1;
 	auto vulkanResource = graph.resourceBegin();
@@ -837,6 +836,27 @@ void RenderDevice::frameSyncSetup()
     mDevice.resetFences(1, &fence);
 
     mSwapChain.getNextImageIndex(mImageAquired);
+}
+
+
+void RenderDevice::execute(BarrierRecorder& recorder)
+{
+	for (uint8_t i = 0; i < static_cast<uint8_t>(QueueType::MaxQueues); ++i)
+	{
+		QueueType currentQueue = static_cast<QueueType>(i);
+
+		if (!recorder.empty())
+		{
+			const auto imageBarriers = recorder.getImageBarriers(currentQueue);
+			const auto bufferBarriers = recorder.getBufferBarriers(currentQueue);
+
+			getCurrentCommandPool()->getBufferForQueue(currentQueue).pipelineBarrier(vk::PipelineStageFlagBits::eTopOfPipe, vk::PipelineStageFlagBits::eTransfer,
+				vk::DependencyFlagBits::eByRegion,
+				0, nullptr,
+				bufferBarriers.size(), bufferBarriers.data(),
+				imageBarriers.size(), imageBarriers.data());
+		}
+	}
 }
 
 

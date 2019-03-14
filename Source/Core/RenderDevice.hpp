@@ -128,7 +128,6 @@ public:
     SwapChain*                         getSwapChain() { return &mSwapChain; }
     MemoryManager*                     getMemoryManager() { return &mMemoryManager; }
 	CommandPool*					   getCurrentCommandPool() { return &mCommandPools[getCurrentFrameIndex()]; }
-    BarrierManager*                    getBarrierManager() { return &mBarrierManager; }
     vk::PhysicalDevice*                getPhysicalDevice() { return &mPhysicalDevice; }
 
     // Memory management functions
@@ -154,6 +153,9 @@ public:
 
     void                               flushWait() const { mDevice.waitIdle(); }
 
+	void							   execute(BarrierRecorder& recorder);
+
+
 private:
 
     std::pair<vk::VertexInputBindingDescription,
@@ -174,9 +176,10 @@ private:
     void                                                        generateDescriptorSets(RenderGraph&);
     void                                                        generateFrameBuffers(RenderGraph&);
 
-    void frameSyncSetup();
-    void submitFrame();
-    void swap();
+
+    void														frameSyncSetup();
+    void														submitFrame();
+    void														swap();
 
     vk::Fence                          createFence(const bool signaled);
 
@@ -229,7 +232,6 @@ private:
     std::vector<CommandPool> mCommandPools;
     MemoryManager mMemoryManager;
     DescriptorManager mDescriptorManager;
-    BarrierManager mBarrierManager;
 };
 
 #endif

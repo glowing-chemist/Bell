@@ -116,9 +116,12 @@ void Image::setContents(const void* data,
     copyInfo.setImageOffset({offsetx, offsety, offsetz}); // copy to the image starting at the start (0, 0, 0)
     copyInfo.setImageExtent(mExtent);
 
-    // This needs to get recorded before the upload is recorded in to the primrary
-    getDevice()->getBarrierManager()->transitionImageLayout(*this, vk::ImageLayout::eTransferDstOptimal);
-    getDevice()->getBarrierManager()->flushAllBarriers();
+	{
+		// This needs to get recorded before the upload is recorded in to the primrary
+		BarrierRecorder preBarrier{ getDevice() };
+		preBarrier.transitionImageLayout(*this, vk::ImageLayout::eTransferDstOptimal);
+		getDevice()->execute(preBarrier);
+	}
 
     getDevice()->getCurrentCommandPool()
             ->getBufferForQueue(QueueType::Graphics).copyBufferToImage(stagingBuffer.getBuffer(),
@@ -126,9 +129,13 @@ void Image::setContents(const void* data,
                                                                        vk::ImageLayout::eTransferDstOptimal,
                                                                        copyInfo);
 
-    // Image will probably be sampled from next, will need to handle seperatly if it will be used to write to
-    // with non discard (blending).
-    getDevice()->getBarrierManager()->transitionImageLayout(*this, vk::ImageLayout::eShaderReadOnlyOptimal);
+	{
+		// Image will probably be sampled from next, will need to handle seperatly if it will be used to write to
+		// with non discard (blending).
+		BarrierRecorder postRecorder{ getDevice() };
+		postRecorder.transitionImageLayout(*this, vk::ImageLayout::eShaderReadOnlyOptimal);
+		getDevice()->execute(postRecorder);
+	}
 
     // Maybe try to implement a staging buffer cache so that we don't have to create one
     // each time.

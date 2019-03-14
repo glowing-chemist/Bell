@@ -30,6 +30,7 @@ class BindingIterator;
 
 class RenderGraph
 {
+	friend RenderDevice;
 	friend TaskIterator;
 	friend ResourceIterator;
 	friend BindingIterator<BindingIteratorType::Input>;
