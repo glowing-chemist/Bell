@@ -36,7 +36,35 @@ public:
                                                 mCurrentQueue{QueueType::Graphics},
                                                 mRefCount{new std::atomic<uint32_t>(1u)} {}
 
-    ~GPUResource() { const uint32_t oldRefCount = std::atomic_fetch_add(mRefCount, 0u); if(oldRefCount == 0) delete mRefCount; }
+    ~GPUResource()
+    {
+        const uint32_t oldRefCount = std::atomic_fetch_add(mRefCount, 0u);
+        if(oldRefCount == 0)
+            delete mRefCount;
+    }
+
+    GPUResource(const GPUResource& other)
+    {
+        mNeedsUpdating = other.mNeedsUpdating;
+        mLastAccessed = other.mLastAccessed;
+        mCurrentQueue = other.mCurrentQueue;
+        mRefCount = other.mRefCount;
+
+        aquire();
+    }
+
+    GPUResource& operator=(const GPUResource& other)
+    {
+        mNeedsUpdating = other.mNeedsUpdating;
+        mLastAccessed = other.mLastAccessed;
+        mCurrentQueue = other.mCurrentQueue;
+        mRefCount = other.mRefCount;
+
+        aquire();
+    }
+
+    GPUResource(GPUResource&&) = default;
+    GPUResource& operator=(GPUResource&&) = default;
 
     inline uint64_t		getLastAccessed() const { return mLastAccessed; }
     inline void			updateLastAccessed(const uint64_t updatedAccess) { mLastAccessed = updatedAccess; }

@@ -28,6 +28,12 @@ public:
 
     ~Image();
 
+    Image& operator=(const Image&) = default;
+    Image(const Image&) = default;
+
+    Image& operator=(Image&&);
+    Image(Image&&);
+
     vk::Image       getImage() { return mImage; }
     vk::ImageView   createImageView(vk::Format,
                                     vk::ImageViewType,

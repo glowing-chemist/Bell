@@ -32,8 +32,53 @@ Image::Image(RenderDevice* dev,
 Image::~Image()
 {
     const bool shouldDestroy = release();
-    if(shouldDestroy)
+
+    // Don't add a moved from image to the defered queue.
+    if(shouldDestroy && mImage != vk::Image(nullptr))
         getDevice()->destroyImage(*this);
+}
+
+
+Image& Image::operator=(Image&& other)
+{
+    mImageMemory = other.mImageMemory;
+    mImage = other.mImage;
+    other.mImage = nullptr;
+    mImageView = other.mImageView;
+    other.mImageView = nullptr;
+    mCurrentSampler = other.mCurrentSampler;
+    other.mCurrentSampler = nullptr;
+    mFormat = other.mFormat;
+    mLayout = other.mLayout;
+    mUsage = other.mUsage;
+    mNumberOfMips = other.mNumberOfMips;
+    mExtent = other.mNumberOfMips;
+    mType = other.mType;
+
+    mDebugName = other.mDebugName;
+
+    return *this;
+}
+
+
+Image::Image(Image&& other) :   GPUResource(other.getDevice()->getCurrentSubmissionIndex()),
+                                DeviceChild (other.getDevice())
+{
+    mImageMemory = other.mImageMemory;
+    mImage = other.mImage;
+    other.mImage = nullptr;
+    mImageView = other.mImageView;
+    other.mImageView = nullptr;
+    mCurrentSampler = other.mCurrentSampler;
+    other.mCurrentSampler = nullptr;
+    mFormat = other.mFormat;
+    mLayout = other.mLayout;
+    mUsage = other.mUsage;
+    mNumberOfMips = other.mNumberOfMips;
+    mExtent = other.mNumberOfMips;
+    mType = other.mType;
+
+    mDebugName = other.mDebugName;
 }
 
 

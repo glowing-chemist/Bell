@@ -32,6 +32,35 @@ Buffer::~Buffer()
 }
 
 
+Buffer& Buffer::operator=(Buffer&& other)
+{
+    mBuffer = other.mBuffer;
+    other.mBuffer = nullptr;
+    mBufferMemory = other.mBufferMemory;
+    mCurrentOffset = other.mCurrentOffset;
+    mSize = other.mSize;
+    mStride = other.mStride;
+    mAllignment = other.mAllignment;
+    mName = other.mName;
+
+    return *this;
+}
+
+
+Buffer::Buffer(Buffer&& other) :    GPUResource (other.getDevice()->getCurrentSubmissionIndex()),
+                                    DeviceChild (other.getDevice())
+{
+    mBuffer = other.mBuffer;
+    other.mBuffer = nullptr;
+    mBufferMemory = other.mBufferMemory;
+    mCurrentOffset = other.mCurrentOffset;
+    mSize = other.mSize;
+    mStride = other.mStride;
+    mAllignment = other.mAllignment;
+    mName = other.mName;
+}
+
+
 void Buffer::setContents(const void* data, const uint32_t size, const uint32_t offset)
 {
     const uint32_t entries = size / mStride;
@@ -59,7 +88,6 @@ void Buffer::setContents(const void* data, const uint32_t size, const uint32_t o
     // Maybe try to implement a staging buffer cache so that we don't have to create one
     // each time.
     stagingBuffer.updateLastAccessed(getDevice()->getCurrentSubmissionIndex());
-    getDevice()->destroyBuffer(stagingBuffer);
 }
 
 
