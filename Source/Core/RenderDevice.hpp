@@ -165,21 +165,32 @@ private:
 
     std::pair<vk::VertexInputBindingDescription,
               std::vector<vk::VertexInputAttributeDescription>> generateVertexInput(const GraphicsTask&);
+
     vk::DescriptorSetLayout                                     generateDescriptorSetLayout(const RenderTask&);
+
     vk::PipelineLayout                                          generatePipelineLayout(vk::DescriptorSetLayout);
+
     vk::RenderPass                                              generateRenderPass(const GraphicsTask&);
+
     vk::PipelineRasterizationStateCreateInfo                    generateRasterizationInfo(const GraphicsTask&);
+
     std::vector<vk::PipelineShaderStageCreateInfo>              generateShaderStagesInfo(const GraphicsTask&);
+
     vk::Pipeline                                                generatePipeline(const GraphicsTask&,
                                                                                  const vk::PipelineLayout&,
                                                                                  const vk::VertexInputBindingDescription &,
                                                                                  const std::vector<vk::VertexInputAttributeDescription> &,
                                                                                  const vk::RenderPass&);
+
     vk::Pipeline                                                generatePipeline(const ComputeTask&,
                                                                                  const vk::PipelineLayout&);
+
 	void														generateVulkanResources(RenderGraph&);
+
     void                                                        generateDescriptorSets(RenderGraph&);
+
     void                                                        generateFrameBuffers(RenderGraph&);
+
 
     void                                                        clearDeferredResources();
 
