@@ -37,6 +37,8 @@ RenderDevice::RenderDevice(vk::PhysicalDevice physDev, vk::Device dev, vk::Surfa
     vk::SemaphoreCreateInfo semInfo{};
     mImageAquired = mDevice.createSemaphore(semInfo);
     mImageRendered = mDevice.createSemaphore(semInfo);
+
+    transitionSwapChain(vk::ImageLayout::eColorAttachmentOptimal);
 }
 
 
@@ -866,6 +868,34 @@ void RenderDevice::execute(BarrierRecorder& recorder)
 				imageBarriers.size(), imageBarriers.data());
 		}
 	}
+}
+
+
+void RenderDevice::transitionSwapChain(vk::ImageLayout layout)
+{
+    std::vector<vk::ImageMemoryBarrier> imageMemoryBarriers{};
+
+    for(uint32_t i = 0; i < getSwapChain()->getNumberOfSwapChainImages(); ++i)
+    {
+        vk::Image image = getSwapChain()->getImage(i);
+
+        vk::ImageMemoryBarrier barrier{};
+        barrier.setSrcAccessMask(vk::AccessFlagBits::eMemoryWrite);
+        barrier.setDstAccessMask(vk::AccessFlagBits::eMemoryRead);
+        barrier.setOldLayout(vk::ImageLayout::eUndefined);
+        barrier.setNewLayout(layout);
+        barrier.setSubresourceRange({vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1});
+        barrier.setImage(image);
+
+        imageMemoryBarriers.push_back(barrier);
+    }
+
+    getCurrentCommandPool()->getBufferForQueue(QueueType::Graphics).pipelineBarrier(vk::PipelineStageFlagBits::eTopOfPipe, vk::PipelineStageFlagBits::eColorAttachmentOutput,
+        vk::DependencyFlagBits::eByRegion,
+        0, nullptr,
+        0, nullptr,
+        imageMemoryBarriers.size(), imageMemoryBarriers.data());
+
 }
 
 

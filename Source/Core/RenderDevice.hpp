@@ -189,6 +189,8 @@ private:
     void                               destroyBuffer(vk::Buffer& buffer )
                                             { mDevice.destroyBuffer(buffer); }
 
+    void                               transitionSwapChain(vk::ImageLayout);
+
     // Keep track of when resources can be freed
     uint64_t mCurrentSubmission;
     uint64_t mFinishedSubmission;
