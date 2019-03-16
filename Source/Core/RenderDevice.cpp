@@ -50,15 +50,24 @@ RenderDevice::~RenderDevice()
         mDevice.destroyImage(handle);
         mMemoryManager.Free(memory);
     }
+    mImagesPendingDestruction.clear();
 
     for(auto& [lastUsed, handle, memory] : mBuffersPendingDestruction)
     {
         mDevice.destroyBuffer(handle);
         mMemoryManager.Free(memory);
     }
+    mBuffersPendingDestruction.clear();
 
     mSwapChain.destroy();
     mMemoryManager.Destroy();
+
+    for(auto& fence : mFrameFinished)
+    {
+        mDevice.destroyFence(fence);
+    }
+    mDevice.destroySemaphore(mImageAquired);
+    mDevice.destroySemaphore(mImageRendered);
 }
 
 
