@@ -72,6 +72,11 @@ void BarrierRecorder::transitionImageLayout(Image& image, const vk::ImageLayout 
 	barrier.setOldLayout(image.getLayout());
 	barrier.setNewLayout(layout);
 	barrier.setImage(image.getImage());
+    if(layout == vk::ImageLayout::eDepthStencilAttachmentOptimal) {
+        barrier.setSubresourceRange({vk::ImageAspectFlagBits::eDepth, 0, 1, 0, 1});
+    } else {
+        barrier.setSubresourceRange({vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1});
+    }
 
 	mImageMemoryBarriers.push_back({image.getOwningQueueType(), barrier});
 
