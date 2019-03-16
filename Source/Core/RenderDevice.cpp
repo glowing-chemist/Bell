@@ -388,11 +388,17 @@ vk::RenderPass	RenderDevice::generateRenderPass(const GraphicsTask& task)
         // in order to avoid having to do manula barriers for all transitions.
         attachmentDesc.setInitialLayout((layout));
         if(type == AttachmentType::SwapChain)
+        {
             attachmentDesc.setFinalLayout(vk::ImageLayout::ePresentSrcKHR);
+            attachmentDesc.setLoadOp(vk::AttachmentLoadOp::eDontCare); // the first time we use the swapchain it will contain garbage.
+        }
         else
+        {
             attachmentDesc.setFinalLayout(layout);
+            attachmentDesc.setLoadOp(vk::AttachmentLoadOp::eLoad);
+        }
 
-        attachmentDesc.setLoadOp(vk::AttachmentLoadOp::eLoad); // we are going to overwrite all pixles
+        attachmentDesc.setLoadOp(vk::AttachmentLoadOp::eDontCare); // we are going to overwrite all pixles
         attachmentDesc.setStoreOp(vk::AttachmentStoreOp::eStore);
         attachmentDesc.setStencilLoadOp(vk::AttachmentLoadOp::eLoad);
         attachmentDesc.setStencilStoreOp(vk::AttachmentStoreOp::eStore);
