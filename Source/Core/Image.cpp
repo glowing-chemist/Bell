@@ -8,7 +8,7 @@ Image::Image(RenderDevice* dev,
              const uint32_t y,
              const uint32_t z,
              std::string debugName) :
-    GPUResource{dev->getCurrentFrameIndex()},
+    GPUResource{dev->getCurrentSubmissionIndex()},
     DeviceChild{dev},
     mFormat{format},
 	mLayout{vk::ImageLayout::eUndefined},
