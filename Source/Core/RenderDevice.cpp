@@ -5,7 +5,6 @@
 #include <limits>
 
 RenderDevice::RenderDevice(vk::PhysicalDevice physDev, vk::Device dev, vk::SurfaceKHR surface, GLFWwindow* window) :
-    mCurrentSubmission{0},
     mFinishedSubmission{0},
     mDevice{dev},
     mPhysicalDevice{physDev},
@@ -13,6 +12,9 @@ RenderDevice::RenderDevice(vk::PhysicalDevice physDev, vk::Device dev, vk::Surfa
     mMemoryManager{this},
     mDescriptorManager{this}
 {
+    // This is a bit of a hack to work around not being able to tell for the first few frames that
+    // the fences we waited on hadn't been submitted (as no work has been done).
+    mCurrentSubmission = mSwapChain.getNumberOfSwapChainImages();
 
     mQueueFamilyIndicies = getAvailableQueues(surface, mPhysicalDevice);
     mGraphicsQueue = mDevice.getQueue(mQueueFamilyIndicies.GraphicsQueueIndex, 0);
@@ -37,8 +39,6 @@ RenderDevice::RenderDevice(vk::PhysicalDevice physDev, vk::Device dev, vk::Surfa
     vk::SemaphoreCreateInfo semInfo{};
     mImageAquired = mDevice.createSemaphore(semInfo);
     mImageRendered = mDevice.createSemaphore(semInfo);
-
-    transitionSwapChain(vk::ImageLayout::eColorAttachmentOptimal);
 }
 
 
@@ -398,7 +398,6 @@ vk::RenderPass	RenderDevice::generateRenderPass(const GraphicsTask& task)
             attachmentDesc.setLoadOp(vk::AttachmentLoadOp::eLoad);
         }
 
-        attachmentDesc.setLoadOp(vk::AttachmentLoadOp::eDontCare); // we are going to overwrite all pixles
         attachmentDesc.setStoreOp(vk::AttachmentStoreOp::eStore);
         attachmentDesc.setStencilLoadOp(vk::AttachmentLoadOp::eLoad);
         attachmentDesc.setStencilStoreOp(vk::AttachmentStoreOp::eStore);
@@ -745,15 +744,12 @@ vk::Fence RenderDevice::createFence(const bool signaled)
 
 void RenderDevice::execute(RenderGraph& graph)
 {
-    frameSyncSetup();
-
 	graph.reorderTasks();
 	graph.mergeTasks();
 
     generateVulkanResources(graph);
 
 	CommandPool* currentCommandPool = getCurrentCommandPool();
-    currentCommandPool->reset();
 	currentCommandPool->reserve(graph.taskCount() + 1, QueueType::Graphics); // +1 for the primary cmd buffer all the secondaries will be recorded in to.
 
     vk::CommandBuffer primaryCmdBuffer = currentCommandPool->getBufferForQueue(QueueType::Graphics);
@@ -797,11 +793,10 @@ void RenderDevice::execute(RenderGraph& graph)
         if(graph.getVertexBuffer())
             secondaryCmdBuffer.bindVertexBuffers(0, { graph.getVertexBuffer()->getBuffer() }, {0});
 
-
         if(graph.getIndexBuffer())
             secondaryCmdBuffer.bindIndexBuffer(graph.getIndexBuffer()->getBuffer(), 0, vk::IndexType::eUint32);
 
-        // Don't bind descriptor sets is we have no input attachments.
+        // Don't bind descriptor sets if we have no input attachments.
         if(resources.mDescriptorsWritten)
             secondaryCmdBuffer.bindDescriptorSets(bindPoint, resources.mPipelineLayout, 0, 1,  &resources.mDescSet, 0, nullptr);
 		secondaryCmdBuffer.bindPipeline(bindPoint, resources.mPipeline);
@@ -820,6 +815,25 @@ void RenderDevice::execute(RenderGraph& graph)
 
     submitFrame();
     swap();
+}
+
+
+void RenderDevice::startFrame()
+{
+    frameSyncSetup();
+    getCurrentCommandPool()->reset();
+    clearDeferredResources();
+    ++mCurrentSubmission;
+    ++mFinishedSubmission;
+
+    // The swapChain will be in PresentOptimal so make it ready to be written to.
+    transitionSwapChain(vk::ImageLayout::eColorAttachmentOptimal);
+}
+
+
+void RenderDevice::endFrame()
+{
+    // Nothing to do here yet
 }
 
 
@@ -879,29 +893,67 @@ void RenderDevice::execute(BarrierRecorder& recorder)
 
 void RenderDevice::transitionSwapChain(vk::ImageLayout layout)
 {
-    std::vector<vk::ImageMemoryBarrier> imageMemoryBarriers{};
+    vk::Image image = getSwapChain()->getImage(getSwapChain()->getCurrentImageIndex());
 
-    for(uint32_t i = 0; i < getSwapChain()->getNumberOfSwapChainImages(); ++i)
-    {
-        vk::Image image = getSwapChain()->getImage(i);
-
-        vk::ImageMemoryBarrier barrier{};
-        barrier.setSrcAccessMask(vk::AccessFlagBits::eMemoryWrite);
-        barrier.setDstAccessMask(vk::AccessFlagBits::eMemoryRead);
-        barrier.setOldLayout(vk::ImageLayout::eUndefined);
-        barrier.setNewLayout(layout);
-        barrier.setSubresourceRange({vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1});
-        barrier.setImage(image);
-
-        imageMemoryBarriers.push_back(barrier);
-    }
+    vk::ImageMemoryBarrier barrier{};
+    barrier.setSrcAccessMask(vk::AccessFlagBits::eMemoryWrite);
+    barrier.setDstAccessMask(vk::AccessFlagBits::eMemoryRead);
+    barrier.setOldLayout(vk::ImageLayout::eUndefined);
+    barrier.setNewLayout(layout);
+    barrier.setSubresourceRange({vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1});
+    barrier.setImage(image);
 
     getCurrentCommandPool()->getBufferForQueue(QueueType::Graphics).pipelineBarrier(vk::PipelineStageFlagBits::eTopOfPipe, vk::PipelineStageFlagBits::eColorAttachmentOutput,
         vk::DependencyFlagBits::eByRegion,
         0, nullptr,
         0, nullptr,
-        imageMemoryBarriers.size(), imageMemoryBarriers.data());
+        1, &barrier);
 
+}
+
+
+void RenderDevice::clearDeferredResources()
+{
+    for(uint32_t i = 0; i < mFramebuffersPendingDestruction.size(); ++i)
+    {
+        auto& [submission, frameBuffer] = mFramebuffersPendingDestruction.front();
+
+        if(submission <= mFinishedSubmission)
+        {
+            mDevice.destroyFramebuffer(frameBuffer);
+            mFramebuffersPendingDestruction.pop_front();
+        }
+        else
+            break;
+    }
+
+    for(uint32_t i = 0; i < mImagesPendingDestruction.size(); ++i)
+    {
+        auto& [submission, image, memory] = mImagesPendingDestruction.front();
+
+        if(submission <= mFinishedSubmission)
+        {
+            mDevice.destroyImage(image);
+            getMemoryManager()->Free(memory);
+            mImagesPendingDestruction.pop_front();
+        }
+        else
+            break;
+    }
+
+    for(uint32_t i = 0; i < mBuffersPendingDestruction.size(); ++i)
+    {
+        auto& [submission, buffer, memory] = mBuffersPendingDestruction.front();
+
+        if(submission <= mFinishedSubmission)
+        {
+            mDevice.destroyBuffer(buffer);
+            getMemoryManager()->Free(memory);
+            mBuffersPendingDestruction.pop_front();
+        }
+        else
+            break;
+    }
 }
 
 

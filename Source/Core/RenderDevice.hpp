@@ -3,7 +3,9 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <deque>
 #include <unordered_map>
+#include <vector>
 #include <vulkan/vulkan.hpp>
 
 #include "BarrierManager.hpp"
@@ -53,6 +55,9 @@ public:
     vk::PhysicalDeviceLimits           getLimits() const { return mLimits; }
 
     void                               execute(RenderGraph&);
+
+    void                               startFrame();
+    void                               endFrame();
 
     vk::Image                          createImage(const vk::Format,
                                                    const vk::ImageUsageFlags,
@@ -176,6 +181,7 @@ private:
     void                                                        generateDescriptorSets(RenderGraph&);
     void                                                        generateFrameBuffers(RenderGraph&);
 
+    void                                                        clearDeferredResources();
 
     void														frameSyncSetup();
     void														submitFrame();
@@ -194,7 +200,7 @@ private:
     // Keep track of when resources can be freed
     uint64_t mCurrentSubmission;
     uint64_t mFinishedSubmission;
-    std::vector<std::pair<uint64_t, vk::Framebuffer>> mFramebuffersPendingDestruction;
+    std::deque<std::pair<uint64_t, vk::Framebuffer>> mFramebuffersPendingDestruction;
 
     struct ImageDestructionInfo
     {
@@ -202,7 +208,7 @@ private:
         vk::Image mImageHandle;
         Allocation mImageMemory;
     };
-    std::vector<ImageDestructionInfo> mImagesPendingDestruction;
+    std::deque<ImageDestructionInfo> mImagesPendingDestruction;
 
     struct BufferDestructionInfo
     {
@@ -210,7 +216,7 @@ private:
         vk::Buffer mBufferHandle;
         Allocation mBufferMemory;
     };
-    std::vector<BufferDestructionInfo> mBuffersPendingDestruction;
+    std::deque<BufferDestructionInfo> mBuffersPendingDestruction;
 
     // underlying devices
     vk::Device mDevice;
