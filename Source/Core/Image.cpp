@@ -185,7 +185,7 @@ void Image::setContents(const void* data,
     // Maybe try to implement a staging buffer cache so that we don't have to create one
     // each time.
     stagingBuffer.updateLastAccessed(getDevice()->getCurrentSubmissionIndex());
-    getDevice()->destroyBuffer(stagingBuffer);
+    updateLastAccessed(getDevice()->getCurrentSubmissionIndex());
 }
 
 

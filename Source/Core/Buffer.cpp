@@ -88,6 +88,7 @@ void Buffer::setContents(const void* data, const uint32_t size, const uint32_t o
     // Maybe try to implement a staging buffer cache so that we don't have to create one
     // each time.
     stagingBuffer.updateLastAccessed(getDevice()->getCurrentSubmissionIndex());
+    updateLastAccessed(getDevice()->getCurrentSubmissionIndex());
 }
 
 
