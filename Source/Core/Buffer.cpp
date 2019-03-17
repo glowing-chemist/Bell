@@ -6,7 +6,7 @@ Buffer::Buffer(RenderDevice* dev,
        const uint32_t size,
        const uint32_t stride,
        std::string name) :
-    GPUResource{dev->getCurrentFrameIndex()},
+    GPUResource{dev->getCurrentSubmissionIndex()},
     DeviceChild{dev},
     mUsage{usage},
     mSize{size},
