@@ -13,6 +13,8 @@
 #include <vulkan/vulkan.hpp>
 #include <vulkan/vulkan.h>
 
+#define DUMP_API 0
+
 static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallbackFunc(
     VkDebugReportFlagsEXT,
     VkDebugReportObjectTypeEXT,
@@ -85,19 +87,24 @@ RenderInstance::RenderInstance(GLFWwindow* window)
     instanceInfo.setPApplicationInfo(&appInfo);
 #ifndef NDEBUG
     const auto availableLayers = vk::enumerateInstanceLayerProperties();
-    bool validationLayersFound = false;
-    const char* validationLayers = "VK_LAYER_LUNARG_standard_validation";
-
-    for(auto& layer : availableLayers) {
-        if(strcmp(layer.layerName, validationLayers) == 0) {
-            validationLayersFound = true;
-            break;
+    std::vector<const char*> validationLayers = {"VK_LAYER_LUNARG_standard_validation"
+#if DUMP_API
+                                                 ,"VK_LAYER_LUNARG_api_dump"
+#endif
+                                                };
+    uint8_t layersFound = 0;
+    for(const auto* neededLayer : validationLayers )
+    {
+        for(auto& availableLayer : availableLayers) {
+            if(strcmp(availableLayer.layerName, neededLayer) == 0) {
+                ++layersFound;
+            }
         }
     }
-    if(!validationLayersFound) throw std::runtime_error{"Running in debug but Lunarg validation layers not found"};
+    if(layersFound != validationLayers.size()) throw std::runtime_error{"Running in debug but Lunarg validation layers not found"};
 
-    instanceInfo.setEnabledLayerCount(1);
-    instanceInfo.setPpEnabledLayerNames(&validationLayers);
+    instanceInfo.setEnabledLayerCount(validationLayers.size());
+    instanceInfo.setPpEnabledLayerNames(validationLayers.data());
 #endif
 
     mInstance = vk::createInstance(instanceInfo);
