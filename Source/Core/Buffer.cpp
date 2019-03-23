@@ -1,5 +1,6 @@
 #include "Core/Buffer.hpp"
 #include "RenderDevice.hpp"
+#include "Core/BarrierManager.hpp"
 
 Buffer::Buffer(RenderDevice* dev,
        vk::BufferUsageFlags usage,
@@ -84,6 +85,11 @@ void Buffer::setContents(const void* data, const uint32_t size, const uint32_t o
 
     getDevice()->getCurrentCommandPool()->getBufferForQueue(QueueType::Graphics)
             .copyBuffer(stagingBuffer.getBuffer(), getBuffer(), copyInfo);
+
+    BarrierRecorder barrier{getDevice()};
+    barrier.makeContentsVisible(*this);
+
+    getDevice()->execute(barrier);
 
     // Maybe try to implement a staging buffer cache so that we don't have to create one
     // each time.
