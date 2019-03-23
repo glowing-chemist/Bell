@@ -84,6 +84,34 @@ void BarrierRecorder::transitionImageLayout(Image& image, const vk::ImageLayout 
 }
 
 
+void BarrierRecorder::makeContentsVisible(Image& image)
+{
+    vk::ImageMemoryBarrier barrier{};
+    barrier.setSrcAccessMask(vk::AccessFlagBits::eMemoryWrite);
+    barrier.setDstAccessMask(vk::AccessFlagBits::eMemoryRead);
+    barrier.setOldLayout(image.getLayout());
+    barrier.setNewLayout(image.getLayout());
+    if(image.getLayout() == vk::ImageLayout::eDepthStencilAttachmentOptimal) {
+        barrier.setSubresourceRange({vk::ImageAspectFlagBits::eDepth, 0, 1, 0, 1});
+    } else {
+        barrier.setSubresourceRange({vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1});
+    }
+
+    mImageMemoryBarriers.push_back({image.getOwningQueueType(), barrier});
+}
+
+
+void BarrierRecorder::makeContentsVisible(Buffer& buffer)
+{
+    vk::BufferMemoryBarrier barrier{};
+    barrier.setSrcAccessMask(vk::AccessFlagBits::eMemoryWrite);
+    barrier.setDstAccessMask(vk::AccessFlagBits::eMemoryRead);
+    barrier.setBuffer(buffer.getBuffer());
+
+    mBufferMemoryBarriers.push_back({buffer.getOwningQueueType(), barrier});
+}
+
+
 std::vector<vk::ImageMemoryBarrier> BarrierRecorder::getImageBarriers(QueueType type)
 {
 	std::vector<vk::ImageMemoryBarrier> barriers;

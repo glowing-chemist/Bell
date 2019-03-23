@@ -22,6 +22,9 @@ public:
 
 	void transitionImageLayout(Image&, const vk::ImageLayout);
 
+    void makeContentsVisible(Image&);
+    void makeContentsVisible(Buffer&);
+
 	std::vector<vk::ImageMemoryBarrier> getImageBarriers(QueueType);
 	std::vector<vk::BufferMemoryBarrier> getBufferBarriers(QueueType);
 
