@@ -185,13 +185,29 @@ void RenderGraph::bindIndexBuffer(const Buffer& buffer)
 
 void RenderGraph::reorderTasks()
 {
-    // TODO
+    static bool hasReordered = false;
+
+    if(hasReordered)
+        return;
+
+    hasReordered = true;
 }
 
 
 void RenderGraph::mergeTasks()
 {
-    // TODO
+    static bool hasMerged = false;
+
+    if(hasMerged)
+        return;
+
+    hasMerged = true;
+}
+
+
+void RenderGraph::recordBarriers()
+{
+
 }
 
 

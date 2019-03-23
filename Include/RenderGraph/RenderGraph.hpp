@@ -108,6 +108,7 @@ private:
 
     void reorderTasks();
     void mergeTasks();
+    void recordBarriers();
 
     void bindResource(const std::string&, const uint32_t, const ResourceType);
 

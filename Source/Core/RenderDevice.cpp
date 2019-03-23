@@ -6,6 +6,7 @@
 
 RenderDevice::RenderDevice(vk::PhysicalDevice physDev, vk::Device dev, vk::SurfaceKHR surface, GLFWwindow* window) :
     mFinishedSubmission{0},
+    mCurrentFrameIndex{0},
     mDevice{dev},
     mPhysicalDevice{physDev},
     mSwapChain{this, surface, window},
@@ -34,11 +35,15 @@ RenderDevice::RenderDevice(vk::PhysicalDevice physDev, vk::Device dev, vk::Surfa
     for (uint32_t i = 0; i < mSwapChain.getNumberOfSwapChainImages(); ++i)
     {
         mFrameFinished.push_back(createFence(true));
+        vk::SemaphoreCreateInfo semInfo{};
+        mImageAquired.push_back(mDevice.createSemaphore(semInfo));
+        mImageRendered.push_back(mDevice.createSemaphore(semInfo));
     }
 
-    vk::SemaphoreCreateInfo semInfo{};
-    mImageAquired = mDevice.createSemaphore(semInfo);
-    mImageRendered = mDevice.createSemaphore(semInfo);
+#ifndef NDEBUG
+    vk::EventCreateInfo eventInfo{};
+    mDebugEvent = mDevice.createEvent(eventInfo);
+#endif
 }
 
 
@@ -68,8 +73,20 @@ RenderDevice::~RenderDevice()
     {
         mDevice.destroyFence(fence);
     }
-    mDevice.destroySemaphore(mImageAquired);
-    mDevice.destroySemaphore(mImageRendered);
+
+    for(auto& semaphore : mImageAquired)
+    {
+        mDevice.destroySemaphore(semaphore);
+    }
+
+    for(auto& semaphore : mImageRendered)
+    {
+        mDevice.destroySemaphore(semaphore);
+    }
+
+#ifndef NDEBUG
+    mDevice.destroyEvent(mDebugEvent);
+#endif
 }
 
 
@@ -698,8 +715,7 @@ void RenderDevice::generateFrameBuffers(RenderGraph& graph)
                                            getSwapChain()->getSwapChainImageHeight(),
                                             1};
 
-                const size_t currentSwapchainIndex = getSwapChain()->getCurrentImageIndex();
-                imageViews.push_back(getSwapChain()->getImageView(currentSwapchainIndex));
+                imageViews.push_back(getSwapChain()->getImageView(getCurrentFrameIndex()));
             }
             else
             {
@@ -787,7 +803,7 @@ void RenderDevice::execute(RenderGraph& graph)
         secondaryBegin.setFlags(vk::CommandBufferUsageFlagBits::eRenderPassContinue);
         secondaryBegin.setPInheritanceInfo(&secondaryInherit);
 
-        vk::CommandBuffer secondaryCmdBuffer = currentCommandPool->getBufferForQueue(QueueType::Graphics, cmdBufferIndex);
+        vk::CommandBuffer& secondaryCmdBuffer = currentCommandPool->getBufferForQueue(QueueType::Graphics, cmdBufferIndex);
         secondaryCmdBuffer.begin(secondaryBegin);
 
         if(graph.getVertexBuffer())
@@ -833,7 +849,7 @@ void RenderDevice::startFrame()
 
 void RenderDevice::endFrame()
 {
-    // Nothing to do here yet
+    mCurrentFrameIndex = (mCurrentFrameIndex + 1) %  getSwapChain()->getNumberOfSwapChainImages();
 }
 
 
@@ -843,10 +859,10 @@ void RenderDevice::submitFrame()
     submitInfo.setCommandBufferCount(1);
     submitInfo.setPCommandBuffers(&getCurrentCommandPool()->getBufferForQueue(QueueType::Graphics));
     submitInfo.setWaitSemaphoreCount(1);
-    submitInfo.setPWaitSemaphores(&mImageAquired);
-    submitInfo.setPSignalSemaphores(&mImageRendered);
+    submitInfo.setPWaitSemaphores(&mImageAquired[getCurrentFrameIndex()]);
+    submitInfo.setPSignalSemaphores(&mImageRendered[getCurrentFrameIndex()]);
     submitInfo.setSignalSemaphoreCount(1);
-    auto const waitStage = vk::PipelineStageFlags(vk::PipelineStageFlagBits::eTransfer);
+    auto const waitStage = vk::PipelineStageFlags(vk::PipelineStageFlagBits::eColorAttachmentOutput);
     submitInfo.setPWaitDstStageMask(&waitStage);
 
     mGraphicsQueue.submit(submitInfo, mFrameFinished[getCurrentFrameIndex()]);
@@ -855,18 +871,18 @@ void RenderDevice::submitFrame()
 
 void RenderDevice::swap()
 {
-    mSwapChain.present(mGraphicsQueue, mImageRendered);
+    mSwapChain.present(mGraphicsQueue, mImageRendered[getCurrentFrameIndex()]);
 }
 
 
 void RenderDevice::frameSyncSetup()
 {
+    mSwapChain.getNextImageIndex(mImageAquired[getCurrentFrameIndex()]);
+
     // wait for the previous frame using this swapchain image to be finished.
     auto& fence = mFrameFinished[getCurrentFrameIndex()];
-    mDevice.waitForFences(1, &fence, true, std::numeric_limits<uint64_t>::max());
+    mDevice.waitForFences(fence, true, std::numeric_limits<uint64_t>::max());
     mDevice.resetFences(1, &fence);
-
-    mSwapChain.getNextImageIndex(mImageAquired);
 }
 
 
@@ -881,7 +897,7 @@ void RenderDevice::execute(BarrierRecorder& recorder)
 			const auto imageBarriers = recorder.getImageBarriers(currentQueue);
 			const auto bufferBarriers = recorder.getBufferBarriers(currentQueue);
 
-			getCurrentCommandPool()->getBufferForQueue(currentQueue).pipelineBarrier(vk::PipelineStageFlagBits::eTopOfPipe, vk::PipelineStageFlagBits::eTransfer,
+            getCurrentCommandPool()->getBufferForQueue(currentQueue).pipelineBarrier(vk::PipelineStageFlagBits::eTopOfPipe, vk::PipelineStageFlagBits::eTransfer,
 				vk::DependencyFlagBits::eByRegion,
 				0, nullptr,
 				bufferBarriers.size(), bufferBarriers.data(),
@@ -893,7 +909,7 @@ void RenderDevice::execute(BarrierRecorder& recorder)
 
 void RenderDevice::transitionSwapChain(vk::ImageLayout layout)
 {
-    vk::Image image = getSwapChain()->getImage(getSwapChain()->getCurrentImageIndex());
+    vk::Image image = getSwapChain()->getImage(getCurrentFrameIndex());
 
     vk::ImageMemoryBarrier barrier{};
     barrier.setSrcAccessMask(vk::AccessFlagBits::eMemoryWrite);

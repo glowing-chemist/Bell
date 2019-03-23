@@ -18,7 +18,7 @@
 #include "RenderGraph/ComputeTask.hpp"
 #include "RenderGraph/RenderGraph.hpp"
 
-class GLFWwindow;
+struct GLFWwindow;
 
 struct QueueIndicies
 {
@@ -154,7 +154,7 @@ public:
     void                               bindImageMemory(vk::Image&, vk::DeviceMemory, const uint64_t);
 
     uint64_t						   getCurrentSubmissionIndex() const { return mCurrentSubmission; }
-	uint64_t						   getCurrentFrameIndex() const { return mSwapChain.getCurrentImageIndex(); }
+    uint64_t						   getCurrentFrameIndex() const { return mCurrentFrameIndex; }
 
     void                               flushWait() const { mDevice.waitIdle(); }
 
@@ -208,9 +208,23 @@ private:
 
     void                               transitionSwapChain(vk::ImageLayout);
 
+#ifndef NDEBUG
+public:
+    void                               insertDebugEventSignal(vk::CommandBuffer& buffer)
+                                            { buffer.setEvent(mDebugEvent, vk::PipelineStageFlagBits::eAllCommands); }
+    void                                waitOnDebugEvent()
+    {
+        while(mDevice.getEventStatus(mDebugEvent) != vk::Result::eEventSet) {}
+        mDevice.resetEvent(mDebugEvent);
+    }
+private:
+#endif
+
     // Keep track of when resources can be freed
     uint64_t mCurrentSubmission;
     uint64_t mFinishedSubmission;
+    uint32_t mCurrentFrameIndex;
+
     std::deque<std::pair<uint64_t, vk::Framebuffer>> mFramebuffersPendingDestruction;
 
     struct ImageDestructionInfo
@@ -238,9 +252,13 @@ private:
     vk::Queue mTransferQueue;
 	QueueIndicies mQueueFamilyIndicies;
 
-    std::vector<vk::Fence> mFrameFinished;
-    vk::Semaphore          mImageAquired;
-    vk::Semaphore          mImageRendered;
+    std::vector<vk::Fence>              mFrameFinished;
+    std::vector<vk::Semaphore>          mImageAquired;
+    std::vector<vk::Semaphore>          mImageRendered;
+
+#ifndef NDEBUG
+    vk::Event                           mDebugEvent;
+#endif
 
     vk::PhysicalDeviceLimits mLimits;
 

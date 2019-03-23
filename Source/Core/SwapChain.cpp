@@ -152,8 +152,8 @@ void SwapChain::present(vk::Queue& presentQueue, vk::Semaphore& waitSemaphore) {
 	vk::PresentInfoKHR info{};
     info.setPSwapchains(&mSwapChain);
 	info.setSwapchainCount(1);
-	info.setPWaitSemaphores(&waitSemaphore);
-	info.setWaitSemaphoreCount(1);
+    info.setPWaitSemaphores(&waitSemaphore);
+    info.setWaitSemaphoreCount(1);
 	info.setPImageIndices(&mCurrentImageIndex);
 
 	presentQueue.presentKHR(info);

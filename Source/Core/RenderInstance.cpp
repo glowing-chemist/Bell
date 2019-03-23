@@ -13,7 +13,7 @@
 #include <vulkan/vulkan.hpp>
 #include <vulkan/vulkan.h>
 
-#define DUMP_API 0
+#define DUMP_API 1
 
 static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallbackFunc(
     VkDebugReportFlagsEXT,
@@ -34,7 +34,7 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallbackFunc(
     asm("int3");
 #endif
 
-    return VK_TRUE;
+    return true;
 
 }
 
