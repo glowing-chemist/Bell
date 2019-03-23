@@ -9,6 +9,7 @@ Buffer::Buffer(RenderDevice* dev,
        std::string name) :
     GPUResource{dev->getCurrentSubmissionIndex()},
     DeviceChild{dev},
+    mCurrentOffset{0},
     mUsage{usage},
     mSize{size},
     mStride{stride},
@@ -18,7 +19,10 @@ Buffer::Buffer(RenderDevice* dev,
     mAllignment = mUsage & vk::BufferUsageFlagBits::eUniformBuffer ?
                                    getDevice()->getLimits().minUniformBufferOffsetAlignment : 1;
 
-    mBuffer = getDevice()->createBuffer(entries * mAllignment, mUsage);
+
+    mSize = mAllignment == 1 ? mSize : entries * mAllignment;
+
+    mBuffer = getDevice()->createBuffer(mSize, mUsage);
     const vk::MemoryRequirements bufferMemReqs = getDevice()->getMemoryRequirements(mBuffer);
     mBufferMemory = getDevice()->getMemoryManager()->Allocate(mSize, bufferMemReqs.alignment, static_cast<bool>(mUsage & vk::BufferUsageFlagBits::eTransferSrc));
     getDevice()->getMemoryManager()->BindBuffer(mBuffer, mBufferMemory);
