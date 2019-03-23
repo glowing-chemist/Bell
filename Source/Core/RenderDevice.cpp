@@ -799,17 +799,17 @@ void RenderDevice::execute(RenderGraph& graph)
         // Don't bind descriptor sets if we have no input attachments.
         if(resources.mDescriptorsWritten)
             secondaryCmdBuffer.bindDescriptorSets(bindPoint, resources.mPipelineLayout, 0, 1,  &resources.mDescSet, 0, nullptr);
-		secondaryCmdBuffer.bindPipeline(bindPoint, resources.mPipeline);
+        secondaryCmdBuffer.bindPipeline(bindPoint, resources.mPipeline);
 
-		(*task).recordCommands(secondaryCmdBuffer);
+        (*task).recordCommands(secondaryCmdBuffer);
 
         secondaryCmdBuffer.end();
+        primaryCmdBuffer.executeCommands(secondaryCmdBuffer);
+
         primaryCmdBuffer.endRenderPass();
 
-		primaryCmdBuffer.executeCommands(secondaryCmdBuffer);
-
 		++cmdBufferIndex;
-	}
+    }
 
 	primaryCmdBuffer.end();
 
