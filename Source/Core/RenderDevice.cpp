@@ -898,6 +898,9 @@ void RenderDevice::execute(BarrierRecorder& recorder)
 			const auto imageBarriers = recorder.getImageBarriers(currentQueue);
 			const auto bufferBarriers = recorder.getBufferBarriers(currentQueue);
 
+            if(bufferBarriers.empty() && imageBarriers.empty())
+                continue;
+
             getCurrentCommandPool()->getBufferForQueue(currentQueue).pipelineBarrier(vk::PipelineStageFlagBits::eTopOfPipe, vk::PipelineStageFlagBits::eTransfer,
 				vk::DependencyFlagBits::eByRegion,
 				0, nullptr,
