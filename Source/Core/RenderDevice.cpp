@@ -806,6 +806,8 @@ void RenderDevice::execute(RenderGraph& graph)
         vk::CommandBuffer& secondaryCmdBuffer = currentCommandPool->getBufferForQueue(QueueType::Graphics, cmdBufferIndex);
         secondaryCmdBuffer.begin(secondaryBegin);
 
+        secondaryCmdBuffer.bindPipeline(bindPoint, resources.mPipeline);
+
         if(graph.getVertexBuffer())
             secondaryCmdBuffer.bindVertexBuffers(0, { graph.getVertexBuffer()->getBuffer() }, {0});
 
@@ -815,7 +817,6 @@ void RenderDevice::execute(RenderGraph& graph)
         // Don't bind descriptor sets if we have no input attachments.
         if(resources.mDescriptorsWritten)
             secondaryCmdBuffer.bindDescriptorSets(bindPoint, resources.mPipelineLayout, 0, 1,  &resources.mDescSet, 0, nullptr);
-        secondaryCmdBuffer.bindPipeline(bindPoint, resources.mPipeline);
 
         (*task).recordCommands(secondaryCmdBuffer);
 
