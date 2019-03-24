@@ -29,28 +29,55 @@ enum class QueueType {
 };
 
 
-class GPUResource {
+class RefCount {
 public:
-    GPUResource(const uint64_t lastAccessed) :  mNeedsUpdating{false},
-                                                mLastAccessed{lastAccessed},
-                                                mCurrentQueue{QueueType::Graphics},
-                                                mRefCount{new std::atomic<uint32_t>(1u)} {}
+    RefCount() : mRefCount{new std::atomic<uint32_t>(1u)} {}
 
-    ~GPUResource()
+    ~RefCount()
     {
         const uint32_t oldRefCount = std::atomic_fetch_add(mRefCount, 0u);
         if(oldRefCount == 0)
             delete mRefCount;
     }
 
-    GPUResource(const GPUResource& other)
+    RefCount(const RefCount& other)
+    {
+        mRefCount = other.mRefCount;
+
+        aquire();
+    }
+
+    RefCount& operator=(const RefCount& other)
+    {
+        mRefCount = other.mRefCount;
+
+        aquire();
+
+        return *this;
+    }
+
+    RefCount(RefCount&&) = default;
+    RefCount& operator=(RefCount&&) = default;
+
+    void                aquire() { std::atomic_fetch_add(mRefCount, 1u); }
+    bool                release() { const uint32_t oldRefCount = std::atomic_fetch_sub(mRefCount, 1u); return oldRefCount == 1; }
+
+protected:
+    std::atomic<uint32_t>* mRefCount;
+};
+
+
+class GPUResource : public RefCount {
+public:
+    GPUResource(const uint64_t lastAccessed) :  mNeedsUpdating{false},
+                                                mLastAccessed{lastAccessed},
+                                                mCurrentQueue{QueueType::Graphics} {}
+
+    GPUResource(const GPUResource& other) : RefCount{other}
     {
         mNeedsUpdating = other.mNeedsUpdating;
         mLastAccessed = other.mLastAccessed;
         mCurrentQueue = other.mCurrentQueue;
-        mRefCount = other.mRefCount;
-
-        aquire();
     }
 
     GPUResource& operator=(const GPUResource& other)
@@ -60,7 +87,7 @@ public:
         mCurrentQueue = other.mCurrentQueue;
         mRefCount = other.mRefCount;
 
-        aquire();
+        return *this;
     }
 
     GPUResource(GPUResource&&) = default;
@@ -75,14 +102,10 @@ public:
 	inline QueueType	getOwningQueueType() const { return mCurrentQueue; }
 	inline void			setOwningQueueType(const QueueType queueType) { mCurrentQueue = queueType; }
 
-    void                aquire() { std::atomic_fetch_add(mRefCount, 1u); }
-    bool                release() { const uint32_t oldRefCount = std::atomic_fetch_sub(mRefCount, 1u); return oldRefCount == 1; }
-
 private:
     bool mNeedsUpdating;
     uint64_t mLastAccessed;
     QueueType mCurrentQueue;
-    std::atomic<uint32_t>* mRefCount;
 };
 
 #endif
