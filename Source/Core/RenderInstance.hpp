@@ -31,6 +31,7 @@ public:
     RenderDevice createRenderDevice(const int DeviceFeatureFlags = 0);
 
     void addDebugCallback();
+    void removeDebugCallback();
 
     GLFWwindow* getWindow() const;
     vk::SurfaceKHR getSurface() const;
@@ -39,7 +40,7 @@ private:
     std::pair<vk::PhysicalDevice, vk::Device> findSuitableDevices(const int DeviceFeatureFlags = 0);
 
     vk::Instance mInstance;
-    vk::DebugReportCallbackEXT debugCallback;
+    vk::DebugReportCallbackEXT mDebugCallback;
     vk::SurfaceKHR mWindowSurface;
     GLFWwindow* mWindow;
 };

@@ -197,6 +197,9 @@ std::pair<vk::PhysicalDevice, vk::Device> RenderInstance::findSuitableDevices(in
 RenderInstance::~RenderInstance()
 {
     mInstance.destroySurfaceKHR(mWindowSurface);
+#ifndef NDEBUG
+    removeDebugCallback();
+#endif
     mInstance.destroy();
     glfwDestroyWindow(mWindow);
     glfwTerminate();
@@ -209,15 +212,24 @@ void RenderInstance::addDebugCallback()
     callbackCreateInfo.flags = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT | VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT;
     callbackCreateInfo.pfnCallback = debugCallbackFunc;
 
-    auto* func = reinterpret_cast<PFN_vkCreateDebugReportCallbackEXT>(mInstance.getProcAddr("vkCreateDebugReportCallbackEXT"));
-    if(func != nullptr) {
+    auto* createCallback = reinterpret_cast<PFN_vkCreateDebugReportCallbackEXT>(mInstance.getProcAddr("vkCreateDebugReportCallbackEXT"));
+    if(createCallback != nullptr) {
         std::cerr << "Inserting debug callback \n";
 
-        auto call = static_cast<VkDebugReportCallbackEXT>(debugCallback);
-        func(static_cast<vk::Instance>(mInstance), &callbackCreateInfo, nullptr, &call);
+        auto call = static_cast<VkDebugReportCallbackEXT>(mDebugCallback);
+        createCallback(mInstance, &callbackCreateInfo, nullptr, &call);
+        mDebugCallback = call;
     }
-
 }
+
+
+void RenderInstance::removeDebugCallback()
+{
+    auto* destroyCallback = reinterpret_cast<PFN_vkDestroyDebugReportCallbackEXT>(mInstance.getProcAddr("vkDestroyDebugReportCallbackEXT"));
+    if(destroyCallback != nullptr)
+        destroyCallback(mInstance, mDebugCallback, nullptr);
+}
+
 
 GLFWwindow* RenderInstance::getWindow() const
 {
