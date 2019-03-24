@@ -2,6 +2,7 @@
 #define SHADER_HPP
 
 #include "Core/DeviceChild.hpp"
+#include "Core/GPUResource.hpp"
 
 #include <string>
 #include <vector>
@@ -15,7 +16,7 @@
 class RenderDevice;
 
 
-class Shader : DeviceChild
+class Shader : DeviceChild, RefCount
 {
 public:
 
