@@ -37,8 +37,8 @@ Shader::Shader(RenderDevice* device, const std::string& path) :
 
 Shader::~Shader()
 {
-    //if(mCompiled)
-        //getDevice()->destroyShaderModule(mShaderModule);
+    if(mCompiled && release())
+        getDevice()->destroyShaderModule(mShaderModule);
 }
 
 
