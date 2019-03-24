@@ -48,6 +48,8 @@ public:
         mInputAttachments.push_back({name, attachmentType});
     }
 
+    void mergeDispatches(ComputeTask&);
+
     void recordCommands(vk::CommandBuffer) const override;
 
 	void clearCalls() override { mComputeCalls.clear(); }
@@ -65,5 +67,8 @@ private:
 	ComputePipelineDescription mPipelineDescription;
 
 };
+
+
+bool operator==(const ComputeTask& lhs, const ComputeTask& rhs);
 
 #endif

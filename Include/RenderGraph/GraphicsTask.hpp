@@ -133,6 +133,8 @@ public:
 
     void recordCommands(vk::CommandBuffer) const override;
 
+    void mergeDraws(GraphicsTask&);
+
 	void clearCalls() override { mDrawCalls.clear(); }
 	TaskType taskType() const override { return TaskType::Graphics; }
 
@@ -152,5 +154,8 @@ private:
 	
 	int mVertexAttributes;
 };
+
+
+bool operator==(const GraphicsTask& lhs, const GraphicsTask& rhs);
 
 #endif

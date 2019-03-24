@@ -201,7 +201,60 @@ void RenderGraph::mergeTasks()
     if(hasMerged)
         return;
 
+    for(uint32_t i = 0; i < taskCount() - 1; ++i)
+    {
+        const auto [type, index] = mTaskOrder[i];
+        const auto [secondType, secondIndex] = mTaskOrder[i + 1];
+
+        auto& task1 = getTask(type, index);
+        auto& task2 = getTask(secondType, secondIndex);
+
+        if(areSupersets(task1, task2))
+        {
+            mergeTasks(task1, task2);
+
+            // We souldn't need to worry about cleaning up any other tracking state as we should have already serialised by now.
+            if(task2.taskType() == TaskType::Graphics)
+            {
+                mGraphicsTasks.erase(std::remove(mGraphicsTasks.begin(), mGraphicsTasks.end(), static_cast<GraphicsTask&>(task2)), mGraphicsTasks.end());
+            } else
+            {
+                mComputeTask.erase(std::remove(mComputeTask.begin(), mComputeTask.end(), static_cast<ComputeTask&>(task2)), mComputeTask.end());
+            }
+        }
+    }
+
     hasMerged = true;
+}
+
+
+bool RenderGraph::areSupersets(const RenderTask& task1, const RenderTask& task2)
+{
+    if(task1.taskType() != task2.taskType())
+        return false;
+
+    if(task1.getOuputAttachments() != task2.getOuputAttachments())
+        return false;
+
+    if(task1.getInputAttachments() != task2.getInputAttachments())
+        return false;
+
+
+    return true;
+}
+
+
+void RenderGraph::mergeTasks(RenderTask& task1, RenderTask& task2)
+{
+    if(task1.taskType() == TaskType::Graphics)
+    {
+        static_cast<GraphicsTask&>(task1).mergeDraws(static_cast<GraphicsTask&>(task2));
+    } else
+    {
+        static_cast<ComputeTask&>(task1).mergeDispatches(static_cast<ComputeTask&>(task2));
+    }
+
+    task2.clearCalls();
 }
 
 

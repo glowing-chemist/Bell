@@ -49,6 +49,12 @@ void GraphicsTask::recordCommands(vk::CommandBuffer CmdBuffer) const
 }
 
 
+void GraphicsTask::mergeDraws(GraphicsTask & task)
+{
+    mDrawCalls.insert(mDrawCalls.end(), task.mDrawCalls.begin(), task.mDrawCalls.end());
+}
+
+
 namespace std
 {
 
@@ -74,5 +80,12 @@ namespace std
         return hash;
     }
 
+}
+
+
+bool operator==(const GraphicsTask& lhs, const GraphicsTask& rhs)
+{
+    std::hash<GraphicsPipelineDescription> hasher{};
+    return hasher(lhs.getPipelineDescription()) == hasher(rhs.getPipelineDescription());
 }
 

@@ -19,3 +19,33 @@ void ComputeTask::recordCommands(vk::CommandBuffer CmdBuffer) const
         }
     }
 }
+
+
+void ComputeTask::mergeDispatches(ComputeTask& task)
+{
+    mComputeCalls.insert(mComputeCalls.end(), task.mComputeCalls.begin(), task.mComputeCalls.end());
+}
+
+
+namespace std
+{
+
+    size_t hash<ComputePipelineDescription>::operator()(const ComputePipelineDescription& desc) const noexcept
+    {
+        std::hash<std::string> stringHasher{};
+
+        size_t hash = 0;
+        hash ^= stringHasher(desc.mComputeShader.getFilePath());
+
+
+        return hash;
+    }
+
+}
+
+
+bool operator==(const ComputeTask& lhs, const ComputeTask& rhs)
+{
+    std::hash<ComputePipelineDescription> hasher{};
+    return hasher(lhs.getPipelineDescription()) == hasher(rhs.getPipelineDescription());
+}

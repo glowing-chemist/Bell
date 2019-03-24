@@ -30,6 +30,7 @@ enum class TaskType
 	Compute
 };
 
+
 // This class describes any task that can be used for rendering
 // from graphics render passes to async compute
 class RenderTask 
