@@ -59,10 +59,10 @@ void RenderGraph::addDependancy(const std::string& dependancy, const std::string
         uint32_t taskCounter = 0;
         for(uint32_t i = 0; i < mTaskOrder.size(); ++i)
         {
-            if(mTaskOrder[i].first == TaskType::Compute)
-                ++taskCounter;
             if(taskCounter == computeTaskIndex)
                 dependancyTaskIndex = i;
+            if(mTaskOrder[i].first == TaskType::Compute)
+                ++taskCounter;
         }
     }
     else
@@ -71,44 +71,44 @@ void RenderGraph::addDependancy(const std::string& dependancy, const std::string
         uint32_t taskCounter = 0;
         for(uint32_t i = 0; i < mTaskOrder.size(); ++i)
         {
-            if(mTaskOrder[i].first == TaskType::Graphics)
-                ++taskCounter;
             if(taskCounter == graphicsTaskIndex)
                 dependancyTaskIndex = i;
+            if(mTaskOrder[i].first == TaskType::Graphics)
+                ++taskCounter;
         }
     }
     }
     // Find the dependant taskIndex now
     {
-    auto dependancyGraphicsIt = std::find_if(mGraphicsTasks.begin(), mGraphicsTasks.end(),
+    auto dependantGraphicsIt = std::find_if(mGraphicsTasks.begin(), mGraphicsTasks.end(),
                                             [&dependant](auto& task) {return task.getName() == dependant;});
 
 
-    if(dependancyGraphicsIt == mGraphicsTasks.end())
+    if(dependantGraphicsIt == mGraphicsTasks.end())
     {
-        auto dependancyComputeIt = std::find_if(mComputeTask.begin(), mComputeTask.end(),
+        auto dependantComputeIt = std::find_if(mComputeTask.begin(), mComputeTask.end(),
                                                     [&dependant](const auto& task) {return task.getName() == dependant;});
 
-        const uint32_t computeTaskIndex = std::distance(mComputeTask.begin(), dependancyComputeIt);
+        const uint32_t computeTaskIndex = std::distance(mComputeTask.begin(), dependantComputeIt);
         uint32_t taskCounter = 0;
         for(uint32_t i = 0; i < mTaskOrder.size(); ++i)
         {
+            if(taskCounter == computeTaskIndex)
+                dependantTaskIndex = i;
             if(mTaskOrder[i].first == TaskType::Compute)
                 ++taskCounter;
-            if(taskCounter == computeTaskIndex)
-                dependancyTaskIndex = i;
         }
     }
     else
     {
-        const uint32_t graphicsTaskIndex = std::distance(mGraphicsTasks.begin(), dependancyGraphicsIt);
+        const uint32_t graphicsTaskIndex = std::distance(mGraphicsTasks.begin(), dependantGraphicsIt);
         uint32_t taskCounter = 0;
         for(uint32_t i = 0; i < mTaskOrder.size(); ++i)
         {
+            if(taskCounter == graphicsTaskIndex)
+                dependantTaskIndex = i;
             if(mTaskOrder[i].first == TaskType::Graphics)
                 ++taskCounter;
-            if(taskCounter == graphicsTaskIndex)
-                dependancyTaskIndex = i;
         }
     }
     }
