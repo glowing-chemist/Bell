@@ -101,8 +101,6 @@ class GraphicsTask : public RenderTask
 {
 public:
     GraphicsTask(const std::string& name, const GraphicsPipelineDescription& desc) : RenderTask{name}, mPipelineDescription{ desc } {}
-
-    const std::string& getName() { return getName();  }
 	
 	GraphicsPipelineDescription getPipelineDescription() const { return mPipelineDescription; }
 
