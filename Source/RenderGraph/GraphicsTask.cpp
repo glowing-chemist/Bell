@@ -86,7 +86,7 @@ namespace std
 bool operator==(const GraphicsTask& lhs, const GraphicsTask& rhs)
 {
     std::hash<GraphicsPipelineDescription> hasher{};
-    return hasher(lhs.getPipelineDescription()) == hasher(rhs.getPipelineDescription());
+    return hasher(lhs.getPipelineDescription()) == hasher(rhs.getPipelineDescription()) && rhs.mDrawCalls.size() == lhs.mDrawCalls.size();
 }
 
 

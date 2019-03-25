@@ -47,7 +47,7 @@ namespace std
 bool operator==(const ComputeTask& lhs, const ComputeTask& rhs)
 {
     std::hash<ComputePipelineDescription> hasher{};
-    return hasher(lhs.getPipelineDescription()) == hasher(rhs.getPipelineDescription());
+    return hasher(lhs.getPipelineDescription()) == hasher(rhs.getPipelineDescription()) && lhs.mComputeCalls.size() == rhs.mComputeCalls.size();
 }
 
 

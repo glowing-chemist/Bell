@@ -138,6 +138,8 @@ public:
 	void clearCalls() override { mDrawCalls.clear(); }
 	TaskType taskType() const override { return TaskType::Graphics; }
 
+    friend bool operator==(const GraphicsTask& lhs, const GraphicsTask& rhs);
+
 private:
 
 	struct thunkedDraw {
@@ -156,7 +158,6 @@ private:
 };
 
 
-bool operator==(const GraphicsTask& lhs, const GraphicsTask& rhs);
 bool operator==(const GraphicsPipelineDescription& lhs, const GraphicsPipelineDescription& rhs);
 
 #endif
