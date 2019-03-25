@@ -187,7 +187,7 @@ void RenderGraph::reorderTasks()
 {
     static bool hasReordered = false;
 
-    if(hasReordered)
+    if(hasReordered || mTaskDependancies.empty())
         return;
 
 	std::vector<std::pair<TaskType, uint32_t>> newTaskOrder{};
