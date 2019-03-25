@@ -190,6 +190,34 @@ void RenderGraph::reorderTasks()
     if(hasReordered)
         return;
 
+	std::vector<std::pair<TaskType, uint32_t>> newTaskOrder{};
+	newTaskOrder.reserve(mTaskOrder.size());
+
+	const uint32_t taskCount = mTaskOrder.size();
+
+	for (uint32_t i = 0; i < taskCount; ++i)
+	{
+		std::vector<uint8_t> dependancyBitset(mTaskDependancies.size());
+
+		for (uint32_t vertexIndex = 0; vertexIndex < mTaskDependancies.size(); ++vertexIndex)
+		{
+			dependancyBitset[mTaskDependancies[vertexIndex].second] = 1;
+		}
+
+		const uint32_t taskIndexToAdd = std::distance(dependancyBitset.begin(), std::find(dependancyBitset.begin(), dependancyBitset.end(), 0));
+
+		newTaskOrder.push_back(mTaskOrder[taskIndexToAdd]);
+		mTaskOrder.erase(mTaskOrder.begin() + taskIndexToAdd);
+
+		for (uint32_t i = 0; i < mTaskDependancies.size(); ++i)
+		{
+			if (mTaskDependancies[i].first == taskIndexToAdd)
+				mTaskDependancies.erase(mTaskDependancies.begin() + i);
+		}
+	}
+
+	mTaskOrder.swap(newTaskOrder);
+
     hasReordered = true;
 }
 
@@ -222,8 +250,7 @@ void RenderGraph::mergeTasks()
                 mComputeTask.erase(std::remove(mComputeTask.begin(), mComputeTask.end(), static_cast<ComputeTask&>(task2)), mComputeTask.end());
             }
 
-			std::swap(mVulkanResources.begin() + i + 1, mVulkanResources.end() - 1);
-			mVulkanResources.erase(mVulkanResources.end() - 1, mVulkanResources.end());
+			mVulkanResources.erase(mVulkanResources.begin() + i + 1);
         }
     }
 
