@@ -251,6 +251,7 @@ void RenderGraph::mergeTasks()
             }
 
 			mVulkanResources.erase(mVulkanResources.begin() + i + 1);
+            mTaskOrder.erase(mTaskOrder.begin() + i + 1);
         }
     }
 
