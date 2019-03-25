@@ -69,6 +69,21 @@ RenderDevice::~RenderDevice()
     mSwapChain.destroy();
     mMemoryManager.Destroy();
 
+    for(auto& [desc, graphicsHandles] : mGraphicsPipelineCache)
+    {
+        mDevice.destroyPipeline(graphicsHandles.mPipeline);
+        mDevice.destroyPipelineLayout(graphicsHandles.mPipelineLayout);
+        mDevice.destroyRenderPass(graphicsHandles.mRenderPass);
+        mDevice.destroyDescriptorSetLayout(graphicsHandles.mDescriptorSetLayout);
+    }
+
+    for(auto& [desc, computeHandles]: mComputePipelineCache)
+    {
+        mDevice.destroyPipeline(computeHandles.mPipeline);
+        mDevice.destroyPipelineLayout(computeHandles.mPipelineLayout);
+        mDevice.destroyDescriptorSetLayout(computeHandles.mDescriptorSetLayout);
+    }
+
     for(auto& fence : mFrameFinished)
     {
         mDevice.destroyFence(fence);
@@ -158,6 +173,9 @@ uint32_t RenderDevice::getQueueFamilyIndex(const QueueType type) const
 
 GraphicsPipelineHandles RenderDevice::createPipelineHandles(const GraphicsTask& task)
 {
+    if(mGraphicsPipelineCache[task.getPipelineDescription()].mPipeline != vk::Pipeline{nullptr})
+        return mGraphicsPipelineCache[task.getPipelineDescription()];
+
     const auto [vertexBindings, vertexAttributes] = generateVertexInput(task);
     const vk::DescriptorSetLayout descSetLayout = generateDescriptorSetLayout(task);
     const vk::PipelineLayout pipelineLayout = generatePipelineLayout(descSetLayout);
@@ -168,17 +186,26 @@ GraphicsPipelineHandles RenderDevice::createPipelineHandles(const GraphicsTask& 
                                                     vertexAttributes,
                                                     renderPass);
 
-    return {pipeline, pipelineLayout, renderPass, vertexBindings, vertexAttributes, descSetLayout};
+    GraphicsPipelineHandles handles{pipeline, pipelineLayout, renderPass, vertexBindings, vertexAttributes, descSetLayout};
+    mGraphicsPipelineCache[task.getPipelineDescription()] = handles;
+
+    return handles;
 }
 
 
 ComputePipelineHandles RenderDevice::createPipelineHandles(const ComputeTask& task)
 {
+    if(mComputePipelineCache[task.getPipelineDescription()].mPipeline != vk::Pipeline{nullptr})
+        return mComputePipelineCache[task.getPipelineDescription()];
+
     const vk::DescriptorSetLayout descSetLayout = generateDescriptorSetLayout(task);
     const vk::PipelineLayout pipelineLayout = generatePipelineLayout(descSetLayout);
     const vk::Pipeline pipeline = generatePipeline(task, pipelineLayout);
 
-    return {pipeline, pipelineLayout, descSetLayout};
+    ComputePipelineHandles handles{pipeline, pipelineLayout, descSetLayout};
+    mComputePipelineCache[task.getPipelineDescription()] = handles;
+
+    return handles;
 }
 
 

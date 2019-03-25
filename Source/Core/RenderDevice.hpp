@@ -262,8 +262,8 @@ private:
 
     vk::PhysicalDeviceLimits mLimits;
 
-	std::unordered_map<GraphicsPipelineDescription, std::pair<vk::Pipeline, vk::PipelineLayout>> mGraphicsPipelineCache;
-	std::unordered_map<ComputePipelineDescription, std::pair<vk::Pipeline, vk::PipelineLayout>> mComputePipelineCache;
+    std::unordered_map<GraphicsPipelineDescription, GraphicsPipelineHandles> mGraphicsPipelineCache;
+    std::unordered_map<ComputePipelineDescription, ComputePipelineHandles> mComputePipelineCache;
 
     SwapChain mSwapChain;
     std::vector<CommandPool> mCommandPools;

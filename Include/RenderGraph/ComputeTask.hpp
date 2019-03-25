@@ -70,5 +70,6 @@ private:
 
 
 bool operator==(const ComputeTask& lhs, const ComputeTask& rhs);
+bool operator==(const ComputePipelineDescription& lhs, const ComputePipelineDescription& rhs);
 
 #endif

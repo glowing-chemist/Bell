@@ -157,5 +157,6 @@ private:
 
 
 bool operator==(const GraphicsTask& lhs, const GraphicsTask& rhs);
+bool operator==(const GraphicsPipelineDescription& lhs, const GraphicsPipelineDescription& rhs);
 
 #endif

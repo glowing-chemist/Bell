@@ -89,3 +89,10 @@ bool operator==(const GraphicsTask& lhs, const GraphicsTask& rhs)
     return hasher(lhs.getPipelineDescription()) == hasher(rhs.getPipelineDescription());
 }
 
+
+bool operator==(const GraphicsPipelineDescription& lhs, const GraphicsPipelineDescription& rhs)
+{
+    std::hash<GraphicsPipelineDescription> hasher{};
+    return hasher(lhs) == hasher(rhs);
+}
+
