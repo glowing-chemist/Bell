@@ -221,6 +221,9 @@ void RenderGraph::mergeTasks()
             {
                 mComputeTask.erase(std::remove(mComputeTask.begin(), mComputeTask.end(), static_cast<ComputeTask&>(task2)), mComputeTask.end());
             }
+
+			std::swap(mVulkanResources.begin() + i + 1, mVulkanResources.end() - 1);
+			mVulkanResources.erase(mVulkanResources.end() - 1, mVulkanResources.end());
         }
     }
 
