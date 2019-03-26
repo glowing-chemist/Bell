@@ -192,7 +192,13 @@ void RenderGraph::reorderTasks()
 
 	std::vector<std::pair<TaskType, uint32_t>> newTaskOrder{};
     std::vector<vulkanResources> newResources{};
-	newTaskOrder.reserve(mTaskOrder.size());
+    std::vector<std::vector<ResourceBindingInfo>> newInputBindings{};
+    std::vector<std::vector<ResourceBindingInfo>> newOutputBindings{};
+
+    newTaskOrder.reserve(mTaskOrder.size());
+    newResources.reserve(mTaskOrder.size());
+    newInputBindings.reserve(mTaskOrder.size());
+    newOutputBindings.reserve(mTaskOrder.size());
 
 	const uint32_t taskCount = mTaskOrder.size();
 
@@ -209,6 +215,9 @@ void RenderGraph::reorderTasks()
 
 		newTaskOrder.push_back(mTaskOrder[taskIndexToAdd]);
         newResources.push_back(mVulkanResources[taskIndexToAdd]);
+        newInputBindings.push_back(std::move(mInputResources[taskIndexToAdd]));
+        newOutputBindings.push_back((std::move(mOutputResources[taskIndexToAdd])));
+
 		mTaskOrder.erase(mTaskOrder.begin() + taskIndexToAdd);
 
 		for (uint32_t i = 0; i < mTaskDependancies.size(); ++i)
@@ -220,6 +229,8 @@ void RenderGraph::reorderTasks()
 
 	mTaskOrder.swap(newTaskOrder);
     mVulkanResources.swap(newResources);
+    mInputResources.swap(newInputBindings);
+    mOutputResources.swap(newOutputBindings);
 
     hasReordered = true;
 }
