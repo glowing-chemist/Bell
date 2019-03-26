@@ -335,56 +335,9 @@ vk::Pipeline RenderDevice::generatePipeline(const ComputeTask& task,
 
 vk::RenderPass	RenderDevice::generateRenderPass(const GraphicsTask& task)
 {
-    // TODO implement a renderpass cache.
-
-    const auto& inputAttachments = task.getInputAttachments();
     const auto& outputAttachments = task.getOuputAttachments();
 
     std::vector<vk::AttachmentDescription> attachmentDescriptions;
-
-    for(const auto& [name, type] : inputAttachments)
-    {
-        // We only care about images here.
-        if(type == AttachmentType::DataBuffer ||
-           type == AttachmentType::PushConstants ||
-           type == AttachmentType::UniformBuffer)
-                continue;
-
-        vk::AttachmentDescription attachmentDesc{};
-
-        // get the needed format
-        const auto [format, layout] = [type, this]()
-        {
-            switch(type)
-            {
-                case AttachmentType::Texture1D:
-                case AttachmentType::Texture2D:
-                case AttachmentType::Texture3D:
-                    return std::make_pair(vk::Format::eR8G8B8A8Srgb, vk::ImageLayout::eShaderReadOnlyOptimal);
-                case AttachmentType::Depth:
-                    return std::make_pair(vk::Format::eD32Sfloat, vk::ImageLayout::eDepthStencilReadOnlyOptimal);
-                case AttachmentType::SwapChain:
-                    return std::make_pair(this->getSwapChain()->getSwapChainImageFormat(),
-                                          vk::ImageLayout::eShaderReadOnlyOptimal);
-                default:
-                    return std::make_pair(vk::Format::eR8Sint, vk::ImageLayout::eUndefined); // should be obvious that something has gone wrong.
-            }
-        }();
-
-        attachmentDesc.setFormat(format);
-
-        // eventually I will implment a render pass system that is aware of what comes before and after it
-        // in order to avoid having to do manula barriers for all transitions.
-        attachmentDesc.setInitialLayout((layout));
-        attachmentDesc.setFinalLayout(layout);
-
-        attachmentDesc.setLoadOp(vk::AttachmentLoadOp::eLoad); // we are going to overwrite all pixles
-        attachmentDesc.setStoreOp(vk::AttachmentStoreOp::eStore);
-        attachmentDesc.setStencilLoadOp(vk::AttachmentLoadOp::eLoad);
-        attachmentDesc.setStencilStoreOp(vk::AttachmentStoreOp::eStore);
-
-        attachmentDescriptions.push_back((attachmentDesc));
-    }
 
     // needed for subpass createInfo;
     bool hasDepthAttachment = false;
