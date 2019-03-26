@@ -191,6 +191,7 @@ void RenderGraph::reorderTasks()
         return;
 
 	std::vector<std::pair<TaskType, uint32_t>> newTaskOrder{};
+    std::vector<vulkanResources> newResources{};
 	newTaskOrder.reserve(mTaskOrder.size());
 
 	const uint32_t taskCount = mTaskOrder.size();
@@ -207,6 +208,7 @@ void RenderGraph::reorderTasks()
 		const uint32_t taskIndexToAdd = std::distance(dependancyBitset.begin(), std::find(dependancyBitset.begin(), dependancyBitset.end(), 0));
 
 		newTaskOrder.push_back(mTaskOrder[taskIndexToAdd]);
+        newResources.push_back(mVulkanResources[taskIndexToAdd]);
 		mTaskOrder.erase(mTaskOrder.begin() + taskIndexToAdd);
 
 		for (uint32_t i = 0; i < mTaskDependancies.size(); ++i)
@@ -217,6 +219,7 @@ void RenderGraph::reorderTasks()
 	}
 
 	mTaskOrder.swap(newTaskOrder);
+    mVulkanResources.swap(newResources);
 
     hasReordered = true;
 }
