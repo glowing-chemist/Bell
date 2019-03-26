@@ -373,7 +373,7 @@ vk::RenderPass	RenderDevice::generateRenderPass(const GraphicsTask& task)
 
         attachmentDesc.setFormat(format);
 
-        // eventually I will implment a render pass system that is aware of what comes beofer and after it
+        // eventually I will implment a render pass system that is aware of what comes before and after it
         // in order to avoid having to do manula barriers for all transitions.
         attachmentDesc.setInitialLayout((layout));
         attachmentDesc.setFinalLayout(layout);
