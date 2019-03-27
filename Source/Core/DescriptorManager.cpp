@@ -14,13 +14,13 @@ DescriptorManager::~DescriptorManager()
 }
 
 
-std::vector<vk::DescriptorSet> DescriptorManager::getDescriptors(RenderGraph& graph)
+std::vector<vk::DescriptorSet> DescriptorManager::getDescriptors(RenderGraph& graph, std::vector<vulkanResources>& resources)
 {
     std::vector<vk::DescriptorSet> descSets;
 	uint32_t resourceIndex = 0;
 
 	auto task = graph.taskBegin();
-	auto resource = graph.resourceBegin();
+	auto resource = resources.begin();
 
     while(task != graph.taskEnd())
     {
@@ -44,7 +44,7 @@ std::vector<vk::DescriptorSet> DescriptorManager::getDescriptors(RenderGraph& gr
 
 
 
-void DescriptorManager::writeDescriptors(std::vector<vk::DescriptorSet>& descSets, RenderGraph& graph)
+void DescriptorManager::writeDescriptors(std::vector<vk::DescriptorSet>& descSets, RenderGraph& graph, std::vector<vulkanResources>& resources)
 {
     std::vector<vk::WriteDescriptorSet> descSetWrites;
     std::vector<vk::DescriptorImageInfo> imageInfos;
@@ -58,11 +58,11 @@ void DescriptorManager::writeDescriptors(std::vector<vk::DescriptorSet>& descSet
 	uint32_t descIndex = 0;
 
 	auto inputBindings = graph.inputBindingBegin();
-	auto resource = graph.resourceBegin();
+	auto resource = resources.begin();
 
     while(inputBindings != graph.inputBindingEnd())
     {
-        if(!(*resource).mDescSetNeedsUpdating)
+        if(!graph.getDescriptorsNeedUpdating()[descIndex])
         {
             ++resource;
             ++inputBindings;
@@ -123,7 +123,7 @@ void DescriptorManager::freeDescriptorSets(RenderGraph& graph)
 
 vk::DescriptorSet DescriptorManager::allocateDescriptorSet(const RenderGraph& graph,
                                                            const RenderTask& task,
-                                                           const RenderGraph::vulkanResources& resources)
+                                                           const vulkanResources& resources)
 {    
     // Find a better/more efficient way to do this.
     std::vector<AttachmentType> attachments(task.getInputAttachments().size());

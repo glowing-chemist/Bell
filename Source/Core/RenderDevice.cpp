@@ -627,8 +627,9 @@ vk::PipelineLayout RenderDevice::generatePipelineLayout(vk::DescriptorSetLayout 
 void RenderDevice::generateVulkanResources(RenderGraph& graph)
 {
 	auto task = graph.taskBegin();
-	auto resource = graph.resourceBegin();
-    
+	mVulkanResources.reserve(graph.mTaskOrder.size());
+	auto& resource = mVulkanResources.begin();
+
 	while( task != graph.taskEnd())
     {
 		if ((*resource).mPipeline != vk::Pipeline{ nullptr })
@@ -643,7 +644,7 @@ void RenderDevice::generateVulkanResources(RenderGraph& graph)
             const GraphicsTask& graphicsTask = static_cast<const GraphicsTask&>(*task);
             GraphicsPipelineHandles pipelineHandles = createPipelineHandles(graphicsTask);
 
-            RenderGraph::vulkanResources& taskResources = *resource;
+            vulkanResources& taskResources = *resource;
             taskResources.mPipeline = pipelineHandles.mPipeline;
             taskResources.mPipelineLayout = pipelineHandles.mPipelineLayout;
             taskResources.mDescSetLayout = pipelineHandles.mDescriptorSetLayout;
@@ -657,7 +658,7 @@ void RenderDevice::generateVulkanResources(RenderGraph& graph)
             const ComputeTask& computeTask = static_cast<const ComputeTask&>(*task);
             ComputePipelineHandles pipelineHandles = createPipelineHandles(computeTask);
 
-            RenderGraph::vulkanResources& taskResources = *resource;
+            vulkanResources& taskResources = *resource;
             taskResources.mPipeline = pipelineHandles.mPipeline;
             taskResources.mPipelineLayout = pipelineHandles.mPipelineLayout;
             taskResources.mDescSetLayout = pipelineHandles.mDescriptorSetLayout;
@@ -673,14 +674,16 @@ void RenderDevice::generateVulkanResources(RenderGraph& graph)
 void RenderDevice::generateFrameBuffers(RenderGraph& graph)
 {
 	auto outputBindings = graph.outputBindingBegin();
-	auto resource = graph.resourceBegin();
+	auto resource = mVulkanResources.begin();
+	uint32_t taskIndex = 0;
 
 	while(outputBindings != graph.outputBindingEnd())
     {
-        if(!(*resource).mFrameBufferNeedsUpdating)
+        if(!graph.mFrameBuffersNeedUpdating[taskIndex])
         {
             ++resource;
             ++outputBindings;
+			++taskIndex;
             continue;
         }
 
@@ -717,15 +720,16 @@ void RenderDevice::generateFrameBuffers(RenderGraph& graph)
 
 		++resource;
 		++outputBindings;
-        (*resource).mFrameBufferNeedsUpdating = false;
-    }
+        graph.mFrameBuffersNeedUpdating[taskIndex] = false;
+		++taskIndex;
+	}
 }
 
 
 void RenderDevice::generateDescriptorSets(RenderGraph & graph)
 {
-    auto descriptorSets = mDescriptorManager.getDescriptors(graph);
-    mDescriptorManager.writeDescriptors(descriptorSets, graph);
+    auto descriptorSets = mDescriptorManager.getDescriptors(graph, mVulkanResources);
+    mDescriptorManager.writeDescriptors(descriptorSets, graph, mVulkanResources);
 }
 
 
@@ -751,7 +755,7 @@ void RenderDevice::execute(RenderGraph& graph)
     vk::CommandBuffer primaryCmdBuffer = currentCommandPool->getBufferForQueue(QueueType::Graphics);
 
 	uint32_t cmdBufferIndex = 1;
-	auto vulkanResource = graph.resourceBegin();
+	auto vulkanResource = mVulkanResources.begin();
 	for (auto task = graph.taskBegin(); task != graph.taskEnd(); ++task, ++vulkanResource)
 	{
         const auto& resources = *vulkanResource;
@@ -795,7 +799,7 @@ void RenderDevice::execute(RenderGraph& graph)
             secondaryCmdBuffer.bindIndexBuffer(graph.getIndexBuffer()->getBuffer(), 0, vk::IndexType::eUint32);
 
         // Don't bind descriptor sets if we have no input attachments.
-        if(resources.mDescriptorsWritten)
+		if (resources.mDescSet != vk::DescriptorSet{ nullptr })
             secondaryCmdBuffer.bindDescriptorSets(bindPoint, resources.mPipelineLayout, 0, 1,  &resources.mDescSet, 0, nullptr);
 
         (*task).recordCommands(secondaryCmdBuffer);
@@ -831,6 +835,9 @@ void RenderDevice::startFrame()
 void RenderDevice::endFrame()
 {
     mCurrentFrameIndex = (mCurrentFrameIndex + 1) %  getSwapChain()->getNumberOfSwapChainImages();
+
+	// This is safe (doesn't leak resources) as they are all stored in the pipeline cache.
+	mVulkanResources.clear();
 }
 
 

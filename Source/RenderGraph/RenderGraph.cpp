@@ -10,7 +10,6 @@ void RenderGraph::addTask(const GraphicsTask& task)
 
     mTaskOrder.push_back({TaskType::Graphics, taskIndex});
     // Also add a vulkan resources and inputs/outputs for each task, zero initialised
-    mVulkanResources.emplace_back();
     mInputResources.emplace_back();
     mOutputResources.emplace_back();
 
@@ -34,7 +33,6 @@ void RenderGraph::addTask(const ComputeTask& task)
     mTaskOrder.push_back({TaskType::Compute, taskIndex});
 
     // Also add a vulkan resources and inputs/outputs for each task, zero initialised
-    mVulkanResources.emplace_back();
     mInputResources.emplace_back();
     mOutputResources.emplace_back();
 }
@@ -120,6 +118,8 @@ void RenderGraph::addDependancy(const std::string& dependancy, const std::string
 void RenderGraph::bindResource(const std::string& name, const uint32_t index, const ResourceType resourcetype)
 {
     uint32_t taskOrderIndex = 0;
+	mDescriptorsNeedUpdating.resize(mTaskOrder.size());
+	mFrameBuffersNeedUpdating.resize(mTaskOrder.size());
     for(const auto [taskType, taskIndex] : mTaskOrder)
     {
         RenderTask& task = getTask(taskType, taskIndex);
@@ -130,7 +130,7 @@ void RenderGraph::bindResource(const std::string& name, const uint32_t index, co
             if(input.first == name)
             {
                 mInputResources[taskOrderIndex][inputAttachmentIndex] = {name, resourcetype, index, inputAttachmentIndex};
-                mVulkanResources[taskOrderIndex].mDescSetNeedsUpdating = true;
+                mDescriptorsNeedUpdating[taskOrderIndex] = true;
                 break; // Assume a resource is only bound once per task.
             }
             ++inputAttachmentIndex;
@@ -142,7 +142,7 @@ void RenderGraph::bindResource(const std::string& name, const uint32_t index, co
             if(input.first == name)
             {
                 mOutputResources[taskOrderIndex][outputAttachmentIndex] = {name, resourcetype, index, outputAttachmentIndex};
-                mVulkanResources[taskOrderIndex].mFrameBufferNeedsUpdating = true;
+                mFrameBuffersNeedUpdating[taskOrderIndex] = true;
                 break;
             }
             ++outputAttachmentIndex;
@@ -191,12 +191,10 @@ void RenderGraph::reorderTasks()
         return;
 
 	std::vector<std::pair<TaskType, uint32_t>> newTaskOrder{};
-    std::vector<vulkanResources> newResources{};
     std::vector<std::vector<ResourceBindingInfo>> newInputBindings{};
     std::vector<std::vector<ResourceBindingInfo>> newOutputBindings{};
 
     newTaskOrder.reserve(mTaskOrder.size());
-    newResources.reserve(mTaskOrder.size());
     newInputBindings.reserve(mTaskOrder.size());
     newOutputBindings.reserve(mTaskOrder.size());
 
@@ -214,7 +212,6 @@ void RenderGraph::reorderTasks()
 		const uint32_t taskIndexToAdd = std::distance(dependancyBitset.begin(), std::find(dependancyBitset.begin(), dependancyBitset.end(), 0));
 
 		newTaskOrder.push_back(mTaskOrder[taskIndexToAdd]);
-        newResources.push_back(mVulkanResources[taskIndexToAdd]);
         newInputBindings.push_back(std::move(mInputResources[taskIndexToAdd]));
         newOutputBindings.push_back((std::move(mOutputResources[taskIndexToAdd])));
 
@@ -228,7 +225,6 @@ void RenderGraph::reorderTasks()
 	}
 
 	mTaskOrder.swap(newTaskOrder);
-    mVulkanResources.swap(newResources);
     mInputResources.swap(newInputBindings);
     mOutputResources.swap(newOutputBindings);
 
@@ -264,7 +260,6 @@ void RenderGraph::mergeTasks()
                 mComputeTask.erase(std::remove(mComputeTask.begin(), mComputeTask.end(), static_cast<ComputeTask&>(task2)), mComputeTask.end());
             }
 
-			mVulkanResources.erase(mVulkanResources.begin() + i + 1);
             mTaskOrder.erase(mTaskOrder.begin() + i + 1);
         }
     }
@@ -370,18 +365,6 @@ TaskIterator RenderGraph::taskBegin()
 TaskIterator RenderGraph::taskEnd()
 {
 	return TaskIterator{*this, mTaskOrder.size()};
-}
-
-
-ResourceIterator RenderGraph::resourceBegin()
-{
-	return ResourceIterator{mVulkanResources, *this};
-}
-
-
-ResourceIterator RenderGraph::resourceEnd()
-{
-	return ResourceIterator{ mVulkanResources, *this, mVulkanResources.size()};
 }
 
 

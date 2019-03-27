@@ -17,7 +17,6 @@
 
 class DescriptorManager;
 class TaskIterator;
-class ResourceIterator;
 
 enum class BindingIteratorType
 {
@@ -32,7 +31,6 @@ class RenderGraph
 {
 	friend RenderDevice;
 	friend TaskIterator;
-	friend ResourceIterator;
 	friend BindingIterator<BindingIteratorType::Input>;
 	friend BindingIterator<BindingIteratorType::Output>;
 public:
@@ -62,14 +60,22 @@ public:
 	TaskIterator taskBegin();
 	TaskIterator taskEnd();
 
-	ResourceIterator resourceBegin();
-	ResourceIterator resourceEnd();
-
 	BindingIterator<BindingIteratorType::Input> inputBindingBegin();
 	BindingIterator<BindingIteratorType::Input> inputBindingEnd();
 
 	BindingIterator< BindingIteratorType::Output> outputBindingBegin();
 	BindingIterator< BindingIteratorType::Output> outputBindingEnd();
+
+	const std::vector<bool>& getDescriptorsNeedUpdating() const
+	{
+		return mDescriptorsNeedUpdating; 
+	}
+
+
+	const std::vector<bool>& getFrameBuffersNeedUpdating() const
+	{
+		return mFrameBuffersNeedUpdating;
+	}
 
     // resources tracking
     enum class ResourceType
@@ -78,23 +84,6 @@ public:
         Buffer
     };
 	GPUResource& getResource(const ResourceType, const uint32_t);
-
-    struct vulkanResources
-    {
-        vk::Pipeline mPipeline;
-        vk::PipelineLayout mPipelineLayout;
-        vk::DescriptorSetLayout mDescSetLayout;
-        // Only needed for graphics tasks
-        std::optional<vk::RenderPass> mRenderPass;
-        std::optional<vk::VertexInputBindingDescription> mVertexBindingDescription;
-        std::optional<std::vector<vk::VertexInputAttributeDescription>> mVertexAttributeDescription;
-
-        std::optional<vk::Framebuffer> mFrameBuffer;
-        bool mFrameBufferNeedsUpdating = true;
-        vk::DescriptorSet mDescSet;
-        bool mDescSetNeedsUpdating;
-        bool mDescriptorsWritten = false;
-    };
 
 	struct ResourceBindingInfo
 	{
@@ -123,7 +112,8 @@ private:
     std::optional<Buffer> mIndexBuffer;
 
     std::vector<std::pair<TaskType, uint32_t>> mTaskOrder;
-    std::vector<vulkanResources> mVulkanResources;
+	std::vector<bool> mDescriptorsNeedUpdating;
+	std::vector<bool> mFrameBuffersNeedUpdating;
 
     std::vector<std::pair<uint32_t, uint32_t>> mTaskDependancies;
 
@@ -151,24 +141,6 @@ public:
 	TaskIterator& operator++();
 	bool operator==(const TaskIterator& rhs) { return mCurrentIndex == rhs.mCurrentIndex; }
 	bool operator!=(const TaskIterator& rhs) { return !(*this == rhs); }
-};
-
-
-class ResourceIterator : public std::iterator<std::forward_iterator_tag,
-	RenderGraph::vulkanResources>
-{
-	std::vector<RenderGraph::vulkanResources>& mResources;
-	uint64_t mCurrentIndex;
-	const RenderGraph& mGraph;
-
-public:
-
-	ResourceIterator(std::vector<RenderGraph::vulkanResources>& resources, RenderGraph& graph, uint64_t startingIndex = 0) : mResources{ resources }, mCurrentIndex{ startingIndex }, mGraph{ graph } {}
-
-	RenderGraph::vulkanResources& operator*() { return mResources[mCurrentIndex]; }
-	ResourceIterator& operator++() { ++mCurrentIndex; return *this; }
-    bool operator==(const ResourceIterator& rhs) { return mCurrentIndex == rhs.mCurrentIndex; }
-	bool operator!=(const ResourceIterator& rhs) { return !(*this == rhs); }
 };
 
 

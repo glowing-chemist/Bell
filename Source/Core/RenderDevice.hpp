@@ -243,6 +243,8 @@ private:
     };
     std::deque<BufferDestructionInfo> mBuffersPendingDestruction;
 
+	std::vector<vulkanResources> mVulkanResources;
+
     // underlying devices
     vk::Device mDevice;
     vk::PhysicalDevice mPhysicalDevice;
