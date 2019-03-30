@@ -7,9 +7,10 @@ Image::Image(RenderDevice* dev,
              const uint32_t x,
              const uint32_t y,
              const uint32_t z,
-             std::string debugName) :
+             std::string&& debugName) :
     GPUResource{dev->getCurrentSubmissionIndex()},
     DeviceChild{dev},
+    mIsOwned{true},
     mFormat{format},
 	mLayout{vk::ImageLayout::eUndefined},
     mUsage{usage},
@@ -29,9 +30,34 @@ Image::Image(RenderDevice* dev,
 }
 
 
+Image::Image(RenderDevice* dev,
+      vk::Image& image,
+      vk::Format format,
+      const uint32_t x,
+      const uint32_t y,
+      const uint32_t z,
+      std::string&& debugName
+      )
+    :
+        GPUResource{dev->getCurrentSubmissionIndex()},
+        DeviceChild{dev},
+        mImage{image},
+        mIsOwned{false},
+        mFormat{format},
+        mLayout{vk::ImageLayout::eUndefined},
+        mNumberOfMips{1},
+        mExtent{x, y, z},
+        mDebugName{debugName}
+{
+    if(x != 0 && y == 0 && z == 0) mType = vk::ImageType::e1D;
+    if(x != 0 && y != 0 && z == 1) mType = vk::ImageType::e2D;
+    if(x != 0 && y != 0 && z >  1) mType = vk::ImageType::e3D;
+}
+
+
 Image::~Image()
 {
-    const bool shouldDestroy = release();
+    const bool shouldDestroy = release() && mIsOwned;
 
     // Don't add a moved from image to the defered queue.
     if(shouldDestroy && mImage != vk::Image(nullptr))
@@ -44,6 +70,7 @@ Image& Image::operator=(Image&& other)
     mImageMemory = other.mImageMemory;
     mImage = other.mImage;
     other.mImage = nullptr;
+    mIsOwned = other.mIsOwned;
     mImageView = other.mImageView;
     other.mImageView = nullptr;
     mCurrentSampler = other.mCurrentSampler;
@@ -52,7 +79,7 @@ Image& Image::operator=(Image&& other)
     mLayout = other.mLayout;
     mUsage = other.mUsage;
     mNumberOfMips = other.mNumberOfMips;
-    mExtent = other.mNumberOfMips;
+    mExtent = other.mExtent;
     mType = other.mType;
 
     mDebugName = other.mDebugName;
@@ -69,13 +96,14 @@ Image::Image(Image&& other) :   GPUResource(other.getDevice()->getCurrentSubmiss
     other.mImage = nullptr;
     mImageView = other.mImageView;
     other.mImageView = nullptr;
+    mIsOwned = other.mIsOwned;
     mCurrentSampler = other.mCurrentSampler;
     other.mCurrentSampler = nullptr;
     mFormat = other.mFormat;
     mLayout = other.mLayout;
     mUsage = other.mUsage;
     mNumberOfMips = other.mNumberOfMips;
-    mExtent = other.mNumberOfMips;
+    mExtent = other.mExtent;
     mType = other.mType;
 
     mDebugName = other.mDebugName;
@@ -94,6 +122,8 @@ vk::ImageView   Image::createImageView( vk::Format format,
     subresourceRange.setLevelCount(levelCount);
     subresourceRange.setBaseArrayLayer(baseArrayLayer);
     subresourceRange.setLayerCount(layerCount);
+    subresourceRange.setAspectMask(mLayout == vk::ImageLayout::eDepthStencilAttachmentOptimal ?
+                                       vk::ImageAspectFlagBits::eDepth : vk::ImageAspectFlagBits::eColor);
 
     vk::ImageViewCreateInfo createInfo{};
     createInfo.setImage(mImage);

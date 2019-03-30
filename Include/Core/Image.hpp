@@ -24,7 +24,16 @@ public:
           const uint32_t,
           const uint32_t,
           const uint32_t,
-          std::string = "");
+          std::string&& = "");
+
+    Image(RenderDevice*,
+          vk::Image&,
+          const vk::Format,
+          const uint32_t,
+          const uint32_t,
+          const uint32_t,
+          std::string&& = ""
+          );
 
     ~Image();
 
@@ -55,10 +64,16 @@ public:
 
     void           setCurrentSampler(vk::Sampler& sampler)
                     { mCurrentSampler = sampler;}
+
     const vk::Sampler&    getCurrentSampler() const
                     { return mCurrentSampler; }
+
     void            setCurrentImageView(vk::ImageView& view)
                     { mImageView = view; }
+
+    vk::ImageView&   getCurrentImageView()
+                    { return mImageView; }
+
     const vk::ImageView&   getCurrentImageView() const
                     { return mImageView; }
 
@@ -95,6 +110,7 @@ private:
     vk::ImageView mImageView;
     vk::Sampler mCurrentSampler;
 
+    bool mIsOwned;
     vk::Format mFormat;
 	vk::ImageLayout mLayout;
     vk::ImageUsageFlags mUsage;
