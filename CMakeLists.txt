@@ -53,5 +53,10 @@ set(SOURCE
 	"Source/RenderGraph/RenderGraph.cpp"
 	)
 
+if(USE_ASAN)
+    set (CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address")
+    set (CMAKE_LINKER_FLAGS_DEBUG "${CMAKE_LINKER_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address")
+endif()
+
 add_library(${PROJECT_NAME} ${SOURCE})
 target_link_libraries(${PROJECT_NAME} ${Vulkan_LIBRARIES} glfw stdc++fs ${glslangLibs})
