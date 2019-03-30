@@ -219,6 +219,9 @@ private:
 
     void                               transitionSwapChain(vk::ImageLayout);
 
+    void                               destroyFrameBuffer(vk::Framebuffer& frameBuffer, uint64_t frameIndex)
+                                            { mFramebuffersPendingDestruction.push_back({frameIndex, frameBuffer}); }
+
 #ifndef NDEBUG
 public:
     void                               insertDebugEventSignal(vk::CommandBuffer& buffer)

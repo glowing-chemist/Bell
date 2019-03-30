@@ -501,6 +501,7 @@ vk::DescriptorSetLayout RenderDevice::generateDescriptorSetLayout(const RenderTa
     uint32_t curretnBinding = 0;
     for(const auto& [name, type] : inputAttachments)
     {
+        // TRanslate between Bell enums to the vulkan equivelent.
         vk::DescriptorType descriptorType = [type]()
         {
             switch(type)
@@ -679,6 +680,7 @@ void RenderDevice::generateFrameBuffers(RenderGraph& graph)
 
 	while(outputBindings != graph.outputBindingEnd())
     {
+        // Just reuse the old frameBuffer if no knew resources have been bound.
         if(!graph.mFrameBuffersNeedUpdating[taskIndex])
         {
             ++resource;
@@ -704,6 +706,11 @@ void RenderDevice::generateFrameBuffers(RenderGraph& graph)
         info.setWidth(imageExtent.width);
         info.setHeight(imageExtent.height);
         info.setLayers(imageExtent.depth);
+
+        // Make sure we don't leak frameBuffers, add them to the pendign destruction list.
+        // Conservartively set the fraemBuffer as used in the last frame.
+        if((*resource).mFrameBuffer)
+            destroyFrameBuffer(*(*resource).mFrameBuffer, getCurrentSubmissionIndex() - 1);
 
         (*resource).mFrameBuffer = mDevice.createFramebuffer(info);
 
