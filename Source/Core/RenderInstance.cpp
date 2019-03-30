@@ -13,7 +13,7 @@
 #include <vulkan/vulkan.hpp>
 #include <vulkan/vulkan.h>
 
-#define DUMP_API 1
+#define DUMP_API 0
 
 static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallbackFunc(
     VkDebugReportFlagsEXT,
