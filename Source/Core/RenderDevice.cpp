@@ -627,8 +627,8 @@ vk::PipelineLayout RenderDevice::generatePipelineLayout(vk::DescriptorSetLayout 
 void RenderDevice::generateVulkanResources(RenderGraph& graph)
 {
 	auto task = graph.taskBegin();
-	mVulkanResources.reserve(graph.mTaskOrder.size());
-	auto& resource = mVulkanResources.begin();
+    mVulkanResources.resize(graph.mTaskOrder.size());
+    auto resource = mVulkanResources.begin();
 
 	while( task != graph.taskEnd())
     {
@@ -692,20 +692,9 @@ void RenderDevice::generateFrameBuffers(RenderGraph& graph)
 
         for(const auto& bindingInfo : *outputBindings)
         {
-            if(bindingInfo.mName == "Framebuffer")
-            {
-                imageExtent = vk::Extent3D{getSwapChain()->getSwapChainImageWidth(),
-                                           getSwapChain()->getSwapChainImageHeight(),
-                                            1};
-
-                imageViews.push_back(getSwapChain()->getImageView(getCurrentFrameIndex()));
-            }
-            else
-            {
                 const auto& image = static_cast<Image&>(graph.getResource(bindingInfo.mResourcetype, bindingInfo.mResourceIndex));
                 imageExtent = image.getExtent();
                 imageViews.push_back(image.getCurrentImageView());
-            }
         }
 
         vk::FramebufferCreateInfo info{};
@@ -900,7 +889,7 @@ void RenderDevice::execute(BarrierRecorder& recorder)
 
 void RenderDevice::transitionSwapChain(vk::ImageLayout layout)
 {
-    vk::Image image = getSwapChain()->getImage(getCurrentFrameIndex());
+    vk::Image image = getSwapChain()->getImage(getCurrentFrameIndex()).getImage();
 
     vk::ImageMemoryBarrier barrier{};
     barrier.setSrcAccessMask(vk::AccessFlagBits::eMemoryWrite);

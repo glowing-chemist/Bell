@@ -74,6 +74,12 @@ public:
     void                               destroyImageView(vk::ImageView& view)
                                             { mDevice.destroyImageView(view); }
 
+    Image&                             getSwapChainImage()
+                                            { return getSwapChain()->getImage(mCurrentFrameIndex); }
+
+    const Image&                       getSwapChainImage() const
+                                            { return getSwapChain()->getImage(mCurrentFrameIndex); }
+
     vk::Buffer                         createBuffer(const uint32_t, const vk::BufferUsageFlags);
 
     void                               destroyBuffer(Buffer& buffer) { mBuffersPendingDestruction.push_back({buffer.getLastAccessed(), buffer.getBuffer(), buffer.getMemory()}); }
@@ -134,6 +140,11 @@ public:
     MemoryManager*                     getMemoryManager() { return &mMemoryManager; }
 	CommandPool*					   getCurrentCommandPool() { return &mCommandPools[getCurrentFrameIndex()]; }
     vk::PhysicalDevice*                getPhysicalDevice() { return &mPhysicalDevice; }
+
+    // Only these two can do usefull work when const
+    const SwapChain*                         getSwapChain() const { return &mSwapChain; }
+    const vk::PhysicalDevice*                getPhysicalDevice() const { return &mPhysicalDevice; }
+
 
     // Memory management functions
     vk::MemoryRequirements             getMemoryRequirements(vk::Image image)

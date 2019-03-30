@@ -12,6 +12,8 @@ void RenderGraph::addTask(const GraphicsTask& task)
     // Also add a vulkan resources and inputs/outputs for each task, zero initialised
     mInputResources.emplace_back();
     mOutputResources.emplace_back();
+    mFrameBuffersNeedUpdating.emplace_back();
+    mDescriptorsNeedUpdating.emplace_back();
 
     // This makes sure that the frameBuffer attahcment is registered properly.
     auto& outputResources = mOutputResources.back();
@@ -35,6 +37,8 @@ void RenderGraph::addTask(const ComputeTask& task)
     // Also add a vulkan resources and inputs/outputs for each task, zero initialised
     mInputResources.emplace_back();
     mOutputResources.emplace_back();
+    mFrameBuffersNeedUpdating.emplace_back();
+    mDescriptorsNeedUpdating.emplace_back();
 }
 
 
@@ -118,8 +122,6 @@ void RenderGraph::addDependancy(const std::string& dependancy, const std::string
 void RenderGraph::bindResource(const std::string& name, const uint32_t index, const ResourceType resourcetype)
 {
     uint32_t taskOrderIndex = 0;
-	mDescriptorsNeedUpdating.resize(mTaskOrder.size());
-	mFrameBuffersNeedUpdating.resize(mTaskOrder.size());
     for(const auto [taskType, taskIndex] : mTaskOrder)
     {
         RenderTask& task = getTask(taskType, taskIndex);
@@ -193,6 +195,8 @@ void RenderGraph::reorderTasks()
 	std::vector<std::pair<TaskType, uint32_t>> newTaskOrder{};
     std::vector<std::vector<ResourceBindingInfo>> newInputBindings{};
     std::vector<std::vector<ResourceBindingInfo>> newOutputBindings{};
+    std::vector<bool> newFrameBuffersNeedUpdating{};
+    std::vector<bool> newDescriptorsNeedUpdating{};
 
     newTaskOrder.reserve(mTaskOrder.size());
     newInputBindings.reserve(mTaskOrder.size());
@@ -202,7 +206,7 @@ void RenderGraph::reorderTasks()
 
 	for (uint32_t i = 0; i < taskCount; ++i)
 	{
-		std::vector<uint8_t> dependancyBitset(mTaskDependancies.size());
+        std::vector<uint8_t> dependancyBitset(taskCount);
 
 		for (uint32_t vertexIndex = 0; vertexIndex < mTaskDependancies.size(); ++vertexIndex)
 		{
@@ -214,6 +218,8 @@ void RenderGraph::reorderTasks()
 		newTaskOrder.push_back(mTaskOrder[taskIndexToAdd]);
         newInputBindings.push_back(std::move(mInputResources[taskIndexToAdd]));
         newOutputBindings.push_back((std::move(mOutputResources[taskIndexToAdd])));
+        newFrameBuffersNeedUpdating.push_back(mFrameBuffersNeedUpdating[taskIndexToAdd]);
+        newDescriptorsNeedUpdating.push_back(mDescriptorsNeedUpdating[taskIndexToAdd]);
 
 		mTaskOrder.erase(mTaskOrder.begin() + taskIndexToAdd);
 
@@ -227,6 +233,8 @@ void RenderGraph::reorderTasks()
 	mTaskOrder.swap(newTaskOrder);
     mInputResources.swap(newInputBindings);
     mOutputResources.swap(newOutputBindings);
+    mFrameBuffersNeedUpdating.swap(newFrameBuffersNeedUpdating);
+    mDescriptorsNeedUpdating.swap(mDescriptorsNeedUpdating);
 
     hasReordered = true;
 }
@@ -261,6 +269,8 @@ void RenderGraph::mergeTasks()
             }
 
             mTaskOrder.erase(mTaskOrder.begin() + i + 1);
+            mInputResources.erase(mInputResources.begin() + i+ + 1);
+            mOutputResources.erase(mOutputResources.begin() + i+ + 1);
         }
     }
 

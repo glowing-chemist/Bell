@@ -2,6 +2,7 @@
 #define SWAPCHAIN_HPP
 
 #include "DeviceChild.hpp"
+#include "Core/Image.hpp"
 
 #include <vulkan/vulkan.hpp>
 #include <GLFW/glfw3.h>
@@ -30,8 +31,14 @@ public:
 
     unsigned int getNumberOfSwapChainImages() const;
 
-    const vk::ImageView& getImageView(const size_t) const;
-    vk::Image& getImage(const size_t);
+    vk::ImageView& getImageView(const size_t index)
+        { return mSwapChainImages[index].getCurrentImageView(); }
+
+    Image& getImage(const size_t index)
+        { return mSwapChainImages[index]; }
+
+    const Image& getImage(const size_t index) const
+        { return mSwapChainImages[index]; }
 
     uint32_t getNextImageIndex(vk::Semaphore&);
 	uint32_t getCurrentImageIndex() const { return mCurrentImageIndex; };
@@ -46,8 +53,7 @@ private:
 
 	uint32_t mCurrentImageIndex;
     vk::SwapchainKHR mSwapChain;
-    std::vector<vk::Image> mSwapChainImages;
-    std::vector<vk::ImageView> mSwapChainImageViews;
+    std::vector<Image> mSwapChainImages;
     vk::Extent2D mSwapChainExtent;
     vk::Format mSwapChainFormat;
 };

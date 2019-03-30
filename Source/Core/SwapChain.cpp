@@ -8,7 +8,8 @@
 #include <iostream>
 #include <limits>
 
-vk::SurfaceFormatKHR chooseSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>& formats) {
+vk::SurfaceFormatKHR chooseSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>& formats)
+{
     if(formats.size() == 1 && formats[0].format == vk::Format::eUndefined) { // indicates any format can be used, so pick the best
         vk::SurfaceFormatKHR form;
         form.format = vk::Format::eB8G8R8A8Unorm;
@@ -18,22 +19,26 @@ vk::SurfaceFormatKHR chooseSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>
     return formats[0]; // if not pick the first format
 }
 
-unsigned int SwapChain::getSwapChainImageWidth() const {
+unsigned int SwapChain::getSwapChainImageWidth() const
+{
     return mSwapChainExtent.width;
 }
 
 
-unsigned int SwapChain::getSwapChainImageHeight() const {
+unsigned int SwapChain::getSwapChainImageHeight() const
+{
     return mSwapChainExtent.height;
 }
 
 
-unsigned int SwapChain::getNumberOfSwapChainImages() const {
+unsigned int SwapChain::getNumberOfSwapChainImages() const
+{
     return mSwapChainImages.size();
 }
 
 
-SwapChainSupportDetails SwapChain::querySwapchainSupport(vk::PhysicalDevice dev, vk::SurfaceKHR surface) {
+SwapChainSupportDetails SwapChain::querySwapchainSupport(vk::PhysicalDevice dev, vk::SurfaceKHR surface)
+{
     SwapChainSupportDetails details;
 
     details.capabilities = dev.getSurfaceCapabilitiesKHR(surface);
@@ -43,7 +48,8 @@ SwapChainSupportDetails SwapChain::querySwapchainSupport(vk::PhysicalDevice dev,
     return details;
 }
 
-vk::PresentModeKHR choosePresentMode(const std::vector<vk::PresentModeKHR>& presentModes) {
+vk::PresentModeKHR choosePresentMode(const std::vector<vk::PresentModeKHR>& presentModes)
+{
     for(auto& mode : presentModes) {
         if(mode == vk::PresentModeKHR::eMailbox) { // if availble return mailbox
             return mode;
@@ -52,7 +58,8 @@ vk::PresentModeKHR choosePresentMode(const std::vector<vk::PresentModeKHR>& pres
     return vk::PresentModeKHR::eFifo; // else Efifo is garenteed to be present
 }
 
-vk::Extent2D SwapChain::chooseSwapExtent(const vk::SurfaceCapabilitiesKHR&, GLFWwindow* window) {
+vk::Extent2D SwapChain::chooseSwapExtent(const vk::SurfaceCapabilitiesKHR&, GLFWwindow* window)
+{
     int width, height;
     glfwGetWindowSize(window, &width, &height);
 
@@ -92,7 +99,11 @@ SwapChain::SwapChain(RenderDevice* Device, vk::SurfaceKHR windowSurface, GLFWwin
 
     mSwapChain = getDevice()->createSwapchain(info);
 
-    mSwapChainImages = getDevice()->getSwapchainImages(mSwapChain);
+    auto swapChainImages = getDevice()->getSwapchainImages(mSwapChain);
+    for(vk::Image image : swapChainImages)
+    {
+        mSwapChainImages.emplace_back(getDevice(), image, mSwapChainFormat, swapExtent.width, swapExtent.height, 1, "SwapChain");
+    }
 
     mSwapChainExtent = swapExtent;
     mSwapChainFormat = swapFormat.format;
@@ -101,54 +112,47 @@ SwapChain::SwapChain(RenderDevice* Device, vk::SurfaceKHR windowSurface, GLFWwin
 }
 
 
-void SwapChain::destroy() {
-    for(auto& imageView : mSwapChainImageViews) {
-        getDevice()->destroyImageView(imageView);
+void SwapChain::destroy()
+{
+    for(auto& image : mSwapChainImages)
+    {
+        getDevice()->destroyImageView(image.getCurrentImageView());
     }
     getDevice()->destroySwapchain(mSwapChain);
 }
 
 
-vk::Format SwapChain::getSwapChainImageFormat() const {
+vk::Format SwapChain::getSwapChainImageFormat() const
+{
     return mSwapChainFormat;
 }
 
 
-void SwapChain::createSwapChainImageViews() {
-    mSwapChainImageViews.resize(mSwapChainImages.size());
-    for(size_t i = 0; i < mSwapChainImages.size(); i++) {
-        vk::ImageViewCreateInfo info{};
-        info.setImage(mSwapChainImages[i]);
-        info.setViewType(vk::ImageViewType::e2D);
-        info.setFormat(mSwapChainFormat);
+void SwapChain::createSwapChainImageViews()
+{
+    for(size_t i = 0; i < mSwapChainImages.size(); i++)
+    {
 
-        info.setComponents(vk::ComponentMapping()); // set swizzle components to identity
-        info.setSubresourceRange(vk::ImageSubresourceRange{vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1});
+        vk::ImageView view = mSwapChainImages[i].createImageView(mSwapChainFormat,
+                                                                 vk::ImageViewType::e2D,
+                                                                 0, 1, 0, 1);
 
-        mSwapChainImageViews[i] = getDevice()->createImageView(info);
+        mSwapChainImages[i].setCurrentImageView(view);
     }
-    std::cerr << "created " << mSwapChainImageViews.size() << " image views" << std::endl;
+    std::cerr << "created " << mSwapChainImages.size() << " image views" << std::endl;
 }
 
 
-const vk::ImageView& SwapChain::getImageView(const size_t index) const {
-    return mSwapChainImageViews[index];
-}
-
-
-vk::Image& SwapChain::getImage(const size_t index) {
-    return mSwapChainImages[index];
-}
-
-
-uint32_t SwapChain::getNextImageIndex(vk::Semaphore& sem) {
+uint32_t SwapChain::getNextImageIndex(vk::Semaphore& sem)
+{
     getDevice()->aquireNextSwapchainImage(mSwapChain, std::numeric_limits<uint64_t>::max(), sem, mCurrentImageIndex);
 	
 	return mCurrentImageIndex;
 }
 
 
-void SwapChain::present(vk::Queue& presentQueue, vk::Semaphore& waitSemaphore) {
+void SwapChain::present(vk::Queue& presentQueue, vk::Semaphore& waitSemaphore)
+{
 	vk::PresentInfoKHR info{};
     info.setPSwapchains(&mSwapChain);
 	info.setSwapchainCount(1);
