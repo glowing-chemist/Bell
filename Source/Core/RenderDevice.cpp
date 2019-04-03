@@ -18,9 +18,9 @@ RenderDevice::RenderDevice(vk::PhysicalDevice physDev, vk::Device dev, vk::Surfa
     mCurrentSubmission = mSwapChain.getNumberOfSwapChainImages();
 
     mQueueFamilyIndicies = getAvailableQueues(surface, mPhysicalDevice);
-    mGraphicsQueue = mDevice.getQueue(mQueueFamilyIndicies.GraphicsQueueIndex, 0);
-    mComputeQueue  = mDevice.getQueue(mQueueFamilyIndicies.ComputeQueueIndex, 0);
-    mTransferQueue = mDevice.getQueue(mQueueFamilyIndicies.TransferQueueIndex, 0);
+    mGraphicsQueue = mDevice.getQueue(static_cast<uint32_t>(mQueueFamilyIndicies.GraphicsQueueIndex), 0);
+    mComputeQueue  = mDevice.getQueue(static_cast<uint32_t>(mQueueFamilyIndicies.ComputeQueueIndex), 0);
+    mTransferQueue = mDevice.getQueue(static_cast<uint32_t>(mQueueFamilyIndicies.TransferQueueIndex), 0);
 
     mLimits = mPhysicalDevice.getProperties().limits;
 
@@ -151,8 +151,9 @@ vk::Queue&  RenderDevice::getQueue(const QueueType type)
             return mComputeQueue;
         case QueueType::Transfer:
             return mTransferQueue;
+        default:
+            return mGraphicsQueue;
     }
-    return mGraphicsQueue; // This should be unreachable unless I add more queue types.
 }
 
 
@@ -161,13 +162,14 @@ uint32_t RenderDevice::getQueueFamilyIndex(const QueueType type) const
 	switch(type)
 	{
 	case QueueType::Graphics:
-		return mQueueFamilyIndicies.GraphicsQueueIndex;
+        return static_cast<uint32_t>(mQueueFamilyIndicies.GraphicsQueueIndex);
 	case QueueType::Compute:
-		return mQueueFamilyIndicies.ComputeQueueIndex;
+        return static_cast<uint32_t>(mQueueFamilyIndicies.ComputeQueueIndex);
 	case QueueType::Transfer:
-		return mQueueFamilyIndicies.TransferQueueIndex;
+        return static_cast<uint32_t>(mQueueFamilyIndicies.TransferQueueIndex);
+    default:
+        return static_cast<uint32_t>(mQueueFamilyIndicies.GraphicsQueueIndex);
 	}
-	return mQueueFamilyIndicies.GraphicsQueueIndex; // This should be unreachable unless I add more queue types.
 }
 
 
@@ -224,7 +226,7 @@ vk::Pipeline RenderDevice::generatePipeline(const GraphicsTask& task,
     inputAssemblyInfo.setPrimitiveRestartEnable(false);
 
     vk::PipelineVertexInputStateCreateInfo vertexInputInfo{};
-    vertexInputInfo.setVertexAttributeDescriptionCount(vertexAttributes.size());
+    vertexInputInfo.setVertexAttributeDescriptionCount(static_cast<uint32_t>(vertexAttributes.size()));
     vertexInputInfo.setPVertexAttributeDescriptions(vertexAttributes.data());
     vertexInputInfo.setVertexBindingDescriptionCount(1);
     vertexInputInfo.setPVertexBindingDescriptions(&vertexBinding);
@@ -297,7 +299,7 @@ vk::Pipeline RenderDevice::generatePipeline(const GraphicsTask& task,
     depthStencilInfo.setDepthBoundsTestEnable(false);
 
     vk::GraphicsPipelineCreateInfo pipelineCreateInfo{};
-    pipelineCreateInfo.setStageCount(shaderInfo.size());
+    pipelineCreateInfo.setStageCount(static_cast<uint32_t>(shaderInfo.size()));
     pipelineCreateInfo.setPStages(shaderInfo.data());
     pipelineCreateInfo.setPVertexInputState(&vertexInputInfo);
     pipelineCreateInfo.setPInputAssemblyState(&inputAssemblyInfo);
@@ -406,7 +408,7 @@ vk::RenderPass	RenderDevice::generateRenderPass(const GraphicsTask& task)
 
     vk::SubpassDescription subpassDesc{};
     subpassDesc.setPipelineBindPoint(vk::PipelineBindPoint::eGraphics);
-    subpassDesc.setColorAttachmentCount(outputAttachmentRefs.size());
+    subpassDesc.setColorAttachmentCount(static_cast<uint32_t>(outputAttachmentRefs.size()));
 	subpassDesc.setPColorAttachments(outputAttachmentRefs.data());
     if(hasDepthAttachment)
     {
@@ -414,7 +416,7 @@ vk::RenderPass	RenderDevice::generateRenderPass(const GraphicsTask& task)
     }
 
     vk::RenderPassCreateInfo renderPassInfo{};
-    renderPassInfo.setAttachmentCount(attachmentDescriptions.size());
+    renderPassInfo.setAttachmentCount(static_cast<uint32_t>(attachmentDescriptions.size()));
     renderPassInfo.setPAttachments(attachmentDescriptions.data());
     renderPassInfo.setSubpassCount(1);
     renderPassInfo.setPSubpasses(&subpassDesc);
@@ -535,7 +537,7 @@ vk::DescriptorSetLayout RenderDevice::generateDescriptorSetLayout(const RenderTa
 
     vk::DescriptorSetLayoutCreateInfo descSetLayoutInfo{};
     descSetLayoutInfo.setPBindings(layoutBindings.data());
-    descSetLayoutInfo.setBindingCount(layoutBindings.size());
+    descSetLayoutInfo.setBindingCount(static_cast<uint32_t>(layoutBindings.size()));
 
     return mDevice.createDescriptorSetLayout(descSetLayoutInfo);
 }
@@ -701,7 +703,7 @@ void RenderDevice::generateFrameBuffers(RenderGraph& graph)
 
         vk::FramebufferCreateInfo info{};
         info.setRenderPass(*(*resource).mRenderPass);
-        info.setAttachmentCount(imageViews.size());
+        info.setAttachmentCount(static_cast<uint32_t>(imageViews.size()));
         info.setPAttachments(imageViews.data());
         info.setWidth(imageExtent.width);
         info.setHeight(imageExtent.height);
@@ -746,7 +748,7 @@ void RenderDevice::execute(RenderGraph& graph)
     generateVulkanResources(graph);
 
 	CommandPool* currentCommandPool = getCurrentCommandPool();
-	currentCommandPool->reserve(graph.taskCount() + 1, QueueType::Graphics); // +1 for the primary cmd buffer all the secondaries will be recorded in to.
+    currentCommandPool->reserve(static_cast<uint32_t>(graph.taskCount()) + 1, QueueType::Graphics); // +1 for the primary cmd buffer all the secondaries will be recorded in to.
 
     vk::CommandBuffer primaryCmdBuffer = currentCommandPool->getBufferForQueue(QueueType::Graphics);
 
@@ -887,8 +889,8 @@ void RenderDevice::execute(BarrierRecorder& recorder)
             getCurrentCommandPool()->getBufferForQueue(currentQueue).pipelineBarrier(vk::PipelineStageFlagBits::eTopOfPipe, vk::PipelineStageFlagBits::eTransfer,
 				vk::DependencyFlagBits::eByRegion,
 				0, nullptr,
-				bufferBarriers.size(), bufferBarriers.data(),
-				imageBarriers.size(), imageBarriers.data());
+                static_cast<uint32_t>(bufferBarriers.size()), bufferBarriers.data(),
+                static_cast<uint32_t>(imageBarriers.size()), imageBarriers.data());
 		}
 	}
 }
