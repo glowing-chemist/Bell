@@ -66,6 +66,17 @@ RenderDevice::~RenderDevice()
     }
     mBuffersPendingDestruction.clear();
 
+    for(auto& resources : mVulkanResources)
+    {
+        if(resources.mFrameBuffer)
+            mFramebuffersPendingDestruction.push_back({0, *resources.mFrameBuffer});
+    }
+
+    for(const auto [lastUsed, frameBuffer] : mFramebuffersPendingDestruction)
+    {
+        mDevice.destroyFramebuffer(frameBuffer);
+    }
+
     mSwapChain.destroy();
     mMemoryManager.Destroy();
 
