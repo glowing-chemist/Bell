@@ -735,12 +735,14 @@ std::vector<BarrierRecorder> RenderDevice::recordBarriers(RenderGraph& graph)
 {
     std::vector<BarrierRecorder> barriers{};
 
-    for(const auto& resources : graph.mInputResources)
+    for(uint32_t i = 0; i < graph.mInputResources.size(); ++i)
     {
+        const auto& inputResources = graph.mInputResources[i];
+        const auto& outputResources = graph.mOutputResources[i];
 
         BarrierRecorder recorder{this};
 
-        for(const auto& resource : resources)
+        for(const auto& resource : inputResources)
         {
             // For now only handle image layout transitions
             // Will handle visibility later (only needed when swapping between compute and graphics)
@@ -752,15 +754,7 @@ std::vector<BarrierRecorder> RenderDevice::recordBarriers(RenderGraph& graph)
             }
         }
 
-        barriers.push_back(recorder);
-    }
-
-    for(const auto& resources : graph.mOutputResources)
-    {
-
-        BarrierRecorder recorder{this};
-
-        for(const auto& resource : resources)
+        for(const auto& resource : outputResources)
         {
             // For now only handle image layout transitions
             // Will handle visibility later (only needed when swapping between compute and graphics)
