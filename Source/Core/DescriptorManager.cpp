@@ -1,5 +1,6 @@
 #include "DescriptorManager.hpp"
 #include "RenderDevice.hpp"
+#include "Core/BellLogging.hpp"
 
 #include <iostream>
 #include <numeric>
@@ -156,7 +157,7 @@ vk::DescriptorSet DescriptorManager::allocateDescriptorSet(const RenderGraph& gr
         }
         catch (...)
         {
-            std::cerr << "pool exhausted trying next descriptor pool \n";
+            BELL_LOG("pool exhausted trying next descriptor pool")
         }
     }
 

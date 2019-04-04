@@ -1,6 +1,7 @@
 #include "SwapChain.hpp"
 #include "RenderInstance.hpp"
 #include "RenderDevice.hpp"
+#include "Core/BellLogging.hpp"
 
 #include <vulkan/vulkan.hpp>
 #include <GLFW/glfw3.h>
@@ -139,7 +140,8 @@ void SwapChain::createSwapChainImageViews()
 
         mSwapChainImages[i].setCurrentImageView(view);
     }
-    std::cerr << "created " << mSwapChainImages.size() << " image views" << std::endl;
+
+    BELL_LOG_ARGS("created %ld image Views", mSwapChainImages.size())
 }
 
 

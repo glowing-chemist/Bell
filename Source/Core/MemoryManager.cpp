@@ -1,5 +1,6 @@
 #include "MemoryManager.hpp"
 #include "RenderDevice.hpp"
+#include "Core/BellLogging.hpp"
 
 #include <vulkan/vulkan.hpp>
 
@@ -74,7 +75,8 @@ void MemoryManager::findPoolIndicies() {
         for(uint32_t i = 0; i < memProps.memoryTypeCount; ++i) {
             if(memProps.memoryTypes[i].propertyFlags & vk::MemoryPropertyFlagBits::eDeviceLocal)
             {
-                std::cerr << "having to use host coherint memory, probably a integrated GPU  \n";
+                BELL_LOG("having to use host coherint memory, probably a integrated GPU")
+
                 mDeviceLocalPoolIndex = i; // just find the first pool that is device local
                 break;
             }
@@ -113,9 +115,7 @@ void MemoryManager::AllocateDevicePool() {
 
     deviceLocalPools.push_back(fragmentList);
 
-#ifndef NDEBUG
-    std::cerr << "Allocated a memory pool \n";
-#endif
+    BELL_LOG("Allocated a memory pool")
 }
 
 
@@ -138,9 +138,7 @@ void MemoryManager::AllocateHostMappablePool() {
 
     hostMappablePools.push_back(fragmentList);
 
-#ifndef NDEBUG
-    std::cerr << "Allocated a host mappable memory pool \n";
-#endif
+    BELL_LOG("Allocated a host mappable memory pool")
 }
 
 
@@ -216,7 +214,7 @@ void MemoryManager::MergePool(std::vector<std::list<PoolFragment> > &pools) { //
 }
 
 
-Allocation MemoryManager::AttemptToAllocate(uint64_t size, unsigned int allignment, bool hostMappable) {
+Allocation MemoryManager::AttemptToAllocate(uint64_t size, unsigned long allignment, bool hostMappable) {
     auto& memPools = hostMappable ? hostMappablePools : deviceLocalPools;
 
     uint32_t poolNum = 0;

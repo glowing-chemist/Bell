@@ -1,5 +1,6 @@
 // Local includes
 #include "RenderInstance.hpp"
+#include "Core/BellLogging.hpp"
 
 // std library includes
 #include <tuple>
@@ -26,7 +27,7 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallbackFunc(
     void*)
 {
 
-    std::cerr << "validation layer: " << msg << std::endl;
+    BELL_LOG_ARGS("VALIDATION LAYER: %s", msg)
 
 #ifdef _MSC_VER 
 	__debugbreak;
@@ -96,12 +97,15 @@ RenderInstance::RenderInstance(GLFWwindow* window)
     for(const auto* neededLayer : validationLayers )
     {
         for(auto& availableLayer : availableLayers) {
+
+            BELL_LOG_ARGS("instance layer: %s", availableLayer.layerName)
+
             if(strcmp(availableLayer.layerName, neededLayer) == 0) {
                 ++layersFound;
             }
         }
     }
-    if(layersFound != validationLayers.size()) throw std::runtime_error{"Running in debug but Lunarg validation layers not found"};
+    if(layersFound != validationLayers.size()) throw std::runtime_error{"Running in debug but validation layers not found"};
 
     instanceInfo.setEnabledLayerCount(validationLayers.size());
     instanceInfo.setPpEnabledLayerNames(validationLayers.data());
@@ -144,7 +148,7 @@ std::pair<vk::PhysicalDevice, vk::Device> RenderInstance::findSuitableDevices(in
         const vk::PhysicalDeviceFeatures   features   = availableDevices[i].getFeatures();
         const QueueIndicies queueIndices = getAvailableQueues(mWindowSurface, availableDevices[i]);
 
-        std::cout << "Device Found: " << properties.deviceName << '\n';
+        BELL_LOG_ARGS("Device Found: %s", properties.deviceName)
 
         if(GeometryWanted && features.geometryShader) deviceScores[i] += 1;
         if(TessWanted && features.tessellationShader) deviceScores[i] += 1;
@@ -156,7 +160,7 @@ std::pair<vk::PhysicalDevice, vk::Device> RenderInstance::findSuitableDevices(in
     auto physicalDeviceIndex = std::distance(deviceScores.begin(), maxScoreeDeviceOffset);
     vk::PhysicalDevice physicalDevice = availableDevices[physicalDeviceIndex];
 
-	std::cout << "Device selected: " << physicalDevice.getProperties().deviceName << '\n';
+    BELL_LOG_ARGS("Device selected: %s", physicalDevice.getProperties().deviceName)
 
     const QueueIndicies queueIndices = getAvailableQueues(mWindowSurface, physicalDevice);
 
@@ -216,7 +220,7 @@ void RenderInstance::addDebugCallback()
 
     auto* createCallback = reinterpret_cast<PFN_vkCreateDebugReportCallbackEXT>(mInstance.getProcAddr("vkCreateDebugReportCallbackEXT"));
     if(createCallback != nullptr) {
-        std::cerr << "Inserting debug callback \n";
+        BELL_LOG("Inserting debug callback")
 
         auto call = static_cast<VkDebugReportCallbackEXT>(mDebugCallback);
         createCallback(mInstance, &callbackCreateInfo, nullptr, &call);

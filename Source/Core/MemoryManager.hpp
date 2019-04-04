@@ -61,7 +61,7 @@ private:
     void MergeFreePools();
     void MergePool(std::vector<std::list<PoolFragment>>& pools);
 
-    Allocation AttemptToAllocate(uint64_t size, unsigned int allignment, bool deviceLocal);
+    Allocation AttemptToAllocate(uint64_t size, unsigned long allignment, bool deviceLocal);
 
     void AllocateDevicePool();
     void AllocateHostMappablePool();

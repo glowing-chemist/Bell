@@ -889,9 +889,6 @@ void RenderDevice::startFrame()
 void RenderDevice::endFrame()
 {
     mCurrentFrameIndex = (mCurrentFrameIndex + 1) %  getSwapChain()->getNumberOfSwapChainImages();
-
-	// This is safe (doesn't leak resources) as they are all stored in the pipeline cache.
-	mVulkanResources.clear();
 }
 
 
