@@ -123,6 +123,7 @@ RenderInstance::RenderInstance(GLFWwindow* window)
 RenderDevice RenderInstance::createRenderDevice(const int DeviceFeatureFlags)
 {
     auto [physDev, dev] = findSuitableDevices(DeviceFeatureFlags);
+    mDevice = dev;
 
     return RenderDevice{physDev, dev, mWindowSurface, mWindow};
 }
@@ -197,6 +198,7 @@ std::pair<vk::PhysicalDevice, vk::Device> RenderInstance::findSuitableDevices(in
 RenderInstance::~RenderInstance()
 {
     mInstance.destroySurfaceKHR(mWindowSurface);
+    mDevice.destroy();
 #ifndef NDEBUG
     removeDebugCallback();
 #endif

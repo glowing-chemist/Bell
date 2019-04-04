@@ -40,6 +40,7 @@ private:
     std::pair<vk::PhysicalDevice, vk::Device> findSuitableDevices(const int DeviceFeatureFlags = 0);
 
     vk::Instance mInstance;
+    vk::Device mDevice;
     vk::DebugReportCallbackEXT mDebugCallback;
     vk::SurfaceKHR mWindowSurface;
     GLFWwindow* mWindow;
