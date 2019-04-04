@@ -16,7 +16,7 @@ class RenderDevice;
 class DescriptorManager : public DeviceChild
 {
 public:
-    DescriptorManager(RenderDevice* dev) : DeviceChild{dev} { createDescriptorPool(); }
+    DescriptorManager(RenderDevice* dev) : DeviceChild{dev} { mPools.push_back(createDescriptorPool()); }
     ~DescriptorManager();
 
     std::vector<vk::DescriptorSet> getDescriptors(RenderGraph&, std::vector<vulkanResources>&);
