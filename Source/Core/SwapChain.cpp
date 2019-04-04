@@ -102,7 +102,7 @@ SwapChain::SwapChain(RenderDevice* Device, vk::SurfaceKHR windowSurface, GLFWwin
     auto swapChainImages = getDevice()->getSwapchainImages(mSwapChain);
     for(vk::Image image : swapChainImages)
     {
-        mSwapChainImages.emplace_back(getDevice(), image, mSwapChainFormat, swapExtent.width, swapExtent.height, 1, "SwapChain");
+        mSwapChainImages.emplace_back(getDevice(), image, mSwapChainFormat, vk::ImageUsageFlagBits::eColorAttachment, swapExtent.width, swapExtent.height, 1, "SwapChain");
     }
 
     mSwapChainExtent = swapExtent;

@@ -884,9 +884,6 @@ void RenderDevice::startFrame()
     clearDeferredResources();
     ++mCurrentSubmission;
     ++mFinishedSubmission;
-
-    // The swapChain will be in PresentOptimal so make it ready to be written to.
-    transitionSwapChain(vk::ImageLayout::eColorAttachmentOptimal);
 }
 
 
@@ -953,27 +950,6 @@ void RenderDevice::execute(BarrierRecorder& recorder)
                 static_cast<uint32_t>(imageBarriers.size()), imageBarriers.data());
 		}
 	}
-}
-
-
-void RenderDevice::transitionSwapChain(vk::ImageLayout layout)
-{
-    vk::Image image = getSwapChain()->getImage(getCurrentFrameIndex()).getImage();
-
-    vk::ImageMemoryBarrier barrier{};
-    barrier.setSrcAccessMask(vk::AccessFlagBits::eMemoryWrite);
-    barrier.setDstAccessMask(vk::AccessFlagBits::eMemoryRead);
-    barrier.setOldLayout(vk::ImageLayout::eUndefined);
-    barrier.setNewLayout(layout);
-    barrier.setSubresourceRange({vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1});
-    barrier.setImage(image);
-
-    getCurrentCommandPool()->getBufferForQueue(QueueType::Graphics).pipelineBarrier(vk::PipelineStageFlagBits::eTopOfPipe, vk::PipelineStageFlagBits::eColorAttachmentOutput,
-        vk::DependencyFlagBits::eByRegion,
-        0, nullptr,
-        0, nullptr,
-        1, &barrier);
-
 }
 
 

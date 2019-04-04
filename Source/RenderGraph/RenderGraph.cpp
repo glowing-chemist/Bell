@@ -308,12 +308,6 @@ void RenderGraph::mergeTasks(RenderTask& task1, RenderTask& task2)
 }
 
 
-void RenderGraph::recordBarriers()
-{
-
-}
-
-
 RenderTask& RenderGraph::getTask(TaskType taskType, uint32_t taskIndex)
 {
     RenderTask& task = [taskType, taskIndex, this]() -> RenderTask&

@@ -101,8 +101,6 @@ private:
     bool areSupersets(const RenderTask&, const RenderTask&);
     void mergeTasks(RenderTask&, RenderTask&);
 
-    void recordBarriers();
-
     void bindResource(const std::string&, const uint32_t, const ResourceType);
 
     std::vector<GraphicsTask> mGraphicsTasks;

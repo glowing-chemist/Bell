@@ -29,6 +29,7 @@ public:
     Image(RenderDevice*,
           vk::Image&,
           const vk::Format,
+          const vk::ImageUsageFlags,
           const uint32_t,
           const uint32_t,
           const uint32_t,
@@ -92,6 +93,9 @@ public:
 
 	vk::Format		getFormat() const
 						{ return mFormat; }
+
+    vk::ImageUsageFlags getUsage() const
+                           { return mUsage; }
 
 	vk::ImageLayout getLayout() const
 						{ return mLayout; }
