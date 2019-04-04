@@ -202,6 +202,8 @@ private:
 
     void                                                        generateFrameBuffers(RenderGraph&);
 
+    std::vector<BarrierRecorder>                                recordBarriers(RenderGraph&);
+
 
     void                                                        clearDeferredResources();
 

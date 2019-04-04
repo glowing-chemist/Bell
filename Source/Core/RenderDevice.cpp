@@ -731,6 +731,63 @@ void RenderDevice::generateDescriptorSets(RenderGraph & graph)
 }
 
 
+std::vector<BarrierRecorder> RenderDevice::recordBarriers(RenderGraph& graph)
+{
+    std::vector<BarrierRecorder> barriers{};
+
+    for(const auto& resources : graph.mInputResources)
+    {
+        // don't add an empty recorder if there are no resources bound.
+        if(resources.empty())
+            continue;
+
+        BarrierRecorder recorder{this};
+
+        for(const auto& resource : resources)
+        {
+            // For now only handle image layout transitions
+            // Will handle visibility later (only needed when swapping between compute and graphics)
+            if(resource.mResourcetype == RenderGraph::ResourceType::Image)
+            {
+                Image& image = static_cast<Image&>(graph.getResource(resource.mResourcetype, resource.mResourceIndex));
+
+                recorder.transitionImageLayout(image, vk::ImageLayout::eShaderReadOnlyOptimal);
+            }
+        }
+
+        barriers.push_back(recorder);
+    }
+
+    for(const auto& resources : graph.mOutputResources)
+    {
+        // don't add an empty recorder if there are no resources bound.
+        if(resources.empty())
+            continue;
+
+        BarrierRecorder recorder{this};
+
+        for(const auto& resource : resources)
+        {
+            // For now only handle image layout transitions
+            // Will handle visibility later (only needed when swapping between compute and graphics)
+            if(resource.mResourcetype == RenderGraph::ResourceType::Image)
+            {
+                Image& image = static_cast<Image&>(graph.getResource(resource.mResourcetype, resource.mResourceIndex));
+
+                if(image.getUsage() & vk::ImageUsageFlagBits::eColorAttachment)
+                    recorder.transitionImageLayout(image, vk::ImageLayout::eColorAttachmentOptimal);
+                else if(image.getUsage() & vk::ImageUsageFlagBits::eDepthStencilAttachment)
+                    recorder.transitionImageLayout(image, vk::ImageLayout::eDepthStencilAttachmentOptimal);
+            }
+        }
+
+        barriers.push_back(recorder);
+    }
+
+    return barriers;
+}
+
+
 vk::Fence RenderDevice::createFence(const bool signaled)
 {
     vk::FenceCreateInfo info{};
@@ -747,6 +804,8 @@ void RenderDevice::execute(RenderGraph& graph)
 
     generateVulkanResources(graph);
 
+    std::vector<BarrierRecorder> neededBarriers = recordBarriers(graph);
+
 	CommandPool* currentCommandPool = getCurrentCommandPool();
     currentCommandPool->reserve(static_cast<uint32_t>(graph.taskCount()) + 1, QueueType::Graphics); // +1 for the primary cmd buffer all the secondaries will be recorded in to.
 
@@ -760,6 +819,7 @@ void RenderDevice::execute(RenderGraph& graph)
 		
 		vk::PipelineBindPoint bindPoint = vk::PipelineBindPoint::eCompute;
 
+        execute(neededBarriers[cmdBufferIndex - 1]);
 
         if (resources.mRenderPass)
         {
