@@ -737,9 +737,6 @@ std::vector<BarrierRecorder> RenderDevice::recordBarriers(RenderGraph& graph)
 
     for(const auto& resources : graph.mInputResources)
     {
-        // don't add an empty recorder if there are no resources bound.
-        if(resources.empty())
-            continue;
 
         BarrierRecorder recorder{this};
 
@@ -760,9 +757,6 @@ std::vector<BarrierRecorder> RenderDevice::recordBarriers(RenderGraph& graph)
 
     for(const auto& resources : graph.mOutputResources)
     {
-        // don't add an empty recorder if there are no resources bound.
-        if(resources.empty())
-            continue;
 
         BarrierRecorder recorder{this};
 
