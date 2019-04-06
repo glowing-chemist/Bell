@@ -283,14 +283,19 @@ bool RenderGraph::areSupersets(const RenderTask& task1, const RenderTask& task2)
     if(task1.taskType() != task2.taskType())
         return false;
 
-    if(task1.getOuputAttachments() != task2.getOuputAttachments())
-        return false;
+    bool isFrameBufferSubset = std::includes(task1.getOuputAttachments().begin(), task1.getOuputAttachments().end(),
+                                  task2.getOuputAttachments().begin(), task2.getOuputAttachments().end());
 
-    if(task1.getInputAttachments() != task2.getInputAttachments())
-        return false;
+    isFrameBufferSubset |= std::includes(task2.getOuputAttachments().begin(), task2.getOuputAttachments().end(),
+                                  task1.getOuputAttachments().begin(), task1.getOuputAttachments().end());
 
+    bool isDescriptorSubset = std::includes(task1.getInputAttachments().begin(), task1.getInputAttachments().end(),
+                              task2.getInputAttachments().begin(), task2.getInputAttachments().end());
 
-    return true;
+    isDescriptorSubset |= std::includes(task2.getInputAttachments().begin(), task2.getInputAttachments().end(),
+                              task1.getInputAttachments().begin(), task1.getInputAttachments().end());
+
+    return isFrameBufferSubset && isDescriptorSubset;
 }
 
 

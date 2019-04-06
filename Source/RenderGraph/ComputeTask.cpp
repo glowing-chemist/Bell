@@ -24,6 +24,12 @@ void ComputeTask::recordCommands(vk::CommandBuffer CmdBuffer) const
 void ComputeTask::mergeDispatches(ComputeTask& task)
 {
     mComputeCalls.insert(mComputeCalls.end(), task.mComputeCalls.begin(), task.mComputeCalls.end());
+
+    if(task.mInputAttachments.size() > mInputAttachments.size())
+        mInputAttachments = task.mInputAttachments;
+
+    if(task.mOutputAttachments.size() > mOutputAttachments.size())
+        mOutputAttachments = task.mOutputAttachments;
 }
 
 

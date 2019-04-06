@@ -52,6 +52,12 @@ void GraphicsTask::recordCommands(vk::CommandBuffer CmdBuffer) const
 void GraphicsTask::mergeDraws(GraphicsTask & task)
 {
     mDrawCalls.insert(mDrawCalls.end(), task.mDrawCalls.begin(), task.mDrawCalls.end());
+
+    if(task.mInputAttachments.size() > mInputAttachments.size())
+        mInputAttachments = task.mInputAttachments;
+
+    if(task.mOutputAttachments.size() > mOutputAttachments.size())
+        mOutputAttachments = task.mOutputAttachments;
 }
 
 
