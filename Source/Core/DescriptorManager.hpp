@@ -22,18 +22,21 @@ public:
     std::vector<vk::DescriptorSet> getDescriptors(RenderGraph&, std::vector<vulkanResources>&);
     void                           writeDescriptors(std::vector<vk::DescriptorSet>&, RenderGraph&, std::vector<vulkanResources>&);
 
-    void                           freeDescriptorSets(RenderGraph&);
+    void                           freeDescriptorSet(const std::vector<AttachmentType>&, vk::DescriptorSet);
 
 private:
 
     vk::DescriptorImageInfo     generateDescriptorImageInfo(Image&) const;
     vk::DescriptorBufferInfo    generateDescriptorBufferInfo(Buffer&) const;
 
-    vk::DescriptorSet			allocateDescriptorSet(const RenderGraph&, const RenderTask&, const vulkanResources&);
+    vk::DescriptorSet			allocateDescriptorSet(const RenderTask&, const vulkanResources&);
 
     vk::DescriptorPool			createDescriptorPool();
 
-    std::map<std::vector<AttachmentType>, std::vector<vk::DescriptorSet>> mFreeDescriptoSets;
+    void                        transferFreeDescriptorSets();
+
+    std::map<std::vector<AttachmentType>, std::vector<vk::DescriptorSet>> mFreeDescriptorSets;
+    std::map<std::vector<AttachmentType>, std::vector<std::pair<uint64_t, vk::DescriptorSet>>> mPendingFreeDescriptorSets;
     std::vector<vk::DescriptorPool> mPools;
 };
 

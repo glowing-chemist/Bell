@@ -166,6 +166,7 @@ public:
 
     uint64_t						   getCurrentSubmissionIndex() const { return mCurrentSubmission; }
     uint64_t						   getCurrentFrameIndex() const { return mCurrentFrameIndex; }
+    uint64_t                           getFinishedSubmissionIndex() const { return mFinishedSubmission; }
 
     void                               flushWait() const { mDevice.waitIdle(); }
 

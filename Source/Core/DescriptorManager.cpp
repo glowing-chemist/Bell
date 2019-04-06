@@ -6,6 +6,20 @@
 #include <numeric>
 #include <cstdint>
 
+namespace
+{
+    std::vector<AttachmentType> stripName(const std::vector<std::pair<std::string, AttachmentType>>& vec)
+    {
+        // Find a better/more efficient way to do this.
+        std::vector<AttachmentType> attachments(vec.size());
+        std::transform(vec.begin(), vec.end(),
+                       attachments.begin(), [](const auto& attachmentInfo) { return attachmentInfo.second;});
+
+        return attachments;
+    }
+}
+
+
 DescriptorManager::~DescriptorManager()
 {
     for(auto& pool : mPools)
@@ -17,6 +31,9 @@ DescriptorManager::~DescriptorManager()
 
 std::vector<vk::DescriptorSet> DescriptorManager::getDescriptors(RenderGraph& graph, std::vector<vulkanResources>& resources)
 {
+    // move all descriptor sets pending destruction that have been finished with to the free cache.
+    transferFreeDescriptorSets();
+
     std::vector<vk::DescriptorSet> descSets;
 	uint32_t resourceIndex = 0;
 
@@ -27,8 +44,20 @@ std::vector<vk::DescriptorSet> DescriptorManager::getDescriptors(RenderGraph& gr
     {
         if((*resource).mDescSet == vk::DescriptorSet{nullptr})
         {
-            vk::DescriptorSet descSet = allocateDescriptorSet(graph, *task, *resource);
+            vk::DescriptorSet descSet = allocateDescriptorSet(*task, *resource);
             descSets.push_back(descSet);
+
+            (*resource).mDescSet = descSet;
+        }
+        else if(graph.getDescriptorsNeedUpdating()[resourceIndex])
+        {
+            vk::DescriptorSet descSet = allocateDescriptorSet(*task, *resource);
+            descSets.push_back(descSet);
+
+            auto attatchmentTypes = stripName((*task).getInputAttachments());
+            mPendingFreeDescriptorSets[attatchmentTypes].push_back({getDevice()->getCurrentSubmissionIndex(), (*resource).mDescSet});
+
+            (*resource).mDescSet = descSet;
         }
         else
         {
@@ -116,25 +145,21 @@ void DescriptorManager::writeDescriptors(std::vector<vk::DescriptorSet>& descSet
 }
 
 
-void DescriptorManager::freeDescriptorSets(RenderGraph& graph)
+void DescriptorManager::freeDescriptorSet(const std::vector<AttachmentType>& layout, vk::DescriptorSet descSet)
 {
-    // Add descriptor sets back to the free list.
+    mFreeDescriptorSets[layout].push_back(descSet);
 }
 
 
-vk::DescriptorSet DescriptorManager::allocateDescriptorSet(const RenderGraph& graph,
-                                                           const RenderTask& task,
+vk::DescriptorSet DescriptorManager::allocateDescriptorSet(const RenderTask& task,
                                                            const vulkanResources& resources)
 {    
-    // Find a better/more efficient way to do this.
-    std::vector<AttachmentType> attachments(task.getInputAttachments().size());
-    std::transform(task.getInputAttachments().begin(), task.getInputAttachments().end(),
-                   attachments.begin(), [](const auto& attachmentInfo) { return attachmentInfo.second;});
+    std::vector<AttachmentType> attachments = stripName(task.getInputAttachments());
 
-    if(mFreeDescriptoSets[attachments].size() != 0)
+    if(mFreeDescriptorSets[attachments].size() != 0)
     {
-        const vk::DescriptorSet descSet = mFreeDescriptoSets[attachments].back();
-        mFreeDescriptoSets[attachments].pop_back();
+        const vk::DescriptorSet descSet = mFreeDescriptorSets[attachments].back();
+        mFreeDescriptorSets[attachments].pop_back();
 
         return descSet;
     }
@@ -166,7 +191,7 @@ vk::DescriptorSet DescriptorManager::allocateDescriptorSet(const RenderGraph& gr
 	// so allocate create a new one and allocate a set from it.
 	mPools.insert(mPools.begin(), createDescriptorPool());
 
-	return allocateDescriptorSet(graph, task, resources);
+    return allocateDescriptorSet(task, resources);
 }
 
 
@@ -216,3 +241,23 @@ vk::DescriptorBufferInfo DescriptorManager::generateDescriptorBufferInfo(Buffer&
 
     return bufferInfo;
 }
+
+
+void DescriptorManager::transferFreeDescriptorSets()
+{
+    for(auto& [attachmentTypes, submissionIndexAndDescriptorSet] : mPendingFreeDescriptorSets)
+    {
+        uint32_t descriptorIndex = 0;
+        for(const auto&[lastUsedSubmissionIndex, descriptorSet] : submissionIndexAndDescriptorSet)
+        {
+            if(lastUsedSubmissionIndex <= getDevice()->getFinishedSubmissionIndex())
+            {
+                mFreeDescriptorSets[attachmentTypes].push_back(descriptorSet);
+
+                submissionIndexAndDescriptorSet.erase(submissionIndexAndDescriptorSet.begin() + descriptorIndex);
+            }
+            ++descriptorIndex;
+        }
+    }
+}
+
