@@ -269,8 +269,8 @@ void RenderGraph::mergeTasks()
             }
 
             mTaskOrder.erase(mTaskOrder.begin() + i + 1);
-            mInputResources.erase(mInputResources.begin() + i+ + 1);
-            mOutputResources.erase(mOutputResources.begin() + i+ + 1);
+            mInputResources.erase(mInputResources.begin() + i + 1);
+            mOutputResources.erase(mOutputResources.begin() + i + 1);
         }
     }
 
