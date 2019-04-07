@@ -132,7 +132,7 @@ void RenderGraph::bindResource(const std::string& name, const uint32_t index, co
         {
             if(input.first == name)
             {
-                mInputResources[taskOrderIndex][inputAttachmentIndex] = {name, resourcetype, index, inputAttachmentIndex};
+                mInputResources[taskOrderIndex].push_back({name, resourcetype, index, inputAttachmentIndex});
                 mDescriptorsNeedUpdating[taskOrderIndex] = true;
                 break; // Assume a resource is only bound once per task.
             }
@@ -144,7 +144,7 @@ void RenderGraph::bindResource(const std::string& name, const uint32_t index, co
         {
             if(input.first == name)
             {
-                mOutputResources[taskOrderIndex][outputAttachmentIndex] = {name, resourcetype, index, outputAttachmentIndex};
+                mOutputResources[taskOrderIndex].push_back({name, resourcetype, index, outputAttachmentIndex});
                 mFrameBuffersNeedUpdating[taskOrderIndex] = true;
                 break;
             }
