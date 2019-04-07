@@ -39,8 +39,7 @@ Image::Image(RenderDevice* dev,
     if(x != 0 && y != 0 && z == 1) mType = vk::ImageType::e2D;
     if(x != 0 && y != 0 && z >  1) mType = vk::ImageType::e3D;
 
-    const uint32_t pixelSize = getPixelSize(mFormat);
-    mImage = getDevice()->createImage(format, usage, mType, x * pixelSize, y, z);
+    mImage = getDevice()->createImage(format, usage, mType, x, y, z);
     vk::MemoryRequirements imageRequirements = getDevice()->getMemoryRequirements(mImage);
 
     mImageMemory = getDevice()->getMemoryManager()->Allocate(imageRequirements.size, imageRequirements.alignment, false);
