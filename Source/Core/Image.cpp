@@ -197,7 +197,7 @@ void Image::setContents(const void* data,
     Buffer stagingBuffer = Buffer(getDevice(), vk::BufferUsageFlagBits::eTransferSrc, size, 1, "Staging Buffer");
 
     void* mappedBuffer = stagingBuffer.map();
-    std::memcpy(mappedBuffer, data, xsize * ysize);
+    std::memcpy(mappedBuffer, data, size);
     stagingBuffer.unmap();
 
     vk::BufferImageCopy copyInfo{};
