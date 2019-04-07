@@ -15,16 +15,6 @@ void RenderGraph::addTask(const GraphicsTask& task)
     mOutputResources.emplace_back();
     mFrameBuffersNeedUpdating.emplace_back();
     mDescriptorsNeedUpdating.emplace_back();
-
-    // This makes sure that the frameBuffer attahcment is registered properly.
-    auto& outputResources = mOutputResources.back();
-    for(const auto& resource : task.getOuputAttachments())
-    {
-        ResourceBindingInfo info{};
-        info.mName = resource.first;
-
-        outputResources.push_back(info);
-    }
 }
 
 
