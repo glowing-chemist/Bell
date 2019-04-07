@@ -1,7 +1,7 @@
 #include "RenderGraph/GraphicsTask.hpp"
+#include "RenderGraph/RenderGraph.hpp"
 
-
-void GraphicsTask::recordCommands(vk::CommandBuffer CmdBuffer) const
+void GraphicsTask::recordCommands(vk::CommandBuffer CmdBuffer, const RenderGraph& graph) const
 {
     for(const auto& thunk : mDrawCalls)
     {
@@ -30,7 +30,10 @@ void GraphicsTask::recordCommands(vk::CommandBuffer CmdBuffer) const
                 break;
 
             case DrawType::Indirect:
-                // TODO implement indirect draw calls
+                CmdBuffer.drawIndirect(graph.getBoundBuffer(thunk.mIndirectBufferName).getBuffer(),
+                                       0,
+                                       thunk.mNumberOfInstances,
+                                       100); // TODO workout what the correct stride should be (maybe pass it down and let user decide)
                 break;
 
             case DrawType::IndexedInstanced:
@@ -41,8 +44,11 @@ void GraphicsTask::recordCommands(vk::CommandBuffer CmdBuffer) const
                                       0);
                 break;
 
-            case DrawType::IndexedInstancedIndirect:
-                // TODO implement indirect draw calls
+            case DrawType::IndexedIndirect:
+                CmdBuffer.drawIndexedIndirect(graph.getBoundBuffer(thunk.mIndirectBufferName).getBuffer(),
+                                              0,
+                                              thunk.mNumberOfInstances,
+                                              100); // TODO workout what the correct stride should be (maybe pass it down and let user decide)
                 break;
         }
     }

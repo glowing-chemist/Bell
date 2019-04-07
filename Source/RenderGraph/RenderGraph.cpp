@@ -1,5 +1,6 @@
 
 #include "RenderGraph/RenderGraph.hpp"
+#include "Core/BellLogging.hpp"
 
 #include <algorithm>
 
@@ -362,6 +363,26 @@ GPUResource& RenderGraph::getResource(const ResourceType resourceType, const uin
     }();
 
     return resource;
+}
+
+
+const Buffer& RenderGraph::getBoundBuffer(const std::string& name) const
+{
+    auto itr = std::find_if(mBuffers.begin(), mBuffers.end(), [&name](const std::pair<std::string, Buffer>& entry) { return name == entry.first; });
+
+    BELL_ASSERT(itr != mBuffers.end(), "Buffer not found");
+
+    return (*itr).second;
+}
+
+
+const Image& RenderGraph::getBoundImage(const std::string& name) const
+{
+    auto itr = std::find_if(mImages.begin(), mImages.end(), [&name](const std::pair<std::string, Image>& entry) { return name == entry.first; });
+
+    BELL_ASSERT(itr != mImages.end(), "Image not found");
+
+    return (*itr).second;
 }
 
 

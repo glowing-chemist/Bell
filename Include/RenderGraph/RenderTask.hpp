@@ -9,6 +9,8 @@
 
 #include <vulkan/vulkan.hpp>
 
+class RenderGraph;
+
 enum class AttachmentType
 {
     Texture1D,
@@ -21,6 +23,7 @@ enum class AttachmentType
 	Depth,
     UniformBuffer,
     DataBuffer,
+    IndirectBuffer,
     PushConstants
 };
 
@@ -50,7 +53,7 @@ public:
     }
 
 
-    virtual void recordCommands(vk::CommandBuffer) const = 0;
+    virtual void recordCommands(vk::CommandBuffer, const RenderGraph&) const = 0;
 
 
     const std::vector<std::pair<std::string, AttachmentType>>& getInputAttachments() const

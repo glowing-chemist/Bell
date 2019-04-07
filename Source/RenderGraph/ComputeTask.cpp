@@ -1,7 +1,7 @@
 #include "RenderGraph/ComputeTask.hpp"
+#include "RenderGraph/RenderGraph.hpp"
 
-
-void ComputeTask::recordCommands(vk::CommandBuffer CmdBuffer) const
+void ComputeTask::recordCommands(vk::CommandBuffer CmdBuffer, const RenderGraph& graph) const
 {
     for(const auto& thunk : mComputeCalls)
     {
@@ -14,7 +14,8 @@ void ComputeTask::recordCommands(vk::CommandBuffer CmdBuffer) const
                 break;
 
             case DispatchType::Indirect:
-                // TODO
+                CmdBuffer.dispatchIndirect(graph.getBoundBuffer(thunk.mIndirectBuffer).getBuffer(),
+                                           100);
                 break;
         }
     }

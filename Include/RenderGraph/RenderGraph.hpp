@@ -55,6 +55,9 @@ public:
 	RenderTask& getTask(TaskType, uint32_t);
 	const RenderTask& getTask(TaskType, uint32_t) const;
 
+    const Buffer& getBoundBuffer(const std::string&) const;
+    const Image&  getBoundImage(const std::string&) const;
+
 	uint64_t taskCount() const { return mTaskOrder.size(); }
 
 	TaskIterator taskBegin();

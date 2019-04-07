@@ -20,7 +20,7 @@ enum class DrawType
     Instanced,
     Indirect,
     IndexedInstanced,
-    IndexedInstancedIndirect
+    IndexedIndirect
 };
 
 enum class BlendMode
@@ -111,25 +111,30 @@ public:
 
 	void addDrawCall(const uint32_t vertexOffset, const uint32_t numberOfVerticies) 
 	{ 
-			mDrawCalls.push_back({DrawType::Standard, vertexOffset, numberOfVerticies, 0, 0, 0});
+            mDrawCalls.push_back({DrawType::Standard, vertexOffset, numberOfVerticies, 0, 0, 1, ""});
 	}
 
 	void addIndexedDrawCall(const uint32_t vertexOffset, const uint32_t indexOffset, const uint32_t numberOfIndicies) 
 	{ 
-			mDrawCalls.push_back({ DrawType::Indexed, vertexOffset, 0, indexOffset, numberOfIndicies, 0 });
+            mDrawCalls.push_back({ DrawType::Indexed, vertexOffset, 0, indexOffset, numberOfIndicies, 1, "" });
 	}
+
+    void addIndirectDrawCall(const uint32_t drawCalls, const std::string&& indirectBuffer)
+    {
+        mDrawCalls.push_back({DrawType::Indirect, 0, 0, 0, 0, drawCalls, indirectBuffer});
+    }
 
 	void addIndexedInstancedDrawCall(const uint32_t vertexOffset, const uint32_t indexOffset, const uint32_t numberOfInstances, const uint32_t numberOfIndicies)
 	{
-		mDrawCalls.push_back({ DrawType::IndexedInstanced, vertexOffset, 0, indexOffset, numberOfIndicies, numberOfInstances });
+        mDrawCalls.push_back({ DrawType::IndexedInstanced, vertexOffset, 0, indexOffset, numberOfIndicies, numberOfInstances, "" });
 	}
 
-	void addIndexedInstancedIndirectDrawCall(const uint32_t vertexOffset, const uint32_t indexOffset, const uint32_t numberOfInstances, const uint32_t numberOfIndicies)
+    void addIndexedInstancedIndirectDrawCall(const uint32_t drawCalls, const uint32_t indexOffset, const uint32_t numberOfInstances, const uint32_t numberOfIndicies, const std::string&& indirectName)
 	{
-		mDrawCalls.push_back({ DrawType::IndexedInstanced, vertexOffset, 0, indexOffset, numberOfIndicies, numberOfInstances });
+        mDrawCalls.push_back({ DrawType::IndexedIndirect, 0, 0, indexOffset, numberOfIndicies, numberOfInstances, indirectName});
 	}
 
-    void recordCommands(vk::CommandBuffer) const override;
+    void recordCommands(vk::CommandBuffer, const RenderGraph&) const override;
 
     void mergeDraws(GraphicsTask&);
 
@@ -147,6 +152,7 @@ private:
 		uint32_t mIndexOffset;
 		uint32_t mNumberOfIndicies;
 		uint32_t mNumberOfInstances;
+        std::string mIndirectBufferName;
 	};
 	std::vector<thunkedDraw> mDrawCalls;
 

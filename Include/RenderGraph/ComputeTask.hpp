@@ -50,7 +50,8 @@ public:
 
     void mergeDispatches(ComputeTask&);
 
-    void recordCommands(vk::CommandBuffer) const override;
+    // Needs to take the graph to be able to lookup indirect buffers tha are bound to the graph.
+    void recordCommands(vk::CommandBuffer, const RenderGraph&) const override;
 
 	void clearCalls() override { mComputeCalls.clear(); }
 	TaskType taskType() const override { return TaskType::Compute; }
@@ -63,6 +64,7 @@ private:
 	{
 		DispatchType mDispatchType;
 		uint32_t x, y, z;
+        std::string mIndirectBuffer;
 	};
 	std::vector<thunkedCompute> mComputeCalls;
 

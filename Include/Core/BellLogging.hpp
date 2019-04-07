@@ -5,6 +5,7 @@
 
 // This file contains logging/assert macros that will print out in debug builds.
 
+
 // BELL_LOG
 #ifndef NDEBUG
 
@@ -22,11 +23,11 @@
 // BELL_ASSRT
 #ifndef NDEBUG
 
-#define BELL_ASSERT(condition, msg) if(!condition) printf("ASSERT FAILED: " ## msg ## #condition);
+#define BELL_ASSERT(condition, msg) if(!(condition)) printf(msg #condition);
 
 #else
 
-#define BELL_ASSERT
+#define BELL_ASSERT(condition, msg)
 
 #endif
 

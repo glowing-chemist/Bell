@@ -859,7 +859,7 @@ void RenderDevice::execute(RenderGraph& graph)
 		if (resources.mDescSet != vk::DescriptorSet{ nullptr })
             secondaryCmdBuffer.bindDescriptorSets(bindPoint, resources.mPipelineLayout, 0, 1,  &resources.mDescSet, 0, nullptr);
 
-        (*task).recordCommands(secondaryCmdBuffer);
+        (*task).recordCommands(secondaryCmdBuffer, graph);
 
         secondaryCmdBuffer.end();
         primaryCmdBuffer.executeCommands(secondaryCmdBuffer);
