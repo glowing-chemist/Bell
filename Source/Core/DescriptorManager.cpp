@@ -116,6 +116,7 @@ void DescriptorManager::writeDescriptors(std::vector<vk::DescriptorSet>& descSet
                     imageInfos.push_back(info);
 
                     descWrite.setPImageInfo(&imageInfos.back());
+                    descWrite.setDescriptorType(vk::DescriptorType::eCombinedImageSampler);
                     break;
                 }
                 case RenderGraph::ResourceType::Buffer:
@@ -125,9 +126,14 @@ void DescriptorManager::writeDescriptors(std::vector<vk::DescriptorSet>& descSet
                     bufferInfos.push_back(info);
 
                     descWrite.setPBufferInfo(&bufferInfos.back());
+
+                    if(buffer.getUsage() & vk::BufferUsageFlagBits::eUniformBuffer)
+                        descWrite.setDescriptorType(vk::DescriptorType::eUniformBuffer);
+                    else
+                        descWrite.setDescriptorType(vk::DescriptorType::eStorageBuffer);
+
                     break;
                 }
-
             }
 
             descSetWrites.push_back(descWrite);

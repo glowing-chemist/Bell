@@ -34,8 +34,12 @@ public:
 
     void setCurrentOffset(const uint64_t offset)
         { mCurrentOffset = offset; }
+
     uint64_t getCurrentOffset() const
         { return mCurrentOffset; }
+
+    vk::BufferUsageFlags getUsage() const
+        { return mUsage; }
 
     Allocation getMemory()
         { return mBufferMemory; }

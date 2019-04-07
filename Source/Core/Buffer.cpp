@@ -32,7 +32,7 @@ Buffer::Buffer(RenderDevice* dev,
 Buffer::~Buffer()
 {
     const bool shouldDestroy = release();
-    if(shouldDestroy)
+    if(shouldDestroy && mBuffer != vk::Buffer{nullptr})
         getDevice()->destroyBuffer(*this);
 }
 
