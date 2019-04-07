@@ -512,6 +512,7 @@ vk::DescriptorSetLayout RenderDevice::generateDescriptorSetLayout(const RenderTa
 
     std::vector<vk::DescriptorSetLayoutBinding> layoutBindings;
     uint32_t curretnBinding = 0;
+
     for(const auto& [name, type] : inputAttachments)
     {
         // TRanslate between Bell enums to the vulkan equivelent.
@@ -519,9 +520,9 @@ vk::DescriptorSetLayout RenderDevice::generateDescriptorSetLayout(const RenderTa
         {
             switch(type)
             {
-            case AttachmentType::RenderTarget1D:
-            case AttachmentType::RenderTarget2D:
-            case AttachmentType::RenderTarget3D:
+            case AttachmentType::Texture1D:
+            case AttachmentType::Texture2D:
+            case AttachmentType::Texture3D:
                 return vk::DescriptorType::eCombinedImageSampler;
 
            case AttachmentType::DataBuffer:
