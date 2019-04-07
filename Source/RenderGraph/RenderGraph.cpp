@@ -149,7 +149,7 @@ void RenderGraph::bindResource(const std::string& name, const uint32_t index, co
 void RenderGraph::bindImage(const std::string& name, Image& image)
 {
     const uint32_t currentImageIndex = mImages.size();
-    mImages.push_back({name, image});
+    mImages.emplace_back(name, image);
 
     bindResource(name, currentImageIndex, ResourceType::Image);
 }
@@ -158,7 +158,7 @@ void RenderGraph::bindImage(const std::string& name, Image& image)
 void RenderGraph::bindBuffer(const std::string& name , Buffer& buffer)
 {
     const uint32_t currentBufferIndex = mBuffers.size();
-    mBuffers.push_back({name, buffer});
+    mBuffers.emplace_back(name, buffer);
 
     bindResource(name, currentBufferIndex, ResourceType::Buffer);
 }
