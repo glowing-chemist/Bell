@@ -1,6 +1,23 @@
 #include "Core/Image.hpp"
 #include "RenderDevice.hpp"
 
+namespace
+{
+
+    uint32_t getPixelSize(const vk::Format format)
+    {
+        switch(format)
+        {
+        case vk::Format::eR8G8B8A8Unorm:
+            return 4;
+            // Add more formats as and when needed.
+        default:
+            return 4;
+        }
+    }
+
+}
+
 Image::Image(RenderDevice* dev,
              const vk::Format format,
              const vk::ImageUsageFlags usage,
@@ -22,7 +39,8 @@ Image::Image(RenderDevice* dev,
     if(x != 0 && y != 0 && z == 1) mType = vk::ImageType::e2D;
     if(x != 0 && y != 0 && z >  1) mType = vk::ImageType::e3D;
 
-    mImage = getDevice()->createImage(format, usage, mType, x, y, z);
+    const uint32_t pixelSize = getPixelSize(mFormat);
+    mImage = getDevice()->createImage(format, usage, mType, x * pixelSize, y, z);
     vk::MemoryRequirements imageRequirements = getDevice()->getMemoryRequirements(mImage);
 
     mImageMemory = getDevice()->getMemoryManager()->Allocate(imageRequirements.size, imageRequirements.alignment, false);
@@ -176,7 +194,7 @@ void Image::setContents(const void* data,
                         const int32_t offsety,
                         const int32_t offsetz)
 {
-    const uint32_t size = xsize * ysize * zsize;
+    const uint32_t size = xsize * ysize * zsize * getPixelSize(mFormat);
     Buffer stagingBuffer = Buffer(getDevice(), vk::BufferUsageFlagBits::eTransferSrc, size, 1, "Staging Buffer");
 
     void* mappedBuffer = stagingBuffer.map();
