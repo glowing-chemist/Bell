@@ -52,8 +52,12 @@ RenderDevice::~RenderDevice()
     mDevice.waitIdle();
 
     // We can ignore lastUsed as we have just waited till all work has finished.
-    for(auto& [lastUsed, handle, memory] : mImagesPendingDestruction)
+    for(auto& [lastUsed, handle, memory, imageView, sampler] : mImagesPendingDestruction)
     {
+        if(imageView != vk::ImageView{nullptr})
+            mDevice.destroyImageView(imageView);
+        if(sampler != vk::Sampler{nullptr})
+            mDevice.destroySampler(sampler);
         mDevice.destroyImage(handle);
         mMemoryManager.Free(memory);
     }
@@ -967,10 +971,14 @@ void RenderDevice::clearDeferredResources()
 
     for(uint32_t i = 0; i < mImagesPendingDestruction.size(); ++i)
     {
-        auto& [submission, image, memory] = mImagesPendingDestruction.front();
+        auto& [submission, image, memory, imageView, sampler] = mImagesPendingDestruction.front();
 
         if(submission <= mFinishedSubmission)
         {
+            if(imageView != vk::ImageView{nullptr})
+                mDevice.destroyImageView(imageView);
+            if(sampler != vk::Sampler{nullptr})
+                mDevice.destroySampler(sampler);
             mDevice.destroyImage(image);
             getMemoryManager()->Free(memory);
             mImagesPendingDestruction.pop_front();

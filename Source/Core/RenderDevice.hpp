@@ -66,7 +66,7 @@ public:
                                                    const uint32_t,
                                                    const uint32_t);
 
-    void                               destroyImage(Image& image) { mImagesPendingDestruction.push_back({image.getLastAccessed(), image.getImage(), image.getMemory()}); }
+    void                               destroyImage(Image& image) { mImagesPendingDestruction.push_back({image.getLastAccessed(), image.getImage(), image.getMemory(), image.getCurrentImageView(), image.getCurrentSampler()}); }
 
     vk::ImageView                      createImageView(const vk::ImageViewCreateInfo& info)
                                             { return mDevice.createImageView(info); }
@@ -249,6 +249,8 @@ private:
         uint64_t mLastUsed;
         vk::Image mImageHandle;
         Allocation mImageMemory;
+        vk::ImageView mCurrentImageView;
+        vk::Sampler mCurrentSampler;
     };
     std::deque<ImageDestructionInfo> mImagesPendingDestruction;
 
