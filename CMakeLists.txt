@@ -12,7 +12,9 @@ endif(WIN32)
 
 find_package(Vulkan REQUIRED)
 # glfw doesn't have a good way to find itself on windows so include the source as a dependancy
-set(GLFW_BUILD_TESTS 0) # avoid building unnesary stuff
+
+# avoid building unnesary stuff
+set(GLFW_BUILD_TESTS 0)
 set(GLFW_BUILD_DOCS 0)
 set(GLFW_BUILD_EXAMPLES 0)
 add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/ThirdParty/GLFW3/glfw-3.2.1")
@@ -24,6 +26,11 @@ else()
     set(glslangLibs /usr/lib/libglslang.so /usr/lib/libglslang-default-resource-limits.so  /usr/lib/libSPIRV.so)
 endif(WIN32)
 
+if(USE_ASAN)
+    set (CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address")
+    set (CMAKE_LINKER_FLAGS_DEBUG "${CMAKE_LINKER_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address")
+endif()
+
 include_directories(
                         "${CMAKE_CURRENT_LIST_DIR}/Include/"
                         "${CMAKE_CURRENT_LIST_DIR}/Source/"
@@ -34,29 +41,43 @@ include_directories(
 						${glslangIncludeDirs}
 		    )
 
-set(SOURCE
+set(BELL_BASE_SOURCE
 	# Core files (dependant on vulkan) 
-	"Source/Core/RenderInstance.cpp"
-	"Source/Core/RenderDevice.cpp"
-	"Source/Core/Image.cpp"
-	"Source/Core/Buffer.cpp"
-	"Source/Core/MemoryManager.cpp"
-	"Source/Core/BarrierManager.cpp"
-	"Source/Core/SwapChain.cpp"
-	"Source/Core/CommandPool.cpp"
-	"Source/Core/Shader.cpp"
-	"Source/Core/DescriptorManager.cpp"
+	Source/Core/RenderInstance.cpp
+	Source/Core/RenderDevice.cpp
+	Source/Core/Image.cpp
+	Source/Core/Buffer.cpp
+	Source/Core/MemoryManager.cpp
+	Source/Core/BarrierManager.cpp
+	Source/Core/SwapChain.cpp
+	Source/Core/CommandPool.cpp
+	Source/Core/Shader.cpp
+	Source/Core/DescriptorManager.cpp
 
 	#RenderGraph files (backend independant)
-	"Source/RenderGraph/GraphicsTask.cpp"
-	"Source/RenderGraph/ComputeTask.cpp"
-	"Source/RenderGraph/RenderGraph.cpp"
+	Source/RenderGraph/GraphicsTask.cpp
+	Source/RenderGraph/ComputeTask.cpp
+	Source/RenderGraph/RenderGraph.cpp
 	)
 
-if(USE_ASAN)
-    set (CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address")
-    set (CMAKE_LINKER_FLAGS_DEBUG "${CMAKE_LINKER_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address")
-endif()
+# Build just the base as a seperate target incase users want to build a different engine
 
-add_library(${PROJECT_NAME} ${SOURCE})
-target_link_libraries(${PROJECT_NAME} ${Vulkan_LIBRARIES} glfw stdc++fs ${glslangLibs})
+add_library("${PROJECT_NAME}_BASE" ${BELL_BASE_SOURCE})
+target_link_libraries("${PROJECT_NAME}_BASE" ${Vulkan_LIBRARIES} glfw stdc++fs ${glslangLibs})
+
+
+# Build the main engine as a library
+
+set(BELL_SOURCE
+    Source/Engine/Engine.cpp
+    Source/Engine/AABB.cpp
+    Source/Engine/SceneOctTree.cpp
+    Source/Engine/Camera.cpp
+    Source/Engine/GraphResolver.cpp
+    Source/Engine/StaticMesh.cpp
+	Source/Engine/BufferBuilder.cpp
+    )
+
+
+add_library(${PROJECT_NAME} ${BELL_SOURCE})
+target_link_libraries(${PROJECT_NAME} BELL_BASE)
