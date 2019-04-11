@@ -75,7 +75,8 @@ set(BELL_SOURCE
     Source/Engine/Camera.cpp
     Source/Engine/GraphResolver.cpp
     Source/Engine/StaticMesh.cpp
-	Source/Engine/BufferBuilder.cpp
+    Source/Engine/BufferBuilder.cpp
+    Source/Engine/GeomUtils.cpp
     )
 
 
