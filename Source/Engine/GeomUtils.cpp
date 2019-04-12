@@ -54,9 +54,10 @@ float Plane::distanceTo(const float3& point) const
 
 float Plane::distanceTo(const float4& point) const
 {
-    const float angle = 90.0f - std::acos(glm::dot(mNormal, point));
+    const float4 centerToPoint = point - mCenterPosition;
+    const float angle = 90.0f - std::acos(glm::dot(mNormal, centerToPoint));
 
-    return glm::length(point - mCenterPosition) * std::sin(angle);
+    return glm::length(centerToPoint) * std::sin(angle);
 }
 
 
