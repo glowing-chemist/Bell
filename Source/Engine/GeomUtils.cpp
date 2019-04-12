@@ -40,9 +40,9 @@ bool Plane::isInFrontOf(const float3& point) const
 bool Plane::isInFrontOf(const float4& point) const
 {
     const auto centreToPoint = glm::normalize(point - mCenterPosition);
-    const float angle = std::acos(glm::dot(centreToPoint, mNormal));
+    const float angle = glm::dot(centreToPoint, mNormal);
 
-    return angle <= 90.0f;
+    return angle > 0.0f;
 }
 
 
