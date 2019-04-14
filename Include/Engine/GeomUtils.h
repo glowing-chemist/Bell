@@ -1,6 +1,8 @@
 #ifndef GEOMUTILS_HPP
 #define GEOMUTILS_HPP
 
+#include "Core/BellLogging.hpp"
+
 #include <glm/glm.hpp>
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
@@ -36,9 +38,12 @@ class Plane
 	public:
 	
     Plane(const glm::vec4& position, const glm::vec4& normal) : mCenterPosition{position},
-        mNormal{normal} {}
+        mNormal{normal}
+        { BELL_ASSERT(glm::length(mNormal) == 1.0f, "Direction vecotr of plane is not normalised") }
 
-    bool isInFrontOf(const AABB&, const Estimation) const;
+    Plane() = default;
+
+    bool isInFrontOf(const AABB&, const EstimationMode) const;
     bool isInFrontOf(const float3&) const;
     bool isInFrontOf(const float4&) const;
 
@@ -58,7 +63,8 @@ class Plane
 class Ray
 {
 public:
-    Ray(const float4& position, const float4& direction) : mPosition{position}, mDirection{direction} {}
+    Ray(const float4& position, const float4& direction) : mPosition{position}, mDirection{direction}
+    { BELL_ASSERT(glm::length(mDirection) == 1.0f, "Direction vector of ray is not normalised") }
 
 private:
 
