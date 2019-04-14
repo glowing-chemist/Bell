@@ -1,11 +1,43 @@
 #include "Engine/Camera.hpp"
 
-Frustum::Frustum(const float4& position,
-                 const float4& direction,
+#include <glm/gtx/transform.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
+Frustum::Frustum(const float3& position,
+                 const float3& direction,
+                 const float3& up,
                  const float lenght,
+                 const float startOffset,
                  const float angle)
 {
- // TODO
+    // calculating the near and far planes is relivitly simple as they have the same normal(or oposite) of
+    // the cameras direction.
+    mNearPlane = {position + (direction * startOffset), direction};
+    mFarPlane = {position + (direction * lenght), -direction};
+
+    // We construct the other four planes by taking a pont and a vector in the center of the frustum
+    // and rotating it in the apropriate direction by half the field of view angle.
+    // I'm sure theres probably a trick to do this more effiently but this will do for now.
+    glm::mat3 leftPlaneRotation = glm::rotate(glm::mat4(0), -(angle / 2.0f), up);
+    glm::mat3 rightPlaneRotation = glm::rotate(glm::mat4(0), (angle / 2.0f), up);
+    float3 rightVector = glm::normalize(glm::cross(direction, up));
+
+    mLeftPlane = {(position + (direction * (lenght / 2.0f))) * leftPlaneRotation,
+                  rightVector * leftPlaneRotation};
+
+    mRightPLane = {(position + (direction * (lenght / 2.0f))) * rightPlaneRotation,
+                  -rightVector * rightPlaneRotation};
+
+
+    glm::mat3 bottomPlaneRotation = glm::rotate(glm::mat4(0), (angle / 2.0f), rightVector);
+    glm::mat3 topPlaneRotation = glm::rotate(glm::mat4(0), -(angle / 2.0f), rightVector);
+    float3 normalisedUp = glm::normalize(up);
+
+    mBottomPlane = {(position + (direction * (lenght / 2.0f))) * bottomPlaneRotation,
+                    normalisedUp * rightPlaneRotation};
+
+    mTopPlane = {(position + (direction * (lenght / 2.0f))) * topPlaneRotation,
+                  -normalisedUp * leftPlaneRotation};
 }
 
 
@@ -42,4 +74,62 @@ bool Frustum::isContainedWithin(const AABB &aabb, const EstimationMode mode) con
     inFrontOf &= mBottomPlane.isInFrontOf(aabb, mode);
 
     return inFrontOf;
+}
+
+
+void Camera::moveForward(const float distance)
+{
+    mPosition += distance * mDirection;
+}
+
+
+void Camera::moveBackward(const float distance)
+{
+    mPosition -= distance * mDirection;
+}
+
+
+void Camera::moveLeft(const float distance)
+{
+    mPosition -= distance * rightDirectionVector();
+}
+
+
+void Camera::moveRight(const float distance)
+{
+    mPosition += distance * rightDirectionVector();
+}
+
+
+void Camera::rotatePitch(const float angle)
+{
+    const float3 rotationAxis = glm::cross(mDirection, mUp);
+    const glm::mat3 rotation = glm::rotate(angle, rotationAxis);
+    mDirection = rotation * mDirection;
+    mUp = rotation * mUp;
+}
+
+
+void Camera::rotateYaw(const float angle)
+{
+    const glm::mat3 rotation = glm::rotate(angle, mUp);
+    mDirection = rotation * mDirection;
+}
+
+
+glm::mat4 Camera::getViewMatrix() const
+{
+    const float3 cameraUp = glm::cross(float3(mDirection), float3(rightDirectionVector()));
+    return glm::lookAt(mPosition, mPosition + mDirection, cameraUp);
+}
+
+
+Frustum Camera::getFrustum() const
+{
+    return Frustum{ mPosition,
+                    mDirection,
+                    mUp,
+                    mFarPlaneDistance,
+                    mNearPlaneDistance,
+                    mFieldOfView };
 }

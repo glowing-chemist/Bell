@@ -37,7 +37,7 @@ class Plane
 {
 	public:
 	
-    Plane(const glm::vec4& position, const glm::vec4& normal) : mCenterPosition{position},
+    Plane(const glm::vec3& position, const glm::vec3& normal) : mCenterPosition{position},
         mNormal{normal}
         { BELL_ASSERT(glm::length(mNormal) == 1.0f, "Direction vecotr of plane is not normalised") }
 
@@ -45,31 +45,28 @@ class Plane
 
     bool isInFrontOf(const AABB&, const EstimationMode) const;
     bool isInFrontOf(const float3&) const;
-    bool isInFrontOf(const float4&) const;
 
     float distanceTo(const float3&) const;
-    float distanceTo(const float4&) const;
 
-    float4 closestPoint(const float3&) const;
-    float4 closestPoint(const float4&) const;
+    float3 closestPoint(const float3&) const;
 
 	private:
 
-    float4 mCenterPosition;
-	float4 mNormal;
+    float3 mCenterPosition;
+    float3 mNormal;
 };
 
 
 class Ray
 {
 public:
-    Ray(const float4& position, const float4& direction) : mPosition{position}, mDirection{direction}
+    Ray(const float3& position, const float3& direction) : mPosition{position}, mDirection{direction}
     { BELL_ASSERT(glm::length(mDirection) == 1.0f, "Direction vector of ray is not normalised") }
 
 private:
 
-    float4 mPosition;
-    float4 mDirection;
+    float3 mPosition;
+    float3 mDirection;
 };
 
 #endif
