@@ -1,0 +1,29 @@
+Document to keep track of improvements that can be made to existing components in BELL.
+
+Low hanging fruit:
+	
+	Allow the memory manager to allocate from pool types not currently supported e.g cached,coherient types (potentially a big performance improvment when 
+	updating (uniform) buffers that change every frame or morefrequently).
+
+	Add SIMD/multithreading support so the frustrum culling or more generally when doing collision detection on the scenes BVH. 
+
+	Add debug lables to API handles in order to aid debuging.
+
+Moderate effort fruit:
+
+	Record secondary command buffers in parralel (would probably be best to batch command buffers to be recorded, might need to implement a thread/work pool
+	to best to this with minimal overhead).
+
+	Reorder how memory barriers are recorded in order to perform most image layout transitions as renderpass dependancies (could be a lot more effiecient on AMD/Intel).
+
+	Perform data uploads at the start of the frame on a dedicated transfer queue if one exists.
+
+Difficult to reach fruit:
+
+	Allow for asynchronouse compute (on a seperate queue), this will require finding when it's safe to overlap compute work. (Plus side the memory barrier state tracking can already handle the queue ownership transfer
+	so we really just need to implement a way to find when it's safe to overlap work) This might require more explicit synchronisation than just memory barrires to be correct need to look in 
+	to that.
+
+	Submit the work for the frame in small peices, this should hopeuflly avoid the GPU clocking down inbetween being  fed large peices of work once per frame.
+	I'm really not sure how best to do this??.
+
