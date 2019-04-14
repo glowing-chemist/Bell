@@ -24,7 +24,7 @@ using int4 = glm::vec<4, int32_t>;
 class AABB;
 
 
-enum class Estimation
+enum class EstimationMode
 {
     Over,
     Under

@@ -4,12 +4,12 @@
 #include "Engine/AABB.hpp"
 
 
-bool Plane::isInFrontOf(const AABB& aabb, const Estimation estimationMode) const
+bool Plane::isInFrontOf(const AABB& aabb, const EstimationMode estimationMode) const
 {
     const auto aabbVerticies = aabb.getCubeAsArray();
     bool inFrontOf = true;
 
-    if(estimationMode == Estimation::Over)
+    if(estimationMode == EstimationMode::Over)
     {
         for(const auto& vertex : aabbVerticies)
         {
