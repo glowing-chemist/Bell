@@ -7,14 +7,12 @@
 
 #include <SPIRV/GlslangToSpv.h>
 
-// For some reason the header declaring this is missing the declaration on arches glallang??
+// For some reason the header declaring this is missing the declaration on Arches glallang??
 // the shared library does conatin the symbol though so just declare it ourselves.
 namespace glslang
 {
     extern const TBuiltInResource DefaultTBuiltInResource;
 }
-
-thread_local bool Shader::mGLSLangInitialised = false;
 
 
 Shader::Shader(RenderDevice* device, const std::string& path) :
@@ -44,15 +42,6 @@ Shader::~Shader()
 
 bool Shader::compile()
 {
-    // Make sure the compiler process has been initialised.
-    if(!mGLSLangInitialised)
-    {
-        const bool success = glslang::InitializeProcess();
-        if(!success)
-            return success;
-        mGLSLangInitialised = true;
-    }
-
     glslang::TShader shader{mShaderStage};
     const char* shaderSourceCString = mGLSLSource.c_str();
     shader.setStrings(&shaderSourceCString, 1);

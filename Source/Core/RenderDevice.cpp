@@ -1,5 +1,8 @@
 #include "RenderDevice.hpp"
 #include "RenderInstance.hpp"
+#include "Core/BellLogging.hpp"
+
+#include <glslang/Public/ShaderLang.h>
 #include <vulkan/vulkan.hpp>
 
 #include <limits>
@@ -39,6 +42,11 @@ RenderDevice::RenderDevice(vk::PhysicalDevice physDev, vk::Device dev, vk::Surfa
         mImageAquired.push_back(mDevice.createSemaphore(semInfo));
         mImageRendered.push_back(mDevice.createSemaphore(semInfo));
     }
+
+    // Initialise the glsl compiler here rather than in the first compiled shader to avoid
+    // having to synchronise there.
+    const bool glslInitialised = glslang::InitializeProcess();
+    BELL_ASSERT(glslInitialised, "FAILED TO INITIALISE GLSLANG, we will not be able to compile any shaders from source!")
 
 #ifndef NDEBUG
     vk::EventCreateInfo eventInfo{};

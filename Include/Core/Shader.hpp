@@ -44,7 +44,6 @@ private:
     EShLanguage mShaderStage;
 
     bool mCompiled;
-    static thread_local bool mGLSLangInitialised;
 #ifdef _MSC_VER  // MSVC still doesn't support std::filesystem ...
 	std::experimental::filesystem::file_time_type mLastFileAccessTime;
 #else
