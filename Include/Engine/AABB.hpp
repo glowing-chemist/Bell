@@ -10,37 +10,43 @@
 struct Cube
 {
     // Verticies going clockwise looking down (perpendicular) on a single face
-    float4 mUpper1;
-    float4 mUpper2;
-    float4 mUpper3;
-    float4 mUpper4;
+    float3 mUpper1; // Corresponds to TopFrontLeft
+    float3 mUpper2;
+    float3 mUpper3;
+    float3 mUpper4;
 
-    float4 mLower1;
-    float4 mLower2;
-    float4 mLower3;
-    float4 mLower4;
+    float3 mLower1;
+    float3 mLower2;
+    float3 mLower3; // Corresponds to BottomBackRight
+    float3 mLower4;
 };
 
 
+// An axis aligned bounding box, using the vulkan corrdinate system (origin in the top left corner).
 class AABB
 {
 public:
-    AABB(const glm::vec4& diagonalTop, const glm::vec4& diagonalBottom);
-    AABB(const Cube&);
+    AABB(const float3& diagonalTop, const float3& diagonalBottom) :
+        mTopFrontLeft{diagonalTop},
+        mBottomBackRight{diagonalBottom} {}
+
+    AABB(const Cube& cube) :
+        mTopFrontLeft{cube.mUpper1},
+        mBottomBackRight{cube.mLower3} {}
 
     Cube getCube() const;
-    std::array<float4, 8> getCubeAsArray() const;
+    std::array<float3, 8> getCubeAsArray() const;
 
-    AABB& operator*(const glm::mat4&);
+    AABB& operator*(const glm::mat3&);
 
-    AABB& operator*(const glm::vec4&);
-    AABB& operator+(const glm::vec4&);
-    AABB& operator-(const glm::vec4&);
+    AABB& operator*(const float3&);
+    AABB& operator+(const float3&);
+    AABB& operator-(const float3&);
 
 private:
 
-    float4 mTopBackLeft;
-    float4 mBottomFrontRight;
+    float3 mTopFrontLeft;
+    float3 mBottomBackRight;
 
 };
 

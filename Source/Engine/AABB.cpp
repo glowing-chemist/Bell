@@ -1,29 +1,17 @@
 #include "Engine/AABB.hpp"
 
 
-AABB::AABB(const glm::vec4& diagonalTop, const glm::vec4& diagonalBottom) :
-    mTopBackLeft{diagonalTop},
-    mBottomFrontRight{diagonalBottom}
-{}
-
-
-AABB::AABB(const Cube& cube) :
-    mTopBackLeft{cube.mUpper1},
-    mBottomFrontRight{cube.mLower3}
-{}
-
-
-std::array<float4, 8> AABB::getCubeAsArray() const
+std::array<float3, 8> AABB::getCubeAsArray() const
 {
-    float4 upper1{mTopBackLeft};
-    float4 upper2{mBottomFrontRight.x, mTopBackLeft.y, mTopBackLeft.z, mTopBackLeft.w};
-    float4 upper3{mBottomFrontRight.x, mTopBackLeft.y, mBottomFrontRight.z, mTopBackLeft.w};
-    float4 upper4{mTopBackLeft.x, mTopBackLeft.y, mBottomFrontRight.z, mTopBackLeft.w};
+    float3 upper1{mTopFrontLeft};
+    float3 upper2{mTopFrontLeft.x, mTopFrontLeft.y, mBottomBackRight.z};
+    float3 upper3{mBottomBackRight.x, mTopFrontLeft.y, mBottomBackRight.z};
+    float3 upper4{mBottomBackRight.x, mTopFrontLeft.y, mTopFrontLeft.z};
 
-    float4 lower1{mTopBackLeft.x, mBottomFrontRight.y, mTopBackLeft.z, mBottomFrontRight.w};
-    float4 lower2{mBottomFrontRight.x, mBottomFrontRight.y, mTopBackLeft.z, mBottomFrontRight.w};
-    float4 lower3{mBottomFrontRight};
-    float4 lower4{mTopBackLeft.x, mBottomFrontRight.y, mBottomFrontRight.z, mBottomFrontRight.w};
+    float3 lower1{mTopFrontLeft.x, mBottomBackRight.y, mTopFrontLeft.z};
+    float3 lower2{mTopFrontLeft.x, mBottomBackRight.y, mBottomBackRight.z};
+    float3 lower3{mBottomBackRight};
+    float3 lower4{mBottomBackRight.x, mBottomBackRight.y, mTopFrontLeft.z};
 
     return {upper1, upper2, upper3, upper4,
             lower1, lower2, lower3, lower4};
@@ -40,37 +28,37 @@ Cube AABB::getCube() const
 }
 
 
-AABB& AABB::operator*(const glm::mat4& mat)
+AABB& AABB::operator*(const glm::mat3& mat)
 {
-    mTopBackLeft = mat * mTopBackLeft;
-    mBottomFrontRight = mat * mBottomFrontRight;
+    mTopFrontLeft = mat * mTopFrontLeft;
+    mBottomBackRight = mat * mBottomBackRight;
 
     return *this;
 }
 
 
-AABB& AABB::operator*(const glm::vec4& vec)
+AABB& AABB::operator*(const float3& vec)
 {
-    mTopBackLeft *= vec;
-    mBottomFrontRight *= vec;
+    mTopFrontLeft *= vec;
+    mBottomBackRight *= vec;
 
     return *this;
 }
 
 
-AABB& AABB::operator+(const glm::vec4& vec)
+AABB& AABB::operator+(const float3& vec)
 {
-    mTopBackLeft += vec;
-    mBottomFrontRight += vec;
+    mTopFrontLeft += vec;
+    mBottomBackRight += vec;
 
     return *this;
 }
 
 
-AABB& AABB::operator-(const glm::vec4& vec)
+AABB& AABB::operator-(const float3& vec)
 {
-    mTopBackLeft -= vec;
-    mBottomFrontRight -= vec;
+    mTopFrontLeft -= vec;
+    mBottomBackRight -= vec;
 
     return *this;
 }

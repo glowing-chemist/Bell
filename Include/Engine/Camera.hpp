@@ -45,7 +45,7 @@ public:
            float fieldOfView = 90.0f)
         : mPosition{position},
           mDirection{direction},
-          mUp{0.0f, 1.0f, 0.0f},
+          mUp{0.0f, -1.0f, 0.0f},
           mNearPlaneDistance{nearPlaneDistance},
           mFarPlaneDistance{farPlaneDistance},
           mFieldOfView{fieldOfView} {}
