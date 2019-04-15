@@ -129,9 +129,9 @@ public:
         mDrawCalls.push_back({ DrawType::IndexedInstanced, vertexOffset, 0, indexOffset, numberOfIndicies, numberOfInstances, "" });
 	}
 
-    void addIndexedInstancedIndirectDrawCall(const uint32_t drawCalls, const uint32_t indexOffset, const uint32_t numberOfInstances, const uint32_t numberOfIndicies, const std::string&& indirectName)
+    void addIndexedIndirectDrawCall(const uint32_t drawCalls, const uint32_t indexOffset, const uint32_t numberOfIndicies, const std::string&& indirectName)
 	{
-        mDrawCalls.push_back({ DrawType::IndexedIndirect, 0, 0, indexOffset, numberOfIndicies, numberOfInstances, indirectName});
+        mDrawCalls.push_back({ DrawType::IndexedIndirect, 0, 0, indexOffset, numberOfIndicies, drawCalls, indirectName});
 	}
 
     void recordCommands(vk::CommandBuffer, const RenderGraph&) const override;
