@@ -33,16 +33,19 @@ bool Plane::isInFrontOf(const AABB& aabb, const EstimationMode estimationMode) c
 
 bool Plane::isInFrontOf(const float3& point) const
 {
-    return isInFrontOf(float4{point, 1.0f});
+    const auto centreToPoint = glm::normalize(point - mCenterPosition);
+    const float angle = glm::dot(centreToPoint, mNormal);
+
+    return angle > 0.0f;
 }
 
 
 float Plane::distanceTo(const float3& point) const
 {
-    const auto centreToPoint = glm::normalize(point - mCenterPosition);
-    const float angle = glm::dot(centreToPoint, mNormal);
+    const float3 centerToPoint = point - mCenterPosition;
+    const float angle = 90.0f - std::acos(glm::dot(mNormal, centerToPoint));
 
-    return angle > 0.0f;
+    return glm::length(centerToPoint) * std::sin(angle);
 }
 
 
