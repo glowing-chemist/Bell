@@ -35,7 +35,7 @@ public:
         mBottomBackRight{cube.mLower3} {}
 
     Cube getCube() const;
-    std::array<float3, 8> getCubeAsArray() const;
+    std::array<float3, 8> getCubeAsVertexArray() const;
 
     AABB& operator*(const glm::mat3&);
 

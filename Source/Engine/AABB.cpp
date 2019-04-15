@@ -1,7 +1,7 @@
 #include "Engine/AABB.hpp"
 
 
-std::array<float3, 8> AABB::getCubeAsArray() const
+std::array<float3, 8> AABB::getCubeAsVertexArray() const
 {
     float3 upper1{mTopFrontLeft};
     float3 upper2{mTopFrontLeft.x, mTopFrontLeft.y, mBottomBackRight.z};
@@ -21,7 +21,7 @@ std::array<float3, 8> AABB::getCubeAsArray() const
 Cube AABB::getCube() const
 {
 
-    auto verticies = getCubeAsArray();
+    auto verticies = getCubeAsVertexArray();
 
     return Cube{verticies[0], verticies[1], verticies[2], verticies[3],
                 verticies[4], verticies[5], verticies[6], verticies[7]};

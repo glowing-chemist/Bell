@@ -6,7 +6,7 @@
 
 bool Plane::isInFrontOf(const AABB& aabb, const EstimationMode estimationMode) const
 {
-    const auto aabbVerticies = aabb.getCubeAsArray();
+    const auto aabbVerticies = aabb.getCubeAsVertexArray();
     bool inFrontOf = true;
 
     if(estimationMode == EstimationMode::Over)
