@@ -63,6 +63,12 @@ public:
     Ray(const float3& position, const float3& direction) : mPosition{position}, mDirection{direction}
     { BELL_ASSERT(glm::length(mDirection) == 1.0f, "Direction vector of ray is not normalised") }
 
+    float3 getPosition() const
+        { return mPosition; }
+
+    float3 getDirection() const
+        { return mDirection; }
+
 private:
 
     float3 mPosition;

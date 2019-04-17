@@ -71,7 +71,7 @@ target_link_libraries("${PROJECT_NAME}_BASE" ${Vulkan_LIBRARIES} glfw stdc++fs $
 set(BELL_SOURCE
     Source/Engine/Engine.cpp
     Source/Engine/AABB.cpp
-    Source/Engine/SceneOctTree.cpp
+    Source/Engine/BVH.cpp
     Source/Engine/Camera.cpp
     Source/Engine/GraphResolver.cpp
     Source/Engine/StaticMesh.cpp

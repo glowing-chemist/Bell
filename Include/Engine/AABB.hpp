@@ -37,6 +37,9 @@ public:
     Cube getCube() const;
     std::array<float3, 8> getCubeAsVertexArray() const;
 
+    // std::limits<float>::max() to indicate no intersection
+    float intersectionDistance(const Ray&) const;
+
     AABB& operator*(const glm::mat3&);
 
     AABB& operator*(const float3&);
