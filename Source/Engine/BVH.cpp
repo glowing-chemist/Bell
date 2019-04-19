@@ -50,7 +50,7 @@ std::vector<T>   BVH<T>::allIntersections(const Ray& ray) const
 
 
 template<typename T>
-std::vector<T> BVH<T>::containedWithin(const Frustum& frustum, std::unique_ptr<Node>& node, const EstimationMode estimationMode) const
+std::vector<T> BVH<T>::containedWithin(const Frustum& frustum, const std::unique_ptr<Node>& node, const EstimationMode estimationMode) const
 {
 	if (!frustum.isContainedWithin(node->mBoundingBox, estimationMode))
 		return {};
@@ -95,7 +95,7 @@ std::vector<T> BVH<T>::containedWithin(const Frustum& frustum, const EstimationM
 
 
 template<typename T>
-std::vector<T> BVH<T>::getIntersections(const Ray& ray, std::unique_ptr<Node>& node) const
+std::vector<T> BVH<T>::getIntersections(const Ray& ray, const std::unique_ptr<Node>& node) const
 {
     if(node->mBoundingBox.intersectionDistance(ray) == NO_INTERSECTION)
         return {};
