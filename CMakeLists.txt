@@ -66,7 +66,14 @@ set(BELL_BASE_SOURCE
 # Build just the base as a seperate target incase users want to build a different engine
 
 add_library("${PROJECT_NAME}_BASE" ${BELL_BASE_SOURCE})
-target_link_libraries("${PROJECT_NAME}_BASE" ${Vulkan_LIBRARIES} glfw stdc++fs ${glslangLibs})
+
+if(WIN32)
+	set(BELL_BASE_DEPENDANCIES ${Vulkan_LIBRARIES} glfw ${glslangLibs})
+else()
+	set(BELL_BASE_DEPENDANCIES ${Vulkan_LIBRARIES} glfw stdc++fs ${glslangLibs})
+endif(WIN32)
+
+target_link_libraries("${PROJECT_NAME}_BASE" ${BELL_BASE_DEPENDANCIES})
 
 
 # Build the main engine as a library
