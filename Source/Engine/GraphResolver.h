@@ -1,0 +1,5 @@
+#ifndef GRAPHRESOLVER_HPP
+#define GRAPHRESOLVER_HPP
+
+
+#endif

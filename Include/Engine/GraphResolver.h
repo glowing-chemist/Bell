@@ -1,0 +1,4 @@
+#ifndef GRAPH_RESOLVER_HPP
+#define GRAPH_RESOLVER_HPP
+
+#endif
