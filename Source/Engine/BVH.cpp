@@ -50,9 +50,47 @@ std::vector<T>   BVH<T>::allIntersections(const Ray& ray) const
 
 
 template<typename T>
+std::vector<T> BVH<T>::containedWithin(const Frustum& frustum, std::unique_ptr<Node>& node, const EstimationMode estimationMode) const
+{
+	if (!frustum.isContainedWithin(node->mBoundingBox, estimationMode))
+		return {};
+
+	if (node->mLeafValue)
+		return { *(node->mLeafValue) };
+
+	std::vector<T> leftChildren;
+	std::vector<T> rightChildren;
+
+	if (frustum.isContainedWithin(node->mLeft.mBoundingBox, estimationMode))
+		leftChildren = getIntersections(frustum, node->Left, estimationMode);
+
+	if (frustum.isContainedWithin(node->mRight.mBoundingBox, estimationMode))
+		rightChildren = getIntersections(frustun, node->mRight, estimationMode);
+
+	return leftChildren.insert(leftChildren.back(), rightChildren.begin(), rightChildren.end());
+}
+
+
+
+template<typename T>
 std::vector<T> BVH<T>::containedWithin(const Frustum& frustum, const EstimationMode estimationMode) const
 {
+	if (!frustum.isContainedWithin(mRoot->mBoundingBox, estimationMode))
+		return {};
 
+	if (mRoot->mLeafValue)
+		return { *mRoot->mLeafValue };
+
+	std::vector<T> leftChildren;
+	std::vector<T> rightChildren;
+
+	if (frustum.isContainedWithin(mRoot.mLeft.mBoundingBox, estimationMode))
+		leftChildren = containedWithin(frustum, mRoot->Left, estimationMode);
+
+	if (frustum.isContainedWithin(mRoot.mRight.mBoundingBox, estimationMode))
+		rightChildren = containedWithin(ray, mRoot->mRight, estimationMode);
+
+	return leftChildren.insert(leftChildren.back(), rightChildren.begin(), rightChildren.end());
 }
 
 
@@ -79,7 +117,7 @@ std::vector<T> BVH<T>::getIntersections(const Ray& ray, std::unique_ptr<Node>& n
 
 
 template<typename T>
-std::vector<std::pair<T, float>> BVH<T>::getIntersectionsWiothDistance(const Ray& ray,
+std::vector<std::pair<T, float>> BVH<T>::getIntersectionsWithDistance(const Ray& ray,
                                                                std::unique_ptr<Node>& node,
                                                                const float distance) const
 {

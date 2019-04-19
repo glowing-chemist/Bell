@@ -36,7 +36,9 @@ public:
 
 private:
     std::vector<T>              getIntersections(const Ray&, std::unique_ptr<Node>&) const;
-    std::vector<std::pair<T, float>>   getIntersectionsWiothDistance(const Ray&, std::unique_ptr<Node>&, const float distance) const;
+    std::vector<std::pair<T, float>>   getIntersectionsWithDistance(const Ray&, std::unique_ptr<Node>&, const float distance) const;
+
+	std::vector<T>              containedWithin(const Frustum&, std::unique_ptr<Node>&, const EstimationMode) const;
 
     std::unique_ptr<Node> mRoot;
 };
