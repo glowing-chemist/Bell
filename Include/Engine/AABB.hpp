@@ -34,11 +34,17 @@ public:
         mTopFrontLeft{cube.mUpper1},
         mBottomBackRight{cube.mLower3} {}
 
+	// Allow a zero sized AABB to be constructed
+	AABB() = default;
+
     Cube getCube() const;
     std::array<float3, 8> getCubeAsVertexArray() const;
 
     // std::limits<float>::max() to indicate no intersection
     float intersectionDistance(const Ray&) const;
+
+	bool contains(const float3&) const;
+	bool containes(const AABB&, const EstimationMode) const;
 
     AABB& operator*(const glm::mat3&);
 
