@@ -56,6 +56,10 @@ public:
     BVH<T> generateBVH() const;
 
 private:
+
+	std::unique_ptr<typename BVH<T>::Node> partition(std::vector<std::pair<AABB, T>>&, const AABB&) const;
+	std::pair<AABB, AABB> splitAABB(const AABB&);
+
     AABB mRootBoundingBox; // AABB that all others are contained within.
     std::vector<std::pair<AABB, T>> mBoundingBoxes;
 };
