@@ -85,10 +85,21 @@ set(BELL_SOURCE
     Source/Engine/Camera.cpp
     Source/Engine/GraphResolver.cpp
     Source/Engine/StaticMesh.cpp
-    Source/Engine/BufferBuilder.cpp
     Source/Engine/GeomUtils.cpp
+	Source/Engine/Scene.cpp
     )
 
 
 add_library(${PROJECT_NAME} ${BELL_SOURCE})
 target_link_libraries(${PROJECT_NAME} BELL_BASE)
+
+
+set(BELL_EDITOR_SOURCE
+	Source/Editor/main.cpp
+	Source/Editor/Editor.cpp
+	Source/Editor/NodeIMGUI.cpp
+	Source/Editor/MeshesIMGUI.cpp
+	)
+
+add_executable(BELL_EDITOR ${BELL_EDITOR_SOURCE})
+target_link_libraries(BELL_EDITOR BELL)
