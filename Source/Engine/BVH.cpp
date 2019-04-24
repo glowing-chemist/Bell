@@ -65,7 +65,7 @@ std::vector<T> BVH<T>::containedWithin(const Frustum& frustum, const std::unique
 		leftChildren = getIntersections(frustum, node->Left, estimationMode);
 
 	if (frustum.isContainedWithin(node->mRight.mBoundingBox, estimationMode))
-		rightChildren = getIntersections(frustun, node->mRight, estimationMode);
+        rightChildren = getIntersections(frustum, node->mRight, estimationMode);
 
 	return leftChildren.insert(leftChildren.back(), rightChildren.begin(), rightChildren.end());
 }
@@ -88,7 +88,7 @@ std::vector<T> BVH<T>::containedWithin(const Frustum& frustum, const EstimationM
 		leftChildren = containedWithin(frustum, mRoot->Left, estimationMode);
 
 	if (frustum.isContainedWithin(mRoot.mRight.mBoundingBox, estimationMode))
-		rightChildren = containedWithin(ray, mRoot->mRight, estimationMode);
+        rightChildren = containedWithin(frustum, mRoot->mRight, estimationMode);
 
 	return leftChildren.insert(leftChildren.back(), rightChildren.begin(), rightChildren.end());
 }
@@ -154,7 +154,7 @@ BVH<T> BVHFactory<T>::generateBVH() const
 template<typename T>
 std::unique_ptr<typename BVH<T>::Node> BVHFactory<T>::partition(std::vector<std::pair<AABB, T>>& elements, const AABB& containingBox) const
 {
-	std::unique_ptr<typename BVH<T>::Node> node = std::make_unique();
+    std::unique_ptr<typename BVH<T>::Node> node = std::make_unique<typename BVH<T>::Node>();
 	node->mBoundingBox = containingBox;
 
 	if (elements.size() > 2)
@@ -174,8 +174,8 @@ std::unique_ptr<typename BVH<T>::Node> BVHFactory<T>::partition(std::vector<std:
 	}
 	else
 	{
-		std::unique_ptr<typename BVH<T>::Node> leftNode = std::make_unique();
-		std::unique_ptr<typename BVH<T>::Node> rightNode = std::make_unique();
+        std::unique_ptr<typename BVH<T>::Node> leftNode = std::make_unique<typename BVH<T>::Node>();
+        std::unique_ptr<typename BVH<T>::Node> rightNode = std::make_unique<typename BVH<T>::Node>();
 
 		leftNode->mBoundingBox = elements[0].first;
 		leftNode->mLeafValue = elements[0].second;
@@ -186,7 +186,7 @@ std::unique_ptr<typename BVH<T>::Node> BVHFactory<T>::partition(std::vector<std:
 			rightNode->mLeafValue = elements[1].second;
 		}
 
-		node->mLeft = std:move(leftNode);
+        node->mLeft = std::move(leftNode);
 		node->mRight = std::move(rightNode);
 	}
 
@@ -223,7 +223,7 @@ std::pair<AABB, AABB> BVHFactory<T>::splitAABB(const AABB& aabb)
 	else
 	{
 		AABB first{ aabbCube.mUpper1, float3{ aabbCube.mLower3.x , aabbCube.mLower3.y, aabbCube.mLower3.z - (zLength / 2.0f) } };
-		AABB second{ float3{aabbCube.mUpper1.x, aabbCube.mUpper1.y, aabbCube.z + (zLength / 2.0f)}, aabbCube.mLower3 };
+        AABB second{ float3{aabbCube.mUpper1.x, aabbCube.mUpper1.y, aabbCube.mUpper1.z + (zLength / 2.0f)}, aabbCube.mLower3 };
 
 		return { first, second };
 	}

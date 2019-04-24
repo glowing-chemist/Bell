@@ -25,6 +25,8 @@ public:
 
     struct Node
     {
+        Node() = default;
+
         // Use an optional incase T doesn't have a default constructor.
         std::optional<T> mLeafValue;
 
