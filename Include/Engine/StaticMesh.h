@@ -2,6 +2,7 @@
 #define STATIC_MESH_HPP
 
 #include "Engine/AABB.hpp"
+#include "Engine/PassTypes.hpp"
 
 #include <cstdint>
 #include <string>
@@ -29,11 +30,23 @@ public:
 		return mIndexBuffer;
 	}
 
+    void addPass(const PassType passType)
+    {
+        mPassTypes = static_cast<PassType>(static_cast<uint64_t>(mPassTypes) | static_cast<uint64_t>(passType));
+    }
+
+    PassType getPassTypes() const
+    {
+        return mPassTypes;
+    }
+
 private:
 
 	std::vector<float> mVertexBuffer;
 	std::vector<uint32_t> mIndexBuffer;
 	AABB mAABB;
+
+    PassType mPassTypes;
 };
 
 #endif
