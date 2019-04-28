@@ -6,7 +6,7 @@
 
 void RenderGraph::addTask(const GraphicsTask& task)
 {
-    const uint32_t taskIndex = mGraphicsTasks.size();
+    const uint32_t taskIndex = static_cast<uint32_t>(mGraphicsTasks.size());
     mGraphicsTasks.push_back(task);
 
     mTaskOrder.push_back({TaskType::Graphics, taskIndex});
@@ -20,7 +20,7 @@ void RenderGraph::addTask(const GraphicsTask& task)
 
 void RenderGraph::addTask(const ComputeTask& task)
 {
-    const uint32_t taskIndex = mComputeTask.size();
+    const uint32_t taskIndex = static_cast<uint32_t>(mComputeTask.size());
     mComputeTask.push_back(task);
 
     mTaskOrder.push_back({TaskType::Compute, taskIndex});
@@ -48,7 +48,7 @@ void RenderGraph::addDependancy(const std::string& dependancy, const std::string
         auto dependancyComputeIt = std::find_if(mComputeTask.begin(), mComputeTask.end(),
                                                     [&dependancy](const auto& task) {return task.getName() == dependancy;});
 
-        const uint32_t computeTaskIndex = std::distance(mComputeTask.begin(), dependancyComputeIt);
+        const uint32_t computeTaskIndex = static_cast<uint32_t>(std::distance(mComputeTask.begin(), dependancyComputeIt));
         uint32_t taskCounter = 0;
         for(uint32_t i = 0; i < mTaskOrder.size(); ++i)
         {
@@ -60,7 +60,7 @@ void RenderGraph::addDependancy(const std::string& dependancy, const std::string
     }
     else
     {
-        const uint32_t graphicsTaskIndex = std::distance(mGraphicsTasks.begin(), dependancyGraphicsIt);
+        const uint32_t graphicsTaskIndex = static_cast<uint32_t>(std::distance(mGraphicsTasks.begin(), dependancyGraphicsIt));
         uint32_t taskCounter = 0;
         for(uint32_t i = 0; i < mTaskOrder.size(); ++i)
         {
@@ -82,7 +82,7 @@ void RenderGraph::addDependancy(const std::string& dependancy, const std::string
         auto dependantComputeIt = std::find_if(mComputeTask.begin(), mComputeTask.end(),
                                                     [&dependant](const auto& task) {return task.getName() == dependant;});
 
-        const uint32_t computeTaskIndex = std::distance(mComputeTask.begin(), dependantComputeIt);
+        const uint32_t computeTaskIndex = static_cast<uint32_t>(std::distance(mComputeTask.begin(), dependantComputeIt));
         uint32_t taskCounter = 0;
         for(uint32_t i = 0; i < mTaskOrder.size(); ++i)
         {
@@ -94,7 +94,7 @@ void RenderGraph::addDependancy(const std::string& dependancy, const std::string
     }
     else
     {
-        const uint32_t graphicsTaskIndex = std::distance(mGraphicsTasks.begin(), dependantGraphicsIt);
+        const uint32_t graphicsTaskIndex = static_cast<uint32_t>(std::distance(mGraphicsTasks.begin(), dependantGraphicsIt));
         uint32_t taskCounter = 0;
         for(uint32_t i = 0; i < mTaskOrder.size(); ++i)
         {
@@ -148,7 +148,7 @@ void RenderGraph::bindResource(const std::string& name, const uint32_t index, co
 
 void RenderGraph::bindImage(const std::string& name, Image& image)
 {
-    const uint32_t currentImageIndex = mImages.size();
+    const uint32_t currentImageIndex = static_cast<uint32_t>(mImages.size());
     mImages.emplace_back(name, image);
 
     bindResource(name, currentImageIndex, ResourceType::Image);
@@ -157,7 +157,7 @@ void RenderGraph::bindImage(const std::string& name, Image& image)
 
 void RenderGraph::bindBuffer(const std::string& name , Buffer& buffer)
 {
-    const uint32_t currentBufferIndex = mBuffers.size();
+    const uint32_t currentBufferIndex = static_cast<uint32_t>(mBuffers.size());
     mBuffers.emplace_back(name, buffer);
 
     bindResource(name, currentBufferIndex, ResourceType::Buffer);
@@ -193,7 +193,7 @@ void RenderGraph::reorderTasks()
     newInputBindings.reserve(mTaskOrder.size());
     newOutputBindings.reserve(mTaskOrder.size());
 
-	const uint32_t taskCount = mTaskOrder.size();
+    const uint32_t taskCount = static_cast<uint32_t>(mTaskOrder.size());
 
 	for (uint32_t i = 0; i < taskCount; ++i)
 	{
@@ -204,7 +204,7 @@ void RenderGraph::reorderTasks()
 			dependancyBitset[mTaskDependancies[vertexIndex].second] = 1;
 		}
 
-		const uint32_t taskIndexToAdd = std::distance(dependancyBitset.begin(), std::find(dependancyBitset.begin(), dependancyBitset.end(), 0));
+        const uint32_t taskIndexToAdd = static_cast<uint32_t>(std::distance(dependancyBitset.begin(), std::find(dependancyBitset.begin(), dependancyBitset.end(), 0)));
 
 		newTaskOrder.push_back(mTaskOrder[taskIndexToAdd]);
         newInputBindings.push_back(std::move(mInputResources[taskIndexToAdd]));
@@ -360,7 +360,7 @@ const Buffer& RenderGraph::getBoundBuffer(const std::string& name) const
 {
     auto itr = std::find_if(mBuffers.begin(), mBuffers.end(), [&name](const std::pair<std::string, Buffer>& entry) { return name == entry.first; });
 
-    BELL_ASSERT(itr != mBuffers.end(), "Buffer not found");
+    BELL_ASSERT(itr != mBuffers.end(), "Buffer not found")
 
     return (*itr).second;
 }
@@ -370,7 +370,7 @@ const Image& RenderGraph::getBoundImage(const std::string& name) const
 {
     auto itr = std::find_if(mImages.begin(), mImages.end(), [&name](const std::pair<std::string, Image>& entry) { return name == entry.first; });
 
-    BELL_ASSERT(itr != mImages.end(), "Image not found");
+    BELL_ASSERT(itr != mImages.end(), "Image not found")
 
     return (*itr).second;
 }
