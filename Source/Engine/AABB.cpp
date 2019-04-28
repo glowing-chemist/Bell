@@ -35,8 +35,7 @@ float AABB::intersectionDistance(const Ray& ray) const
     float3 rayOrigin = ray.getPosition();
     float3 inverseDirection{1.0f / rayDirection.x, 1.0f / rayDirection.y, 1.0f / rayDirection.z};
 
-    // mTopFrontLeft is the corner of AABB with minimal coordinates - left bottom, rt is maximal corner
-    // r.org is origin of ray
+    // mTopFrontLeft is the corner of AABB with minimal coordinates - left top.
     float t1 = (mTopFrontLeft.x - rayOrigin.x) * inverseDirection.x;
     float t2 = (mBottomBackRight.x - rayOrigin.x) * inverseDirection.x;
     float t3 = (mTopFrontLeft.y - rayOrigin.y) * inverseDirection.y;
@@ -86,8 +85,14 @@ bool AABB::containes(const AABB& aabb, const EstimationMode estimationMode) cons
 
 AABB& AABB::operator*(const glm::mat3& mat)
 {
-    mTopFrontLeft = mat * mTopFrontLeft;
-    mBottomBackRight = mat * mBottomBackRight;
+    // Keep track of the max/min values seen on each axis
+    // so tha we still have an AABB not an OOBB.
+    const auto cubeVerticies= getCubeAsVertexArray();
+    for(auto& vertex : cubeVerticies)
+    {
+        mTopFrontLeft = componentWiseMin(mTopFrontLeft, mat * vertex);
+        mBottomBackRight = componentWiseMax(mBottomBackRight, mat * vertex);
+    }
 
     return *this;
 }

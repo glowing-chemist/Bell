@@ -9,7 +9,7 @@
 // 8 float4 representing the 8 verticies of a cude
 struct Cube
 {
-    // Verticies going clockwise looking down (perpendicular) on a single face
+    // Verticies going clockwise looking down (perpendicular) to a single face
     float3 mUpper1; // Corresponds to TopFrontLeft
     float3 mUpper2;
     float3 mUpper3;
