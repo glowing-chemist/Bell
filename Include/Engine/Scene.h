@@ -5,12 +5,14 @@
 #include "Engine/Camera.hpp"
 #include "Engine/StaticMesh.h"
 
+#include <atomic>
 #include <cstdint>
 #include <string>
 #include <vector>
 
 
-using SceneID = int64_t;
+using SceneID = uint64_t;
+using InstanceID = int64_t;
 
 enum class MeshType
 {
@@ -22,11 +24,21 @@ enum class MeshType
 class Scene
 {
 public:
+
+    struct MeshInstance;
+
 	Scene(const std::string& name);
 
-	SceneID addMesh(const StaticMesh&, MeshType);
+    SceneID       addMesh(const StaticMesh&, MeshType);
+    InstanceID    addMeshInstace(const SceneID, const glm::mat4&);
+
+    void          finalise();
+
+    std::vector<MeshInstance*> getViewableMeshes() const;
+
+    MeshInstance* getMeshInstance(const InstanceID);
 	
-	void	setCamera(const Camera& camera)
+    void setCamera(const Camera& camera)
 	{
 		mSceneCamera = camera;
 	}
@@ -36,13 +48,31 @@ public:
 		return mSceneCamera;
 	}
 
+    struct MeshInstance
+    {
+        StaticMesh* mMesh;
+        glm::mat3 mTransformation;
+    };
+
 private:
 
-	std::vector<StaticMesh> mStaticMeshes;
-	std::vector<StaticMesh> mDynamicMeshes;
+    void generateSceneAABB(const bool includeStatic);
+
+    std::string mName;
+
+    std::vector<std::pair<StaticMesh, MeshType>> mSceneMeshes;
+
+    std::vector<MeshInstance> mStaticMeshInstances;
+    std::vector<MeshInstance> mDynamicMeshInstances;
+
+    BVH<MeshInstance*> mStaticMeshBoundingVolume;
+    BVH<MeshInstance*> mDynamicMeshBoundingVolume;
+
+    AABB mSceneAABB;
 
 	Camera mSceneCamera;
 
+    std::atomic_bool mFinalised;
 };
 
 #endif

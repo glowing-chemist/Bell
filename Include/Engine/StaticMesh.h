@@ -20,6 +20,11 @@ public:
 		return mAABB;
 	}
 
+    AABB& getAABB()
+    {
+        return mAABB;
+    }
+
 	const std::vector<float>& getVertexBuffer() const
 	{
 		return mVertexBuffer;

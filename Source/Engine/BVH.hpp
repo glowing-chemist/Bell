@@ -17,7 +17,12 @@ class BVH
 {
 public:
     struct Node;
+
     BVH(std::unique_ptr<Node>& ptr) : mRoot{std::move(ptr)} {}
+    BVH()= default;
+
+    BVH(BVH&&) = default;
+    BVH& operator=(BVH&&) = default;
 
     std::optional<T> closestIntersection(const Ray&) const;
     std::vector<T>   allIntersections(const Ray&) const;
@@ -51,6 +56,8 @@ class BVHFactory
 {
 public:
     BVHFactory(const AABB& rootBox) : mRootBoundingBox{rootBox}, mBoundingBoxes{} {}
+    BVHFactory(const AABB& rootBox, std::vector<std::pair<AABB, T>>& data) : mRootBoundingBox{rootBox},
+                                                                            mBoundingBoxes{data} {}
 
     void addAABB(const AABB& box, const T& value)
         { mBoundingBoxes.push_back({box, value}); }
