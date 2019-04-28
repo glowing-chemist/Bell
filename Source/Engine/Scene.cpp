@@ -124,12 +124,9 @@ void Scene::generateSceneAABB(const bool includeStatic)
             AABB meshAABB = instance.mMesh->getAABB() * instance.mTransformation;
             Cube instanceCube = meshAABB.getCube();
 
-            // I think using length is correct here?
-            if(glm::length(instanceCube.mUpper1) < glm::length(sceneCube.mUpper1))
-                sceneCube.mUpper1 = instanceCube.mUpper1;
+            sceneCube.mUpper1 = componentWiseMin(instanceCube.mUpper1, sceneCube.mUpper1);
 
-            if(glm::length(instanceCube.mLower3) > glm::length(sceneCube.mLower3))
-                sceneCube.mLower3 = instanceCube.mLower3;
+            sceneCube.mLower3 = componentWiseMax(instanceCube.mLower3, sceneCube.mLower3);
         }
     }
 
@@ -138,12 +135,9 @@ void Scene::generateSceneAABB(const bool includeStatic)
         AABB meshAABB = instance.mMesh->getAABB() * instance.mTransformation;
         Cube instanceCube = meshAABB.getCube();
 
-        // I think using length is correct here?
-        if(glm::length(instanceCube.mUpper1) < glm::length(sceneCube.mUpper1))
-            sceneCube.mUpper1 = instanceCube.mUpper1;
+        sceneCube.mUpper1 = componentWiseMin(instanceCube.mUpper1, sceneCube.mUpper1);
 
-        if(glm::length(instanceCube.mLower3) > glm::length(sceneCube.mLower3))
-            sceneCube.mLower3 = instanceCube.mLower3;
+        sceneCube.mLower3 = componentWiseMax(instanceCube.mLower3, sceneCube.mLower3);
     }
 
     mSceneAABB = AABB(sceneCube);
