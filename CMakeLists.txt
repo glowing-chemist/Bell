@@ -14,10 +14,8 @@ find_package(Vulkan REQUIRED)
 # glfw doesn't have a good way to find itself on windows so include the source as a dependancy
 
 # avoid building unnesary stuff
-set(GLFW_BUILD_TESTS 0)
-set(GLFW_BUILD_DOCS 0)
-set(GLFW_BUILD_EXAMPLES 0)
 add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/ThirdParty/GLFW3/glfw-3.2.1")
+add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/ThirdParty/assimp-4.1.0")
 
 if(WIN32)
     set(glslangIncludeDirs "C:\\Program Files (x86)\\glslang\\include" )
@@ -37,11 +35,11 @@ include_directories(
                         "${CMAKE_CURRENT_LIST_DIR}/Include/"
                         "${CMAKE_CURRENT_LIST_DIR}/Source/"
 
-						# ThirdParty header search paths
-						${Vulkan_INCLUDE_DIRS}
-						"${CMAKE_CURRENT_LIST_DIR}/ThirdParty/GLFW3/glfw-3.2.1/include"
-						${glslangIncludeDirs}
-						${glmIncludeDirs}
+			# ThirdParty header search paths
+			${Vulkan_INCLUDE_DIRS}
+			"${CMAKE_CURRENT_LIST_DIR}/ThirdParty/GLFW3/glfw-3.2.1/include"
+			${glslangIncludeDirs}
+			${glmIncludeDirs}
 		    )
 
 set(BELL_BASE_SOURCE
@@ -86,7 +84,7 @@ set(BELL_SOURCE
     Source/Engine/GraphResolver.cpp
     Source/Engine/StaticMesh.cpp
     Source/Engine/GeomUtils.cpp
-	Source/Engine/Scene.cpp
+    Source/Engine/Scene.cpp
     )
 
 
