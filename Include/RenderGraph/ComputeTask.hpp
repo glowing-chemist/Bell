@@ -38,8 +38,8 @@ public:
     ComputePipelineDescription getPipelineDescription() const
         { return mPipelineDescription; }
 
-	void addDispatch(const uint32_t x, const uint32_t y, const uint32_t z) { mComputeCalls.push_back({DispatchType::Standard, x, y, z}); }
-	void addIndirectDispatch(const uint32_t x, const uint32_t y, const uint32_t z) { mComputeCalls.push_back({DispatchType::Indirect, x, y, z}); }
+    void addDispatch(const uint32_t x, const uint32_t y, const uint32_t z) { mComputeCalls.push_back({DispatchType::Standard, x, y, z, ""}); }
+    void addIndirectDispatch(const uint32_t x, const uint32_t y, const uint32_t z) { mComputeCalls.push_back({DispatchType::Indirect, x, y, z, ""}); }
 
     void addOutput(const std::string& name, const AttachmentType attachmentType) override
     {
