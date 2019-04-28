@@ -75,5 +75,44 @@ private:
     float3 mDirection;
 };
 
+
+// Free Functions
+
+// Return a vector constructed from the minimum of each component.
+inline float3 componentWiseMin(const float3& lhs, const float3& rhs)
+{
+    return float3{std::min(lhs.x, rhs.x),
+                  std::min(lhs.y, rhs.y),
+                  std::min(lhs.z, rhs.z)};
+}
+
+
+inline float4 componentWiseMin(const float4& lhs, const float4& rhs)
+{
+    return float4{std::min(lhs.x, rhs.x),
+                  std::min(lhs.y, rhs.y),
+                  std::min(lhs.z, rhs.z),
+                  std::min(lhs.w, rhs.w)};
+}
+
+
+// Return a vector constructed from the maximum of each component.
+inline float3 componentWiseMax(const float3& lhs, const float3& rhs)
+{
+    return float3{std::max(lhs.x, rhs.x),
+                  std::max(lhs.y, rhs.y),
+                  std::max(lhs.z, rhs.z)};
+}
+
+
+inline float4 componentWiseMax(const float4& lhs, const float4& rhs)
+{
+    return float4{std::max(lhs.x, rhs.x),
+                  std::max(lhs.y, rhs.y),
+                  std::max(lhs.z, rhs.z),
+                  std::max(lhs.w, rhs.w)};
+}
+
+
 #endif
 
