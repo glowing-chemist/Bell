@@ -14,6 +14,9 @@ find_package(Vulkan REQUIRED)
 # glfw doesn't have a good way to find itself on windows so include the source as a dependancy
 
 # avoid building unnesary stuff
+set(GLFW_BUILD_DOCS 0)
+set(GLFW_BUILD_TESTS 0)
+set(GLFW_BUILD_EXAMPLES 0)
 add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/ThirdParty/GLFW3/glfw-3.2.1")
 add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/ThirdParty/assimp-4.1.0")
 
@@ -38,6 +41,7 @@ include_directories(
 			# ThirdParty header search paths
 			${Vulkan_INCLUDE_DIRS}
 			"${CMAKE_CURRENT_LIST_DIR}/ThirdParty/GLFW3/glfw-3.2.1/include"
+			"${CMAKE_CURRENT_LIST_DIR}/ThirdParty/assimp-4.1.0/include"
 			${glslangIncludeDirs}
 			${glmIncludeDirs}
 		    )
@@ -89,7 +93,7 @@ set(BELL_SOURCE
 
 
 add_library(${PROJECT_NAME} ${BELL_SOURCE})
-target_link_libraries(${PROJECT_NAME} BELL_BASE)
+target_link_libraries(${PROJECT_NAME} BELL_BASE assimp)
 
 
 set(BELL_EDITOR_SOURCE
