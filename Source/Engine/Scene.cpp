@@ -16,6 +16,36 @@ Scene::Scene(const std::string& name) :
 }
 
 
+Scene::Scene(Scene&& scene) :
+    mName{std::move(scene.mName)},
+    mSceneMeshes{std::move(scene.mSceneMeshes)},
+    mStaticMeshInstances{std::move(scene.mStaticMeshInstances)},
+    mDynamicMeshInstances{std::move(scene.mDynamicMeshInstances)},
+    mStaticMeshBoundingVolume{std::move(scene.mStaticMeshBoundingVolume)},
+    mDynamicMeshBoundingVolume{std::move(scene.mDynamicMeshBoundingVolume)},
+    mSceneAABB{std::move(scene.mSceneAABB)},
+    mSceneCamera{std::move(scene.mSceneCamera)},
+    mFinalised{scene.mFinalised.load(std::memory_order::memory_order_relaxed)}
+{
+}
+
+
+Scene& Scene::operator=(Scene&& scene)
+{
+    mName = std::move(scene.mName);
+    mSceneMeshes = std::move(scene.mSceneMeshes);
+    mStaticMeshInstances = std::move(scene.mStaticMeshInstances);
+    mDynamicMeshInstances = std::move(scene.mDynamicMeshInstances);
+    mStaticMeshBoundingVolume = std::move(scene.mStaticMeshBoundingVolume);
+    mDynamicMeshBoundingVolume = std::move(scene.mDynamicMeshBoundingVolume);
+    mSceneAABB = std::move(scene.mSceneAABB);
+    mSceneCamera = std::move(scene.mSceneCamera);
+    mFinalised = scene.mFinalised.load(std::memory_order::memory_order_relaxed);
+
+    return *this;
+}
+
+
 SceneID Scene::addMesh(const StaticMesh& mesh, MeshType meshType)
 {
     SceneID id = mSceneMeshes.size();

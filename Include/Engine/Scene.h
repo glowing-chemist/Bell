@@ -28,6 +28,8 @@ public:
     struct MeshInstance;
 
 	Scene(const std::string& name);
+    Scene(Scene&&);
+    Scene& operator=(Scene&&);;
 
     SceneID       addMesh(const StaticMesh&, MeshType);
     InstanceID    addMeshInstace(const SceneID, const glm::mat4&);
