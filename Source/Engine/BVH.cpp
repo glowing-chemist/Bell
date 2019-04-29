@@ -1,3 +1,4 @@
+#include <limits>
 #include <algorithm>
 
 #include "Engine/BVH.hpp"
@@ -15,12 +16,12 @@ std::optional<T> BVH<T>::closestIntersection(const Ray& ray) const
     if(mRoot->mLeafValue)
         return {*mRoot->mLeafValue};
 
-    std::vector<std::pair<T, float>> leftChildren = getIntersections(ray, mRoot->Left);
-    std::vector<std::pair<T, float>> rightChildren = getIntersections(ray, mRoot->mRight);
+    std::vector<std::pair<T, float>> leftChildren = getIntersectionsWithDistance(ray, mRoot->mLeft, std::numeric_limits<float>::infinity());
+    std::vector<std::pair<T, float>> rightChildren = getIntersectionsWithDistance(ray, mRoot->mRight, std::numeric_limits<float>::infinity());
 
-    leftChildren.insert(leftChildren.back(), rightChildren.begin(), rightChildren.end());
+    leftChildren.insert(leftChildren.end(), rightChildren.begin(), rightChildren.end());
 
-    std::pair<T, float>& minPair = std::min_element(leftChildren.begin(), leftChildren.end(),
+    std::pair<T, float> minPair = *std::min_element(leftChildren.begin(), leftChildren.end(),
                                                    [](const auto& lhs, const auto& rhs) { return lhs.second < rhs.second;});
 
     return minPair.first;
@@ -40,12 +41,14 @@ std::vector<T>   BVH<T>::allIntersections(const Ray& ray) const
     std::vector<T> rightChildren;
 
     if(mRoot->mLeft->mBoundingBox.intersectionDistance(ray) != NO_INTERSECTION)
-        leftChildren = getIntersections(ray, mRoot->Left);
+        leftChildren = getIntersections(ray, mRoot->mLeft);
 
     if(mRoot->mRight->mBoundingBox.intersectionDistance(ray) != NO_INTERSECTION)
         rightChildren = getIntersections(ray, mRoot->mRight);
 
-    return leftChildren.insert(leftChildren.back(), rightChildren.begin(), rightChildren.end());
+    leftChildren.insert(leftChildren.end(), rightChildren.begin(), rightChildren.end());
+
+    return leftChildren;
 }
 
 
@@ -61,13 +64,15 @@ std::vector<T> BVH<T>::containedWithin(const Frustum& frustum, const std::unique
 	std::vector<T> leftChildren;
 	std::vector<T> rightChildren;
 
-	if (frustum.isContainedWithin(node->mLeft.mBoundingBox, estimationMode))
-		leftChildren = getIntersections(frustum, node->Left, estimationMode);
+    if (frustum.isContainedWithin(node->mLeft->mBoundingBox, estimationMode))
+        leftChildren = containedWithin(frustum, node->mLeft, estimationMode);
 
-	if (frustum.isContainedWithin(node->mRight.mBoundingBox, estimationMode))
-        rightChildren = getIntersections(frustum, node->mRight, estimationMode);
+    if (frustum.isContainedWithin(node->mRight->mBoundingBox, estimationMode))
+        rightChildren = containedWithin(frustum, node->mRight, estimationMode);
 
-	return leftChildren.insert(leftChildren.back(), rightChildren.begin(), rightChildren.end());
+    leftChildren.insert(leftChildren.end(), rightChildren.begin(), rightChildren.end());
+
+    return leftChildren;
 }
 
 
@@ -84,13 +89,15 @@ std::vector<T> BVH<T>::containedWithin(const Frustum& frustum, const EstimationM
 	std::vector<T> leftChildren;
 	std::vector<T> rightChildren;
 
-	if (frustum.isContainedWithin(mRoot.mLeft.mBoundingBox, estimationMode))
-		leftChildren = containedWithin(frustum, mRoot->Left, estimationMode);
+    if (frustum.isContainedWithin(mRoot->mLeft->mBoundingBox, estimationMode))
+        leftChildren = containedWithin(frustum, mRoot->mLeft, estimationMode);
 
-	if (frustum.isContainedWithin(mRoot.mRight.mBoundingBox, estimationMode))
+    if (frustum.isContainedWithin(mRoot->mRight->mBoundingBox, estimationMode))
         rightChildren = containedWithin(frustum, mRoot->mRight, estimationMode);
 
-	return leftChildren.insert(leftChildren.back(), rightChildren.begin(), rightChildren.end());
+    leftChildren.insert(leftChildren.end(), rightChildren.begin(), rightChildren.end());
+
+    return leftChildren;
 }
 
 
@@ -107,12 +114,14 @@ std::vector<T> BVH<T>::getIntersections(const Ray& ray, const std::unique_ptr<No
     std::vector<T> rightChildren;
 
     if(node->mLeft->mBoundingBox.intersectionDistance(ray) != NO_INTERSECTION)
-        leftChildren = getIntersections(ray, node->Left);
+        leftChildren = getIntersections(ray, node->mLeft);
 
     if(node->mRight->mBoundingBox.intersectionDistance(ray) != NO_INTERSECTION)
         rightChildren = getIntersections(ray, node->mRight);
 
-    return leftChildren.insert(leftChildren.back(), rightChildren.begin(), rightChildren.end());
+    leftChildren.insert(leftChildren.end(), rightChildren.begin(), rightChildren.end());
+
+    return leftChildren;
 }
 
 
@@ -125,29 +134,31 @@ std::vector<std::pair<T, float>> BVH<T>::getIntersectionsWithDistance(const Ray&
         return {};
 
     if(node->mLeafValue)
-        return {*(node->mLeafValue), distance};
+        return {{*(node->mLeafValue), distance}};
 
     std::vector<std::pair<T, float>> leftChildren;
     std::vector<std::pair<T, float>> rightChildren;
 
     const float leftDistance = node->mLeft->mBoundingBox.intersectionDistance(ray);
     if(leftDistance != NO_INTERSECTION)
-        leftChildren = getIntersectionsWithDistance(ray, node->Left, leftDistance);
+        leftChildren = getIntersectionsWithDistance(ray, node->mLeft, leftDistance);
 
     const float rightDistance = node->mRight->mBoundingBox.intersectionDistance(ray);
     if(rightDistance != NO_INTERSECTION)
-        rightChildren = getIntersectionsWithDistance(ray, node->mRight);
+        rightChildren = getIntersectionsWithDistance(ray, node->mRight, rightDistance);
 
-    return leftChildren.insert(leftChildren.back(), rightChildren.begin(), rightChildren.end());
+    leftChildren.insert(leftChildren.end(), rightChildren.begin(), rightChildren.end());
+
+    return leftChildren;
 }
 
 
 template<typename T>
-BVH<T> BVHFactory<T>::generateBVH() const
+BVH<T> BVHFactory<T>::generateBVH()
 {
 	std::unique_ptr<typename BVH<T>::Node> root = partition(mBoundingBoxes, mRootBoundingBox);
 
-	return BVH<T>(std::move(root));
+    return BVH<T>(root);
 }
 
 
@@ -164,12 +175,12 @@ std::unique_ptr<typename BVH<T>::Node> BVHFactory<T>::partition(std::vector<std:
 		const auto[leftSplit, rightSplit] = splitAABB(containingBox);
 		
 		const auto leftBoxIter = std::partition(elements.begin(), elements.end(), [&leftSplit](const std::pair<AABB, T>& pair)
-		{ return leftSplit.contains(pair.first, EstimationMode::Under); });
+        { return leftSplit.contains(pair.first, EstimationMode::Under); });
 
 		std::vector<std::pair<AABB, T>> rightChildren{ elements.begin(), leftBoxIter };
 		std::vector<std::pair<AABB, T>> leftChildren{leftBoxIter, elements.end()};
 
-		node->mLeft = parition(leftChildren, leftSplit);
+        node->mLeft = partition(leftChildren, leftSplit);
 		node->mRight = partition(rightChildren, rightSplit);
 	}
 	else
@@ -195,7 +206,7 @@ std::unique_ptr<typename BVH<T>::Node> BVHFactory<T>::partition(std::vector<std:
 
 
 template<typename T>
-std::pair<AABB, AABB> BVHFactory<T>::splitAABB(const AABB& aabb)
+std::pair<AABB, AABB> BVHFactory<T>::splitAABB(const AABB& aabb) const
 {
 	const Cube aabbCube = aabb.getCube();
 
@@ -228,5 +239,15 @@ std::pair<AABB, AABB> BVHFactory<T>::splitAABB(const AABB& aabb)
 		return { first, second };
 	}
 }
+
+
+// Explicitly instantiate
+#include "Engine/Scene.h"
+
+template
+class BVHFactory<Scene::MeshInstance*>;
+
+template
+class BVH<Scene::MeshInstance*>;
 
 

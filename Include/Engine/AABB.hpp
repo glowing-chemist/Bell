@@ -44,7 +44,7 @@ public:
     float intersectionDistance(const Ray&) const;
 
 	bool contains(const float3&) const;
-	bool containes(const AABB&, const EstimationMode) const;
+    bool contains(const AABB&, const EstimationMode) const;
 
     AABB& operator*(const glm::mat3&);
 

@@ -62,12 +62,12 @@ public:
     void addAABB(const AABB& box, const T& value)
         { mBoundingBoxes.push_back({box, value}); }
 
-    BVH<T> generateBVH() const;
+    BVH<T> generateBVH();
 
 private:
 
-	std::unique_ptr<typename BVH<T>::Node> partition(std::vector<std::pair<AABB, T>>&, const AABB&) const;
-	std::pair<AABB, AABB> splitAABB(const AABB&);
+    std::unique_ptr<typename BVH<T>::Node> partition(std::vector<std::pair<AABB, T>>&, const AABB&) const;
+    std::pair<AABB, AABB> splitAABB(const AABB&) const;
 
     AABB mRootBoundingBox; // AABB that all others are contained within.
     std::vector<std::pair<AABB, T>> mBoundingBoxes;

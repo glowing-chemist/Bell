@@ -29,7 +29,7 @@ public:
 
 	Scene(const std::string& name);
     Scene(Scene&&);
-    Scene& operator=(Scene&&);;
+    Scene& operator=(Scene&&);
 
     SceneID       addMesh(const StaticMesh&, MeshType);
     InstanceID    addMeshInstace(const SceneID, const glm::mat4&);
