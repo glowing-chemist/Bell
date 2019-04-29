@@ -4,6 +4,9 @@
 #include "Engine/AABB.hpp"
 #include "Engine/PassTypes.hpp"
 
+#include "assimp/vector2.h"
+#include "assimp/vector3.h"
+
 #include <cstdint>
 #include <string>
 #include <vector>
@@ -25,14 +28,14 @@ public:
         return mAABB;
     }
 
-	const std::vector<float>& getVertexBuffer() const
+    const std::vector<float>& getVertexData() const
 	{
-		return mVertexBuffer;
+        return mVertexData;
 	}
 
-	const std::vector<uint32_t>& getIndexBuffer() const
+    const std::vector<uint32_t>& getIndexData() const
 	{
-		return mIndexBuffer;
+        return mIndexData;
 	}
 
     void addPass(const PassType passType)
@@ -47,8 +50,12 @@ public:
 
 private:
 
-	std::vector<float> mVertexBuffer;
-	std::vector<uint32_t> mIndexBuffer;
+    void writeVertexVector4(const aiVector3D&, const uint32_t);
+    void writeVertexVector2(const aiVector2D&, const uint32_t);
+
+
+    std::vector<float> mVertexData;
+    std::vector<uint32_t> mIndexData;
 	AABB mAABB;
 
     PassType mPassTypes;
