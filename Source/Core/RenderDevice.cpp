@@ -371,7 +371,7 @@ vk::RenderPass	RenderDevice::generateRenderPass(const GraphicsTask& task)
     std::vector<vk::AttachmentReference> depthAttachmentRef{};
     uint32_t outputAttatchmentCounter = 0;
 
-    for(const auto& [name, type] : outputAttachments)
+    for(const auto& [name, type, loadop] : outputAttachments)
     {
         // We only care about images here.
         if(type == AttachmentType::DataBuffer ||
@@ -418,7 +418,18 @@ vk::RenderPass	RenderDevice::generateRenderPass(const GraphicsTask& task)
         else
         {
             attachmentDesc.setFinalLayout(layout);
-            attachmentDesc.setLoadOp(vk::AttachmentLoadOp::eLoad);
+
+            vk::AttachmentLoadOp op = [loadop](){
+                switch(loadop)
+                {
+                    case LoadOp::Preserve:
+                        return vk::AttachmentLoadOp::eLoad;
+                    default:
+                        return vk::AttachmentLoadOp::eClear;
+                }
+            }();
+
+            attachmentDesc.setLoadOp(op);
         }
 
         attachmentDesc.setStoreOp(vk::AttachmentStoreOp::eStore);
@@ -840,10 +851,17 @@ void RenderDevice::execute(RenderGraph& graph)
             const auto pipelineDesc = graphicsTask.getPipelineDescription();
             vk::Rect2D renderArea{ {0, 0}, {pipelineDesc.mViewport.x, pipelineDesc.mViewport.y} };
 
+            const std::vector<vk::ClearValue> clearValues = graphicsTask.getClearValues();
+
             vk::RenderPassBeginInfo passBegin{};
             passBegin.setRenderPass(*resources.mRenderPass);
             passBegin.setFramebuffer(*resources.mFrameBuffer);
             passBegin.setRenderArea(renderArea);
+            if(!clearValues.empty())
+            {
+                passBegin.setClearValueCount(clearValues.size());
+                passBegin.setPClearValues(clearValues.data());
+            }
 
             primaryCmdBuffer.beginRenderPass(passBegin, vk::SubpassContents::eSecondaryCommandBuffers);
 

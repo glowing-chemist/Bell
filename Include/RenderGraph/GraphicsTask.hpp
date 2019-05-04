@@ -136,6 +136,8 @@ public:
 
     void recordCommands(vk::CommandBuffer, const RenderGraph&) const override;
 
+    std::vector<vk::ClearValue> getClearValues() const;
+
     void mergeDraws(GraphicsTask&);
 
 	void clearCalls() override { mDrawCalls.clear(); }

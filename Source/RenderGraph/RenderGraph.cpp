@@ -132,7 +132,7 @@ void RenderGraph::bindResource(const std::string& name, const uint32_t index, co
         uint32_t outputAttachmentIndex = 0;
         for(const auto& input : task.getOuputAttachments())
         {
-            if(input.first == name)
+            if(input.mName == name)
             {
                 mOutputResources[taskOrderIndex].push_back({name, resourcetype, index, outputAttachmentIndex});
                 mFrameBuffersNeedUpdating[taskOrderIndex] = true;

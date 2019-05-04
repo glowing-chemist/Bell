@@ -27,6 +27,13 @@ enum class AttachmentType
     PushConstants
 };
 
+enum class LoadOp
+{
+    Preserve,
+    Clear_White,
+    Clear_Black
+};
+
 enum class TaskType
 {
 	Graphics,
@@ -47,19 +54,26 @@ public:
        mInputAttachments.push_back({name, attachmentType});
     }
 
-    virtual void addOutput(const std::string& name, const AttachmentType attachmentType)
+    // Loadop has no effect on ComputeTasks
+    virtual void addOutput(const std::string& name, const AttachmentType attachmentType, const LoadOp op = LoadOp::Preserve)
     {
-       mOutputAttachments.push_back({name, attachmentType});
+       mOutputAttachments.push_back({name, attachmentType, op});
     }
 
 
     virtual void recordCommands(vk::CommandBuffer, const RenderGraph&) const = 0;
 
+    struct OutputAttachmentInfo
+    {
+        std::string mName;
+        AttachmentType mType;
+        LoadOp         mLoadOp;
+    };
 
     const std::vector<std::pair<std::string, AttachmentType>>& getInputAttachments() const
         { return mInputAttachments; }
 
-    const std::vector<std::pair<std::string, AttachmentType>>& getOuputAttachments() const
+    const std::vector<OutputAttachmentInfo>& getOuputAttachments() const
         { return mOutputAttachments; }
 
 	virtual void clearCalls() = 0;
@@ -74,8 +88,14 @@ protected:
 
     std::string mName;
 
-    std::vector<std::pair<std::string, AttachmentType>> mOutputAttachments;
+    std::vector<OutputAttachmentInfo> mOutputAttachments;
     std::vector<std::pair<std::string, AttachmentType>> mInputAttachments;
 };
+
+
+inline bool operator<(const RenderTask::OutputAttachmentInfo& lhs, const RenderTask::OutputAttachmentInfo& rhs)
+{
+    return lhs.mName < rhs.mName && lhs.mType < rhs.mType && lhs.mLoadOp < rhs.mLoadOp;
+}
 
 #endif

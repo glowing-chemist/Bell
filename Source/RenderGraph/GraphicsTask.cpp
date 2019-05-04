@@ -67,6 +67,29 @@ void GraphicsTask::mergeDraws(GraphicsTask & task)
 }
 
 
+std::vector<vk::ClearValue> GraphicsTask::getClearValues() const
+{
+    std::vector<vk::ClearValue> clearValues;
+
+    for(const auto& attatchment : mOutputAttachments)
+    {
+        if(attatchment.mLoadOp != LoadOp::Preserve)
+        {
+            if(attatchment.mLoadOp == LoadOp::Clear_Black)
+            {
+                clearValues.emplace_back(std::array<float, 4>{0.0f, 0.0f, 0.0f, 1.0f});
+            }
+            else
+            {
+                clearValues.emplace_back(std::array<float, 4>{1.0f, 1.0f, 1.0f, 1.0f});
+            }
+        }
+    }
+
+    return clearValues;
+}
+
+
 namespace std
 {
 
