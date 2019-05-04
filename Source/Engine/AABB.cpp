@@ -65,7 +65,7 @@ bool AABB::contains(const float3& point) const
 }
 
 
-bool AABB::containes(const AABB& aabb, const EstimationMode estimationMode) const
+bool AABB::contains(const AABB& aabb, const EstimationMode estimationMode) const
 {
 	const auto verticies = aabb.getCubeAsVertexArray();
 	
