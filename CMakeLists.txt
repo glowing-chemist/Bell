@@ -42,6 +42,7 @@ include_directories(
 			${Vulkan_INCLUDE_DIRS}
 			"${CMAKE_CURRENT_LIST_DIR}/ThirdParty/GLFW3/glfw-3.2.1/include"
 			"${CMAKE_CURRENT_LIST_DIR}/ThirdParty/assimp-4.1.0/include"
+			"${CMAKE_CURRENT_LIST_DIR}/ThirdParty/imgui-master"
 			${glslangIncludeDirs}
 			${glmIncludeDirs}
 		    )
@@ -91,8 +92,14 @@ set(BELL_SOURCE
     Source/Engine/Scene.cpp
     )
 
+set(DearImGUI_SOURCE
+    ThirdParty/imgui-master/imgui.cpp
+    ThirdParty/imgui-master/imgui_draw.cpp
+    ThirdParty/imgui-master/imgui_widgets.cpp
+    )
 
-add_library(${PROJECT_NAME} ${BELL_SOURCE})
+
+add_library(${PROJECT_NAME} ${BELL_SOURCE} ${DearImGUI_SOURCE})
 target_link_libraries(${PROJECT_NAME} BELL_BASE assimp)
 
 
