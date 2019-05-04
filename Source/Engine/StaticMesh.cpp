@@ -11,7 +11,8 @@ StaticMesh::StaticMesh(const std::string& path)
     const aiScene* model = importer.ReadFile(path.c_str(),
                                              aiProcess_Triangulate |
                                              aiProcess_JoinIdenticalVertices |
-                                             aiProcess_GenNormals);
+                                             aiProcess_GenNormals |
+                                             aiProcess_FlipWindingOrder);
 
     const aiMesh* mesh = model->mMeshes[0];
 
@@ -29,7 +30,7 @@ StaticMesh::StaticMesh(const std::string& path)
                 break;
 
             case aiPrimitiveType::aiPrimitiveType_TRIANGLE:
-                primitiveElementSize = 3;
+                primitiveElementSize = 4;
                 break;
 
             default:
@@ -39,16 +40,22 @@ StaticMesh::StaticMesh(const std::string& path)
         return primitiveElementSize;
     }();
 
-    const uint32_t vertexStride =   (mesh->HasPositions() ? primitiveSize * 4 : 0) +
-                                    (mesh->HasTextureCoords(0) ? 8 : 0) +
-                                    (mesh->HasNormals() ? 16 : 0) +
+    const uint32_t vertexStride =   (mesh->HasPositions() ? primitiveSize * 1 : 0) +
+                                    (mesh->HasTextureCoords(0) ? 2 : 0) +
+                                    (mesh->HasNormals() ? 4 : 0) +
                                     (mesh->HasVertexColors(0) ? 4 : 0);
 
-    mIndexData.resize(mesh->mFaces[0].mNumIndices);
-    mVertexData.resize(mesh->mNumFaces * vertexStride);
+    // assume triangles atm
+    mIndexData.resize(mesh->mNumFaces * mesh->mFaces[0].mNumIndices);
+    mVertexData.resize(mesh->mNumVertices * vertexStride);
 
-    // Copy the index buffer data.
-    std::memcpy(mIndexData.data(), mesh->mFaces[0].mIndices, mesh->mFaces[0].mNumIndices * sizeof (uint32_t));
+    // Copy the index data
+    for(uint32_t i = 0; i < mesh->mNumFaces; ++i)
+    {
+        mIndexData[i] = mesh->mFaces[i].mIndices[0];
+        mIndexData[i + 1] = mesh->mFaces[i].mIndices[1];
+        mIndexData[i + 2] = mesh->mFaces[i].mIndices[2];
+    }
 
     uint32_t currentOffset = 0;
 
@@ -58,25 +65,25 @@ StaticMesh::StaticMesh(const std::string& path)
         if(mesh->HasPositions())
         {
             writeVertexVector4(mesh->mVertices[i], currentOffset);
-            currentOffset += 16;
+            currentOffset += 4;
         }
 
         if(mesh->HasTextureCoords(0))
         {
-            writeVertexVector2({mesh->mTextureCoords[i][0].x, mesh->mTextureCoords[i][0].y}, currentOffset);
-            currentOffset += 8;
+            writeVertexVector2({mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y}, currentOffset);
+            currentOffset += 2;
         }
 
         if(mesh->HasNormals())
         {
             writeVertexVector4(mesh->mNormals[i], currentOffset);
-            currentOffset += 16;
+            currentOffset += 4;
         }
 
         if(mesh->HasVertexColors(0))
         {
             writeVertexVector4({mesh->mColors[i]->r, mesh->mColors[i]->g, mesh->mColors[i]->b}, currentOffset);
-            currentOffset += 16;
+            currentOffset += 4;
         }
     }
 }
@@ -85,15 +92,15 @@ StaticMesh::StaticMesh(const std::string& path)
 void StaticMesh::writeVertexVector4(const aiVector3D& vector, const uint32_t startOffset)
 {
     *reinterpret_cast<float*>(&mVertexData[startOffset]) = vector.x;
-    *reinterpret_cast<float*>(&mVertexData[startOffset + sizeof(float)]) = vector.y;
-    *reinterpret_cast<float*>(&mVertexData[startOffset + sizeof(float) * 2]) = vector.z;
-    *reinterpret_cast<float*>(&mVertexData[startOffset + sizeof(float) * 3]) = 1.0f;
+    *reinterpret_cast<float*>(&mVertexData[startOffset] + 1) = vector.y;
+    *reinterpret_cast<float*>(&mVertexData[startOffset] + 2) = vector.z;
+    *reinterpret_cast<float*>(&mVertexData[startOffset] + 3) = 1.0f;
 }
 
 
 void StaticMesh::writeVertexVector2(const aiVector2D& vector, const uint32_t startOffset)
 {
     *reinterpret_cast<float*>(&mVertexData[startOffset]) = vector.x;
-    *reinterpret_cast<float*>(&mVertexData[startOffset + sizeof(float)]) = vector.y;
+    *reinterpret_cast<float*>(&mVertexData[startOffset] + 1) = vector.y;
 }
 
