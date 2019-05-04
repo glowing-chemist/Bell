@@ -50,11 +50,12 @@ StaticMesh::StaticMesh(const std::string& path)
     mVertexData.resize(mesh->mNumVertices * vertexStride);
 
     // Copy the index data
-    for(uint32_t i = 0; i < mesh->mNumFaces; ++i)
+    uint32_t currentIndex = 0;
+    for(uint32_t i = 0; i < mesh->mNumFaces; ++i, currentIndex += 3)
     {
-        mIndexData[i] = mesh->mFaces[i].mIndices[0];
-        mIndexData[i + 1] = mesh->mFaces[i].mIndices[1];
-        mIndexData[i + 2] = mesh->mFaces[i].mIndices[2];
+        mIndexData[currentIndex] = mesh->mFaces[i].mIndices[0];
+        mIndexData[currentIndex + 1] = mesh->mFaces[i].mIndices[1];
+        mIndexData[currentIndex + 2] = mesh->mFaces[i].mIndices[2];
     }
 
     uint32_t currentOffset = 0;
