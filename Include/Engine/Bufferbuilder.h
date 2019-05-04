@@ -10,7 +10,7 @@ public:
 	BufferBuilder() = default;
 
 	template<typename T>
-	uint64_t addData(const std::vector<T>&);
+    uint64_t addData(const std::vector<T>&);
 
 	const std::vector<unsigned char>& finishRecording() const
 	{
@@ -27,12 +27,12 @@ private:
 template<typename T>
 inline uint64_t BufferBuilder::addData(const std::vector<T>& data)
 {
-	const uin64_t offset = mBytes.size();
+    const uint64_t offset = mBytes.size();
 
 	const uint64_t dataSize = data.size() * sizeof(T);
-	mBytes.insert(mBytes.end(), reinterpret_cast<unsigned char*>(data.data()), reinterpret_cast<unsigned char*>(data.data()) + dataSize);
+    mBytes.insert(mBytes.end(), reinterpret_cast<const unsigned char*>(data.data()), reinterpret_cast<const unsigned char*>(data.data()) + dataSize);
 
-	retrun offset;
+    return offset;
 }
 
 #endif
