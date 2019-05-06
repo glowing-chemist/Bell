@@ -5,7 +5,8 @@
 #include <vulkan/vulkan.hpp>
 #include <cstdint>
 
-enum class ImageType {
+enum class ImageType
+{
     Texture1D = 0,
     Texture2D,
     Texture3D,
@@ -14,14 +15,16 @@ enum class ImageType {
     RenderTarget3D
 };
 
-enum class BufferType {
+enum class BufferType
+{
     VertexBuffer = 0,
     IndexBuffer,
     UniformBuffer,
     DataBuffer
 };
 
-enum class QueueType {
+enum class QueueType
+{
     Graphics = 0,
     Compute,
     Transfer,
@@ -29,7 +32,8 @@ enum class QueueType {
 };
 
 
-class RefCount {
+class RefCount
+{
 public:
     RefCount() : mRefCount{new std::atomic<uint32_t>(1u)} {}
 
@@ -67,7 +71,8 @@ protected:
 };
 
 
-class GPUResource : public RefCount {
+class GPUResource : public RefCount
+{
 public:
     GPUResource(const uint64_t lastAccessed) :  mNeedsUpdating{false},
                                                 mLastAccessed{lastAccessed},
