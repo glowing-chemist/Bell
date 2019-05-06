@@ -60,12 +60,10 @@ RenderDevice::~RenderDevice()
     mDevice.waitIdle();
 
     // We can ignore lastUsed as we have just waited till all work has finished.
-    for(auto& [lastUsed, handle, memory, imageView, sampler] : mImagesPendingDestruction)
+    for(auto& [lastUsed, handle, memory, imageView] : mImagesPendingDestruction)
     {
         if(imageView != vk::ImageView{nullptr})
             mDevice.destroyImageView(imageView);
-        if(sampler != vk::Sampler{nullptr})
-            mDevice.destroySampler(sampler);
         mDevice.destroyImage(handle);
         mMemoryManager.Free(memory);
     }
@@ -120,6 +118,11 @@ RenderDevice::~RenderDevice()
     for(auto& semaphore : mImageRendered)
     {
         mDevice.destroySemaphore(semaphore);
+    }
+
+    for(auto& [samplerType, sampler] : mImmutableSamplerCache)
+    {
+        mDevice.destroySampler(sampler);
     }
 
 #ifndef NDEBUG
@@ -821,6 +824,70 @@ vk::Fence RenderDevice::createFence(const bool signaled)
 }
 
 
+vk::Sampler RenderDevice::getImmutableSampler(const Sampler& samplerDesc)
+{
+    vk::Sampler sampler = mImmutableSamplerCache[samplerDesc];
+
+    if(sampler != vk::Sampler(nullptr))
+        return sampler;
+
+    const vk::Filter filterMode = [&samplerDesc]()
+    {
+        switch(samplerDesc.getSamplerType())
+        {
+            case SamplerType::Linear:
+                return vk::Filter::eLinear;
+
+            case SamplerType::Point:
+                return vk::Filter::eNearest;
+
+        }
+    }();
+
+    const vk::SamplerMipmapMode mipmapMode = filterMode == vk::Filter::eLinear ? vk::SamplerMipmapMode::eLinear :
+                                                                                 vk::SamplerMipmapMode::eNearest;
+
+    std::array<AddressMode, 3> addressModes = samplerDesc.getAddressModes();
+
+    auto addressModeConversion = [](const AddressMode mode)
+    {
+        switch(mode)
+        {
+            case AddressMode::Clamp:
+                return vk::SamplerAddressMode::eClampToEdge;
+
+            case AddressMode::Mirror:
+                return vk::SamplerAddressMode::eMirroredRepeat;
+
+            case AddressMode::Repeat:
+                return  vk::SamplerAddressMode::eRepeat;
+        }
+    };
+
+    vk::SamplerCreateInfo info{};
+    info.setMagFilter(filterMode);
+    info.setMinFilter(filterMode);
+    info.setAddressModeU(addressModeConversion(addressModes[0]));
+    info.setAddressModeV(addressModeConversion(addressModes[1]));
+    info.setAddressModeW (addressModeConversion(addressModes[2]));
+    info.setAnisotropyEnable(samplerDesc.getNumberOfSamples() > 1);
+    info.setMaxAnisotropy(samplerDesc.getNumberOfSamples());
+    info.setBorderColor(vk::BorderColor::eIntOpaqueBlack);
+    info.setCompareEnable(false);
+    info.setCompareOp(vk::CompareOp::eNever);
+    info.setMipmapMode(mipmapMode);
+    info.setMipLodBias(0.0f);
+    info.setMinLod(0.0f);
+    info.setMaxLod(0.0f);
+
+    sampler =  createSampler(info);
+    mImmutableSamplerCache[samplerDesc] = sampler;
+
+    return sampler;
+}
+
+
+
 void RenderDevice::execute(RenderGraph& graph)
 {
 	graph.reorderTasks();
@@ -998,14 +1065,12 @@ void RenderDevice::clearDeferredResources()
 
     for(uint32_t i = 0; i < mImagesPendingDestruction.size(); ++i)
     {
-        auto& [submission, image, memory, imageView, sampler] = mImagesPendingDestruction.front();
+        auto& [submission, image, memory, imageView] = mImagesPendingDestruction.front();
 
         if(submission <= mFinishedSubmission)
         {
             if(imageView != vk::ImageView{nullptr})
                 mDevice.destroyImageView(imageView);
-            if(sampler != vk::Sampler{nullptr})
-                mDevice.destroySampler(sampler);
             mDevice.destroyImage(image);
             getMemoryManager()->Free(memory);
             mImagesPendingDestruction.pop_front();

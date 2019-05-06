@@ -6,6 +6,7 @@
 
 #include "Core/Image.hpp"
 #include "Core/Buffer.hpp"
+#include "Core/Sampler.hpp"
 
 #include <iterator>
 #include <string>
@@ -44,6 +45,7 @@ public:
 
     void bindImage(const std::string&, Image&);
     void bindBuffer(const std::string&, Buffer&);
+    void bindSampler(const std::string&, const Sampler&);
 
     // These are special because they are used by every task that has vertex attributes
     void bindVertexBuffer(const Buffer&);
@@ -84,9 +86,12 @@ public:
     enum class ResourceType
     {
         Image,
+        Sampler,
         Buffer
     };
 	GPUResource& getResource(const ResourceType, const uint32_t);
+    Sampler& getSampler(const uint32_t);
+
 
 	struct ResourceBindingInfo
 	{
@@ -123,6 +128,9 @@ private:
 
     std::vector<std::pair<std::string, Image>> mImages;
     std::vector<std::pair<std::string, Buffer>> mBuffers;
+    // the actual sampler objects are stored on the device a they live for the
+    // life of the renderer.
+    std::vector<std::pair<std::string, Sampler>> mSamplers;
 };
 
 

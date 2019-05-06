@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <deque>
 #include <unordered_map>
+#include <unordered_map>
 #include <vector>
 #include <vulkan/vulkan.hpp>
 
@@ -14,6 +15,7 @@
 #include "SwapChain.hpp"
 #include "CommandPool.h"
 #include "Core/Image.hpp"
+#include "Core/Sampler.hpp"
 #include "RenderGraph/GraphicsTask.hpp"
 #include "RenderGraph/ComputeTask.hpp"
 #include "RenderGraph/RenderGraph.hpp"
@@ -66,7 +68,7 @@ public:
                                                    const uint32_t,
                                                    const uint32_t);
 
-    void                               destroyImage(Image& image) { mImagesPendingDestruction.push_back({image.getLastAccessed(), image.getImage(), image.getMemory(), image.getCurrentImageView(), image.getCurrentSampler()}); }
+    void                               destroyImage(Image& image) { mImagesPendingDestruction.push_back({image.getLastAccessed(), image.getImage(), image.getMemory(), image.getCurrentImageView()}); }
 
     vk::ImageView                      createImageView(const vk::ImageViewCreateInfo& info)
                                             { return mDevice.createImageView(info); }
@@ -144,6 +146,8 @@ public:
     // Only these two can do usefull work when const
     const SwapChain*                         getSwapChain() const { return &mSwapChain; }
     const vk::PhysicalDevice*                getPhysicalDevice() const { return &mPhysicalDevice; }
+
+    vk::Sampler                        getImmutableSampler(const Sampler& sampler);
 
 
     // Memory management functions
@@ -250,7 +254,6 @@ private:
         vk::Image mImageHandle;
         Allocation mImageMemory;
         vk::ImageView mCurrentImageView;
-        vk::Sampler mCurrentSampler;
     };
     std::deque<ImageDestructionInfo> mImagesPendingDestruction;
 
@@ -285,6 +288,8 @@ private:
 
     std::unordered_map<GraphicsPipelineDescription, GraphicsPipelineHandles> mGraphicsPipelineCache;
     std::unordered_map<ComputePipelineDescription, ComputePipelineHandles> mComputePipelineCache;
+
+    std::unordered_map<Sampler, vk::Sampler> mImmutableSamplerCache;
 
     SwapChain mSwapChain;
     std::vector<CommandPool> mCommandPools;

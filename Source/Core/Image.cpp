@@ -92,8 +92,6 @@ Image& Image::operator=(Image&& other)
     mIsOwned = other.mIsOwned;
     mImageView = other.mImageView;
     other.mImageView = nullptr;
-    mCurrentSampler = other.mCurrentSampler;
-    other.mCurrentSampler = nullptr;
     mFormat = other.mFormat;
     mLayout = other.mLayout;
     mUsage = other.mUsage;
@@ -116,8 +114,6 @@ Image::Image(Image&& other) :   GPUResource(other.getDevice()->getCurrentSubmiss
     mImageView = other.mImageView;
     other.mImageView = nullptr;
     mIsOwned = other.mIsOwned;
-    mCurrentSampler = other.mCurrentSampler;
-    other.mCurrentSampler = nullptr;
     mFormat = other.mFormat;
     mLayout = other.mLayout;
     mUsage = other.mUsage;
@@ -151,37 +147,6 @@ vk::ImageView   Image::createImageView( vk::Format format,
     createInfo.setViewType(type);
 
     return getDevice()->createImageView(createInfo);
-}
-
-
-vk::Sampler Image::createImageSampler(  vk::Filter magFilter,
-                                    vk::Filter minFilter,
-                                    vk::SamplerAddressMode u,
-                                    vk::SamplerAddressMode v,
-                                    vk::SamplerAddressMode w,
-                                    bool anisotropyEnable,
-                                    uint32_t maxAnisotropy,
-                                    vk::BorderColor borderColour,
-                                    vk::CompareOp compareOp,
-                                    vk::SamplerMipmapMode mipMapMode)
-{
-    vk::SamplerCreateInfo info{};
-    info.setMagFilter(magFilter);
-    info.setMinFilter(minFilter);
-    info.setAddressModeU(u);
-    info.setAddressModeV(v);
-    info.setAddressModeW (w);
-    info.setAnisotropyEnable(anisotropyEnable);
-    info.setMaxAnisotropy(maxAnisotropy);
-    info.setBorderColor(borderColour);
-    info.setCompareEnable(compareOp != vk::CompareOp::eAlways);
-    info.setCompareOp(compareOp);
-    info.setMipmapMode(mipMapMode);
-    info.setMipLodBias(0.0f);
-    info.setMinLod(0.0f);
-    info.setMaxLod(0.0f);
-
-    return getDevice()->createSampler(info);
 }
 
 

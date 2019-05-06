@@ -59,6 +59,7 @@ set(BELL_BASE_SOURCE
 	Source/Core/CommandPool.cpp
 	Source/Core/Shader.cpp
 	Source/Core/DescriptorManager.cpp
+	Source/Core/Sampler.cpp
 
 	#RenderGraph files (backend independant)
 	Source/RenderGraph/GraphicsTask.cpp

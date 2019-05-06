@@ -16,6 +16,7 @@ enum class AttachmentType
     Texture1D,
     Texture2D,
     Texture3D,
+    Sampler,
 	RenderTarget1D,
 	RenderTarget2D,
 	RenderTarget3D,

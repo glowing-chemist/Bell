@@ -164,6 +164,16 @@ void RenderGraph::bindBuffer(const std::string& name , Buffer& buffer)
 }
 
 
+void RenderGraph::bindSampler(const std::string& name, const Sampler& type)
+{
+    const uint32_t samplerIndex = static_cast<uint32_t>(mSamplers.size());
+    mSamplers.emplace_back(name, type);
+
+    bindResource(name, samplerIndex, ResourceType::Sampler);
+}
+
+
+
 void RenderGraph::bindVertexBuffer(const Buffer& buffer)
 {
     mVertexBuffer = buffer;
@@ -353,6 +363,14 @@ GPUResource& RenderGraph::getResource(const ResourceType resourceType, const uin
     }();
 
     return resource;
+}
+
+
+Sampler& RenderGraph::getSampler(const uint32_t resourceIndex)
+{
+    BELL_ASSERT(resourceType == ResouseType::Sampler, " Attempting to fetch non sampler resource")
+
+    return mSamplers[resourceIndex].second;
 }
 
 

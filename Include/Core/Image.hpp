@@ -52,23 +52,6 @@ public:
                                     const uint32_t baseArrayLayer,
                                     const uint32_t layerCount);
 
-    vk::Sampler    createImageSampler(  vk::Filter magFilter,
-                                        vk::Filter minFilter,
-                                        vk::SamplerAddressMode u,
-                                        vk::SamplerAddressMode v,
-                                        vk::SamplerAddressMode w,
-                                        bool anisotropyEnable,
-                                        uint32_t maxAnisotropy,
-                                        vk::BorderColor borderColour,
-                                        vk::CompareOp compareOp,
-                                        vk::SamplerMipmapMode mipMapMode);
-
-    void           setCurrentSampler(vk::Sampler& sampler)
-                    { mCurrentSampler = sampler;}
-
-    const vk::Sampler&    getCurrentSampler() const
-                    { return mCurrentSampler; }
-
     void            setCurrentImageView(vk::ImageView& view)
                     { mImageView = view; }
 
@@ -112,7 +95,6 @@ private:
     Allocation mImageMemory;
     vk::Image mImage;
     vk::ImageView mImageView;
-    vk::Sampler mCurrentSampler;
 
     bool mIsOwned;
     vk::Format mFormat;

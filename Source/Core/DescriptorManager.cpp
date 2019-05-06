@@ -73,7 +73,6 @@ std::vector<vk::DescriptorSet> DescriptorManager::getDescriptors(RenderGraph& gr
 }
 
 
-
 void DescriptorManager::writeDescriptors(std::vector<vk::DescriptorSet>& descSets, RenderGraph& graph, std::vector<vulkanResources>& resources)
 {
     std::vector<vk::WriteDescriptorSet> descSetWrites;
@@ -116,9 +115,23 @@ void DescriptorManager::writeDescriptors(std::vector<vk::DescriptorSet>& descSet
                     imageInfos.push_back(info);
 
                     descWrite.setPImageInfo(&imageInfos.back());
-                    descWrite.setDescriptorType(vk::DescriptorType::eCombinedImageSampler);
+                    descWrite.setDescriptorType(vk::DescriptorType::eSampledImage);
                     break;
                 }
+
+                case RenderGraph::ResourceType::Sampler:
+                {
+                    vk::DescriptorImageInfo info{};
+                    info.setSampler(getDevice()->getImmutableSampler(graph.getSampler(bindingInfo.mResourceIndex)));
+
+                    imageInfos.push_back(info);
+
+                    descWrite.setPImageInfo(&imageInfos.back());
+                    descWrite.setDescriptorType(vk::DescriptorType::eSampler);
+
+                    break;
+                }
+
                 case RenderGraph::ResourceType::Buffer:
                 {
                     auto& buffer = static_cast<Buffer&>(graph.getResource(bindingInfo.mResourcetype, bindingInfo.mResourceIndex));
@@ -212,14 +225,18 @@ vk::DescriptorPool DescriptorManager::createDescriptorPool()
     dataBufferDescPoolSize.setType(vk::DescriptorType::eStorageBuffer);
     dataBufferDescPoolSize.setDescriptorCount(100);
 
-    vk::DescriptorPoolSize imageSamplerrDescPoolSize{};
-    imageSamplerrDescPoolSize.setType(vk::DescriptorType::eCombinedImageSampler);
-    imageSamplerrDescPoolSize.setDescriptorCount(100);
+    vk::DescriptorPoolSize samplerrDescPoolSize{};
+    samplerrDescPoolSize.setType(vk::DescriptorType::eSampler);
+    samplerrDescPoolSize.setDescriptorCount(100);
 
-    std::array<vk::DescriptorPoolSize, 3> descPoolSizes{uniformBufferDescPoolSize, imageSamplerrDescPoolSize, dataBufferDescPoolSize};
+    vk::DescriptorPoolSize imageDescPoolSize{};
+    imageDescPoolSize.setType(vk::DescriptorType::eSampledImage);
+    imageDescPoolSize.setDescriptorCount(100);
+
+    std::array<vk::DescriptorPoolSize, 4> descPoolSizes{uniformBufferDescPoolSize, samplerrDescPoolSize, dataBufferDescPoolSize, imageDescPoolSize};
 
     vk::DescriptorPoolCreateInfo uniformBufferDescPoolInfo{};
-    uniformBufferDescPoolInfo.setPoolSizeCount(descPoolSizes.size()); // two pools one for uniform buffers and one for combined image samplers
+    uniformBufferDescPoolInfo.setPoolSizeCount(descPoolSizes.size());
     uniformBufferDescPoolInfo.setPPoolSizes(descPoolSizes.data());
     uniformBufferDescPoolInfo.setMaxSets(100);
 
@@ -230,7 +247,6 @@ vk::DescriptorPool DescriptorManager::createDescriptorPool()
 vk::DescriptorImageInfo DescriptorManager::generateDescriptorImageInfo(Image& image) const
 {
     vk::DescriptorImageInfo imageInfo{};
-    imageInfo.setSampler(image.getCurrentSampler());
     imageInfo.setImageView(image.getCurrentImageView());
     imageInfo.setImageLayout(image.getLayout());
 
