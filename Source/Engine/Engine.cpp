@@ -90,6 +90,7 @@ void Engine::recordOverlay(const ImDrawData* drawData)
     GraphicsTask task("ImGuiOverlay", desc);
     task.setVertexAttributes(VertexAttributes::Position | VertexAttributes::TextureCoordinates | VertexAttributes::Aledo);
     task.addInput("OverlayTexture", AttachmentType::Texture2D);
+    task.addInput("FontSampler", AttachmentType::Sampler);
     task.addOutput("FrameBuffer", AttachmentType::SwapChain);
 
     // Render command lists
