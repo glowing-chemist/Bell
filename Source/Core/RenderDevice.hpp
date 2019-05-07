@@ -176,6 +176,7 @@ public:
 
 	void							   execute(BarrierRecorder& recorder);
 
+    void							   submitFrame();
     void							   swap();
 
 
@@ -216,7 +217,6 @@ private:
     void                                                        clearDeferredResources();
 
     void														frameSyncSetup();
-    void														submitFrame();
 
     vk::Fence                          createFence(const bool signaled);
 
