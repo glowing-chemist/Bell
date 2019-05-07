@@ -368,7 +368,7 @@ GPUResource& RenderGraph::getResource(const ResourceType resourceType, const uin
 
 Sampler& RenderGraph::getSampler(const uint32_t resourceIndex)
 {
-    BELL_ASSERT(resourceType == ResouseType::Sampler, " Attempting to fetch non sampler resource")
+    BELL_ASSERT(resourceIndex < mSamplers.size(), " Attempting to fetch non sampler resource")
 
     return mSamplers[resourceIndex].second;
 }
