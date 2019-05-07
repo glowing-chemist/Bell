@@ -971,7 +971,6 @@ void RenderDevice::execute(RenderGraph& graph)
 	primaryCmdBuffer.end();
 
     submitFrame();
-    swap();
 }
 
 
