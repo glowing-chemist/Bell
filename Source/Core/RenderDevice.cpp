@@ -550,7 +550,7 @@ vk::DescriptorSetLayout RenderDevice::generateDescriptorSetLayout(const RenderTa
             case AttachmentType::Texture1D:
             case AttachmentType::Texture2D:
             case AttachmentType::Texture3D:
-                return vk::DescriptorType::eCombinedImageSampler;
+				return vk::DescriptorType::eSampledImage;
 
            case AttachmentType::DataBuffer:
                 return vk::DescriptorType::eStorageBufferDynamic;
