@@ -586,12 +586,19 @@ std::pair<vk::VertexInputBindingDescription, std::vector<vk::VertexInputAttribut
 {
     const int vertexInputs = task.getVertexAttributes();
 
-    const bool hasPosition = vertexInputs & VertexAttributes::Position;
-    const bool hasTextureCoords = vertexInputs & VertexAttributes::TextureCoordinates;
+	const bool hasPosition2 = vertexInputs & VertexAttributes::Position2;
+	const bool hasPosition3 = vertexInputs & VertexAttributes::Position3;
+	const bool hasPosition4 = vertexInputs & VertexAttributes::Position4;
+	const bool hasTextureCoords = vertexInputs & VertexAttributes::TextureCoordinates;
     const bool hasNormals = vertexInputs & VertexAttributes::Normals;
     const bool hasAlbedo = vertexInputs & VertexAttributes::Aledo;
 
-    const uint32_t vertexStride = (hasPosition ? 16 : 0) + (hasTextureCoords ? 8 : 0) + (hasNormals ? 16 : 0) + (hasAlbedo ? 16 : 0);
+	uint32_t positionSize = 0;
+	positionSize = vertexInputs & VertexAttributes::Position2 ? 8 : 0;
+	positionSize = vertexInputs & VertexAttributes::Position3 ? 12 : 0;
+	positionSize = vertexInputs & VertexAttributes::Position4 ? 16 : 0;
+
+	const uint32_t vertexStride = positionSize + (hasTextureCoords ? 8 : 0) + (hasNormals ? 16 : 0) + (hasAlbedo ? 16 : 0);
 
     vk::VertexInputBindingDescription bindingDesc{};
     bindingDesc.setStride(vertexStride);
@@ -602,7 +609,33 @@ std::pair<vk::VertexInputBindingDescription, std::vector<vk::VertexInputAttribut
     uint8_t currentOffset = 0;
     uint8_t currentLocation  = 0;
 
-    if(hasPosition)
+	if(hasPosition2)
+	{
+		vk::VertexInputAttributeDescription attribDescPos{};
+		attribDescPos.setBinding(0);
+		attribDescPos.setLocation(currentLocation);
+		attribDescPos.setFormat(vk::Format::eR32G32Sfloat);
+		attribDescPos.setOffset(currentOffset);
+
+		attribs.push_back(attribDescPos);
+		currentOffset += 8;
+		++currentLocation;
+	}
+
+	if(hasPosition3)
+	{
+		vk::VertexInputAttributeDescription attribDescPos{};
+		attribDescPos.setBinding(0);
+		attribDescPos.setLocation(currentLocation);
+		attribDescPos.setFormat(vk::Format::eR32G32Sfloat);
+		attribDescPos.setOffset(currentOffset);
+
+		attribs.push_back(attribDescPos);
+		currentOffset += 12;
+		++currentLocation;
+	}
+
+	if(hasPosition4)
     {
         vk::VertexInputAttributeDescription attribDescPos{};
         attribDescPos.setBinding(0);
@@ -611,7 +644,7 @@ std::pair<vk::VertexInputBindingDescription, std::vector<vk::VertexInputAttribut
         attribDescPos.setOffset(currentOffset);
 
         attribs.push_back(attribDescPos);
-        currentOffset += 16;
+		currentOffset += 16;
         ++currentLocation;
     }
 

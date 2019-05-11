@@ -59,10 +59,12 @@ enum class VertexAssemblyType
 
 enum VertexAttributes
 {
-	Position = 1 << 1,
-	TextureCoordinates = 1 << 2,
-	Normals = 1 << 3,
-	Aledo = 1 << 4
+	Position2 = 1 << 1,
+	Position3 = 1 << 2,
+	Position4 = 1 << 3,
+	TextureCoordinates = 1 << 4,
+	Normals = 1 << 5,
+	Aledo = 1 << 6
 };
 
 struct Rect
