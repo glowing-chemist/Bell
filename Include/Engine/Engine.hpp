@@ -61,6 +61,9 @@ public:
 	void   setBufferInScene( const std::string& name , const Buffer& buffer)
 		{ mCurrentRenderGraph.bindBuffer(name, buffer); }
 
+	void setSamperInScene(const std::string& name, const Sampler sampler)
+		{ mCurrentRenderGraph.bindSampler(name, sampler); }
+
 	void setVertexBufferforScene(const Buffer& vertBuf)
 		{ mCurrentRenderGraph.bindVertexBuffer(vertBuf); }
 
