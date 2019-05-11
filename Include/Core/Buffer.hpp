@@ -19,7 +19,7 @@ public:
            vk::BufferUsageFlags usage,
            const uint32_t size,
            const uint32_t stride,
-           std::string = "");
+		   const std::string& = "");
 
     ~Buffer();
 

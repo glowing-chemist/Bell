@@ -43,8 +43,8 @@ public:
 
     void addDependancy(const std::string&, const std::string&);
 
-    void bindImage(const std::string&, Image&);
-    void bindBuffer(const std::string&, Buffer&);
+    void bindImage(const std::string&, const Image &);
+    void bindBuffer(const std::string&, const Buffer &);
     void bindSampler(const std::string&, const Sampler&);
 
     // These are special because they are used by every task that has vertex attributes

@@ -3,10 +3,10 @@
 #include "Core/BarrierManager.hpp"
 
 Buffer::Buffer(RenderDevice* dev,
-       vk::BufferUsageFlags usage,
-       const uint32_t size,
-       const uint32_t stride,
-       std::string name) :
+	   vk::BufferUsageFlags usage,
+	   const uint32_t size,
+	   const uint32_t stride,
+	   const std::string &name) :
     GPUResource{dev->getCurrentSubmissionIndex()},
     DeviceChild{dev},
     mCurrentOffset{0},

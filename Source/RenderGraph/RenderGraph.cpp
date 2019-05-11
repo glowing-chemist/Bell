@@ -146,7 +146,7 @@ void RenderGraph::bindResource(const std::string& name, const uint32_t index, co
 }
 
 
-void RenderGraph::bindImage(const std::string& name, Image& image)
+void RenderGraph::bindImage(const std::string& name, const Image& image)
 {
     const uint32_t currentImageIndex = static_cast<uint32_t>(mImages.size());
     mImages.emplace_back(name, image);
@@ -155,7 +155,7 @@ void RenderGraph::bindImage(const std::string& name, Image& image)
 }
 
 
-void RenderGraph::bindBuffer(const std::string& name , Buffer& buffer)
+void RenderGraph::bindBuffer(const std::string& name , const Buffer& buffer)
 {
     const uint32_t currentBufferIndex = static_cast<uint32_t>(mBuffers.size());
     mBuffers.emplace_back(name, buffer);

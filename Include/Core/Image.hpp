@@ -24,7 +24,7 @@ public:
           const uint32_t,
           const uint32_t,
           const uint32_t,
-          std::string&& = "");
+		  const std::string& = "");
 
     Image(RenderDevice*,
           vk::Image&,
@@ -33,7 +33,7 @@ public:
           const uint32_t,
           const uint32_t,
           const uint32_t,
-          std::string&& = ""
+		  const std::string& = ""
           );
 
     ~Image();

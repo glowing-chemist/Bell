@@ -24,7 +24,7 @@ Image::Image(RenderDevice* dev,
              const uint32_t x,
              const uint32_t y,
              const uint32_t z,
-             std::string&& debugName) :
+			 const std::string& debugName) :
     GPUResource{dev->getCurrentSubmissionIndex()},
     DeviceChild{dev},
     mIsOwned{true},
@@ -54,7 +54,7 @@ Image::Image(RenderDevice* dev,
       const uint32_t x,
       const uint32_t y,
       const uint32_t z,
-      std::string&& debugName
+	  const std::string& debugName
       )
     :
         GPUResource{dev->getCurrentSubmissionIndex()},
