@@ -17,6 +17,15 @@ public:
 
 private:
 
+	void startFrame()
+	{
+		mEngine.startFrame();
+		ImGui::NewFrame();
+	}
+
+	void endFrame()
+	{ mEngine.endFrame(); }
+
     void renderScene();
     void renderOverlay();
     void swap();
@@ -34,6 +43,10 @@ private:
     CursorPosition mCurrentCursorPos;
 
     Engine mEngine;
+
+	bool mHasUploadedFonts;
+	Image mOverlayFontTexture;
+	Sampler mFontsSampler;
 
     Scene mInProgressScene;
 };

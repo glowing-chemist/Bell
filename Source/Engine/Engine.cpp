@@ -6,12 +6,18 @@ Engine::Engine(GLFWwindow* windowPtr) :
     mRenderDevice(mRenderInstance.createRenderDevice(DeviceFeaturesFlags::Compute | DeviceFeaturesFlags::Discrete)),
     mCurrentScene("Initial current scene"),
     mLoadingScene("Initial loading scene"),
+    mVertexBuilder(),
+    mOverlayVertexByteOffset(0),
+    mIndexBuilder(),
+    mOverlayIndexByteOffset(0),
     mCurrentRenderGraph(),
-    mOverlayVertexShader(&mRenderDevice, "Shaders/Overlay.Vert"),
-    mOverlayFragmentShader(&mRenderDevice, "Shaders/Overlay.frag"),
+    mOverlayVertexShader(&mRenderDevice, "./Shaders/Overlay.vert"),
+    mOverlayFragmentShader(&mRenderDevice, "./Shaders/Overlay.frag"),
     mRenderVariables(),
     mWindow(windowPtr)
 {
+    mOverlayVertexShader.compile();
+    mOverlayFragmentShader.compile();
 }
 
 

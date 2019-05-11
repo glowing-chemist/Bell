@@ -6,14 +6,23 @@ namespace
 
     uint32_t getPixelSize(const vk::Format format)
     {
+		uint32_t result = 4;
+
         switch(format)
         {
         case vk::Format::eR8G8B8A8Unorm:
-            return 4;
-            // Add more formats as and when needed.
+			result = 4;
+			break;
+
+		case vk::Format::eR32G32B32A32Sfloat:
+			result = 16;
+			break;
+
         default:
-            return 4;
+			result =  4;
         }
+
+		return result;
     }
 
 }

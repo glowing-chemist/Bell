@@ -191,7 +191,7 @@ void RenderGraph::reorderTasks()
     static bool hasReordered = false;
 
     if(hasReordered || mTaskDependancies.empty())
-        return;
+		return;
 
 	std::vector<std::pair<TaskType, uint32_t>> newTaskOrder{};
     std::vector<std::vector<ResourceBindingInfo>> newInputBindings{};
