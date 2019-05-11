@@ -18,10 +18,7 @@ public:
 private:
 
 	void startFrame()
-	{
-		mEngine.startFrame();
-		ImGui::NewFrame();
-	}
+	{ mEngine.startFrame(); }
 
 	void endFrame()
 	{ mEngine.endFrame(); }
@@ -46,6 +43,7 @@ private:
 
 	bool mHasUploadedFonts;
 	Image mOverlayFontTexture;
+	Buffer mOverlayTranslationUBO;
 	Sampler mFontsSampler;
 
     Scene mInProgressScene;

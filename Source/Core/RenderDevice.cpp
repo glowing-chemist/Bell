@@ -594,14 +594,17 @@ std::pair<vk::VertexInputBindingDescription, std::vector<vk::VertexInputAttribut
     const bool hasAlbedo = vertexInputs & VertexAttributes::Aledo;
 
 	uint32_t positionSize = 0;
-	positionSize = vertexInputs & VertexAttributes::Position2 ? 8 : 0;
-	positionSize = vertexInputs & VertexAttributes::Position3 ? 12 : 0;
-	positionSize = vertexInputs & VertexAttributes::Position4 ? 16 : 0;
+	if(hasPosition2)
+		positionSize = 8;
+	else if(hasPosition3)
+		positionSize = 12;
+	else if(hasPosition4)
+		positionSize = 16;
 
-	const uint32_t vertexStride = positionSize + (hasTextureCoords ? 8 : 0) + (hasNormals ? 16 : 0) + (hasAlbedo ? 16 : 0);
+	const uint32_t vertexStride = positionSize + (hasTextureCoords ? 8 : 0) + (hasNormals ? 16 : 0) + (hasAlbedo ? 4 : 0);
 
     vk::VertexInputBindingDescription bindingDesc{};
-    bindingDesc.setStride(vertexStride);
+	bindingDesc.setStride(vertexStride);
     bindingDesc.setBinding(0);
     bindingDesc.setInputRate(vk::VertexInputRate::eVertex); // only support the same model for instances draws currently.
 
@@ -679,7 +682,7 @@ std::pair<vk::VertexInputBindingDescription, std::vector<vk::VertexInputAttribut
         vk::VertexInputAttributeDescription attribDescAlbedo{};
         attribDescAlbedo.setBinding(0);
         attribDescAlbedo.setLocation(currentLocation);
-        attribDescAlbedo.setFormat(vk::Format::eR32G32B32A32Sfloat);
+		attribDescAlbedo.setFormat(vk::Format::eR8G8B8A8Unorm);
         attribDescAlbedo.setOffset(currentOffset);
 
         attribs.push_back(attribDescAlbedo);

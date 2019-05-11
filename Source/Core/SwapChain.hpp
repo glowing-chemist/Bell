@@ -41,7 +41,7 @@ public:
         { return mSwapChainImages[index]; }
 
     uint32_t getNextImageIndex(vk::Semaphore&);
-	uint32_t getCurrentImageIndex() const { return mCurrentImageIndex; };
+	uint32_t getCurrentImageIndex() const { return mCurrentImageIndex; }
 
 	void present(vk::Queue&, vk::Semaphore&);
 

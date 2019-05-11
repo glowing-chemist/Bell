@@ -71,25 +71,25 @@ Buffer Engine::createBuffer(const uint32_t size,
 
 void Engine::recordOverlay(const ImDrawData* drawData)
 {
-    const size_t vertexSize = drawData->TotalVtxCount * sizeof(ImDrawVert);
+	const size_t vertexSize = drawData->TotalVtxCount;
 
     // ImGui uses uin16_t sized indexs (by default) but we always use 32 bit (this wastes some memory here)
     // so override this in imconfig.h
-    const size_t indexSize = drawData->TotalIdxCount * sizeof(ImDrawIdx);
+	const size_t indexSize = drawData->TotalIdxCount;
 
-    std::vector<unsigned char> vertexData(vertexSize);
-    std::vector<uint32_t> indexData(indexSize);
+	std::vector<ImDrawVert> vertexData(vertexSize);
+	std::vector<uint32_t> indexData(indexSize);
 
-    unsigned char* vertexPtr = vertexData.data();
-    unsigned char* indexPtr = reinterpret_cast<unsigned char*>(indexData.data());
+	ImDrawVert* vertexPtr = vertexData.data();
+	ImDrawIdx* indexPtr = indexData.data();
 
     for (int n = 0; n < drawData->CmdListsCount; n++)
     {
         const ImDrawList* cmd_list = drawData->CmdLists[n];
         memcpy(vertexPtr, cmd_list->VtxBuffer.Data, cmd_list->VtxBuffer.Size * sizeof(ImDrawVert));
         memcpy(indexPtr, cmd_list->IdxBuffer.Data, cmd_list->IdxBuffer.Size * sizeof(ImDrawIdx));
-        vertexPtr += cmd_list->VtxBuffer.Size;
-        indexPtr += cmd_list->IdxBuffer.Size;
+		vertexPtr += cmd_list->VtxBuffer.Size;
+		indexPtr += cmd_list->IdxBuffer.Size;
     }
 
     mOverlayVertexByteOffset = mVertexBuilder.addData(vertexData);
@@ -109,14 +109,15 @@ void Engine::recordOverlay(const ImDrawData* drawData)
                                      scissorRect,
                                      viewport,
                                      false, // no backface culling
-                                     BlendMode::None,
+									 BlendMode::None,
                                      DepthTest::None};
 
     GraphicsTask task("ImGuiOverlay", desc);
-    task.setVertexAttributes(VertexAttributes::Position | VertexAttributes::TextureCoordinates | VertexAttributes::Aledo);
+	task.setVertexAttributes(VertexAttributes::Position2 | VertexAttributes::TextureCoordinates | VertexAttributes::Aledo);
+	task.addInput("OverlayUBO", AttachmentType::UniformBuffer);
     task.addInput("OverlayTexture", AttachmentType::Texture2D);
     task.addInput("FontSampler", AttachmentType::Sampler);
-    task.addOutput("FrameBuffer", AttachmentType::SwapChain);
+	task.addOutput("FrameBuffer", AttachmentType::SwapChain, LoadOp::Clear_White);
 
     // Render command lists
     uint32_t vertexOffset = 0;
