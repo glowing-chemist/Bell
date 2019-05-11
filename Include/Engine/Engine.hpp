@@ -41,7 +41,7 @@ public:
     Camera& getCurrentSceneCamera();
 
 	Image&  getSwapChainImage()
-		{ mRenderDevice.getSwapChainImage(); }
+		{ return mRenderDevice.getSwapChainImage(); }
 
 	Image createImage(const uint32_t x,
 					  const uint32_t y,
