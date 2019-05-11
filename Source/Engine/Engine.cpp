@@ -146,5 +146,21 @@ void Engine::recordScene()
 
 void Engine::render()
 {
+	auto& vertexData = mVertexBuilder.finishRecording();
+
+	Buffer vertexBuffer = createBuffer(vertexData.size(), vertexData.size(), vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eTransferDst, "Vertex Buffer");
+	vertexBuffer.setContents(vertexData.data(), vertexData.size());
+
+	auto& indexData = mIndexBuilder.finishRecording();
+
+	Buffer indexBuffer = createBuffer(indexData.size(), indexData.size(), vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eTransferDst, "Index Buffer");
+	indexBuffer.setContents(indexData.data(), indexData.size());
+
+	mVertexBuilder = BufferBuilder();
+	mIndexBuilder = BufferBuilder();
+
+	mCurrentRenderGraph.bindVertexBuffer(vertexBuffer);
+	mCurrentRenderGraph.bindIndexBuffer(indexBuffer);
+
     mRenderDevice.execute(mCurrentRenderGraph);
 }
