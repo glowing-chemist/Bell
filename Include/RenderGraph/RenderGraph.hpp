@@ -60,6 +60,8 @@ public:
     const Buffer& getBoundBuffer(const std::string&) const;
     const Image&  getBoundImage(const std::string&) const;
 
+	void reset();
+
 	uint64_t taskCount() const { return mTaskOrder.size(); }
 
 	TaskIterator taskBegin();

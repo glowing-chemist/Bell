@@ -394,6 +394,23 @@ const Image& RenderGraph::getBoundImage(const std::string& name) const
 }
 
 
+void RenderGraph::reset()
+{
+	// Clear all bound resources
+	mImages.clear();
+	mBuffers.clear();
+	mSamplers.clear();
+
+	mInputResources.clear();
+	mOutputResources.clear();
+
+	// Clear all jobs
+	mGraphicsTasks.clear();
+	mComputeTask.clear();
+	mTaskOrder.clear();
+	mTaskDependancies.clear();
+}
+
 TaskIterator RenderGraph::taskBegin()
 {
 	return TaskIterator{*this};

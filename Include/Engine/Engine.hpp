@@ -72,7 +72,10 @@ public:
     void recordScene();
 
 	void startFrame()
-		{ mRenderDevice.startFrame(); }
+	{
+		mRenderDevice.startFrame();
+		mCurrentRenderGraph.reset();
+	}
 
 	void endFrame()
 		{ mRenderDevice.endFrame(); }
