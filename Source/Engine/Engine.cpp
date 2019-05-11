@@ -44,6 +44,25 @@ Camera& Engine::getCurrentSceneCamera()
 }
 
 
+Image Engine::createImage(const uint32_t x,
+				  const uint32_t y,
+				  const uint32_t z,
+				  const vk::Format format,
+				  vk::ImageUsageFlags usage,
+				  const std::string& name)
+{
+	return Image{&mRenderDevice, format, usage, x, y, z, name};
+}
+
+Buffer Engine::createBuffer(const uint32_t size,
+					const uint32_t stride,
+					vk::BufferUsageFlags usage,
+					const std::string& name)
+{
+	return Buffer{&mRenderDevice, usage, size, stride, name};
+}
+
+
 void Engine::recordOverlay(const ImDrawData* drawData)
 {
     const size_t vertexSize = drawData->TotalVtxCount * sizeof(ImDrawVert);
