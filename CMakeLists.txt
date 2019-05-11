@@ -99,6 +99,8 @@ set(DearImGUI_SOURCE
     ThirdParty/imgui-master/imgui_widgets.cpp
     )
 
+file(COPY "${CMAKE_CURRENT_LIST_DIR}/Source/Engine/Shaders" DESTINATION "${CMAKE_BINARY_DIR}/")
+
 
 add_library(${PROJECT_NAME} ${BELL_SOURCE} ${DearImGUI_SOURCE})
 target_link_libraries(${PROJECT_NAME} BELL_BASE assimp)
