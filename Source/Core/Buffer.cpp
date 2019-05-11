@@ -24,7 +24,8 @@ Buffer::Buffer(RenderDevice* dev,
 
     mBuffer = getDevice()->createBuffer(mSize, mUsage);
     const vk::MemoryRequirements bufferMemReqs = getDevice()->getMemoryRequirements(mBuffer);
-    mBufferMemory = getDevice()->getMemoryManager()->Allocate(mSize, bufferMemReqs.alignment, static_cast<bool>(mUsage & vk::BufferUsageFlagBits::eTransferSrc));
+	mBufferMemory = getDevice()->getMemoryManager()->Allocate(mSize, bufferMemReqs.alignment, static_cast<bool>(mUsage & vk::BufferUsageFlagBits::eTransferSrc ||
+																												mUsage & vk::BufferUsageFlagBits::eUniformBuffer));
     getDevice()->getMemoryManager()->BindBuffer(mBuffer, mBufferMemory);
 }
 
