@@ -65,12 +65,13 @@ void Editor::renderOverlay()
 		io.Fonts->GetTexDataAsRGBA32(&pixels, &width, &height);
 		size_t upload_size = width*height;
 
-		mOverlayFontTexture = mEngine.createImage(width,
-												  height,
-												  1,
-												  vk::Format::eR8G8B8A8Unorm,
-												  vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eTransferDst,
-												  "Overlay Fonts");
+		Image fontTexture = mEngine.createImage(width,
+												height,
+												1,
+												vk::Format::eR8G8B8A8Unorm,
+												vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eTransferDst,
+												"Overlay Fonts");
+		mOverlayFontTexture.swap(fontTexture);
 
 		mOverlayFontTexture.setContents(pixels, width, height, 1);
 

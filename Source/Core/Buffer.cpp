@@ -43,32 +43,41 @@ Buffer::~Buffer()
 }
 
 
-Buffer& Buffer::operator=(Buffer&& other)
+void Buffer::swap(Buffer& other)
 {
-    mBuffer = other.mBuffer;
-    other.mBuffer = nullptr;
-    mBufferMemory = other.mBufferMemory;
-    mCurrentOffset = other.mCurrentOffset;
-    mSize = other.mSize;
-    mStride = other.mStride;
-    mAllignment = other.mAllignment;
-    mName = other.mName;
+	vk::Buffer Buffer = mBuffer;
+	Allocation BufferMemory = mBufferMemory;
+	MapInfo CurrentMap = mCurrentMap;
+	uint64_t CurrentOffset = mCurrentOffset;
+	vk::BufferUsageFlags Usage = mUsage;
+	uint32_t Size = mSize;
+	uint32_t Stride = mStride;
+	uint32_t Allignment = mAllignment;
+	std::string Name = mName;
 
-    return *this;
-}
+	mBuffer = other.mBuffer;
+	other.mBuffer = Buffer;
 
+	mBufferMemory = other.mBufferMemory;
+	other.mBufferMemory = BufferMemory;
 
-Buffer::Buffer(Buffer&& other) :    GPUResource (other.getDevice()->getCurrentSubmissionIndex()),
-                                    DeviceChild (other.getDevice())
-{
-    mBuffer = other.mBuffer;
-    other.mBuffer = nullptr;
-    mBufferMemory = other.mBufferMemory;
-    mCurrentOffset = other.mCurrentOffset;
-    mSize = other.mSize;
-    mStride = other.mStride;
-    mAllignment = other.mAllignment;
-    mName = other.mName;
+	mCurrentMap = other.mCurrentMap;
+	other.mCurrentMap = CurrentMap;
+
+	mCurrentOffset = other.mCurrentOffset;
+	other.mCurrentOffset = CurrentOffset;
+
+	mSize = other.mSize;
+	other.mSize = Size;
+
+	mStride = other.mStride;
+	other.mStride = Stride;
+
+	mAllignment = other.mAllignment;
+	other.mAllignment = Allignment;
+
+	mName = other.mName;
+	other.mName = Name;
 }
 
 

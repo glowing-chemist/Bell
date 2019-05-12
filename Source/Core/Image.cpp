@@ -103,44 +103,53 @@ Image::~Image()
 }
 
 
-Image& Image::operator=(Image&& other)
+void Image::swap(Image& other)
 {
-    mImageMemory = other.mImageMemory;
-    mImage = other.mImage;
-    other.mImage = nullptr;
-    mIsOwned = other.mIsOwned;
-    mImageView = other.mImageView;
-    other.mImageView = nullptr;
-    mFormat = other.mFormat;
-    mLayout = other.mLayout;
-    mUsage = other.mUsage;
-    mNumberOfMips = other.mNumberOfMips;
-    mExtent = other.mExtent;
-    mType = other.mType;
-
-    mDebugName = other.mDebugName;
-
-    return *this;
-}
+	Allocation imageMemory = mImageMemory;
+	vk::Image image = mImage;
+	vk::ImageView imageView = mImageView;
+	bool isOwned = mIsOwned;
+	vk::Format Format = mFormat;
+	vk::ImageLayout Layout = mLayout;
+	vk::ImageUsageFlags Usage = mUsage;
+	uint32_t NumberOfMips = mNumberOfMips;
+	vk::Extent3D Extent = mExtent;
+	vk::ImageType Type = mType;
+	std::string DebugName = mDebugName;
 
 
-Image::Image(Image&& other) :   GPUResource(other.getDevice()->getCurrentSubmissionIndex()),
-                                DeviceChild (other.getDevice())
-{
-    mImageMemory = other.mImageMemory;
-    mImage = other.mImage;
-    other.mImage = nullptr;
-    mImageView = other.mImageView;
-    other.mImageView = nullptr;
-    mIsOwned = other.mIsOwned;
-    mFormat = other.mFormat;
-    mLayout = other.mLayout;
-    mUsage = other.mUsage;
-    mNumberOfMips = other.mNumberOfMips;
-    mExtent = other.mExtent;
-    mType = other.mType;
+	mImageMemory = other.mImageMemory;
+	other.mImageMemory = imageMemory;
 
-    mDebugName = other.mDebugName;
+	mImage = other.mImage;
+	other.mImage = image;
+
+	mIsOwned = other.mIsOwned;
+	other.mIsOwned = isOwned;
+
+	mImageView = other.mImageView;
+	other.mImageView = imageView;
+
+	mFormat = other.mFormat;
+	other.mFormat = Format;
+
+	mLayout = other.mLayout;
+	other.mLayout = Layout;
+
+	mUsage = other.mUsage;
+	other.mUsage = Usage;
+
+	mNumberOfMips = other.mNumberOfMips;
+	other.mNumberOfMips = NumberOfMips;
+
+	mExtent = other.mExtent;
+	other.mExtent = Extent;
+
+	mType = other.mType;
+	other.mType = Type;
+
+	mDebugName = other.mDebugName;
+	other.mDebugName = DebugName;
 }
 
 

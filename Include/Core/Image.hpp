@@ -41,8 +41,10 @@ public:
     Image& operator=(const Image&) = default;
     Image(const Image&) = default;
 
-    Image& operator=(Image&&);
-    Image(Image&&);
+	Image& operator=(Image&&) = delete;
+	Image(Image&&) = delete;
+
+	void swap(Image&); // used instead of a move constructor.
 
     vk::Image       getImage() { return mImage; }
     vk::ImageView   createImageView(vk::Format,
