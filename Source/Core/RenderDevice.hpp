@@ -297,12 +297,12 @@ private:
 
     std::unordered_map<Sampler, vk::Sampler> mImmutableSamplerCache;
 
+	bool mHasDebugLableSupport;
+
     SwapChain mSwapChain;
     std::vector<CommandPool> mCommandPools;
     MemoryManager mMemoryManager;
     DescriptorManager mDescriptorManager;
-
-	bool mHasDebugLableSupport;
 };
 
 #endif

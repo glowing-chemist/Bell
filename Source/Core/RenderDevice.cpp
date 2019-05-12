@@ -17,10 +17,10 @@ RenderDevice::RenderDevice(vk::Instance instance,
     mDevice{dev},
     mPhysicalDevice{physDev},
 	mInstance(instance),
+	mHasDebugLableSupport{false},
     mSwapChain{this, surface, window},
     mMemoryManager{this},
-	mDescriptorManager{this},
-	mHasDebugLableSupport(false)
+	mDescriptorManager{this}
 {
     // This is a bit of a hack to work around not being able to tell for the first few frames that
     // the fences we waited on hadn't been submitted (as no work has been done).
