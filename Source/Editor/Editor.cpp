@@ -99,8 +99,13 @@ void Editor::renderOverlay()
 	transformations[2] = -1.0f - draw_data->DisplayPos.x * transformations[0];
 	transformations[3] = -1.0f - draw_data->DisplayPos.y * transformations[1];
 
-	void* uboPtr = mOverlayTranslationUBO.map();
+	MapInfo mapInfo{};
+	mapInfo.mOffset = 0;
+	mapInfo.mSize = mOverlayTranslationUBO.getSize();
+	void* uboPtr = mOverlayTranslationUBO.map(mapInfo);
+
 	memcpy(uboPtr, &transformations[0], 16);
+
 	mOverlayTranslationUBO.unmap();
 
 	mEngine.recordOverlay(draw_data);

@@ -77,7 +77,11 @@ void Buffer::setContents(const void* data, const uint32_t size, const uint32_t o
     const uint32_t entries = size / mStride;
 
     Buffer stagingBuffer = Buffer(getDevice(), vk::BufferUsageFlagBits::eTransferSrc, size * mAllignment, mStride, "Staging Buffer");
-    void* mappedBuffer = stagingBuffer.map();
+
+	MapInfo mapInfo{};
+	mapInfo.mOffset = 0;
+	mapInfo.mSize = stagingBuffer.getSize();
+	void* mappedBuffer = stagingBuffer.map(mapInfo);
 
     for(uint32_t i = 0; i < entries; ++i)
     {
@@ -108,14 +112,17 @@ void Buffer::setContents(const void* data, const uint32_t size, const uint32_t o
 }
 
 
-void*   Buffer::map()
+void* Buffer::map(MapInfo& mapInfo)
 {
-    return getDevice()->getMemoryManager()->MapAllocation(mBufferMemory);
+	mapInfo.mMemory = mBufferMemory;
+	mCurrentMap = mapInfo;
+
+	return getDevice()->getMemoryManager()->MapAllocation(mapInfo);
 }
 
 
-void    Buffer::unmap()
+void  Buffer::unmap()
 {
-    getDevice()->getMemoryManager()->UnMapAllocation(mBufferMemory);
+	getDevice()->getMemoryManager()->UnMapAllocation(mCurrentMap);
 }
 

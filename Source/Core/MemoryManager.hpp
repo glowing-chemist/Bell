@@ -9,7 +9,8 @@
 
 #define MEMORY_LOGGING 0
 
-struct PoolFragment {
+struct PoolFragment
+{
     friend class MemoryManager; // to allow this to be an opaque handle that only the memory manager can use
     friend bool operator==(const PoolFragment&, const PoolFragment&);
 private:
@@ -20,7 +21,8 @@ private:
     bool canBeMerged = false;
 };
 
-struct Allocation {
+struct Allocation
+{
     friend class MemoryManager;
 private:
     uint64_t size;
@@ -31,6 +33,13 @@ private:
     bool hostMappable;
 };
 
+struct MapInfo
+{
+	Allocation mMemory;
+	size_t mOffset;
+	size_t mSize;
+};
+
 
 // This class will be used for keeping track of GPU allocations for buffers and
 // images. this will be done by maintaing 2 pools of gpu memory, one device local
@@ -39,7 +48,6 @@ private:
 class MemoryManager : public DeviceChild
 {
 public:
-    MemoryManager() = default; // constructor that doens't allocate pools
     explicit MemoryManager(RenderDevice*); // one that does
 
     Allocation Allocate(uint64_t size, unsigned long allignment, bool hostMappable);
@@ -48,10 +56,13 @@ public:
     void       BindImage(vk::Image& image, Allocation alloc);
     void       BindBuffer(vk::Buffer& buffer, Allocation alloc);
 
-	void*	   MapAllocation(Allocation alloc);
-	void	   UnMapAllocation(Allocation alloc);
+	void*	   MapAllocation(MapInfo info);
+	void	   UnMapAllocation(MapInfo info);
 
     void       Destroy();
+
+	bool	   writeMapsNeedFlushing() const
+				{ return !mHasHostCoherent; }
 
 #if MEMORY_LOGGING
     void dumpPools() const;
@@ -73,6 +84,7 @@ private:
 
     uint32_t mDeviceLocalPoolIndex;
     uint32_t mHostMappablePoolIndex;
+	bool mHasHostCoherent;
 
     std::vector<vk::DeviceMemory> deviceMemoryBackers;
     std::vector<vk::DeviceMemory> hostMappableMemoryBackers;

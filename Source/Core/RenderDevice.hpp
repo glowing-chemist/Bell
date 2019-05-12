@@ -167,6 +167,9 @@ public:
     void*                              mapMemory(vk::DeviceMemory, vk::DeviceSize, vk::DeviceSize);
     void                               unmapMemory(vk::DeviceMemory);
 
+	void							   flushMemoryRange(const vk::MappedMemoryRange& range)
+											{ mDevice.flushMappedMemoryRanges(1, &range); }
+
     void                               bindBufferMemory(vk::Buffer&, vk::DeviceMemory, const uint64_t);
     void                               bindImageMemory(vk::Image&, vk::DeviceMemory, const uint64_t);
 

@@ -44,17 +44,21 @@ public:
     Allocation getMemory()
         { return mBufferMemory; }
 
+	uint32_t getSize() const
+		{ return mSize;}
+
     void setContents(const void* data,
                      const uint32_t size,
                      const uint32_t offset = 0);
 
 
-    void*   map();
+	void*   map(MapInfo &mapInfo);
     void    unmap();
 
 private:
     vk::Buffer mBuffer;
     Allocation mBufferMemory;
+	MapInfo mCurrentMap;
 
     uint64_t mCurrentOffset;
 

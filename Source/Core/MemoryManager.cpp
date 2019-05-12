@@ -10,7 +10,8 @@
 #include <algorithm>
 
 
-bool operator==(const PoolFragment& lhs, const PoolFragment& rhs) {
+bool operator==(const PoolFragment& lhs, const PoolFragment& rhs)
+{
     return lhs.DeviceLocal == rhs.DeviceLocal
             && lhs.free == rhs.free
             && lhs.offset == rhs.offset
@@ -18,7 +19,8 @@ bool operator==(const PoolFragment& lhs, const PoolFragment& rhs) {
 }
 
 
-MemoryManager::MemoryManager(RenderDevice* dev) : DeviceChild{dev} {
+MemoryManager::MemoryManager(RenderDevice* dev) : DeviceChild{dev}
+{
     findPoolIndicies();
 
     AllocateDevicePool();
@@ -26,14 +28,16 @@ MemoryManager::MemoryManager(RenderDevice* dev) : DeviceChild{dev} {
 }
 
 
-void MemoryManager::Destroy() {
+void MemoryManager::Destroy()
+{
     FreeDevicePools();
     FreeHostMappablePools();
 }
 
 
 #if MEMORY_LOGGING
-    void MemoryManager::dumpPools() const {
+	void MemoryManager::dumpPools() const
+	{
         std::cout << "Device local pools: \n";
         for(auto& pool : deviceLocalPools) {
             for(auto& fragment : pool) {
@@ -57,11 +61,13 @@ void MemoryManager::Destroy() {
 #endif
 
 
-void MemoryManager::findPoolIndicies() {
+void MemoryManager::findPoolIndicies()
+{
     vk::PhysicalDeviceMemoryProperties memProps = getDevice()->getMemoryProperties();
 
     bool poolFound = false;
-    for(uint32_t i = 0; i < memProps.memoryTypeCount; ++i) {
+	for(uint32_t i = 0; i < memProps.memoryTypeCount; ++i)
+	{
         if(memProps.memoryTypes[i].propertyFlags & vk::MemoryPropertyFlagBits::eDeviceLocal
            && !(memProps.memoryTypes[i].propertyFlags & vk::MemoryPropertyFlagBits::eHostCoherent))
         {
@@ -71,7 +77,8 @@ void MemoryManager::findPoolIndicies() {
         }
     }
 
-    if(!poolFound) {
+	if(!poolFound)
+	{
         for(uint32_t i = 0; i < memProps.memoryTypeCount; ++i) {
             if(memProps.memoryTypes[i].propertyFlags & vk::MemoryPropertyFlagBits::eDeviceLocal)
             {
@@ -83,20 +90,31 @@ void MemoryManager::findPoolIndicies() {
         }
     }
 
-    for(uint32_t i = 0; i < memProps.memoryTypeCount; ++i) {
-        if((memProps.memoryTypes[i].propertyFlags & vk::MemoryPropertyFlagBits::eHostCoherent)
+	for(uint32_t i = 0; i < memProps.memoryTypeCount; ++i)
+	{
+		if((memProps.memoryTypes[i].propertyFlags & vk::MemoryPropertyFlagBits::eHostCoherent)
            && (memProps.memoryTypes[i]).propertyFlags & vk::MemoryPropertyFlagBits::eHostVisible)
         {
-            mHostMappablePoolIndex = i; // just find the find pool that is device local
-            break;
+			mHostMappablePoolIndex = i;
+			mHasHostCoherent = true;
         }
+
+		if((memProps.memoryTypes[i].propertyFlags & vk::MemoryPropertyFlagBits::eDeviceLocal)
+		   && (memProps.memoryTypes[i]).propertyFlags & vk::MemoryPropertyFlagBits::eHostVisible)
+		{
+			mHostMappablePoolIndex = i;
+			mHasHostCoherent = false;
+			// Prefer explicit memory flushing so break here if we have it
+			break;
+		}
     }
 
     
 }
 
 
-void MemoryManager::AllocateDevicePool() {
+void MemoryManager::AllocateDevicePool()
+{
 
     vk::MemoryAllocateInfo allocInfo{256 * 1000000, static_cast<uint32_t>(mDeviceLocalPoolIndex)};
 
@@ -104,7 +122,8 @@ void MemoryManager::AllocateDevicePool() {
 
     std::list<PoolFragment> fragmentList(4);
     uint64_t offset = 0;
-    for(auto& frag : fragmentList) {
+	for(auto& frag : fragmentList)
+	{
         frag.free = true;
         frag.DeviceLocal = true;
         frag.size = 64 * 1000000;
@@ -119,7 +138,8 @@ void MemoryManager::AllocateDevicePool() {
 }
 
 
-void MemoryManager::AllocateHostMappablePool() {
+void MemoryManager::AllocateHostMappablePool()
+{
 
     vk::MemoryAllocateInfo allocInfo{256 * 1000000, static_cast<uint32_t>(mHostMappablePoolIndex)};
 
@@ -127,7 +147,8 @@ void MemoryManager::AllocateHostMappablePool() {
 
     std::list<PoolFragment> fragmentList(4);
     uint64_t offset = 0;
-    for(auto& frag : fragmentList) {
+	for(auto& frag : fragmentList)
+	{
         frag.free = true;
         frag.DeviceLocal = true;
         frag.size = 64 * 1000000;
@@ -142,43 +163,54 @@ void MemoryManager::AllocateHostMappablePool() {
 }
 
 
-void MemoryManager::FreeDevicePools() {
-    for(auto& frags : deviceMemoryBackers) {
+void MemoryManager::FreeDevicePools()
+{
+	for(auto& frags : deviceMemoryBackers)
+	{
         getDevice()->freeMemory(frags);
     }
 }
 
 
-void MemoryManager::FreeHostMappablePools() {
-    for(auto& frags : hostMappableMemoryBackers) { // we assume that all has been unmapped
+void MemoryManager::FreeHostMappablePools()
+{
+	for(auto& frags : hostMappableMemoryBackers)
+	{ // we assume that all has been unmapped
         getDevice()->freeMemory(frags);
     }
 }
 
 
-void MemoryManager::MergeFreePools() {
+void MemoryManager::MergeFreePools()
+{
     MergePool(deviceLocalPools);
     MergePool(hostMappablePools);
 }
 
 
-void MemoryManager::MergePool(std::vector<std::list<PoolFragment> > &pools) { // this is expensive on a a list so only call when really needed
-    for(auto& pool : pools) {
+void MemoryManager::MergePool(std::vector<std::list<PoolFragment> > &pools)
+{ // this is expensive on a a list so only call when really needed
+	for(auto& pool : pools)
+	{
         // loop forwards through all the fragments and mark any free fragments ajasent to a free fragment as can be merged
 #if MEMORY_LOGGING
         const auto freeFragmentsPre = std::count_if(pool.begin(), pool.end(), [](auto& fragment){ return fragment.free; });
         std::cout << "number of free fragments pre merge: " << freeFragmentsPre << '\n';
 #endif
 		bool fragmentFree = false;
-        for(auto& fragment : pool) {
+		for(auto& fragment : pool)
+		{
             
-            if(fragmentFree && fragment.free) {
+			if(fragmentFree && fragment.free)
+			{
                 fragment.canBeMerged = true;
             }
 
-            if(fragment.free) {
+			if(fragment.free)
+			{
                 fragmentFree = true;
-            } else { 
+			} else
+			{
                 fragmentFree = false;
             }
         }
@@ -187,15 +219,17 @@ void MemoryManager::MergePool(std::vector<std::list<PoolFragment> > &pools) { //
         uint64_t sizeToAdd = 0;
         bool fragmentMerged = false;
         std::vector<std::list<PoolFragment>::reverse_iterator> fragmentsToRemove;
-        for(auto fragment = pool.rbegin(); fragment != pool.rend(); ++fragment) {
-
-            if(fragmentMerged) {
+		for(auto fragment = pool.rbegin(); fragment != pool.rend(); ++fragment)
+		{
+			if(fragmentMerged)
+			{
                 fragment->size += sizeToAdd;
                 sizeToAdd = 0;
                 fragmentMerged = false;
             }
 
-            if(fragment->canBeMerged) {
+			if(fragment->canBeMerged)
+			{
                 sizeToAdd = fragment->size;
                 fragmentsToRemove.push_back(fragment);
                 fragmentMerged = true;
@@ -203,7 +237,8 @@ void MemoryManager::MergePool(std::vector<std::list<PoolFragment> > &pools) { //
         }
 
         // One final loop over all the fragments to be removed in reverse to avoid a use after free
-        for(auto iter = fragmentsToRemove.rbegin(); iter != fragmentsToRemove.rend(); ++iter) {
+		for(auto iter = fragmentsToRemove.rbegin(); iter != fragmentsToRemove.rend(); ++iter)
+		{
             pool.remove(**iter);
         }
 #if MEMORY_LOGGING
@@ -214,16 +249,19 @@ void MemoryManager::MergePool(std::vector<std::list<PoolFragment> > &pools) { //
 }
 
 
-Allocation MemoryManager::AttemptToAllocate(uint64_t size, unsigned long allignment, bool hostMappable) {
+Allocation MemoryManager::AttemptToAllocate(uint64_t size, unsigned long allignment, bool hostMappable)
+{
     auto& memPools = hostMappable ? hostMappablePools : deviceLocalPools;
 
     uint32_t poolNum = 0;
     for(auto& pool : memPools) {
         for(auto fragIter = pool.begin(); fragIter != pool.end(); ++fragIter) {
             PoolFragment frag = *fragIter;
-            if(frag.free && frag.size >= size) {
+			if(frag.free && frag.size >= size)
+			{
                 unsigned int allignedoffset = 0;
-                while((frag.offset  + allignedoffset) % allignment != 0) {
+				while((frag.offset  + allignedoffset) % allignment != 0)
+				{
                     ++allignedoffset;
                     if(size + allignedoffset > frag.size) continue; // make sure there is enought size to be alligned
                 }
@@ -235,7 +273,8 @@ Allocation MemoryManager::AttemptToAllocate(uint64_t size, unsigned long allignm
                 alloc.pool = poolNum;
                 alloc.size = size;
 
-                if(size + allignedoffset < (frag.size / 2)) { // we'd be wasting more than half the fragment, so split it up
+				if(size + allignedoffset < (frag.size / 2))
+				{ // we'd be wasting more than half the fragment, so split it up
                     PoolFragment fragToInsert;
                     fragToInsert.DeviceLocal = true;
                     fragToInsert.free = true;
@@ -258,7 +297,8 @@ Allocation MemoryManager::AttemptToAllocate(uint64_t size, unsigned long allignm
 }
 
 
-Allocation MemoryManager::Allocate(uint64_t size, unsigned long allignment,  bool hostMappable) {
+Allocation MemoryManager::Allocate(uint64_t size, unsigned long allignment,  bool hostMappable)
+{
 
     Allocation alloc = AttemptToAllocate(size, allignment, hostMappable);
     if(alloc.size != 0) return alloc;
@@ -267,9 +307,11 @@ Allocation MemoryManager::Allocate(uint64_t size, unsigned long allignment,  boo
     alloc = AttemptToAllocate(size, allignment, hostMappable);
     if(alloc.size != 0) return alloc;
 
-    if(hostMappable) {
+	if(hostMappable)
+	{
         AllocateHostMappablePool();
-    } else {
+	} else
+	{
         AllocateDevicePool();
     }
     MergeFreePools();
@@ -277,41 +319,59 @@ Allocation MemoryManager::Allocate(uint64_t size, unsigned long allignment,  boo
 }
 
 
-void MemoryManager::Free(Allocation alloc) {
+void MemoryManager::Free(Allocation alloc)
+{
     auto& pools = alloc.hostMappable ? hostMappablePools : deviceLocalPools ;
     auto& pool  = pools[alloc.pool];
 
     for(auto& frag : pool) {
-        if(alloc.fragOffset == frag.offset)  {
+		if(alloc.fragOffset == frag.offset)
+		{
             frag.free = true;
         }
     }
 }
 
 
-void MemoryManager::BindBuffer(vk::Buffer &buffer, Allocation alloc) {
+void MemoryManager::BindBuffer(vk::Buffer &buffer, Allocation alloc)
+{
     std::vector<vk::DeviceMemory> pools = alloc.hostMappable ? hostMappableMemoryBackers : deviceMemoryBackers ;
 
     getDevice()->bindBufferMemory(buffer, pools[alloc.pool], alloc.offset);
 }
 
 
-void MemoryManager::BindImage(vk::Image &image, Allocation alloc) {
+void MemoryManager::BindImage(vk::Image &image, Allocation alloc)
+{
     std::vector<vk::DeviceMemory> pools = alloc.hostMappable ? hostMappableMemoryBackers : deviceMemoryBackers ;
 
     getDevice()->bindImageMemory(image, pools[alloc.pool], alloc.offset);
 }
 
 
-void* MemoryManager::MapAllocation(Allocation alloc) {
+void* MemoryManager::MapAllocation(MapInfo info)
+{
+	const Allocation& alloc = info.mMemory;
 	std::vector<vk::DeviceMemory> pools = alloc.hostMappable ? hostMappableMemoryBackers : deviceMemoryBackers;
 
-    return getDevice()->mapMemory(pools[alloc.pool], alloc.size, alloc.offset);
+	return getDevice()->mapMemory(pools[alloc.pool], info.mSize, alloc.offset + info.mOffset);
 }
 
 
-void MemoryManager::UnMapAllocation(Allocation alloc) {
+void MemoryManager::UnMapAllocation(MapInfo info)
+{
+	const Allocation& alloc = info.mMemory;
 	std::vector<vk::DeviceMemory> pools = alloc.hostMappable ? hostMappableMemoryBackers : deviceMemoryBackers;
 
-    getDevice()->unmapMemory(pools[alloc.pool]);
+	getDevice()->unmapMemory(pools[alloc.pool]);
+
+	if(writeMapsNeedFlushing())
+	{
+		vk::MappedMemoryRange range{};
+		range.setMemory(pools[alloc.pool]);
+		range.setSize(info.mSize);
+		range.setOffset(alloc.offset + info.mOffset);
+
+		getDevice()->flushMemoryRange(range);
+	}
 }

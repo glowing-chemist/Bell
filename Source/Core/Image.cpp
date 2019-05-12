@@ -180,7 +180,10 @@ void Image::setContents(const void* data,
     const uint32_t size = xsize * ysize * zsize * getPixelSize(mFormat);
     Buffer stagingBuffer = Buffer(getDevice(), vk::BufferUsageFlagBits::eTransferSrc, size, 1, "Staging Buffer");
 
-    void* mappedBuffer = stagingBuffer.map();
+	MapInfo mapInfo{};
+	mapInfo.mOffset = 0;
+	mapInfo.mSize = stagingBuffer.getSize();
+	void* mappedBuffer = stagingBuffer.map(mapInfo);
     std::memcpy(mappedBuffer, data, size);
     stagingBuffer.unmap();
 
