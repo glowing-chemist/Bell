@@ -129,7 +129,7 @@ RenderDevice RenderInstance::createRenderDevice(const int DeviceFeatureFlags)
     auto [physDev, dev] = findSuitableDevices(DeviceFeatureFlags);
     mDevice = dev;
 
-    return RenderDevice{physDev, dev, mWindowSurface, mWindow};
+	return RenderDevice{mInstance, physDev, dev, mWindowSurface, mWindow};
 }
 
 
@@ -176,15 +176,30 @@ std::pair<vk::PhysicalDevice, vk::Device> RenderInstance::findSuitableDevices(in
         queueInfo.push_back(info);
     }
 
-    const char* deviceExtensions = VK_KHR_SWAPCHAIN_EXTENSION_NAME;
+	std::array<const char*, 2> deviceExtensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME, VK_EXT_DEBUG_MARKER_EXTENSION_NAME};
+
+	uint8_t requiredExtensionCount = 0;
+	for(const auto extensions : deviceExtensions)
+	{
+		auto deviceExtensionproperties = physicalDevice.enumerateDeviceExtensionProperties();
+		for(const auto deviceExtension : deviceExtensionproperties)
+		{
+			if(strcmp(extensions, deviceExtension.extensionName) == 0)
+				++requiredExtensionCount;
+		}
+	}
+
+	BELL_ASSERT(requiredExtensionCount == deviceExtensions.size(), "Missing device extensions!")
+
+	const bool hasDebugNameExtension = requiredExtensionCount == deviceExtensions.size();
 
     vk::PhysicalDeviceFeatures physicalFeatures{};
     physicalFeatures.geometryShader = GeometryWanted;
     physicalFeatures.setSamplerAnisotropy(true);
 
     vk::DeviceCreateInfo deviceInfo{};
-    deviceInfo.setEnabledExtensionCount(1);
-    deviceInfo.setPpEnabledExtensionNames(&deviceExtensions);
+	deviceInfo.setEnabledExtensionCount(hasDebugNameExtension ? deviceExtensions.size() : 1);
+	deviceInfo.setPpEnabledExtensionNames(deviceExtensions.data());
     deviceInfo.setQueueCreateInfoCount(uniqueQueues.size());
     deviceInfo.setPQueueCreateInfos(queueInfo.data());
     deviceInfo.setPEnabledFeatures(&physicalFeatures);

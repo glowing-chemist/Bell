@@ -27,6 +27,11 @@ Buffer::Buffer(RenderDevice* dev,
 	mBufferMemory = getDevice()->getMemoryManager()->Allocate(mSize, bufferMemReqs.alignment, static_cast<bool>(mUsage & vk::BufferUsageFlagBits::eTransferSrc ||
 																												mUsage & vk::BufferUsageFlagBits::eUniformBuffer));
     getDevice()->getMemoryManager()->BindBuffer(mBuffer, mBufferMemory);
+
+	if(mName != "")
+	{
+		getDevice()->setDebugName(mName, reinterpret_cast<uint64_t>(VkBuffer(mBuffer)), vk::DebugReportObjectTypeEXT::eBuffer);
+	}
 }
 
 

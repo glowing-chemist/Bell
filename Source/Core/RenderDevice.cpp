@@ -7,14 +7,20 @@
 
 #include <limits>
 
-RenderDevice::RenderDevice(vk::PhysicalDevice physDev, vk::Device dev, vk::SurfaceKHR surface, GLFWwindow* window) :
+RenderDevice::RenderDevice(vk::Instance instance,
+						   vk::PhysicalDevice physDev,
+						   vk::Device dev,
+						   vk::SurfaceKHR surface,
+						   GLFWwindow* window) :
     mFinishedSubmission{0},
     mCurrentFrameIndex{0},
     mDevice{dev},
     mPhysicalDevice{physDev},
+	mInstance(instance),
     mSwapChain{this, surface, window},
     mMemoryManager{this},
-    mDescriptorManager{this}
+	mDescriptorManager{this},
+	mHasDebugLableSupport(false)
 {
     // This is a bit of a hack to work around not being able to tell for the first few frames that
     // the fences we waited on hadn't been submitted (as no work has been done).
@@ -52,6 +58,13 @@ RenderDevice::RenderDevice(vk::PhysicalDevice physDev, vk::Device dev, vk::Surfa
     vk::EventCreateInfo eventInfo{};
     mDebugEvent = mDevice.createEvent(eventInfo);
 #endif
+
+	// Check for the debug names extension
+	for(const auto extensionProperty : mPhysicalDevice.enumerateDeviceExtensionProperties())
+	{
+		if(strcmp(VK_EXT_DEBUG_MARKER_EXTENSION_NAME, extensionProperty.extensionName) == 0)
+			mHasDebugLableSupport = true;
+	}
 }
 
 
@@ -1128,6 +1141,25 @@ void RenderDevice::clearDeferredResources()
             break;
     }
 }
+
+
+void RenderDevice::setDebugName(const std::string& name, const uint64_t handle, const vk::DebugReportObjectTypeEXT objectType)
+{
+	vk::DebugMarkerObjectNameInfoEXT markerInfo{};
+	markerInfo.setObject(handle);
+	markerInfo.setObjectType(objectType);
+	markerInfo.setPObjectName(name.c_str());
+
+	static auto* debugMarkerFunction = reinterpret_cast<PFN_vkDebugMarkerSetObjectNameEXT>(mInstance.getProcAddr("vkDebugMarkerSetObjectNameEXT"));
+
+	if(debugMarkerFunction != nullptr && mHasDebugLableSupport)
+	{
+		VkDebugMarkerObjectNameInfoEXT Info = markerInfo;
+		Info.sType = VK_STRUCTURE_TYPE_DEBUG_MARKER_OBJECT_NAME_INFO_EXT;
+		debugMarkerFunction(mDevice, &Info);
+	}
+}
+
 
 
 // Memory management functions

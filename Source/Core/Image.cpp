@@ -53,6 +53,11 @@ Image::Image(RenderDevice* dev,
 
     mImageMemory = getDevice()->getMemoryManager()->Allocate(imageRequirements.size, imageRequirements.alignment, false);
     getDevice()->getMemoryManager()->BindImage(mImage, mImageMemory);
+
+	if(mDebugName != "")
+	{
+		getDevice()->setDebugName(mDebugName, reinterpret_cast<uint64_t>(VkImage(mImage)), vk::DebugReportObjectTypeEXT::eImage);
+	}
 }
 
 
@@ -80,6 +85,11 @@ Image::Image(RenderDevice* dev,
     if(x != 0 && y == 0 && z == 0) mType = vk::ImageType::e1D;
     if(x != 0 && y != 0 && z == 1) mType = vk::ImageType::e2D;
     if(x != 0 && y != 0 && z >  1) mType = vk::ImageType::e3D;
+
+	if(mDebugName != "")
+	{
+		getDevice()->setDebugName(mDebugName, reinterpret_cast<uint64_t>(VkImage(mImage)), vk::DebugReportObjectTypeEXT::eImage);
+	}
 }
 
 

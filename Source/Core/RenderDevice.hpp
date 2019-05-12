@@ -51,7 +51,7 @@ struct ComputePipelineHandles
 class RenderDevice
 {
 public:
-    RenderDevice(vk::PhysicalDevice, vk::Device, vk::SurfaceKHR, GLFWwindow*);
+	RenderDevice(vk::Instance, vk::PhysicalDevice, vk::Device, vk::SurfaceKHR, GLFWwindow*);
     ~RenderDevice();
 
     vk::PhysicalDeviceLimits           getLimits() const { return mLimits; }
@@ -148,6 +148,8 @@ public:
     const vk::PhysicalDevice*                getPhysicalDevice() const { return &mPhysicalDevice; }
 
     vk::Sampler                        getImmutableSampler(const Sampler& sampler);
+
+	void							   setDebugName(const std::string&, const uint64_t, const vk::DebugReportObjectTypeEXT);
 
 
     // Memory management functions
@@ -273,6 +275,8 @@ private:
     vk::Device mDevice;
     vk::PhysicalDevice mPhysicalDevice;
 
+	vk::Instance mInstance;
+
     vk::Queue mGraphicsQueue;
     vk::Queue mComputeQueue;
     vk::Queue mTransferQueue;
@@ -297,6 +301,8 @@ private:
     std::vector<CommandPool> mCommandPools;
     MemoryManager mMemoryManager;
     DescriptorManager mDescriptorManager;
+
+	bool mHasDebugLableSupport;
 };
 
 #endif
