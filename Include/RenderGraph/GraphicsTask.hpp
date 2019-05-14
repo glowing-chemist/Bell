@@ -26,11 +26,11 @@ enum class DrawType
 enum class BlendMode
 {
     None,
-    Or,
-    Nor,
-    Xor,
-    And,
-    Nand
+	Add,
+	Subtract,
+	ReverseSubtract,
+	Min,
+	Max
 };
 
 enum class DepthTest
@@ -84,7 +84,8 @@ struct GraphicsPipelineDescription
     Rect mViewport;
 	bool mUseBackFaceCulling;
 
-    BlendMode mBlendMode;
+	BlendMode mAlphaBlendMode;
+	BlendMode mColourBlendMode;
     DepthTest mDepthTest;
 };
 // needed in order to use unordered_map

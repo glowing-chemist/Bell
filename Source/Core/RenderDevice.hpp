@@ -201,11 +201,14 @@ private:
 
     std::vector<vk::PipelineShaderStageCreateInfo>              generateShaderStagesInfo(const GraphicsTask&);
 
+	std::vector<vk::PipelineColorBlendAttachmentState>			generateColourBlendState(const GraphicsTask&);
+
     vk::Pipeline                                                generatePipeline(const GraphicsTask&,
                                                                                  const vk::PipelineLayout&,
                                                                                  const vk::VertexInputBindingDescription &,
                                                                                  const std::vector<vk::VertexInputAttributeDescription> &,
-                                                                                 const vk::RenderPass&);
+																				 const vk::RenderPass&,
+																				 const std::vector<vk::PipelineColorBlendAttachmentState>&);
 
     vk::Pipeline                                                generatePipeline(const ComputeTask&,
                                                                                  const vk::PipelineLayout&);

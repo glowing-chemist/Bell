@@ -110,6 +110,7 @@ void Engine::recordOverlay(const ImDrawData* drawData)
                                      viewport,
                                      false, // no backface culling
 									 BlendMode::None,
+									 BlendMode::None,
                                      DepthTest::None};
 
     GraphicsTask task("ImGuiOverlay", desc);
@@ -117,7 +118,7 @@ void Engine::recordOverlay(const ImDrawData* drawData)
 	task.addInput("OverlayUBO", AttachmentType::UniformBuffer);
     task.addInput("OverlayTexture", AttachmentType::Texture2D);
     task.addInput("FontSampler", AttachmentType::Sampler);
-	task.addOutput("FrameBuffer", AttachmentType::SwapChain, LoadOp::Clear_White);
+	task.addOutput("FrameBuffer", AttachmentType::SwapChain, LoadOp::Clear_Black);
 
     // Render command lists
     uint32_t vertexOffset = 0;

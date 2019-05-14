@@ -221,11 +221,13 @@ GraphicsPipelineHandles RenderDevice::createPipelineHandles(const GraphicsTask& 
     const vk::DescriptorSetLayout descSetLayout = generateDescriptorSetLayout(task);
     const vk::PipelineLayout pipelineLayout = generatePipelineLayout(descSetLayout);
     const vk::RenderPass renderPass = generateRenderPass(task);
+	const std::vector<vk::PipelineColorBlendAttachmentState> blendState = generateColourBlendState(task);
     const vk::Pipeline pipeline = generatePipeline( task,
                                                     pipelineLayout,
                                                     vertexBindings,
                                                     vertexAttributes,
-                                                    renderPass);
+													renderPass,
+													blendState);
 
     GraphicsPipelineHandles handles{pipeline, pipelineLayout, renderPass, vertexBindings, vertexAttributes, descSetLayout};
     mGraphicsPipelineCache[task.getPipelineDescription()] = handles;
@@ -251,10 +253,11 @@ ComputePipelineHandles RenderDevice::createPipelineHandles(const ComputeTask& ta
 
 
 vk::Pipeline RenderDevice::generatePipeline(const GraphicsTask& task,
-                                            const vk::PipelineLayout &pipelineLayout,
-                                            const vk::VertexInputBindingDescription &vertexBinding,
-                                            const std::vector<vk::VertexInputAttributeDescription> &vertexAttributes,
-                                            const vk::RenderPass &renderPass)
+											const vk::PipelineLayout &pipelineLayout,
+											const vk::VertexInputBindingDescription &vertexBinding,
+											const std::vector<vk::VertexInputAttributeDescription> &vertexAttributes,
+											const vk::RenderPass &renderPass,
+											const std::vector<vk::PipelineColorBlendAttachmentState>& blendState)
 {
     const GraphicsPipelineDescription& pipelineDesc = task.getPipelineDescription();
     vk::PipelineRasterizationStateCreateInfo rasterInfo = generateRasterizationInfo(task);
@@ -290,30 +293,10 @@ vk::Pipeline RenderDevice::generatePipeline(const GraphicsTask& task,
     multiSampInfo.setSampleShadingEnable(false);
     multiSampInfo.setRasterizationSamples(vk::SampleCountFlagBits::e1);
 
-    vk::PipelineColorBlendAttachmentState colorAttachState{};
-    colorAttachState.setColorWriteMask(vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG |  vk::ColorComponentFlagBits::eB |  vk::ColorComponentFlagBits::eA); // write to all color components
-    colorAttachState.setBlendEnable(false);
-
     vk::PipelineColorBlendStateCreateInfo blendStateInfo{};
-    blendStateInfo.setLogicOpEnable(pipelineDesc.mBlendMode != BlendMode::None);
-    blendStateInfo.setAttachmentCount(1);
-    blendStateInfo.setPAttachments(&colorAttachState);
-    blendStateInfo.setLogicOp([op = pipelineDesc.mBlendMode] {
-       switch(op)
-       {
-            case BlendMode::None:
-            case BlendMode::Or:
-                return vk::LogicOp::eOr;
-            case BlendMode::Nor:
-                return vk::LogicOp::eNor;
-            case BlendMode::Xor:
-                return vk::LogicOp::eXor;
-            case BlendMode::And:
-                return vk::LogicOp::eAnd;
-            case BlendMode::Nand:
-                return vk::LogicOp::eNand;
-       }
-    }());
+	blendStateInfo.setLogicOpEnable(false);
+	blendStateInfo.setAttachmentCount(static_cast<uint32_t>(blendState.size()));
+	blendStateInfo.setPAttachments(blendState.data());
 
     vk::PipelineDepthStencilStateCreateInfo depthStencilInfo{};
     const bool depthTest = pipelineDesc.mDepthTest != DepthTest::None;
@@ -712,6 +695,69 @@ vk::PipelineLayout RenderDevice::generatePipelineLayout(vk::DescriptorSetLayout 
     info.setPSetLayouts(&descLayout);
 
     return mDevice.createPipelineLayout(info);
+}
+
+
+std::vector<vk::PipelineColorBlendAttachmentState> RenderDevice::generateColourBlendState(const GraphicsTask& task)
+{
+	std::vector<vk::PipelineColorBlendAttachmentState> blendState;
+
+	const auto& outputAttachments = task.getOuputAttachments();
+	const auto pipelineDesc = task.getPipelineDescription();
+
+	for(const auto& [name, type, loadOp] : outputAttachments)
+	{
+		const auto blendAdjuster = [](const BlendMode op)
+		{
+			vk::BlendOp adjustedOp;
+
+			switch(op)
+			{
+				case BlendMode::Add:
+					adjustedOp = vk::BlendOp::eAdd;
+					break;
+
+				case BlendMode::Subtract:
+					adjustedOp = vk::BlendOp::eSubtract;
+					break;
+
+				case BlendMode::ReverseSubtract:
+					adjustedOp = vk::BlendOp::eReverseSubtract;
+					break;
+
+				case BlendMode::Min:
+					adjustedOp = vk::BlendOp::eMin;
+					break;
+
+				case BlendMode::Max:
+					adjustedOp = vk::BlendOp::eMax;
+					break;
+
+				default:
+					adjustedOp = vk::BlendOp::eAdd;
+			}
+
+			return adjustedOp;
+		};
+
+		const vk::BlendOp alphaBlendOp = blendAdjuster(pipelineDesc.mAlphaBlendMode);
+		const vk::BlendOp colourBlendop = blendAdjuster(pipelineDesc.mColourBlendMode);
+
+		vk::PipelineColorBlendAttachmentState colorAttachState{};
+		// write to all components by default.
+		colorAttachState.setColorWriteMask(vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG |  vk::ColorComponentFlagBits::eB |  vk::ColorComponentFlagBits::eA); // write to all color components
+		colorAttachState.setBlendEnable(pipelineDesc.mColourBlendMode != BlendMode::None);
+		colorAttachState.setColorBlendOp(colourBlendop);
+		colorAttachState.setAlphaBlendOp(alphaBlendOp);
+		colorAttachState.setSrcColorBlendFactor(vk::BlendFactor::eSrcColor);
+		colorAttachState.setDstColorBlendFactor(vk::BlendFactor::eDstColor);
+		colorAttachState.setSrcAlphaBlendFactor(vk::BlendFactor::eSrcAlpha);
+		colorAttachState.setDstAlphaBlendFactor(vk::BlendFactor::eDstAlpha);
+
+		blendState.push_back(colorAttachState);
+	}
+
+	return blendState;
 }
 
 
