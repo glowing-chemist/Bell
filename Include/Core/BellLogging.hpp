@@ -32,4 +32,16 @@
 #endif
 
 
+// BELL_TRAP
+#ifndef NDEBUG
+
+#define BELL_TRAP __asm("int3")
+
+#else
+
+#define BELL_TRAP
+
+#endif
+
+
 #endif
