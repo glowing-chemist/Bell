@@ -176,12 +176,14 @@ void RenderGraph::bindSampler(const std::string& name, const Sampler& type)
 
 void RenderGraph::bindVertexBuffer(const Buffer& buffer)
 {
-    mVertexBuffer = buffer;
+	mVertexBuffer.reset();
+	mVertexBuffer = buffer;
 }
 
 
 void RenderGraph::bindIndexBuffer(const Buffer& buffer)
 {
+	mIndexBuffer.reset();
     mIndexBuffer = buffer;
 }
 
