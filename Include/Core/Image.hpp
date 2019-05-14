@@ -38,8 +38,8 @@ public:
 
     ~Image();
 
-    Image& operator=(const Image&) = default;
-    Image(const Image&) = default;
+	Image& operator=(const Image&) = delete;
+	Image(const Image&) = default;
 
 	Image& operator=(Image&&) = delete;
 	Image(Image&&) = delete;

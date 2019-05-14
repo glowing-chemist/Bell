@@ -48,20 +48,20 @@ public:
     {
         mRefCount = other.mRefCount;
 
-        aquire();
-    }
+		aquire();
+	}
 
     RefCount& operator=(const RefCount& other)
     {
         mRefCount = other.mRefCount;
 
-        aquire();
+		aquire();
 
         return *this;
     }
 
-    RefCount(RefCount&&) = default;
-    RefCount& operator=(RefCount&&) = default;
+	RefCount(RefCount&&) = delete;
+	RefCount& operator=(RefCount&&) = delete;
 
     void                aquire() { std::atomic_fetch_add(mRefCount, 1u); }
     bool                release() { const uint32_t oldRefCount = std::atomic_fetch_sub(mRefCount, 1u); return oldRefCount == 1; }

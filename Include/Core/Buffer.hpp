@@ -23,8 +23,11 @@ public:
 
     ~Buffer();
 
-    Buffer& operator=(const Buffer&) = default;
-    Buffer(const Buffer&) = default;
+	Buffer& operator=(const Buffer&);
+	Buffer(const Buffer&);
+
+	Buffer& operator=(Buffer&&) = delete;
+	Buffer(Buffer&&) = delete;
 
 	void swap(Buffer&);
 

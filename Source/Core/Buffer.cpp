@@ -39,9 +39,52 @@ Buffer::~Buffer()
 {
     const bool shouldDestroy = release();
     if(shouldDestroy && mBuffer != vk::Buffer{nullptr})
+	{
         getDevice()->destroyBuffer(*this);
+	}
 }
 
+
+Buffer& Buffer::operator=(const Buffer& buf)
+{
+	if(mBuffer != vk::Buffer(nullptr))
+	{
+		const bool shouldDestroy = release();
+		if(shouldDestroy)
+			getDevice()->destroyBuffer(*this);
+	}
+
+	GPUResource::operator=(buf);
+	DeviceChild::operator=(buf);
+
+	mBuffer = buf.mBuffer;
+	mBufferMemory = buf.mBufferMemory;
+	mCurrentMap = buf.mCurrentMap;
+	mCurrentOffset = buf.mCurrentOffset;
+	mUsage = buf.mUsage;
+	mSize = buf.mSize;
+	mStride = buf.mStride;
+	mAllignment = buf.mAllignment;
+	mName = buf.mName;
+
+	return *this;
+}
+
+
+Buffer::Buffer(const Buffer& buf) :
+	GPUResource{buf},
+	DeviceChild{buf}
+{
+	mBuffer = buf.mBuffer;
+	mBufferMemory = buf.mBufferMemory;
+	mCurrentMap = buf.mCurrentMap;
+	mCurrentOffset = buf.mCurrentOffset;
+	mUsage = buf.mUsage;
+	mSize = buf.mSize;
+	mStride = buf.mStride;
+	mAllignment = buf.mAllignment;
+	mName = buf.mName;
+}
 
 void Buffer::swap(Buffer& other)
 {
@@ -129,12 +172,16 @@ void* Buffer::map(MapInfo& mapInfo)
 	mapInfo.mMemory = mBufferMemory;
 	mCurrentMap = mapInfo;
 
+	updateLastAccessed(getDevice()->getCurrentSubmissionIndex());
+
 	return getDevice()->getMemoryManager()->MapAllocation(mapInfo);
 }
 
 
 void  Buffer::unmap()
 {
+	updateLastAccessed(getDevice()->getCurrentSubmissionIndex());
+
 	getDevice()->getMemoryManager()->UnMapAllocation(mCurrentMap);
 }
 
