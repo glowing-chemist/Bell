@@ -26,8 +26,7 @@ public:
     Buffer& operator=(const Buffer&) = default;
     Buffer(const Buffer&) = default;
 
-    Buffer& operator=(Buffer&&);
-    Buffer(Buffer&&);
+	void swap(Buffer&);
 
 	vk::Buffer getBuffer() const
 		{ return mBuffer; }

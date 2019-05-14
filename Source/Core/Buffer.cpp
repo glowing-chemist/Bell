@@ -67,6 +67,9 @@ void Buffer::swap(Buffer& other)
 	mCurrentOffset = other.mCurrentOffset;
 	other.mCurrentOffset = CurrentOffset;
 
+	mUsage = other.mUsage;
+	other.mUsage = Usage;
+
 	mSize = other.mSize;
 	other.mSize = Size;
 
