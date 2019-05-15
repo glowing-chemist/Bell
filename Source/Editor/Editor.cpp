@@ -63,7 +63,6 @@ void Editor::renderOverlay()
 		unsigned char* pixels;
 		int width, height;
 		io.Fonts->GetTexDataAsRGBA32(&pixels, &width, &height);
-		size_t upload_size = width*height;
 
 		Image fontTexture = mEngine.createImage(width,
 												height,
