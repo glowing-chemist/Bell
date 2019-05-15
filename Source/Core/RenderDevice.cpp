@@ -412,24 +412,22 @@ vk::RenderPass	RenderDevice::generateRenderPass(const GraphicsTask& task)
         if(type == AttachmentType::SwapChain)
         {
             attachmentDesc.setFinalLayout(vk::ImageLayout::ePresentSrcKHR);
-            attachmentDesc.setLoadOp(vk::AttachmentLoadOp::eDontCare); // the first time we use the swapchain it will contain garbage.
         }
         else
         {
             attachmentDesc.setFinalLayout(layout);
-
-            vk::AttachmentLoadOp op = [loadop](){
-                switch(loadop)
-                {
-                    case LoadOp::Preserve:
-                        return vk::AttachmentLoadOp::eLoad;
-                    default:
-                        return vk::AttachmentLoadOp::eClear;
-                }
-            }();
-
-            attachmentDesc.setLoadOp(op);
         }
+		vk::AttachmentLoadOp op = [loadop](){
+			switch(loadop)
+			{
+				case LoadOp::Preserve:
+					return vk::AttachmentLoadOp::eLoad;
+				default:
+					return vk::AttachmentLoadOp::eClear;
+			}
+		}();
+
+		attachmentDesc.setLoadOp(op);
 
         attachmentDesc.setStoreOp(vk::AttachmentStoreOp::eStore);
         attachmentDesc.setStencilLoadOp(vk::AttachmentLoadOp::eLoad);
