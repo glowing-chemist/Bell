@@ -85,7 +85,7 @@ void Editor::renderOverlay()
 
 	ImGui::NewFrame();
 
-	// TOD add imgui code.
+	addMenuBar();
 
 	// Set up the draw data.
 	ImGui::Render();
@@ -134,6 +134,15 @@ void Editor::pumpInputQueue()
 	io.MousePos = ImVec2(static_cast<float>(mCurrentCursorPos.x),
 						 static_cast<float>(mCurrentCursorPos.y));
 
+	bool mousePressed[5];
+	for(uint i = 0; i < 5; ++i)
+	{
+		const auto pressed = glfwGetMouseButton(mWindow, i);
+
+		mousePressed[i] = pressed == GLFW_PRESS;
+	}
+	memcpy(&io.MouseDown[0], &mousePressed[0], sizeof(bool) * 5);
+
 	int w, h;
 	int display_w, display_h;
 	glfwGetWindowSize(mWindow, &w, &h);
@@ -141,4 +150,35 @@ void Editor::pumpInputQueue()
 	io.DisplaySize = ImVec2(static_cast<float>(w), static_cast<float>(h));
 	if (w > 0 && h > 0)
 		io.DisplayFramebufferScale = ImVec2(static_cast<float>(display_w) / w, static_cast<float>(display_h) / h);
+}
+
+
+void Editor::addMenuBar()
+{
+	if (ImGui::BeginMainMenuBar())
+		{
+			if (ImGui::BeginMenu("File"))
+			{
+				if(ImGui::MenuItem("Load Scene"))
+				{
+
+				}
+				if(ImGui::MenuItem("Close current Scene"))
+				{
+
+				}
+
+				ImGui::EndMenu();
+			}
+			if (ImGui::BeginMenu("Help"))
+			{
+				if(ImGui::MenuItem("About"))
+				{
+
+				}
+
+				ImGui::EndMenu();
+			}
+			ImGui::EndMainMenuBar();
+	}
 }

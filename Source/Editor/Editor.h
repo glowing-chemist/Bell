@@ -29,6 +29,8 @@ private:
 
     void pumpInputQueue();
 
+	void addMenuBar();
+
 
     GLFWwindow* mWindow;
 
