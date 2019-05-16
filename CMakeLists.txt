@@ -111,6 +111,7 @@ set(BELL_EDITOR_SOURCE
 	Source/Editor/Editor.cpp
 	Source/Editor/NodeIMGUI.cpp
 	Source/Editor/MeshesIMGUI.cpp
+	Source/Editor/imguifilebrowser.cpp
 	)
 
 add_executable(BELL_EDITOR ${BELL_EDITOR_SOURCE})
