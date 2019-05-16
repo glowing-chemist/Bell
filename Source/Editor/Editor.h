@@ -3,6 +3,7 @@
 
 #include "Engine/Engine.hpp"
 #include "Engine/Scene.h"
+#include "imguifilebrowser.h"
 
 #include "GLFW/glfw3.h"
 
@@ -40,6 +41,11 @@ private:
         double y;
     };
     CursorPosition mCurrentCursorPos;
+    int mMode;
+    bool mShowHelpMenu;
+
+    bool mShowFileBrowser;
+    ImGuiFileBrowser mFileBrowser;
 
     Engine mEngine;
 

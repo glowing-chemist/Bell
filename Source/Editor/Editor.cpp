@@ -6,6 +6,10 @@
 Editor::Editor(GLFWwindow* window) :
     mWindow{window},
     mCurrentCursorPos{0.0, 0.0},
+    mMode{0},
+    mShowHelpMenu{false},
+    mShowFileBrowser{false},
+    mFileBrowser{"/"},
     mEngine{mWindow},
 	mHasUploadedFonts(false),
 	mOverlayFontTexture(mEngine.createImage(1, 1, 1, vk::Format::eR8Srgb, vk::ImageUsageFlagBits::eSampled, "Font Texture")),
@@ -87,6 +91,15 @@ void Editor::renderOverlay()
 
 	addMenuBar();
 
+    if(mShowFileBrowser)
+    {
+        ImGui::SetNextWindowPos(ImVec2(800, 450));
+        auto optionalPath = mFileBrowser.render();
+
+        if(optionalPath)
+            mShowFileBrowser = false;
+    }
+
 	// Set up the draw data.
 	ImGui::Render();
 
@@ -161,24 +174,35 @@ void Editor::addMenuBar()
 			{
 				if(ImGui::MenuItem("Load Scene"))
 				{
-
+                    mShowFileBrowser = true;
 				}
 				if(ImGui::MenuItem("Close current Scene"))
 				{
 
-				}
+                }
+                if(ImGui::MenuItem("Add new mesh"))
+                {
+                    mShowFileBrowser = true;
+                }
 
 				ImGui::EndMenu();
 			}
 			if (ImGui::BeginMenu("Help"))
 			{
 				if(ImGui::MenuItem("About"))
-				{
-
-				}
+                    mShowHelpMenu = true;
 
 				ImGui::EndMenu();
 			}
-			ImGui::EndMainMenuBar();
+
+            // Radio buttons to select the mode.
+            ImGui::BeginGroup();
+
+            ImGui::RadioButton("Scene mode", &mMode, 0);
+            ImGui::RadioButton("Shader graph mode", &mMode, 1);
+
+            ImGui::EndGroup();
+
+            ImGui::EndMainMenuBar();
 	}
 }
