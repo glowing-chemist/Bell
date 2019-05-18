@@ -1,13 +1,8 @@
 Document to keep track of improvements that can be made to existing components in BELL.
 
 Low hanging fruit:
-	
-	Allow the memory manager to allocate from pool types not currently supported e.g cached,coherient types (potentially a big performance improvment when 
-	updating (uniform) buffers that change every frame or morefrequently).
 
 	Add SIMD/multithreading support so the frustrum culling or more generally when doing collision detection on the scenes BVH. 
-
-	Add debug lables to API handles in order to aid debuging.
 
 Moderate effort fruit:
 
