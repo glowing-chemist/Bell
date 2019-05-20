@@ -24,7 +24,7 @@ public:
     ~Buffer();
 
 	Buffer& operator=(const Buffer&);
-	Buffer(const Buffer&);
+    Buffer(const Buffer&) = default;
 
 	Buffer& operator=(Buffer&&) = delete;
 	Buffer(Buffer&&) = delete;

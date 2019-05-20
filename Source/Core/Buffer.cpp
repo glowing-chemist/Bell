@@ -71,21 +71,6 @@ Buffer& Buffer::operator=(const Buffer& buf)
 }
 
 
-Buffer::Buffer(const Buffer& buf) :
-	GPUResource{buf},
-	DeviceChild{buf}
-{
-	mBuffer = buf.mBuffer;
-	mBufferMemory = buf.mBufferMemory;
-	mCurrentMap = buf.mCurrentMap;
-	mCurrentOffset = buf.mCurrentOffset;
-	mUsage = buf.mUsage;
-	mSize = buf.mSize;
-	mStride = buf.mStride;
-	mAllignment = buf.mAllignment;
-	mName = buf.mName;
-}
-
 void Buffer::swap(Buffer& other)
 {
 	vk::Buffer Buffer = mBuffer;
