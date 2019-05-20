@@ -77,8 +77,12 @@ RenderDevice::~RenderDevice()
     {
         if(imageView != vk::ImageView{nullptr})
             mDevice.destroyImageView(imageView);
-        mDevice.destroyImage(handle);
-        mMemoryManager.Free(memory);
+
+        if(handle != vk::Image{nullptr})
+        {
+            mDevice.destroyImage(handle);
+            mMemoryManager.Free(memory);
+        }
     }
     mImagesPendingDestruction.clear();
 

@@ -15,6 +15,7 @@
 #include "SwapChain.hpp"
 #include "CommandPool.h"
 #include "Core/Image.hpp"
+#include "Core/ImageView.hpp"
 #include "Core/Sampler.hpp"
 #include "RenderGraph/GraphicsTask.hpp"
 #include "RenderGraph/ComputeTask.hpp"
@@ -68,7 +69,8 @@ public:
                                                    const uint32_t,
                                                    const uint32_t);
 
-    void                               destroyImage(Image& image) { mImagesPendingDestruction.push_back({image.getLastAccessed(), image.getImage(), image.getMemory(), image.getCurrentImageView()}); }
+    void                               destroyImage(Image& image) { mImagesPendingDestruction.push_back({image.getLastAccessed(), image.getImage(), image.getMemory(), nullptr}); }
+    void                               destroyImageView(ImageView& view) { mImagesPendingDestruction.push_back({view.getLastAccessed(), view.getImage(), view.getImageMemory(), view.getImageView()}); }
 
     vk::ImageView                      createImageView(const vk::ImageViewCreateInfo& info)
                                             { return mDevice.createImageView(info); }

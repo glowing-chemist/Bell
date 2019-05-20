@@ -52,7 +52,9 @@ set(BELL_BASE_SOURCE
 	Source/Core/RenderInstance.cpp
 	Source/Core/RenderDevice.cpp
 	Source/Core/Image.cpp
+	Source/Core/ImageView.cpp
 	Source/Core/Buffer.cpp
+	Source/Core/BufferView.cpp
 	Source/Core/MemoryManager.cpp
 	Source/Core/BarrierManager.cpp
 	Source/Core/SwapChain.cpp
