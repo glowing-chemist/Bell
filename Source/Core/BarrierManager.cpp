@@ -63,41 +63,91 @@ void BarrierRecorder::transferResourceToQueue(Buffer& buffer, const QueueType qu
 
 void BarrierRecorder::transitionImageLayout(Image& image, const vk::ImageLayout layout)
 {
-	if (layout == image.getLayout())
-		return;
+    for(uint32_t arrayLevel = 0; arrayLevel < image.numberOfLevels(); ++arrayLevel)
+    {
+        for(uint32_t mipLevel = 0; mipLevel < image.numberOfMips(); ++mipLevel)
+        {
+            vk::ImageMemoryBarrier barrier{};
+            barrier.setSrcAccessMask(vk::AccessFlagBits::eMemoryWrite);
+            barrier.setDstAccessMask(vk::AccessFlagBits::eMemoryRead);
+            barrier.setOldLayout(image.getLayout(arrayLevel, mipLevel));
+            barrier.setNewLayout(layout);
+            barrier.setImage(image.getImage());
+            if(layout == vk::ImageLayout::eDepthStencilAttachmentOptimal) {
+                barrier.setSubresourceRange({vk::ImageAspectFlagBits::eDepth, 0, image.numberOfMips(), 0, image.numberOfLevels()});
+            } else {
+                barrier.setSubresourceRange({vk::ImageAspectFlagBits::eColor, 0, image.numberOfMips(), 0, image.numberOfLevels()});
+            }
 
-	vk::ImageMemoryBarrier barrier{};
-	barrier.setSrcAccessMask(vk::AccessFlagBits::eMemoryWrite);
-	barrier.setDstAccessMask(vk::AccessFlagBits::eMemoryRead);
-	barrier.setOldLayout(image.getLayout());
-	barrier.setNewLayout(layout);
-	barrier.setImage(image.getImage());
+            image.mSubResourceInfo[(arrayLevel * image.numberOfMips()) + mipLevel].mLayout = layout;
+
+            mImageMemoryBarriers.push_back({image.getOwningQueueType(), barrier});
+        }
+    }
+}
+
+
+void BarrierRecorder::makeContentsVisible(Image& image)
+{
+
+    for(uint32_t arrayLevel = 0; arrayLevel < image.numberOfLevels(); ++arrayLevel)
+    {
+        for(uint32_t mipLevel = 0; mipLevel < image.numberOfMips(); ++mipLevel)
+        {
+            vk::ImageMemoryBarrier barrier{};
+            barrier.setSrcAccessMask(vk::AccessFlagBits::eMemoryWrite);
+            barrier.setDstAccessMask(vk::AccessFlagBits::eMemoryRead);
+            barrier.setOldLayout(image.getLayout(arrayLevel, mipLevel));
+            barrier.setNewLayout(image.getLayout(arrayLevel, mipLevel));
+            if(image.getLayout(arrayLevel, mipLevel) == vk::ImageLayout::eDepthStencilAttachmentOptimal) {
+                barrier.setSubresourceRange({vk::ImageAspectFlagBits::eDepth, 0, 1, 0, 1});
+            } else {
+                barrier.setSubresourceRange({vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1});
+            }
+
+            mImageMemoryBarriers.push_back({image.getOwningQueueType(), barrier});
+        }
+    }
+}
+
+
+void BarrierRecorder::transitionImageLayout(ImageView& imageView, const vk::ImageLayout layout)
+{
+    if (layout == imageView.getImageLayout())
+        return;
+
+    vk::ImageMemoryBarrier barrier{};
+    barrier.setSrcAccessMask(vk::AccessFlagBits::eMemoryWrite);
+    barrier.setDstAccessMask(vk::AccessFlagBits::eMemoryRead);
+    barrier.setOldLayout(imageView.getImageLayout());
+    barrier.setNewLayout(layout);
+    barrier.setImage(imageView.getImage());
     if(layout == vk::ImageLayout::eDepthStencilAttachmentOptimal) {
         barrier.setSubresourceRange({vk::ImageAspectFlagBits::eDepth, 0, 1, 0, 1});
     } else {
         barrier.setSubresourceRange({vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1});
     }
 
-	mImageMemoryBarriers.push_back({image.getOwningQueueType(), barrier});
+    mImageMemoryBarriers.push_back({imageView.getOwningQueueType(), barrier});
 
-	image.mLayout = layout;
+    imageView.mLayout = layout;
 }
 
 
-void BarrierRecorder::makeContentsVisible(Image& image)
+void BarrierRecorder::makeContentsVisible(ImageView& imageView)
 {
     vk::ImageMemoryBarrier barrier{};
     barrier.setSrcAccessMask(vk::AccessFlagBits::eMemoryWrite);
     barrier.setDstAccessMask(vk::AccessFlagBits::eMemoryRead);
-    barrier.setOldLayout(image.getLayout());
-    barrier.setNewLayout(image.getLayout());
-    if(image.getLayout() == vk::ImageLayout::eDepthStencilAttachmentOptimal) {
+    barrier.setOldLayout(imageView.getImageLayout());
+    barrier.setNewLayout(imageView.getImageLayout());
+    if(imageView.getImageLayout() == vk::ImageLayout::eDepthStencilAttachmentOptimal) {
         barrier.setSubresourceRange({vk::ImageAspectFlagBits::eDepth, 0, 1, 0, 1});
     } else {
         barrier.setSubresourceRange({vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1});
     }
 
-    mImageMemoryBarriers.push_back({image.getOwningQueueType(), barrier});
+    mImageMemoryBarriers.push_back({imageView.getOwningQueueType(), barrier});
 }
 
 

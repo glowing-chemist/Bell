@@ -21,18 +21,24 @@ public:
     Image(RenderDevice*,
           const vk::Format,
           const vk::ImageUsageFlags,
-          const uint32_t,
-          const uint32_t,
-          const uint32_t,
+          const uint32_t x,
+          const uint32_t y,
+          const uint32_t z,
+          const uint32_t mips = 1,
+          const uint32_t levels = 1,
+          const uint32_t samples = 1,
 		  const std::string& = "");
 
     Image(RenderDevice*,
           vk::Image&,
           const vk::Format,
           const vk::ImageUsageFlags,
-          const uint32_t,
-          const uint32_t,
-          const uint32_t,
+          const uint32_t x,
+          const uint32_t y,
+          const uint32_t z,
+          const uint32_t mips = 1,
+          const uint32_t levels = 1,
+          const uint32_t samples = 1,
 		  const std::string& = ""
           );
 
@@ -47,33 +53,20 @@ public:
 	void swap(Image&); // used instead of a move constructor.
 
     vk::Image       getImage() { return mImage; }
-    vk::ImageView   createImageView(vk::Format,
-                                    vk::ImageViewType,
-                                    const uint32_t baseMipLevel,
-                                    const uint32_t levelCount,
-                                    const uint32_t baseArrayLayer,
-                                    const uint32_t layerCount);
-
-    void            setCurrentImageView(vk::ImageView& view)
-                    { mImageView = view; }
-
-    vk::ImageView&   getCurrentImageView()
-                    { return mImageView; }
-
-    const vk::ImageView&   getCurrentImageView() const
-                    { return mImageView; }
-
 
     void setContents(const void* data,
                      const uint32_t xsize,
                     const uint32_t ysize,
                     const uint32_t zsize,
+                    const uint32_t level = 0,
+                    const uint32_t lod = 0,
                     const int32_t offsetx = 0,
                     const int32_t offsety = 0,
                     const int32_t offsetz = 0);
 
 
     uint32_t        numberOfMips() const { return mNumberOfMips; }
+    uint32_t        numberOfLevels() const { return mNumberOfLevels; }
     void            generateMips(const uint32_t);
 
 	vk::Format		getFormat() const
@@ -82,11 +75,11 @@ public:
     vk::ImageUsageFlags getUsage() const
                            { return mUsage; }
 
-	vk::ImageLayout getLayout() const
-						{ return mLayout; }
+    vk::ImageLayout getLayout(const uint32_t level, const uint32_t LOD) const
+                        { return mSubResourceInfo[(level * mNumberOfMips) + LOD].mLayout; }
 
-    vk::Extent3D    getExtent() const
-                        { return mExtent; }
+    vk::Extent3D    getExtent(const uint32_t level, const uint32_t LOD) const
+                        { return mSubResourceInfo[(level * mNumberOfMips) + LOD].mExtent; }
 
     Allocation      getMemory() const
                         { return mImageMemory; }
@@ -96,15 +89,22 @@ public:
 private:
     Allocation mImageMemory;
     vk::Image mImage;
-    vk::ImageView mImageView;
+
+    struct SubResourceInfo
+    {
+        vk::ImageLayout mLayout;
+        vk::Extent3D mExtent;
+    };
+    std::vector<SubResourceInfo> mSubResourceInfo;
+    uint32_t mNumberOfMips;
+    uint32_t mNumberOfLevels;
+
 
     bool mIsOwned;
     vk::Format mFormat;
-	vk::ImageLayout mLayout;
     vk::ImageUsageFlags mUsage;
-    uint32_t mNumberOfMips;
-    vk::Extent3D mExtent;
     vk::ImageType mType;
+    uint32_t mSamples;
 
     std::string mDebugName;
 };

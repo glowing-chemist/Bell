@@ -12,7 +12,8 @@ Editor::Editor(GLFWwindow* window) :
     mFileBrowser{"/"},
     mEngine{mWindow},
 	mHasUploadedFonts(false),
-	mOverlayFontTexture(mEngine.createImage(1, 1, 1, vk::Format::eR8Srgb, vk::ImageUsageFlagBits::eSampled, "Font Texture")),
+    mOverlayFontTexture(mEngine.createImage(512, 64, 1, 1, 1, 1, vk::Format::eR8G8B8A8Unorm, vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eTransferDst , "Font Texture")),
+    mOverlayTextureView(mOverlayFontTexture),
 	mOverlayTranslationUBO(mEngine.createBuffer(16, 16, vk::BufferUsageFlagBits::eUniformBuffer, "Transformations")),
 	mFontsSampler(SamplerType::Linear),
     mInProgressScene{"In construction"}
@@ -68,21 +69,7 @@ void Editor::renderOverlay()
 		int width, height;
 		io.Fonts->GetTexDataAsRGBA32(&pixels, &width, &height);
 
-		Image fontTexture = mEngine.createImage(width,
-												height,
-												1,
-												vk::Format::eR8G8B8A8Unorm,
-												vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eTransferDst,
-												"Overlay Fonts");
-		mOverlayFontTexture.swap(fontTexture);
-
 		mOverlayFontTexture.setContents(pixels, width, height, 1);
-
-		auto imageView = mOverlayFontTexture.createImageView(vk::Format::eR8G8B8A8Unorm,
-															 vk::ImageViewType::e2D,
-															 0, 1, 0, 1);
-
-		mOverlayFontTexture.setCurrentImageView(imageView);
 
 		mHasUploadedFonts = true;
 	}
@@ -124,8 +111,8 @@ void Editor::renderOverlay()
 	mEngine.recordOverlay(draw_data);
 
 	mEngine.setSamperInScene("FontSampler", mFontsSampler);
-	mEngine.setImageInScene("OverlayTexture", mOverlayFontTexture);
-	mEngine.setImageInScene("FrameBuffer", mEngine.getSwapChainImage());
+    mEngine.setImageInScene("OverlayTexture", mOverlayTextureView);
+    mEngine.setImageInScene("FrameBuffer", mEngine.getSwaChainImageView());
 	mEngine.setBufferInScene("OverlayUBO", mOverlayTranslationUBO);
 }
 

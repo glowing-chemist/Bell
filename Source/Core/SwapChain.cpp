@@ -99,27 +99,41 @@ SwapChain::SwapChain(RenderDevice* Device, vk::SurfaceKHR windowSurface, GLFWwin
     info.setClipped(true);
 
     mSwapChain = getDevice()->createSwapchain(info);
+    mSwapChainExtent = swapExtent;
+    mSwapChainFormat = swapFormat.format;
 
     auto swapChainImages = getDevice()->getSwapchainImages(mSwapChain);
     for(vk::Image image : swapChainImages)
     {
-        mSwapChainImages.emplace_back(getDevice(), image, mSwapChainFormat, vk::ImageUsageFlagBits::eColorAttachment, swapExtent.width, swapExtent.height, 1, "SwapChain");
+        mSwapChainImages.emplace_back(getDevice(),
+                                      image,
+                                      mSwapChainFormat,
+                                      vk::ImageUsageFlagBits::eColorAttachment,
+                                      swapExtent.width,
+                                      swapExtent.height,
+                                      1, 1, 1, 1, "SwapChain");
     }
-
-    mSwapChainExtent = swapExtent;
-    mSwapChainFormat = swapFormat.format;
 
     createSwapChainImageViews();
 }
 
 
+SwapChain::~SwapChain()
+{
+    destroy();
+}
+
+
 void SwapChain::destroy()
 {
-    for(auto& image : mSwapChainImages)
+    mSwapChainImages.clear();
+    mImageViews.clear();
+
+    if(mSwapChain != vk::SwapchainKHR{nullptr})
     {
-        getDevice()->destroyImageView(image.getCurrentImageView());
+        getDevice()->destroySwapchain(mSwapChain);
+        mSwapChain = nullptr;
     }
-    getDevice()->destroySwapchain(mSwapChain);
 }
 
 
@@ -133,12 +147,8 @@ void SwapChain::createSwapChainImageViews()
 {
     for(size_t i = 0; i < mSwapChainImages.size(); i++)
     {
-
-        vk::ImageView view = mSwapChainImages[i].createImageView(mSwapChainFormat,
-                                                                 vk::ImageViewType::e2D,
-                                                                 0, 1, 0, 1);
-
-        mSwapChainImages[i].setCurrentImageView(view);
+        ImageView imgeView(mSwapChainImages[i]);
+        mImageViews.push_back(imgeView);
     }
 
     BELL_LOG_ARGS("created %ld image Views", mSwapChainImages.size())

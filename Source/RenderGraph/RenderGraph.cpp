@@ -146,10 +146,10 @@ void RenderGraph::bindResource(const std::string& name, const uint32_t index, co
 }
 
 
-void RenderGraph::bindImage(const std::string& name, const Image& image)
+void RenderGraph::bindImage(const std::string& name, const ImageView &image)
 {
-    const uint32_t currentImageIndex = static_cast<uint32_t>(mImages.size());
-    mImages.emplace_back(name, image);
+    const uint32_t currentImageIndex = static_cast<uint32_t>(mImageViews.size());
+    mImageViews.emplace_back(name, image);
 
     bindResource(name, currentImageIndex, ResourceType::Image);
 }
@@ -350,29 +350,27 @@ const RenderTask& RenderGraph::getTask(TaskType taskType, uint32_t taskIndex) co
 }
 
 
-GPUResource& RenderGraph::getResource(const ResourceType resourceType, const uint32_t resourceIndex)
+Sampler& RenderGraph::getSampler(const uint32_t index)
 {
-    GPUResource& resource = [resourceType, resourceIndex, this]() -> GPUResource&
-    {
-        switch(resourceType)
-        {
-            case ResourceType::Image:
-                return mImages[resourceIndex].second;
+    BELL_ASSERT(index < mSamplers.size(), " Attempting to fetch non sampler resource")
 
-            case ResourceType::Buffer:
-                return mBuffers[resourceIndex].second;
-        }
-    }();
-
-    return resource;
+    return mSamplers[index].second;
 }
 
 
-Sampler& RenderGraph::getSampler(const uint32_t resourceIndex)
+ImageView& RenderGraph::getImageView(const uint32_t index)
 {
-    BELL_ASSERT(resourceIndex < mSamplers.size(), " Attempting to fetch non sampler resource")
+    BELL_ASSERT(index < mImageViews.size(), " Attempting to fetch non imageView resource")
 
-    return mSamplers[resourceIndex].second;
+    return mImageViews[index].second;
+}
+
+
+Buffer& RenderGraph::getBuffer(const uint32_t index)
+{
+    BELL_ASSERT(index < mBuffers.size(), " Attempting to fetch non buffer resource")
+
+    return mBuffers[index].second;
 }
 
 
@@ -386,11 +384,11 @@ const Buffer& RenderGraph::getBoundBuffer(const std::string& name) const
 }
 
 
-const Image& RenderGraph::getBoundImage(const std::string& name) const
+const ImageView& RenderGraph::getBoundImageView(const std::string& name) const
 {
-    auto itr = std::find_if(mImages.begin(), mImages.end(), [&name](const std::pair<std::string, Image>& entry) { return name == entry.first; });
+    auto itr = std::find_if(mImageViews.begin(), mImageViews.end(), [&name](const std::pair<std::string, ImageView>& entry) { return name == entry.first; });
 
-    BELL_ASSERT(itr != mImages.end(), "Image not found")
+    BELL_ASSERT(itr != mImageViews.end(), "Image not found")
 
     return (*itr).second;
 }
@@ -399,7 +397,7 @@ const Image& RenderGraph::getBoundImage(const std::string& name) const
 void RenderGraph::reset()
 {
 	// Clear all bound resources
-	mImages.clear();
+    mImageViews.clear();
 	mBuffers.clear();
 	mSamplers.clear();
 

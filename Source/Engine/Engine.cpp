@@ -53,11 +53,14 @@ Camera& Engine::getCurrentSceneCamera()
 Image Engine::createImage(const uint32_t x,
 				  const uint32_t y,
 				  const uint32_t z,
+                  const uint32_t mips,
+                  const uint32_t levels,
+                  const uint32_t samples,
 				  const vk::Format format,
 				  vk::ImageUsageFlags usage,
 				  const std::string& name)
 {
-	return Image{&mRenderDevice, format, usage, x, y, z, name};
+    return Image{&mRenderDevice, format, usage, x, y, z, mips, levels, samples, name};
 }
 
 Buffer Engine::createBuffer(const uint32_t size,

@@ -72,6 +72,9 @@ RenderDevice::~RenderDevice()
 {
     mDevice.waitIdle();
 
+    // destroy the swapchain first so that is can add it's image views to the deferred destruction queue.
+    mSwapChain.destroy();
+
     // We can ignore lastUsed as we have just waited till all work has finished.
     for(auto& [lastUsed, handle, memory, imageView] : mImagesPendingDestruction)
     {
@@ -104,7 +107,6 @@ RenderDevice::~RenderDevice()
         mDevice.destroyFramebuffer(frameBuffer);
     }
 
-    mSwapChain.destroy();
     mMemoryManager.Destroy();
 
     for(auto& [desc, graphicsHandles] : mGraphicsPipelineCache)
@@ -145,32 +147,6 @@ RenderDevice::~RenderDevice()
 #ifndef NDEBUG
     mDevice.destroyEvent(mDebugEvent);
 #endif
-}
-
-
-vk::Image   RenderDevice::createImage(const vk::Format format,
-                                      const vk::ImageUsageFlags usage,
-                                      const vk::ImageType type,
-                                      const uint32_t x,
-                                      const uint32_t y,
-                                      const uint32_t z)
-{
-    // default to only allowing 2D images for now, with no MS
-    vk::ImageCreateInfo createInfo(vk::ImageCreateFlags{},
-                                  type,
-                                  format,
-                                  vk::Extent3D{x, y, z},
-                                  1,
-                                  1,
-                                  vk::SampleCountFlagBits::e1,
-                                  vk::ImageTiling::eOptimal,
-                                  usage,
-                                  vk::SharingMode::eExclusive,
-                                  0,
-                                  nullptr,
-                                  vk::ImageLayout::eUndefined);
-
-    return mDevice.createImage(createInfo);
 }
 
 
@@ -550,16 +526,24 @@ vk::DescriptorSetLayout RenderDevice::generateDescriptorSetLayout(const RenderTa
             case AttachmentType::Texture3D:
 				return vk::DescriptorType::eSampledImage;
 
+            case AttachmentType::Image1D:
+            case AttachmentType::Image2D:
+            case AttachmentType::Image3D:
+                return vk::DescriptorType::eStorageImage;
+
            case AttachmentType::DataBuffer:
                 return vk::DescriptorType::eStorageBufferDynamic;
 
            case AttachmentType::UniformBuffer:
                 return vk::DescriptorType::eUniformBuffer;
 
+           case AttachmentType::Sampler:
+                return vk::DescriptorType::eSampler;
+
            // Ignore push constants for now.
             }
 
-            return vk::DescriptorType::eSampler; // For now use this to indicate push_constants (terrible I know)
+            return vk::DescriptorType::eCombinedImageSampler; // For now use this to indicate push_constants (terrible I know)
         }();
 
         vk::DescriptorSetLayoutBinding layoutBinding{};
@@ -832,9 +816,9 @@ void RenderDevice::generateFrameBuffers(RenderGraph& graph)
 
         for(const auto& bindingInfo : *outputBindings)
         {
-                const auto& image = static_cast<Image&>(graph.getResource(bindingInfo.mResourcetype, bindingInfo.mResourceIndex));
-                imageExtent = image.getExtent();
-                imageViews.push_back(image.getCurrentImageView());
+                const auto& imageView = graph.getImageView(bindingInfo.mResourceIndex);
+                imageExtent = imageView.getImageExtent();
+                imageViews.push_back(imageView.getImageView());
         }
 
         vk::FramebufferCreateInfo info{};
@@ -884,9 +868,9 @@ std::vector<BarrierRecorder> RenderDevice::recordBarriers(RenderGraph& graph)
             // Will handle visibility later (only needed when swapping between compute and graphics)
             if(resource.mResourcetype == RenderGraph::ResourceType::Image)
             {
-                Image& image = static_cast<Image&>(graph.getResource(resource.mResourcetype, resource.mResourceIndex));
+                ImageView& imageView = graph.getImageView(resource.mResourceIndex);
 
-                recorder.transitionImageLayout(image, vk::ImageLayout::eShaderReadOnlyOptimal);
+                recorder.transitionImageLayout(imageView, vk::ImageLayout::eShaderReadOnlyOptimal);
             }
         }
 
@@ -896,12 +880,12 @@ std::vector<BarrierRecorder> RenderDevice::recordBarriers(RenderGraph& graph)
             // Will handle visibility later (only needed when swapping between compute and graphics)
             if(resource.mResourcetype == RenderGraph::ResourceType::Image)
             {
-                Image& image = static_cast<Image&>(graph.getResource(resource.mResourcetype, resource.mResourceIndex));
+                ImageView& imageView = graph.getImageView(resource.mResourceIndex);
 
-                if(image.getUsage() & vk::ImageUsageFlagBits::eColorAttachment)
-                    recorder.transitionImageLayout(image, vk::ImageLayout::eColorAttachmentOptimal);
-                else if(image.getUsage() & vk::ImageUsageFlagBits::eDepthStencilAttachment)
-                    recorder.transitionImageLayout(image, vk::ImageLayout::eDepthStencilAttachmentOptimal);
+                if(imageView.getImageUsage() & vk::ImageUsageFlagBits::eColorAttachment)
+                    recorder.transitionImageLayout(imageView, vk::ImageLayout::eColorAttachmentOptimal);
+                else if(imageView.getImageUsage() & vk::ImageUsageFlagBits::eDepthStencilAttachment)
+                    recorder.transitionImageLayout(imageView, vk::ImageLayout::eDepthStencilAttachmentOptimal);
             }
         }
 

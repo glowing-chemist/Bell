@@ -26,7 +26,7 @@ public:
 
 private:
 
-    vk::DescriptorImageInfo     generateDescriptorImageInfo(Image&) const;
+    vk::DescriptorImageInfo     generateDescriptorImageInfo(ImageView &imageView) const;
     vk::DescriptorBufferInfo    generateDescriptorBufferInfo(Buffer&) const;
 
     vk::DescriptorSet			allocateDescriptorSet(const RenderTask&, const vulkanResources&);

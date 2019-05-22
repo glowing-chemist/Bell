@@ -21,6 +21,7 @@ class SwapChain : public DeviceChild
 {
 public:
     SwapChain(RenderDevice* Device, vk::SurfaceKHR windowSurface, GLFWwindow* window);
+    ~SwapChain();
 
     void destroy();
 
@@ -31,8 +32,8 @@ public:
 
     unsigned int getNumberOfSwapChainImages() const;
 
-    vk::ImageView& getImageView(const size_t index)
-        { return mSwapChainImages[index].getCurrentImageView(); }
+    ImageView& getImageView(const size_t index)
+        { return mImageViews[index]; }
 
     Image& getImage(const size_t index)
         { return mSwapChainImages[index]; }
@@ -54,6 +55,7 @@ private:
 	uint32_t mCurrentImageIndex;
     vk::SwapchainKHR mSwapChain;
     std::vector<Image> mSwapChainImages;
+    std::vector<ImageView> mImageViews;
     vk::Extent2D mSwapChainExtent;
     vk::Format mSwapChainFormat;
 };

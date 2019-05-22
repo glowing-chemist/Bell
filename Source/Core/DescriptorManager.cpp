@@ -110,8 +110,8 @@ void DescriptorManager::writeDescriptors(std::vector<vk::DescriptorSet>& descSet
             {
                 case RenderGraph::ResourceType::Image:
                 {
-                    auto& image = static_cast<Image&>(graph.getResource(bindingInfo.mResourcetype, bindingInfo.mResourceIndex));
-                    vk::DescriptorImageInfo info = generateDescriptorImageInfo(image);
+                    auto& imageView = graph.getImageView(bindingInfo.mResourceIndex);
+                    vk::DescriptorImageInfo info = generateDescriptorImageInfo(imageView);
                     imageInfos.push_back(info);
 
                     descWrite.setPImageInfo(&imageInfos.back());
@@ -134,7 +134,7 @@ void DescriptorManager::writeDescriptors(std::vector<vk::DescriptorSet>& descSet
 
                 case RenderGraph::ResourceType::Buffer:
                 {
-                    auto& buffer = static_cast<Buffer&>(graph.getResource(bindingInfo.mResourcetype, bindingInfo.mResourceIndex));
+                    auto& buffer = graph.getBuffer(bindingInfo.mResourceIndex);
                     vk::DescriptorBufferInfo info = generateDescriptorBufferInfo(buffer);
                     bufferInfos.push_back(info);
 
@@ -244,11 +244,11 @@ vk::DescriptorPool DescriptorManager::createDescriptorPool()
 }
 
 
-vk::DescriptorImageInfo DescriptorManager::generateDescriptorImageInfo(Image& image) const
+vk::DescriptorImageInfo DescriptorManager::generateDescriptorImageInfo(ImageView& imageView) const
 {
     vk::DescriptorImageInfo imageInfo{};
-    imageInfo.setImageView(image.getCurrentImageView());
-    imageInfo.setImageLayout(image.getLayout());
+    imageInfo.setImageView(imageView.getImageView());
+    imageInfo.setImageLayout(vk::ImageLayout::eShaderReadOnlyOptimal);
 
     return imageInfo;
 }

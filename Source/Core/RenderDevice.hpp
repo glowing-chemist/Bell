@@ -62,12 +62,8 @@ public:
     void                               startFrame();
     void                               endFrame();
 
-    vk::Image                          createImage(const vk::Format,
-                                                   const vk::ImageUsageFlags,
-                                                   const vk::ImageType,
-                                                   const uint32_t,
-                                                   const uint32_t,
-                                                   const uint32_t);
+    vk::Image                          createImage(const vk::ImageCreateInfo& info)
+                                            { return mDevice.createImage(info); }
 
     void                               destroyImage(Image& image) { mImagesPendingDestruction.push_back({image.getLastAccessed(), image.getImage(), image.getMemory(), nullptr}); }
     void                               destroyImageView(ImageView& view) { mImagesPendingDestruction.push_back({view.getLastAccessed(), view.getImage(), view.getImageMemory(), view.getImageView()}); }
@@ -83,6 +79,9 @@ public:
 
     const Image&                       getSwapChainImage() const
                                             { return getSwapChain()->getImage(mCurrentFrameIndex); }
+
+    ImageView&                         getSwapChainImageView()
+                                            { return mSwapChain.getImageView(mSwapChain.getCurrentImageIndex()); }
 
     vk::Buffer                         createBuffer(const uint32_t, const vk::BufferUsageFlags);
 

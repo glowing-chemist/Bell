@@ -10,6 +10,7 @@
 #include <vulkan/vulkan.hpp>
 
 class Image;
+class ImageView;
 class Buffer;
 
 class BarrierRecorder : DeviceChild
@@ -21,8 +22,10 @@ public:
 	void transferResourceToQueue(Buffer&, const QueueType);
 
 	void transitionImageLayout(Image&, const vk::ImageLayout);
+    void transitionImageLayout(ImageView&, const vk::ImageLayout);
 
     void makeContentsVisible(Image&);
+    void makeContentsVisible(ImageView&);
     void makeContentsVisible(Buffer&);
 
 	std::vector<vk::ImageMemoryBarrier> getImageBarriers(QueueType);

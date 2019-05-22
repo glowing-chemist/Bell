@@ -43,19 +43,25 @@ public:
 	Image&  getSwapChainImage()
 		{ return mRenderDevice.getSwapChainImage(); }
 
-	Image createImage(const uint32_t x,
-					  const uint32_t y,
-					  const uint32_t z,
-					  const vk::Format,
-					  vk::ImageUsageFlags,
-					  const std::string& = "");
+    ImageView& getSwaChainImageView()
+        { return mRenderDevice.getSwapChainImageView(); }
+
+    Image createImage(const uint32_t x,
+                      const uint32_t y,
+                      const uint32_t z,
+                      const uint32_t mips,
+                      const uint32_t levels,
+                      const uint32_t samples,
+                      const vk::Format,
+                      vk::ImageUsageFlags,
+                      const std::string& = "");
 
 	Buffer createBuffer(const uint32_t size,
 						const uint32_t stride,
 						vk::BufferUsageFlags,
 						const std::string& = "");
 
-	void   setImageInScene(const std::string& name, const Image& image)
+    void   setImageInScene(const std::string& name, const ImageView& image)
 		{ mCurrentRenderGraph.bindImage(name, image); }
 
 	void   setBufferInScene( const std::string& name , const Buffer& buffer)

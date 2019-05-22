@@ -33,26 +33,60 @@ Image::Image(RenderDevice* dev,
              const uint32_t x,
              const uint32_t y,
              const uint32_t z,
+             const uint32_t mips,
+             const uint32_t levels,
+             const uint32_t samples,
 			 const std::string& debugName) :
     GPUResource{dev->getCurrentSubmissionIndex()},
     DeviceChild{dev},
+    mNumberOfMips{mips},
+    mNumberOfLevels{levels},
     mIsOwned{true},
     mFormat{format},
-	mLayout{vk::ImageLayout::eUndefined},
     mUsage{usage},
-    mNumberOfMips{1},
-    mExtent{x, y, z},
+    mSamples{samples},
     mDebugName{debugName}
 {
     if(x != 0 && y == 0 && z == 0) mType = vk::ImageType::e1D;
     if(x != 0 && y != 0 && z == 1) mType = vk::ImageType::e2D;
     if(x != 0 && y != 0 && z >  1) mType = vk::ImageType::e3D;
 
-    mImage = getDevice()->createImage(format, usage, mType, x, y, z);
+    vk::ImageCreateInfo createInfo(vk::ImageCreateFlags{},
+                                  mType,
+                                  format,
+                                  vk::Extent3D{x, y, z},
+                                  mNumberOfMips,
+                                  mNumberOfLevels,
+                                   static_cast<vk::SampleCountFlagBits>(mSamples),
+                                  vk::ImageTiling::eOptimal,
+                                  mUsage,
+                                  vk::SharingMode::eExclusive,
+                                  0,
+                                  nullptr,
+                                  vk::ImageLayout::eUndefined);
+
+    mImage = getDevice()->createImage(createInfo);
+
     vk::MemoryRequirements imageRequirements = getDevice()->getMemoryRequirements(mImage);
 
     mImageMemory = getDevice()->getMemoryManager()->Allocate(imageRequirements.size, imageRequirements.alignment, false);
     getDevice()->getMemoryManager()->BindImage(mImage, mImageMemory);
+
+    for(uint32_t arrayLevel = 0; arrayLevel < mNumberOfLevels; ++arrayLevel)
+    {
+        vk::Extent3D extent{x, y, z};
+
+        for(uint32_t mipsLevel = 0; mipsLevel < mNumberOfMips; ++mipsLevel)
+        {
+            SubResourceInfo subInfo{};
+            subInfo.mLayout = vk::ImageLayout::eUndefined;
+            subInfo.mExtent = extent;
+
+            extent = vk::Extent3D{extent.width / 2, extent.height / 2, extent.depth / 2};
+
+            mSubResourceInfo.push_back(subInfo);
+        }
+    }
 
 	if(mDebugName != "")
 	{
@@ -68,23 +102,42 @@ Image::Image(RenderDevice* dev,
       const uint32_t x,
       const uint32_t y,
       const uint32_t z,
+      const uint32_t mips,
+      const uint32_t levels,
+      const uint32_t samples,
 	  const std::string& debugName
       )
     :
         GPUResource{dev->getCurrentSubmissionIndex()},
         DeviceChild{dev},
         mImage{image},
+        mNumberOfMips{mips},
+        mNumberOfLevels{levels},
         mIsOwned{false},
         mFormat{format},
-        mLayout{vk::ImageLayout::eUndefined},
         mUsage{usage},
-        mNumberOfMips{1},
-        mExtent{x, y, z},
+        mSamples{samples},
         mDebugName{debugName}
 {
     if(x != 0 && y == 0 && z == 0) mType = vk::ImageType::e1D;
     if(x != 0 && y != 0 && z == 1) mType = vk::ImageType::e2D;
     if(x != 0 && y != 0 && z >  1) mType = vk::ImageType::e3D;
+
+    for(uint32_t arrayLevel = 0; arrayLevel < mNumberOfLevels; ++arrayLevel)
+    {
+        vk::Extent3D extent{x, y, z};
+
+        for(uint32_t mipsLevel = 0; mipsLevel < mNumberOfMips; ++mipsLevel)
+        {
+            SubResourceInfo subInfo{};
+            subInfo.mLayout = vk::ImageLayout::eUndefined;
+            subInfo.mExtent = extent;
+
+            extent = vk::Extent3D{extent.width / 2, extent.height / 2, extent.depth / 2};
+
+            mSubResourceInfo.push_back(subInfo);
+        }
+    }
 
 	if(mDebugName != "")
 	{
@@ -105,17 +158,15 @@ Image::~Image()
 
 void Image::swap(Image& other)
 {
-	Allocation imageMemory = mImageMemory;
-	vk::Image image = mImage;
-	vk::ImageView imageView = mImageView;
-	bool isOwned = mIsOwned;
-	vk::Format Format = mFormat;
-	vk::ImageLayout Layout = mLayout;
-	vk::ImageUsageFlags Usage = mUsage;
-	uint32_t NumberOfMips = mNumberOfMips;
-	vk::Extent3D Extent = mExtent;
-	vk::ImageType Type = mType;
-	std::string DebugName = mDebugName;
+    const Allocation imageMemory = mImageMemory;
+    const vk::Image image = mImage;
+    const bool isOwned = mIsOwned;
+    const vk::Format Format = mFormat;
+    const vk::ImageUsageFlags Usage = mUsage;
+    const uint32_t NumberOfMips = mNumberOfMips;
+    const uint32_t NumberOfLevels = mNumberOfLevels;
+    const vk::ImageType Type = mType;
+    const std::string DebugName = mDebugName;
 
 
 	mImageMemory = other.mImageMemory;
@@ -127,23 +178,19 @@ void Image::swap(Image& other)
 	mIsOwned = other.mIsOwned;
 	other.mIsOwned = isOwned;
 
-	mImageView = other.mImageView;
-	other.mImageView = imageView;
-
 	mFormat = other.mFormat;
 	other.mFormat = Format;
-
-	mLayout = other.mLayout;
-	other.mLayout = Layout;
 
 	mUsage = other.mUsage;
 	other.mUsage = Usage;
 
+    mSubResourceInfo.swap(other.mSubResourceInfo);
+
 	mNumberOfMips = other.mNumberOfMips;
 	other.mNumberOfMips = NumberOfMips;
 
-	mExtent = other.mExtent;
-	other.mExtent = Extent;
+    mNumberOfLevels = other.mNumberOfLevels;
+    other.mNumberOfLevels = NumberOfLevels;
 
 	mType = other.mType;
 	other.mType = Type;
@@ -153,35 +200,12 @@ void Image::swap(Image& other)
 }
 
 
-vk::ImageView   Image::createImageView( vk::Format format,
-                                        vk::ImageViewType type,
-                                        const uint32_t baseMipLevel,
-                                        const uint32_t levelCount,
-                                        const uint32_t baseArrayLayer,
-                                        const uint32_t layerCount)
-{
-    vk::ImageSubresourceRange subresourceRange{};
-    subresourceRange.setBaseMipLevel(baseMipLevel);
-    subresourceRange.setLevelCount(levelCount);
-    subresourceRange.setBaseArrayLayer(baseArrayLayer);
-    subresourceRange.setLayerCount(layerCount);
-    subresourceRange.setAspectMask(mLayout == vk::ImageLayout::eDepthStencilAttachmentOptimal ?
-                                       vk::ImageAspectFlagBits::eDepth : vk::ImageAspectFlagBits::eColor);
-
-    vk::ImageViewCreateInfo createInfo{};
-    createInfo.setImage(mImage);
-    createInfo.setFormat(format);
-    createInfo.setSubresourceRange(subresourceRange);
-    createInfo.setViewType(type);
-
-    return getDevice()->createImageView(createInfo);
-}
-
-
 void Image::setContents(const void* data,
                         const uint32_t xsize,
                         const uint32_t ysize,
                         const uint32_t zsize,
+                        const uint32_t level,
+                        const uint32_t lod,
                         const int32_t offsetx,
                         const int32_t offsety,
                         const int32_t offsetz)
@@ -204,7 +228,7 @@ void Image::setContents(const void* data,
     copyInfo.setImageSubresource({vk::ImageAspectFlagBits::eColor, 0, 0, 1});
 
     copyInfo.setImageOffset({offsetx, offsety, offsetz}); // copy to the image starting at the start (0, 0, 0)
-    copyInfo.setImageExtent(mExtent);
+    copyInfo.setImageExtent(getExtent(level, lod));
 
 	{
 		// This needs to get recorded before the upload is recorded in to the primrary
