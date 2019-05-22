@@ -4,11 +4,9 @@
 
 
 ImageView::ImageView(Image& parentImage,
-                     const uint32_t offsetx,
-                     const uint32_t offsety,
-                     const uint32_t offsetz,
                      const uint32_t level,
-                     const uint32_t lod) :
+                     const uint32_t lod,
+                     const uint32_t lodCount) :
     GPUResource{parentImage.getDevice()->getCurrentSubmissionIndex()},
     DeviceChild{parentImage.getDevice()},
     mImageHandle{parentImage.getImage()},
@@ -17,15 +15,13 @@ ImageView::ImageView(Image& parentImage,
     mLayout{parentImage.getLayout(level, lod)},
     mExtent{parentImage.getExtent(level, lod)},
     mUsage{parentImage.getUsage()},
-    mOffsetx{offsetx},
-    mOffsety{offsety},
-    mOffsetz{offsetz},
     mLOD{lod},
+    mLODCount{lodCount},
     mLevel{level}
 {
     vk::ImageSubresourceRange subresourceRange{};
     subresourceRange.setBaseMipLevel(lod);
-    subresourceRange.setLevelCount(1);
+    subresourceRange.setLevelCount(mLODCount);
     subresourceRange.setBaseArrayLayer(level);
     subresourceRange.setLayerCount(1);
     subresourceRange.setAspectMask(parentImage.getLayout(mLevel, mLOD) == vk::ImageLayout::eDepthStencilAttachmentOptimal ?
@@ -79,10 +75,8 @@ ImageView& ImageView::operator=(const ImageView& otherView)
     mImageMemory = otherView.mImageMemory;
     mImageFormat = otherView.mImageFormat;
 
-    mOffsetx = otherView.mOffsetx;
-    mOffsety = otherView.mOffsety;
-    mOffsetz = otherView.mOffsetz;
     mLOD = otherView.mLOD;
+    mLODCount = otherView.mLODCount;
 
     return *this;
 }

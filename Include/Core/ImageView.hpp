@@ -15,11 +15,9 @@ class ImageView : public GPUResource, public DeviceChild
 public:
 
     ImageView(Image&,
-              const uint32_t offsetx = 0,
-              const uint32_t offsety = 0,
-              const uint32_t offsetz = 0,
               const uint32_t level = 0,
-              const uint32_t lod = 0);
+              const uint32_t lod = 0,
+              const uint32_t lodCount = 1);
 
     ~ImageView();
 
@@ -63,10 +61,8 @@ private:
     vk::Extent3D mExtent;
     vk::ImageUsageFlags mUsage;
 
-    uint32_t mOffsetx;
-    uint32_t mOffsety;
-    uint32_t mOffsetz;
     uint32_t mLOD;
+    uint32_t mLODCount;
     uint32_t mLevel;
 };
 
