@@ -86,8 +86,9 @@ void DescriptorManager::writeDescriptors(std::vector<vk::DescriptorSet>& descSet
     bufferInfos.reserve(maxDescWrites);
 	uint32_t descIndex = 0;
 
-	auto inputBindings = graph.inputBindingBegin();
-	auto resource = resources.begin();
+    auto inputBindings  = graph.inputBindingBegin();
+    auto resource       = resources.begin();
+    auto task           = graph.taskBegin();
 
     while(inputBindings != graph.inputBindingEnd())
     {
@@ -95,9 +96,12 @@ void DescriptorManager::writeDescriptors(std::vector<vk::DescriptorSet>& descSet
         {
             ++resource;
             ++inputBindings;
+            ++task;
             ++descIndex;
             continue;
         }
+
+        uint32_t bindingIndex = 0;
 
         for(const auto& bindingInfo : *inputBindings)
         {
@@ -105,6 +109,8 @@ void DescriptorManager::writeDescriptors(std::vector<vk::DescriptorSet>& descSet
             descWrite.setDescriptorCount(1);
             descWrite.setDstSet(descSets[descIndex]);
             descWrite.setDstBinding(bindingInfo.mResourceBinding);
+
+            const auto& bindings = (*task).getInputAttachments();
 
             switch(bindingInfo.mResourcetype)
             {
@@ -114,8 +120,24 @@ void DescriptorManager::writeDescriptors(std::vector<vk::DescriptorSet>& descSet
                     vk::DescriptorImageInfo info = generateDescriptorImageInfo(imageView);
                     imageInfos.push_back(info);
 
+                    const vk::DescriptorType type = [attachmentType = bindings[bindingIndex].second]()
+                    {
+                        switch(attachmentType)
+                        {
+                            case AttachmentType::Image1D:
+                            case AttachmentType::Image2D:
+                            case AttachmentType::Image3D:
+                                return vk::DescriptorType::eStorageImage;
+
+                            case AttachmentType::Texture1D:
+                            case AttachmentType::Texture2D:
+                            case AttachmentType::Texture3D:
+                                return vk::DescriptorType::eSampledImage;
+                        }
+                    }();
+
                     descWrite.setPImageInfo(&imageInfos.back());
-                    descWrite.setDescriptorType(vk::DescriptorType::eSampledImage);
+                    descWrite.setDescriptorType(type);
                     break;
                 }
 
@@ -150,12 +172,14 @@ void DescriptorManager::writeDescriptors(std::vector<vk::DescriptorSet>& descSet
             }
 
             descSetWrites.push_back(descWrite);
+            ++bindingIndex;
 
             (*resource).mDescriptorsWritten = true;
         }
 
 		++resource;
 		++inputBindings;
+        ++task;
 		++descIndex;
     }
 
@@ -233,7 +257,15 @@ vk::DescriptorPool DescriptorManager::createDescriptorPool()
     imageDescPoolSize.setType(vk::DescriptorType::eSampledImage);
     imageDescPoolSize.setDescriptorCount(100);
 
-    std::array<vk::DescriptorPoolSize, 4> descPoolSizes{uniformBufferDescPoolSize, samplerrDescPoolSize, dataBufferDescPoolSize, imageDescPoolSize};
+    vk::DescriptorPoolSize storageImageDescPoolSize{};
+    storageImageDescPoolSize.setType(vk::DescriptorType::eStorageImage);
+    storageImageDescPoolSize.setDescriptorCount(100);
+
+    std::array<vk::DescriptorPoolSize, 5> descPoolSizes{uniformBufferDescPoolSize,
+                                                        samplerrDescPoolSize,
+                                                        dataBufferDescPoolSize,
+                                                        imageDescPoolSize,
+                                                        storageImageDescPoolSize};
 
     vk::DescriptorPoolCreateInfo uniformBufferDescPoolInfo{};
     uniformBufferDescPoolInfo.setPoolSizeCount(descPoolSizes.size());

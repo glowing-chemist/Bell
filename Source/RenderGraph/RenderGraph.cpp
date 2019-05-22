@@ -173,7 +173,6 @@ void RenderGraph::bindSampler(const std::string& name, const Sampler& type)
 }
 
 
-
 void RenderGraph::bindVertexBuffer(const Buffer& buffer)
 {
 	mVertexBuffer.reset();
