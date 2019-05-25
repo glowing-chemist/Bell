@@ -191,7 +191,8 @@ std::pair<vk::PhysicalDevice, vk::Device> RenderInstance::findSuitableDevices(in
 
 	BELL_ASSERT(requiredExtensionCount == deviceExtensions.size(), "Missing device extensions!")
 
-	const bool hasDebugNameExtension = requiredExtensionCount == deviceExtensions.size();
+	// Use greater or equal to to work around nvidia reporting the debug marker extension twice.
+	const bool hasDebugNameExtension = requiredExtensionCount >= deviceExtensions.size();
 
     vk::PhysicalDeviceFeatures physicalFeatures{};
     physicalFeatures.geometryShader = GeometryWanted;
