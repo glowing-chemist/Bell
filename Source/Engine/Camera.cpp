@@ -103,8 +103,8 @@ void Camera::moveRight(const float distance)
 
 void Camera::rotatePitch(const float angle)
 {
-    const float3 rotationAxis = glm::cross(mDirection, mUp);
-    const glm::mat3 rotation = glm::rotate(angle, rotationAxis);
+	const float3 rotationAxis = rightDirectionVector();
+	const glm::mat3 rotation = glm::rotate(glm::mat4(1.0f), glm::radians(angle), rotationAxis);
     mDirection = rotation * mDirection;
     mUp = rotation * mUp;
 }
@@ -112,15 +112,20 @@ void Camera::rotatePitch(const float angle)
 
 void Camera::rotateYaw(const float angle)
 {
-    const glm::mat3 rotation = glm::rotate(angle, mUp);
+	const glm::mat3 rotation = glm::rotate(glm::mat4(1.0f), glm::radians(angle), mUp);
     mDirection = rotation * mDirection;
 }
 
 
 glm::mat4 Camera::getViewMatrix() const
 {
-    const float3 cameraUp = glm::cross(float3(mDirection), float3(rightDirectionVector()));
-    return glm::lookAt(mPosition, mPosition + mDirection, cameraUp);
+	return glm::lookAt(mPosition, mPosition + mDirection, mUp);
+}
+
+
+glm::mat4 Camera::getPerspectiveMatrix() const
+{
+	return glm::perspective(glm::radians(mFieldOfView), 1.0f, mNearPlaneDistance, mFarPlaneDistance);
 }
 
 
