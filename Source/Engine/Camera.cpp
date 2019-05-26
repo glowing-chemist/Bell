@@ -18,8 +18,8 @@ Frustum::Frustum(const float3& position,
     // We construct the other four planes by taking a pont and a vector in the center of the frustum
     // and rotating it in the apropriate direction by half the field of view angle.
     // I'm sure theres probably a trick to do this more effiently but this will do for now.
-    glm::mat3 leftPlaneRotation = glm::rotate(glm::mat4(0), -(angle / 2.0f), up);
-    glm::mat3 rightPlaneRotation = glm::rotate(glm::mat4(0), (angle / 2.0f), up);
+	glm::mat3 leftPlaneRotation = glm::rotate(glm::mat4(1.0f), -(angle / 2.0f), up);
+	glm::mat3 rightPlaneRotation = glm::rotate(glm::mat4(1.0f), (angle / 2.0f), up);
     float3 rightVector = glm::normalize(glm::cross(direction, up));
 
     mLeftPlane = {(position + (direction * (lenght / 2.0f))) * leftPlaneRotation,
@@ -29,8 +29,8 @@ Frustum::Frustum(const float3& position,
                   -rightVector * rightPlaneRotation};
 
 
-    glm::mat3 bottomPlaneRotation = glm::rotate(glm::mat4(0), (angle / 2.0f), rightVector);
-    glm::mat3 topPlaneRotation = glm::rotate(glm::mat4(0), -(angle / 2.0f), rightVector);
+	glm::mat3 bottomPlaneRotation = glm::rotate(glm::mat4(1.0f), (angle / 2.0f), rightVector);
+	glm::mat3 topPlaneRotation = glm::rotate(glm::mat4(1.0f), -(angle / 2.0f), rightVector);
     float3 normalisedUp = glm::normalize(up);
 
     mBottomPlane = {(position + (direction * (lenght / 2.0f))) * bottomPlaneRotation,
