@@ -52,6 +52,7 @@ private:
 
     void writeVertexVector4(const aiVector3D&, const uint32_t);
     void writeVertexVector2(const aiVector2D&, const uint32_t);
+	void writeVertexFloat(const float, const uint32_t);
 
 
     std::vector<float> mVertexData;

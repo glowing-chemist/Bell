@@ -4,6 +4,9 @@
 #include "assimp/scene.h"
 #include "assimp/postprocess.h"
 
+#include <limits>
+
+
 StaticMesh::StaticMesh(const std::string& path)
 {
     Assimp::Importer importer;
@@ -43,7 +46,8 @@ StaticMesh::StaticMesh(const std::string& path)
     const uint32_t vertexStride =   (mesh->HasPositions() ? primitiveSize * 1 : 0) +
                                     (mesh->HasTextureCoords(0) ? 2 : 0) +
                                     (mesh->HasNormals() ? 4 : 0) +
-                                    (mesh->HasVertexColors(0) ? 4 : 0);
+									(mesh->HasVertexColors(0) ? 4 : 0) +
+									(model->mNumMaterials != 0 ? 1 : 0);
 
     // assume triangles atm
     mIndexData.resize(mesh->mNumFaces * mesh->mFaces[0].mNumIndices);
@@ -86,6 +90,12 @@ StaticMesh::StaticMesh(const std::string& path)
             writeVertexVector4({mesh->mColors[i]->r, mesh->mColors[i]->g, mesh->mColors[i]->b}, currentOffset);
             currentOffset += 4;
         }
+
+		if(model->mNumMaterials != 0)
+		{
+			writeVertexFloat(mesh->mMaterialIndex, currentOffset);
+			currentOffset += 1;
+		}
     }
 }
 
@@ -104,4 +114,11 @@ void StaticMesh::writeVertexVector2(const aiVector2D& vector, const uint32_t sta
     *reinterpret_cast<float*>(&mVertexData[startOffset]) = vector.x;
     *reinterpret_cast<float*>(&mVertexData[startOffset] + 1) = vector.y;
 }
+
+
+void StaticMesh::writeVertexFloat(const float value, const uint32_t startOffset)
+{
+	*reinterpret_cast<float*>(&mVertexData[startOffset]) = value;
+}
+
 
