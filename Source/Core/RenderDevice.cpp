@@ -364,7 +364,14 @@ vk::RenderPass	RenderDevice::generateRenderPass(const GraphicsTask& task)
 
 		vk::ImageLayout layout = getVulkanImageLayout(type);
 		vk::Format adjustedFormat = getVulkanImageFormat(format);
-		outputAttachmentRefs.push_back({outputAttatchmentCounter, layout});
+
+		if(layout == vk::ImageLayout::eDepthStencilAttachmentOptimal)
+		{
+			hasDepthAttachment = true;
+			depthAttachmentRef.push_back({outputAttatchmentCounter, layout});
+		}
+		else
+			outputAttachmentRefs.push_back({outputAttatchmentCounter, layout});
 
         vk::AttachmentDescription attachmentDesc{};
 		attachmentDesc.setFormat(adjustedFormat);
@@ -393,7 +400,7 @@ vk::RenderPass	RenderDevice::generateRenderPass(const GraphicsTask& task)
 		attachmentDesc.setLoadOp(op);
 
         attachmentDesc.setStoreOp(vk::AttachmentStoreOp::eStore);
-        attachmentDesc.setStencilLoadOp(vk::AttachmentLoadOp::eLoad);
+		attachmentDesc.setStencilLoadOp(op);
         attachmentDesc.setStencilStoreOp(vk::AttachmentStoreOp::eStore);
 
         attachmentDescriptions.push_back((attachmentDesc));
@@ -688,40 +695,44 @@ std::vector<vk::PipelineColorBlendAttachmentState> RenderDevice::generateColourB
 	const auto& outputAttachments = task.getOuputAttachments();
 	const auto pipelineDesc = task.getPipelineDescription();
 
+	const auto blendAdjuster = [](const BlendMode op)
+	{
+		vk::BlendOp adjustedOp;
+
+		switch(op)
+		{
+			case BlendMode::Add:
+				adjustedOp = vk::BlendOp::eAdd;
+				break;
+
+			case BlendMode::Subtract:
+				adjustedOp = vk::BlendOp::eSubtract;
+				break;
+
+			case BlendMode::ReverseSubtract:
+				adjustedOp = vk::BlendOp::eReverseSubtract;
+				break;
+
+			case BlendMode::Min:
+				adjustedOp = vk::BlendOp::eMin;
+				break;
+
+			case BlendMode::Max:
+				adjustedOp = vk::BlendOp::eMax;
+				break;
+
+			default:
+				adjustedOp = vk::BlendOp::eAdd;
+		}
+
+		return adjustedOp;
+	};
+
 	for(const auto& [name, type, format, loadOp] : outputAttachments)
 	{
-		const auto blendAdjuster = [](const BlendMode op)
-		{
-			vk::BlendOp adjustedOp;
-
-			switch(op)
-			{
-				case BlendMode::Add:
-					adjustedOp = vk::BlendOp::eAdd;
-					break;
-
-				case BlendMode::Subtract:
-					adjustedOp = vk::BlendOp::eSubtract;
-					break;
-
-				case BlendMode::ReverseSubtract:
-					adjustedOp = vk::BlendOp::eReverseSubtract;
-					break;
-
-				case BlendMode::Min:
-					adjustedOp = vk::BlendOp::eMin;
-					break;
-
-				case BlendMode::Max:
-					adjustedOp = vk::BlendOp::eMax;
-					break;
-
-				default:
-					adjustedOp = vk::BlendOp::eAdd;
-			}
-
-			return adjustedOp;
-		};
+		// Don't generate blend info for depth attachments.
+		if(format == Format::D32Float || format == Format::D24S8Float)
+			continue;
 
 		const vk::BlendOp alphaBlendOp = blendAdjuster(pipelineDesc.mAlphaBlendMode);
 		const vk::BlendOp colourBlendop = blendAdjuster(pipelineDesc.mColourBlendMode);
