@@ -54,7 +54,7 @@ set(BELL_BASE_SOURCE
 	Source/Core/Image.cpp
 	Source/Core/ImageView.cpp
 	Source/Core/Buffer.cpp
-	Source/Core/BufferView.cpp
+	#Source/Core/BufferView.cpp
 	Source/Core/MemoryManager.cpp
 	Source/Core/BarrierManager.cpp
 	Source/Core/SwapChain.cpp
@@ -63,10 +63,13 @@ set(BELL_BASE_SOURCE
 	Source/Core/DescriptorManager.cpp
 	Source/Core/Sampler.cpp
 
-	#RenderGraph files (backend independant)
+	# RenderGraph files (backend independant)
 	Source/RenderGraph/GraphicsTask.cpp
 	Source/RenderGraph/ComputeTask.cpp
 	Source/RenderGraph/RenderGraph.cpp
+
+	# Utils
+	Source/Core/ConversionUtils.cpp
 	)
 
 # Build just the base as a seperate target incase users want to build a different engine

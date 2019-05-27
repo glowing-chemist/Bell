@@ -7,29 +7,11 @@
 #include <map>
 #include <tuple>
 
+#include "Engine/PassTypes.hpp"
+
 #include <vulkan/vulkan.hpp>
 
 class RenderGraph;
-
-enum class AttachmentType
-{
-    Texture1D,
-    Texture2D,
-    Texture3D,
-    Sampler,
-    Image1D,
-    Image2D,
-    Image3D,
-	RenderTarget1D,
-	RenderTarget2D,
-	RenderTarget3D,
-    SwapChain,
-	Depth,
-    UniformBuffer,
-    DataBuffer,
-    IndirectBuffer,
-    PushConstants
-};
 
 enum class LoadOp
 {

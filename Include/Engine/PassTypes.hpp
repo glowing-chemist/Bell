@@ -7,16 +7,46 @@
 enum class PassType : uint64_t
 {
 	DepthPre = 0,
-	Albedo = 1 << 1,
-	Normal = 1 << 2,
-	Position = 1 << 3,
-	Animation = 1 << 4,
-	DeferredLighting = 1 << 5,
-	Shadow = 1 << 6,
-	CascadingShadow = 1 << 7
+	GBufferFill = 1,
+	Animation = 1 << 1,
+	DeferredLighting = 1 << 2,
+	Shadow = 1 << 3,
+	CascadingShadow = 1 << 4
 
-	// Add more asw and when implemented.
+	// Add more as and when implemented.
 };
+
+
+enum class AttachmentType
+{
+	Texture1D,
+	Texture2D,
+	Texture3D,
+	Sampler,
+	Image1D,
+	Image2D,
+	Image3D,
+	RenderTarget1D,
+	RenderTarget2D,
+	RenderTarget3D,
+	SwapChain,
+	Depth,
+	UniformBuffer,
+	DataBuffer,
+	IndirectBuffer,
+	PushConstants
+};
+
+
+enum class Format
+{
+	RGBA8SRGB,
+	RGBA8UNorm,
+	BGRA8UNorm,
+	D32Float,
+	D24S8Float
+};
+
 
 #endif
 
