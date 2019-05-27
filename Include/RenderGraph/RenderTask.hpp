@@ -41,9 +41,9 @@ public:
     }
 
     // Loadop has no effect on ComputeTasks
-    virtual void addOutput(const std::string& name, const AttachmentType attachmentType, const LoadOp op = LoadOp::Preserve)
+	virtual void addOutput(const std::string& name, const AttachmentType attachmentType, const Format format, const LoadOp op = LoadOp::Preserve)
     {
-       mOutputAttachments.push_back({name, attachmentType, op});
+	   mOutputAttachments.push_back({name, attachmentType, format, op});
     }
 
 
@@ -53,6 +53,7 @@ public:
     {
         std::string mName;
         AttachmentType mType;
+		Format			mFormat;
         LoadOp         mLoadOp;
     };
 

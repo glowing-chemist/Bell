@@ -24,7 +24,7 @@ ImageView::ImageView(Image& parentImage,
     subresourceRange.setLevelCount(mLODCount);
     subresourceRange.setBaseArrayLayer(level);
     subresourceRange.setLayerCount(1);
-    subresourceRange.setAspectMask(parentImage.getLayout(mLevel, mLOD) == vk::ImageLayout::eDepthStencilAttachmentOptimal ?
+	subresourceRange.setAspectMask((parentImage.getFormat() == vk::Format::eD32Sfloat) || (parentImage.getFormat() == vk::Format::eD24UnormS8Uint) ?
                                        vk::ImageAspectFlagBits::eDepth : vk::ImageAspectFlagBits::eColor);
 
     const auto extent = parentImage.getExtent(mLevel, mLOD);

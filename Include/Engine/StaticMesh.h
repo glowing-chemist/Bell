@@ -3,6 +3,7 @@
 
 #include "Engine/AABB.hpp"
 #include "Engine/PassTypes.hpp"
+#include "RenderGraph/GraphicsTask.hpp"
 
 #include "assimp/vector2.h"
 #include "assimp/vector3.h"
@@ -16,7 +17,7 @@ class StaticMesh
 {
 public:
 	
-	StaticMesh(const std::string& filePath);
+	StaticMesh(const std::string& filePath, const int vertexAttributes);
 
 	const AABB& getAABB() const
 	{

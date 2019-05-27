@@ -7,7 +7,7 @@
 #include <limits>
 
 
-StaticMesh::StaticMesh(const std::string& path)
+StaticMesh::StaticMesh(const std::string& path, const int vertAttributes)
 {
     Assimp::Importer importer;
 
@@ -43,11 +43,23 @@ StaticMesh::StaticMesh(const std::string& path)
         return primitiveElementSize;
     }();
 
-    const uint32_t vertexStride =   (mesh->HasPositions() ? primitiveSize * 1 : 0) +
-                                    (mesh->HasTextureCoords(0) ? 2 : 0) +
-                                    (mesh->HasNormals() ? 4 : 0) +
-									(mesh->HasVertexColors(0) ? 4 : 0) +
-									(model->mNumMaterials != 0 ? 1 : 0);
+	const bool positionNeeded = mesh->HasPositions() && ((vertAttributes & VertexAttributes::Position2 ||
+													 vertAttributes & VertexAttributes::Position3 ||
+													 vertAttributes & VertexAttributes::Position4));
+
+	const bool UVNeeded = mesh->HasTextureCoords(0) && (vertAttributes & VertexAttributes::TextureCoordinates);
+
+	const bool normalsNeeded = mesh->HasNormals() && (vertAttributes & VertexAttributes::Normals);
+
+	const bool albedoNeeded = mesh->HasVertexColors(0) && (vertAttributes & VertexAttributes::Aledo);
+
+	const bool materialNeeded = model->HasMaterials() && (vertAttributes & VertexAttributes::Material);
+
+	const uint32_t vertexStride =   (positionNeeded ? primitiveSize * 1 : 0) +
+									(UVNeeded ? 2 : 0) +
+									(normalsNeeded ? 4 : 0) +
+									(albedoNeeded ? 4 : 0) +
+									(materialNeeded != 0 ? 1 : 0);
 
     // assume triangles atm
     mIndexData.resize(mesh->mNumFaces * mesh->mFaces[0].mNumIndices);
@@ -67,31 +79,31 @@ StaticMesh::StaticMesh(const std::string& path)
     // Copy the vertex buffer data.
     for(uint32_t i = 0; i < mesh->mNumVertices; ++i)
     {
-        if(mesh->HasPositions())
+		if(positionNeeded)
         {
             writeVertexVector4(mesh->mVertices[i], currentOffset);
             currentOffset += 4;
         }
 
-        if(mesh->HasTextureCoords(0))
+		if(UVNeeded)
         {
             writeVertexVector2({mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y}, currentOffset);
             currentOffset += 2;
         }
 
-        if(mesh->HasNormals())
+		if(normalsNeeded)
         {
             writeVertexVector4(mesh->mNormals[i], currentOffset);
             currentOffset += 4;
         }
 
-        if(mesh->HasVertexColors(0))
+		if(albedoNeeded)
         {
             writeVertexVector4({mesh->mColors[i]->r, mesh->mColors[i]->g, mesh->mColors[i]->b}, currentOffset);
             currentOffset += 4;
         }
 
-		if(model->mNumMaterials != 0)
+		if(materialNeeded)
 		{
 			writeVertexFloat(mesh->mMaterialIndex, currentOffset);
 			currentOffset += 1;

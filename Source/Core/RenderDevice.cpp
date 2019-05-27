@@ -1,6 +1,7 @@
 #include "RenderDevice.hpp"
 #include "RenderInstance.hpp"
 #include "Core/BellLogging.hpp"
+#include "Core/ConversionUtils.hpp"
 
 #include <glslang/Public/ShaderLang.h>
 #include <vulkan/vulkan.hpp>
@@ -350,7 +351,7 @@ vk::RenderPass	RenderDevice::generateRenderPass(const GraphicsTask& task)
     std::vector<vk::AttachmentReference> depthAttachmentRef{};
     uint32_t outputAttatchmentCounter = 0;
 
-    for(const auto& [name, type, loadop] : outputAttachments)
+	for(const auto& [name, type, format, loadop] : outputAttachments)
     {
         // We only care about images here.
         if(type == AttachmentType::DataBuffer ||
@@ -360,31 +361,13 @@ vk::RenderPass	RenderDevice::generateRenderPass(const GraphicsTask& task)
                 ++outputAttatchmentCounter;
                 continue;
         }
-        // get the needed format
-        const auto[format, layout] = [&, this]()
-        {
-            switch(type)
-            {
-                case AttachmentType::RenderTarget1D:
-                case AttachmentType::RenderTarget2D:
-                case AttachmentType::RenderTarget3D:
-                    outputAttachmentRefs.push_back({outputAttatchmentCounter, vk::ImageLayout::eColorAttachmentOptimal});
-                    return std::make_pair(vk::Format::eR8G8B8A8Srgb, vk::ImageLayout::eColorAttachmentOptimal);
-                case AttachmentType::Depth:
-                    hasDepthAttachment = true;
-                    depthAttachmentRef.push_back({outputAttatchmentCounter, vk::ImageLayout::eDepthStencilAttachmentOptimal});
-                    return std::make_pair(vk::Format::eD32Sfloat, vk::ImageLayout::eDepthStencilAttachmentOptimal);
-                case AttachmentType::SwapChain:
-                    outputAttachmentRefs.push_back({outputAttatchmentCounter, vk::ImageLayout::eColorAttachmentOptimal});
-                    return std::make_pair(this->getSwapChain()->getSwapChainImageFormat(),
-                                          vk::ImageLayout::eColorAttachmentOptimal);
-                default:
-                    return std::make_pair(vk::Format::eR8Sint, vk::ImageLayout::eUndefined); // should be obvious that something has gone wrong.
-            }
-        }();
+
+		vk::ImageLayout layout = getVulkanImageLayout(type);
+		vk::Format adjustedFormat = getVulkanImageFormat(format);
+		outputAttachmentRefs.push_back({outputAttatchmentCounter, layout});
 
         vk::AttachmentDescription attachmentDesc{};
-        attachmentDesc.setFormat(format);
+		attachmentDesc.setFormat(adjustedFormat);
 
         // eventually I will implment a render pass system that is aware of what comes beofer and after it
         // in order to avoid having to do manula barriers for all transitions.
@@ -705,7 +688,7 @@ std::vector<vk::PipelineColorBlendAttachmentState> RenderDevice::generateColourB
 	const auto& outputAttachments = task.getOuputAttachments();
 	const auto pipelineDesc = task.getPipelineDescription();
 
-	for(const auto& [name, type, loadOp] : outputAttachments)
+	for(const auto& [name, type, format, loadOp] : outputAttachments)
 	{
 		const auto blendAdjuster = [](const BlendMode op)
 		{

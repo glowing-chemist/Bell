@@ -1,4 +1,5 @@
 #include "Engine/Engine.hpp"
+#include "Core/ConversionUtils.hpp"
 
 
 Engine::Engine(GLFWwindow* windowPtr) :
@@ -121,7 +122,7 @@ void Engine::recordOverlay(const ImDrawData* drawData)
 	task.addInput("OverlayUBO", AttachmentType::UniformBuffer);
     task.addInput("OverlayTexture", AttachmentType::Texture2D);
     task.addInput("FontSampler", AttachmentType::Sampler);
-	task.addOutput("FrameBuffer", AttachmentType::SwapChain, LoadOp::Clear_Black);
+	task.addOutput("FrameBuffer", AttachmentType::SwapChain, getBellImageFormat(getSwapChainImage().getFormat()), LoadOp::Clear_Black);
 
     // Render command lists
     uint32_t vertexOffset = 0;
