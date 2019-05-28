@@ -176,31 +176,41 @@ std::pair<vk::PhysicalDevice, vk::Device> RenderInstance::findSuitableDevices(in
         queueInfo.push_back(info);
     }
 
-	std::array<const char*, 2> deviceExtensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME, VK_EXT_DEBUG_MARKER_EXTENSION_NAME};
+	// We use descriptor indexing to implement bindless PBR so that we can do our lighting pass in one pass for all materials.
+	const std::vector<const char*> requireDeviceExtensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME, VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME};
+	const std::vector<const char*> optionalDeviceExtensions = {VK_EXT_DEBUG_MARKER_EXTENSION_NAME};
 
-	uint8_t requiredExtensionCount = 0;
-	for(const auto extensions : deviceExtensions)
+	std::vector<const char*> extensionsToEnable{};
+
+	const auto deviceExtensionproperties = physicalDevice.enumerateDeviceExtensionProperties();
+
+	for(const auto availableExtensions : deviceExtensionproperties)
 	{
-		auto deviceExtensionproperties = physicalDevice.enumerateDeviceExtensionProperties();
-		for(const auto deviceExtension : deviceExtensionproperties)
+		for(const auto* extension : requireDeviceExtensions)
 		{
-			if(strcmp(extensions, deviceExtension.extensionName) == 0)
-				++requiredExtensionCount;
+			if(strcmp(extension, availableExtensions.extensionName) == 0)
+			{
+				extensionsToEnable.push_back(extension);
+			}
+		}
+
+		// If the device advertises support for an optional extension add it to the required list so that we will enable it.
+		for(const auto* extension : optionalDeviceExtensions)
+		{
+			if(strcmp(extension, availableExtensions.extensionName) == 0)
+				extensionsToEnable.push_back(extension);
 		}
 	}
 
-	BELL_ASSERT(requiredExtensionCount == deviceExtensions.size(), "Missing device extensions!")
-
-	// Use greater or equal to to work around nvidia reporting the debug marker extension twice.
-	const bool hasDebugNameExtension = requiredExtensionCount >= deviceExtensions.size();
+	BELL_ASSERT(extensionsToEnable.size() >= requireDeviceExtensions.size(), "Missing required extension!")
 
     vk::PhysicalDeviceFeatures physicalFeatures{};
     physicalFeatures.geometryShader = GeometryWanted;
     physicalFeatures.setSamplerAnisotropy(true);
 
     vk::DeviceCreateInfo deviceInfo{};
-	deviceInfo.setEnabledExtensionCount(hasDebugNameExtension ? deviceExtensions.size() : 1);
-	deviceInfo.setPpEnabledExtensionNames(deviceExtensions.data());
+	deviceInfo.setEnabledExtensionCount(extensionsToEnable.size());
+	deviceInfo.setPpEnabledExtensionNames(extensionsToEnable.data());
     deviceInfo.setQueueCreateInfoCount(uniqueQueues.size());
     deviceInfo.setPQueueCreateInfos(queueInfo.data());
     deviceInfo.setPEnabledFeatures(&physicalFeatures);
