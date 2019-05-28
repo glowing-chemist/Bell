@@ -14,8 +14,7 @@ StaticMesh::StaticMesh(const std::string& path, const int vertAttributes)
     const aiScene* model = importer.ReadFile(path.c_str(),
                                              aiProcess_Triangulate |
                                              aiProcess_JoinIdenticalVertices |
-                                             aiProcess_GenNormals |
-                                             aiProcess_FlipWindingOrder);
+											 aiProcess_GenNormals);
 
     const aiMesh* mesh = model->mMeshes[0];
 
