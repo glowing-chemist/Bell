@@ -878,7 +878,10 @@ std::vector<BarrierRecorder> RenderDevice::recordBarriers(RenderGraph& graph)
             {
                 ImageView& imageView = graph.getImageView(resource.mResourceIndex);
 
-                recorder.transitionImageLayout(imageView, vk::ImageLayout::eShaderReadOnlyOptimal);
+				if(imageView.getImageUsage() & vk::ImageUsageFlagBits::eColorAttachment)
+					recorder.transitionImageLayout(imageView, vk::ImageLayout::eShaderReadOnlyOptimal);
+				else if(imageView.getImageUsage() & vk::ImageUsageFlagBits::eDepthStencilAttachment)
+					recorder.transitionImageLayout(imageView, vk::ImageLayout::eDepthStencilReadOnlyOptimal);
             }
         }
 
