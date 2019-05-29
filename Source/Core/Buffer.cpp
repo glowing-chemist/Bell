@@ -19,9 +19,6 @@ Buffer::Buffer(RenderDevice* dev,
     mAllignment = mUsage & vk::BufferUsageFlagBits::eUniformBuffer ?
                                    getDevice()->getLimits().minUniformBufferOffsetAlignment : 1;
 
-
-    mSize = mAllignment == 1 ? mSize : entries * mAllignment;
-
     mBuffer = getDevice()->createBuffer(mSize, mUsage);
     const vk::MemoryRequirements bufferMemReqs = getDevice()->getMemoryRequirements(mBuffer);
 	mBufferMemory = getDevice()->getMemoryManager()->Allocate(mSize, bufferMemReqs.alignment, static_cast<bool>(mUsage & vk::BufferUsageFlagBits::eTransferSrc ||
