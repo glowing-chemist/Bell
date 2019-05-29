@@ -120,7 +120,7 @@ void DescriptorManager::writeDescriptors(std::vector<vk::DescriptorSet>& descSet
                     vk::DescriptorImageInfo info = generateDescriptorImageInfo(imageView);
                     imageInfos.push_back(info);
 
-                    const vk::DescriptorType type = [attachmentType = bindings[bindingIndex].second]()
+					const vk::DescriptorType type = [attachmentType = bindings[bindingInfo.mResourceBinding].second]()
                     {
                         switch(attachmentType)
                         {
