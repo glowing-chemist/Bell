@@ -9,13 +9,22 @@ class Image;
 class BarrierRecorder;
 
 
+enum class ImageViewType
+{
+	Colour,
+	Depth
+};
+
+
 class ImageView : public GPUResource, public DeviceChild
 {
     friend BarrierRecorder;
 public:
 
     ImageView(Image&,
+			  const ImageViewType,
               const uint32_t level = 0,
+			  const uint32_t levelCount = 1,
               const uint32_t lod = 0,
               const uint32_t lodCount = 1);
 
@@ -49,6 +58,18 @@ public:
     Allocation getImageMemory() const
         { return mImageMemory; }
 
+	uint32_t getBaseMip() const
+		{ return mLOD; }
+
+	uint32_t getMipsCount() const
+		{ return mLODCount; }
+
+	uint32_t getBaseLevel() const
+		{ return mLevel; }
+
+	uint32_t getLevelCount() const
+		{ return mLevelCount; }
+
 
 private:
 
@@ -64,6 +85,7 @@ private:
     uint32_t mLOD;
     uint32_t mLODCount;
     uint32_t mLevel;
+	uint32_t mLevelCount;
 };
 
 #endif

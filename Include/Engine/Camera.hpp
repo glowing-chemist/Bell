@@ -41,11 +41,11 @@ public:
     Camera(const float3& position,
            const float3& direction,
            float nearPlaneDistance = 0.1f,
-           float farPlaneDistance = 100.0f,
+		   float farPlaneDistance = 10.0f,
            float fieldOfView = 90.0f)
         : mPosition{position},
           mDirection{direction},
-          mUp{0.0f, -1.0f, 0.0f},
+		  mUp{0.0f, -1.0f, 0.0f},
           mNearPlaneDistance{nearPlaneDistance},
           mFarPlaneDistance{farPlaneDistance},
           mFieldOfView{fieldOfView} {}

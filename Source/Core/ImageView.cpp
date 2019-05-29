@@ -4,9 +4,11 @@
 
 
 ImageView::ImageView(Image& parentImage,
-                     const uint32_t level,
-                     const uint32_t lod,
-                     const uint32_t lodCount) :
+					 const ImageViewType viewType,
+					 const uint32_t level,
+					 const uint32_t levelCount,
+					 const uint32_t lod,
+					 const uint32_t lodCount) :
     GPUResource{parentImage.getDevice()->getCurrentSubmissionIndex()},
     DeviceChild{parentImage.getDevice()},
     mImageHandle{parentImage.getImage()},
@@ -17,15 +19,27 @@ ImageView::ImageView(Image& parentImage,
     mUsage{parentImage.getUsage()},
     mLOD{lod},
     mLODCount{lodCount},
-    mLevel{level}
+	mLevel{level},
+	mLevelCount{levelCount}
 {
+	const vk::ImageAspectFlags adjustedViewType = [viewType]()
+	{
+		switch(viewType)
+		{
+			case ImageViewType::Colour:
+				return vk::ImageAspectFlagBits::eColor;
+
+			case ImageViewType::Depth:
+				return vk::ImageAspectFlagBits::eDepth;
+		}
+	}();
+
     vk::ImageSubresourceRange subresourceRange{};
     subresourceRange.setBaseMipLevel(lod);
     subresourceRange.setLevelCount(mLODCount);
     subresourceRange.setBaseArrayLayer(level);
-    subresourceRange.setLayerCount(1);
-	subresourceRange.setAspectMask((parentImage.getFormat() == vk::Format::eD32Sfloat) || (parentImage.getFormat() == vk::Format::eD24UnormS8Uint) ?
-                                       vk::ImageAspectFlagBits::eDepth : vk::ImageAspectFlagBits::eColor);
+	subresourceRange.setLayerCount(mLevelCount);
+	subresourceRange.setAspectMask(adjustedViewType);
 
     const auto extent = parentImage.getExtent(mLevel, mLOD);
     vk::ImageViewType type = vk::ImageViewType::e1D;
