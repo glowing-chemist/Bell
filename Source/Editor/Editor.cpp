@@ -13,7 +13,7 @@ Editor::Editor(GLFWwindow* window) :
     mEngine{mWindow},
 	mHasUploadedFonts(false),
     mOverlayFontTexture(mEngine.createImage(512, 64, 1, 1, 1, 1, vk::Format::eR8G8B8A8Unorm, vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eTransferDst , "Font Texture")),
-    mOverlayTextureView(mOverlayFontTexture),
+	mOverlayTextureView(mOverlayFontTexture, ImageViewType::Colour),
 	mOverlayTranslationUBO(mEngine.createBuffer(16, 16, vk::BufferUsageFlagBits::eUniformBuffer, "Transformations")),
 	mFontsSampler(SamplerType::Linear),
     mInProgressScene{"In construction"}
