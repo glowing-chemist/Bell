@@ -206,16 +206,29 @@ void RenderGraph::reorderTasks()
 
     const uint32_t taskCount = static_cast<uint32_t>(mTaskOrder.size());
 
+	// keep track of tasks that have already been added to meet other tasks dependancies.
+	// This stops us readding moved from tasks.
+	std::vector<uint8_t> usedDependants(taskCount);
+
 	for (uint32_t i = 0; i < taskCount; ++i)
 	{
-        std::vector<uint8_t> dependancyBitset(taskCount);
+		std::vector<uint8_t> dependancyBitset = usedDependants;
 
 		for (uint32_t vertexIndex = 0; vertexIndex < mTaskDependancies.size(); ++vertexIndex)
 		{
 			dependancyBitset[mTaskDependancies[vertexIndex].second] = 1;
 		}
 
-        const uint32_t taskIndexToAdd = static_cast<uint32_t>(std::distance(dependancyBitset.begin(), std::find(dependancyBitset.begin(), dependancyBitset.end(), 0)));
+		const uint32_t taskIndexToAdd = static_cast<uint32_t>(std::distance(dependancyBitset.begin(),
+																			std::find(
+																				dependancyBitset.begin(),
+																				dependancyBitset.end(),
+																				0
+																				)
+																			)
+															  );
+
+		usedDependants[taskIndexToAdd] = 1;
 
 		newTaskOrder.push_back(mTaskOrder[taskIndexToAdd]);
         newInputBindings.push_back(std::move(mInputResources[taskIndexToAdd]));
@@ -228,7 +241,9 @@ void RenderGraph::reorderTasks()
 		for (uint32_t i = 0; i < mTaskDependancies.size(); ++i)
 		{
 			if (mTaskDependancies[i].first == taskIndexToAdd)
+			{
 				mTaskDependancies.erase(mTaskDependancies.begin() + i);
+			}
 		}
 	}
 
