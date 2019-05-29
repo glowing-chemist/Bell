@@ -14,7 +14,8 @@ out gl_PerVertex {
 };
 
 
-layout(binding = 0) uniform UniformBufferObject {    
+layout(binding = 0) uniform UniformBufferObject 
+{    
     mat4 model;    
     mat4 view;    
     mat4 perspective;    
