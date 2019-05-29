@@ -147,7 +147,7 @@ void SwapChain::createSwapChainImageViews()
 {
     for(size_t i = 0; i < mSwapChainImages.size(); i++)
     {
-        ImageView imgeView(mSwapChainImages[i]);
+		ImageView imgeView(mSwapChainImages[i], ImageViewType::Colour);
         mImageViews.push_back(imgeView);
     }
 
