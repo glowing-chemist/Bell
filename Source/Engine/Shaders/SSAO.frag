@@ -31,6 +31,7 @@ void main()
 	const float depth = texture(sampler2D(depthTexture, linearSampler), uv).x;
 
 	float occlusion = 1.0f;
+	const float occlusionFactor = 1.0f / float(normalsOffsets.numberOfOffsets);
 
 	for(uint i = 0; i < normalsOffsets.numberOfOffsets; ++i)
 	{
@@ -40,8 +41,7 @@ void main()
 
 		const float realOffsetDepth = texture(sampler2D(depthTexture, linearSampler), offsetedPosition.xy).x;
 
-		if(realOffsetDepth <= offsetedPosition.z)
-			occlusion -= 0.1f;
+		occlusion -= occlusionFactor * mix(0.0f, 1.0f, (offsetedPosition.z - realOffsetDepth) > 0.0f);
 	}
 
 	SSAOOutput = occlusion;
