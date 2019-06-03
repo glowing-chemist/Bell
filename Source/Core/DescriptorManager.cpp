@@ -1,5 +1,6 @@
 #include "DescriptorManager.hpp"
 #include "RenderDevice.hpp"
+#include "Core/ConversionUtils.hpp"
 #include "Core/BellLogging.hpp"
 
 #include <iostream>
@@ -116,11 +117,9 @@ void DescriptorManager::writeDescriptors(std::vector<vk::DescriptorSet>& descSet
             {
                 case RenderGraph::ResourceType::Image:
                 {
-                    auto& imageView = graph.getImageView(bindingInfo.mResourceIndex);
-                    vk::DescriptorImageInfo info = generateDescriptorImageInfo(imageView);
-                    imageInfos.push_back(info);
-
-					const vk::DescriptorType type = [attachmentType = bindings[bindingInfo.mResourceBinding].second]()
+					// We assume that no sampling happens from the swapchain image.
+					const AttachmentType attachmentType = bindings[bindingInfo.mResourceBinding].second;
+					const vk::DescriptorType type = [attachmentType]()
                     {
                         switch(attachmentType)
                         {
@@ -135,6 +134,14 @@ void DescriptorManager::writeDescriptors(std::vector<vk::DescriptorSet>& descSet
                                 return vk::DescriptorType::eSampledImage;
                         }
                     }();
+
+					auto& imageView = graph.getImageView(bindingInfo.mResourceIndex);
+
+					vk::ImageLayout adjustedLayout = imageView.getType() == ImageViewType::Depth ? vk::ImageLayout::eDepthStencilReadOnlyOptimal : getVulkanImageLayout(attachmentType);
+
+					vk::DescriptorImageInfo info = generateDescriptorImageInfo(imageView, adjustedLayout);
+
+					imageInfos.push_back(info);
 
                     descWrite.setPImageInfo(&imageInfos.back());
                     descWrite.setDescriptorType(type);
@@ -276,11 +283,11 @@ vk::DescriptorPool DescriptorManager::createDescriptorPool()
 }
 
 
-vk::DescriptorImageInfo DescriptorManager::generateDescriptorImageInfo(ImageView& imageView) const
+vk::DescriptorImageInfo DescriptorManager::generateDescriptorImageInfo(ImageView& imageView, const vk::ImageLayout layout) const
 {
     vk::DescriptorImageInfo imageInfo{};
     imageInfo.setImageView(imageView.getImageView());
-    imageInfo.setImageLayout(vk::ImageLayout::eShaderReadOnlyOptimal);
+	imageInfo.setImageLayout(layout);
 
     return imageInfo;
 }
