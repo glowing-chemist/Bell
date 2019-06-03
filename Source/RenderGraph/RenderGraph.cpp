@@ -20,8 +20,8 @@ void RenderGraph::addTask(const GraphicsTask& task)
 
 void RenderGraph::addTask(const ComputeTask& task)
 {
-    const uint32_t taskIndex = static_cast<uint32_t>(mComputeTask.size());
-    mComputeTask.push_back(task);
+	const uint32_t taskIndex = static_cast<uint32_t>(mComputeTasks.size());
+	mComputeTasks.push_back(task);
 
     mTaskOrder.push_back({TaskType::Compute, taskIndex});
 
@@ -35,7 +35,7 @@ void RenderGraph::addTask(const ComputeTask& task)
 
 void RenderGraph::addDependancy(const std::string& dependancy, const std::string& dependant)
 {
-    // Find the task index in mGraphicsTasks/mComputeTasks
+	// Find the task index in mGraphicsTasks/mComputeTaskss
     uint32_t dependancyTaskIndex = 0;
     uint32_t dependantTaskIndex = 0;
     {
@@ -45,10 +45,10 @@ void RenderGraph::addDependancy(const std::string& dependancy, const std::string
 
     if(dependancyGraphicsIt == mGraphicsTasks.end())
     {
-        auto dependancyComputeIt = std::find_if(mComputeTask.begin(), mComputeTask.end(),
+		auto dependancyComputeIt = std::find_if(mComputeTasks.begin(), mComputeTasks.end(),
                                                     [&dependancy](const auto& task) {return task.getName() == dependancy;});
 
-        const uint32_t computeTaskIndex = static_cast<uint32_t>(std::distance(mComputeTask.begin(), dependancyComputeIt));
+		const uint32_t computeTaskIndex = static_cast<uint32_t>(std::distance(mComputeTasks.begin(), dependancyComputeIt));
         uint32_t taskCounter = 0;
         for(uint32_t i = 0; i < mTaskOrder.size(); ++i)
         {
@@ -79,10 +79,10 @@ void RenderGraph::addDependancy(const std::string& dependancy, const std::string
 
     if(dependantGraphicsIt == mGraphicsTasks.end())
     {
-        auto dependantComputeIt = std::find_if(mComputeTask.begin(), mComputeTask.end(),
+		auto dependantComputeIt = std::find_if(mComputeTasks.begin(), mComputeTasks.end(),
                                                     [&dependant](const auto& task) {return task.getName() == dependant;});
 
-        const uint32_t computeTaskIndex = static_cast<uint32_t>(std::distance(mComputeTask.begin(), dependantComputeIt));
+		const uint32_t computeTaskIndex = static_cast<uint32_t>(std::distance(mComputeTasks.begin(), dependantComputeIt));
         uint32_t taskCounter = 0;
         for(uint32_t i = 0; i < mTaskOrder.size(); ++i)
         {
@@ -236,8 +236,6 @@ void RenderGraph::reorderTasks()
         newFrameBuffersNeedUpdating.push_back(mFrameBuffersNeedUpdating[taskIndexToAdd]);
         newDescriptorsNeedUpdating.push_back(mDescriptorsNeedUpdating[taskIndexToAdd]);
 
-		mTaskOrder.erase(mTaskOrder.begin() + taskIndexToAdd);
-
 		for (uint32_t i = 0; i < mTaskDependancies.size(); ++i)
 		{
 			if (mTaskDependancies[i].first == taskIndexToAdd)
@@ -282,7 +280,7 @@ void RenderGraph::mergeTasks()
                 mGraphicsTasks.erase(std::remove(mGraphicsTasks.begin(), mGraphicsTasks.end(), static_cast<GraphicsTask&>(task2)), mGraphicsTasks.end());
             } else
             {
-                mComputeTask.erase(std::remove(mComputeTask.begin(), mComputeTask.end(), static_cast<ComputeTask&>(task2)), mComputeTask.end());
+				mComputeTasks.erase(std::remove(mComputeTasks.begin(), mComputeTasks.end(), static_cast<ComputeTask&>(task2)), mComputeTasks.end());
             }
 
             mTaskOrder.erase(mTaskOrder.begin() + i + 1);
@@ -339,7 +337,7 @@ RenderTask& RenderGraph::getTask(TaskType taskType, uint32_t taskIndex)
             case TaskType::Graphics:
                 return mGraphicsTasks[taskIndex];
             case TaskType::Compute:
-                return mComputeTask[taskIndex];
+				return mComputeTasks[taskIndex];
         }
     }();
 
@@ -356,7 +354,7 @@ const RenderTask& RenderGraph::getTask(TaskType taskType, uint32_t taskIndex) co
             case TaskType::Graphics:
                 return mGraphicsTasks[taskIndex];
             case TaskType::Compute:
-                return mComputeTask[taskIndex];
+				return mComputeTasks[taskIndex];
         }
     }();
 
@@ -420,7 +418,7 @@ void RenderGraph::reset()
 
 	// Clear all jobs
 	mGraphicsTasks.clear();
-	mComputeTask.clear();
+	mComputeTasks.clear();
 	mTaskOrder.clear();
 	mTaskDependancies.clear();
 }

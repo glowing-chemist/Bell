@@ -116,7 +116,7 @@ private:
     void bindResource(const std::string&, const uint32_t, const ResourceType);
 
     std::vector<GraphicsTask> mGraphicsTasks;
-    std::vector<ComputeTask>  mComputeTask;
+	std::vector<ComputeTask>  mComputeTasks;
 
     std::optional<Buffer> mVertexBuffer;
     std::optional<Buffer> mIndexBuffer;
