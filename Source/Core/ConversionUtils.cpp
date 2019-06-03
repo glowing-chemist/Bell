@@ -11,6 +11,11 @@ vk::ImageLayout getVulkanImageLayout(const AttachmentType type)
 		case AttachmentType::RenderTarget3D:
 			return vk::ImageLayout::eColorAttachmentOptimal;
 
+		case AttachmentType::Image1D:
+		case AttachmentType::Image2D:
+		case AttachmentType::Image3D:
+			return vk::ImageLayout::eGeneral;
+
 		case AttachmentType::Depth:
 			return vk::ImageLayout::eDepthStencilAttachmentOptimal;
 
