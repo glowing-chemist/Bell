@@ -16,6 +16,8 @@ CommandPool::CommandPool(RenderDevice* renderDevice) :
 	for (auto& createInfo : poolCreateInfos)
 	{
 		createInfo.setQueueFamilyIndex(getDevice()->getQueueFamilyIndex(static_cast<QueueType>(queueFamiltTypeIndex)));
+		// we reset the pools every 3 frames so set these as transient.
+		createInfo.setFlags(vk::CommandPoolCreateFlagBits::eTransient);
 		++queueFamiltTypeIndex;
 	}
 
