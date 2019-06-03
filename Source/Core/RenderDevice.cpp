@@ -1011,6 +1011,8 @@ void RenderDevice::execute(RenderGraph& graph)
 
         execute(neededBarriers[cmdBufferIndex - 1]);
 
+		vk::CommandBufferUsageFlags commadBufferUsage = vk::CommandBufferUsageFlagBits::eOneTimeSubmit;
+
         if (resources.mRenderPass)
         {
             const auto& graphicsTask = static_cast<const GraphicsTask&>(*task);
@@ -1018,6 +1020,8 @@ void RenderDevice::execute(RenderGraph& graph)
             vk::Rect2D renderArea{ {0, 0}, {pipelineDesc.mViewport.x, pipelineDesc.mViewport.y} };
 
             const std::vector<vk::ClearValue> clearValues = graphicsTask.getClearValues();
+
+			commadBufferUsage |= vk::CommandBufferUsageFlagBits::eRenderPassContinue;
 
             vk::RenderPassBeginInfo passBegin{};
             passBegin.setRenderPass(*resources.mRenderPass);
@@ -1039,7 +1043,7 @@ void RenderDevice::execute(RenderGraph& graph)
         secondaryInherit.setFramebuffer(*resources.mFrameBuffer);
 
         vk::CommandBufferBeginInfo secondaryBegin{};
-        secondaryBegin.setFlags(vk::CommandBufferUsageFlagBits::eRenderPassContinue);
+		secondaryBegin.setFlags(commadBufferUsage);
         secondaryBegin.setPInheritanceInfo(&secondaryInherit);
 
         vk::CommandBuffer& secondaryCmdBuffer = currentCommandPool->getBufferForQueue(QueueType::Graphics, cmdBufferIndex);
@@ -1062,7 +1066,9 @@ void RenderDevice::execute(RenderGraph& graph)
         secondaryCmdBuffer.end();
         primaryCmdBuffer.executeCommands(secondaryCmdBuffer);
 
-        primaryCmdBuffer.endRenderPass();
+		// end the render pass if we are executing a graphics task.
+		if (resources.mRenderPass)
+			primaryCmdBuffer.endRenderPass();
 
 		++cmdBufferIndex;
     }
