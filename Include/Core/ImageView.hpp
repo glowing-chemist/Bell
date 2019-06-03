@@ -70,12 +70,16 @@ public:
 	uint32_t getLevelCount() const
 		{ return mLevelCount; }
 
+	ImageViewType getType() const
+		{ return mType; }
+
 
 private:
 
     vk::Image mImageHandle;
     vk::ImageView mImageViewHandle;
     Allocation mImageMemory;
+	ImageViewType mType;
 
     vk::Format mImageFormat;
     vk::ImageLayout mLayout;
