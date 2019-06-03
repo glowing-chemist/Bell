@@ -1,0 +1,39 @@
+#version 450
+#extension GL_ARB_separate_shader_objects : enable
+
+
+layout(rgba8_snorm, binding = 0) uniform readonly image2D inImage;
+layout(rgba8_snorm, binding = 1) uniform writeonly image2D outImage; 
+
+
+layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
+
+
+const float[] decomposedKernel = {0.0039f, 0.0157f, 0.0236, 0.0157f, 0.0039f};
+
+shared vec4 sharedLine[256];
+
+
+void main()
+{
+	const vec2 size = imageSize(inImage);
+
+	const ivec3 dispatchLocation = ivec3(gl_GlobalInvocationID);
+
+	sharedLine[gl_LocalInvocationID.x] = imageLoad(inImage, dispatchLocation.xy);
+
+	// wait for the shared memory to be fully populated.
+	barrier();
+
+	if(dispatchLocation.x >= size.x)
+		return;
+
+	vec4 bluredPixel = vec4(0.0f, 0.0f, 0.0f, 0.0f);
+
+	for(uint i = 0; i < 5; ++i)
+	{
+		bluredPixel += decomposedKernel[i] * sharedLine[max(0, gl_LocalInvocationID.x - 2 + i)];
+	}
+
+	imageStore(outImage, dispatchLocation.xy, bluredPixel);
+}
