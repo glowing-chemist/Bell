@@ -844,7 +844,7 @@ void RenderDevice::generateFrameBuffers(RenderGraph& graph)
         info.setHeight(imageExtent.height);
         info.setLayers(imageExtent.depth);
 
-        // Make sure we don't leak frameBuffers, add them to the pendign destruction list.
+		// Make sure we don't leak frameBuffers, add them to the pending destruction list.
         // Conservartively set the fraemBuffer as used in the last frame.
         if((*resource).mFrameBuffer)
             destroyFrameBuffer(*(*resource).mFrameBuffer, getCurrentSubmissionIndex() - 1);
@@ -870,6 +870,8 @@ std::vector<BarrierRecorder> RenderDevice::recordBarriers(RenderGraph& graph)
 {
     std::vector<BarrierRecorder> barriers{};
 
+	auto taskIt = graph.taskBegin();
+
     for(uint32_t i = 0; i < graph.mInputResources.size(); ++i)
     {
         const auto& inputResources = graph.mInputResources[i];
@@ -885,8 +887,14 @@ std::vector<BarrierRecorder> RenderDevice::recordBarriers(RenderGraph& graph)
             {
                 ImageView& imageView = graph.getImageView(resource.mResourceIndex);
 
-				if(imageView.getImageUsage() & vk::ImageUsageFlagBits::eColorAttachment)
-					recorder.transitionImageLayout(imageView, vk::ImageLayout::eShaderReadOnlyOptimal);
+				if(imageView.getImageUsage() & vk::ImageUsageFlagBits::eColorAttachment ||
+				   imageView.getImageUsage() & vk::ImageUsageFlagBits::eStorage)
+				{
+					// fetch the attachment type for the current image view and get what layout the image needs to be in.
+					const vk::ImageLayout layout = getVulkanImageLayout((*taskIt).getInputAttachments()[resource.mResourceBinding].second);
+
+					recorder.transitionImageLayout(imageView, layout);
+				}
 				else if(imageView.getImageUsage() & vk::ImageUsageFlagBits::eDepthStencilAttachment)
 					recorder.transitionImageLayout(imageView, vk::ImageLayout::eDepthStencilReadOnlyOptimal);
             }
@@ -908,6 +916,7 @@ std::vector<BarrierRecorder> RenderDevice::recordBarriers(RenderGraph& graph)
         }
 
         barriers.push_back(recorder);
+		++taskIt;
     }
 
     return barriers;
