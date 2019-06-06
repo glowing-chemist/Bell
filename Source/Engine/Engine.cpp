@@ -1,6 +1,6 @@
 #include "Engine/Engine.hpp"
 #include "Core/ConversionUtils.hpp"
-
+#include "Core/BellLogging.hpp"
 
 Engine::Engine(GLFWwindow* windowPtr) :
     mRenderInstance(windowPtr),
@@ -70,6 +70,23 @@ Buffer Engine::createBuffer(const uint32_t size,
 					const std::string& name)
 {
 	return Buffer{&mRenderDevice, usage, size, stride, name};
+}
+
+
+Shader Engine::getShader(const std::string& path)
+{
+	if(mShaderCache.find(path) != mShaderCache.end())
+		return (*mShaderCache.find(path)).second;
+
+	Shader newShader{&mRenderDevice, path};
+
+	const bool compiled = newShader.compile();
+
+	BELL_ASSERT(compiled, "Shader failed to compile")
+
+	mShaderCache.insert({path, newShader});
+
+	return newShader;
 }
 
 

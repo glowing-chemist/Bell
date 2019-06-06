@@ -61,6 +61,8 @@ public:
 						vk::BufferUsageFlags,
 						const std::string& = "");
 
+	Shader getShader(const std::string& path);
+
     void   setImageInScene(const std::string& name, const ImageView& image)
 		{ mCurrentRenderGraph.bindImage(name, image); }
 
@@ -96,6 +98,9 @@ public:
     GLFWwindow* getWindow()
         { return mWindow; }
 
+	RenderDevice* getDevice()
+		{ return &mRenderDevice; }
+
 private:
 
     RenderInstance mRenderInstance;
@@ -114,6 +119,8 @@ private:
 
     Shader mOverlayVertexShader;
     Shader mOverlayFragmentShader;
+
+	std::unordered_map<std::string, Shader> mShaderCache;
 
     std::map<std::string, std::variant<int64_t, double>> mRenderVariables;
 
