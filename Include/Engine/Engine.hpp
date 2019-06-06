@@ -66,7 +66,7 @@ public:
     void   setImageInScene(const std::string& name, const ImageView& image)
 		{ mCurrentRenderGraph.bindImage(name, image); }
 
-	void   setBufferInScene( const std::string& name , const Buffer& buffer)
+	void   setBufferInScene( const std::string& name , const BufferView& buffer)
 		{ mCurrentRenderGraph.bindBuffer(name, buffer); }
 
 	void setSamperInScene(const std::string& name, const Sampler sampler)

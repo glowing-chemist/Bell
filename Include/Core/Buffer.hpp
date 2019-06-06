@@ -34,16 +34,10 @@ public:
 	vk::Buffer getBuffer() const
 		{ return mBuffer; }
 
-    void setCurrentOffset(const uint64_t offset)
-        { mCurrentOffset = offset; }
-
-    uint64_t getCurrentOffset() const
-        { return mCurrentOffset; }
-
     vk::BufferUsageFlags getUsage() const
         { return mUsage; }
 
-    Allocation getMemory()
+	Allocation getMemory() const
         { return mBufferMemory; }
 
 	uint32_t getSize() const
@@ -61,8 +55,6 @@ private:
     vk::Buffer mBuffer;
     Allocation mBufferMemory;
 	MapInfo mCurrentMap;
-
-    uint64_t mCurrentOffset;
 
     vk::BufferUsageFlags mUsage;
     uint32_t mSize;

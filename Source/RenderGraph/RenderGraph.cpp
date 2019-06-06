@@ -155,10 +155,10 @@ void RenderGraph::bindImage(const std::string& name, const ImageView &image)
 }
 
 
-void RenderGraph::bindBuffer(const std::string& name , const Buffer& buffer)
+void RenderGraph::bindBuffer(const std::string& name , const BufferView& buffer)
 {
-    const uint32_t currentBufferIndex = static_cast<uint32_t>(mBuffers.size());
-    mBuffers.emplace_back(name, buffer);
+	const uint32_t currentBufferIndex = static_cast<uint32_t>(mBufferViews.size());
+	mBufferViews.emplace_back(name, buffer);
 
     bindResource(name, currentBufferIndex, ResourceType::Buffer);
 }
@@ -378,19 +378,19 @@ ImageView& RenderGraph::getImageView(const uint32_t index)
 }
 
 
-Buffer& RenderGraph::getBuffer(const uint32_t index)
+BufferView& RenderGraph::getBuffer(const uint32_t index)
 {
-    BELL_ASSERT(index < mBuffers.size(), " Attempting to fetch non buffer resource")
+	BELL_ASSERT(index < mBufferViews.size(), " Attempting to fetch non buffer resource")
 
-    return mBuffers[index].second;
+	return mBufferViews[index].second;
 }
 
 
-const Buffer& RenderGraph::getBoundBuffer(const std::string& name) const
+const BufferView& RenderGraph::getBoundBuffer(const std::string& name) const
 {
-    auto itr = std::find_if(mBuffers.begin(), mBuffers.end(), [&name](const std::pair<std::string, Buffer>& entry) { return name == entry.first; });
+	auto itr = std::find_if(mBufferViews.begin(), mBufferViews.end(), [&name](const std::pair<std::string, BufferView>& entry) { return name == entry.first; });
 
-    BELL_ASSERT(itr != mBuffers.end(), "Buffer not found")
+	BELL_ASSERT(itr != mBufferViews.end(), "Buffer not found")
 
     return (*itr).second;
 }
@@ -410,7 +410,7 @@ void RenderGraph::reset()
 {
 	// Clear all bound resources
     mImageViews.clear();
-	mBuffers.clear();
+	mBufferViews.clear();
 	mSamplers.clear();
 
 	mInputResources.clear();

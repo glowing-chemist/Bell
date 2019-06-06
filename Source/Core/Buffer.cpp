@@ -9,7 +9,6 @@ Buffer::Buffer(RenderDevice* dev,
 	   const std::string &name) :
     GPUResource{dev->getCurrentSubmissionIndex()},
     DeviceChild{dev},
-    mCurrentOffset{0},
     mUsage{usage},
     mSize{size},
     mStride{stride},
@@ -57,7 +56,6 @@ Buffer& Buffer::operator=(const Buffer& buf)
 	mBuffer = buf.mBuffer;
 	mBufferMemory = buf.mBufferMemory;
 	mCurrentMap = buf.mCurrentMap;
-	mCurrentOffset = buf.mCurrentOffset;
 	mUsage = buf.mUsage;
 	mSize = buf.mSize;
 	mStride = buf.mStride;
@@ -73,7 +71,6 @@ void Buffer::swap(Buffer& other)
 	vk::Buffer Buffer = mBuffer;
 	Allocation BufferMemory = mBufferMemory;
 	MapInfo CurrentMap = mCurrentMap;
-	uint64_t CurrentOffset = mCurrentOffset;
 	vk::BufferUsageFlags Usage = mUsage;
 	uint32_t Size = mSize;
 	uint32_t Stride = mStride;
@@ -88,9 +85,6 @@ void Buffer::swap(Buffer& other)
 
 	mCurrentMap = other.mCurrentMap;
 	other.mCurrentMap = CurrentMap;
-
-	mCurrentOffset = other.mCurrentOffset;
-	other.mCurrentOffset = CurrentOffset;
 
 	mUsage = other.mUsage;
 	other.mUsage = Usage;

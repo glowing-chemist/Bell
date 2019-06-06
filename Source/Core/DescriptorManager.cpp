@@ -163,13 +163,13 @@ void DescriptorManager::writeDescriptors(std::vector<vk::DescriptorSet>& descSet
 
                 case RenderGraph::ResourceType::Buffer:
                 {
-                    auto& buffer = graph.getBuffer(bindingInfo.mResourceIndex);
-                    vk::DescriptorBufferInfo info = generateDescriptorBufferInfo(buffer);
+					auto& bufferView = graph.getBuffer(bindingInfo.mResourceIndex);
+					vk::DescriptorBufferInfo info = generateDescriptorBufferInfo(bufferView);
                     bufferInfos.push_back(info);
 
                     descWrite.setPBufferInfo(&bufferInfos.back());
 
-                    if(buffer.getUsage() & vk::BufferUsageFlagBits::eUniformBuffer)
+					if(bufferView.getUsage() & vk::BufferUsageFlagBits::eUniformBuffer)
                         descWrite.setDescriptorType(vk::DescriptorType::eUniformBuffer);
                     else
                         descWrite.setDescriptorType(vk::DescriptorType::eStorageBuffer);
@@ -293,12 +293,12 @@ vk::DescriptorImageInfo DescriptorManager::generateDescriptorImageInfo(ImageView
 }
 
 
-vk::DescriptorBufferInfo DescriptorManager::generateDescriptorBufferInfo(Buffer& buffer) const
+vk::DescriptorBufferInfo DescriptorManager::generateDescriptorBufferInfo(BufferView& buffer) const
 {
     vk::DescriptorBufferInfo bufferInfo{};
     bufferInfo.setBuffer(buffer.getBuffer());
-    bufferInfo.setOffset(buffer.getCurrentOffset());
-    bufferInfo.setRange(VK_WHOLE_SIZE);
+	bufferInfo.setOffset(buffer.getOffset());
+	bufferInfo.setRange(buffer.getSize());
 
     return bufferInfo;
 }

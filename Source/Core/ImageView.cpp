@@ -61,7 +61,6 @@ ImageView::ImageView(Image& parentImage,
 
 ImageView::~ImageView()
 {
-    // This is the last reference on the image so destroy ourselves and the image.
     const bool shouldDestroy = release();
     if(shouldDestroy)
     {

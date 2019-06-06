@@ -7,6 +7,7 @@
 #include "Core/Image.hpp"
 #include "Core/ImageView.hpp"
 #include "Core/Buffer.hpp"
+#include "Core/BufferView.hpp"
 #include "Core/Sampler.hpp"
 
 #include <iterator>
@@ -45,7 +46,7 @@ public:
     void addDependancy(const std::string&, const std::string&);
 
     void bindImage(const std::string&, const ImageView &);
-    void bindBuffer(const std::string&, const Buffer &);
+	void bindBuffer(const std::string&, const BufferView &);
     void bindSampler(const std::string&, const Sampler&);
 
     // These are special because they are used by every task that has vertex attributes
@@ -58,7 +59,7 @@ public:
 	RenderTask& getTask(TaskType, uint32_t);
 	const RenderTask& getTask(TaskType, uint32_t) const;
 
-    const Buffer& getBoundBuffer(const std::string&) const;
+	const BufferView &getBoundBuffer(const std::string&) const;
     const ImageView&  getBoundImageView(const std::string&) const;
 
 	void reset();
@@ -93,7 +94,7 @@ public:
         Buffer
     };
     ImageView& getImageView(const uint32_t index);
-    Buffer&    getBuffer(const uint32_t index);
+	BufferView &getBuffer(const uint32_t index);
     Sampler& getSampler(const uint32_t index);
 
 
@@ -131,7 +132,7 @@ private:
     std::vector<std::vector<ResourceBindingInfo>> mOutputResources;
 
     std::vector<std::pair<std::string, ImageView>> mImageViews;
-    std::vector<std::pair<std::string, Buffer>> mBuffers;
+	std::vector<std::pair<std::string, BufferView>> mBufferViews;
     // the actual sampler objects are stored on the device a they live for the
     // life of the renderer.
     std::vector<std::pair<std::string, Sampler>> mSamplers;
