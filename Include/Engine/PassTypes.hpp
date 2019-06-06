@@ -11,7 +11,8 @@ enum class PassType : uint64_t
 	Animation = 1 << 1,
 	DeferredLighting = 1 << 2,
 	Shadow = 1 << 3,
-	CascadingShadow = 1 << 4
+	CascadingShadow = 1 << 4,
+	SSAO = 1 << 5
 
 	// Add more as and when implemented.
 };
