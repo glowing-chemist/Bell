@@ -10,7 +10,13 @@
 
 #include <vulkan/vulkan.hpp>
 
-#include <glslang/Public/ShaderLang.h>
+#include "glslang/Public/ShaderLang.h"
+
+#ifdef _MS_VER
+namespace fs = std::experimental::filesystem;
+#else
+namespace fs = std::filesystem;
+#endif
 
 
 class RenderDevice;
@@ -29,7 +35,7 @@ public:
 
     const vk::ShaderModule&           getShaderModule() const;
 
-    const std::string& getFilePath() const
+	std::string getFilePath() const
         { return mFilePath; }
 
 private:
@@ -40,7 +46,7 @@ private:
     std::vector<unsigned int> mSPIRV;
     vk::ShaderModule mShaderModule;
 
-    std::string mFilePath;
+	fs::path mFilePath;
     EShLanguage mShaderStage;
 
     bool mCompiled;
