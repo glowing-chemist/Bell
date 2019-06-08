@@ -19,15 +19,8 @@ set(GLFW_BUILD_TESTS 0)
 set(GLFW_BUILD_EXAMPLES 0)
 add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/ThirdParty/GLFW3/glfw-3.2.1")
 add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/ThirdParty/assimp-4.1.0")
+add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/ThirdParty/glslang")
 
-if(WIN32)
-    set(glslangIncludeDirs "C:\\Program Files (x86)\\glslang\\include" )
-	set(glslangLibs "C:\\Program Files (x86)\\glslang\\lib\\glslang.lib")
-
-	set(glmIncludeDirs "C:\\Program Files (x86)\\glm\\include")
-else()
-    set(glslangLibs /usr/lib/libglslang.so /usr/lib/libglslang-default-resource-limits.so  /usr/lib/libSPIRV.so)
-endif(WIN32)
 
 if(USE_ASAN)
     set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-omit-frame-pointer -fsanitize=address")
@@ -43,6 +36,7 @@ include_directories(
 			"${CMAKE_CURRENT_LIST_DIR}/ThirdParty/GLFW3/glfw-3.2.1/include"
 			"${CMAKE_CURRENT_LIST_DIR}/ThirdParty/assimp-4.1.0/include"
 			"${CMAKE_CURRENT_LIST_DIR}/ThirdParty/imgui-master"
+			"${CMAKE_CURRENT_LIST_DIR}/ThirdParty/glslang"
 			${glslangIncludeDirs}
 			${glmIncludeDirs}
 		    )
@@ -77,9 +71,9 @@ set(BELL_BASE_SOURCE
 add_library("${PROJECT_NAME}_BASE" ${BELL_BASE_SOURCE})
 
 if(WIN32)
-	set(BELL_BASE_DEPENDANCIES ${Vulkan_LIBRARIES} glfw ${glslangLibs})
+    set(BELL_BASE_DEPENDANCIES ${Vulkan_LIBRARIES} glfw glslang SPIRV)
 else()
-	set(BELL_BASE_DEPENDANCIES ${Vulkan_LIBRARIES} glfw stdc++fs ${glslangLibs})
+    set(BELL_BASE_DEPENDANCIES ${Vulkan_LIBRARIES} glfw stdc++fs glslang SPIRV)
 endif(WIN32)
 
 target_link_libraries("${PROJECT_NAME}_BASE" ${BELL_BASE_DEPENDANCIES})
