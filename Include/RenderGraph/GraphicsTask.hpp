@@ -4,6 +4,8 @@
 #include "RenderTask.hpp"
 #include "Core/Shader.hpp"
 
+#include <glm/mat4x4.hpp>
+
 #include <string>
 #include <unordered_map>
 #include <optional>
@@ -20,7 +22,8 @@ enum class DrawType
     Instanced,
     Indirect,
     IndexedInstanced,
-    IndexedIndirect
+	IndexedIndirect,
+	SetPushConstant
 };
 
 enum class BlendMode
@@ -170,30 +173,35 @@ public:
 
 	void addDrawCall(const uint32_t vertexOffset, const uint32_t numberOfVerticies) 
 	{ 
-            mDrawCalls.push_back({DrawType::Standard, vertexOffset, numberOfVerticies, 0, 0, 1, ""});
+			mDrawCalls.push_back({DrawType::Standard, vertexOffset, numberOfVerticies, 0, 0, 1, ""});
 	}
 
 	void addIndexedDrawCall(const uint32_t vertexOffset, const uint32_t indexOffset, const uint32_t numberOfIndicies) 
 	{ 
-            mDrawCalls.push_back({ DrawType::Indexed, vertexOffset, 0, indexOffset, numberOfIndicies, 1, "" });
+			mDrawCalls.push_back({ DrawType::Indexed, vertexOffset, 0, indexOffset, numberOfIndicies, 1, "" });
 	}
 
     void addIndirectDrawCall(const uint32_t drawCalls, const std::string&& indirectBuffer)
     {
-        mDrawCalls.push_back({DrawType::Indirect, 0, 0, 0, 0, drawCalls, indirectBuffer});
+		mDrawCalls.push_back({DrawType::Indirect, 0, 0, 0, 0, drawCalls, indirectBuffer});
     }
 
 	void addIndexedInstancedDrawCall(const uint32_t vertexOffset, const uint32_t indexOffset, const uint32_t numberOfInstances, const uint32_t numberOfIndicies)
 	{
-        mDrawCalls.push_back({ DrawType::IndexedInstanced, vertexOffset, 0, indexOffset, numberOfIndicies, numberOfInstances, "" });
+		mDrawCalls.push_back({ DrawType::IndexedInstanced, vertexOffset, 0, indexOffset, numberOfIndicies, numberOfInstances, "" });
 	}
 
     void addIndexedIndirectDrawCall(const uint32_t drawCalls, const uint32_t indexOffset, const uint32_t numberOfIndicies, const std::string&& indirectName)
 	{
-        mDrawCalls.push_back({ DrawType::IndexedIndirect, 0, 0, indexOffset, numberOfIndicies, drawCalls, indirectName});
+		mDrawCalls.push_back({ DrawType::IndexedIndirect, 0, 0, indexOffset, numberOfIndicies, drawCalls, indirectName});
 	}
 
-    void recordCommands(vk::CommandBuffer, const RenderGraph&) const override;
+	void addPushConsatntValue(const glm::mat4& val)
+	{
+		mDrawCalls.push_back({DrawType::SetPushConstant, 0, 0, 0, 0, 0, "", val});
+	}
+
+	void recordCommands(vk::CommandBuffer, const RenderGraph&, const vulkanResources&) const override;
 
     std::vector<vk::ClearValue> getClearValues() const;
 
@@ -206,15 +214,19 @@ public:
 
 private:
 
+
 	struct thunkedDraw {
 		DrawType mDrawType;
+
 		uint32_t mVertexOffset;
 		uint32_t mNumberOfVerticies;
 		uint32_t mIndexOffset;
 		uint32_t mNumberOfIndicies;
 		uint32_t mNumberOfInstances;
-        std::string mIndirectBufferName;
+		std::string mIndirectBufferName;
+		glm::mat4 mPushConstantValue;
 	};
+
 	std::vector<thunkedDraw> mDrawCalls;
 
 	GraphicsPipelineDescription mPipelineDescription;

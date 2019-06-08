@@ -51,7 +51,7 @@ public:
     void mergeDispatches(ComputeTask&);
 
     // Needs to take the graph to be able to lookup indirect buffers tha are bound to the graph.
-    void recordCommands(vk::CommandBuffer, const RenderGraph&) const override;
+	void recordCommands(vk::CommandBuffer, const RenderGraph&, const vulkanResources&) const override;
 
 	void clearCalls() override { mComputeCalls.clear(); }
 	TaskType taskType() const override { return TaskType::Compute; }

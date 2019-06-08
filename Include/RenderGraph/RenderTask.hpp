@@ -12,6 +12,7 @@
 #include <vulkan/vulkan.hpp>
 
 class RenderGraph;
+class vulkanResources;
 
 enum class LoadOp
 {
@@ -47,7 +48,7 @@ public:
     }
 
 
-    virtual void recordCommands(vk::CommandBuffer, const RenderGraph&) const = 0;
+	virtual void recordCommands(vk::CommandBuffer, const RenderGraph&, const vulkanResources&) const = 0;
 
     struct OutputAttachmentInfo
     {

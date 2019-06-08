@@ -1,55 +1,64 @@
 #include "RenderGraph/GraphicsTask.hpp"
 #include "RenderGraph/RenderGraph.hpp"
 
-void GraphicsTask::recordCommands(vk::CommandBuffer CmdBuffer, const RenderGraph& graph) const
+void GraphicsTask::recordCommands(vk::CommandBuffer CmdBuffer, const RenderGraph& graph, const vulkanResources& resources) const
 {
     for(const auto& thunk : mDrawCalls)
     {
         switch (thunk.mDrawType)
         {
             case DrawType::Standard:
-                CmdBuffer.draw(thunk.mNumberOfVerticies,
+				CmdBuffer.draw(thunk.mNumberOfVerticies,
                                1,
-                               thunk.mVertexOffset,
+							   thunk.mVertexOffset,
                                0);
                 break;
 
             case DrawType::Indexed:
-                CmdBuffer.drawIndexed(thunk.mNumberOfIndicies,
+				CmdBuffer.drawIndexed(thunk.mNumberOfIndicies,
                                       1,
-                                      thunk.mIndexOffset,
-                                      static_cast<int32_t>(thunk.mVertexOffset),
+									  thunk.mIndexOffset,
+									  static_cast<int32_t>(thunk.mVertexOffset),
                                       0);
                 break;
 
             case DrawType::Instanced:
-                CmdBuffer.draw(thunk.mNumberOfVerticies,
-                               thunk.mNumberOfInstances,
-                               thunk.mVertexOffset,
+				CmdBuffer.draw(thunk.mNumberOfVerticies,
+							   thunk.mNumberOfInstances,
+							   thunk.mVertexOffset,
                                0);
                 break;
 
             case DrawType::Indirect:
-                CmdBuffer.drawIndirect(graph.getBoundBuffer(thunk.mIndirectBufferName).getBuffer(),
+				CmdBuffer.drawIndirect(graph.getBoundBuffer(thunk.mIndirectBufferName).getBuffer(),
                                        0,
-                                       thunk.mNumberOfInstances,
+									   thunk.mNumberOfInstances,
                                        100); // TODO workout what the correct stride should be (maybe pass it down and let user decide)
                 break;
 
             case DrawType::IndexedInstanced:
-                CmdBuffer.drawIndexed(thunk.mNumberOfIndicies,
-                                      thunk.mNumberOfInstances,
-                                      thunk.mIndexOffset,
-                                      static_cast<int32_t>(thunk.mVertexOffset),
+				CmdBuffer.drawIndexed(thunk.mNumberOfIndicies,
+									  thunk.mNumberOfInstances,
+									  thunk.mIndexOffset,
+									  static_cast<int32_t>(thunk.mVertexOffset),
                                       0);
                 break;
 
             case DrawType::IndexedIndirect:
-                CmdBuffer.drawIndexedIndirect(graph.getBoundBuffer(thunk.mIndirectBufferName).getBuffer(),
+				CmdBuffer.drawIndexedIndirect(graph.getBoundBuffer(thunk.mIndirectBufferName).getBuffer(),
                                               0,
-                                              thunk.mNumberOfInstances,
+											  thunk.mNumberOfInstances,
                                               100); // TODO workout what the correct stride should be (maybe pass it down and let user decide)
                 break;
+
+			case DrawType::SetPushConstant:
+				CmdBuffer.pushConstants(resources.mPipelineLayout,
+										vk::ShaderStageFlagBits::eAll,
+										0,
+										sizeof(glm::mat4),
+										&thunk.mPushConstantValue);
+
+			break;
         }
     }
 }

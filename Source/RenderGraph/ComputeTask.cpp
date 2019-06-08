@@ -1,7 +1,7 @@
 #include "RenderGraph/ComputeTask.hpp"
 #include "RenderGraph/RenderGraph.hpp"
 
-void ComputeTask::recordCommands(vk::CommandBuffer CmdBuffer, const RenderGraph& graph) const
+void ComputeTask::recordCommands(vk::CommandBuffer CmdBuffer, const RenderGraph& graph, const vulkanResources &) const
 {
     for(const auto& thunk : mComputeCalls)
     {

@@ -194,7 +194,7 @@ private:
 
     vk::DescriptorSetLayout                                     generateDescriptorSetLayout(const RenderTask&);
 
-    vk::PipelineLayout                                          generatePipelineLayout(vk::DescriptorSetLayout);
+	vk::PipelineLayout                                          generatePipelineLayout(vk::DescriptorSetLayout, const RenderTask&);
 
     vk::RenderPass                                              generateRenderPass(const GraphicsTask&);
 

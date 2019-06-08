@@ -200,7 +200,7 @@ GraphicsPipelineHandles RenderDevice::createPipelineHandles(const GraphicsTask& 
 
     const auto [vertexBindings, vertexAttributes] = generateVertexInput(task);
     const vk::DescriptorSetLayout descSetLayout = generateDescriptorSetLayout(task);
-    const vk::PipelineLayout pipelineLayout = generatePipelineLayout(descSetLayout);
+	const vk::PipelineLayout pipelineLayout = generatePipelineLayout(descSetLayout, task);
     const vk::RenderPass renderPass = generateRenderPass(task);
 	const std::vector<vk::PipelineColorBlendAttachmentState> blendState = generateColourBlendState(task);
     const vk::Pipeline pipeline = generatePipeline( task,
@@ -223,7 +223,7 @@ ComputePipelineHandles RenderDevice::createPipelineHandles(const ComputeTask& ta
         return mComputePipelineCache[task.getPipelineDescription()];
 
     const vk::DescriptorSetLayout descSetLayout = generateDescriptorSetLayout(task);
-    const vk::PipelineLayout pipelineLayout = generatePipelineLayout(descSetLayout);
+	const vk::PipelineLayout pipelineLayout = generatePipelineLayout(descSetLayout, task);
     const vk::Pipeline pipeline = generatePipeline(task, pipelineLayout);
 
     ComputePipelineHandles handles{pipeline, pipelineLayout, descSetLayout};
@@ -678,11 +678,29 @@ std::pair<vk::VertexInputBindingDescription, std::vector<vk::VertexInputAttribut
 }
 
 
-vk::PipelineLayout RenderDevice::generatePipelineLayout(vk::DescriptorSetLayout descLayout)
+vk::PipelineLayout RenderDevice::generatePipelineLayout(vk::DescriptorSetLayout descLayout, const RenderTask& task)
 {
     vk::PipelineLayoutCreateInfo info{};
     info.setSetLayoutCount(1);
     info.setPSetLayouts(&descLayout);
+
+	const auto& inputAttachments = task.getInputAttachments();
+	const bool hasPushConstants =  std::find_if(inputAttachments.begin(), inputAttachments.end(), [](const auto& attachment)
+	{
+		return attachment.second == AttachmentType::PushConstants;
+	}) != inputAttachments.end();
+
+	// at least for now just use a mat4 for push constants.
+	vk::PushConstantRange range{};
+	range.setSize(sizeof(glm::mat4));
+	range.setOffset(0);
+	range.setStageFlags(vk::ShaderStageFlagBits::eAll);
+
+	if(hasPushConstants)
+	{
+		info.setPPushConstantRanges(&range);
+		info.setPushConstantRangeCount(1);
+	}
 
     return mDevice.createPipelineLayout(info);
 }
@@ -1070,7 +1088,7 @@ void RenderDevice::execute(RenderGraph& graph)
 		if (resources.mDescSet != vk::DescriptorSet{ nullptr })
             secondaryCmdBuffer.bindDescriptorSets(bindPoint, resources.mPipelineLayout, 0, 1,  &resources.mDescSet, 0, nullptr);
 
-        (*task).recordCommands(secondaryCmdBuffer, graph);
+		(*task).recordCommands(secondaryCmdBuffer, graph, resources);
 
         secondaryCmdBuffer.end();
         primaryCmdBuffer.executeCommands(secondaryCmdBuffer);
