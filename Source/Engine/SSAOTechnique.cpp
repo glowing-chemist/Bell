@@ -10,16 +10,12 @@ SSAOTechnique::SSAOTechnique(Engine* eng) :
 	mLinearSampler{SamplerType::Linear},
 	mFullScreenTriangleVertex{eng->getShader("Shaders/FullScreenTriangle.vert")},
 	mSSAOFragmentShader{eng->getShader("Shaders/SSAO.frag")},
-	mPipelineDesc{mFullScreenTriangleVertex, {}, {}, {}
+	mPipelineDesc{mFullScreenTriangleVertex
 				  ,mSSAOFragmentShader,
 				  Rect{getDevice()->getSwapChain()->getSwapChainImageWidth() / 2,
 						getDevice()->getSwapChain()->getSwapChainImageHeight() / 2},
 				  Rect{getDevice()->getSwapChain()->getSwapChainImageWidth() / 2,
-				  getDevice()->getSwapChain()->getSwapChainImageHeight() / 2},
-				  false,
-				  BlendMode::None,
-				  BlendMode::None,
-				  DepthTest::None},
+				  getDevice()->getSwapChain()->getSwapChainImageHeight() / 2}},
 	mTask{"SSAO", mPipelineDesc}
 {
 }

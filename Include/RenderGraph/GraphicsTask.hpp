@@ -88,6 +88,61 @@ struct GraphicsPipelineDescription
 	BlendMode mAlphaBlendMode;
 	BlendMode mColourBlendMode;
     DepthTest mDepthTest;
+
+	GraphicsPipelineDescription(const Shader& vert, const Shader& frag,
+								const Rect& scissor, const Rect& viewport) :
+		mVertexShader{vert},
+		mGeometryShader{},
+		mHullShader{},
+		mTesselationControlShader{},
+		mFragmentShader{frag},
+		mScissorRect{scissor},
+		mViewport{viewport},
+		mUseBackFaceCulling{false},
+		mAlphaBlendMode{BlendMode::None},
+		mColourBlendMode{BlendMode::None},
+		mDepthTest{DepthTest::None}
+	{}
+
+	GraphicsPipelineDescription(const Shader& vert, const Shader& frag,
+								const Rect& scissor, const Rect& viewport,
+								const bool useFaceCulling,
+								const BlendMode alphaBlendMode,
+								const BlendMode colourBlendMode,
+								const DepthTest depthTest) :
+		mVertexShader{vert},
+		mGeometryShader{},
+		mHullShader{},
+		mTesselationControlShader{},
+		mFragmentShader{frag},
+		mScissorRect{scissor},
+		mViewport{viewport},
+		mUseBackFaceCulling{useFaceCulling},
+		mAlphaBlendMode{alphaBlendMode},
+		mColourBlendMode{colourBlendMode},
+		mDepthTest{depthTest}
+	{}
+
+	GraphicsPipelineDescription(const Shader& vert, const Shader& frag,
+								const std::optional<Shader>& geometryShader,
+								const std::optional<Shader>& hullShaderr, const std::optional<Shader>& tesselationCOntrol,
+								const Rect& scissor, const Rect& viewport,
+								const bool useFaceCulling,
+								const BlendMode alphaBlendMode,
+								const BlendMode colourBlendMode,
+								const DepthTest depthTest) :
+		mVertexShader{vert},
+		mGeometryShader{geometryShader},
+		mHullShader{hullShaderr},
+		mTesselationControlShader{tesselationCOntrol},
+		mFragmentShader{frag},
+		mScissorRect{scissor},
+		mViewport{viewport},
+		mUseBackFaceCulling{useFaceCulling},
+		mAlphaBlendMode{alphaBlendMode},
+		mColourBlendMode{colourBlendMode},
+		mDepthTest{depthTest}
+	{}
 };
 // needed in order to use unordered_map
 namespace std
