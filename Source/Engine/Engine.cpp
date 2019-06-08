@@ -122,17 +122,14 @@ void Engine::recordOverlay(const ImDrawData* drawData)
     Rect viewport{mRenderDevice.getSwapChain()->getSwapChainImageWidth(),
                   mRenderDevice.getSwapChain()->getSwapChainImageHeight()};
 
-    GraphicsPipelineDescription desc{mOverlayVertexShader,
-                                     {}, // We're not using a geom/tess shaders for the overlay, duh.
-                                     {},
-                                     {},
+	GraphicsPipelineDescription desc(mOverlayVertexShader,
                                      mOverlayFragmentShader,
                                      scissorRect,
                                      viewport,
                                      false, // no backface culling
 									 BlendMode::None,
 									 BlendMode::None,
-                                     DepthTest::None};
+									 DepthTest::None);
 
     GraphicsTask task("ImGuiOverlay", desc);
 	task.setVertexAttributes(VertexAttributes::Position2 | VertexAttributes::TextureCoordinates | VertexAttributes::Aledo);
