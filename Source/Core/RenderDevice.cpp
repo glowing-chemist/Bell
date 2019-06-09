@@ -574,7 +574,7 @@ std::pair<vk::VertexInputBindingDescription, std::vector<vk::VertexInputAttribut
 	else if(hasPosition4)
 		positionSize = 16;
 
-	const uint32_t vertexStride = positionSize + (hasTextureCoords ? 8 : 0) + (hasNormals ? 16 : 0) + (hasAlbedo ? 4 : 0) + (hasAlbedo ? 1 : 0);
+	const uint32_t vertexStride = positionSize + (hasTextureCoords ? 8 : 0) + (hasNormals ? 16 : 0) + (hasAlbedo ? 4 : 0) + (hasAlbedo ? 1 : 0) + (hasMaterial ? 4 : 0);
 
     vk::VertexInputBindingDescription bindingDesc{};
 	bindingDesc.setStride(vertexStride);
@@ -668,7 +668,7 @@ std::pair<vk::VertexInputBindingDescription, std::vector<vk::VertexInputAttribut
 		vk::VertexInputAttributeDescription attribDescAlbedo{};
 		attribDescAlbedo.setBinding(0);
 		attribDescAlbedo.setLocation(currentLocation);
-		attribDescAlbedo.setFormat(vk::Format::eR16Uint);
+		attribDescAlbedo.setFormat(vk::Format::eR32Uint);
 		attribDescAlbedo.setOffset(currentOffset);
 
 		attribs.push_back(attribDescAlbedo);

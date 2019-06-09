@@ -34,6 +34,7 @@ StaticMesh::StaticMesh(const std::string& path, const int vertAttributes)
 	const bool materialNeeded = model->HasMaterials() && (vertAttributes & VertexAttributes::Material);
 
 	// relys on float and MaterialID beingn the same size (should always be true).
+	static_assert(sizeof(float) == sizeof(uint32_t), "Material ID doesn't match sizeof(float");
 	const uint32_t vertexStride =   ((positionNeeded ? primitiveSize : 0) +
 									(UVNeeded ? 2 : 0) +
 									(normalsNeeded ? 4 : 0) +
@@ -116,11 +117,11 @@ StaticMesh::StaticMesh(const std::string& path, const int vertAttributes, const 
 
 	const bool albedoNeeded = mesh->HasVertexColors(0) && (vertAttributes & VertexAttributes::Aledo);
 
-	const uint32_t vertexStride =   (positionNeeded ? primitiveSize * 1 : 0) +
+	const uint32_t vertexStride =   ((positionNeeded ? primitiveSize * 1 : 0) +
 									(UVNeeded ? 2 : 0) +
 									(normalsNeeded ? 4 : 0) +
 									(albedoNeeded ? 4 : 0) +
-									1;
+									1) * sizeof(float);
 
 	// assume triangles atm
 	mIndexData.resize(mesh->mNumFaces * mesh->mFaces[0].mNumIndices);
