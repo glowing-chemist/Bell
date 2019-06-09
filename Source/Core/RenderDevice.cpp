@@ -668,7 +668,7 @@ std::pair<vk::VertexInputBindingDescription, std::vector<vk::VertexInputAttribut
 		vk::VertexInputAttributeDescription attribDescAlbedo{};
 		attribDescAlbedo.setBinding(0);
 		attribDescAlbedo.setLocation(currentLocation);
-		attribDescAlbedo.setFormat(vk::Format::eR32Sfloat);
+		attribDescAlbedo.setFormat(vk::Format::eR16Uint);
 		attribDescAlbedo.setOffset(currentOffset);
 
 		attribs.push_back(attribDescAlbedo);

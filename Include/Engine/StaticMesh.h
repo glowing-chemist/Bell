@@ -7,6 +7,7 @@
 
 #include "assimp/vector2.h"
 #include "assimp/vector3.h"
+#include "assimp/scene.h"
 
 #include <cstdint>
 #include <string>
@@ -18,6 +19,8 @@ class StaticMesh
 public:
 	
 	StaticMesh(const std::string& filePath, const int vertexAttributes);
+	StaticMesh(const std::string& filePath, const int vertexAttributes, const uint32_t materialID);
+
 
 	const AABB& getAABB() const
 	{
@@ -29,7 +32,7 @@ public:
         return mAABB;
     }
 
-    const std::vector<float>& getVertexData() const
+	const std::vector<unsigned char>& getVertexData() const
 	{
         return mVertexData;
 	}
@@ -54,9 +57,12 @@ private:
     void writeVertexVector4(const aiVector3D&, const uint32_t);
     void writeVertexVector2(const aiVector2D&, const uint32_t);
 	void writeVertexFloat(const float, const uint32_t);
+	void WriteVertexInt(const uint32_t, const uint32_t);
+
+	uint32_t getPrimitiveSize(const aiPrimitiveType) const;
 
 
-    std::vector<float> mVertexData;
+	std::vector<unsigned char> mVertexData;
     std::vector<uint32_t> mIndexData;
 	AABB mAABB;
 
