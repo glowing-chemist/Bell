@@ -25,5 +25,14 @@ struct SSAOBuffer
 };
 
 
+struct Light
+{
+	glm::vec4 position;
+	glm::vec4 albedo;
+	float influence;
+	float FOV;
+	float brightness;
+};
+
 #endif
 

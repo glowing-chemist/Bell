@@ -17,3 +17,12 @@ struct SSAOBuffer
         int offsetsCount;      
 };
 
+
+struct Light
+{
+		vec4 position;
+		vec4 albedo;
+		float influence;
+		float FOV;
+		float brightness;
+};
