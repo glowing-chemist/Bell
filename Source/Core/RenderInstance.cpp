@@ -208,12 +208,17 @@ std::pair<vk::PhysicalDevice, vk::Device> RenderInstance::findSuitableDevices(in
     physicalFeatures.geometryShader = GeometryWanted;
     physicalFeatures.setSamplerAnisotropy(true);
 
+	vk::PhysicalDeviceDescriptorIndexingFeaturesEXT descriptorIndexingInfo{};
+	descriptorIndexingInfo.setShaderSampledImageArrayNonUniformIndexing(true);
+	descriptorIndexingInfo.setRuntimeDescriptorArray(true);
+
     vk::DeviceCreateInfo deviceInfo{};
 	deviceInfo.setEnabledExtensionCount(extensionsToEnable.size());
 	deviceInfo.setPpEnabledExtensionNames(extensionsToEnable.data());
     deviceInfo.setQueueCreateInfoCount(uniqueQueues.size());
     deviceInfo.setPQueueCreateInfos(queueInfo.data());
     deviceInfo.setPEnabledFeatures(&physicalFeatures);
+	deviceInfo.setPNext(&descriptorIndexingInfo);
 #ifndef NDEBUG
     const char* validationLayers = "VK_LAYER_LUNARG_standard_validation";
     deviceInfo.setEnabledLayerCount(1);
