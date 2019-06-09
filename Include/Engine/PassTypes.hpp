@@ -46,7 +46,8 @@ enum class Format
 	BGRA8UNorm,
 	D32Float,
 	D24S8Float,
-	R32Uint
+	R32Uint,
+	R8UNorm
 };
 
 

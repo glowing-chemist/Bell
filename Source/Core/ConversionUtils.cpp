@@ -51,6 +51,9 @@ vk::Format getVulkanImageFormat(const Format format)
 		case Format::R32Uint:
 			return vk::Format::eR32Uint;
 
+		case Format::R8UNorm:
+			return vk::Format::eR8Unorm;
+
 		default:
 			return vk::Format::eR8G8B8A8Srgb;
 	}
