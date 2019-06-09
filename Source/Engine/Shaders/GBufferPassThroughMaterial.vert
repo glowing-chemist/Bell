@@ -8,14 +8,13 @@
 layout(location = 0) in vec4 position;
 layout(location = 1) in vec2 uv;
 layout(location = 2) in vec4 normals;
-layout(location = 3) in float material;
+layout(location = 3) in uint material;
 
 
 layout(location = 0) out vec4 outNormals;
-layout(location = 1) out vec4 outAlbedo;
-layout(location = 2) out float outMaterialID;
-layout(location = 3) out vec2 outUv;
-layout(location = 4) out vec4 outPosition;
+layout(location = 1) out uint outMaterialID;
+layout(location = 2) out vec2 outUv;
+layout(location = 3) out vec4 outPosition;
 
 
 layout(push_constant) uniform pushModelMatrix
