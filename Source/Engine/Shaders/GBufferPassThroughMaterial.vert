@@ -14,7 +14,6 @@ layout(location = 3) in uint material;
 layout(location = 0) out vec4 outNormals;
 layout(location = 1) out uint outMaterialID;
 layout(location = 2) out vec2 outUv;
-layout(location = 3) out vec4 outPosition;
 
 
 layout(push_constant) uniform pushModelMatrix
@@ -41,5 +40,4 @@ void main()
 	outNormals = push_constants.model * normals;
 	outMaterialID = material;
 	outUv = uv;
-	outPosition = gl_Position;
 }
