@@ -214,9 +214,9 @@ void RenderGraph::reorderTasks()
 	{
 		std::vector<uint8_t> dependancyBitset = usedDependants;
 
-		for (uint32_t vertexIndex = 0; vertexIndex < mTaskDependancies.size(); ++vertexIndex)
+		for (const auto& dependancy : mTaskDependancies)
 		{
-			dependancyBitset[mTaskDependancies[vertexIndex].second] = 1;
+			dependancyBitset[dependancy.second] = 1;
 		}
 
 		const uint32_t taskIndexToAdd = static_cast<uint32_t>(std::distance(dependancyBitset.begin(),
@@ -236,12 +236,14 @@ void RenderGraph::reorderTasks()
         newFrameBuffersNeedUpdating.push_back(mFrameBuffersNeedUpdating[taskIndexToAdd]);
         newDescriptorsNeedUpdating.push_back(mDescriptorsNeedUpdating[taskIndexToAdd]);
 
-		for (uint32_t i = 0; i < mTaskDependancies.size(); ++i)
+		uint32_t dependancyIndex = 0;
+		for (const auto& dependancy : mTaskDependancies)
 		{
-			if (mTaskDependancies[i].first == taskIndexToAdd)
+			if (dependancy.first == taskIndexToAdd)
 			{
-				mTaskDependancies.erase(mTaskDependancies.begin() + i);
+				mTaskDependancies.erase(mTaskDependancies.begin()+ dependancyIndex);
 			}
+			++dependancyIndex;
 		}
 	}
 
