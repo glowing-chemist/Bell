@@ -12,6 +12,7 @@ class SSAOTechnique : public Technique
 {
 public:
 	SSAOTechnique(Engine* dev);
+	virtual ~SSAOTechnique() = default;
 
 	virtual PassType getPassType() const final override
 		{ return PassType::SSAO; }
@@ -24,8 +25,14 @@ public:
 	Image& getSSAOImage()
 		{ return mSSAOImage; }
 
+	std::string getSSAOImageName() const
+		{ return "SSAOImage"; }
+
 	Sampler& getSampler()
 		{ return mLinearSampler; }
+
+	std::string getSSAOSamplerName() const
+		{ return "LinearSampler"; }
 
 private:
 

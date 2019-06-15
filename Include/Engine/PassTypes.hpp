@@ -7,12 +7,13 @@
 enum class PassType : uint64_t
 {
 	DepthPre = 0,
-	GBufferFill = 1,
+	GBuffer = 1,
 	Animation = 1 << 1,
 	DeferredLighting = 1 << 2,
 	Shadow = 1 << 3,
 	CascadingShadow = 1 << 4,
-	SSAO = 1 << 5
+	SSAO = 1 << 5,
+	GBufferMaterial = 1 << 6
 
 	// Add more as and when implemented.
 };
@@ -47,7 +48,8 @@ enum class Format
 	D32Float,
 	D24S8Float,
 	R32Uint,
-	R8UNorm
+	R8UNorm,
+	R16G16Unorm
 };
 
 
