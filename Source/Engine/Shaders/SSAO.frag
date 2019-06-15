@@ -31,6 +31,13 @@ void main()
 {
 	const float depth = texture(sampler2D(depthTexture, linearSampler), uv).x;
 
+	// early out if the depth for this pixel is at the far clip plane.
+	if(depth == 1.0f)
+	{
+		SSAOOutput = 1.0f;
+		return;
+	}
+
 	float occlusion = 1.0f;
 	const float occlusionFactor = 1.0f / float(normalsOffsets.offsetsCount);
 
