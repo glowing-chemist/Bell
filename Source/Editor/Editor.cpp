@@ -12,8 +12,10 @@ Editor::Editor(GLFWwindow* window) :
     mFileBrowser{"/"},
     mEngine{mWindow},
 	mHasUploadedFonts(false),
-    mOverlayFontTexture(mEngine.createImage(512, 64, 1, 1, 1, 1, vk::Format::eR8G8B8A8Unorm, vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eTransferDst , "Font Texture")),
+	mOverlayFontTexture(mEngine.createImage(512, 64, 1, 1, 1, 1, Format::RGBA8UNorm, ImageUsage::Sampled | ImageUsage::TransferDest , "Font Texture")),
 	mOverlayTextureView(mOverlayFontTexture, ImageViewType::Colour),
+	mUITexture(mEngine.createImage(1600, 900, 1, 1, 1, 1, Format::RGBA8UNorm, ImageUsage::Sampled | ImageUsage::ColourAttachment , "UI Texture")),
+	mUIImageView(mUITexture, ImageViewType::Colour),
 	mOverlayTranslationUBO(mEngine.createBuffer(16, 16, vk::BufferUsageFlagBits::eUniformBuffer, "Transformations")),
 	mFontsSampler(SamplerType::Linear),
     mInProgressScene{"In construction"}

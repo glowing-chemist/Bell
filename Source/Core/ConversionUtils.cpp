@@ -36,6 +36,9 @@ vk::Format getVulkanImageFormat(const Format format)
 		case Format::RGBA8SRGB:
 			return vk::Format::eR8G8B8A8Srgb;
 
+		case Format::RGB32SFloat:
+			return vk::Format::eR32G32B32Sfloat;
+
 		case Format::RGBA8UNorm:
 			return vk::Format::eR8G8B8A8Unorm;
 
@@ -60,6 +63,55 @@ vk::Format getVulkanImageFormat(const Format format)
 		default:
 			return vk::Format::eR8G8B8A8Srgb;
 	}
+}
+
+
+vk::ImageUsageFlags getVulkanImageUsage(const ImageUsage usage)
+{
+	vk::ImageUsageFlags vulkanFlags = static_cast<vk::ImageUsageFlags>(0);
+
+	if(usage & ImageUsage::Sampled)
+		vulkanFlags |= vk::ImageUsageFlagBits::eSampled;
+
+	if(usage & ImageUsage::ColourAttachment)
+		vulkanFlags |= vk::ImageUsageFlagBits::eColorAttachment;
+
+	if(usage & ImageUsage::DepthStencil)
+		vulkanFlags |= vk::ImageUsageFlagBits::eDepthStencilAttachment;
+
+	if(usage & ImageUsage::Storage)
+		vulkanFlags |= vk::ImageUsageFlagBits::eStorage;
+
+	if(usage & ImageUsage::TransferDest)
+		vulkanFlags |= vk::ImageUsageFlagBits::eTransferDst;
+
+	if(usage & ImageUsage::TransferSrc)
+		vulkanFlags |= vk::ImageUsageFlagBits::eTransferSrc;
+
+
+	return vulkanFlags;
+}
+
+
+uint32_t getPixelSize(const Format format)
+{
+	uint32_t result = 4;
+
+	switch(format)
+	{
+	case Format::RGBA8UNorm:
+		result = 4;
+		break;
+
+	case Format::RGB32SFloat:
+		result = 16;
+		break;
+
+	default:
+		result =  4;
+	}
+
+	return result;
 }
 
 

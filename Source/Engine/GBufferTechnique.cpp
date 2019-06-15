@@ -4,22 +4,22 @@
 GBufferTechnique::GBufferTechnique(Engine* eng) :
 	Technique{"GBuffer", eng->getDevice()},
 
-	mDepthImage{getDevice(), vk::Format::eD24UnormS8Uint, vk::ImageUsageFlagBits::eDepthStencilAttachment | vk::ImageUsageFlagBits::eSampled,
+	mDepthImage{getDevice(), Format::D24S8Float, ImageUsage::DepthStencil | ImageUsage::Sampled,
 				getDevice()->getSwapChain()->getSwapChainImageWidth(), getDevice()->getSwapChain()->getSwapChainImageHeight(),
 				1, 1, 1, 1, "Depth Buffer"},
 	mDepthView{mDepthImage, ImageViewType::Depth},
 
-	mAlbedoImage{getDevice(), vk::Format::eB8G8R8Srgb, vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled,
+	mAlbedoImage{getDevice(), Format::RGBA8SRGB, ImageUsage::ColourAttachment | ImageUsage::Sampled,
 				 getDevice()->getSwapChain()->getSwapChainImageWidth(), getDevice()->getSwapChain()->getSwapChainImageHeight(),
 				 1, 1, 1, 1, "Albedo Buffer"},
 	mAlbedoView{mAlbedoImage, ImageViewType::Colour},
 
-	mNormalsImage{getDevice(), vk::Format::eR16G16Snorm, vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled,
+	mNormalsImage{getDevice(), Format::R16G16Unorm, ImageUsage::ColourAttachment | ImageUsage::Sampled,
 				  getDevice()->getSwapChain()->getSwapChainImageWidth(), getDevice()->getSwapChain()->getSwapChainImageHeight(),
 				  1, 1, 1, 1, "Normals Buffer"},
 	mNormalsView{mNormalsImage, ImageViewType::Colour},
 
-	mSpecularImage{getDevice(), vk::Format::eR8Snorm, vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled,
+	mSpecularImage{getDevice(), Format::R8UNorm, ImageUsage::ColourAttachment | ImageUsage::Sampled,
 				   getDevice()->getSwapChain()->getSwapChainImageWidth(), getDevice()->getSwapChain()->getSwapChainImageHeight(),
 				   1, 1, 1, 1, "Specular Buffer"},
 	mSpecularView{mSpecularImage, ImageViewType::Colour},

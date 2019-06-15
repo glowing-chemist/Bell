@@ -4,7 +4,7 @@
 
 SSAOTechnique::SSAOTechnique(Engine* eng) :
 	Technique{"SSAO", eng->getDevice()},
-	mSSAOImage{getDevice(), vk::Format::eR8Snorm, vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eColorAttachment,
+	mSSAOImage{getDevice(), Format::R8UNorm, ImageUsage::Sampled | ImageUsage::ColourAttachment,
 			   getDevice()->getSwapChain()->getSwapChainImageWidth() / 2, getDevice()->getSwapChain()->getSwapChainImageHeight() / 2, 1},
 	mSSAOIMageView{mSSAOImage, ImageViewType::Colour},
 	mLinearSampler{SamplerType::Linear},

@@ -1,35 +1,10 @@
 #include "Core/Image.hpp"
 #include "RenderDevice.hpp"
-
-namespace
-{
-
-    uint32_t getPixelSize(const vk::Format format)
-    {
-		uint32_t result = 4;
-
-        switch(format)
-        {
-        case vk::Format::eR8G8B8A8Unorm:
-			result = 4;
-			break;
-
-		case vk::Format::eR32G32B32A32Sfloat:
-			result = 16;
-			break;
-
-        default:
-			result =  4;
-        }
-
-		return result;
-    }
-
-}
+#include "Core/ConversionUtils.hpp"
 
 Image::Image(RenderDevice* dev,
-             const vk::Format format,
-             const vk::ImageUsageFlags usage,
+			 const Format format,
+			 const ImageUsage usage,
              const uint32_t x,
              const uint32_t y,
              const uint32_t z,
@@ -53,13 +28,13 @@ Image::Image(RenderDevice* dev,
 
     vk::ImageCreateInfo createInfo(vk::ImageCreateFlags{},
                                   mType,
-                                  format,
+								  getVulkanImageFormat(format),
                                   vk::Extent3D{x, y, z},
                                   mNumberOfMips,
                                   mNumberOfLevels,
                                    static_cast<vk::SampleCountFlagBits>(mSamples),
                                   vk::ImageTiling::eOptimal,
-                                  mUsage,
+								  getVulkanImageUsage(mUsage),
                                   vk::SharingMode::eExclusive,
                                   0,
                                   nullptr,
@@ -96,9 +71,9 @@ Image::Image(RenderDevice* dev,
 
 
 Image::Image(RenderDevice* dev,
-      vk::Image& image,
-      vk::Format format,
-      const vk::ImageUsageFlags usage,
+	  vk::Image& image,
+	  Format format,
+	  const ImageUsage usage,
       const uint32_t x,
       const uint32_t y,
       const uint32_t z,
@@ -110,7 +85,7 @@ Image::Image(RenderDevice* dev,
     :
         GPUResource{dev->getCurrentSubmissionIndex()},
         DeviceChild{dev},
-        mImage{image},
+		mImage{image},
         mNumberOfMips{mips},
         mNumberOfLevels{levels},
         mIsOwned{false},
@@ -161,8 +136,8 @@ void Image::swap(Image& other)
     const Allocation imageMemory = mImageMemory;
     const vk::Image image = mImage;
     const bool isOwned = mIsOwned;
-    const vk::Format Format = mFormat;
-    const vk::ImageUsageFlags Usage = mUsage;
+	const Format Format = mFormat;
+	const ImageUsage Usage = mUsage;
     const uint32_t NumberOfMips = mNumberOfMips;
     const uint32_t NumberOfLevels = mNumberOfLevels;
     const vk::ImageType Type = mType;

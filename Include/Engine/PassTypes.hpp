@@ -43,6 +43,7 @@ enum class AttachmentType
 enum class Format
 {
 	RGBA8SRGB,
+	RGB32SFloat,
 	RGBA8UNorm,
 	BGRA8UNorm,
 	D32Float,
@@ -51,6 +52,27 @@ enum class Format
 	R8UNorm,
 	R16G16Unorm
 };
+
+
+enum class ImageUsage : uint32_t
+{
+	Sampled = 1,
+	ColourAttachment = 1 << 1,
+	DepthStencil = 1 << 2,
+	Storage = 1 << 3,
+	TransferDest = 1 << 4,
+	TransferSrc = 1 << 5
+};
+
+inline ImageUsage operator|(const ImageUsage& lhs, const ImageUsage& rhs)
+{
+	return static_cast<ImageUsage>(static_cast<uint32_t>(lhs) | static_cast<uint32_t>(rhs));
+}
+
+inline uint32_t operator&(const ImageUsage& lhs, const ImageUsage& rhs)
+{
+	return static_cast<uint32_t>(lhs) & static_cast<uint32_t>(rhs);
+}
 
 
 #endif

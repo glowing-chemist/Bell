@@ -46,15 +46,15 @@ public:
     ImageView& getSwaChainImageView()
         { return mRenderDevice.getSwapChainImageView(); }
 
-    Image createImage(const uint32_t x,
-                      const uint32_t y,
-                      const uint32_t z,
-                      const uint32_t mips,
-                      const uint32_t levels,
-                      const uint32_t samples,
-                      const vk::Format,
-                      vk::ImageUsageFlags,
-                      const std::string& = "");
+	Image createImage(const uint32_t x,
+					  const uint32_t y,
+					  const uint32_t z,
+					  const uint32_t mips,
+					  const uint32_t levels,
+					  const uint32_t samples,
+					  const Format,
+					  ImageUsage,
+					  const std::string& = "");
 
 	Buffer createBuffer(const uint32_t size,
 						const uint32_t stride,

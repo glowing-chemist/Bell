@@ -11,6 +11,9 @@ vk::ImageLayout getVulkanImageLayout(const AttachmentType);
 
 vk::Format getVulkanImageFormat(const Format);
 
+vk::ImageUsageFlags getVulkanImageUsage(const ImageUsage);
+
+uint32_t getPixelSize(const Format);
 
 Format getBellImageFormat(const vk::Format);
 

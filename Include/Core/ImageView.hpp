@@ -3,6 +3,7 @@
 
 #include "Core/MemoryManager.hpp"
 #include "Core/GPUResource.hpp"
+#include "Engine/PassTypes.hpp"
 
 
 class Image;
@@ -43,7 +44,7 @@ public:
     vk::ImageView getImageView() const
         { return mImageViewHandle; }
 
-    vk::Format getImageViewFormat() const
+	Format getImageViewFormat() const
         { return mImageFormat; }
 
     vk::ImageLayout getImageLayout() const
@@ -52,7 +53,7 @@ public:
     vk::Extent3D getImageExtent() const
         { return mExtent; }
 
-    vk::ImageUsageFlags getImageUsage() const
+	ImageUsage getImageUsage() const
         { return mUsage; }
 
     Allocation getImageMemory() const
@@ -81,10 +82,10 @@ private:
     Allocation mImageMemory;
 	ImageViewType mType;
 
-    vk::Format mImageFormat;
+	Format mImageFormat;
     vk::ImageLayout mLayout;
     vk::Extent3D mExtent;
-    vk::ImageUsageFlags mUsage;
+	ImageUsage mUsage;
 
     uint32_t mLOD;
     uint32_t mLODCount;

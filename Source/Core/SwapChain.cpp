@@ -2,6 +2,7 @@
 #include "RenderInstance.hpp"
 #include "RenderDevice.hpp"
 #include "Core/BellLogging.hpp"
+#include "Core/ConversionUtils.hpp"
 
 #include <vulkan/vulkan.hpp>
 #include <GLFW/glfw3.h>
@@ -107,8 +108,8 @@ SwapChain::SwapChain(RenderDevice* Device, vk::SurfaceKHR windowSurface, GLFWwin
     {
         mSwapChainImages.emplace_back(getDevice(),
                                       image,
-                                      mSwapChainFormat,
-                                      vk::ImageUsageFlagBits::eColorAttachment,
+									  getBellImageFormat(mSwapChainFormat),
+									  ImageUsage::ColourAttachment,
                                       swapExtent.width,
                                       swapExtent.height,
                                       1, 1, 1, 1, "SwapChain");

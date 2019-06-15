@@ -905,15 +905,15 @@ std::vector<BarrierRecorder> RenderDevice::recordBarriers(RenderGraph& graph)
             {
                 ImageView& imageView = graph.getImageView(resource.mResourceIndex);
 
-				if(imageView.getImageUsage() & vk::ImageUsageFlagBits::eColorAttachment ||
-				   imageView.getImageUsage() & vk::ImageUsageFlagBits::eStorage)
+				if(imageView.getImageUsage() & ImageUsage::ColourAttachment ||
+				   imageView.getImageUsage() & ImageUsage::Storage)
 				{
 					// fetch the attachment type for the current image view and get what layout the image needs to be in.
 					const vk::ImageLayout layout = getVulkanImageLayout((*taskIt).getInputAttachments()[resource.mResourceBinding].second);
 
 					recorder.transitionImageLayout(imageView, layout);
 				}
-				else if(imageView.getImageUsage() & vk::ImageUsageFlagBits::eDepthStencilAttachment)
+				else if(imageView.getImageUsage() & ImageUsage::DepthStencil)
 					recorder.transitionImageLayout(imageView, vk::ImageLayout::eDepthStencilReadOnlyOptimal);
             }
         }
@@ -926,9 +926,9 @@ std::vector<BarrierRecorder> RenderDevice::recordBarriers(RenderGraph& graph)
             {
                 ImageView& imageView = graph.getImageView(resource.mResourceIndex);
 
-                if(imageView.getImageUsage() & vk::ImageUsageFlagBits::eColorAttachment)
+				if(imageView.getImageUsage() & ImageUsage::ColourAttachment)
                     recorder.transitionImageLayout(imageView, vk::ImageLayout::eColorAttachmentOptimal);
-                else if(imageView.getImageUsage() & vk::ImageUsageFlagBits::eDepthStencilAttachment)
+				else if(imageView.getImageUsage() & ImageUsage::DepthStencil)
                     recorder.transitionImageLayout(imageView, vk::ImageLayout::eDepthStencilAttachmentOptimal);
             }
         }

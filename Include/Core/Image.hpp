@@ -10,6 +10,9 @@
 #include "Core/MemoryManager.hpp"
 #include "Core/BarrierManager.hpp"
 
+#include "Engine/PassTypes.hpp"
+
+
 class RenderDevice;
 
 
@@ -19,8 +22,8 @@ class Image final : public GPUResource, public DeviceChild
 public:
 
     Image(RenderDevice*,
-          const vk::Format,
-          const vk::ImageUsageFlags,
+		  const Format,
+		  const ImageUsage,
           const uint32_t x,
           const uint32_t y,
           const uint32_t z,
@@ -30,9 +33,9 @@ public:
 		  const std::string& = "");
 
     Image(RenderDevice*,
-          vk::Image&,
-          const vk::Format,
-          const vk::ImageUsageFlags,
+		  vk::Image&,
+		  const Format,
+		  const ImageUsage,
           const uint32_t x,
           const uint32_t y,
           const uint32_t z,
@@ -69,11 +72,11 @@ public:
     uint32_t        numberOfLevels() const { return mNumberOfLevels; }
     void            generateMips(const uint32_t);
 
-	vk::Format		getFormat() const
+	Format		getFormat() const
 						{ return mFormat; }
 
-    vk::ImageUsageFlags getUsage() const
-                           { return mUsage; }
+	ImageUsage	getUsage() const
+						{ return mUsage; }
 
     vk::ImageLayout getLayout(const uint32_t level, const uint32_t LOD) const
                         { return mSubResourceInfo[(level * mNumberOfMips) + LOD].mLayout; }
@@ -101,8 +104,8 @@ private:
 
 
     bool mIsOwned;
-    vk::Format mFormat;
-    vk::ImageUsageFlags mUsage;
+	Format mFormat;
+	ImageUsage mUsage;
     vk::ImageType mType;
     uint32_t mSamples;
 

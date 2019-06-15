@@ -52,6 +52,8 @@ private:
 	bool mHasUploadedFonts;
 	Image mOverlayFontTexture;
     ImageView mOverlayTextureView;
+	Image mUITexture;
+	ImageView mUIImageView;
 	Buffer mOverlayTranslationUBO;
 	Sampler mFontsSampler;
 

@@ -1,6 +1,7 @@
 #include "Core/ImageView.hpp"
 #include "Core/Image.hpp"
 #include "Core/RenderDevice.hpp"
+#include "Core/ConversionUtils.hpp"
 
 
 ImageView::ImageView(Image& parentImage,
@@ -51,7 +52,7 @@ ImageView::ImageView(Image& parentImage,
 
     vk::ImageViewCreateInfo createInfo{};
     createInfo.setImage(mImageHandle);
-    createInfo.setFormat(mImageFormat);
+	createInfo.setFormat(getVulkanImageFormat(mImageFormat));
     createInfo.setSubresourceRange(subresourceRange);
     createInfo.setViewType(type);
 

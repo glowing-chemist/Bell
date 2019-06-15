@@ -57,8 +57,8 @@ Image Engine::createImage(const uint32_t x,
                   const uint32_t mips,
                   const uint32_t levels,
                   const uint32_t samples,
-				  const vk::Format format,
-				  vk::ImageUsageFlags usage,
+				  const Format format,
+				  ImageUsage usage,
 				  const std::string& name)
 {
     return Image{&mRenderDevice, format, usage, x, y, z, mips, levels, samples, name};
@@ -136,7 +136,7 @@ void Engine::recordOverlay(const ImDrawData* drawData)
 	task.addInput("OverlayUBO", AttachmentType::UniformBuffer);
     task.addInput("OverlayTexture", AttachmentType::Texture2D);
     task.addInput("FontSampler", AttachmentType::Sampler);
-	task.addOutput("FrameBuffer", AttachmentType::SwapChain, getBellImageFormat(getSwapChainImage().getFormat()), LoadOp::Clear_Black);
+	task.addOutput("FrameBuffer", AttachmentType::SwapChain, getSwapChainImage().getFormat(), LoadOp::Clear_Black);
 
     // Render command lists
     uint32_t vertexOffset = 0;
