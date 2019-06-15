@@ -21,8 +21,12 @@ void main()
 	vec4 uvWithDerivitives;
 	uvWithDerivitives.xy = uv;
 
-	uvWithDerivitives.z = dFdx(uv.x);
-	uvWithDerivitives.w = dFdy(uv.y);
+	// Pack the derivitives in to a single float this should still give us plenty of precision.
+	uint packedXDerivitives = packUnorm2x16(dFdx(uv));
+	uint packedYDerivitives = packUnorm2x16(dFdy(uv));
+
+	uvWithDerivitives.z = uintBitsToFloat(packedXDerivitives);
+	uvWithDerivitives.w = uintBitsToFloat(packedYDerivitives);
 
 	outUV = uvWithDerivitives;
 	outMaterial = materialID;

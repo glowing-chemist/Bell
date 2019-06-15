@@ -54,10 +54,13 @@ void main()
 	// Once I get some material tests sorted.
     vec3 Albedo = vec3(0.7f);
 
+    const vec2 xDerivities = unpackUnorm2x16(floatBitsToUint(fragUVwithDifferentials.z));
+    const vec2 yDerivities = unpackUnorm2x16(floatBitsToUint(fragUVwithDifferentials.w));
+
     frameBuffer = textureGrad(sampler2D(materials[nonuniformEXT(materialIndexMapping[materialID].mappedIndex)], linearSampler),
     							fragUVwithDifferentials.xy, // UV
-    							fragUVwithDifferentials.zw, // Dx
-    							fragUVwithDifferentials.zw);// Dy
+    							xDerivities,
+    							yDerivities);
     
     // then calculate lighting as usual    
     vec3 lighting = Albedo * 0.1; // hard-coded ambient component    
