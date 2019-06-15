@@ -13,16 +13,17 @@ struct CameraBuffer
     
 struct SSAOBuffer    
 {    
-        vec4 offsets[16];    
+        vec4 offsets[16];
+        float scale;
         int offsetsCount;      
 };
 
 
 struct Light
 {
-		vec4 position;
-		vec4 albedo;
-		float influence;
-		float FOV;
-		float brightness;
+	vec4 position;
+	vec4 albedo;
+	float influence;
+	float FOV;
+	float brightness;
 };

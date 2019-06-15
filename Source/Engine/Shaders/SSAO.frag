@@ -36,7 +36,7 @@ void main()
 
 	for(uint i = 0; i < normalsOffsets.offsetsCount; ++i)
 	{
-		const vec4 scaledViewSpaceNormalOffsets = (camera.perspective * camera.view * (normalsOffsets.offsets[i] / 100.0f));
+		const vec4 scaledViewSpaceNormalOffsets = (camera.perspective * camera.view * (normalsOffsets.offsets[i] * normalsOffsets.scale));
 
 		const vec4 offsetedPosition = vec4(uv, depth, 1.0f) + scaledViewSpaceNormalOffsets;
 
