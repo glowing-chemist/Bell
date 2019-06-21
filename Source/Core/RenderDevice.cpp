@@ -537,6 +537,11 @@ vk::DescriptorSetLayout RenderDevice::generateDescriptorSetLayout(const RenderTa
             return vk::DescriptorType::eCombinedImageSampler; // For now use this to indicate push_constants (terrible I know)
         }();
 
+		// This indicates it's a push constant which we don't need to handle when allocating descriptor
+		// sets.
+		if(descriptorType == vk::DescriptorType::eCombinedImageSampler)
+			continue;
+
         vk::DescriptorSetLayoutBinding layoutBinding{};
         layoutBinding.setBinding(curretnBinding++);
         layoutBinding.setDescriptorType(descriptorType);
