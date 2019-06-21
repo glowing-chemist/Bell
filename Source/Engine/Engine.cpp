@@ -226,12 +226,12 @@ void Engine::updateGlobalUniformBuffers()
 
 			const float3 vec = glm::normalize(float3{r1, r2, r3});
 
-			offsets[i] = vec;
+			offsets[i] = float4{vec, 0.0f};
 		}
 
 		mGeneratedSSAOBuffer = true;
 
-		mSSAOBUffer.mOffsets = offsets;
+		std::memcpy(&mSSAOBUffer.mOffsets[0], offsets.data(), offsets.size() * sizeof(float4));
 		mSSAOBUffer.mScale = 0.001f;
 		mSSAOBUffer.mOffsetsCount = offsets.size();
 

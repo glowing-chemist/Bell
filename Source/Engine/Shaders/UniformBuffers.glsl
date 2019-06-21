@@ -15,7 +15,7 @@ struct CameraBuffer
     
 struct SSAOBuffer    
 {    
-        vec3 offsets[16];
+        vec4 offsets[16];
         float scale;
         int offsetsCount;      
 };
