@@ -7,13 +7,15 @@ struct CameraBuffer
             
         mat4 invertedCamera;      
       
-        vec4 frameBufferSize;    
+        vec2 frameBufferSize;
+
+        vec3 position;
 };    
     
     
 struct SSAOBuffer    
 {    
-        vec4 offsets[16];
+        vec3 offsets[16];
         float scale;
         int offsetsCount;      
 };

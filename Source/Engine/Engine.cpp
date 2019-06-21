@@ -14,6 +14,12 @@ Engine::Engine(GLFWwindow* windowPtr) :
     mCurrentRenderGraph(),
     mOverlayVertexShader(&mRenderDevice, "./Shaders/Overlay.vert"),
     mOverlayFragmentShader(&mRenderDevice, "./Shaders/Overlay.frag"),
+	mCameraBuffer{},
+	mDeviceCameraBuffer{getDevice(), vk::BufferUsageFlagBits::eUniformBuffer, sizeof(CameraBuffer), sizeof(CameraBuffer), "Camera Buffer"},
+	mSSAOBUffer{},
+	mDeviceSSAOBuffer{getDevice(), vk::BufferUsageFlagBits::eUniformBuffer, sizeof(SSAOBuffer), sizeof(SSAOBuffer), "SSAO Buffer"},
+	mGeneratedSSAOBuffer{false},
+	mTechniques{},
     mRenderVariables(),
     mWindow(windowPtr)
 {
@@ -183,4 +189,58 @@ void Engine::render()
 	mCurrentRenderGraph.bindIndexBuffer(indexBuffer);
 
     mRenderDevice.execute(mCurrentRenderGraph);
+}
+
+
+void Engine::updateGlobalUniformBuffers()
+{
+	auto& currentCamera = getCurrentSceneCamera();
+
+	mCameraBuffer.mViewMatrix = currentCamera.getViewMatrix();
+	mCameraBuffer.mPerspectiveMatrix = currentCamera.getPerspectiveMatrix();
+	mCameraBuffer.mInvertedCameraMatrix = glm::inverse(mCameraBuffer.mPerspectiveMatrix * mCameraBuffer.mViewMatrix);
+	mCameraBuffer.mFrameBufferSize = glm::vec2{getSwapChainImage().getExtent(0, 0).width, getSwapChainImage().getExtent(0, 0).height};
+	mCameraBuffer.mPosition = currentCamera.getPosition();
+
+	MapInfo mapInfo{};
+	mapInfo.mSize = sizeof(CameraBuffer);
+	mapInfo.mOffset = 0;
+
+	void* cameraBufferPtr = mDeviceCameraBuffer.map(mapInfo);
+
+		std::memcpy(cameraBufferPtr, &mCameraBuffer, sizeof(CameraBuffer));
+
+	mDeviceCameraBuffer.unmap();
+
+	// The SSAO buffer only needs tp be updated once.
+	// Or if the number of samples needs to be changed.
+	if(!mGeneratedSSAOBuffer)
+	{
+		std::array<float3, 16> offsets;
+
+		for(uint i = 0; i < 16; ++i)
+		{
+			const float r1 = (static_cast <float> (rand()) / static_cast <float> (RAND_MAX / 2)) - 1.0f;
+			const float r2 = (static_cast <float> (rand()) / static_cast <float> (RAND_MAX / 2)); // generate vectors on a hemisphere.
+			const float r3 = (static_cast <float> (rand()) / static_cast <float> (RAND_MAX / 2)) - 1.0f;
+
+			const float3 vec = glm::normalize(float3{r1, r2, r3});
+
+			offsets[i] = vec;
+		}
+
+		mGeneratedSSAOBuffer = true;
+
+		mSSAOBUffer.mOffsets = offsets;
+		mSSAOBUffer.mScale = 0.001f;
+		mSSAOBUffer.mOffsetsCount = offsets.size();
+
+		mapInfo.mSize = sizeof(SSAOBuffer);
+
+		void* SSAOBufferPtr = mDeviceSSAOBuffer.map(mapInfo);
+
+			std::memcpy(SSAOBufferPtr, &mSSAOBUffer, sizeof(SSAOBuffer));
+
+		mDeviceSSAOBuffer.unmap();
+	}
 }

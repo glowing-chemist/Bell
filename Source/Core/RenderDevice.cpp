@@ -7,6 +7,7 @@
 #include <vulkan/vulkan.hpp>
 
 #include <limits>
+#include <vector>
 
 RenderDevice::RenderDevice(vk::Instance instance,
 						   vk::PhysicalDevice physDev,

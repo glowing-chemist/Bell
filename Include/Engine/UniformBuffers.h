@@ -14,13 +14,15 @@ struct CameraBuffer
 	
     glm::mat4 mInvertedCameraMatrix;
 	
-    glm::vec4 mFrameBufferSize;
+    glm::vec2 mFrameBufferSize;
+
+    glm::vec3 mPosition;
 };
 
 
 struct SSAOBuffer
 {
-    std::array<glm::vec4, 16> mOffsets;
+    std::array<glm::vec3, 16> mOffsets;
     float mScale;
     int mOffsetsCount;
 };

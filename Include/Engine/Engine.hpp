@@ -9,6 +9,8 @@
 #include "Engine/Scene.h"
 #include "Engine/Camera.hpp"
 #include "Engine/Bufferbuilder.h"
+#include "Engine/UniformBuffers.h"
+#include "Engine/Technique.hpp"
 
 #include "imgui.h"
 
@@ -121,6 +123,22 @@ private:
     Shader mOverlayFragmentShader;
 
 	std::unordered_map<std::string, Shader> mShaderCache;
+
+	// Global uniform buffers
+
+	// Name: CameraBuffer
+	CameraBuffer mCameraBuffer;
+	Buffer mDeviceCameraBuffer;
+
+	// Name: SSAOBuffer
+	SSAOBuffer mSSAOBUffer;
+	Buffer mDeviceSSAOBuffer;
+	bool mGeneratedSSAOBuffer;
+
+	void updateGlobalUniformBuffers();
+
+	std::unordered_map<PassType, Technique*> mTechniques;
+
 
     std::map<std::string, std::variant<int64_t, double>> mRenderVariables;
 

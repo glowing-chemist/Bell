@@ -43,9 +43,9 @@ void main()
 
 	for(uint i = 0; i < normalsOffsets.offsetsCount; ++i)
 	{
-		const vec4 scaledViewSpaceNormalOffsets = (camera.perspective * camera.view * (normalsOffsets.offsets[i] * normalsOffsets.scale));
+		const vec3 scaledViewSpaceNormalOffsets = (mat3(camera.perspective) * mat3(camera.view) * (normalsOffsets.offsets[i] * normalsOffsets.scale));
 
-		const vec4 offsetedPosition = vec4(uv, depth, 1.0f) + scaledViewSpaceNormalOffsets;
+		const vec3 offsetedPosition = vec3(uv, depth) + scaledViewSpaceNormalOffsets;
 
 		const float realOffsetDepth = texture(sampler2D(depthTexture, linearSampler), offsetedPosition.xy).x;
 

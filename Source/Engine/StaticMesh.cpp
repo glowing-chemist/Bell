@@ -6,7 +6,10 @@
 #include <limits>
 
 
-StaticMesh::StaticMesh(const std::string& path, const int vertAttributes)
+StaticMesh::StaticMesh(const std::string& path, const int vertAttributes) :
+	mVertexData{},
+	mIndexData{},
+	mAABB{}
 {
     Assimp::Importer importer;
 
@@ -57,6 +60,9 @@ StaticMesh::StaticMesh(const std::string& path, const int vertAttributes)
 
     uint32_t currentOffset = 0;
 
+	float3 topLeft{0.0f, 0.0f, 0.0f};
+	float3 bottumRight{std::numeric_limits<float>::infinity(), std::numeric_limits<float>::infinity(), std::numeric_limits<float>::infinity()};
+
     // Copy the vertex buffer data.
     for(uint32_t i = 0; i < mesh->mNumVertices; ++i)
     {
@@ -64,6 +70,15 @@ StaticMesh::StaticMesh(const std::string& path, const int vertAttributes)
         {
             writeVertexVector4(mesh->mVertices[i], currentOffset);
 			currentOffset += 4 * sizeof(float);
+
+			// update the AABB positions
+			topLeft = componentWiseMin(topLeft, float3{	mesh->mVertices[i].x,
+														mesh->mVertices[i].y,
+														mesh->mVertices[i].z});
+
+			bottumRight = componentWiseMax(bottumRight, float3{	mesh->mVertices[i].x,
+																mesh->mVertices[i].y,
+																mesh->mVertices[i].z});
         }
 
 		if(UVNeeded)
@@ -90,10 +105,15 @@ StaticMesh::StaticMesh(const std::string& path, const int vertAttributes)
 			currentOffset += sizeof(uint32_t);
 		}
     }
+
+	mAABB = AABB{topLeft, bottumRight};
 }
 
 
-StaticMesh::StaticMesh(const std::string& path, const int vertAttributes, const uint32_t materialID)
+StaticMesh::StaticMesh(const std::string& path, const int vertAttributes, const uint32_t materialID) :
+	mVertexData{},
+	mIndexData{},
+	mAABB{}
 {
 	Assimp::Importer importer;
 
@@ -140,6 +160,10 @@ StaticMesh::StaticMesh(const std::string& path, const int vertAttributes, const 
 
 	uint32_t currentOffset = 0;
 
+	float3 topLeft{0.0f, 0.0f, 0.0f};
+	float3 bottumRight{std::numeric_limits<float>::infinity(), std::numeric_limits<float>::infinity(), std::numeric_limits<float>::infinity()};
+
+
 	// Copy the vertex buffer data.
 	for(uint32_t i = 0; i < mesh->mNumVertices; ++i)
 	{
@@ -147,6 +171,15 @@ StaticMesh::StaticMesh(const std::string& path, const int vertAttributes, const 
 		{
 			writeVertexVector4(mesh->mVertices[i], currentOffset);
 			currentOffset += 4 * sizeof(float);
+
+			// update the AABB positions
+			topLeft = componentWiseMin(topLeft, float3{	mesh->mVertices[i].x,
+														mesh->mVertices[i].y,
+														mesh->mVertices[i].z});
+
+			bottumRight = componentWiseMax(bottumRight, float3{	mesh->mVertices[i].x,
+																mesh->mVertices[i].y,
+																mesh->mVertices[i].z});
 		}
 
 		if(UVNeeded)
@@ -170,6 +203,8 @@ StaticMesh::StaticMesh(const std::string& path, const int vertAttributes, const 
 		WriteVertexInt(materialID, currentOffset);
 		currentOffset += sizeof(uint32_t);
 	}
+
+	mAABB = AABB{topLeft, bottumRight};
 }
 
 
