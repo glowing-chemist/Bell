@@ -8,7 +8,7 @@
 #include <string>
 
 
-class SSAOTechnique : public Technique
+class SSAOTechnique : public Technique<GraphicsTask>
 {
 public:
 	SSAOTechnique(Engine* dev);
@@ -17,7 +17,7 @@ public:
 	virtual PassType getPassType() const final override
 		{ return PassType::SSAO; }
 
-	virtual RenderTask& getTaskToRecord() override final;
+	virtual GraphicsTask& getTaskToRecord() override final;
 
 	void setDepthSlot(const std::string& depthSlot)
 	{ mDepthNameSlot = depthSlot; }

@@ -11,6 +11,7 @@
 #include <string>
 
 
+template<typename T>
 class Technique : public DeviceChild
 {
 public:
@@ -22,7 +23,7 @@ public:
 
     virtual PassType getPassType() const = 0;
 
-	virtual RenderTask& getTaskToRecord() = 0;
+	virtual T& getTaskToRecord() = 0;
 
 private:
 

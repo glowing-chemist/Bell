@@ -137,7 +137,7 @@ private:
 
 	void updateGlobalUniformBuffers();
 
-	std::unordered_map<PassType, Technique*> mTechniques;
+	std::unordered_map<PassType, Technique<RenderTask>*> mTechniques;
 
 
     std::map<std::string, std::variant<int64_t, double>> mRenderVariables;

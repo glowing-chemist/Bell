@@ -11,7 +11,7 @@
 #include "Engine.hpp"
 
 
-class GBufferTechnique : public Technique
+class GBufferTechnique : public Technique<GraphicsTask>
 {
 public:
 	GBufferTechnique(Engine*);
@@ -20,7 +20,7 @@ public:
 	virtual PassType getPassType() const final override
 		{ return PassType::GBuffer; }
 
-	virtual RenderTask& getTaskToRecord() final override;
+	virtual GraphicsTask& getTaskToRecord() final override;
 
 	Image& getDepthImage()
 		{ return mDepthImage; }
