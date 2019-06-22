@@ -38,6 +38,8 @@ GraphicsTask& SSAOTechnique::getTaskToRecord()
 		mTask.addInput("linearSampler", AttachmentType::Sampler);
 
 		mTask.addOutput("ssaoRenderTarget", AttachmentType::RenderTarget2D, Format::RGBA8UNorm, LoadOp::Clear_Black);
+
+		mTaskInitialised = true;
 	}
 
 	// CLear the draw calls first.

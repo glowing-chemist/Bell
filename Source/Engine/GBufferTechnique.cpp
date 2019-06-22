@@ -49,6 +49,8 @@ GraphicsTask &GBufferTechnique::getTaskToRecord()
 		mTask.addOutput("GBuffer Normals", AttachmentType::Texture2D, Format::R16G16Unorm, LoadOp::Clear_Black);
 		mTask.addOutput("GBuffer Albedo", AttachmentType::Texture2D, Format::RGBA8SRGB, LoadOp::Clear_Black);
 		mTask.addOutput("GBuffer Specular", AttachmentType::Texture2D, Format::R8UNorm, LoadOp::Clear_Black);
+
+		mTaskInitialised = true;
 	}
 
 	mTask.clearCalls();

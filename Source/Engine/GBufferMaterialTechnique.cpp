@@ -51,6 +51,8 @@ GraphicsTask &GBufferMaterialTechnique::getTaskToRecord()
 		mTask.addOutput("GBuffer UV", AttachmentType::Texture2D, Format::RGBA8SRGB, LoadOp::Clear_Black);
 		mTask.addOutput("GBuffer Material", AttachmentType::Texture2D, Format::R8UNorm, LoadOp::Clear_Black);
 		mTask.addOutput("GBuffer Depth", AttachmentType::Depth, Format::D24S8Float, LoadOp::Clear_White);
+
+		mTaskInitialised = true;
 	}
 
 	mTask.clearCalls();
