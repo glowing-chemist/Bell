@@ -48,6 +48,7 @@ private:
 
 	GraphicsPipelineDescription mPipelineDesc;
 	GraphicsTask mTask;
+	bool mTaskInitialised;
 };
 
 

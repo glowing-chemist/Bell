@@ -16,24 +16,32 @@ SSAOTechnique::SSAOTechnique(Engine* eng) :
 						getDevice()->getSwapChain()->getSwapChainImageHeight() / 2},
 				  Rect{getDevice()->getSwapChain()->getSwapChainImageWidth() / 2,
 				  getDevice()->getSwapChain()->getSwapChainImageHeight() / 2}},
-	mTask{"SSAO", mPipelineDesc}
+	mTask{"SSAO", mPipelineDesc},
+	mTaskInitialised{false}
 {
 }
 
 
-RenderTask& SSAOTechnique::getTaskToRecord()
+GraphicsTask& SSAOTechnique::getTaskToRecord()
 {
-	// full scren triangle so no vertex attributes.
-	mTask.setVertexAttributes(0);
 
-	// These are always availble, and updated and bound by the engine.
-	mTask.addInput("NormalsOffset", AttachmentType::UniformBuffer);
-	mTask.addInput("CameraBuffer", AttachmentType::UniformBuffer);
+	if(!mTaskInitialised)
+	{
+		// full scren triangle so no vertex attributes.
+		mTask.setVertexAttributes(0);
 
-	mTask.addInput(mDepthNameSlot, AttachmentType::Texture2D);
-	mTask.addInput("linearSampler", AttachmentType::Sampler);
+		// These are always availble, and updated and bound by the engine.
+		mTask.addInput("NormalsOffset", AttachmentType::UniformBuffer);
+		mTask.addInput("CameraBuffer", AttachmentType::UniformBuffer);
 
-	mTask.addOutput("ssaoRenderTarget", AttachmentType::RenderTarget2D, Format::RGBA8UNorm, LoadOp::Clear_Black);
+		mTask.addInput(mDepthNameSlot, AttachmentType::Texture2D);
+		mTask.addInput("linearSampler", AttachmentType::Sampler);
+
+		mTask.addOutput("ssaoRenderTarget", AttachmentType::RenderTarget2D, Format::RGBA8UNorm, LoadOp::Clear_Black);
+	}
+
+	// CLear the draw calls first.
+	mTask.clearCalls();
 
 	return mTask;
 }

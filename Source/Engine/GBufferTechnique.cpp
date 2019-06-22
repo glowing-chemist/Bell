@@ -31,21 +31,27 @@ GBufferTechnique::GBufferTechnique(Engine* eng) :
 						 Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
 						 getDevice()->getSwapChain()->getSwapChainImageHeight()}},
 
-	mTask{"GBuffer", mPipelineDescription}
+	mTask{"GBuffer", mPipelineDescription},
+	mTaskInitialised{false}
 {}
 
 
-RenderTask& GBufferTechnique::getTaskToRecord()
+GraphicsTask &GBufferTechnique::getTaskToRecord()
 {
-	mTask.setVertexAttributes(VertexAttributes::Position4 | VertexAttributes::Aledo |
-							  VertexAttributes::Normals | VertexAttributes::TextureCoordinates);
 
-	mTask.addInput("Model Matrix", AttachmentType::PushConstants);
+	if(!mTaskInitialised)
+	{
+		mTask.setVertexAttributes(VertexAttributes::Position4 | VertexAttributes::Aledo |
+								  VertexAttributes::Normals | VertexAttributes::TextureCoordinates);
 
-	mTask.addOutput("GBuffer Normals", AttachmentType::Texture2D, Format::R16G16Unorm, LoadOp::Clear_Black);
-	mTask.addOutput("GBuffer Albedo", AttachmentType::Texture2D, Format::RGBA8SRGB, LoadOp::Clear_Black);
-	mTask.addOutput("GBuffer Specular", AttachmentType::Texture2D, Format::R8UNorm, LoadOp::Clear_Black);
+		mTask.addInput("Model Matrix", AttachmentType::PushConstants);
 
+		mTask.addOutput("GBuffer Normals", AttachmentType::Texture2D, Format::R16G16Unorm, LoadOp::Clear_Black);
+		mTask.addOutput("GBuffer Albedo", AttachmentType::Texture2D, Format::RGBA8SRGB, LoadOp::Clear_Black);
+		mTask.addOutput("GBuffer Specular", AttachmentType::Texture2D, Format::R8UNorm, LoadOp::Clear_Black);
+	}
+
+	mTask.clearCalls();
 
 	return mTask;
 }
