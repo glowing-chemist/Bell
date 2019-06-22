@@ -90,6 +90,13 @@ set(BELL_SOURCE
     Source/Engine/StaticMesh.cpp
     Source/Engine/GeomUtils.cpp
     Source/Engine/Scene.cpp
+
+    # Techniques
+    Source/Engine/SSAOTechnique.cpp
+    Source/Engine/GBufferTechnique.cpp
+    Source/Engine/GBufferMaterialTechnique.cpp
+    Source/Engine/BlurXTechnique.cpp
+    Source/Engine/BlurYTechnique.cpp
     )
 
 set(DearImGUI_SOURCE
