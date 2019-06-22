@@ -39,6 +39,9 @@ vk::Format getVulkanImageFormat(const Format format)
 		case Format::RGB32SFloat:
 			return vk::Format::eR32G32B32Sfloat;
 
+		case Format::RGBA32SFloat:
+			return vk::Format::eR32G32B32A32Sfloat;
+
 		case Format::RGBA8UNorm:
 			return vk::Format::eR8G8B8A8Unorm;
 

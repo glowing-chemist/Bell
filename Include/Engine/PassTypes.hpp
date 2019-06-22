@@ -44,6 +44,7 @@ enum class Format
 {
 	RGBA8SRGB,
 	RGB32SFloat,
+	RGBA32SFloat,
 	RGBA8UNorm,
 	BGRA8UNorm,
 	D32Float,
