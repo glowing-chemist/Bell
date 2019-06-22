@@ -1,5 +1,5 @@
-#ifndef GBUFFERMATERIAL_HPP
-#define GBUFFERMATERIAL_HPP
+#ifndef GBUFFER_HPP
+#define GBUFFER_HPP
 
 #include "Technique.hpp"
 
