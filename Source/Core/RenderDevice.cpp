@@ -104,7 +104,7 @@ RenderDevice::~RenderDevice()
             mFramebuffersPendingDestruction.push_back({0, *resources.mFrameBuffer});
     }
 
-    for(const auto [lastUsed, frameBuffer] : mFramebuffersPendingDestruction)
+	for(const auto& [lastUsed, frameBuffer] : mFramebuffersPendingDestruction)
     {
         mDevice.destroyFramebuffer(frameBuffer);
     }
