@@ -46,6 +46,7 @@ public:
     void addDependancy(const std::string&, const std::string&);
 
     void bindImage(const std::string&, const ImageView &);
+	void bindImageArray(const std::string&, const ImageViewArray&);
 	void bindBuffer(const std::string&, const BufferView &);
     void bindSampler(const std::string&, const Sampler&);
 
@@ -90,12 +91,14 @@ public:
     enum class ResourceType
     {
         Image,
+		ImageArray,
         Sampler,
         Buffer
     };
-    ImageView& getImageView(const uint32_t index);
-	BufferView &getBuffer(const uint32_t index);
-    Sampler& getSampler(const uint32_t index);
+	ImageView&		getImageView(const uint32_t index);
+	ImageViewArray& getImageArrayViews(const uint32_t index);
+	BufferView&		getBuffer(const uint32_t index);
+	Sampler&		getSampler(const uint32_t index);
 
 
 	struct ResourceBindingInfo
@@ -132,6 +135,7 @@ private:
     std::vector<std::vector<ResourceBindingInfo>> mOutputResources;
 
     std::vector<std::pair<std::string, ImageView>> mImageViews;
+	std::vector<std::pair<std::string, ImageViewArray>> mImageViewArrays;
 	std::vector<std::pair<std::string, BufferView>> mBufferViews;
     // the actual sampler objects are stored on the device a they live for the
     // life of the renderer.

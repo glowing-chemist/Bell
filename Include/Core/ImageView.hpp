@@ -93,4 +93,7 @@ private:
 	uint32_t mLevelCount;
 };
 
+// Alias array of images (will split this in to a separate class if we need any  more functionality).
+using ImageViewArray = std::vector<ImageView>;
+
 #endif

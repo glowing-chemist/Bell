@@ -107,7 +107,6 @@ void DescriptorManager::writeDescriptors(std::vector<vk::DescriptorSet>& descSet
         for(const auto& bindingInfo : *inputBindings)
         {
             vk::WriteDescriptorSet descWrite{};
-            descWrite.setDescriptorCount(1);
             descWrite.setDstSet(descSets[descIndex]);
             descWrite.setDstBinding(bindingInfo.mResourceBinding);
 
@@ -145,8 +144,26 @@ void DescriptorManager::writeDescriptors(std::vector<vk::DescriptorSet>& descSet
 
                     descWrite.setPImageInfo(&imageInfos.back());
                     descWrite.setDescriptorType(type);
+					descWrite.setDescriptorCount(1);
                     break;
                 }
+
+				// Image arrays can only be sampled in this renderer (at least for now).
+				case RenderGraph::ResourceType::ImageArray:
+				{
+					auto imageViews = graph.getImageArrayViews(bindingInfo.mResourceIndex);
+
+					for(auto& view : imageViews)
+					{
+						imageInfos.push_back(generateDescriptorImageInfo(view, vk::ImageLayout::eShaderReadOnlyOptimal));
+					}
+
+					descWrite.setPImageInfo(&imageInfos[imageInfos.size() - imageViews.size() - 1]);
+					descWrite.setDescriptorType(vk::DescriptorType::eSampledImage);
+					descWrite.setDescriptorCount(static_cast<uint32_t>(imageViews.size()));
+
+					break;
+				}
 
                 case RenderGraph::ResourceType::Sampler:
                 {
@@ -157,6 +174,7 @@ void DescriptorManager::writeDescriptors(std::vector<vk::DescriptorSet>& descSet
 
                     descWrite.setPImageInfo(&imageInfos.back());
                     descWrite.setDescriptorType(vk::DescriptorType::eSampler);
+					descWrite.setDescriptorCount(1);
 
                     break;
                 }
@@ -174,6 +192,7 @@ void DescriptorManager::writeDescriptors(std::vector<vk::DescriptorSet>& descSet
                     else
                         descWrite.setDescriptorType(vk::DescriptorType::eStorageBuffer);
 
+					descWrite.setDescriptorCount(1);
                     break;
                 }
             }

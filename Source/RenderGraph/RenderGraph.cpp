@@ -155,6 +155,15 @@ void RenderGraph::bindImage(const std::string& name, const ImageView &image)
 }
 
 
+void RenderGraph::bindImageArray(const std::string& name, const ImageViewArray& imageArray)
+{
+	const uint32_t currentImageArrayIndex = static_cast<uint32_t>(mImageViewArrays.size());
+	mImageViewArrays.emplace_back(name, imageArray);
+
+	bindResource(name, currentImageArrayIndex, ResourceType::ImageArray);
+}
+
+
 void RenderGraph::bindBuffer(const std::string& name , const BufferView& buffer)
 {
 	const uint32_t currentBufferIndex = static_cast<uint32_t>(mBufferViews.size());
@@ -371,6 +380,14 @@ ImageView& RenderGraph::getImageView(const uint32_t index)
     BELL_ASSERT(index < mImageViews.size(), " Attempting to fetch non imageView resource")
 
     return mImageViews[index].second;
+}
+
+
+ImageViewArray& RenderGraph::getImageArrayViews(const uint32_t index)
+{
+	BELL_ASSERT(index < mImageViewArrays.size(), "Attempting to fetch non imageViewArray resource")
+
+	return mImageViewArrays[index].second;
 }
 
 
