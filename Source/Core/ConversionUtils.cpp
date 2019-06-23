@@ -16,6 +16,11 @@ vk::ImageLayout getVulkanImageLayout(const AttachmentType type)
 		case AttachmentType::Image3D:
 			return vk::ImageLayout::eGeneral;
 
+		case AttachmentType::Texture1D:
+		case AttachmentType::Texture2D:
+		case AttachmentType::Texture3D:
+			return vk::ImageLayout::eShaderReadOnlyOptimal;
+
 		case AttachmentType::Depth:
 			return vk::ImageLayout::eDepthStencilAttachmentOptimal;
 
