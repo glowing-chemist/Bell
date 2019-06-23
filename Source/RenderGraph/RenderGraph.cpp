@@ -113,7 +113,7 @@ void RenderGraph::addDependancy(const std::string& dependancy, const std::string
 void RenderGraph::bindResource(const std::string& name, const uint32_t index, const ResourceType resourcetype)
 {
     uint32_t taskOrderIndex = 0;
-    for(const auto [taskType, taskIndex] : mTaskOrder)
+	for(const auto& [taskType, taskIndex] : mTaskOrder)
     {
         RenderTask& task = getTask(taskType, taskIndex);
 
