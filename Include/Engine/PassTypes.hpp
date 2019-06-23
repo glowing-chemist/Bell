@@ -62,7 +62,8 @@ enum class ImageUsage : uint32_t
 	DepthStencil = 1 << 2,
 	Storage = 1 << 3,
 	TransferDest = 1 << 4,
-	TransferSrc = 1 << 5
+	TransferSrc = 1 << 5,
+	CubeMap = 1 << 6
 };
 
 inline ImageUsage operator|(const ImageUsage& lhs, const ImageUsage& rhs)

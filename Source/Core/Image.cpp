@@ -26,7 +26,9 @@ Image::Image(RenderDevice* dev,
     if(x != 0 && y != 0 && z == 1) mType = vk::ImageType::e2D;
     if(x != 0 && y != 0 && z >  1) mType = vk::ImageType::e3D;
 
-    vk::ImageCreateInfo createInfo(vk::ImageCreateFlags{},
+	vk::ImageCreateFlags createFlags = usage & ImageUsage::CubeMap ? vk::ImageCreateFlagBits::eCubeCompatible : vk::ImageCreateFlags{};
+
+	vk::ImageCreateInfo createInfo(createFlags,
                                   mType,
 								  getVulkanImageFormat(format),
                                   vk::Extent3D{x, y, z},

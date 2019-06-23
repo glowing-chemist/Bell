@@ -44,11 +44,21 @@ ImageView::ImageView(Image& parentImage,
 	subresourceRange.setAspectMask(adjustedViewType);
 
     const auto extent = parentImage.getExtent(mLevel, mLOD);
-    vk::ImageViewType type = vk::ImageViewType::e1D;
-    if(extent.height > 0)
+
+	vk::ImageViewType type = vk::ImageViewType::e1D;
+
+	if(extent.height > 0)
         type = vk::ImageViewType::e2D;
+
+	if(extent.height > 0 && levelCount > 1)
+		type = vk::ImageViewType::e2DArray;
+
     if(extent.depth > 1)
         type = vk::ImageViewType::e3D;
+
+	if(extent.depth > 1 && parentImage.getUsage() & ImageUsage::CubeMap)
+		type = vk::ImageViewType::eCube;
+
 
     vk::ImageViewCreateInfo createInfo{};
     createInfo.setImage(mImageHandle);
