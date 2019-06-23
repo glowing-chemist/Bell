@@ -64,15 +64,17 @@ void GraphicsTask::recordCommands(vk::CommandBuffer CmdBuffer, const RenderGraph
 }
 
 
-void GraphicsTask::mergeDraws(GraphicsTask & task)
+void GraphicsTask::mergeWith(const RenderTask& task)
 {
-    mDrawCalls.insert(mDrawCalls.end(), task.mDrawCalls.begin(), task.mDrawCalls.end());
+	const auto& graphicsTask = static_cast<const GraphicsTask&>(task);
 
-    if(task.mInputAttachments.size() > mInputAttachments.size())
-        mInputAttachments = task.mInputAttachments;
+	mDrawCalls.insert(mDrawCalls.end(), graphicsTask.mDrawCalls.begin(), graphicsTask.mDrawCalls.end());
 
-    if(task.mOutputAttachments.size() > mOutputAttachments.size())
-        mOutputAttachments = task.mOutputAttachments;
+	if(graphicsTask.mInputAttachments.size() > mInputAttachments.size())
+		mInputAttachments = graphicsTask.mInputAttachments;
+
+	if(graphicsTask.mOutputAttachments.size() > mOutputAttachments.size())
+		mOutputAttachments = graphicsTask.mOutputAttachments;
 }
 
 

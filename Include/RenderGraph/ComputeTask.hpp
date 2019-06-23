@@ -48,7 +48,7 @@ public:
         mInputAttachments.push_back({name, attachmentType});
     }
 
-    void mergeDispatches(ComputeTask&);
+	void mergeWith(const RenderTask&) override final;
 
     // Needs to take the graph to be able to lookup indirect buffers tha are bound to the graph.
 	void recordCommands(vk::CommandBuffer, const RenderGraph&, const vulkanResources&) const override;

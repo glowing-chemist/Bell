@@ -318,13 +318,7 @@ bool RenderGraph::areSupersets(const RenderTask& task1, const RenderTask& task2)
 
 void RenderGraph::mergeTasks(RenderTask& task1, RenderTask& task2)
 {
-    if(task1.taskType() == TaskType::Graphics)
-    {
-        static_cast<GraphicsTask&>(task1).mergeDraws(static_cast<GraphicsTask&>(task2));
-    } else
-    {
-        static_cast<ComputeTask&>(task1).mergeDispatches(static_cast<ComputeTask&>(task2));
-    }
+	task1.mergeWith(task2);
 
     task2.clearCalls();
 }

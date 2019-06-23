@@ -68,6 +68,8 @@ public:
 
 	virtual TaskType taskType() const = 0;
 
+	virtual void mergeWith(const RenderTask&) = 0;
+
     const std::string& getName() const
         { return mName; }
 

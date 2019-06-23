@@ -201,11 +201,11 @@ public:
 		mDrawCalls.push_back({DrawType::SetPushConstant, 0, 0, 0, 0, 0, "", val});
 	}
 
-	void recordCommands(vk::CommandBuffer, const RenderGraph&, const vulkanResources&) const override;
+	void recordCommands(vk::CommandBuffer, const RenderGraph&, const vulkanResources&) const override final;
 
     std::vector<vk::ClearValue> getClearValues() const;
 
-    void mergeDraws(GraphicsTask&);
+	void mergeWith(const RenderTask&) override final;
 
 	void clearCalls() override { mDrawCalls.clear(); }
 	TaskType taskType() const override { return TaskType::Graphics; }

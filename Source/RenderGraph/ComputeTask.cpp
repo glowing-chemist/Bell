@@ -22,15 +22,17 @@ void ComputeTask::recordCommands(vk::CommandBuffer CmdBuffer, const RenderGraph&
 }
 
 
-void ComputeTask::mergeDispatches(ComputeTask& task)
+void ComputeTask::mergeWith(const RenderTask& task)
 {
-    mComputeCalls.insert(mComputeCalls.end(), task.mComputeCalls.begin(), task.mComputeCalls.end());
+	const auto& compueTask = static_cast<const ComputeTask&>(task);
 
-    if(task.mInputAttachments.size() > mInputAttachments.size())
-        mInputAttachments = task.mInputAttachments;
+	mComputeCalls.insert(mComputeCalls.end(), compueTask.mComputeCalls.begin(), compueTask.mComputeCalls.end());
 
-    if(task.mOutputAttachments.size() > mOutputAttachments.size())
-        mOutputAttachments = task.mOutputAttachments;
+	if(compueTask.mInputAttachments.size() > mInputAttachments.size())
+		mInputAttachments = compueTask.mInputAttachments;
+
+	if(compueTask.mOutputAttachments.size() > mOutputAttachments.size())
+		mOutputAttachments = compueTask.mOutputAttachments;
 }
 
 
