@@ -242,8 +242,3 @@ void    Image::generateMips(const uint32_t)
     // possibly allow a custom kernel to be passed in?
 }
 
-
-void    Image::clear()
-{
-    // TODO wait until the barrier manager is implemented to to this
-}

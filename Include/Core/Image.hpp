@@ -87,8 +87,6 @@ public:
     Allocation      getMemory() const
                         { return mImageMemory; }
 
-    void            clear();
-
 private:
     Allocation mImageMemory;
     vk::Image mImage;
