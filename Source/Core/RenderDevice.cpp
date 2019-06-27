@@ -580,7 +580,7 @@ std::pair<vk::VertexInputBindingDescription, std::vector<vk::VertexInputAttribut
 	else if(hasPosition4)
 		positionSize = 16;
 
-	const uint32_t vertexStride = positionSize + (hasTextureCoords ? 8 : 0) + (hasNormals ? 16 : 0) + (hasAlbedo ? 4 : 0) + (hasAlbedo ? 1 : 0) + (hasMaterial ? 4 : 0);
+    const uint32_t vertexStride = positionSize + (hasTextureCoords ? 8 : 0) + (hasNormals ? 16 : 0) + (hasAlbedo ? 4 : 0) + (hasMaterial ? 4 : 0);
 
     vk::VertexInputBindingDescription bindingDesc{};
 	bindingDesc.setStride(vertexStride);
