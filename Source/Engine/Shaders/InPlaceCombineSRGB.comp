@@ -1,0 +1,27 @@
+#version 450
+#extension GL_ARB_separate_shader_objects : enable
+
+
+layout(rgba8, binding = 0) uniform image2D dataImage;
+layout(r8_unorm, binding = 1) uniform readonly image2D multipleImage;
+
+
+layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
+
+
+void main()
+{
+	// Assumes images are the same size.
+	const vec2 size = imageSize(dataImage);
+
+	const ivec3 dispatchLocation = ivec3(gl_GlobalInvocationID);
+
+	if(dispatchLocation.x >= size.x || dispatchLocation.y >= size.y)
+		return;
+
+	const float multiplyer = imageLoad(multipleImage, dispatchLocation.xy).x;
+
+	const vec4 data = imageLoad(dataImage, dispatchLocation.xy);
+
+	imageStore(dataImage, dispatchLocation.xy, data * multiplyer);
+}
