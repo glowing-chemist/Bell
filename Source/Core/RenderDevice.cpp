@@ -609,7 +609,7 @@ std::pair<vk::VertexInputBindingDescription, std::vector<vk::VertexInputAttribut
 		vk::VertexInputAttributeDescription attribDescPos{};
 		attribDescPos.setBinding(0);
 		attribDescPos.setLocation(currentLocation);
-		attribDescPos.setFormat(vk::Format::eR32G32Sfloat);
+        attribDescPos.setFormat(vk::Format::eR32G32B32Sfloat);
 		attribDescPos.setOffset(currentOffset);
 
 		attribs.push_back(attribDescPos);
