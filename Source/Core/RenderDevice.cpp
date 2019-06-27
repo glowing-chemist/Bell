@@ -569,7 +569,7 @@ std::pair<vk::VertexInputBindingDescription, std::vector<vk::VertexInputAttribut
 	const bool hasPosition4 = vertexInputs & VertexAttributes::Position4;
 	const bool hasTextureCoords = vertexInputs & VertexAttributes::TextureCoordinates;
     const bool hasNormals = vertexInputs & VertexAttributes::Normals;
-    const bool hasAlbedo = vertexInputs & VertexAttributes::Aledo;
+    const bool hasAlbedo = vertexInputs & VertexAttributes::Albedo;
 	const bool hasMaterial = vertexInputs & VertexAttributes::Material;
 
 	uint32_t positionSize = 0;

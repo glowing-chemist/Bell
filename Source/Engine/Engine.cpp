@@ -138,7 +138,7 @@ void Engine::recordOverlay(const ImDrawData* drawData)
 									 DepthTest::None);
 
     GraphicsTask task("ImGuiOverlay", desc);
-	task.setVertexAttributes(VertexAttributes::Position2 | VertexAttributes::TextureCoordinates | VertexAttributes::Aledo);
+    task.setVertexAttributes(VertexAttributes::Position2 | VertexAttributes::TextureCoordinates | VertexAttributes::Albedo);
 	task.addInput("OverlayUBO", AttachmentType::UniformBuffer);
     task.addInput("OverlayTexture", AttachmentType::Texture2D);
     task.addInput("FontSampler", AttachmentType::Sampler);

@@ -67,7 +67,7 @@ enum VertexAttributes
 	Position4 = 1 << 3,
 	TextureCoordinates = 1 << 4,
 	Normals = 1 << 5,
-	Aledo = 1 << 6,
+    Albedo = 1 << 6,
 	Material = 1 << 7
 };
 

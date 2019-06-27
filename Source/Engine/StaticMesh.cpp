@@ -33,7 +33,7 @@ StaticMesh::StaticMesh(const std::string& path, const int vertAttributes) :
 
 	const bool normalsNeeded = mesh->HasNormals() && (vertAttributes & VertexAttributes::Normals);
 
-	const bool albedoNeeded = mesh->HasVertexColors(0) && (vertAttributes & VertexAttributes::Aledo);
+	const bool albedoNeeded = mesh->HasVertexColors(0) && (vertAttributes & VertexAttributes::Albedo);
 
 	const bool materialNeeded = model->HasMaterials() && (vertAttributes & VertexAttributes::Material);
 
@@ -137,7 +137,7 @@ StaticMesh::StaticMesh(const std::string& path, const int vertAttributes, const 
 
 	const bool normalsNeeded = mesh->HasNormals() && (vertAttributes & VertexAttributes::Normals);
 
-	const bool albedoNeeded = mesh->HasVertexColors(0) && (vertAttributes & VertexAttributes::Aledo);
+	const bool albedoNeeded = mesh->HasVertexColors(0) && (vertAttributes & VertexAttributes::Albedo);
 
 	const uint32_t vertexStride =   ((positionNeeded ? primitiveSize * 1 : 0) +
 									(UVNeeded ? 2 : 0) +
