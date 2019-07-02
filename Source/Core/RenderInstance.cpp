@@ -77,6 +77,7 @@ RenderInstance::RenderInstance(GLFWwindow* window)
     const char* const* requiredExtensions = glfwGetRequiredInstanceExtensions(&numExtensions);
 
     std::vector<const char*> requiredExtensionVector{requiredExtensions, requiredExtensions + numExtensions};
+	requiredExtensionVector.push_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
 
 #ifndef NDEBUG
     requiredExtensionVector.push_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
@@ -177,7 +178,12 @@ std::pair<vk::PhysicalDevice, vk::Device> RenderInstance::findSuitableDevices(in
     }
 
 	// We use descriptor indexing to implement bindless PBR so that we can do our lighting pass in one pass for all materials.
-	const std::vector<const char*> requireDeviceExtensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME, VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME};
+	const std::vector<const char*> requireDeviceExtensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+															  VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME,
+															  VK_KHR_MAINTENANCE2_EXTENSION_NAME,
+															  VK_KHR_MAINTENANCE3_EXTENSION_NAME
+															 };
+
 	const std::vector<const char*> optionalDeviceExtensions = {VK_EXT_DEBUG_MARKER_EXTENSION_NAME};
 
 	std::vector<const char*> extensionsToEnable{};
