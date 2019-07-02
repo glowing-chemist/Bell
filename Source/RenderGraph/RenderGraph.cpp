@@ -198,9 +198,8 @@ void RenderGraph::bindIndexBuffer(const Buffer& buffer)
 
 void RenderGraph::reorderTasks()
 {
-    static bool hasReordered = false;
-
-    if(hasReordered || mTaskDependancies.empty())
+	// Indicates the graph has already been reordered
+	if(mTaskDependancies.empty())
 		return;
 
 	std::vector<std::pair<TaskType, uint32_t>> newTaskOrder{};
@@ -208,6 +207,7 @@ void RenderGraph::reorderTasks()
     std::vector<std::vector<ResourceBindingInfo>> newOutputBindings{};
     std::vector<bool> newFrameBuffersNeedUpdating{};
     std::vector<bool> newDescriptorsNeedUpdating{};
+	TaskType previousTaskType = TaskType::Compute;
 
     newTaskOrder.reserve(mTaskOrder.size());
     newInputBindings.reserve(mTaskOrder.size());
@@ -218,24 +218,22 @@ void RenderGraph::reorderTasks()
 	// keep track of tasks that have already been added to meet other tasks dependancies.
 	// This stops us readding moved from tasks.
 	std::vector<uint8_t> usedDependants(taskCount);
+	std::vector<uint8_t> dependancyBitset(taskCount);
 
 	for (uint32_t i = 0; i < taskCount; ++i)
 	{
-		std::vector<uint8_t> dependancyBitset = usedDependants;
+		// clear the dependancy flags
+		std::memcpy(dependancyBitset.data(), usedDependants.data(), dependancyBitset.size());
 
 		for (const auto& dependancy : mTaskDependancies)
 		{
 			dependancyBitset[dependancy.second] = 1;
 		}
 
-		const uint32_t taskIndexToAdd = static_cast<uint32_t>(std::distance(dependancyBitset.begin(),
-																			std::find(
-																				dependancyBitset.begin(),
-																				dependancyBitset.end(),
-																				0
-																				)
-																			)
-															  );
+		const uint32_t taskIndexToAdd = selectNextTask(dependancyBitset, previousTaskType);
+
+		// Keep track of the previous task type.
+		previousTaskType = mTaskOrder[taskIndexToAdd].first;
 
 		usedDependants[taskIndexToAdd] = 1;
 
@@ -250,7 +248,7 @@ void RenderGraph::reorderTasks()
 		{
 			if (dependancy.first == taskIndexToAdd)
 			{
-				mTaskDependancies.erase(mTaskDependancies.begin()+ dependancyIndex);
+				mTaskDependancies.erase(mTaskDependancies.begin() + dependancyIndex);
 			}
 			++dependancyIndex;
 		}
@@ -261,8 +259,53 @@ void RenderGraph::reorderTasks()
     mOutputResources.swap(newOutputBindings);
     mFrameBuffersNeedUpdating.swap(newFrameBuffersNeedUpdating);
     mDescriptorsNeedUpdating.swap(mDescriptorsNeedUpdating);
+}
 
-    hasReordered = true;
+
+uint32_t RenderGraph::selectNextTask(const std::vector<uint8_t>& dependancies, const TaskType taskType) const
+{
+	// maps from index to score
+	std::vector<std::pair<uint32_t, uint32_t>> prospectiveTaskIndicies;
+	prospectiveTaskIndicies.reserve(dependancies.size());
+
+	for(uint8_t index = 0; index < dependancies.size(); ++index)
+	{
+		// This task has no unmet dependancies so calculate its score
+		if(dependancies[index] == 0)
+		{
+			uint8_t taskCompatibilityScore = 0;
+
+			const auto& task = getTask(mTaskOrder[index].first, mTaskOrder[index].second);
+
+			// Won't require swapping fom compute -> graphics or vice versa
+			if(task.taskType() == taskType)
+				taskCompatibilityScore += 30;
+
+			// Take in to account how much work each task will do
+			taskCompatibilityScore += task.recordedCommandCount();
+
+			// Calculate how many other tasks depend on this one, prioritise tasks that have a larger
+			// number of dependants.
+			uint32_t dependantTasks = 0;
+			for(const auto& dependancy : mTaskDependancies)
+			{
+				if(dependancy.first == index)
+					dependantTasks++;
+			}
+			// Value it highly that tasks with lots of dependants are scheduled early.
+			taskCompatibilityScore += 10 * dependantTasks;
+
+			prospectiveTaskIndicies.push_back({index, taskCompatibilityScore});
+		}
+	}
+
+	const uint32_t maxScoringIndex = (*std::max_element(prospectiveTaskIndicies.begin(), prospectiveTaskIndicies.end(),
+														[](const auto& p1, const auto& p2)
+	{
+		return p1.second < p2.second;
+	})).first;
+
+	return maxScoringIndex;
 }
 
 

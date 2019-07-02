@@ -66,6 +66,8 @@ public:
 
 	virtual void clearCalls() = 0;
 
+	virtual uint32_t recordedCommandCount() const = 0;
+
 	virtual TaskType taskType() const = 0;
 
 	virtual void mergeWith(const RenderTask&) = 0;

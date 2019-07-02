@@ -112,6 +112,8 @@ public:
 private:
 
     void reorderTasks();
+	// Selecets the best task to execuet next based on some heuristics.
+	uint32_t selectNextTask(const std::vector<uint8_t>& dependancies, const TaskType) const;
 
     void mergeTasks();
     bool areSupersets(const RenderTask&, const RenderTask&);
@@ -125,10 +127,12 @@ private:
     std::optional<Buffer> mVertexBuffer;
     std::optional<Buffer> mIndexBuffer;
 
+	// The index in to the coresponding task array
     std::vector<std::pair<TaskType, uint32_t>> mTaskOrder;
 	std::vector<bool> mDescriptorsNeedUpdating;
 	std::vector<bool> mFrameBuffersNeedUpdating;
 
+	// Dependancy, Dependant
     std::vector<std::pair<uint32_t, uint32_t>> mTaskDependancies;
 
     std::vector<std::vector<ResourceBindingInfo>> mInputResources;

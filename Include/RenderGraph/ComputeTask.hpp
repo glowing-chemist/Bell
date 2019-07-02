@@ -53,8 +53,11 @@ public:
     // Needs to take the graph to be able to lookup indirect buffers tha are bound to the graph.
 	void recordCommands(vk::CommandBuffer, const RenderGraph&, const vulkanResources&) const override;
 
-	void clearCalls() override { mComputeCalls.clear(); }
-	TaskType taskType() const override { return TaskType::Compute; }
+	void clearCalls() override final { mComputeCalls.clear(); }
+
+	uint32_t recordedCommandCount() const override final { return mComputeCalls.size(); }
+
+	TaskType taskType() const override final { return TaskType::Compute; }
 
     friend bool operator==(const ComputeTask& lhs, const ComputeTask& rhs);
 

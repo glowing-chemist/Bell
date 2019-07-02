@@ -847,7 +847,7 @@ void RenderDevice::generateFrameBuffers(RenderGraph& graph)
         vk::Extent3D imageExtent;
 
 		// Sort the bindings by location within the frameBuffer.
-		// Resources aren't always bound in order so make sure that they ar ein order when we iterate over them.
+		// Resources aren't always bound in order so make sure that they are in order when we iterate over them.
 		std::sort((*outputBindings).begin(), (*outputBindings).end(), [](const auto& lhs, const auto& rhs)
 		{
 			return lhs.mResourceBinding < rhs.mResourceBinding;

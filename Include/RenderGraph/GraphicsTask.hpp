@@ -207,8 +207,11 @@ public:
 
 	void mergeWith(const RenderTask&) override final;
 
-	void clearCalls() override { mDrawCalls.clear(); }
-	TaskType taskType() const override { return TaskType::Graphics; }
+	void clearCalls() override final { mDrawCalls.clear(); }
+
+	uint32_t recordedCommandCount() const override final { return mDrawCalls.size(); }
+
+	TaskType taskType() const override final { return TaskType::Graphics; }
 
     friend bool operator==(const GraphicsTask& lhs, const GraphicsTask& rhs);
 
