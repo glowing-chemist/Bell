@@ -63,7 +63,7 @@ void main()
     							yDerivities);
     
     // then calculate lighting as usual    
-    vec3 lighting = Albedo * 0.1; // hard-coded ambient component    
+    vec3 lighting = Albedo * 0.1; // hard-coded ambient component. TODO maybe replace this with image based lighting.  
     vec3 viewDir = normalize(camera.invertedCamera[3].xyz - worldSpaceFragmentPos);
 
     // containes the number of lights. 
