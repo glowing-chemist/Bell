@@ -20,6 +20,7 @@ set(GLFW_BUILD_EXAMPLES 0)
 add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/ThirdParty/GLFW3/glfw-3.2.1")
 add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/ThirdParty/assimp-4.1.0")
 add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/ThirdParty/glslang")
+add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/ThirdParty/imgui-node-editor/NodeEditor")
 
 
 if(USE_ASAN)
