@@ -13,6 +13,21 @@ endif(WIN32)
 find_package(Vulkan REQUIRED)
 # glfw doesn't have a good way to find itself on windows so include the source as a dependancy
 
+include_directories(
+    "${CMAKE_CURRENT_LIST_DIR}/Include/"
+			"${CMAKE_CURRENT_LIST_DIR}/Source/"
+
+			# ThirdParty header search paths
+			${Vulkan_INCLUDE_DIRS}
+			"${CMAKE_CURRENT_LIST_DIR}/ThirdParty/GLFW3/glfw-3.2.1/include"
+			"${CMAKE_CURRENT_LIST_DIR}/ThirdParty/assimp-4.1.0/include"
+			"${CMAKE_CURRENT_LIST_DIR}/ThirdParty/imgui-master"
+			"${CMAKE_CURRENT_LIST_DIR}/ThirdParty/glslang"
+			"${CMAKE_CURRENT_LIST_DIR}/ThirdParty/imgui-node-editor/NodeEditor/Include"
+			${glslangIncludeDirs}
+			${glmIncludeDirs}
+		    )
+
 # avoid building unnesary stuff
 set(GLFW_BUILD_DOCS 0)
 set(GLFW_BUILD_TESTS 0)
@@ -27,20 +42,6 @@ if(USE_ASAN)
     set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-omit-frame-pointer -fsanitize=address")
     set (CMAKE_LINKER_FLAGS "${CMAKE_LINKER_FLAGS} -fno-omit-frame-pointer -fsanitize=address")
 endif()
-
-include_directories(
-                        "${CMAKE_CURRENT_LIST_DIR}/Include/"
-                        "${CMAKE_CURRENT_LIST_DIR}/Source/"
-
-			# ThirdParty header search paths
-			${Vulkan_INCLUDE_DIRS}
-			"${CMAKE_CURRENT_LIST_DIR}/ThirdParty/GLFW3/glfw-3.2.1/include"
-			"${CMAKE_CURRENT_LIST_DIR}/ThirdParty/assimp-4.1.0/include"
-			"${CMAKE_CURRENT_LIST_DIR}/ThirdParty/imgui-master"
-			"${CMAKE_CURRENT_LIST_DIR}/ThirdParty/glslang"
-			${glslangIncludeDirs}
-			${glmIncludeDirs}
-		    )
 
 set(BELL_BASE_SOURCE
 	# Core files (dependant on vulkan) 
@@ -119,7 +120,8 @@ set(BELL_EDITOR_SOURCE
 	Source/Editor/NodeIMGUI.cpp
 	Source/Editor/MeshesIMGUI.cpp
 	Source/Editor/imguifilebrowser.cpp
+	Source/Editor/ImGuiNodeEditor.cpp
 	)
 
 add_executable(BELL_EDITOR ${BELL_EDITOR_SOURCE})
-target_link_libraries(BELL_EDITOR BELL)
+target_link_libraries(BELL_EDITOR BELL imgui_node_editor)
