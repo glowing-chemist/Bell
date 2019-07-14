@@ -19,7 +19,6 @@ Engine::Engine(GLFWwindow* windowPtr) :
 	mSSAOBUffer{},
 	mDeviceSSAOBuffer{getDevice(), vk::BufferUsageFlagBits::eUniformBuffer, sizeof(SSAOBuffer), sizeof(SSAOBuffer), "SSAO Buffer"},
 	mGeneratedSSAOBuffer{false},
-	mTechniques{},
     mRenderVariables(),
     mWindow(windowPtr)
 {

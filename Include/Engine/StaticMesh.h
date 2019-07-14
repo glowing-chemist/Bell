@@ -20,6 +20,8 @@ public:
 	
 	StaticMesh(const std::string& filePath, const int vertexAttributes);
 	StaticMesh(const std::string& filePath, const int vertexAttributes, const uint32_t materialID);
+    StaticMesh(const aiMesh* mesh, const int vertexAttributes, const uint32_t materialID);
+    StaticMesh(const aiMesh* mesh, const int vertexAttributes);
 
 
 	const AABB& getAABB() const

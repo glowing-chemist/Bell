@@ -31,6 +31,8 @@ public:
     Scene(Scene&&);
     Scene& operator=(Scene&&);
 
+    void loadFromFile(const int vertAttributes);
+
     SceneID       addMesh(const StaticMesh&, MeshType);
     InstanceID    addMeshInstace(const SceneID, const glm::mat4&);
 
@@ -59,6 +61,11 @@ public:
 private:
 
     void generateSceneAABB(const bool includeStatic);
+
+    void parseNode(const aiScene* scene,
+                   const aiNode* node,
+                   const aiMatrix4x4& parentTransofrmation,
+                   const int vertAttributes);
 
     std::string mName;
 
