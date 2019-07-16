@@ -1,6 +1,9 @@
 #include "Engine/Scene.h"
 #include "Core/BellLogging.hpp"
 
+#include "assimp/Importer.hpp"
+#include "assimp/postprocess.h"
+
 #include <algorithm>
 #include <iterator>
 
@@ -43,6 +46,57 @@ Scene& Scene::operator=(Scene&& scene)
     mFinalised = scene.mFinalised.load(std::memory_order::memory_order_relaxed);
 
     return *this;
+}
+
+
+void Scene::loadFromFile(const int vertAttributes)
+{
+    Assimp::Importer importer;
+
+    const aiScene* scene = importer.ReadFile(mName.c_str(),
+                                             aiProcess_Triangulate |
+                                             aiProcess_JoinIdenticalVertices |
+                                             aiProcess_GenNormals |
+                                             aiProcess_FlipUVs);
+
+    const aiNode* rootNode = scene->mRootNode;
+
+    // parse node is recursive so will add all meshes to teh scene.
+    parseNode(scene, rootNode, aiMatrix4x4{}, vertAttributes);
+
+    // generate the BVH.
+    finalise();
+}
+
+
+void Scene::parseNode(const aiScene* scene,
+                      const aiNode* node,
+                      const aiMatrix4x4& parentTransofrmation,
+                      const int vertAttributes)
+{
+    aiMatrix4x4 transformation = parentTransofrmation * node->mTransformation;
+
+    for(uint32_t i = 0; i < node->mNumMeshes; ++i)
+    {
+        const aiMesh* currentMesh = scene->mMeshes[node->mMeshes[i]];
+        StaticMesh mesh{currentMesh, vertAttributes};
+
+        const SceneID meshID = addMesh(mesh, MeshType::Static);
+
+        const glm::mat4 transformationMatrix{transformation.a1, transformation.a2, transformation.a3, transformation.a4,
+                                             transformation.b1, transformation.b2, transformation.b3, transformation.b4,
+                                             transformation.c1, transformation.c2, transformation.c3, transformation.c4,
+                                             transformation.d1, transformation.d2, transformation.d3, transformation.d4};
+
+        // TODO: For now don't attempt to deduplicate the meshes (even though this class has the functionality)
+        addMeshInstace(meshID, transformationMatrix);
+    }
+
+    // Recurse through all child nodes
+    for(uint32_t i = 0; i < node->mNumChildren; ++i)
+    {
+        parseNode(scene, node->mChildren[i], transformation, vertAttributes);
+    }
 }
 
 
