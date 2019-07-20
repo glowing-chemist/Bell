@@ -25,10 +25,6 @@ Editor::Editor(GLFWwindow* window) :
 	mFontsSampler.setAddressModeU(AddressMode::Repeat);
 	mFontsSampler.setAddressModeV(AddressMode::Repeat);
 	mFontsSampler.setAddressModeW(AddressMode::Repeat);
-
-	// Set this to nullptr until I can figure out why it casues us not to draw anything.
-	ImGuiIO& io = ImGui::GetIO();
-	io.IniFilename = nullptr;
 }
 
 
