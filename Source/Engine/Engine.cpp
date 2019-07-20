@@ -14,6 +14,8 @@ Engine::Engine(GLFWwindow* windowPtr) :
     mCurrentRenderGraph(),
     mOverlayVertexShader(&mRenderDevice, "./Shaders/Overlay.vert"),
     mOverlayFragmentShader(&mRenderDevice, "./Shaders/Overlay.frag"),
+    mVertexBuffer{getDevice(), vk::BufferUsageFlagBits::eVertexBuffer, 1000, 1000, "Vertex Buffer"},
+    mIndexBuffer{getDevice(), vk::BufferUsageFlagBits::eIndexBuffer, 1000, 1000, "Index Buffer"},
 	mCameraBuffer{},
 	mDeviceCameraBuffer{getDevice(), vk::BufferUsageFlagBits::eUniformBuffer, sizeof(CameraBuffer), sizeof(CameraBuffer), "Camera Buffer"},
 	mSSAOBUffer{},
@@ -205,11 +207,11 @@ void Engine::updateGlobalUniformBuffers()
 	mapInfo.mSize = sizeof(CameraBuffer);
 	mapInfo.mOffset = 0;
 
-	void* cameraBufferPtr = mDeviceCameraBuffer.map(mapInfo);
+    void* cameraBufferPtr = mDeviceCameraBuffer->map(mapInfo);
 
 		std::memcpy(cameraBufferPtr, &mCameraBuffer, sizeof(CameraBuffer));
 
-	mDeviceCameraBuffer.unmap();
+    mDeviceCameraBuffer->unmap();
 
 	// The SSAO buffer only needs tp be updated once.
 	// Or if the number of samples needs to be changed.

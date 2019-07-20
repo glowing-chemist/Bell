@@ -14,7 +14,6 @@
 #include "DescriptorManager.hpp"
 #include "SwapChain.hpp"
 #include "CommandPool.h"
-#include "Core/Image.hpp"
 #include "Core/ImageView.hpp"
 #include "Core/Sampler.hpp"
 #include "RenderGraph/GraphicsTask.hpp"
@@ -128,6 +127,9 @@ public:
 
     std::vector<vk::Image>             getSwapchainImages(vk::SwapchainKHR& swap)
                                             { return mDevice.getSwapchainImagesKHR(swap); }
+
+    uint32_t                           getSwapChainImageCount() const
+                                            { return mSwapChain.getNumberOfSwapChainImages(); }
 
     void                               aquireNextSwapchainImage(vk::SwapchainKHR& swap,
                                                                 uint64_t timout,

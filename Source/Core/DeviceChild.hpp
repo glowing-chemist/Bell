@@ -29,6 +29,8 @@ public:
 
     RenderDevice* getDevice() { return mDevice; }
 
+    const RenderDevice* getDevice() const { return mDevice; }
+
 private:
    RenderDevice*  mDevice;
 };

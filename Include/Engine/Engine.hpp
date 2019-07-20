@@ -3,6 +3,7 @@
 
 #include "Core/RenderInstance.hpp"
 #include "Core/RenderDevice.hpp"
+#include "Core/PerFrameResource.hpp"
 
 #include "RenderGraph/RenderGraph.hpp"
 
@@ -124,11 +125,14 @@ private:
 
 	std::unordered_map<std::string, Shader> mShaderCache;
 
+    PerFrameResource<Buffer> mVertexBuffer;
+    PerFrameResource<Buffer> mIndexBuffer;
+
 	// Global uniform buffers
 
 	// Name: CameraBuffer
 	CameraBuffer mCameraBuffer;
-	Buffer mDeviceCameraBuffer;
+    PerFrameResource<Buffer> mDeviceCameraBuffer;
 
 	// Name: SSAOBuffer
 	SSAOBuffer mSSAOBUffer;
