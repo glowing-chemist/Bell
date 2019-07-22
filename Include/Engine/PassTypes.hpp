@@ -18,6 +18,20 @@ enum class PassType : uint64_t
 	// Add more as and when implemented.
 };
 
+inline const char* passToString(const PassType passType)
+{
+    switch(passType)
+    {
+        case PassType::DepthPre:
+            return "Depth Pre pass";
+
+        case PassType::GBuffer:
+            return "GBuffer pass";
+    }
+
+    return "UNKNOWN PASS TYPE";
+}
+
 
 enum class AttachmentType
 {

@@ -3,6 +3,40 @@
 
 #include "imgui.h"
 
+namespace
+{
+
+    std::shared_ptr<EditorNode> createPassNode(const uint64_t passType)
+    {
+        const PassType pType = static_cast<PassType>(passType);
+
+        switch(pType)
+        {
+            case PassType::DepthPre:
+            {
+                // Set the ID to 0 as the editor will set the real id.
+                std::shared_ptr<EditorNode> newNode = std::make_shared<EditorNode>(0, "Depth Pre", passType);
+                newNode->mOutputs.emplace_back(0, newNode, "Depth", PinType::Texture);
+                return newNode;
+            }
+
+
+            case PassType::GBuffer:
+            {
+                std::shared_ptr<EditorNode> newNode = std::make_shared<EditorNode>(0, "GBuffer", passType);
+                newNode->mOutputs.push_back(Pin{0, newNode, "Normal", PinType::Texture});
+                newNode->mOutputs.push_back(Pin{0, newNode, "Albedo", PinType::Texture});
+                newNode->mOutputs.push_back(Pin{0, newNode, "Specular", PinType::Texture});
+                newNode->mOutputs.push_back(Pin{0, newNode, "Depth", PinType::Texture});
+                return newNode;
+            }
+
+        }
+    }
+
+}
+
+
 Editor::Editor(GLFWwindow* window) :
     mWindow{window},
     mCurrentCursorPos{0.0, 0.0},
@@ -10,6 +44,8 @@ Editor::Editor(GLFWwindow* window) :
     mShowHelpMenu{false},
     mShowFileBrowser{false},
     mFileBrowser{"/"},
+    mShowNodeEditor{false},
+    mNodeEditor{"render graph editor", createPassNode},
     mEngine{mWindow},
 	mHasUploadedFonts(false),
 	mOverlayFontTexture(mEngine.createImage(512, 64, 1, 1, 1, 1, Format::RGBA8UNorm, ImageUsage::Sampled | ImageUsage::TransferDest , "Font Texture")),
@@ -42,7 +78,11 @@ void Editor::run()
 
 		startFrame();
 
-		renderScene();
+        // Only draw the scene is we're in scene mode else draw the
+        // pass/shader graphs.
+        if(mMode == 0)
+            renderScene();
+
 		renderOverlay();
 
 		swap();
@@ -67,14 +107,19 @@ void Editor::renderOverlay()
 		int width, height;
 		io.Fonts->GetTexDataAsRGBA32(&pixels, &width, &height);
 
-		mOverlayFontTexture.setContents(pixels, width, height, 1);
+        mOverlayFontTexture.setContents(pixels, static_cast<uint32_t>(width), static_cast<uint32_t>(height), 1);
 
 		mHasUploadedFonts = true;
 	}
 
-	ImGui::NewFrame();
+    ImGui::NewFrame();
 
-	addMenuBar();
+    drawMenuBar();
+    drawAssistantWindow();
+
+    // We are on Pass/shader graph mode
+    if(mMode == 1)
+        mNodeEditor.draw();
 
     if(mShowFileBrowser)
     {
@@ -85,7 +130,7 @@ void Editor::renderOverlay()
             mShowFileBrowser = false;
     }
 
-	// Set up the draw data.
+    // Set up the draw data/ also calls endFrame.
 	ImGui::Render();
 
 	// Set up transformation UBO
@@ -151,7 +196,7 @@ void Editor::pumpInputQueue()
 }
 
 
-void Editor::addMenuBar()
+void Editor::drawMenuBar()
 {
 	if (ImGui::BeginMainMenuBar())
 		{
@@ -183,11 +228,47 @@ void Editor::addMenuBar()
             // Radio buttons to select the mode.
             ImGui::BeginGroup();
 
-            ImGui::RadioButton("Scene mode", &mMode, 0);
-            ImGui::RadioButton("Shader graph mode", &mMode, 1);
+                ImGui::RadioButton("Scene mode", &mMode, 0);
+                ImGui::RadioButton("Shader graph mode", &mMode, 1);
 
             ImGui::EndGroup();
 
             ImGui::EndMainMenuBar();
 	}
+}
+
+
+void Editor::drawAssistantWindow()
+{
+    const ImGuiIO& io = ImGui::GetIO();
+
+    // TODO Using magic numbers for now, but will replace with proper scaling code later
+    ImGui::SetNextWindowSize(ImVec2{io.DisplaySize.x / 4, io.DisplaySize.y - 20});
+    ImGui::SetNextWindowPos(ImVec2{0, 20});
+
+    if(ImGui::Begin("Assistant Editor"))
+    {
+
+       if(ImGui::BeginMenu("Add new task"))
+       {
+           ImGui::Indent(10.0f);
+
+           drawPassContextMenu(PassType::DepthPre);
+           drawPassContextMenu(PassType::GBuffer);
+
+           ImGui::EndMenu();
+       }
+
+
+        ImGui::End();
+    }
+}
+
+
+void Editor::drawPassContextMenu(const PassType passType)
+{
+    if(ImGui::MenuItem(passToString(passType)))
+    {
+        mNodeEditor.addNode(static_cast<uint64_t>(passType));
+    }
 }

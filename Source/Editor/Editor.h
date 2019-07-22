@@ -4,6 +4,7 @@
 #include "Engine/Engine.hpp"
 #include "Engine/Scene.h"
 #include "imguifilebrowser.h"
+#include "ImGuiNodeEditor.h"
 
 #include "GLFW/glfw3.h"
 
@@ -30,8 +31,10 @@ private:
 
     void pumpInputQueue();
 
-	void addMenuBar();
+    void drawMenuBar();
+    void drawAssistantWindow();
 
+    void drawPassContextMenu(const PassType);
 
     GLFWwindow* mWindow;
 
@@ -46,6 +49,8 @@ private:
 
     bool mShowFileBrowser;
     ImGuiFileBrowser mFileBrowser;
+    bool mShowNodeEditor;
+    ImGuiNodeEditor mNodeEditor;
 
     Engine mEngine;
 
