@@ -24,6 +24,7 @@ include_directories(
 			"${CMAKE_CURRENT_LIST_DIR}/ThirdParty/imgui-master"
 			"${CMAKE_CURRENT_LIST_DIR}/ThirdParty/glslang"
 			"${CMAKE_CURRENT_LIST_DIR}/ThirdParty/imgui-node-editor/NodeEditor/Include"
+		        "${CMAKE_CURRENT_LIST_DIR}/ThirdParty/glm"	
 			${glslangIncludeDirs}
 			${glmIncludeDirs}
 		    )
