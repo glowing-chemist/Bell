@@ -12,7 +12,7 @@
 
 #include "glslang/Public/ShaderLang.h"
 
-#ifdef _MS_VER
+#ifdef _MSC_VER
 namespace fs = std::experimental::filesystem;
 #else
 namespace fs = std::filesystem;
