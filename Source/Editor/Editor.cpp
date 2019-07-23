@@ -48,11 +48,11 @@ Editor::Editor(GLFWwindow* window) :
     mNodeEditor{"render graph editor", createPassNode},
     mEngine{mWindow},
 	mHasUploadedFonts(false),
-	mOverlayFontTexture(mEngine.createImage(512, 64, 1, 1, 1, 1, Format::RGBA8UNorm, ImageUsage::Sampled | ImageUsage::TransferDest , "Font Texture")),
+	mOverlayFontTexture(mEngine.getDevice(), Format::RGBA8UNorm, ImageUsage::Sampled | ImageUsage::TransferDest, 512, 64, 1, 1, 1, 1, "Font Texture"),
 	mOverlayTextureView(mOverlayFontTexture, ImageViewType::Colour),
-	mUITexture(mEngine.createImage(1600, 900, 1, 1, 1, 1, Format::RGBA8UNorm, ImageUsage::Sampled | ImageUsage::ColourAttachment , "UI Texture")),
+	mUITexture(mEngine.getDevice(), Format::RGBA8UNorm, ImageUsage::Sampled | ImageUsage::ColourAttachment, 1600, 900, 1, 1, 1, 1, "UI Texture"),
 	mUIImageView(mUITexture, ImageViewType::Colour),
-	mOverlayTranslationUBO(mEngine.createBuffer(16, 16, vk::BufferUsageFlagBits::eUniformBuffer, "Transformations")),
+	mOverlayTranslationUBO(mEngine.getDevice(), vk::BufferUsageFlagBits::eUniformBuffer, 16, 16, "Transformations"),
 	mFontsSampler(SamplerType::Linear),
     mInProgressScene{"In construction"}
 {
@@ -178,7 +178,7 @@ void Editor::pumpInputQueue()
 						 static_cast<float>(mCurrentCursorPos.y));
 
 	bool mousePressed[5];
-	for(uint i = 0; i < 5; ++i)
+	for(uint32_t i = 0; i < 5; ++i)
 	{
 		const auto pressed = glfwGetMouseButton(mWindow, i);
 

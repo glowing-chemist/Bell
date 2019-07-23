@@ -3,11 +3,14 @@
 
 #include "Core/BellLogging.hpp"
 
+#define GLM_ENABLE_EXPERIMENTAL
 #include <glm/glm.hpp>
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
 #include <glm/vec4.hpp>
 #include <glm/mat4x4.hpp>
+
+#include <algorithm>
 
 
 using float2 = glm::vec2;

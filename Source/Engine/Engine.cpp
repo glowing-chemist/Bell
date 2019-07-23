@@ -219,7 +219,7 @@ void Engine::updateGlobalUniformBuffers()
 	{
 		std::array<float3, 16> offsets;
 
-		for(uint i = 0; i < 16; ++i)
+		for(uint32_t i = 0; i < 16; ++i)
 		{
 			const float r1 = (static_cast <float> (rand()) / static_cast <float> (RAND_MAX / 2)) - 1.0f;
 			const float r2 = (static_cast <float> (rand()) / static_cast <float> (RAND_MAX / 2)); // generate vectors on a hemisphere.

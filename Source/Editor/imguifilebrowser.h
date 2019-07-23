@@ -6,25 +6,30 @@
 #include <string>
 #include <vector>
 
+#ifdef _MSC_VER
+namespace fs = std::experimental::filesystem;
+#else
+namespace fs = std::filesystem;
+#endif
 
 class ImGuiFileBrowser
 {
 public:
-    ImGuiFileBrowser(const std::filesystem::path& path) :
+    ImGuiFileBrowser(const fs::path& path) :
     mCurrentDirectory{path}
     {
 	populateChildren();
     }
 
-    std::optional<std::filesystem::path> render();
+    std::optional<fs::path> render();
 
 
 private:
 
     void populateChildren();
 
-    std::filesystem::path mCurrentDirectory;
-    std::vector<std::filesystem::path> mChildren;
+    fs::path mCurrentDirectory;
+    std::vector<fs::path> mChildren;
 };
 
 #endif // IMGUIFILEBROWSER_H

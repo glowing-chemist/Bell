@@ -1,5 +1,7 @@
 #include "ImGuiNodeEditor.h"
 
+#include <algorithm>
+
 ImGuiNodeEditor::ImGuiNodeEditor(const std::string& name, NodeFactoryFunc factoryFunc) :
     mName{name},
     mCurrentID{1},

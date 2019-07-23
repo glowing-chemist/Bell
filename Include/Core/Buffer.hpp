@@ -26,8 +26,8 @@ public:
 	Buffer& operator=(const Buffer&);
     Buffer(const Buffer&) = default;
 
-	Buffer& operator=(Buffer&&) = delete;
-	Buffer(Buffer&&) = delete;
+	Buffer& operator=(Buffer&&);
+	Buffer(Buffer&&);
 
 	void swap(Buffer&);
 

@@ -36,7 +36,7 @@ public:
     const vk::ShaderModule&           getShaderModule() const;
 
 	std::string getFilePath() const
-        { return mFilePath; }
+        { return mFilePath.string(); }
 
 private:
 

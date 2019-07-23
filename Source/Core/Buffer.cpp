@@ -103,11 +103,29 @@ void Buffer::swap(Buffer& other)
 }
 
 
+Buffer& Buffer::operator=(Buffer&& rhs)
+{
+	swap(rhs);
+
+	return *this;
+}
+
+
+Buffer::Buffer(Buffer&& rhs) :
+	GPUResource(rhs),
+	DeviceChild(rhs)
+{
+	mBuffer = vk::Buffer{ nullptr };
+
+	swap(rhs);
+}
+
+
 void Buffer::setContents(const void* data, const uint32_t size, const uint32_t offset)
 {
     const uint32_t entries = size / mStride;
 
-    Buffer stagingBuffer = Buffer(getDevice(), vk::BufferUsageFlagBits::eTransferSrc, size * mAllignment, mStride, "Staging Buffer");
+    Buffer stagingBuffer(getDevice(), vk::BufferUsageFlagBits::eTransferSrc, size * mAllignment, mStride, "Staging Buffer");
 
 	MapInfo mapInfo{};
 	mapInfo.mOffset = 0;

@@ -3,9 +3,6 @@
 #include "imgui.h"
 
 
-namespace fs = std::filesystem;
-
-
 std::optional<fs::path> ImGuiFileBrowser::render()
 {
     int selectedFile = -1;
@@ -13,11 +10,11 @@ std::optional<fs::path> ImGuiFileBrowser::render()
     if(ImGui::Begin("FileBrowser"))
     {
         ImGui::BeginGroup();
-        for(uint i = 0; i < mChildren.size(); ++i)
+        for(uint32_t i = 0; i < mChildren.size(); ++i)
         {
             const auto file = mChildren[i];
 
-            ImGui::RadioButton(file.filename().c_str(), &selectedFile, i);
+            ImGui::RadioButton(file.filename().string().c_str(), &selectedFile, static_cast<int>(i));
         }
 
         if(selectedFile != -1)
