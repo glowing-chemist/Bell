@@ -49,58 +49,82 @@ void ImGuiNodeEditor::draw()
 
                 ImGui::TextUnformatted(node->mName.c_str());
 
-                const uint32_t minConnections = static_cast<uint32_t>(std::min(node->mInputs.size(), node->mOutputs.size()));
+				beginColumn();
 
-                for(uint32_t i = 0; i < minConnections; ++i)
-                {
-                    ax::NodeEditor::BeginPin(node->mInputs[i].mID, ax::NodeEditor::PinKind::Input);
+				for (const auto& input : node->mInputs)
+				{
+					ax::NodeEditor::BeginPin(input.mID, ax::NodeEditor::PinKind::Input);
 
-                    // We should really always have a pin name here.
-                    if (!node->mInputs[i].mName.empty())
-                    {
-                        ImGui::TextUnformatted(node->mInputs[i].mName.c_str());
-                    }
+					ImGui::TextUnformatted(input.mName.c_str());
 
-                    // TODO add some connection icon logic here.
+					ax::NodeEditor::EndPin();
+				}
 
-                    ax::NodeEditor::EndPin();
+				nextColumn();
 
-                    ImGui::SameLine();
+				for (const auto& input : node->mOutputs)
+				{
+					ax::NodeEditor::BeginPin(input.mID, ax::NodeEditor::PinKind::Output);
 
-                    ax::NodeEditor::BeginPin(node->mOutputs[i].mID, ax::NodeEditor::PinKind::Output);
+					ImGui::TextUnformatted(input.mName.c_str());
 
-                    if (!node->mOutputs[i].mName.empty())
-                    {
-                        ImGui::TextUnformatted(node->mOutputs[i].mName.c_str());
-                    }
+					ax::NodeEditor::EndPin();
+				}
 
-                    // TODO add some connection icon logic here.
-
-                    ax::NodeEditor::EndPin();
-                }
-
-                const auto& largerList = node->mInputs.size() > node->mOutputs.size() ? node->mInputs : node->mOutputs;
-
-                for(uint32_t i = minConnections; i < largerList.size(); ++i)
-                {
-                    ax::NodeEditor::BeginPin(largerList[i].mID, largerList[i].mKind == PinKind::Output ? ax::NodeEditor::PinKind::Output : ax::NodeEditor::PinKind::Input);
-
-                    if (!largerList[i].mName.empty())
-                    {
-                        ImGui::TextUnformatted(largerList[i].mName.c_str());
-                    }
-
-                    // TODO add some connection icon logic here.
-
-                    ax::NodeEditor::EndPin();
-                }
+				endColumn();
 
             ax::NodeEditor::EndNode();
         }
 
+		if (ax::NodeEditor::BeginCreate())
+		{
+			ax::NodeEditor::PinId inputPinId, outputPinId;
+			if (ax::NodeEditor::QueryNewLink(&inputPinId, &outputPinId))
+			{
+
+				if (inputPinId && outputPinId) // TODO add connection rejection logic.
+				{
+					if (ax::NodeEditor::AcceptNewItem())
+					{
+
+						mLinks.push_back({ ax::NodeEditor::LinkId(mCurrentID++), inputPinId, outputPinId });
+
+						// Draw new link.
+						ax::NodeEditor::Link(mLinks.back().mID, mLinks.back().mStartPinID, mLinks.back().mEndPinID);
+					}
+				}
+				else
+					ax::NodeEditor::RejectNewItem();
+			}
+		}
+
+		ax::NodeEditor::EndCreate();
+
+		if (ax::NodeEditor::BeginDelete())
+		{
+			// There may be many links marked for deletion, let's loop over them.
+			ax::NodeEditor::LinkId deletedLinkId;
+			while (ax::NodeEditor::QueryDeletedLink(&deletedLinkId))
+			{
+				// TODO Add deletion logic.
+				if (ax::NodeEditor::AcceptDeletedItem())
+				{
+					mLinks.erase(std::remove_if(mLinks.begin(), mLinks.end(), [deletedLinkId](const auto& link)
+					{
+						return link.mID == deletedLinkId;
+					}), mLinks.end());
+				}
+
+				// You may reject link deletion by calling:
+				// ed::RejectDeletedItem();
+			}
+		}
+
+		ax::NodeEditor::EndDelete();
+
         for(const auto& link : mLinks)
         {
-            ax::NodeEditor::Link(link.ID, link.StartPinID, link.EndPinID);
+            ax::NodeEditor::Link(link.mID, link.mStartPinID, link.mEndPinID);
         }
 
     ax::NodeEditor::End();

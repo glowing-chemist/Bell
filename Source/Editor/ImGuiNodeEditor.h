@@ -62,15 +62,15 @@ struct EditorNode
 
 struct Link
 {
-    ax::NodeEditor::LinkId ID;
+    ax::NodeEditor::LinkId mID;
 
-    ax::NodeEditor::PinId StartPinID;
-    ax::NodeEditor::PinId EndPinID;
+    ax::NodeEditor::PinId mStartPinID;
+    ax::NodeEditor::PinId mEndPinID;
 
-    ImColor Color;
+    ImColor mColor;
 
     Link(ax::NodeEditor::LinkId id, ax::NodeEditor::PinId startPinId, ax::NodeEditor::PinId endPinId):
-        ID(id), StartPinID(startPinId), EndPinID(endPinId), Color(255, 255, 255)
+        mID(id), mStartPinID(startPinId), mEndPinID(endPinId), mColor(255, 255, 255)
     {
     }
 };
@@ -91,6 +91,23 @@ public:
     void draw();
 
 private:
+
+	inline void beginColumn()
+	{
+		ImGui::BeginGroup();
+	}
+
+	inline void nextColumn()
+	{
+		ImGui::EndGroup();
+		ImGui::SameLine();
+		ImGui::BeginGroup();
+	}
+
+	inline void endColumn()
+	{
+		ImGui::EndGroup();
+	}
 
     std::string mName;
 
