@@ -27,6 +27,9 @@ inline const char* passToString(const PassType passType)
 
         case PassType::GBuffer:
             return "GBuffer pass";
+
+        case PassType::SSAO:
+            return "SSAO";
     }
 
     return "UNKNOWN PASS TYPE";

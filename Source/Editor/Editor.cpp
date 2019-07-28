@@ -31,6 +31,14 @@ namespace
                 return newNode;
             }
 
+            case PassType::SSAO:
+            {
+                std::shared_ptr<EditorNode> newNode = std::make_shared<EditorNode>(0, "SSAO", passType);
+                newNode->mInputs.push_back(Pin{0, newNode, "Depth", PinType::Texture, PinKind::Input});
+                newNode->mOutputs.push_back(Pin{0, newNode, "SSAO", PinType::Texture, PinKind::Output});
+                return newNode;
+            }
+
         }
     }
 
@@ -255,6 +263,7 @@ void Editor::drawAssistantWindow()
 
            drawPassContextMenu(PassType::DepthPre);
            drawPassContextMenu(PassType::GBuffer);
+           drawPassContextMenu(PassType::SSAO);
 
            ImGui::EndMenu();
        }
