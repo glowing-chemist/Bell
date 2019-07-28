@@ -31,6 +31,10 @@ public:
 
 	void swap(Buffer&);
 
+    // will only resize to a larger buffer.
+    // returns whether or not the buffer was resized (and views need to be recreated)
+    bool resize(const uint32_t newSize, const bool preserContents);
+
 	vk::Buffer getBuffer() const
 		{ return mBuffer; }
 
@@ -52,6 +56,16 @@ public:
     void    unmap();
 
 private:
+
+    void resizePreserveContents(const uint32_t);
+    void resizeDiscardContents(const uint32_t);
+
+    inline bool isMappable() const
+    {
+        return static_cast<bool>(mUsage & vk::BufferUsageFlagBits::eTransferSrc ||
+        mUsage & vk::BufferUsageFlagBits::eUniformBuffer);
+    }
+
     vk::Buffer mBuffer;
     Allocation mBufferMemory;
 	MapInfo mCurrentMap;

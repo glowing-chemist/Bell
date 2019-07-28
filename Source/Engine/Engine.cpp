@@ -14,8 +14,8 @@ Engine::Engine(GLFWwindow* windowPtr) :
     mCurrentRenderGraph(),
     mOverlayVertexShader(&mRenderDevice, "./Shaders/Overlay.vert"),
     mOverlayFragmentShader(&mRenderDevice, "./Shaders/Overlay.frag"),
-    mVertexBuffer{getDevice(), vk::BufferUsageFlagBits::eVertexBuffer, 1000, 1000, "Vertex Buffer"},
-    mIndexBuffer{getDevice(), vk::BufferUsageFlagBits::eIndexBuffer, 1000, 1000, "Index Buffer"},
+    mVertexBuffer{getDevice(), vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eTransferDst, 1000, 1000, "Vertex Buffer"},
+    mIndexBuffer{getDevice(), vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eTransferDst, 1000, 1000, "Index Buffer"},
 	mCameraBuffer{},
 	mDeviceCameraBuffer{getDevice(), vk::BufferUsageFlagBits::eUniformBuffer, sizeof(CameraBuffer), sizeof(CameraBuffer), "Camera Buffer"},
 	mSSAOBUffer{},
@@ -175,19 +175,19 @@ void Engine::render()
 {
 	auto& vertexData = mVertexBuilder.finishRecording();
 
-	Buffer vertexBuffer = createBuffer(vertexData.size(), vertexData.size(), vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eTransferDst, "Vertex Buffer");
-	vertexBuffer.setContents(vertexData.data(), vertexData.size());
-
 	auto& indexData = mIndexBuilder.finishRecording();
 
-	Buffer indexBuffer = createBuffer(indexData.size(), indexData.size(), vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eTransferDst, "Index Buffer");
-	indexBuffer.setContents(indexData.data(), indexData.size());
+    mVertexBuffer->resize(static_cast<uint32_t>(vertexData.size()), false);
+    mIndexBuffer->resize(static_cast<uint32_t>(indexData.size()), false);
+
+    mVertexBuffer->setContents(vertexData.data(), static_cast<uint32_t>(vertexData.size()));
+    mIndexBuffer->setContents(indexData.data(), static_cast<uint32_t>(indexData.size()));
 
 	mVertexBuilder = BufferBuilder();
 	mIndexBuilder = BufferBuilder();
 
-	mCurrentRenderGraph.bindVertexBuffer(vertexBuffer);
-	mCurrentRenderGraph.bindIndexBuffer(indexBuffer);
+    mCurrentRenderGraph.bindVertexBuffer(*mVertexBuffer);
+    mCurrentRenderGraph.bindIndexBuffer(*mIndexBuffer);
 
     mRenderDevice.execute(mCurrentRenderGraph);
 }

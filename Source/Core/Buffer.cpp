@@ -1,6 +1,8 @@
 #include "Core/Buffer.hpp"
 #include "RenderDevice.hpp"
 #include "Core/BarrierManager.hpp"
+#include "Core/BellLogging.hpp"
+
 
 Buffer::Buffer(RenderDevice* dev,
 	   vk::BufferUsageFlags usage,
@@ -14,14 +16,12 @@ Buffer::Buffer(RenderDevice* dev,
     mStride{stride},
     mName{name}
 {
-    const uint32_t entries = size / stride;
     mAllignment = mUsage & vk::BufferUsageFlagBits::eUniformBuffer ?
                                    getDevice()->getLimits().minUniformBufferOffsetAlignment : 1;
 
     mBuffer = getDevice()->createBuffer(mSize, mUsage);
     const vk::MemoryRequirements bufferMemReqs = getDevice()->getMemoryRequirements(mBuffer);
-	mBufferMemory = getDevice()->getMemoryManager()->Allocate(mSize, bufferMemReqs.alignment, static_cast<bool>(mUsage & vk::BufferUsageFlagBits::eTransferSrc ||
-																												mUsage & vk::BufferUsageFlagBits::eUniformBuffer));
+    mBufferMemory = getDevice()->getMemoryManager()->Allocate(bufferMemReqs.size, bufferMemReqs.alignment, isMappable());
     getDevice()->getMemoryManager()->BindBuffer(mBuffer, mBufferMemory);
 
 	if(mName != "")
@@ -125,38 +125,55 @@ void Buffer::setContents(const void* data, const uint32_t size, const uint32_t o
 {
     const uint32_t entries = size / mStride;
 
-    Buffer stagingBuffer(getDevice(), vk::BufferUsageFlagBits::eTransferSrc, size * mAllignment, mStride, "Staging Buffer");
+    BELL_ASSERT(size <= mSize, "Attempting to map a larger range than the buffer supports.")
 
-	MapInfo mapInfo{};
-	mapInfo.mOffset = 0;
-	mapInfo.mSize = stagingBuffer.getSize();
-	void* mappedBuffer = stagingBuffer.map(mapInfo);
-
-    for(uint32_t i = 0; i < entries; ++i)
+    if(isMappable())
     {
-        std::memcpy(reinterpret_cast<char*>(mappedBuffer) + (i * mAllignment),
-                    reinterpret_cast<const char*>(data) + (i * mStride),
-                    mStride);
+        MapInfo mapInfo{};
+        mapInfo.mOffset = offset;
+        mapInfo.mSize = size;
+
+        void* mappedBuffer = map(mapInfo);
+
+        std::memcpy(mappedBuffer, data, size);
+
+        unmap();
     }
+    else
+    {
+        Buffer stagingBuffer(getDevice(), vk::BufferUsageFlagBits::eTransferSrc, size * mAllignment, mStride, "Staging Buffer");
 
-    stagingBuffer.unmap();
+        MapInfo mapInfo{};
+        mapInfo.mOffset = 0;
+        mapInfo.mSize = stagingBuffer.getSize();
+        void* mappedBuffer = stagingBuffer.map(mapInfo);
 
-    vk::BufferCopy copyInfo{};
-    copyInfo.setSize(size * mAllignment);
-    copyInfo.setSrcOffset(0);
-    copyInfo.setDstOffset(offset);
+        for(uint32_t i = 0; i < entries; ++i)
+        {
+            std::memcpy(reinterpret_cast<char*>(mappedBuffer) + (i * mAllignment),
+                        reinterpret_cast<const char*>(data) + (i * mStride),
+                        mStride);
+        }
 
-    getDevice()->getCurrentCommandPool()->getBufferForQueue(QueueType::Graphics)
-            .copyBuffer(stagingBuffer.getBuffer(), getBuffer(), copyInfo);
+        stagingBuffer.unmap();
 
-    BarrierRecorder barrier{getDevice()};
-    barrier.makeContentsVisible(*this);
+        vk::BufferCopy copyInfo{};
+        copyInfo.setSize(size * mAllignment);
+        copyInfo.setSrcOffset(0);
+        copyInfo.setDstOffset(offset);
 
-    getDevice()->execute(barrier);
+        getDevice()->getCurrentCommandPool()->getBufferForQueue(QueueType::Graphics)
+                .copyBuffer(stagingBuffer.getBuffer(), getBuffer(), copyInfo);
 
-    // Maybe try to implement a staging buffer cache so that we don't have to create one
-    // each time.
-    stagingBuffer.updateLastAccessed(getDevice()->getCurrentSubmissionIndex());
+        BarrierRecorder barrier{getDevice()};
+        barrier.makeContentsVisible(*this);
+
+        getDevice()->execute(barrier);
+
+        // TODO: Implement a staging buffer cache so that we don't have to create one
+        // each time.
+        stagingBuffer.updateLastAccessed(getDevice()->getCurrentSubmissionIndex());
+    }
     updateLastAccessed(getDevice()->getCurrentSubmissionIndex());
 }
 
@@ -179,3 +196,64 @@ void  Buffer::unmap()
 	getDevice()->getMemoryManager()->UnMapAllocation(mCurrentMap);
 }
 
+
+bool Buffer::resize(const uint32_t newSize, const bool preserContents)
+{
+    if(newSize <= mSize)
+        return false;
+
+    if(preserContents)
+        resizePreserveContents(newSize);
+    else
+        resizeDiscardContents(newSize);
+
+    updateLastAccessed(getDevice()->getCurrentSubmissionIndex());
+
+    return true;
+}
+
+
+void Buffer::resizePreserveContents(const uint32_t newSize)
+{
+    vk::Buffer newBuffer = getDevice()->createBuffer(newSize, mUsage);
+    const vk::MemoryRequirements bufferMemReqs = getDevice()->getMemoryRequirements(newBuffer);
+    Allocation newMemory = getDevice()->getMemoryManager()->Allocate(bufferMemReqs.size, bufferMemReqs.alignment, isMappable());
+    getDevice()->getMemoryManager()->BindBuffer(newBuffer, newMemory);
+
+    vk::BufferCopy copyInfo{};
+    copyInfo.setSize(mSize);
+    copyInfo.setSrcOffset(0);
+    copyInfo.setDstOffset(0);
+
+    // Copy the contents
+    getDevice()->getCurrentCommandPool()->getBufferForQueue(QueueType::Graphics)
+            .copyBuffer(newBuffer, getBuffer(), copyInfo);
+
+    // add the current buffer to deferred destruction queue.
+    getDevice()->destroyBuffer(*this);
+
+    mBuffer = newBuffer;
+    mBufferMemory = newMemory;
+    mSize = newSize;
+
+    BarrierRecorder barrier{getDevice()};
+    barrier.makeContentsVisible(*this);
+
+    getDevice()->execute(barrier);
+}
+
+
+void Buffer::resizeDiscardContents(const uint32_t newSize)
+{
+    vk::Buffer newBuffer = getDevice()->createBuffer(newSize, mUsage);
+    const vk::MemoryRequirements bufferMemReqs = getDevice()->getMemoryRequirements(newBuffer);
+    Allocation newMemory = getDevice()->getMemoryManager()->Allocate(bufferMemReqs.size, bufferMemReqs.alignment, isMappable());
+    getDevice()->getMemoryManager()->BindBuffer(newBuffer, newMemory);
+
+    // add the current buffer to deferred destruction queue.
+    getDevice()->destroyBuffer(*this);
+
+    mBuffer = newBuffer;
+    mBufferMemory = newMemory;
+    mSize = newSize;
+}
