@@ -16,7 +16,7 @@ namespace
             {
                 // Set the ID to 0 as the editor will set the real id.
                 std::shared_ptr<EditorNode> newNode = std::make_shared<EditorNode>(0, "Depth Pre", passType);
-                newNode->mOutputs.emplace_back(0, newNode, "Depth", PinType::Texture);
+                newNode->mOutputs.emplace_back(0, newNode, "Depth", PinType::Texture, PinKind::Output);
                 return newNode;
             }
 
@@ -24,10 +24,10 @@ namespace
             case PassType::GBuffer:
             {
                 std::shared_ptr<EditorNode> newNode = std::make_shared<EditorNode>(0, "GBuffer", passType);
-                newNode->mOutputs.push_back(Pin{0, newNode, "Normal", PinType::Texture});
-                newNode->mOutputs.push_back(Pin{0, newNode, "Albedo", PinType::Texture});
-                newNode->mOutputs.push_back(Pin{0, newNode, "Specular", PinType::Texture});
-                newNode->mOutputs.push_back(Pin{0, newNode, "Depth", PinType::Texture});
+                newNode->mOutputs.push_back(Pin{0, newNode, "Normal", PinType::Texture, PinKind::Output});
+                newNode->mOutputs.push_back(Pin{0, newNode, "Albedo", PinType::Texture, PinKind::Output});
+                newNode->mOutputs.push_back(Pin{0, newNode, "Specular", PinType::Texture, PinKind::Output});
+                newNode->mOutputs.push_back(Pin{0, newNode, "Depth", PinType::Texture, PinKind::Output});
                 return newNode;
             }
 

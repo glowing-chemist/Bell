@@ -1,4 +1,5 @@
 #include "ImGuiNodeEditor.h"
+#include "Core/BellLogging.hpp"
 
 #include <algorithm>
 
@@ -51,6 +52,8 @@ void ImGuiNodeEditor::draw()
 
 				beginColumn();
 
+                ImGui::TextUnformatted("Inputs");
+
 				for (const auto& input : node->mInputs)
 				{
 					ax::NodeEditor::BeginPin(input.mID, ax::NodeEditor::PinKind::Input);
@@ -61,6 +64,8 @@ void ImGuiNodeEditor::draw()
 				}
 
 				nextColumn();
+
+                ImGui::TextUnformatted("Outputs");
 
 				for (const auto& input : node->mOutputs)
 				{
@@ -78,16 +83,19 @@ void ImGuiNodeEditor::draw()
 
 		if (ax::NodeEditor::BeginCreate())
 		{
-			ax::NodeEditor::PinId inputPinId, outputPinId;
-			if (ax::NodeEditor::QueryNewLink(&inputPinId, &outputPinId))
+            ax::NodeEditor::PinId startPinID, endPinID;
+            if (ax::NodeEditor::QueryNewLink(&startPinID, &endPinID))
 			{
 
-				if (inputPinId && outputPinId) // TODO add connection rejection logic.
+                const Pin& inputPin = findPin(startPinID);
+                const Pin& outputPin = findPin(endPinID);
+
+                if (startPinID && endPinID && (inputPin.mKind != outputPin.mKind))
 				{
 					if (ax::NodeEditor::AcceptNewItem())
 					{
 
-						mLinks.push_back({ ax::NodeEditor::LinkId(mCurrentID++), inputPinId, outputPinId });
+                        mLinks.push_back({ ax::NodeEditor::LinkId(mCurrentID++), startPinID, endPinID });
 
 						// Draw new link.
 						ax::NodeEditor::Link(mLinks.back().mID, mLinks.back().mStartPinID, mLinks.back().mEndPinID);
@@ -130,4 +138,30 @@ void ImGuiNodeEditor::draw()
     ax::NodeEditor::End();
 
     ax::NodeEditor::SetCurrentEditor(nullptr);
+}
+
+
+const Pin& ImGuiNodeEditor::findPin(const ax::NodeEditor::PinId pinID)
+{
+    for(const auto& node : mNodes)
+    {
+        if(const auto pin = std::find_if(node->mInputs.begin(), node->mInputs.end(), [pinID] ( const Pin& pin )
+        {
+            return pin.mID == pinID;
+        }); pin != node->mInputs.end())
+        {
+            return *pin;
+        }
+
+        if(const auto pin = std::find_if(node->mOutputs.begin(), node->mOutputs.end(), [pinID] ( const Pin& pin )
+        {
+            return pin.mID == pinID;
+        }); pin != node->mOutputs.end())
+        {
+            return *pin;
+        }
+    }
+
+    // This should be unreachable.
+    BELL_TRAP;
 }

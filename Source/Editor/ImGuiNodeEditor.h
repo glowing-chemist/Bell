@@ -33,8 +33,8 @@ struct Pin
     PinType                     mType;
     PinKind                     mKind;
 
-    Pin(unsigned int id, const std::shared_ptr<EditorNode>& parent,  const char* name, PinType type):
-        mID(id), mNode(parent), mName(name), mType(type), mKind(PinKind::Input)
+    Pin(unsigned int id, const std::shared_ptr<EditorNode>& parent,  const char* name, const PinType type, const PinKind kind):
+        mID(id), mNode(parent), mName(name), mType(type), mKind(kind)
     {
     }
 };
@@ -108,6 +108,8 @@ private:
 	{
 		ImGui::EndGroup();
 	}
+
+    const Pin& findPin(const ax::NodeEditor::PinId);
 
     std::string mName;
 
