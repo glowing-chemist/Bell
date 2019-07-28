@@ -232,7 +232,7 @@ void Engine::updateGlobalUniformBuffers()
 
 		mGeneratedSSAOBuffer = true;
 
-		std::memcpy(&mSSAOBUffer.mOffsets[0], offsets.data(), offsets.size() * sizeof(float4));
+        std::memcpy(&mSSAOBUffer.mOffsets[0], offsets.data(), offsets.size() * sizeof(float3));
 		mSSAOBUffer.mScale = 0.001f;
 		mSSAOBUffer.mOffsetsCount = offsets.size();
 
