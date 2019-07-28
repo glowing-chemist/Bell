@@ -145,17 +145,17 @@ const Pin& ImGuiNodeEditor::findPin(const ax::NodeEditor::PinId pinID)
 {
     for(const auto& node : mNodes)
     {
-        if(const auto pin = std::find_if(node->mInputs.begin(), node->mInputs.end(), [pinID] ( const Pin& pin )
+        if(const auto pin = std::find_if(node->mInputs.begin(), node->mInputs.end(), [pinID] ( const Pin& inPin )
         {
-            return pin.mID == pinID;
+            return inPin.mID == pinID;
         }); pin != node->mInputs.end())
         {
             return *pin;
         }
 
-        if(const auto pin = std::find_if(node->mOutputs.begin(), node->mOutputs.end(), [pinID] ( const Pin& pin )
+        if(const auto pin = std::find_if(node->mOutputs.begin(), node->mOutputs.end(), [pinID] ( const Pin& inPin )
         {
-            return pin.mID == pinID;
+            return inPin.mID == pinID;
         }); pin != node->mOutputs.end())
         {
             return *pin;
