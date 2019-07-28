@@ -19,7 +19,10 @@ public:
         DeviceChild{dev},
         mData{}
     {
-        mData.emplace_back(dev, std::forward<Args>(args)...);
+        for(uint32_t i = 0; i < getDevice()->getSwapChainImageCount(); ++i)
+        {
+            mData.emplace_back(dev, std::forward<Args>(args)...);
+        }
     }
 
     /* TODO Make this work for non DeviceChild derived classes.
