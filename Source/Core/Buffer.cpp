@@ -202,6 +202,11 @@ bool Buffer::resize(const uint32_t newSize, const bool preserContents)
     if(newSize <= mSize)
         return false;
 
+	// if the stride is the same as the size (it's one contiguos data block)
+	// we need to update the stride.
+	if (mSize == mStride)
+		mStride = newSize;
+
     if(preserContents)
         resizePreserveContents(newSize);
     else
