@@ -131,7 +131,6 @@ void Editor::renderOverlay()
 
     if(mShowFileBrowser)
     {
-        ImGui::SetNextWindowPos(ImVec2(800, 450));
         auto optionalPath = mFileBrowser.render();
 
         if(optionalPath)
