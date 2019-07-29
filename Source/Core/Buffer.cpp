@@ -125,10 +125,10 @@ void Buffer::setContents(const void* data, const uint32_t size, const uint32_t o
 {
     const uint32_t entries = size / mStride;
 
-    BELL_ASSERT(size <= mSize, "Attempting to map a larger range than the buffer supports.")
-
     if(isMappable())
     {
+        BELL_ASSERT(size <= mSize, "Attempting to map a larger range than the buffer supports.")
+
         MapInfo mapInfo{};
         mapInfo.mOffset = offset;
         mapInfo.mSize = size;
