@@ -141,24 +141,19 @@ void Buffer::setContents(const void* data, const uint32_t size, const uint32_t o
     }
     else
     {
-        Buffer stagingBuffer(getDevice(), vk::BufferUsageFlagBits::eTransferSrc, size * mAllignment, mStride, "Staging Buffer");
+        Buffer stagingBuffer(getDevice(), vk::BufferUsageFlagBits::eTransferSrc, size, mStride, "Staging Buffer");
 
         MapInfo mapInfo{};
         mapInfo.mOffset = 0;
         mapInfo.mSize = stagingBuffer.getSize();
         void* mappedBuffer = stagingBuffer.map(mapInfo);
 
-        for(uint32_t i = 0; i < entries; ++i)
-        {
-            std::memcpy(reinterpret_cast<char*>(mappedBuffer) + (i * mAllignment),
-                        reinterpret_cast<const char*>(data) + (i * mStride),
-                        mStride);
-        }
+            std::memcpy(mappedBuffer, data, size);
 
         stagingBuffer.unmap();
 
         vk::BufferCopy copyInfo{};
-        copyInfo.setSize(size * mAllignment);
+        copyInfo.setSize(size);
         copyInfo.setSrcOffset(0);
         copyInfo.setDstOffset(offset);
 
