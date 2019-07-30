@@ -10,7 +10,8 @@
 StaticMesh::StaticMesh(const std::string& path, const int vertAttributes) :
 	mVertexData{},
 	mIndexData{},
-	mAABB{}
+    mAABB{},
+    mPassTypes{0}
 {
     Assimp::Importer importer;
 
