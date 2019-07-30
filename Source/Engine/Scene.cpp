@@ -164,9 +164,13 @@ void Scene::finalise()
                    [](MeshInstance& instance)
                     { return std::pair<AABB, MeshInstance*>{instance.mMesh->getAABB() * instance.mTransformation, &instance}; } );
 
-    BVHFactory<MeshInstance*> dynamicBVHFactory(mSceneAABB, dynamicBVHMeshes);
+    // Not all scenes contain dynamic meshes.
+    if(!dynamicBVHMeshes.empty())
+    {
+        BVHFactory<MeshInstance*> dynamicBVHFactory(mSceneAABB, dynamicBVHMeshes);
 
-    mStaticMeshBoundingVolume = dynamicBVHFactory.generateBVH();
+        mStaticMeshBoundingVolume = dynamicBVHFactory.generateBVH();
+    }
 }
 
 

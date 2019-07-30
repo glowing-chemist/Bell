@@ -134,7 +134,10 @@ void Editor::renderOverlay()
         auto optionalPath = mFileBrowser.render();
 
         if(optionalPath)
+        {
             mShowFileBrowser = false;
+            mEngine.setScene(*optionalPath);
+        }
     }
 
     // Set up the draw data/ also calls endFrame.

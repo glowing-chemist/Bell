@@ -31,18 +31,21 @@ Engine::Engine(GLFWwindow* windowPtr) :
 
 void Engine::loadScene(const std::string& path)
 {
-
+    mLoadingScene = Scene(path);
+    mLoadingScene.loadFromFile(VertexAttributes::Position4 | VertexAttributes::TextureCoordinates | VertexAttributes::Normals);
 }
 
 void Engine::transitionScene()
 {
-
+    mCurrentScene = std::move(mLoadingScene);
 }
 
 
 void Engine::setScene(const std::string& path)
 {
-
+    mCurrentScene = Scene(path);
+    // For now don't include material ID, some more work will be needed to expose that correctly.
+    mCurrentScene.loadFromFile(VertexAttributes::Position4 | VertexAttributes::TextureCoordinates | VertexAttributes::Normals);
 }
 
 
