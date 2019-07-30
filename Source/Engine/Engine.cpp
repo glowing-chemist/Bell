@@ -186,8 +186,8 @@ void Engine::render()
     mVertexBuffer->setContents(vertexData.data(), static_cast<uint32_t>(vertexData.size()));
     mIndexBuffer->setContents(indexData.data(), static_cast<uint32_t>(indexData.size()));
 
-	mVertexBuilder = BufferBuilder();
-	mIndexBuilder = BufferBuilder();
+    mVertexBuilder.reset();
+    mIndexBuilder.reset();
 
     mCurrentRenderGraph.bindVertexBuffer(*mVertexBuffer);
     mCurrentRenderGraph.bindIndexBuffer(*mIndexBuffer);
