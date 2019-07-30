@@ -48,7 +48,7 @@ namespace
 Editor::Editor(GLFWwindow* window) :
     mWindow{window},
     mCurrentCursorPos{0.0, 0.0},
-    mMode{0},
+    mMode{1},
     mShowHelpMenu{false},
     mShowFileBrowser{false},
     mFileBrowser{"/"},
