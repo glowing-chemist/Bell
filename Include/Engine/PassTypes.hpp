@@ -13,7 +13,8 @@ enum class PassType : uint64_t
 	Shadow = 1 << 3,
 	CascadingShadow = 1 << 4,
 	SSAO = 1 << 5,
-	GBufferMaterial = 1 << 6
+    GBufferMaterial = 1 << 6,
+    EditorDefault = 1 << 7 // This can be any kind of pass.
 
 	// Add more as and when implemented.
 };
