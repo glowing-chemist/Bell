@@ -46,7 +46,7 @@ public:
 
     void addPass(const PassType passType)
     {
-        mPassTypes |= passType;
+        mPassTypes |= static_cast<uint64_t>(passType);
     }
 
     PassType getPassTypes() const
