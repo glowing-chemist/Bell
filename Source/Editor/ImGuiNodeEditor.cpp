@@ -38,6 +38,24 @@ void ImGuiNodeEditor::addNode(const uint64_t nodeType)
 }
 
 
+void ImGuiNodeEditor::addNode(const std::shared_ptr<EditorNode>& newNode)
+{
+    newNode->mID = mCurrentID++;
+
+    for(auto& input : newNode->mInputs)
+    {
+        input.mID = mCurrentID++;
+    }
+
+    for(auto& output : newNode->mOutputs)
+    {
+        output.mID = mCurrentID++;
+    }
+
+    mNodes.push_back(std::move(newNode));
+}
+
+
 void ImGuiNodeEditor::draw()
 {
     ax::NodeEditor::SetCurrentEditor(mContext);
@@ -46,39 +64,7 @@ void ImGuiNodeEditor::draw()
 
         for(const auto& node : mNodes)
         {
-            ax::NodeEditor::BeginNode(node->mID);
-
-                ImGui::TextUnformatted(node->mName.c_str());
-
-				beginColumn();
-
-                ImGui::TextUnformatted("Inputs");
-
-				for (const auto& input : node->mInputs)
-				{
-					ax::NodeEditor::BeginPin(input.mID, ax::NodeEditor::PinKind::Input);
-
-					ImGui::TextUnformatted(input.mName.c_str());
-
-					ax::NodeEditor::EndPin();
-				}
-
-				nextColumn();
-
-                ImGui::TextUnformatted("Outputs");
-
-				for (const auto& input : node->mOutputs)
-				{
-					ax::NodeEditor::BeginPin(input.mID, ax::NodeEditor::PinKind::Output);
-
-					ImGui::TextUnformatted(input.mName.c_str());
-
-					ax::NodeEditor::EndPin();
-				}
-
-				endColumn();
-
-            ax::NodeEditor::EndNode();
+           node->draw();
         }
 
 		if (ax::NodeEditor::BeginCreate())
@@ -164,4 +150,76 @@ const Pin& ImGuiNodeEditor::findPin(const ax::NodeEditor::PinId pinID)
 
     // This should be unreachable.
     BELL_TRAP;
+}
+
+
+void PassNode::draw()
+{
+    ax::NodeEditor::BeginNode(mID);
+
+        ImGui::TextUnformatted(mName.c_str());
+
+        beginColumn();
+
+        ImGui::TextUnformatted("Inputs");
+
+        for (const auto& input : mInputs)
+        {
+            ax::NodeEditor::BeginPin(input.mID, ax::NodeEditor::PinKind::Input);
+
+            ImGui::TextUnformatted(input.mName.c_str());
+
+            ax::NodeEditor::EndPin();
+        }
+
+        nextColumn();
+
+        ImGui::TextUnformatted("Outputs");
+
+        for (const auto& input : mOutputs)
+        {
+            ax::NodeEditor::BeginPin(input.mID, ax::NodeEditor::PinKind::Output);
+
+            ImGui::TextUnformatted(input.mName.c_str());
+
+            ax::NodeEditor::EndPin();
+        }
+
+        endColumn();
+
+    ax::NodeEditor::EndNode();
+}
+
+
+void ResourceNode::draw()
+{
+    ax::NodeEditor::BeginNode(mID);
+
+        //ImGui::InputText("Resource Name", mName.data(), mName.size());
+
+        beginColumn();
+
+        for (const auto& input : mInputs)
+        {
+            ax::NodeEditor::BeginPin(input.mID, ax::NodeEditor::PinKind::Input);
+
+            ImGui::TextUnformatted(input.mName.c_str());
+
+            ax::NodeEditor::EndPin();
+        }
+
+        nextColumn();
+
+        for (const auto& input : mOutputs)
+        {
+            ax::NodeEditor::BeginPin(input.mID, ax::NodeEditor::PinKind::Output);
+
+            ImGui::TextUnformatted(input.mName.c_str());
+
+            ax::NodeEditor::EndPin();
+        }
+
+        endColumn();
+
+    ax::NodeEditor::EndNode();
 }

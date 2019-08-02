@@ -3,18 +3,21 @@
 
 #include <cstdint>
 
+
+#define PASS_TYPES  DepthPre = 0, \
+                    GBuffer = 1, \
+                    Animation = 1 << 1, \
+                    DeferredLighting = 1 << 2, \
+                    Shadow = 1 << 3, \
+                    CascadingShadow = 1 << 4, \
+                    SSAO = 1 << 5, \
+                    GBufferMaterial = 1 << 6, \
+                    EditorDefault = 1 << 7 \
+
 // An enum to keep track of which 
 enum class PassType : uint64_t
 {
-	DepthPre = 0,
-	GBuffer = 1,
-	Animation = 1 << 1,
-	DeferredLighting = 1 << 2,
-	Shadow = 1 << 3,
-	CascadingShadow = 1 << 4,
-	SSAO = 1 << 5,
-    GBufferMaterial = 1 << 6,
-    EditorDefault = 1 << 7 // This can be any kind of pass.
+    PASS_TYPES
 
 	// Add more as and when implemented.
 };
@@ -28,6 +31,9 @@ inline const char* passToString(const PassType passType)
 
         case PassType::GBuffer:
             return "GBuffer pass";
+
+        case PassType::GBufferMaterial:
+            return "GBuffer Material pass";
 
         case PassType::SSAO:
             return "SSAO";

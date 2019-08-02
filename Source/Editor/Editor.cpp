@@ -8,22 +8,22 @@ namespace
 
     std::shared_ptr<EditorNode> createPassNode(const uint64_t passType)
     {
-        const PassType pType = static_cast<PassType>(passType);
+        const NodeTypes pType = static_cast<NodeTypes>(passType);
 
         switch(pType)
         {
-            case PassType::DepthPre:
+            case NodeTypes::DepthPre:
             {
                 // Set the ID to 0 as the editor will set the real id.
-                std::shared_ptr<EditorNode> newNode = std::make_shared<EditorNode>(0, "Depth Pre", passType);
+                std::shared_ptr<EditorNode> newNode = std::make_shared<PassNode>("Depth Pre", passType);
                 newNode->mOutputs.emplace_back(0, newNode, "Depth", PinType::Texture, PinKind::Output);
                 return newNode;
             }
 
 
-            case PassType::GBuffer:
+            case NodeTypes::GBuffer:
             {
-                std::shared_ptr<EditorNode> newNode = std::make_shared<EditorNode>(0, "GBuffer", passType);
+                std::shared_ptr<EditorNode> newNode = std::make_shared<PassNode>("GBuffer", passType);
                 newNode->mOutputs.push_back(Pin{0, newNode, "Normal", PinType::Texture, PinKind::Output});
                 newNode->mOutputs.push_back(Pin{0, newNode, "Albedo", PinType::Texture, PinKind::Output});
                 newNode->mOutputs.push_back(Pin{0, newNode, "Specular", PinType::Texture, PinKind::Output});
@@ -31,11 +31,20 @@ namespace
                 return newNode;
             }
 
-            case PassType::SSAO:
+            case NodeTypes::SSAO:
             {
-                std::shared_ptr<EditorNode> newNode = std::make_shared<EditorNode>(0, "SSAO", passType);
+                std::shared_ptr<EditorNode> newNode = std::make_shared<PassNode>("SSAO", passType);
                 newNode->mInputs.push_back(Pin{0, newNode, "Depth", PinType::Texture, PinKind::Input});
                 newNode->mOutputs.push_back(Pin{0, newNode, "SSAO", PinType::Texture, PinKind::Output});
+                return newNode;
+            }
+
+            case NodeTypes::GBufferMaterial:
+            {
+                std::shared_ptr<EditorNode> newNode = std::make_shared<PassNode>("GBufferMaterial", passType);
+                newNode->mOutputs.push_back(Pin{0, newNode, "Normal", PinType::Texture, PinKind::Output});
+                newNode->mOutputs.push_back(Pin{0, newNode, "UV", PinType::Texture, PinKind::Output});
+                newNode->mOutputs.push_back(Pin{0, newNode, "Depth", PinType::Texture, PinKind::Output});
                 return newNode;
             }
 
@@ -265,7 +274,29 @@ void Editor::drawAssistantWindow()
 
            drawPassContextMenu(PassType::DepthPre);
            drawPassContextMenu(PassType::GBuffer);
+           drawPassContextMenu(PassType::GBufferMaterial);
            drawPassContextMenu(PassType::SSAO);
+
+           ImGui::EndMenu();
+       }
+
+       if(ImGui::BeginMenu("Add new resource"))
+       {
+           if(ImGui::MenuItem("Texture"))
+           {
+               std::shared_ptr<EditorNode> newNode = std::make_shared<ResourceNode>("Texture", std::numeric_limits<uint64_t>::max());
+               newNode->mOutputs.push_back(Pin{0, newNode, "Sample", PinType::Texture, PinKind::Output});
+
+               mNodeEditor.addNode(newNode);
+           }
+
+           if(ImGui::MenuItem("Buffer"))
+           {
+               std::shared_ptr<EditorNode> newNode = std::make_shared<ResourceNode>("Buffer", std::numeric_limits<uint64_t>::max() - 1);
+               newNode->mOutputs.push_back(Pin{0, newNode, "Load", PinType::Buffer, PinKind::Output});
+
+               mNodeEditor.addNode(newNode);
+           }
 
            ImGui::EndMenu();
        }

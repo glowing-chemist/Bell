@@ -9,6 +9,13 @@
 #include <string>
 #include <vector>
 
+enum class NodeTypes : uint64_t
+{
+    PASS_TYPES,
+    Texture,
+    BUffer
+};
+
 
 enum class PinType
 {
@@ -54,8 +61,29 @@ struct EditorNode
     std::string State;
     std::string SavedState;
 
-    EditorNode(unsigned int id, const char* name, const uint64_t type, ImColor color = ImColor(255, 255, 255)):
-        mID(id), mName(name), mColor(color), mType(type), mSize(0, 0)
+    virtual ~EditorNode() = default;
+
+    virtual void draw() = 0;
+
+    inline void beginColumn() const
+    {
+        ImGui::BeginGroup();
+    }
+
+    inline void nextColumn() const
+    {
+        ImGui::EndGroup();
+        ImGui::SameLine();
+        ImGui::BeginGroup();
+    }
+
+    inline void endColumn() const
+    {
+        ImGui::EndGroup();
+    }
+
+    EditorNode(const char* name, const uint64_t type, ImColor color = ImColor(255, 255, 255)):
+        mID(0), mName(name), mColor(color), mType(type), mSize(0, 0)
     {}
 };
 
@@ -76,6 +104,29 @@ struct Link
 };
 
 
+struct PassNode : EditorNode
+{
+    PassNode(const char* name, const uint64_t type, ImColor color = ImColor(255, 255, 255)) :
+        EditorNode(name, color, type)
+    {}
+
+    virtual void draw() override final;
+};
+
+
+struct ResourceNode : EditorNode
+{
+    ResourceNode(const char* name, const uint64_t type, ImColor color = ImColor(255, 255, 255)) :
+        EditorNode(name, color, type)
+    {
+        // reserve some space to use as a buffer.
+        mName.reserve(16);
+    }
+
+    virtual void draw() override final;
+};
+
+
 class ImGuiNodeEditor
 {
 
@@ -87,27 +138,11 @@ public:
     ~ImGuiNodeEditor();
 
     void addNode(const uint64_t);
+    void addNode(const std::shared_ptr<EditorNode>&);
 
     void draw();
 
 private:
-
-	inline void beginColumn()
-	{
-		ImGui::BeginGroup();
-	}
-
-	inline void nextColumn()
-	{
-		ImGui::EndGroup();
-		ImGui::SameLine();
-		ImGui::BeginGroup();
-	}
-
-	inline void endColumn()
-	{
-		ImGui::EndGroup();
-	}
 
     const Pin& findPin(const ax::NodeEditor::PinId);
 
