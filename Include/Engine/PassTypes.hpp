@@ -12,7 +12,9 @@
                     CascadingShadow = 1 << 4, \
                     SSAO = 1 << 5, \
                     GBufferMaterial = 1 << 6, \
-                    EditorDefault = 1 << 7 \
+                    EditorDefault = 1 << 7, \
+                    GBufferPreDepth = 1 << 8, \
+                    GBUfferMaterialPreDepth = 1 << 9 \
 
 // An enum to keep track of which 
 enum class PassType : uint64_t
@@ -37,6 +39,12 @@ inline const char* passToString(const PassType passType)
 
         case PassType::SSAO:
             return "SSAO";
+
+        case PassType::GBufferPreDepth:
+            return "GBuffer Pre-Depth";
+
+        case PassType::GBUfferMaterialPreDepth:
+            return "GBuffer Material Pre-Depth";
     }
 
     return "UNKNOWN PASS TYPE";

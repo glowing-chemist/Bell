@@ -1062,7 +1062,7 @@ void RenderDevice::execute(RenderGraph& graph)
             passBegin.setRenderArea(renderArea);
             if(!clearValues.empty())
             {
-                passBegin.setClearValueCount(clearValues.size());
+                passBegin.setClearValueCount(static_cast<uint32_t>(clearValues.size()));
                 passBegin.setPClearValues(clearValues.data());
             }
 

@@ -20,7 +20,6 @@ namespace
                 return newNode;
             }
 
-
             case NodeTypes::GBuffer:
             {
                 std::shared_ptr<EditorNode> newNode = std::make_shared<PassNode>("GBuffer", passType);
@@ -45,6 +44,25 @@ namespace
                 newNode->mOutputs.push_back(Pin{0, newNode, "Normal", PinType::Texture, PinKind::Output});
                 newNode->mOutputs.push_back(Pin{0, newNode, "UV", PinType::Texture, PinKind::Output});
                 newNode->mOutputs.push_back(Pin{0, newNode, "Depth", PinType::Texture, PinKind::Output});
+                return newNode;
+            }
+
+            case NodeTypes::GBUfferMaterialPreDepth:
+            {
+                std::shared_ptr<EditorNode> newNode = std::make_shared<PassNode>("GBufferMaterialPreDepth", passType);
+                newNode->mOutputs.push_back(Pin{0, newNode, "Normal", PinType::Texture, PinKind::Output});
+                newNode->mOutputs.push_back(Pin{0, newNode, "UV", PinType::Texture, PinKind::Output});
+                newNode->mInputs.push_back(Pin{0, newNode, "Depth", PinType::Texture, PinKind::Input});
+                return newNode;
+            }
+
+            case NodeTypes::GBufferPreDepth:
+            {
+                std::shared_ptr<EditorNode> newNode = std::make_shared<PassNode>("GBufferPreDepth", passType);
+                newNode->mOutputs.push_back(Pin{0, newNode, "Normal", PinType::Texture, PinKind::Output});
+                newNode->mOutputs.push_back(Pin{0, newNode, "Albedo", PinType::Texture, PinKind::Output});
+                newNode->mOutputs.push_back(Pin{0, newNode, "Specular", PinType::Texture, PinKind::Output});
+                newNode->mInputs.push_back(Pin{0, newNode, "Depth", PinType::Texture, PinKind::Input});
                 return newNode;
             }
 
@@ -275,6 +293,8 @@ void Editor::drawAssistantWindow()
            drawPassContextMenu(PassType::DepthPre);
            drawPassContextMenu(PassType::GBuffer);
            drawPassContextMenu(PassType::GBufferMaterial);
+           drawPassContextMenu(PassType::GBufferPreDepth);
+           drawPassContextMenu(PassType::GBUfferMaterialPreDepth);
            drawPassContextMenu(PassType::SSAO);
 
            ImGui::EndMenu();

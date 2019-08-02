@@ -81,5 +81,68 @@ private:
 };
 
 
+class GBufferPreDepthTechnique : public Technique<GraphicsTask>
+{
+public:
+    GBufferPreDepthTechnique(Engine*);
+    virtual ~GBufferPreDepthTechnique() = default;
+
+    virtual PassType getPassType() const final override
+        { return PassType::GBufferPreDepth; }
+
+    virtual GraphicsTask& getTaskToRecord() final override;
+
+    void setDepthName(const std::string& depthName)
+    {  mDepthName = depthName; }
+
+
+    Image& getAlbedoImage()
+        { return mAlbedoImage; }
+
+    ImageView& getAlbedoView()
+        { return mAlbedoView; }
+
+    std::string getAlbedoName() const
+        { return "GBuffer Albedo"; }
+
+
+    Image& getNormalsImage()
+        { return mNormalsImage; }
+
+    ImageView& getNormalsView()
+        { return mNormalsView; }
+
+    std::string getNormalsName() const
+     { return "GBuffer Normals"; }
+
+
+    Image& getSpecularImage()
+        { return mSpecularImage; }
+
+    ImageView& getSpecularView()
+        { return mSpecularView; }
+
+    std::string getSpecularName() const
+        { return "Gbuffer Specular"; }
+
+private:
+
+    std::string mDepthName;
+
+    Image mAlbedoImage;
+    ImageView mAlbedoView;
+
+    Image mNormalsImage;
+    ImageView mNormalsView;
+
+    Image mSpecularImage;
+    ImageView mSpecularView;
+
+    GraphicsPipelineDescription mPipelineDescription;
+    GraphicsTask mTask;
+    bool mTaskInitialised;
+};
+
+
 
 #endif
