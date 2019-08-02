@@ -90,6 +90,7 @@ struct GraphicsPipelineDescription
 
 	BlendMode mAlphaBlendMode;
 	BlendMode mColourBlendMode;
+    bool      mDepthWrite;
     DepthTest mDepthTest;
 
 	GraphicsPipelineDescription(const Shader& vert, const Shader& frag,
@@ -104,6 +105,7 @@ struct GraphicsPipelineDescription
 		mUseBackFaceCulling{false},
 		mAlphaBlendMode{BlendMode::None},
 		mColourBlendMode{BlendMode::None},
+        mDepthWrite{false},
 		mDepthTest{DepthTest::None}
 	{}
 
@@ -112,6 +114,7 @@ struct GraphicsPipelineDescription
 								const bool useFaceCulling,
 								const BlendMode alphaBlendMode,
 								const BlendMode colourBlendMode,
+                                const bool depthWrite,
 								const DepthTest depthTest) :
 		mVertexShader{vert},
 		mGeometryShader{},
@@ -123,6 +126,7 @@ struct GraphicsPipelineDescription
 		mUseBackFaceCulling{useFaceCulling},
 		mAlphaBlendMode{alphaBlendMode},
 		mColourBlendMode{colourBlendMode},
+        mDepthWrite{depthWrite},
 		mDepthTest{depthTest}
 	{}
 
@@ -133,6 +137,7 @@ struct GraphicsPipelineDescription
 								const bool useFaceCulling,
 								const BlendMode alphaBlendMode,
 								const BlendMode colourBlendMode,
+                                const bool depthWrite,
 								const DepthTest depthTest) :
 		mVertexShader{vert},
 		mGeometryShader{geometryShader},
@@ -144,6 +149,7 @@ struct GraphicsPipelineDescription
 		mUseBackFaceCulling{useFaceCulling},
 		mAlphaBlendMode{alphaBlendMode},
 		mColourBlendMode{colourBlendMode},
+        mDepthWrite{depthWrite},
 		mDepthTest{depthTest}
 	{}
 };

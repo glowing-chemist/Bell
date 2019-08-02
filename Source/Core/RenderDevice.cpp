@@ -281,9 +281,8 @@ vk::Pipeline RenderDevice::generatePipeline(const GraphicsTask& task,
 	blendStateInfo.setPAttachments(blendState.data());
 
     vk::PipelineDepthStencilStateCreateInfo depthStencilInfo{};
-    const bool depthTest = pipelineDesc.mDepthTest != DepthTest::None;
-    depthStencilInfo.setDepthTestEnable(depthTest);
-    depthStencilInfo.setDepthWriteEnable(depthTest);
+    depthStencilInfo.setDepthTestEnable(pipelineDesc.mDepthTest != DepthTest::None);
+    depthStencilInfo.setDepthWriteEnable(pipelineDesc.mDepthWrite);
     depthStencilInfo.setDepthCompareOp([testOp = pipelineDesc.mDepthTest] {
        switch(testOp)
        {

@@ -139,6 +139,7 @@ void Engine::recordOverlay(const ImDrawData* drawData)
                                      false, // no backface culling
 									 BlendMode::None,
 									 BlendMode::None,
+                                     false, // no depth writes
 									 DepthTest::None);
 
     GraphicsTask task("ImGuiOverlay", desc);
