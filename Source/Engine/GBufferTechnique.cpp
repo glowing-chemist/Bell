@@ -41,8 +41,7 @@ GraphicsTask &GBufferTechnique::getTaskToRecord()
 
 	if(!mTaskInitialised)
 	{
-		mTask.setVertexAttributes(VertexAttributes::Position4 | VertexAttributes::Albedo |
-								  VertexAttributes::Normals | VertexAttributes::TextureCoordinates);
+        mTask.setVertexAttributes(VertexAttributes::Position4 | VertexAttributes::Normals | VertexAttributes::TextureCoordinates);
 
 		mTask.addInput("Model Matrix", AttachmentType::PushConstants);
 
