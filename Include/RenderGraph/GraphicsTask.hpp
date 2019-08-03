@@ -102,7 +102,7 @@ struct GraphicsPipelineDescription
 		mFragmentShader{frag},
 		mScissorRect{scissor},
 		mViewport{viewport},
-		mUseBackFaceCulling{false},
+        mUseBackFaceCulling{true},
 		mAlphaBlendMode{BlendMode::None},
 		mColourBlendMode{BlendMode::None},
         mDepthWrite{false},
