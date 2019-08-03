@@ -24,12 +24,13 @@ GBufferTechnique::GBufferTechnique(Engine* eng) :
 				   1, 1, 1, 1, "Specular Buffer"},
 	mSpecularView{mSpecularImage, ImageViewType::Colour},
 
-	mPipelineDescription{eng->getShader("./Shaders/GBufferPassThrough.vert"),
-						 eng->getShader("./Shaders/GBuffer.frag"),
-						 Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
-							   getDevice()->getSwapChain()->getSwapChainImageHeight()},
-						 Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
-						 getDevice()->getSwapChain()->getSwapChainImageHeight()}},
+    mPipelineDescription{eng->getShader("./Shaders/GBufferPassThrough.vert"),
+                         eng->getShader("./Shaders/GBuffer.frag"),
+                         Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
+                               getDevice()->getSwapChain()->getSwapChainImageHeight()},
+                         Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
+                         getDevice()->getSwapChain()->getSwapChainImageHeight()},
+                         true, BlendMode::None, BlendMode::None, true, DepthTest::GreaterEqual},
 
 	mTask{"GBuffer", mPipelineDescription},
 	mTaskInitialised{false}
@@ -83,7 +84,7 @@ GBufferPreDepthTechnique::GBufferPreDepthTechnique(Engine* eng) :
                                getDevice()->getSwapChain()->getSwapChainImageHeight()},
                          Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
                          getDevice()->getSwapChain()->getSwapChainImageHeight()},
-                         true, BlendMode::None, BlendMode::None, true, DepthTest::GreaterEqual},
+                         true, BlendMode::None, BlendMode::None, false, DepthTest::GreaterEqual},
 
     mTask{"GBufferPreDepth", mPipelineDescription},
     mTaskInitialised{false}
