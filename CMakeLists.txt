@@ -100,6 +100,7 @@ set(BELL_SOURCE
     Source/Engine/GBufferMaterialTechnique.cpp
     Source/Engine/BlurXTechnique.cpp
     Source/Engine/BlurYTechnique.cpp
+    Source/Engine/PreDepthTechnique.cpp
     )
 
 set(DearImGUI_SOURCE
