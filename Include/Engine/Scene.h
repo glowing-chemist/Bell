@@ -52,6 +52,11 @@ public:
 		return mSceneCamera;
 	}
 
+    const Camera& getCamera() const
+    {
+        return mSceneCamera;
+    }
+
     struct MeshInstance
     {
         StaticMesh* mMesh;
