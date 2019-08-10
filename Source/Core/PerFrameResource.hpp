@@ -25,6 +25,17 @@ public:
         }
     }
 
+    template<typename E>
+    PerFrameResource(E* eng) :
+        DeviceChild{eng->getDevice()},
+        mData{}
+    {
+        for(uint32_t i = 0; i < getDevice()->getSwapChainImageCount(); ++i)
+        {
+            mData.emplace_back(eng);
+        }
+    }
+
     /* TODO Make this work for non DeviceChild derived classes.
     template<typename ...Args, typename D = std::enable_if_t<std::negation<std::is_base_of<DeviceChild, T>>::value, RenderDevice>>
     PerFrameResource(D* dev, Args&& ... args) :
