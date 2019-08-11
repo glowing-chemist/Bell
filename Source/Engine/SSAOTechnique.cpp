@@ -37,7 +37,7 @@ GraphicsTask& SSAOTechnique::getTaskToRecord()
 		mTask.addInput(mDepthNameSlot, AttachmentType::Texture2D);
 		mTask.addInput("linearSampler", AttachmentType::Sampler);
 
-		mTask.addOutput("ssaoRenderTarget", AttachmentType::RenderTarget2D, Format::RGBA8UNorm, LoadOp::Clear_Black);
+		mTask.addOutput("ssaoRenderTarget", AttachmentType::RenderTarget2D, Format::R8UNorm, LoadOp::Clear_Black);
 
 		mTaskInitialised = true;
 	}

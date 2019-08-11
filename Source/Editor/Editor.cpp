@@ -43,6 +43,7 @@ namespace
                 std::shared_ptr<EditorNode> newNode = std::make_shared<PassNode>("GBufferMaterial", passType);
                 newNode->mOutputs.push_back(Pin{0, newNode, "Normal", PinType::Texture, PinKind::Output});
                 newNode->mOutputs.push_back(Pin{0, newNode, "UV", PinType::Texture, PinKind::Output});
+				newNode->mOutputs.push_back(Pin{0, newNode, "Material", PinType::Texture, PinKind::Output });
                 newNode->mOutputs.push_back(Pin{0, newNode, "Depth", PinType::Texture, PinKind::Output});
                 return newNode;
             }
@@ -50,9 +51,10 @@ namespace
             case NodeTypes::GBUfferMaterialPreDepth:
             {
                 std::shared_ptr<EditorNode> newNode = std::make_shared<PassNode>("GBufferMaterialPreDepth", passType);
+				newNode->mInputs.push_back(Pin{ 0, newNode, "Depth", PinType::Texture, PinKind::Input });
                 newNode->mOutputs.push_back(Pin{0, newNode, "Normal", PinType::Texture, PinKind::Output});
                 newNode->mOutputs.push_back(Pin{0, newNode, "UV", PinType::Texture, PinKind::Output});
-                newNode->mInputs.push_back(Pin{0, newNode, "Depth", PinType::Texture, PinKind::Input});
+				newNode->mOutputs.push_back(Pin{0, newNode, "Material", PinType::Texture, PinKind::Output });
                 return newNode;
             }
 
@@ -66,6 +68,34 @@ namespace
                 return newNode;
             }
 
+			case NodeTypes::InplaceCombine:
+			{
+				std::shared_ptr<EditorNode> newNode = std::make_shared<PassNode>("InplaceCombine", passType);
+				newNode->mOutputs.push_back(Pin{ 0, newNode, "Combined", PinType::Texture, PinKind::Output });
+				newNode->mInputs.push_back(Pin{ 0, newNode, "InOut", PinType::Texture, PinKind::Input });
+				newNode->mInputs.push_back(Pin{ 0, newNode, "Factor", PinType::Texture, PinKind::Input });
+				return newNode;
+			}
+
+			case NodeTypes::InplaceCombineSRGB:
+			{
+				std::shared_ptr<EditorNode> newNode = std::make_shared<PassNode>("InplaceCombineSRGB", passType);
+				newNode->mOutputs.push_back(Pin{ 0, newNode, "Combined", PinType::Texture, PinKind::Output });
+				newNode->mInputs.push_back(Pin{ 0, newNode, "InOut", PinType::Texture, PinKind::Input });
+				newNode->mInputs.push_back(Pin{ 0, newNode, "Factor", PinType::Texture, PinKind::Input });
+				return newNode;
+			}
+
+			case NodeTypes::DeferredTextureBlinnPhongLighting:
+			{
+				std::shared_ptr<EditorNode> newNode = std::make_shared<PassNode>("DeferredTextureBlinnPhongLighting", passType);
+				newNode->mInputs.push_back(Pin{ 0, newNode, "Depth", PinType::Texture, PinKind::Input });
+				newNode->mInputs.push_back(Pin{ 0, newNode, "VertexNormal", PinType::Texture, PinKind::Input });
+				newNode->mInputs.push_back(Pin{ 0, newNode, "Material", PinType::Texture, PinKind::Input });
+				newNode->mInputs.push_back(Pin{ 0, newNode, "UV", PinType::Texture, PinKind::Input });
+				newNode->mOutputs.push_back(Pin{ 0, newNode, "AccumilatedLights", PinType::Texture, PinKind::Output });
+				return newNode;
+			}
         }
     }
 
@@ -296,6 +326,9 @@ void Editor::drawAssistantWindow()
            drawPassContextMenu(PassType::GBufferPreDepth);
            drawPassContextMenu(PassType::GBUfferMaterialPreDepth);
            drawPassContextMenu(PassType::SSAO);
+		   drawPassContextMenu(PassType::InplaceCombine);
+		   drawPassContextMenu(PassType::InplaceCombineSRGB);
+		   drawPassContextMenu(PassType::DeferredTextureBlinnPhongLighting);
 
            ImGui::EndMenu();
        }

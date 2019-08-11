@@ -19,7 +19,7 @@ public:
 
 	virtual GraphicsTask& getTaskToRecord() override final;
 
-	void setDepthSlot(const std::string& depthSlot)
+	void setDepthName(const std::string& depthSlot)
 	{ mDepthNameSlot = depthSlot; }
 
 	Image& getSSAOImage()
