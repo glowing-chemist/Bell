@@ -237,8 +237,6 @@ private:
     void                               destroyBuffer(vk::Buffer& buffer )
                                             { mDevice.destroyBuffer(buffer); }
 
-    void                               transitionSwapChain(vk::ImageLayout);
-
     void                               destroyFrameBuffer(vk::Framebuffer& frameBuffer, uint64_t frameIndex)
                                             { mFramebuffersPendingDestruction.push_back({frameIndex, frameBuffer}); }
 
