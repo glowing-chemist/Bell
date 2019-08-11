@@ -163,7 +163,7 @@ void Editor::renderOverlay()
         if(optionalPath)
         {
             mShowFileBrowser = false;
-            mEngine.setScene(*optionalPath);
+            mEngine.setScene((*optionalPath).filename().string());
         }
     }
 
