@@ -73,7 +73,7 @@ ImageView::ImageView(Image& parentImage,
 ImageView::~ImageView()
 {
     const bool shouldDestroy = release();
-    if(shouldDestroy)
+	if (shouldDestroy && mImageViewHandle != vk::ImageView{nullptr})
     {
         mImageHandle = nullptr;
         getDevice()->destroyImageView(*this);
@@ -104,5 +104,27 @@ ImageView& ImageView::operator=(const ImageView& otherView)
     mLODCount = otherView.mLODCount;
 
     return *this;
+}
+
+ImageView::ImageView(ImageView&& rhs) :
+	GPUResource{rhs},
+	DeviceChild{rhs}
+{
+	mImageHandle = rhs.mImageHandle;
+	mImageViewHandle = rhs.mImageViewHandle;
+	mImageMemory = rhs.mImageMemory;
+	mType = rhs.mType;
+
+	mImageFormat = rhs.mImageFormat;
+	mLayout = rhs.mLayout;
+	mExtent = rhs.mExtent;
+	mUsage = rhs.mUsage;
+
+	mLOD = rhs.mLOD;
+	mLODCount = rhs.mLODCount;
+	mLevel = rhs.mLevel;
+	mLevelCount = rhs.mLevelCount;
+
+	rhs.mImageViewHandle = vk::ImageView{nullptr};
 }
 
