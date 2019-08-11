@@ -101,7 +101,8 @@ set(BELL_SOURCE
     Source/Engine/BlurXTechnique.cpp
     Source/Engine/BlurYTechnique.cpp
     Source/Engine/PreDepthTechnique.cpp
-    )
+    Source/Engine/BlinnPhongTechnique.cpp
+	)
 
 set(DearImGUI_SOURCE
     ThirdParty/imgui-master/imgui.cpp
