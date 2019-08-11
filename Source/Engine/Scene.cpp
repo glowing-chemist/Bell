@@ -89,7 +89,7 @@ void Scene::parseNode(const aiScene* scene,
                                              transformation.d1, transformation.d2, transformation.d3, transformation.d4};
 
         // TODO: For now don't attempt to deduplicate the meshes (even though this class has the functionality)
-        addMeshInstace(meshID, transformationMatrix);
+        addMeshInstance(meshID, transformationMatrix);
     }
 
     // Recurse through all child nodes
@@ -112,7 +112,7 @@ SceneID Scene::addMesh(const StaticMesh& mesh, MeshType meshType)
 
 // It's invalid to use the InstanceID for a static mesh for anything other than state tracking.
 // As the BVH for them will not be updated.
-InstanceID Scene::addMeshInstace(const SceneID meshID, const glm::mat4& transformation)
+InstanceID Scene::addMeshInstance(const SceneID meshID, const glm::mat4& transformation)
 {
     auto& [mesh, meshType] = mSceneMeshes[meshID];
 
