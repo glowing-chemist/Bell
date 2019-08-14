@@ -8,11 +8,11 @@
 
 class Engine;
 
-class BlinnPhongDeferredTextures : public Technique<GraphicsTask>
+class BlinnPhongDeferredTexturesTechnique : public Technique<GraphicsTask>
 {
 public:
-	BlinnPhongDeferredTextures(Engine* dev);
-	virtual ~BlinnPhongDeferredTextures() = default;
+    BlinnPhongDeferredTexturesTechnique(Engine* dev);
+    virtual ~BlinnPhongDeferredTexturesTechnique() = default;
 
 	Image& getLightingImage()
 	{

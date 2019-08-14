@@ -1,6 +1,15 @@
-#include "Engine/Engine.hpp"
 #include "Core/ConversionUtils.hpp"
 #include "Core/BellLogging.hpp"
+
+#include "Engine/Engine.hpp"
+#include "Engine/PreDepthTechnique.hpp"
+#include "Engine/GBufferTechnique.hpp"
+#include "Engine/GBufferMaterialTechnique.hpp"
+#include "Engine/SSAOTechnique.hpp"
+#include "Engine/BlurXTechnique.hpp"
+#include "Engine/BlurYTechnique.hpp"
+#include "Engine/BlinnPhongTechnique.hpp"
+
 
 Engine::Engine(GLFWwindow* windowPtr) :
     mRenderInstance(windowPtr),
@@ -100,13 +109,91 @@ Shader Engine::getShader(const std::string& path)
 }
 
 
+std::unique_ptr<Technique<GraphicsTask>> Engine::getSingleGraphicsTechnique(const PassType passType)
+{
+    switch(passType)
+    {
+        case PassType::DepthPre:
+            return std::make_unique<PreDepthTechnique>(this);
+
+        case PassType::GBuffer:
+            return std::make_unique<GBufferTechnique>(this);
+
+        case PassType::GBufferMaterial:
+            return std::make_unique<GBufferMaterialTechnique>(this);
+
+        case PassType::SSAO:
+            return std::make_unique<SSAOTechnique>(this);
+
+        case PassType::GBufferPreDepth:
+            return std::make_unique<GBufferPreDepthTechnique>(this);
+
+        case PassType::GBUfferMaterialPreDepth:
+            return std::make_unique<GBufferMaterialPreDepthTechnique>(this);
+
+        case PassType::DeferredTextureBlinnPhongLighting:
+            return std::make_unique<BlinnPhongDeferredTexturesTechnique>(this);
+
+        default:
+        {
+            BELL_TRAP;
+        }
+    }
+}
+
+
+std::unique_ptr<PerFrameResource<Technique<GraphicsTask>>> Engine::getGraphicsTechnique(const PassType passType)
+{
+
+}
+
+
+std::unique_ptr<Technique<ComputeTask>> Engine::getSingleComputeTechnique(const PassType passType)
+{
+    switch(passType)
+    {
+        //case PassType::SSAO:
+        //    return std::make_unique<SSAOComputeTechnique>(this);
+
+        //case PassType::InplaceCombine:
+        //    return std::make_unique<InplaceCombineTechnique>(this);
+
+        //case PassType::InplaceCombineSRGB:
+        //    return std::make_unique<InplaceCombineSRGBTechnique>(this);
+
+        default:
+        {
+            BELL_TRAP;
+        }
+    }
+}
+
+
+std::unique_ptr<PerFrameResource<Technique<ComputeTask>>> Engine::getComputeTechnique(const PassType passType)
+{
+
+}
+
+
+std::pair<uint64_t, uint64_t> Engine::addMeshToBuffer(const StaticMesh* mesh)
+{
+    const auto& vertexData = mesh->getVertexData();
+    const auto& indexData = mesh->getIndexData();
+
+    const auto vertexOffset = mVertexBuilder.addData(vertexData);
+    const auto indexOffset = mIndexBuilder.addData(indexData);
+
+    return {vertexOffset, indexOffset};
+}
+
+
 void Engine::recordOverlay(const ImDrawData* drawData)
 {
-	const size_t vertexSize = drawData->TotalVtxCount;
+    const size_t vertexSize = static_cast<size_t>(drawData->TotalVtxCount);
 
     // ImGui uses uin16_t sized indexs (by default) but we always use 32 bit (this wastes some memory here)
     // so override this in imconfig.h
-	const size_t indexSize = drawData->TotalIdxCount;
+    const size_t indexSize = static_cast<size_t>(drawData->TotalIdxCount);
 
 	std::vector<ImDrawVert> vertexData(vertexSize);
 	std::vector<uint32_t> indexData(indexSize);

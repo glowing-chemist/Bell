@@ -66,6 +66,14 @@ public:
 
 	Shader getShader(const std::string& path);
 
+    std::unique_ptr<Technique<GraphicsTask>>                   getSingleGraphicsTechnique(const PassType);
+    std::unique_ptr<PerFrameResource<Technique<GraphicsTask>>> getGraphicsTechnique(const PassType);
+    std::unique_ptr<Technique<ComputeTask>>                   getSingleComputeTechnique(const PassType);
+    std::unique_ptr<PerFrameResource<Technique<ComputeTask>>> getComputeTechnique(const PassType);
+
+    // returns an vertex and index buffer offset.
+    std::pair<uint64_t, uint64_t> addMeshToBuffer(const StaticMesh*);
+
     void   setImageInScene(const std::string& name, const ImageView& image)
 		{ mCurrentRenderGraph.bindImage(name, image); }
 

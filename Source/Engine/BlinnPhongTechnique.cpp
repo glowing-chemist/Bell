@@ -4,7 +4,7 @@
 #include "Engine/Engine.hpp"
 
 
-BlinnPhongDeferredTextures::BlinnPhongDeferredTextures(Engine* eng) :
+BlinnPhongDeferredTexturesTechnique::BlinnPhongDeferredTexturesTechnique(Engine* eng) :
 	Technique{ "BlinnPhongDeferredTextures", eng->getDevice() },
 	mLightingTexture{ getDevice(), Format::RGBA8SRGB, ImageUsage::Sampled | ImageUsage::ColourAttachment,
 			   getDevice()->getSwapChain()->getSwapChainImageWidth(), getDevice()->getSwapChain()->getSwapChainImageHeight(), 1 },
@@ -21,7 +21,7 @@ BlinnPhongDeferredTextures::BlinnPhongDeferredTextures(Engine* eng) :
 }
 
 
-GraphicsTask& BlinnPhongDeferredTextures::getTaskToRecord()
+GraphicsTask& BlinnPhongDeferredTexturesTechnique::getTaskToRecord()
 {
 
 	if (!mTaskInitialised)
