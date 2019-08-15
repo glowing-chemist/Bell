@@ -33,7 +33,7 @@ void GraphicsTask::recordCommands(vk::CommandBuffer CmdBuffer, const RenderGraph
 				CmdBuffer.drawIndirect(graph.getBoundBuffer(thunk.mIndirectBufferName).getBuffer(),
                                        0,
 									   thunk.mNumberOfInstances,
-                                       100); // TODO workout what the correct stride should be (maybe pass it down and let user decide)
+                                       sizeof(vk::DrawIndirectCommand));
                 break;
 
             case DrawType::IndexedInstanced:
@@ -48,7 +48,7 @@ void GraphicsTask::recordCommands(vk::CommandBuffer CmdBuffer, const RenderGraph
 				CmdBuffer.drawIndexedIndirect(graph.getBoundBuffer(thunk.mIndirectBufferName).getBuffer(),
                                               0,
 											  thunk.mNumberOfInstances,
-                                              100); // TODO workout what the correct stride should be (maybe pass it down and let user decide)
+                                              sizeof(vk::DrawIndexedIndirectCommand));
                 break;
 
 			case DrawType::SetPushConstant:
