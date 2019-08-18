@@ -31,7 +31,10 @@ public:
 
     bool compile();
     bool reload();
-    bool hasBeenCompiled() const;
+	inline bool hasBeenCompiled() const
+	{
+		return mCompiled;
+	}
 
     const vk::ShaderModule&           getShaderModule() const;
 
