@@ -74,7 +74,7 @@ RenderDevice::RenderDevice(vk::Instance instance,
 
 RenderDevice::~RenderDevice()
 {
-    mDevice.waitIdle();
+	flushWait();
 
     // destroy the swapchain first so that is can add it's image views to the deferred destruction queue.
     mSwapChain.destroy();
