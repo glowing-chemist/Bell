@@ -1,16 +1,17 @@
 #ifndef DEVICECHILD_HPP
 #define DEVICECHILD_HPP
 
+#include <memory>
 #include <optional>
 #include <vulkan/vulkan.hpp>
 
 class RenderDevice;
+class Pipeline;
 
 // Put this here for now to avoid cyclic header dependancies.
 struct vulkanResources
 {
-	vk::Pipeline mPipeline;
-	vk::PipelineLayout mPipelineLayout;
+	std::shared_ptr<Pipeline> mPipeline;
 	vk::DescriptorSetLayout mDescSetLayout;
 	// Only needed for graphics tasks
 	std::optional<vk::RenderPass> mRenderPass;

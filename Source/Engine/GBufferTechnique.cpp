@@ -30,7 +30,7 @@ GBufferTechnique::GBufferTechnique(Engine* eng) :
                                getDevice()->getSwapChain()->getSwapChainImageHeight()},
                          Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
                          getDevice()->getSwapChain()->getSwapChainImageHeight()},
-                         true, BlendMode::None, BlendMode::None, true, DepthTest::GreaterEqual},
+                         true, BlendMode::None, BlendMode::None, true, DepthTest::GreaterEqual, Primitive::TriangleList},
 
 	mTask{"GBuffer", mPipelineDescription},
 	mTaskInitialised{false}
@@ -84,7 +84,7 @@ GBufferPreDepthTechnique::GBufferPreDepthTechnique(Engine* eng) :
                                getDevice()->getSwapChain()->getSwapChainImageHeight()},
                          Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
                          getDevice()->getSwapChain()->getSwapChainImageHeight()},
-                         true, BlendMode::None, BlendMode::None, false, DepthTest::GreaterEqual},
+                         true, BlendMode::None, BlendMode::None, false, DepthTest::GreaterEqual, Primitive::TriangleList},
 
     mTask{"GBufferPreDepth", mPipelineDescription},
     mTaskInitialised{false}

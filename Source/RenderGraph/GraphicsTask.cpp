@@ -52,7 +52,7 @@ void GraphicsTask::recordCommands(vk::CommandBuffer CmdBuffer, const RenderGraph
                 break;
 
 			case DrawType::SetPushConstant:
-				CmdBuffer.pushConstants(resources.mPipelineLayout,
+				CmdBuffer.pushConstants(resources.mPipeline->getLayoutHandle(),
 										vk::ShaderStageFlagBits::eAll,
 										0,
 										sizeof(glm::mat4),

@@ -16,6 +16,7 @@
 #include "CommandPool.h"
 #include "Core/ImageView.hpp"
 #include "Core/Sampler.hpp"
+#include "Core/Pipeline.hpp"
 #include "RenderGraph/GraphicsTask.hpp"
 #include "RenderGraph/ComputeTask.hpp"
 #include "RenderGraph/RenderGraph.hpp"
@@ -32,18 +33,14 @@ struct QueueIndicies
 
 struct GraphicsPipelineHandles
 {
-    vk::Pipeline mPipeline;
-    vk::PipelineLayout mPipelineLayout;
+	std::shared_ptr<GraphicsPipeline> mGraphicsPipeline;
     vk::RenderPass mRenderPass;
-    vk::VertexInputBindingDescription mVertexBindingDescription;
-    std::vector<vk::VertexInputAttributeDescription> mVertexAttributeDescription;
     vk::DescriptorSetLayout mDescriptorSetLayout;
 };
 
 struct ComputePipelineHandles
 {
-    vk::Pipeline mPipeline;
-    vk::PipelineLayout mPipelineLayout;
+	std::shared_ptr<ComputePipeline> mComputePipeline;
     vk::DescriptorSetLayout mDescriptorSetLayout;
 };
 
@@ -137,6 +134,16 @@ public:
                                                                 uint32_t& imageIndex)
                                             { mDevice.acquireNextImageKHR(swap, timout, semaphore, nullptr, &imageIndex); }
 
+	vk::Pipeline						createPipeline(const vk::ComputePipelineCreateInfo& info)
+	{
+		return mDevice.createComputePipeline(nullptr, info);
+	}
+
+	vk::Pipeline						createPipeline(const vk::GraphicsPipelineCreateInfo& info)
+	{
+		return mDevice.createGraphicsPipeline(nullptr, info);
+	}
+
     GraphicsPipelineHandles            createPipelineHandles(const GraphicsTask&);
     ComputePipelineHandles             createPipelineHandles(const ComputeTask&);
 
@@ -187,12 +194,9 @@ public:
     void							   submitFrame();
     void							   swap();
 
-
+	std::vector<vk::PipelineShaderStageCreateInfo>              generateShaderStagesInfo(const GraphicsTask&);
 
 private:
-
-    std::pair<vk::VertexInputBindingDescription,
-              std::vector<vk::VertexInputAttributeDescription>> generateVertexInput(const GraphicsTask&);
 
     vk::DescriptorSetLayout                                     generateDescriptorSetLayout(const RenderTask&);
 
@@ -200,21 +204,12 @@ private:
 
     vk::RenderPass                                              generateRenderPass(const GraphicsTask&);
 
-    vk::PipelineRasterizationStateCreateInfo                    generateRasterizationInfo(const GraphicsTask&);
+    std::shared_ptr<GraphicsPipeline>                                            generatePipeline(const GraphicsTask&,
+																				 const vk::DescriptorSetLayout descSetLayout,
+																				 const vk::RenderPass&);
 
-    std::vector<vk::PipelineShaderStageCreateInfo>              generateShaderStagesInfo(const GraphicsTask&);
-
-	std::vector<vk::PipelineColorBlendAttachmentState>			generateColourBlendState(const GraphicsTask&);
-
-    vk::Pipeline                                                generatePipeline(const GraphicsTask&,
-                                                                                 const vk::PipelineLayout&,
-                                                                                 const vk::VertexInputBindingDescription &,
-                                                                                 const std::vector<vk::VertexInputAttributeDescription> &,
-																				 const vk::RenderPass&,
-																				 const std::vector<vk::PipelineColorBlendAttachmentState>&);
-
-    vk::Pipeline                                                generatePipeline(const ComputeTask&,
-                                                                                 const vk::PipelineLayout&);
+    std::shared_ptr<ComputePipeline>                                             generatePipeline(const ComputeTask&,
+                                                                                 const vk::DescriptorSetLayout&);
 
 	void														generateVulkanResources(RenderGraph&);
 

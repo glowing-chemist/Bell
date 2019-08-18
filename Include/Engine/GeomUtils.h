@@ -117,5 +117,10 @@ inline float4 componentWiseMax(const float4& lhs, const float4& rhs)
 }
 
 
+struct Rect
+{
+	uint32_t x, y;
+};
+
 #endif
 

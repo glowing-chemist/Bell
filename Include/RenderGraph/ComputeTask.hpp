@@ -3,6 +3,7 @@
 
 #include "RenderTask.hpp"
 #include "Core/Shader.hpp"
+#include "Core/Pipeline.hpp"
 
 #include <string>
 #include <vector>
@@ -14,10 +15,6 @@ enum class DispatchType
 	Indirect
 };
 
-struct ComputePipelineDescription 
-{
-    Shader mComputeShader;
-};
 // needed in order to use unordered_map
 namespace std
 {

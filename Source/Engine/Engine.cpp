@@ -227,7 +227,8 @@ void Engine::recordOverlay(const ImDrawData* drawData)
 									 BlendMode::None,
 									 BlendMode::None,
                                      false, // no depth writes
-									 DepthTest::None);
+									 DepthTest::None,
+									 Primitive::TriangleList);
 
     GraphicsTask task("ImGuiOverlay", desc);
     task.setVertexAttributes(VertexAttributes::Position2 | VertexAttributes::TextureCoordinates | VertexAttributes::Albedo);
