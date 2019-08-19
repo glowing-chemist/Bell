@@ -400,6 +400,56 @@ std::vector<vk::PipelineShaderStageCreateInfo> RenderDevice::generateShaderStage
 }
 
 
+std::vector<vk::PipelineShaderStageCreateInfo> RenderDevice::generateIndexedShaderStagesInfo(const GraphicsTask& task)
+{
+	const GraphicsPipelineDescription pipelineDesc = task.getPipelineDescription();
+
+	std::vector<vk::PipelineShaderStageCreateInfo> shaderStages;
+
+	vk::PipelineShaderStageCreateInfo vertexStage{};
+	vertexStage.setStage(vk::ShaderStageFlagBits::eVertex);
+	vertexStage.setPName("main"); //entry point of the shader
+	vertexStage.setModule(pipelineDesc.mIndexedVertexShader.value().getShaderModule());
+	shaderStages.push_back(vertexStage);
+
+	if (pipelineDesc.mGeometryShader)
+	{
+		vk::PipelineShaderStageCreateInfo geometryStage{};
+		geometryStage.setStage(vk::ShaderStageFlagBits::eGeometry);
+		geometryStage.setPName("main"); //entry point of the shader
+		geometryStage.setModule(pipelineDesc.mGeometryShader.value().getShaderModule());
+		shaderStages.push_back(geometryStage);
+	}
+
+	if (pipelineDesc.mHullShader)
+	{
+		vk::PipelineShaderStageCreateInfo hullStage{};
+		hullStage.setStage(vk::ShaderStageFlagBits::eTessellationControl);
+		hullStage.setPName("main"); //entry point of the shader
+		hullStage.setModule(pipelineDesc.mHullShader.value().getShaderModule());
+		shaderStages.push_back(hullStage);
+	}
+
+	if (pipelineDesc.mHullShader)
+	{
+		vk::PipelineShaderStageCreateInfo tesseStage{};
+		tesseStage.setStage(vk::ShaderStageFlagBits::eTessellationEvaluation);
+		tesseStage.setPName("main"); //entry point of the shader
+		tesseStage.setModule(pipelineDesc.mTesselationControlShader.value().getShaderModule());
+		shaderStages.push_back(tesseStage);
+	}
+
+	vk::PipelineShaderStageCreateInfo fragmentStage{};
+	fragmentStage.setStage(vk::ShaderStageFlagBits::eFragment);
+	fragmentStage.setPName("main"); //entry point of the shader
+	fragmentStage.setModule(pipelineDesc.mFragmentShader.getShaderModule());
+	shaderStages.push_back(fragmentStage);
+
+	return shaderStages;
+}
+
+
+
 vk::DescriptorSetLayout RenderDevice::generateDescriptorSetLayout(const RenderTask& task)
 {
     const auto& inputAttachments = task.getInputAttachments();

@@ -33,6 +33,12 @@ bool GraphicsPipeline::compile(const RenderTask& task)
 {
 	std::vector<vk::PipelineShaderStageCreateInfo> shaderInfo = getDevice()->generateShaderStagesInfo(static_cast<const GraphicsTask&>(task));
 
+	std::vector<vk::PipelineShaderStageCreateInfo> indexedShaderInfo;
+	if (mPipelineDescription.mIndexedVertexShader)
+	{
+		indexedShaderInfo = getDevice()->generateIndexedShaderStagesInfo(static_cast<const GraphicsTask&>(task));
+	}
+
 	const vk::PrimitiveTopology topology = [primitiveType = mPipelineDescription.mPrimitiveType]()
 	{
 		switch (primitiveType)
@@ -141,6 +147,11 @@ bool GraphicsPipeline::compile(const RenderTask& task)
 	pipelineCreateInfo.setRenderPass(mRenderPass);
 
 	mPipeline = getDevice()->createPipeline(pipelineCreateInfo);
+
+	// Now resuse most of the state to create the index variant
+	pipelineCreateInfo.setStageCount(static_cast<uint32_t>(indexedShaderInfo.size()));
+	pipelineCreateInfo.setPStages(indexedShaderInfo.data());	
+	mIndexedVariant = getDevice()->createPipeline(pipelineCreateInfo);
 
 	return true;
 }

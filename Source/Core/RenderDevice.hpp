@@ -195,6 +195,7 @@ public:
     void							   swap();
 
 	std::vector<vk::PipelineShaderStageCreateInfo>              generateShaderStagesInfo(const GraphicsTask&);
+	std::vector<vk::PipelineShaderStageCreateInfo>              generateIndexedShaderStagesInfo(const GraphicsTask&);
 
 private:
 
