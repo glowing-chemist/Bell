@@ -421,7 +421,7 @@ std::vector<vk::PipelineShaderStageCreateInfo> RenderDevice::generateIndexedShad
 	vk::PipelineShaderStageCreateInfo vertexStage{};
 	vertexStage.setStage(vk::ShaderStageFlagBits::eVertex);
 	vertexStage.setPName("main"); //entry point of the shader
-	vertexStage.setModule(pipelineDesc.mIndexedVertexShader.value().getShaderModule());
+	vertexStage.setModule(pipelineDesc.mInstancedVertexShader.value().getShaderModule());
 	shaderStages.push_back(vertexStage);
 
 	if (pipelineDesc.mGeometryShader)

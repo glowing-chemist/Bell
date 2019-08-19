@@ -88,9 +88,9 @@ public:
 		mDescSetLayout = layout;
 	}
 
-	vk::Pipeline getIndexedVariant() const
+	vk::Pipeline getInstancedVariant() const
 	{
-		return mIndexedVariant;
+		return mInstancedVariant;
 	}
 
 private:
@@ -105,7 +105,7 @@ private:
 
 
 
-	vk::Pipeline mIndexedVariant;
+	vk::Pipeline mInstancedVariant;
 };
 
 #endif

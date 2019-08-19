@@ -34,7 +34,7 @@ bool GraphicsPipeline::compile(const RenderTask& task)
 	std::vector<vk::PipelineShaderStageCreateInfo> shaderInfo = getDevice()->generateShaderStagesInfo(mPipelineDescription);
 
 	std::vector<vk::PipelineShaderStageCreateInfo> indexedShaderInfo;
-	if (mPipelineDescription.mIndexedVertexShader)
+	if (mPipelineDescription.mInstancedVertexShader)
 	{
 		indexedShaderInfo = getDevice()->generateIndexedShaderStagesInfo(mPipelineDescription);
 	}
@@ -148,11 +148,13 @@ bool GraphicsPipeline::compile(const RenderTask& task)
 
 	mPipeline = getDevice()->createPipeline(pipelineCreateInfo);
 
-	// Now resuse most of the state to create the index variant
-	pipelineCreateInfo.setStageCount(static_cast<uint32_t>(indexedShaderInfo.size()));
-	pipelineCreateInfo.setPStages(indexedShaderInfo.data());	
-	mIndexedVariant = getDevice()->createPipeline(pipelineCreateInfo);
-
+	if (mPipelineDescription.mInstancedVertexShader)
+	{
+		// Now resuse most of the state to create the index variant
+		pipelineCreateInfo.setStageCount(static_cast<uint32_t>(indexedShaderInfo.size()));
+		pipelineCreateInfo.setPStages(indexedShaderInfo.data());
+		mInstancedVariant = getDevice()->createPipeline(pipelineCreateInfo);
+	}
 	return true;
 }
 

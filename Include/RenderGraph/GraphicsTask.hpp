@@ -83,7 +83,7 @@ enum class Primitive
 struct GraphicsPipelineDescription
 {
 	Shader mVertexShader;
-	std::optional<Shader> mIndexedVertexShader;
+	std::optional<Shader> mInstancedVertexShader;
 	std::optional<Shader> mGeometryShader;
 	std::optional<Shader> mHullShader;
 	std::optional<Shader> mTesselationControlShader;
@@ -103,7 +103,7 @@ struct GraphicsPipelineDescription
 	GraphicsPipelineDescription(const Shader& vert, const Shader& frag,
 		const Rect& scissor, const Rect& viewport) :
 		mVertexShader{ vert },
-		mIndexedVertexShader{},
+		mInstancedVertexShader{},
 		mGeometryShader{},
 		mHullShader{},
 		mTesselationControlShader{},
@@ -127,7 +127,7 @@ struct GraphicsPipelineDescription
 		const DepthTest depthTest,
 		const Primitive primitiveType) :
 		mVertexShader{ vert },
-		mIndexedVertexShader{},
+		mInstancedVertexShader{},
 		mGeometryShader{},
 		mHullShader{},
 		mTesselationControlShader{},
@@ -143,7 +143,7 @@ struct GraphicsPipelineDescription
 	{}
 
 	GraphicsPipelineDescription(const Shader& vert,
-		const Shader& indexedVert,
+		const Shader& instancedVert,
 		const Shader& frag,
 		const Rect& scissor, const Rect& viewport,
 		const bool useFaceCulling,
@@ -153,7 +153,7 @@ struct GraphicsPipelineDescription
 		const DepthTest depthTest,
 		const Primitive primitiveType) :
 		mVertexShader{ vert },
-		mIndexedVertexShader{ indexedVert },
+		mInstancedVertexShader{ instancedVert },
 		mGeometryShader{},
 		mHullShader{},
 		mTesselationControlShader{},
@@ -169,7 +169,7 @@ struct GraphicsPipelineDescription
 	{}
 
 	GraphicsPipelineDescription(const Shader& vert, const Shader& frag,
-		const std::optional<Shader>& indexedVertexShader,
+		const std::optional<Shader>& instancedVert,
 		const std::optional<Shader>& geometryShader,
 		const std::optional<Shader>& hullShaderr, const std::optional<Shader>& tesselationCOntrol,
 		const Rect& scissor, const Rect& viewport,
@@ -181,7 +181,7 @@ struct GraphicsPipelineDescription
 		const Primitive primitiveType) :
 
 		mVertexShader{ vert },
-		mIndexedVertexShader{ indexedVertexShader },
+		mInstancedVertexShader{ instancedVert },
 		mGeometryShader{ geometryShader },
 		mHullShader{ hullShaderr },
 		mTesselationControlShader{ tesselationCOntrol },
