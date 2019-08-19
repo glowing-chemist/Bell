@@ -31,12 +31,12 @@ bool ComputePipeline::compile(const RenderTask&)
 
 bool GraphicsPipeline::compile(const RenderTask& task)
 {
-	std::vector<vk::PipelineShaderStageCreateInfo> shaderInfo = getDevice()->generateShaderStagesInfo(static_cast<const GraphicsTask&>(task));
+	std::vector<vk::PipelineShaderStageCreateInfo> shaderInfo = getDevice()->generateShaderStagesInfo(mPipelineDescription);
 
 	std::vector<vk::PipelineShaderStageCreateInfo> indexedShaderInfo;
 	if (mPipelineDescription.mIndexedVertexShader)
 	{
-		indexedShaderInfo = getDevice()->generateIndexedShaderStagesInfo(static_cast<const GraphicsTask&>(task));
+		indexedShaderInfo = getDevice()->generateIndexedShaderStagesInfo(mPipelineDescription);
 	}
 
 	const vk::PrimitiveTopology topology = [primitiveType = mPipelineDescription.mPrimitiveType]()

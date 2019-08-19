@@ -194,8 +194,9 @@ public:
     void							   submitFrame();
     void							   swap();
 
-	std::vector<vk::PipelineShaderStageCreateInfo>              generateShaderStagesInfo(const GraphicsTask&);
-	std::vector<vk::PipelineShaderStageCreateInfo>              generateIndexedShaderStagesInfo(const GraphicsTask&);
+	// non const as can compile uncompiled shaders.
+	std::vector<vk::PipelineShaderStageCreateInfo>              generateShaderStagesInfo(GraphicsPipelineDescription&);
+	std::vector<vk::PipelineShaderStageCreateInfo>              generateIndexedShaderStagesInfo(GraphicsPipelineDescription&);
 
 private:
 

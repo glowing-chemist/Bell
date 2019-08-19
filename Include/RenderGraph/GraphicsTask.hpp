@@ -215,7 +215,8 @@ class GraphicsTask : public RenderTask
 public:
     GraphicsTask(const std::string& name, const GraphicsPipelineDescription& desc) : RenderTask{name}, mPipelineDescription{ desc } {}
 	
-	GraphicsPipelineDescription getPipelineDescription() const { return mPipelineDescription; }
+	const GraphicsPipelineDescription& getPipelineDescription() const { return mPipelineDescription; }
+	GraphicsPipelineDescription& getPipelineDescription() { return mPipelineDescription; }
 
 	void setVertexAttributes(int vertexAttributes)
 		{ mVertexAttributes = vertexAttributes; }

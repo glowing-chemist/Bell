@@ -351,9 +351,14 @@ vk::RenderPass	RenderDevice::generateRenderPass(const GraphicsTask& task)
 }
 
 
-std::vector<vk::PipelineShaderStageCreateInfo> RenderDevice::generateShaderStagesInfo(const GraphicsTask& task)
+std::vector<vk::PipelineShaderStageCreateInfo> RenderDevice::generateShaderStagesInfo(GraphicsPipelineDescription& pipelineDesc)
 {
-    const GraphicsPipelineDescription pipelineDesc = task.getPipelineDescription();
+	// Make sure that all shaders have been compiled by this point.
+	if (!pipelineDesc.mVertexShader.hasBeenCompiled())
+	{
+		pipelineDesc.mVertexShader.compile();
+		pipelineDesc.mFragmentShader.compile();
+	}
 
     std::vector<vk::PipelineShaderStageCreateInfo> shaderStages;
 
@@ -365,6 +370,9 @@ std::vector<vk::PipelineShaderStageCreateInfo> RenderDevice::generateShaderStage
 
     if(pipelineDesc.mGeometryShader)
     {
+		if (!pipelineDesc.mGeometryShader.value().hasBeenCompiled())
+			pipelineDesc.mGeometryShader.value().compile();
+
         vk::PipelineShaderStageCreateInfo geometryStage{};
         geometryStage.setStage(vk::ShaderStageFlagBits::eGeometry);
         geometryStage.setPName("main"); //entry point of the shader
@@ -374,6 +382,9 @@ std::vector<vk::PipelineShaderStageCreateInfo> RenderDevice::generateShaderStage
 
     if(pipelineDesc.mHullShader)
     {
+		if (!pipelineDesc.mHullShader.value().hasBeenCompiled())
+			pipelineDesc.mHullShader.value().compile();
+
         vk::PipelineShaderStageCreateInfo hullStage{};
         hullStage.setStage(vk::ShaderStageFlagBits::eTessellationControl);
         hullStage.setPName("main"); //entry point of the shader
@@ -381,8 +392,11 @@ std::vector<vk::PipelineShaderStageCreateInfo> RenderDevice::generateShaderStage
         shaderStages.push_back(hullStage);
     }
 
-    if(pipelineDesc.mHullShader)
+    if(pipelineDesc.mTesselationControlShader)
     {
+		if (!pipelineDesc.mTesselationControlShader.value().hasBeenCompiled())
+			pipelineDesc.mTesselationControlShader.value().compile();
+
         vk::PipelineShaderStageCreateInfo tesseStage{};
         tesseStage.setStage(vk::ShaderStageFlagBits::eTessellationEvaluation);
         tesseStage.setPName("main"); //entry point of the shader
@@ -400,10 +414,8 @@ std::vector<vk::PipelineShaderStageCreateInfo> RenderDevice::generateShaderStage
 }
 
 
-std::vector<vk::PipelineShaderStageCreateInfo> RenderDevice::generateIndexedShaderStagesInfo(const GraphicsTask& task)
+std::vector<vk::PipelineShaderStageCreateInfo> RenderDevice::generateIndexedShaderStagesInfo(GraphicsPipelineDescription& pipelineDesc)
 {
-	const GraphicsPipelineDescription pipelineDesc = task.getPipelineDescription();
-
 	std::vector<vk::PipelineShaderStageCreateInfo> shaderStages;
 
 	vk::PipelineShaderStageCreateInfo vertexStage{};
