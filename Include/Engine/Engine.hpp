@@ -43,6 +43,12 @@ public:
 
     Camera& getCurrentSceneCamera();
 
+    BufferBuilder& getVertexBufferBuilder()
+    { return mVertexBuilder; }
+
+    BufferBuilder& getIndexBufferBuilder()
+    { return mIndexBuilder; }
+
 	Image&  getSwapChainImage()
 		{ return mRenderDevice.getSwapChainImage(); }
 
