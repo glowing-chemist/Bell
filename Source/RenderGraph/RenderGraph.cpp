@@ -110,6 +110,12 @@ void RenderGraph::addDependancy(const std::string& dependancy, const std::string
 }
 
 
+void RenderGraph::compileDependancies()
+{
+    // TODO implement this based on slots.
+}
+
+
 void RenderGraph::bindResource(const std::string& name, const uint32_t index, const ResourceType resourcetype)
 {
     uint32_t taskOrderIndex = 0;
