@@ -9,6 +9,7 @@
 #include "RenderGraph/GraphicsTask.hpp"
 
 #include "Engine.hpp"
+#include "Engine/DefaultResourceSlots.hpp"
 
 
 class GBufferMaterialTechnique : public Technique<GraphicsTask>
@@ -20,7 +21,8 @@ public:
 	virtual PassType getPassType() const final override
 		{ return PassType::GBufferMaterial; }
 
-	virtual GraphicsTask& getTaskToRecord() final override;
+    virtual GraphicsTask& getTask() final override
+    { return mTask; }
 
 	Image& getDepthImage()
 		{ return mDepthImage; }
@@ -29,7 +31,7 @@ public:
 		{ return mDepthView; }
 
 	std::string getDepthName() const
-		{ return "GBuffer Depth"; }
+        { return kGBufferDepth; }
 
 
 	Image& getMaterialImage()
@@ -38,8 +40,8 @@ public:
 	ImageView& getMaterialView()
 		{ return mMaterialView; }
 
-	std::string getAlbedoName() const
-		{ return "GBuffer Material"; }
+    std::string getMaterialName() const
+        { return kGBufferMaterialID; }
 
 
 	Image& getNormalsImage()
@@ -49,7 +51,7 @@ public:
 		{ return mNormalsView; }
 
 	std::string getNormalsName() const
-	 { return "GBuffer Normals"; }
+     { return kGBufferNormals; }
 
 
 	Image& getUVImage()
@@ -59,7 +61,9 @@ public:
 		{ return mUVView; }
 
 	std::string getUVName() const
-		{ return "GBuffer UV"; }
+        { return kGBufferUV; }
+
+    virtual void bindResources(RenderGraph&) const override final;
 
 private:
 
@@ -77,7 +81,6 @@ private:
 
 	GraphicsPipelineDescription mPipelineDescription;
 	GraphicsTask mTask;
-	bool mTaskInitialised;
 };
 
 
@@ -90,7 +93,8 @@ public:
     virtual PassType getPassType() const final override
         { return PassType::GBUfferMaterialPreDepth; }
 
-    virtual GraphicsTask& getTaskToRecord() final override;
+    virtual GraphicsTask& getTask() final override
+    { return mTask; }
 
     void setDepthName(const std::string& depthName)
         { mDepthName = depthName; }
@@ -101,8 +105,8 @@ public:
     ImageView& getMaterialView()
         { return mMaterialView; }
 
-    std::string getAlbedoName() const
-        { return "GBuffer Material"; }
+    std::string getMaterialName() const
+        { return kGBufferMaterialID; }
 
 
     Image& getNormalsImage()
@@ -112,7 +116,7 @@ public:
         { return mNormalsView; }
 
     std::string getNormalsName() const
-     { return "GBuffer Normals"; }
+     { return kGBufferNormals; }
 
 
     Image& getUVImage()
@@ -122,7 +126,9 @@ public:
         { return mUVView; }
 
     std::string getUVName() const
-        { return "GBuffer UV"; }
+        { return kGBufferUV; }
+
+    virtual void bindResources(RenderGraph&) const override final;
 
 private:
 
@@ -139,7 +145,6 @@ private:
 
     GraphicsPipelineDescription mPipelineDescription;
     GraphicsTask mTask;
-    bool mTaskInitialised;
 };
 
 #endif

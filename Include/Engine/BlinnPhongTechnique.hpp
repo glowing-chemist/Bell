@@ -3,6 +3,7 @@
 
 #include "Core/Image.hpp"
 #include "Technique.hpp"
+#include "Engine/DefaultResourceSlots.hpp"
 
 #include <string>
 
@@ -24,11 +25,9 @@ public:
 		return mLightingView;
 	}
 
-	static std::string& getLightTextureName()
+    std::string getLightTextureName()
 	{
-		static std::string name{"BlinnPhongLightTexture"};
-
-		return name;
+        return kBlinnPhongLighting;
 	}
 
 	void setDepthName(const std::string& name)
@@ -56,8 +55,10 @@ public:
 		return PassType::DeferredTextureBlinnPhongLighting;
 	}
 
-	virtual GraphicsTask& getTaskToRecord() override final;
+    virtual GraphicsTask& getTask() override final
+    { return mTask; }
 
+    virtual void bindResources(RenderGraph&) const override final;
 
 
 private:

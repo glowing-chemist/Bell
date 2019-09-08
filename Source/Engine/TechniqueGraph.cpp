@@ -10,7 +10,14 @@ TechniqueGraph::TechniqueGraph(Engine* eng) :
 
 void TechniqueGraph::addPass(const PassType passType)
 {
-
+    if(mEngine->isGraphicsTask(passType))
+    {
+        mGraphicsTechniques.insert({passType, mEngine->getSingleGraphicsTechnique(passType)});
+    }
+    else
+    {
+        mComputeTechniques.insert({passType, mEngine->getSingleComputeTechnique(passType)});
+    }
 }
 
 

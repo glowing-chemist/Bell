@@ -43,7 +43,10 @@ public:
     void addTask(const GraphicsTask&);
     void addTask(const ComputeTask&);
 
-    void addDependancy(const std::string&, const std::string&);
+    void addDependancy(const std::string& dependancy, const std::string& dependant);
+
+    // compiles the dependancy graph based on slots (assuming resources are finished writing to by their first read from)
+    void compileDependancies();
 
     void bindImage(const std::string&, const ImageView &);
 	void bindImageArray(const std::string&, const ImageViewArray&);

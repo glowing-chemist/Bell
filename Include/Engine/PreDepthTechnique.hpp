@@ -4,6 +4,8 @@
 #include "Core/Image.hpp"
 #include "Engine/Technique.hpp"
 #include "Engine/Engine.hpp"
+#include "Engine/DefaultResourceSlots.hpp"
+
 
 #include <string>
 
@@ -17,7 +19,8 @@ public:
     virtual PassType getPassType() const final override
     { return PassType::DepthPre; }
 
-    virtual GraphicsTask& getTaskToRecord() override final;
+    virtual GraphicsTask& getTask() final override
+    { return mTask; }
 
     Image& getDepthImage()
     { return mDepthImage; }
@@ -26,7 +29,10 @@ public:
     { return mDepthView; }
 
     std::string getDepthName() const
-    { return "PreDepth"; }
+    { return kPreDepth; }
+
+    virtual void bindResources(RenderGraph& graph) const override final
+    { graph.bindImage(getDepthName(), mDepthView); }
 
 
 private:
@@ -36,7 +42,6 @@ private:
 
     GraphicsPipelineDescription mPipelineDescription;
     GraphicsTask mTask;
-    bool mTaskInitialised;
 };
 
 

@@ -137,6 +137,7 @@ std::unique_ptr<Technique<GraphicsTask>> Engine::getSingleGraphicsTechnique(cons
         default:
         {
             BELL_TRAP;
+            return nullptr;
         }
     }
 }
@@ -164,6 +165,8 @@ std::unique_ptr<Technique<ComputeTask>> Engine::getSingleComputeTechnique(const 
         default:
         {
             BELL_TRAP;
+
+            return nullptr;
         }
     }
 }

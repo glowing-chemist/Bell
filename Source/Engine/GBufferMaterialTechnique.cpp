@@ -32,39 +32,34 @@ GBufferMaterialTechnique::GBufferMaterialTechnique(Engine* eng) :
                          getDevice()->getSwapChain()->getSwapChainImageHeight()},
                          true, BlendMode::None, BlendMode::None, true, DepthTest::GreaterEqual, Primitive::TriangleList},
 
-	mTask{"GBufferMaterial", mPipelineDescription},
-	mTaskInitialised{false}
-{}
-
-
-GraphicsTask &GBufferMaterialTechnique::getTaskToRecord()
+    mTask{"GBufferMaterial", mPipelineDescription}
 {
+    mTask.setVertexAttributes(VertexAttributes::Position4 | VertexAttributes::Material |
+                              VertexAttributes::Normals | VertexAttributes::TextureCoordinates);
 
-	if(!mTaskInitialised)
-	{
-		mTask.setVertexAttributes(VertexAttributes::Position4 | VertexAttributes::Material |
-								  VertexAttributes::Normals | VertexAttributes::TextureCoordinates);
+    mTask.addInput("CameraBuffer", AttachmentType::UniformBuffer);
+    mTask.addInput("ModelMatrix", AttachmentType::PushConstants);
 
-		mTask.addInput("CameraBuffer", AttachmentType::UniformBuffer);
-		mTask.addInput("ModelMatrix", AttachmentType::PushConstants);
+    mTask.addOutput("GBuffer Normals",  AttachmentType::Texture2D, Format::R16G16Unorm, LoadOp::Clear_Black);
+    mTask.addOutput("GBuffer UV",       AttachmentType::Texture2D, Format::RGBA8SRGB, LoadOp::Clear_Black);
+    mTask.addOutput("GBuffer Material", AttachmentType::Texture2D, Format::R8UNorm, LoadOp::Clear_Black);
+    mTask.addOutput("GBuffer Depth",    AttachmentType::Depth, Format::D24S8Float, LoadOp::Clear_White);
+}
 
-        mTask.addOutput("GBuffer Normals",  AttachmentType::Texture2D, Format::R16G16Unorm, LoadOp::Clear_Black);
-        mTask.addOutput("GBuffer UV",       AttachmentType::Texture2D, Format::RGBA8SRGB, LoadOp::Clear_Black);
-		mTask.addOutput("GBuffer Material", AttachmentType::Texture2D, Format::R8UNorm, LoadOp::Clear_Black);
-        mTask.addOutput("GBuffer Depth",    AttachmentType::Depth, Format::D24S8Float, LoadOp::Clear_White);
 
-		mTaskInitialised = true;
-	}
-
-	mTask.clearCalls();
-
-	return mTask;
+void GBufferMaterialTechnique::bindResources(RenderGraph& graph) const
+{
+    graph.bindImage(kGBufferDepth, mDepthView);
+    graph.bindImage(kGBufferMaterialID, mMaterialView);
+    graph.bindImage(kGBufferNormals, mNormalsView);
+    graph.bindImage(kGBufferUV, mUVView);
 }
 
 
 GBufferMaterialPreDepthTechnique::GBufferMaterialPreDepthTechnique(Engine* eng) :
     Technique{"GBufferMaterial", eng->getDevice()},
 
+    mDepthName{kPreDepth},
     mMaterialImage{getDevice(), Format::R32Uint, ImageUsage::ColourAttachment | ImageUsage::Sampled,
                  getDevice()->getSwapChain()->getSwapChainImageWidth(), getDevice()->getSwapChain()->getSwapChainImageHeight(),
                  1, 1, 1, 1, "Material Buffer"},
@@ -88,31 +83,25 @@ GBufferMaterialPreDepthTechnique::GBufferMaterialPreDepthTechnique(Engine* eng) 
                          getDevice()->getSwapChain()->getSwapChainImageHeight()},
                          true, BlendMode::None, BlendMode::None, false, DepthTest::GreaterEqual, Primitive::TriangleList},
 
-    mTask{"GBufferMaterialPreDepth", mPipelineDescription},
-    mTaskInitialised{false}
-{}
-
-
-GraphicsTask &GBufferMaterialPreDepthTechnique::getTaskToRecord()
+    mTask{"GBufferMaterialPreDepth", mPipelineDescription}
 {
+    mTask.setVertexAttributes(VertexAttributes::Position4 | VertexAttributes::Material |
+                              VertexAttributes::Normals | VertexAttributes::TextureCoordinates);
 
-    if(!mTaskInitialised)
-    {
-        mTask.setVertexAttributes(VertexAttributes::Position4 | VertexAttributes::Material |
-                                  VertexAttributes::Normals | VertexAttributes::TextureCoordinates);
+    mTask.addInput("CameraBuffer", AttachmentType::UniformBuffer);
+    mTask.addInput("ModelMatrix", AttachmentType::PushConstants);
 
-        mTask.addInput("CameraBuffer", AttachmentType::UniformBuffer);
-        mTask.addInput("ModelMatrix", AttachmentType::PushConstants);
+    mTask.addOutput("GBuffer Normals",  AttachmentType::Texture2D, Format::R16G16Unorm, LoadOp::Clear_Black);
+    mTask.addOutput("GBuffer UV",       AttachmentType::Texture2D, Format::RGBA8SRGB, LoadOp::Clear_Black);
+    mTask.addOutput("GBuffer Material", AttachmentType::Texture2D, Format::R8UNorm, LoadOp::Clear_Black);
+    mTask.addOutput(mDepthName,         AttachmentType::Depth, Format::D24S8Float, LoadOp::Preserve);
 
-        mTask.addOutput("GBuffer Normals",  AttachmentType::Texture2D, Format::R16G16Unorm, LoadOp::Clear_Black);
-        mTask.addOutput("GBuffer UV",       AttachmentType::Texture2D, Format::RGBA8SRGB, LoadOp::Clear_Black);
-        mTask.addOutput("GBuffer Material", AttachmentType::Texture2D, Format::R8UNorm, LoadOp::Clear_Black);
-        mTask.addOutput(mDepthName,         AttachmentType::Depth, Format::D24S8Float, LoadOp::Preserve);
+}
 
-        mTaskInitialised = true;
-    }
 
-    mTask.clearCalls();
-
-    return mTask;
+void GBufferMaterialPreDepthTechnique::bindResources(RenderGraph& graph) const
+{
+    graph.bindImage(kGBufferMaterialID, mMaterialView);
+    graph.bindImage(kGBufferNormals, mNormalsView);
+    graph.bindImage(kGBufferUV, mUVView);
 }

@@ -17,24 +17,9 @@ PreDepthTechnique::PreDepthTechnique(Engine* eng) :
                          getDevice()->getSwapChain()->getSwapChainImageHeight()},
                          true, BlendMode::None, BlendMode::None, true, DepthTest::GreaterEqual, Primitive::TriangleList},
 
-    mTask{"PreDepth", mPipelineDescription},
-    mTaskInitialised{false}
-{}
-
-
-GraphicsTask &PreDepthTechnique::getTaskToRecord()
+    mTask{"PreDepth", mPipelineDescription}
 {
+    mTask.setVertexAttributes(VertexAttributes::Position4 | VertexAttributes::Normals | VertexAttributes::TextureCoordinates);
 
-    if(!mTaskInitialised)
-    {
-        mTask.setVertexAttributes(VertexAttributes::Position4 | VertexAttributes::Normals | VertexAttributes::TextureCoordinates);
-
-        mTask.addOutput(getDepthName(), AttachmentType::Depth, Format::D32Float, LoadOp::Clear_White);
-
-        mTaskInitialised = true;
-    }
-
-    mTask.clearCalls();
-
-    return mTask;
+    mTask.addOutput(getDepthName(), AttachmentType::Depth, Format::D32Float, LoadOp::Clear_White);
 }
