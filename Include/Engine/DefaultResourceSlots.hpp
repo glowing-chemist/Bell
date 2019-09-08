@@ -13,4 +13,7 @@ constexpr char kSSAO[]		    = "SSAO";
 constexpr char kDefaultSampler[]    = "defaultSampler";
 constexpr char kBlinnPhongLighting[]= "BlinnPhongLight";
 
+constexpr char kCameraBuffer[]	    = "CameraBuffer";
+constexpr char kLightBuffer[]	    = "LightBuffer";
+
 #endif

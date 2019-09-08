@@ -38,10 +38,10 @@ GBufferTechnique::GBufferTechnique(Engine* eng) :
 
     mTask.addInput("Model Matrix", AttachmentType::PushConstants);
 
-    mTask.addOutput("GBuffer Normals", AttachmentType::Texture2D, Format::R16G16Unorm, LoadOp::Clear_Black);
-    mTask.addOutput("GBuffer Albedo", AttachmentType::Texture2D, Format::RGBA8SRGB, LoadOp::Clear_Black);
-    mTask.addOutput("GBuffer Specular", AttachmentType::Texture2D, Format::R8UNorm, LoadOp::Clear_Black);
-    mTask.addOutput("GBuffer Depth", AttachmentType::Depth, Format::D32Float, LoadOp::Clear_White);
+    mTask.addOutput(kGBufferNormals, AttachmentType::Texture2D, Format::R16G16Unorm, LoadOp::Clear_Black);
+    mTask.addOutput(kGBufferAlbedo, AttachmentType::Texture2D, Format::RGBA8SRGB, LoadOp::Clear_Black);
+    mTask.addOutput(kGBufferSpecular, AttachmentType::Texture2D, Format::R8UNorm, LoadOp::Clear_Black);
+    mTask.addOutput(kGBufferDepth, AttachmentType::Depth, Format::D32Float, LoadOp::Clear_White);
 }
 
 
@@ -87,9 +87,9 @@ GBufferPreDepthTechnique::GBufferPreDepthTechnique(Engine* eng) :
 
     mTask.addInput("Model Matrix", AttachmentType::PushConstants);
 
-    mTask.addOutput("GBuffer Normals",  AttachmentType::Texture2D, Format::R16G16Unorm, LoadOp::Clear_Black);
-    mTask.addOutput("GBuffer Albedo",   AttachmentType::Texture2D, Format::RGBA8SRGB, LoadOp::Clear_Black);
-    mTask.addOutput("GBuffer Specular", AttachmentType::Texture2D, Format::R8UNorm, LoadOp::Clear_Black);
+    mTask.addOutput(kGBufferNormals,  AttachmentType::Texture2D, Format::R16G16Unorm, LoadOp::Clear_Black);
+    mTask.addOutput(kGBufferAlbedo,   AttachmentType::Texture2D, Format::RGBA8SRGB, LoadOp::Clear_Black);
+    mTask.addOutput(kGBufferSpecular, AttachmentType::Texture2D, Format::R8UNorm, LoadOp::Clear_Black);
     mTask.addOutput(mDepthName,         AttachmentType::Depth, Format::D32Float, LoadOp::Preserve);
 }
 

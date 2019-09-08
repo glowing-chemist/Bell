@@ -47,9 +47,6 @@ private:
 
 	Sampler mLinearSampler;
 
-	Shader mFullScreenTriangleVertex;
-	Shader mSSAOFragmentShader;
-
 	GraphicsPipelineDescription mPipelineDesc;
 	GraphicsTask mTask;
 };

@@ -26,9 +26,9 @@ BlinnPhongDeferredTexturesTechnique::BlinnPhongDeferredTexturesTechnique(Engine*
     mTask.setVertexAttributes(0);
 
     // These are always availble, and updated and bound by the engine.
-    mTask.addInput("LightBuffer", AttachmentType::UniformBuffer);
-    mTask.addInput("CameraBuffer", AttachmentType::UniformBuffer);
-    mTask.addInput("MaterialIndex", AttachmentType::UniformBuffer);
+    mTask.addInput(kLightBuffer, AttachmentType::UniformBuffer);
+    mTask.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
+    mTask.addInput(kGBufferMaterialID, AttachmentType::UniformBuffer);
 
     mTask.addInput(mDepthName, AttachmentType::Texture2D);
     mTask.addInput(mVertexNormalsName, AttachmentType::Texture2D);
@@ -36,7 +36,7 @@ BlinnPhongDeferredTexturesTechnique::BlinnPhongDeferredTexturesTechnique(Engine*
     mTask.addInput(mUVName, AttachmentType::Texture2D);
 
     // Bound by the engine.
-    mTask.addInput("DefaultSampler", AttachmentType::Sampler);
+    mTask.addInput(kDefaultSampler, AttachmentType::Sampler);
 
     mTask.addOutput(getLightTextureName(), AttachmentType::RenderTarget2D, Format::RGBA8SRGB, LoadOp::Clear_Black);
 }

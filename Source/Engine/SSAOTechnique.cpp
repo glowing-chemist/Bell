@@ -8,10 +8,8 @@ SSAOTechnique::SSAOTechnique(Engine* eng) :
 			   getDevice()->getSwapChain()->getSwapChainImageWidth() / 2, getDevice()->getSwapChain()->getSwapChainImageHeight() / 2, 1},
 	mSSAOIMageView{mSSAOImage, ImageViewType::Colour},
 	mLinearSampler{SamplerType::Linear},
-	mFullScreenTriangleVertex{eng->getShader("Shaders/FullScreenTriangle.vert")},
-	mSSAOFragmentShader{eng->getShader("Shaders/SSAO.frag")},
-	mPipelineDesc{mFullScreenTriangleVertex
-				  ,mSSAOFragmentShader,
+    mPipelineDesc{eng->getShader("Shaders/FullScreenTriangle.vert")
+                  ,eng->getShader("Shaders/SSAO.frag"),
 				  Rect{getDevice()->getSwapChain()->getSwapChainImageWidth() / 2,
 						getDevice()->getSwapChain()->getSwapChainImageHeight() / 2},
 				  Rect{getDevice()->getSwapChain()->getSwapChainImageWidth() / 2,
@@ -23,12 +21,12 @@ SSAOTechnique::SSAOTechnique(Engine* eng) :
 
     // These are always availble, and updated and bound by the engine.
     mTask.addInput("NormalsOffset", AttachmentType::UniformBuffer);
-    mTask.addInput("CameraBuffer", AttachmentType::UniformBuffer);
+    mTask.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
 
     mTask.addInput(mDepthNameSlot, AttachmentType::Texture2D);
-    mTask.addInput("linearSampler", AttachmentType::Sampler);
+    mTask.addInput(kDefaultSampler, AttachmentType::Sampler);
 
-    mTask.addOutput("ssaoRenderTarget", AttachmentType::RenderTarget2D, Format::R8UNorm, LoadOp::Clear_Black);
+    mTask.addOutput(kSSAO, AttachmentType::RenderTarget2D, Format::R8UNorm, LoadOp::Clear_Black);
 
     mTask.addDrawCall(0, 3);
 }
