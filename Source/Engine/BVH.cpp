@@ -1,7 +1,9 @@
 #include <limits>
 #include <algorithm>
+#include <numeric>
 
 #include "Engine/BVH.hpp"
+#include "Engine/GeomUtils.h"
 
 
 static constexpr float NO_INTERSECTION = std::numeric_limits<float>::max();
@@ -170,8 +172,6 @@ std::unique_ptr<typename BVH<T>::Node> BVHFactory<T>::partition(std::vector<std:
 
 	if (elements.size() > 2)
 	{
-		// Split the containing box along it's largest axis
-		// TODO: shrink to fit here.
 		const auto[leftSplit, rightSplit] = splitAABB(containingBox);
 		
 		const auto leftBoxIter = std::partition(elements.begin(), elements.end(), [&leftSplit](const std::pair<AABB, T>& pair)
@@ -180,8 +180,40 @@ std::unique_ptr<typename BVH<T>::Node> BVHFactory<T>::partition(std::vector<std:
 		std::vector<std::pair<AABB, T>> rightChildren{ elements.begin(), leftBoxIter };
 		std::vector<std::pair<AABB, T>> leftChildren{leftBoxIter, elements.end()};
 
-        node->mLeft = partition(leftChildren, leftSplit);
-		node->mRight = partition(rightChildren, rightSplit);
+
+        // Shrink
+        AABB shrunkRight{{-std::numeric_limits<float>::infinity(),
+                    -std::numeric_limits<float>::infinity(),
+                    -std::numeric_limits<float>::infinity() },
+                    {std::numeric_limits<float>::infinity(),
+                    std::numeric_limits<float>::infinity(),
+                    std::numeric_limits<float>::infinity()}};
+
+        for(const auto&[aabb, val] : rightChildren)
+        {
+            const float3 bottom = componentWiseMin(aabb.getBottom(), shrunkRight.getBottom());
+            const float3 top = componentWiseMax(aabb.getTop(), shrunkRight.getTop());
+
+            shrunkRight = AABB{top, bottom};
+        }
+
+        AABB shrunkLeft{{-std::numeric_limits<float>::infinity(),
+                    -std::numeric_limits<float>::infinity(),
+                    -std::numeric_limits<float>::infinity() },
+                    {std::numeric_limits<float>::infinity(),
+                    std::numeric_limits<float>::infinity(),
+                    std::numeric_limits<float>::infinity()}};
+
+        for(const auto&[aabb, val] : leftChildren)
+        {
+            const float3 bottom = componentWiseMin(aabb.getBottom(), shrunkLeft.getBottom());
+            const float3 top = componentWiseMax(aabb.getTop(), shrunkLeft.getTop());
+
+            shrunkLeft = AABB{top, bottom};
+        }
+
+        node->mLeft = partition(leftChildren, shrunkLeft);
+        node->mRight = partition(rightChildren, shrunkRight);
 	}
 	else
 	{
@@ -205,6 +237,7 @@ std::unique_ptr<typename BVH<T>::Node> BVHFactory<T>::partition(std::vector<std:
 }
 
 
+// Split the AABB along its largest axis.
 template<typename T>
 std::pair<AABB, AABB> BVHFactory<T>::splitAABB(const AABB& aabb) const
 {
