@@ -178,6 +178,45 @@ std::unique_ptr<PerFrameResource<Technique<ComputeTask>>> Engine::getComputeTech
 }
 
 
+bool Engine::isGraphicsTask(const PassType passType) const
+{
+    switch(passType)
+    {
+        case PassType::DepthPre:
+            return true;
+
+        case PassType::GBuffer:
+            return true;
+
+        case PassType::GBufferMaterial:
+            return true;
+
+        case PassType::SSAO:
+            return true;
+
+        case PassType::GBufferPreDepth:
+            return true;
+
+        case PassType::GBUfferMaterialPreDepth:
+            return true;
+
+        case PassType::DeferredTextureBlinnPhongLighting:
+            return true;
+
+        default:
+        {
+            return false;
+        }
+    }
+}
+
+
+bool Engine::isComputeTask(const PassType passType) const
+{
+    return false; // curently no compute techniques implemented.
+}
+
+
 std::pair<uint64_t, uint64_t> Engine::addMeshToBuffer(const StaticMesh* mesh)
 {
     const auto& vertexData = mesh->getVertexData();
