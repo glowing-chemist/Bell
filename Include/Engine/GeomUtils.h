@@ -3,11 +3,14 @@
 
 #include "Core/BellLogging.hpp"
 
+#define GLM_ENABLE_EXPERIMENTAL
 #include <glm/glm.hpp>
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
 #include <glm/vec4.hpp>
 #include <glm/mat4x4.hpp>
+
+#include <algorithm>
 
 
 using float2 = glm::vec2;
@@ -113,6 +116,11 @@ inline float4 componentWiseMax(const float4& lhs, const float4& rhs)
                   std::max(lhs.w, rhs.w)};
 }
 
+
+struct Rect
+{
+	uint32_t x, y;
+};
 
 #endif
 

@@ -34,7 +34,7 @@ public:
     void loadFromFile(const int vertAttributes);
 
     SceneID       addMesh(const StaticMesh&, MeshType);
-    InstanceID    addMeshInstace(const SceneID, const glm::mat4&);
+    InstanceID    addMeshInstance(const SceneID, const glm::mat4&);
 
     void          finalise();
 
@@ -51,6 +51,11 @@ public:
 	{
 		return mSceneCamera;
 	}
+
+    const Camera& getCamera() const
+    {
+        return mSceneCamera;
+    }
 
     struct MeshInstance
     {

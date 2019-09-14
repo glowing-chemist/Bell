@@ -50,8 +50,8 @@ public:
 	Image& operator=(const Image&) = delete;
 	Image(const Image&) = default;
 
-	Image& operator=(Image&&) = delete;
-	Image(Image&&) = delete;
+	Image& operator=(Image&&);
+	Image(Image&&);
 
 	void swap(Image&); // used instead of a move constructor.
 

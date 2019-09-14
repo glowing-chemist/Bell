@@ -10,7 +10,8 @@
 StaticMesh::StaticMesh(const std::string& path, const int vertAttributes) :
 	mVertexData{},
 	mIndexData{},
-	mAABB{}
+    mAABB{},
+    mPassTypes{static_cast<uint64_t>(PassType::EditorDefault)}
 {
     Assimp::Importer importer;
 
@@ -31,7 +32,8 @@ StaticMesh::StaticMesh(const std::string& path, const int vertAttributes) :
 StaticMesh::StaticMesh(const std::string& path, const int vertAttributes, const uint32_t materialID) :
 	mVertexData{},
 	mIndexData{},
-	mAABB{}
+    mAABB{},
+    mPassTypes{static_cast<uint64_t>(PassType::EditorDefault)}
 {
 	Assimp::Importer importer;
 

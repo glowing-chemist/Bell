@@ -36,7 +36,7 @@ public:
     ImageView(const ImageView&) = default;
 
     ImageView& operator=(ImageView&&) = delete;
-    ImageView(ImageView&&) = delete;
+    ImageView(ImageView&&);
 
     vk::Image getImage() const
         { return mImageHandle; }

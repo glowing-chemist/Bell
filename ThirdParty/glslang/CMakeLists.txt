@@ -118,10 +118,10 @@ endfunction(glslang_set_link_args)
 # otherwise, it will find the wrong version and fail later
 if(IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/External)
     find_package(PythonInterp 3 REQUIRED)
+	# We depend on these for later projects, so they should come first.
+	add_subdirectory(External)
 endif()
 
-# We depend on these for later projects, so they should come first.
-add_subdirectory(External)
 
 if(NOT TARGET SPIRV-Tools-opt)
     set(ENABLE_OPT OFF)

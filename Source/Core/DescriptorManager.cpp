@@ -7,19 +7,6 @@
 #include <numeric>
 #include <cstdint>
 
-namespace
-{
-    std::vector<AttachmentType> stripName(const std::vector<std::pair<std::string, AttachmentType>>& vec)
-    {
-        // Find a better/more efficient way to do this.
-        std::vector<AttachmentType> attachments(vec.size());
-        std::transform(vec.begin(), vec.end(),
-                       attachments.begin(), [](const auto& attachmentInfo) { return attachmentInfo.second;});
-
-        return attachments;
-    }
-}
-
 
 DescriptorManager::~DescriptorManager()
 {
@@ -55,8 +42,7 @@ std::vector<vk::DescriptorSet> DescriptorManager::getDescriptors(RenderGraph& gr
             vk::DescriptorSet descSet = allocateDescriptorSet(*task, *resource);
             descSets.push_back(descSet);
 
-            auto attatchmentTypes = stripName((*task).getInputAttachments());
-            mPendingFreeDescriptorSets[attatchmentTypes].push_back({getDevice()->getCurrentSubmissionIndex(), (*resource).mDescSet});
+            mPendingFreeDescriptorSets[(*task).getInputAttachments()].push_back({getDevice()->getCurrentSubmissionIndex(), (*resource).mDescSet});
 
             (*resource).mDescSet = descSet;
         }
@@ -214,7 +200,7 @@ void DescriptorManager::writeDescriptors(std::vector<vk::DescriptorSet>& descSet
 }
 
 
-void DescriptorManager::freeDescriptorSet(const std::vector<AttachmentType>& layout, vk::DescriptorSet descSet)
+void DescriptorManager::freeDescriptorSet(const std::vector<std::pair<std::string, AttachmentType>>& layout, vk::DescriptorSet descSet)
 {
     mFreeDescriptorSets[layout].push_back(descSet);
 }
@@ -223,7 +209,7 @@ void DescriptorManager::freeDescriptorSet(const std::vector<AttachmentType>& lay
 vk::DescriptorSet DescriptorManager::allocateDescriptorSet(const RenderTask& task,
                                                            const vulkanResources& resources)
 {    
-    std::vector<AttachmentType> attachments = stripName(task.getInputAttachments());
+    std::vector<std::pair<std::string, AttachmentType>> attachments = task.getInputAttachments();
 
     if(mFreeDescriptorSets[attachments].size() != 0)
     {

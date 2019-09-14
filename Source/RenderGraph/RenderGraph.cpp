@@ -3,6 +3,8 @@
 #include "Core/BellLogging.hpp"
 
 #include <algorithm>
+#include <set>
+
 
 void RenderGraph::addTask(const GraphicsTask& task)
 {
@@ -107,6 +109,66 @@ void RenderGraph::addDependancy(const std::string& dependancy, const std::string
     }
 
     mTaskDependancies.push_back({dependancyTaskIndex, dependantTaskIndex});
+}
+
+
+void RenderGraph::compileDependancies()
+{
+    std::set<std::pair<uint32_t, uint32_t>> mDependancies;
+
+    for(size_t i = 0; i < mTaskOrder.size(); ++i)
+    {
+        for(size_t j = 0; j < mTaskOrder.size(); ++j)
+        {
+            // Don't generate dependancies between the same task (shouldn't be possible anyway).
+            if(i == j)
+                continue;
+
+            const RenderTask& outerTask = getTask(mTaskOrder[i].first, mTaskOrder[i].second);
+            const RenderTask& innerTask = getTask(mTaskOrder[j].first, mTaskOrder[j].second);
+
+            // generate dependancies between framebuffer writes and "descriptor" reads.
+            {
+                const std::vector<RenderTask::OutputAttachmentInfo>& outResources = outerTask.getOuputAttachments();
+                const std::vector<std::pair<std::string, AttachmentType>>& inResources = innerTask.getInputAttachments();
+
+                for(size_t outerIndex = 0; outerIndex < outResources.size(); ++outerIndex)
+                {
+                    for(size_t innerIndex = 0; innerIndex < inResources.size(); ++innerIndex)
+                    {
+                        if(outResources[outerIndex].mName == inResources[innerIndex].first)
+                        {
+                            // Innertask reads from a
+                            mDependancies.insert({i, j});
+                        }
+                    }
+                }
+            }
+
+            // generate dependancies between descriptor -> descriptor resources e.g structured buffers.
+            {
+                const std::vector<std::pair<std::string, AttachmentType>>& outResources = outerTask.getInputAttachments();
+                const std::vector<std::pair<std::string, AttachmentType>>& inResources = innerTask.getInputAttachments();
+
+                for(size_t outerIndex = 0; outerIndex < outResources.size(); ++outerIndex)
+                {
+                    for(size_t innerIndex = 0; innerIndex < inResources.size(); ++innerIndex)
+                    {
+                        if(outResources[outerIndex].first == inResources[innerIndex].first &&
+                                (outResources[outerIndex].second == AttachmentType::Image1D ||
+                                 outResources[outerIndex].second == AttachmentType::Image2D ||
+                                 outResources[outerIndex].second == AttachmentType::Image3D ||
+                                 outResources[outerIndex].second == AttachmentType::DataBuffer ||
+                                 outResources[outerIndex].second == AttachmentType::IndirectBuffer))
+                        {
+                            // Innertask reads from a
+                            mDependancies.insert({i, j});
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
 

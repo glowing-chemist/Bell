@@ -52,6 +52,12 @@ public:
     AABB& operator+(const float3&);
     AABB& operator-(const float3&);
 
+    const float3& getTop() const
+    { return mTopFrontLeft; }
+
+    const float3& getBottom() const
+    { return mBottomBackRight; }
+
 private:
 
     float3 mTopFrontLeft;

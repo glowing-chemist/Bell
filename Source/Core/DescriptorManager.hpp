@@ -7,6 +7,7 @@
 
 #include <vulkan/vulkan.hpp>
 
+#include <algorithm>
 #include <vector>
 #include <map>
 
@@ -22,7 +23,7 @@ public:
     std::vector<vk::DescriptorSet> getDescriptors(RenderGraph&, std::vector<vulkanResources>&);
     void                           writeDescriptors(std::vector<vk::DescriptorSet>&, RenderGraph&, std::vector<vulkanResources>&);
 
-    void                           freeDescriptorSet(const std::vector<AttachmentType>&, vk::DescriptorSet);
+    void                           freeDescriptorSet(const std::vector<std::pair<std::string, AttachmentType>>&, vk::DescriptorSet);
 
 private:
 
@@ -35,8 +36,27 @@ private:
 
     void                        transferFreeDescriptorSets();
 
-    std::map<std::vector<AttachmentType>, std::vector<vk::DescriptorSet>> mFreeDescriptorSets;
-    std::map<std::vector<AttachmentType>, std::vector<std::pair<uint64_t, vk::DescriptorSet>>> mPendingFreeDescriptorSets;
+    struct AttachmentComparitor
+    {
+        bool operator()(const std::vector<std::pair<std::string, AttachmentType>>& lhs,
+                      const std::vector<std::pair<std::string, AttachmentType>>& rhs) const noexcept
+        {
+            return std::equal(lhs.begin(), lhs.end(), rhs.begin(), rhs.end(), [] (const std::pair<std::string, AttachmentType>& lhs,
+                                                                                 const std::pair<std::string, AttachmentType>& rhs)
+            {
+                return lhs.second < rhs.second;
+            });
+        }
+    };
+
+    std::map<std::vector<std::pair<std::string, AttachmentType>>,
+             std::vector<vk::DescriptorSet>,
+             AttachmentComparitor> mFreeDescriptorSets;
+
+    std::map<std::vector<std::pair<std::string, AttachmentType>>,
+             std::vector<std::pair<uint64_t, vk::DescriptorSet>>,
+             AttachmentComparitor> mPendingFreeDescriptorSets;
+
     std::vector<vk::DescriptorPool> mPools;
 };
 

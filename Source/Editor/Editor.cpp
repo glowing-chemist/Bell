@@ -3,20 +3,121 @@
 
 #include "imgui.h"
 
+namespace
+{
+
+    std::shared_ptr<EditorNode> createPassNode(const uint64_t passType)
+    {
+        const NodeTypes pType = static_cast<NodeTypes>(passType);
+
+        switch(pType)
+        {
+            case NodeTypes::DepthPre:
+            {
+                // Set the ID to 0 as the editor will set the real id.
+                std::shared_ptr<EditorNode> newNode = std::make_shared<PassNode>("Depth Pre", passType);
+                newNode->mOutputs.emplace_back(0, newNode, "Depth", PinType::Texture, PinKind::Output);
+                return newNode;
+            }
+
+            case NodeTypes::GBuffer:
+            {
+                std::shared_ptr<EditorNode> newNode = std::make_shared<PassNode>("GBuffer", passType);
+                newNode->mOutputs.push_back(Pin{0, newNode, "Normal", PinType::Texture, PinKind::Output});
+                newNode->mOutputs.push_back(Pin{0, newNode, "Albedo", PinType::Texture, PinKind::Output});
+                newNode->mOutputs.push_back(Pin{0, newNode, "Specular", PinType::Texture, PinKind::Output});
+                newNode->mOutputs.push_back(Pin{0, newNode, "Depth", PinType::Texture, PinKind::Output});
+                return newNode;
+            }
+
+            case NodeTypes::SSAO:
+            {
+                std::shared_ptr<EditorNode> newNode = std::make_shared<PassNode>("SSAO", passType);
+                newNode->mInputs.push_back(Pin{0, newNode, "Depth", PinType::Texture, PinKind::Input});
+                newNode->mOutputs.push_back(Pin{0, newNode, "SSAO", PinType::Texture, PinKind::Output});
+                return newNode;
+            }
+
+            case NodeTypes::GBufferMaterial:
+            {
+                std::shared_ptr<EditorNode> newNode = std::make_shared<PassNode>("GBufferMaterial", passType);
+                newNode->mOutputs.push_back(Pin{0, newNode, "Normal", PinType::Texture, PinKind::Output});
+                newNode->mOutputs.push_back(Pin{0, newNode, "UV", PinType::Texture, PinKind::Output});
+				newNode->mOutputs.push_back(Pin{0, newNode, "Material", PinType::Texture, PinKind::Output });
+                newNode->mOutputs.push_back(Pin{0, newNode, "Depth", PinType::Texture, PinKind::Output});
+                return newNode;
+            }
+
+            case NodeTypes::GBUfferMaterialPreDepth:
+            {
+                std::shared_ptr<EditorNode> newNode = std::make_shared<PassNode>("GBufferMaterialPreDepth", passType);
+				newNode->mInputs.push_back(Pin{ 0, newNode, "Depth", PinType::Texture, PinKind::Input });
+                newNode->mOutputs.push_back(Pin{0, newNode, "Normal", PinType::Texture, PinKind::Output});
+                newNode->mOutputs.push_back(Pin{0, newNode, "UV", PinType::Texture, PinKind::Output});
+				newNode->mOutputs.push_back(Pin{0, newNode, "Material", PinType::Texture, PinKind::Output });
+                return newNode;
+            }
+
+            case NodeTypes::GBufferPreDepth:
+            {
+                std::shared_ptr<EditorNode> newNode = std::make_shared<PassNode>("GBufferPreDepth", passType);
+                newNode->mOutputs.push_back(Pin{0, newNode, "Normal", PinType::Texture, PinKind::Output});
+                newNode->mOutputs.push_back(Pin{0, newNode, "Albedo", PinType::Texture, PinKind::Output});
+                newNode->mOutputs.push_back(Pin{0, newNode, "Specular", PinType::Texture, PinKind::Output});
+                newNode->mInputs.push_back(Pin{0, newNode, "Depth", PinType::Texture, PinKind::Input});
+                return newNode;
+            }
+
+			case NodeTypes::InplaceCombine:
+			{
+				std::shared_ptr<EditorNode> newNode = std::make_shared<PassNode>("InplaceCombine", passType);
+				newNode->mOutputs.push_back(Pin{ 0, newNode, "Combined", PinType::Texture, PinKind::Output });
+				newNode->mInputs.push_back(Pin{ 0, newNode, "InOut", PinType::Texture, PinKind::Input });
+				newNode->mInputs.push_back(Pin{ 0, newNode, "Factor", PinType::Texture, PinKind::Input });
+				return newNode;
+			}
+
+			case NodeTypes::InplaceCombineSRGB:
+			{
+				std::shared_ptr<EditorNode> newNode = std::make_shared<PassNode>("InplaceCombineSRGB", passType);
+				newNode->mOutputs.push_back(Pin{ 0, newNode, "Combined", PinType::Texture, PinKind::Output });
+				newNode->mInputs.push_back(Pin{ 0, newNode, "InOut", PinType::Texture, PinKind::Input });
+				newNode->mInputs.push_back(Pin{ 0, newNode, "Factor", PinType::Texture, PinKind::Input });
+				return newNode;
+			}
+
+			case NodeTypes::DeferredTextureBlinnPhongLighting:
+			{
+				std::shared_ptr<EditorNode> newNode = std::make_shared<PassNode>("DeferredTextureBlinnPhongLighting", passType);
+				newNode->mInputs.push_back(Pin{ 0, newNode, "Depth", PinType::Texture, PinKind::Input });
+				newNode->mInputs.push_back(Pin{ 0, newNode, "VertexNormal", PinType::Texture, PinKind::Input });
+				newNode->mInputs.push_back(Pin{ 0, newNode, "Material", PinType::Texture, PinKind::Input });
+				newNode->mInputs.push_back(Pin{ 0, newNode, "UV", PinType::Texture, PinKind::Input });
+				newNode->mOutputs.push_back(Pin{ 0, newNode, "AccumilatedLights", PinType::Texture, PinKind::Output });
+				return newNode;
+			}
+        }
+    }
+
+}
+
+
 Editor::Editor(GLFWwindow* window) :
     mWindow{window},
     mCurrentCursorPos{0.0, 0.0},
-    mMode{0},
+    mMode{1},
     mShowHelpMenu{false},
     mShowFileBrowser{false},
     mFileBrowser{"/"},
+    mShowNodeEditor{false},
+    mNodeEditor{"render graph editor", createPassNode},
     mEngine{mWindow},
 	mHasUploadedFonts(false),
-	mOverlayFontTexture(mEngine.createImage(512, 64, 1, 1, 1, 1, Format::RGBA8UNorm, ImageUsage::Sampled | ImageUsage::TransferDest , "Font Texture")),
+	mOverlayFontTexture(mEngine.getDevice(), Format::RGBA8UNorm, ImageUsage::Sampled | ImageUsage::TransferDest, 512, 64, 1, 1, 1, 1, "Font Texture"),
 	mOverlayTextureView(mOverlayFontTexture, ImageViewType::Colour),
-	mUITexture(mEngine.createImage(1600, 900, 1, 1, 1, 1, Format::RGBA8UNorm, ImageUsage::Sampled | ImageUsage::ColourAttachment , "UI Texture")),
+	mUITexture(mEngine.getDevice(), Format::RGBA8UNorm, ImageUsage::Sampled | ImageUsage::ColourAttachment, 1600, 900, 1, 1, 1, 1, "UI Texture"),
 	mUIImageView(mUITexture, ImageViewType::Colour),
-	mOverlayTranslationUBO(mEngine.createBuffer(16, 16, vk::BufferUsageFlagBits::eUniformBuffer, "Transformations")),
+	mOverlayTranslationUBO(mEngine.getDevice(), vk::BufferUsageFlagBits::eUniformBuffer, 16, 16, "Transformations"),
 	mFontsSampler(SamplerType::Linear),
     mInProgressScene{"In construction"}
 {
@@ -25,10 +126,6 @@ Editor::Editor(GLFWwindow* window) :
 	mFontsSampler.setAddressModeU(AddressMode::Repeat);
 	mFontsSampler.setAddressModeV(AddressMode::Repeat);
 	mFontsSampler.setAddressModeW(AddressMode::Repeat);
-
-	// Set this to nullptr until I can figure out why it casues us not to draw anything.
-	ImGuiIO& io = ImGui::GetIO();
-	io.IniFilename = nullptr;
 }
 
 
@@ -46,7 +143,11 @@ void Editor::run()
 
 		startFrame();
 
-		renderScene();
+        // Only draw the scene is we're in scene mode else draw the
+        // pass/shader graphs.
+        if(mMode == 0)
+            renderScene();
+
 		renderOverlay();
 
 		swap();
@@ -71,25 +172,32 @@ void Editor::renderOverlay()
 		int width, height;
 		io.Fonts->GetTexDataAsRGBA32(&pixels, &width, &height);
 
-		mOverlayFontTexture.setContents(pixels, width, height, 1);
+        mOverlayFontTexture.setContents(pixels, static_cast<uint32_t>(width), static_cast<uint32_t>(height), 1);
 
 		mHasUploadedFonts = true;
 	}
 
-	ImGui::NewFrame();
+    ImGui::NewFrame();
 
-	addMenuBar();
+    drawMenuBar();
+    drawAssistantWindow();
+
+    // We are on Pass/shader graph mode
+    if(mMode == 1)
+        mNodeEditor.draw();
 
     if(mShowFileBrowser)
     {
-        ImGui::SetNextWindowPos(ImVec2(800, 450));
         auto optionalPath = mFileBrowser.render();
 
         if(optionalPath)
+        {
             mShowFileBrowser = false;
+            mEngine.setScene((*optionalPath).filename().string());
+        }
     }
 
-	// Set up the draw data.
+    // Set up the draw data/ also calls endFrame.
 	ImGui::Render();
 
 	// Set up transformation UBO
@@ -137,7 +245,7 @@ void Editor::pumpInputQueue()
 						 static_cast<float>(mCurrentCursorPos.y));
 
 	bool mousePressed[5];
-	for(uint i = 0; i < 5; ++i)
+	for(uint32_t i = 0; i < 5; ++i)
 	{
 		const auto pressed = glfwGetMouseButton(mWindow, i);
 
@@ -155,7 +263,7 @@ void Editor::pumpInputQueue()
 }
 
 
-void Editor::addMenuBar()
+void Editor::drawMenuBar()
 {
 	if (ImGui::BeginMainMenuBar())
 		{
@@ -187,11 +295,75 @@ void Editor::addMenuBar()
             // Radio buttons to select the mode.
             ImGui::BeginGroup();
 
-            ImGui::RadioButton("Scene mode", &mMode, 0);
-            ImGui::RadioButton("Shader graph mode", &mMode, 1);
+                ImGui::RadioButton("Scene mode", &mMode, 0);
+                ImGui::RadioButton("Shader graph mode", &mMode, 1);
 
             ImGui::EndGroup();
 
             ImGui::EndMainMenuBar();
 	}
+}
+
+
+void Editor::drawAssistantWindow()
+{
+    const ImGuiIO& io = ImGui::GetIO();
+
+    // TODO Using magic numbers for now, but will replace with proper scaling code later
+    ImGui::SetNextWindowSize(ImVec2{io.DisplaySize.x / 4, io.DisplaySize.y - 20});
+    ImGui::SetNextWindowPos(ImVec2{0, 20});
+
+    if(ImGui::Begin("Assistant Editor"))
+    {
+
+       if(ImGui::BeginMenu("Add new task"))
+       {
+           ImGui::Indent(10.0f);
+
+           drawPassContextMenu(PassType::DepthPre);
+           drawPassContextMenu(PassType::GBuffer);
+           drawPassContextMenu(PassType::GBufferMaterial);
+           drawPassContextMenu(PassType::GBufferPreDepth);
+           drawPassContextMenu(PassType::GBUfferMaterialPreDepth);
+           drawPassContextMenu(PassType::SSAO);
+		   drawPassContextMenu(PassType::InplaceCombine);
+		   drawPassContextMenu(PassType::InplaceCombineSRGB);
+		   drawPassContextMenu(PassType::DeferredTextureBlinnPhongLighting);
+
+           ImGui::EndMenu();
+       }
+
+       if(ImGui::BeginMenu("Add new resource"))
+       {
+           if(ImGui::MenuItem("Texture"))
+           {
+               std::shared_ptr<EditorNode> newNode = std::make_shared<ResourceNode>("Texture", std::numeric_limits<uint64_t>::max());
+               newNode->mOutputs.push_back(Pin{0, newNode, "Sample", PinType::Texture, PinKind::Output});
+
+               mNodeEditor.addNode(newNode);
+           }
+
+           if(ImGui::MenuItem("Buffer"))
+           {
+               std::shared_ptr<EditorNode> newNode = std::make_shared<ResourceNode>("Buffer", std::numeric_limits<uint64_t>::max() - 1);
+               newNode->mOutputs.push_back(Pin{0, newNode, "Load", PinType::Buffer, PinKind::Output});
+
+               mNodeEditor.addNode(newNode);
+           }
+
+           ImGui::EndMenu();
+       }
+
+
+        ImGui::End();
+    }
+}
+
+
+void Editor::drawPassContextMenu(const PassType passType)
+{
+    if(ImGui::MenuItem(passToString(passType)))
+    {
+        mNodeEditor.addNode(static_cast<uint64_t>(passType));
+    }
 }

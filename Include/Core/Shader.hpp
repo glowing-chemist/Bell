@@ -12,7 +12,7 @@
 
 #include "glslang/Public/ShaderLang.h"
 
-#ifdef _MS_VER
+#ifdef _MSC_VER
 namespace fs = std::experimental::filesystem;
 #else
 namespace fs = std::filesystem;
@@ -31,12 +31,15 @@ public:
 
     bool compile();
     bool reload();
-    bool hasBeenCompiled() const;
+	inline bool hasBeenCompiled() const
+	{
+		return mCompiled;
+	}
 
     const vk::ShaderModule&           getShaderModule() const;
 
 	std::string getFilePath() const
-        { return mFilePath; }
+        { return mFilePath.string(); }
 
 private:
 

@@ -4,6 +4,7 @@
 #include "Core/Image.hpp"
 #include "Engine/Technique.hpp"
 #include "Engine/Engine.hpp"
+#include "Engine/DefaultResourceSlots.hpp"
 
 #include <string>
 
@@ -17,22 +18,25 @@ public:
 	virtual PassType getPassType() const final override
 		{ return PassType::SSAO; }
 
-	virtual GraphicsTask& getTaskToRecord() override final;
+    virtual GraphicsTask& getTask() final override
+    { return mTask; }
 
-	void setDepthSlot(const std::string& depthSlot)
+	void setDepthName(const std::string& depthSlot)
 	{ mDepthNameSlot = depthSlot; }
 
 	Image& getSSAOImage()
 		{ return mSSAOImage; }
 
 	std::string getSSAOImageName() const
-		{ return "SSAOImage"; }
+        { return kSSAO; }
 
 	Sampler& getSampler()
 		{ return mLinearSampler; }
 
 	std::string getSSAOSamplerName() const
-		{ return "LinearSampler"; }
+        { return kDefaultSampler; }
+
+    virtual void bindResources(RenderGraph&) const override final;
 
 private:
 
@@ -43,12 +47,8 @@ private:
 
 	Sampler mLinearSampler;
 
-	Shader mFullScreenTriangleVertex;
-	Shader mSSAOFragmentShader;
-
 	GraphicsPipelineDescription mPipelineDesc;
 	GraphicsTask mTask;
-	bool mTaskInitialised;
 };
 
 

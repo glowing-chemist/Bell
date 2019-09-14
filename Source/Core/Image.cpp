@@ -177,6 +177,24 @@ void Image::swap(Image& other)
 }
 
 
+Image& Image::operator=(Image&& rhs)
+{
+	swap(rhs);
+
+	return *this;
+}
+
+
+Image::Image(Image&& rhs) :
+	GPUResource(rhs),
+	DeviceChild(rhs)
+{
+	mImage = vk::Image{ nullptr };
+
+	swap(rhs);
+}
+
+
 void Image::setContents(const void* data,
                         const uint32_t xsize,
                         const uint32_t ysize,
@@ -188,7 +206,7 @@ void Image::setContents(const void* data,
                         const int32_t offsetz)
 {
     const uint32_t size = xsize * ysize * zsize * getPixelSize(mFormat);
-    Buffer stagingBuffer = Buffer(getDevice(), vk::BufferUsageFlagBits::eTransferSrc, size, 1, "Staging Buffer");
+    Buffer stagingBuffer(getDevice(), vk::BufferUsageFlagBits::eTransferSrc, size, 1, "Staging Buffer");
 
 	MapInfo mapInfo{};
 	mapInfo.mOffset = 0;

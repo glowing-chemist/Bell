@@ -3,6 +3,7 @@
 
 #include "RenderTask.hpp"
 #include "Core/Shader.hpp"
+#include "Core/Pipeline.hpp"
 
 #include <string>
 #include <vector>
@@ -14,10 +15,6 @@ enum class DispatchType
 	Indirect
 };
 
-struct ComputePipelineDescription 
-{
-    Shader mComputeShader;
-};
 // needed in order to use unordered_map
 namespace std
 {
@@ -41,7 +38,7 @@ public:
     void addDispatch(const uint32_t x, const uint32_t y, const uint32_t z) { mComputeCalls.push_back({DispatchType::Standard, x, y, z, ""}); }
     void addIndirectDispatch(const uint32_t x, const uint32_t y, const uint32_t z) { mComputeCalls.push_back({DispatchType::Indirect, x, y, z, ""}); }
 
-	void addOutput(const std::string& name, const AttachmentType attachmentType, const Format, const LoadOp = LoadOp::Preserve) override
+    void addOutput(const std::string& name, const AttachmentType attachmentType, const Format, const LoadOp = LoadOp::Preserve) override final
     {
         // All outputs needs to be part of the descriptor set for compute pipelies
         // as compuite shaders writes don't go to the framebuffer.
@@ -51,7 +48,7 @@ public:
 	void mergeWith(const RenderTask&) override final;
 
     // Needs to take the graph to be able to lookup indirect buffers tha are bound to the graph.
-	void recordCommands(vk::CommandBuffer, const RenderGraph&, const vulkanResources&) const override;
+    void recordCommands(vk::CommandBuffer, const RenderGraph&, const vulkanResources&) const override final;
 
 	void clearCalls() override final { mComputeCalls.clear(); }
 

@@ -15,7 +15,7 @@ void ComputeTask::recordCommands(vk::CommandBuffer CmdBuffer, const RenderGraph&
 
             case DispatchType::Indirect:
                 CmdBuffer.dispatchIndirect(graph.getBoundBuffer(thunk.mIndirectBuffer).getBuffer(),
-                                           100);
+                                           0);
                 break;
         }
     }

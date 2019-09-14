@@ -3,56 +3,82 @@
 
 void GraphicsTask::recordCommands(vk::CommandBuffer CmdBuffer, const RenderGraph& graph, const vulkanResources& resources) const
 {
+	bool instancedPipelineBound = false;
+	auto bindInstancedPipeline = [&instancedPipelineBound, &CmdBuffer, &resources]()
+	{
+		if (!instancedPipelineBound)
+		{
+			CmdBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, std::static_pointer_cast<GraphicsPipeline>(resources.mPipeline)->getInstancedVariant());
+			instancedPipelineBound = true;
+		}
+	};
+
     for(const auto& thunk : mDrawCalls)
     {
         switch (thunk.mDrawType)
         {
             case DrawType::Standard:
+			{
 				CmdBuffer.draw(thunk.mNumberOfVerticies,
-                               1,
-							   thunk.mVertexOffset,
-                               0);
-                break;
+					1,
+					thunk.mVertexOffset,
+					0);
+				break;
+			}
 
             case DrawType::Indexed:
+			{
 				CmdBuffer.drawIndexed(thunk.mNumberOfIndicies,
-                                      1,
-									  thunk.mIndexOffset,
-									  static_cast<int32_t>(thunk.mVertexOffset),
-                                      0);
-                break;
+					1,
+					thunk.mIndexOffset,
+					static_cast<int32_t>(thunk.mVertexOffset),
+					0);
+				break;
+			}
 
             case DrawType::Instanced:
+			{
+				bindInstancedPipeline();
+
 				CmdBuffer.draw(thunk.mNumberOfVerticies,
-							   thunk.mNumberOfInstances,
-							   thunk.mVertexOffset,
-                               0);
-                break;
+					thunk.mNumberOfInstances,
+					thunk.mVertexOffset,
+					0);
+				break;
+			}
 
             case DrawType::Indirect:
+			{
 				CmdBuffer.drawIndirect(graph.getBoundBuffer(thunk.mIndirectBufferName).getBuffer(),
-                                       0,
-									   thunk.mNumberOfInstances,
-                                       100); // TODO workout what the correct stride should be (maybe pass it down and let user decide)
-                break;
+					0,
+					thunk.mNumberOfInstances,
+					sizeof(vk::DrawIndirectCommand));
+				break;
+			}
 
             case DrawType::IndexedInstanced:
+			{
+				bindInstancedPipeline();
+
 				CmdBuffer.drawIndexed(thunk.mNumberOfIndicies,
-									  thunk.mNumberOfInstances,
-									  thunk.mIndexOffset,
-									  static_cast<int32_t>(thunk.mVertexOffset),
-                                      0);
-                break;
+					thunk.mNumberOfInstances,
+					thunk.mIndexOffset,
+					static_cast<int32_t>(thunk.mVertexOffset),
+					0);
+				break;
+			}
 
             case DrawType::IndexedIndirect:
+			{
 				CmdBuffer.drawIndexedIndirect(graph.getBoundBuffer(thunk.mIndirectBufferName).getBuffer(),
-                                              0,
-											  thunk.mNumberOfInstances,
-                                              100); // TODO workout what the correct stride should be (maybe pass it down and let user decide)
-                break;
+					0,
+					thunk.mNumberOfInstances,
+					sizeof(vk::DrawIndexedIndirectCommand));
+				break;
+			}
 
 			case DrawType::SetPushConstant:
-				CmdBuffer.pushConstants(resources.mPipelineLayout,
+				CmdBuffer.pushConstants(resources.mPipeline->getLayoutHandle(),
 										vk::ShaderStageFlagBits::eAll,
 										0,
 										sizeof(glm::mat4),

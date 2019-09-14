@@ -1,6 +1,15 @@
-#include "Engine/Engine.hpp"
 #include "Core/ConversionUtils.hpp"
 #include "Core/BellLogging.hpp"
+
+#include "Engine/Engine.hpp"
+#include "Engine/PreDepthTechnique.hpp"
+#include "Engine/GBufferTechnique.hpp"
+#include "Engine/GBufferMaterialTechnique.hpp"
+#include "Engine/SSAOTechnique.hpp"
+#include "Engine/BlurXTechnique.hpp"
+#include "Engine/BlurYTechnique.hpp"
+#include "Engine/BlinnPhongTechnique.hpp"
+
 
 Engine::Engine(GLFWwindow* windowPtr) :
     mRenderInstance(windowPtr),
@@ -14,6 +23,8 @@ Engine::Engine(GLFWwindow* windowPtr) :
     mCurrentRenderGraph(),
     mOverlayVertexShader(&mRenderDevice, "./Shaders/Overlay.vert"),
     mOverlayFragmentShader(&mRenderDevice, "./Shaders/Overlay.frag"),
+    mVertexBuffer{getDevice(), vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eTransferDst, 1000, 1000, "Vertex Buffer"},
+    mIndexBuffer{getDevice(), vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eTransferDst, 1000, 1000, "Index Buffer"},
 	mCameraBuffer{},
 	mDeviceCameraBuffer{getDevice(), vk::BufferUsageFlagBits::eUniformBuffer, sizeof(CameraBuffer), sizeof(CameraBuffer), "Camera Buffer"},
 	mSSAOBUffer{},
@@ -29,18 +40,21 @@ Engine::Engine(GLFWwindow* windowPtr) :
 
 void Engine::loadScene(const std::string& path)
 {
-
+    mLoadingScene = Scene(path);
+    mLoadingScene.loadFromFile(VertexAttributes::Position4 | VertexAttributes::TextureCoordinates | VertexAttributes::Normals);
 }
 
 void Engine::transitionScene()
 {
-
+    mCurrentScene = std::move(mLoadingScene);
 }
 
 
 void Engine::setScene(const std::string& path)
 {
-
+    mCurrentScene = Scene(path);
+    // TODO For now don't include material ID, some more work will be needed to expose that correctly.
+    mCurrentScene.loadFromFile(VertexAttributes::Position4 | VertexAttributes::TextureCoordinates | VertexAttributes::Normals);
 }
 
 
@@ -95,13 +109,133 @@ Shader Engine::getShader(const std::string& path)
 }
 
 
+std::unique_ptr<Technique<GraphicsTask>> Engine::getSingleGraphicsTechnique(const PassType passType)
+{
+    switch(passType)
+    {
+        case PassType::DepthPre:
+            return std::make_unique<PreDepthTechnique>(this);
+
+        case PassType::GBuffer:
+            return std::make_unique<GBufferTechnique>(this);
+
+        case PassType::GBufferMaterial:
+            return std::make_unique<GBufferMaterialTechnique>(this);
+
+        case PassType::SSAO:
+            return std::make_unique<SSAOTechnique>(this);
+
+        case PassType::GBufferPreDepth:
+            return std::make_unique<GBufferPreDepthTechnique>(this);
+
+        case PassType::GBUfferMaterialPreDepth:
+            return std::make_unique<GBufferMaterialPreDepthTechnique>(this);
+
+        case PassType::DeferredTextureBlinnPhongLighting:
+            return std::make_unique<BlinnPhongDeferredTexturesTechnique>(this);
+
+        default:
+        {
+            BELL_TRAP;
+            return nullptr;
+        }
+    }
+}
+
+
+std::unique_ptr<PerFrameResource<Technique<GraphicsTask>>> Engine::getGraphicsTechnique(const PassType passType)
+{
+
+}
+
+
+std::unique_ptr<Technique<ComputeTask>> Engine::getSingleComputeTechnique(const PassType passType)
+{
+    switch(passType)
+    {
+        //case PassType::SSAO:
+        //    return std::make_unique<SSAOComputeTechnique>(this);
+
+        //case PassType::InplaceCombine:
+        //    return std::make_unique<InplaceCombineTechnique>(this);
+
+        //case PassType::InplaceCombineSRGB:
+        //    return std::make_unique<InplaceCombineSRGBTechnique>(this);
+
+        default:
+        {
+            BELL_TRAP;
+
+            return nullptr;
+        }
+    }
+}
+
+
+std::unique_ptr<PerFrameResource<Technique<ComputeTask>>> Engine::getComputeTechnique(const PassType passType)
+{
+
+}
+
+
+bool Engine::isGraphicsTask(const PassType passType) const
+{
+    switch(passType)
+    {
+        case PassType::DepthPre:
+            return true;
+
+        case PassType::GBuffer:
+            return true;
+
+        case PassType::GBufferMaterial:
+            return true;
+
+        case PassType::SSAO:
+            return true;
+
+        case PassType::GBufferPreDepth:
+            return true;
+
+        case PassType::GBUfferMaterialPreDepth:
+            return true;
+
+        case PassType::DeferredTextureBlinnPhongLighting:
+            return true;
+
+        default:
+        {
+            return false;
+        }
+    }
+}
+
+
+bool Engine::isComputeTask(const PassType passType) const
+{
+    return false; // curently no compute techniques implemented.
+}
+
+
+std::pair<uint64_t, uint64_t> Engine::addMeshToBuffer(const StaticMesh* mesh)
+{
+    const auto& vertexData = mesh->getVertexData();
+    const auto& indexData = mesh->getIndexData();
+
+    const auto vertexOffset = mVertexBuilder.addData(vertexData);
+    const auto indexOffset = mIndexBuilder.addData(indexData);
+
+    return {vertexOffset, indexOffset};
+}
+
+
 void Engine::recordOverlay(const ImDrawData* drawData)
 {
-	const size_t vertexSize = drawData->TotalVtxCount;
+    const size_t vertexSize = static_cast<size_t>(drawData->TotalVtxCount);
 
     // ImGui uses uin16_t sized indexs (by default) but we always use 32 bit (this wastes some memory here)
     // so override this in imconfig.h
-	const size_t indexSize = drawData->TotalIdxCount;
+    const size_t indexSize = static_cast<size_t>(drawData->TotalIdxCount);
 
 	std::vector<ImDrawVert> vertexData(vertexSize);
 	std::vector<uint32_t> indexData(indexSize);
@@ -134,7 +268,9 @@ void Engine::recordOverlay(const ImDrawData* drawData)
                                      false, // no backface culling
 									 BlendMode::None,
 									 BlendMode::None,
-									 DepthTest::None);
+                                     false, // no depth writes
+									 DepthTest::None,
+									 Primitive::TriangleList);
 
     GraphicsTask task("ImGuiOverlay", desc);
     task.setVertexAttributes(VertexAttributes::Position2 | VertexAttributes::TextureCoordinates | VertexAttributes::Albedo);
@@ -173,19 +309,19 @@ void Engine::render()
 {
 	auto& vertexData = mVertexBuilder.finishRecording();
 
-	Buffer vertexBuffer = createBuffer(vertexData.size(), vertexData.size(), vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eTransferDst, "Vertex Buffer");
-	vertexBuffer.setContents(vertexData.data(), vertexData.size());
-
 	auto& indexData = mIndexBuilder.finishRecording();
 
-	Buffer indexBuffer = createBuffer(indexData.size(), indexData.size(), vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eTransferDst, "Index Buffer");
-	indexBuffer.setContents(indexData.data(), indexData.size());
+    mVertexBuffer->resize(static_cast<uint32_t>(vertexData.size()), false);
+    mIndexBuffer->resize(static_cast<uint32_t>(indexData.size()), false);
 
-	mVertexBuilder = BufferBuilder();
-	mIndexBuilder = BufferBuilder();
+    mVertexBuffer->setContents(vertexData.data(), static_cast<uint32_t>(vertexData.size()));
+    mIndexBuffer->setContents(indexData.data(), static_cast<uint32_t>(indexData.size()));
 
-	mCurrentRenderGraph.bindVertexBuffer(vertexBuffer);
-	mCurrentRenderGraph.bindIndexBuffer(indexBuffer);
+    mVertexBuilder.reset();
+    mIndexBuilder.reset();
+
+    mCurrentRenderGraph.bindVertexBuffer(*mVertexBuffer);
+    mCurrentRenderGraph.bindIndexBuffer(*mIndexBuffer);
 
     mRenderDevice.execute(mCurrentRenderGraph);
 }
@@ -205,11 +341,11 @@ void Engine::updateGlobalUniformBuffers()
 	mapInfo.mSize = sizeof(CameraBuffer);
 	mapInfo.mOffset = 0;
 
-	void* cameraBufferPtr = mDeviceCameraBuffer.map(mapInfo);
+    void* cameraBufferPtr = mDeviceCameraBuffer->map(mapInfo);
 
 		std::memcpy(cameraBufferPtr, &mCameraBuffer, sizeof(CameraBuffer));
 
-	mDeviceCameraBuffer.unmap();
+    mDeviceCameraBuffer->unmap();
 
 	// The SSAO buffer only needs tp be updated once.
 	// Or if the number of samples needs to be changed.
@@ -217,7 +353,7 @@ void Engine::updateGlobalUniformBuffers()
 	{
 		std::array<float3, 16> offsets;
 
-		for(uint i = 0; i < 16; ++i)
+		for(uint32_t i = 0; i < 16; ++i)
 		{
 			const float r1 = (static_cast <float> (rand()) / static_cast <float> (RAND_MAX / 2)) - 1.0f;
 			const float r2 = (static_cast <float> (rand()) / static_cast <float> (RAND_MAX / 2)); // generate vectors on a hemisphere.
@@ -230,7 +366,7 @@ void Engine::updateGlobalUniformBuffers()
 
 		mGeneratedSSAOBuffer = true;
 
-		std::memcpy(&mSSAOBUffer.mOffsets[0], offsets.data(), offsets.size() * sizeof(float4));
+        std::memcpy(&mSSAOBUffer.mOffsets[0], offsets.data(), offsets.size() * sizeof(float3));
 		mSSAOBUffer.mScale = 0.001f;
 		mSSAOBUffer.mOffsetsCount = offsets.size();
 

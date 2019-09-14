@@ -123,7 +123,7 @@ namespace
 Shader::Shader(RenderDevice* device, const std::string& path) :
     DeviceChild{device},
     mFilePath{path},
-    mShaderStage{getShaderStage(mFilePath)}
+    mShaderStage{getShaderStage(mFilePath.string())}
 {
     // Load the glsl Source from disk in to mGLSLSource.
     std::ifstream sourceFile{mFilePath};
@@ -159,7 +159,7 @@ bool Shader::compile()
 	std::string preProcessedShader;
 
 	DirStackFileIncluder includer{};
-	includer.pushExternalLocalDirectory(fs::absolute(mFilePath.parent_path()).c_str());
+	includer.pushExternalLocalDirectory(fs::absolute(mFilePath.parent_path()).string());
 
 	if(!shader.preprocess(&Resources, 100, ENoProfile, false, false, messages, &preProcessedShader, includer))
 	{

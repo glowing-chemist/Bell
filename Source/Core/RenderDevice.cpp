@@ -2,12 +2,14 @@
 #include "RenderInstance.hpp"
 #include "Core/BellLogging.hpp"
 #include "Core/ConversionUtils.hpp"
+#include "Core/Pipeline.hpp"
 
 #include <glslang/Public/ShaderLang.h>
 #include <vulkan/vulkan.hpp>
 
 #include <limits>
 #include <vector>
+
 
 RenderDevice::RenderDevice(vk::Instance instance,
 						   vk::PhysicalDevice physDev,
@@ -72,7 +74,7 @@ RenderDevice::RenderDevice(vk::Instance instance,
 
 RenderDevice::~RenderDevice()
 {
-    mDevice.waitIdle();
+	flushWait();
 
     // destroy the swapchain first so that is can add it's image views to the deferred destruction queue.
     mSwapChain.destroy();
@@ -113,16 +115,16 @@ RenderDevice::~RenderDevice()
 
     for(auto& [desc, graphicsHandles] : mGraphicsPipelineCache)
     {
-        mDevice.destroyPipeline(graphicsHandles.mPipeline);
-        mDevice.destroyPipelineLayout(graphicsHandles.mPipelineLayout);
+        mDevice.destroyPipeline(graphicsHandles.mGraphicsPipeline->getHandle());
+        mDevice.destroyPipelineLayout(graphicsHandles.mGraphicsPipeline->getLayoutHandle());
         mDevice.destroyRenderPass(graphicsHandles.mRenderPass);
         mDevice.destroyDescriptorSetLayout(graphicsHandles.mDescriptorSetLayout);
     }
 
     for(auto& [desc, computeHandles]: mComputePipelineCache)
     {
-        mDevice.destroyPipeline(computeHandles.mPipeline);
-        mDevice.destroyPipelineLayout(computeHandles.mPipelineLayout);
+        mDevice.destroyPipeline(computeHandles.mComputePipeline->getHandle());
+        mDevice.destroyPipelineLayout(computeHandles.mComputePipeline->getLayoutHandle());
         mDevice.destroyDescriptorSetLayout(computeHandles.mDescriptorSetLayout);
     }
 
@@ -196,22 +198,16 @@ uint32_t RenderDevice::getQueueFamilyIndex(const QueueType type) const
 
 GraphicsPipelineHandles RenderDevice::createPipelineHandles(const GraphicsTask& task)
 {
-    if(mGraphicsPipelineCache[task.getPipelineDescription()].mPipeline != vk::Pipeline{nullptr})
+    if(mGraphicsPipelineCache[task.getPipelineDescription()].mGraphicsPipeline)
         return mGraphicsPipelineCache[task.getPipelineDescription()];
 
-    const auto [vertexBindings, vertexAttributes] = generateVertexInput(task);
     const vk::DescriptorSetLayout descSetLayout = generateDescriptorSetLayout(task);
-	const vk::PipelineLayout pipelineLayout = generatePipelineLayout(descSetLayout, task);
     const vk::RenderPass renderPass = generateRenderPass(task);
-	const std::vector<vk::PipelineColorBlendAttachmentState> blendState = generateColourBlendState(task);
-    const vk::Pipeline pipeline = generatePipeline( task,
-                                                    pipelineLayout,
-                                                    vertexBindings,
-                                                    vertexAttributes,
-													renderPass,
-													blendState);
+    const auto pipeline = generatePipeline( task,
+													descSetLayout,
+													renderPass);
 
-    GraphicsPipelineHandles handles{pipeline, pipelineLayout, renderPass, vertexBindings, vertexAttributes, descSetLayout};
+    GraphicsPipelineHandles handles{pipeline, renderPass, descSetLayout};
     mGraphicsPipelineCache[task.getPipelineDescription()] = handles;
 
     return handles;
@@ -220,123 +216,50 @@ GraphicsPipelineHandles RenderDevice::createPipelineHandles(const GraphicsTask& 
 
 ComputePipelineHandles RenderDevice::createPipelineHandles(const ComputeTask& task)
 {
-    if(mComputePipelineCache[task.getPipelineDescription()].mPipeline != vk::Pipeline{nullptr})
+    if(mComputePipelineCache[task.getPipelineDescription()].mComputePipeline->getHandle() != vk::Pipeline{nullptr})
         return mComputePipelineCache[task.getPipelineDescription()];
 
     const vk::DescriptorSetLayout descSetLayout = generateDescriptorSetLayout(task);
-	const vk::PipelineLayout pipelineLayout = generatePipelineLayout(descSetLayout, task);
-    const vk::Pipeline pipeline = generatePipeline(task, pipelineLayout);
+    const auto pipeline = generatePipeline(task, descSetLayout);
 
-    ComputePipelineHandles handles{pipeline, pipelineLayout, descSetLayout};
+    ComputePipelineHandles handles{pipeline, descSetLayout};
     mComputePipelineCache[task.getPipelineDescription()] = handles;
 
     return handles;
 }
 
 
-vk::Pipeline RenderDevice::generatePipeline(const GraphicsTask& task,
-											const vk::PipelineLayout &pipelineLayout,
-											const vk::VertexInputBindingDescription &vertexBinding,
-											const std::vector<vk::VertexInputAttributeDescription> &vertexAttributes,
-											const vk::RenderPass &renderPass,
-											const std::vector<vk::PipelineColorBlendAttachmentState>& blendState)
+std::shared_ptr<GraphicsPipeline> RenderDevice::generatePipeline(const GraphicsTask& task,
+											const vk::DescriptorSetLayout descSetLayout,
+											const vk::RenderPass &renderPass)
 {
     const GraphicsPipelineDescription& pipelineDesc = task.getPipelineDescription();
-    vk::PipelineRasterizationStateCreateInfo rasterInfo = generateRasterizationInfo(task);
-    std::vector<vk::PipelineShaderStageCreateInfo> shaderInfo = generateShaderStagesInfo(task);
+	const vk::PipelineLayout pipelineLayout = generatePipelineLayout(descSetLayout, task);
 
-    vk::PipelineInputAssemblyStateCreateInfo inputAssemblyInfo{};
-    inputAssemblyInfo.setTopology(vk::PrimitiveTopology::eTriangleList);
-    inputAssemblyInfo.setPrimitiveRestartEnable(false);
+	std::shared_ptr<GraphicsPipeline> pipeline = std::make_shared<GraphicsPipeline>(this, pipelineDesc);
+	pipeline->setLayout(pipelineLayout);
+	pipeline->setDescriptorLayout(descSetLayout);
+	pipeline->setFrameBufferBlendStates(task);
+	pipeline->setRenderPass(renderPass);
+	pipeline->setVertexAttributes(task.getVertexAttributes());
 
-    vk::PipelineVertexInputStateCreateInfo vertexInputInfo{};
-    vertexInputInfo.setVertexAttributeDescriptionCount(static_cast<uint32_t>(vertexAttributes.size()));
-    vertexInputInfo.setPVertexAttributeDescriptions(vertexAttributes.data());
-    vertexInputInfo.setVertexBindingDescriptionCount(1);
-    vertexInputInfo.setPVertexBindingDescriptions(&vertexBinding);
+	pipeline->compile(task);
 
-    // Viewport and scissor Rects
-    vk::Extent2D viewportExtent{pipelineDesc.mViewport.x, pipelineDesc.mViewport.y};
-    vk::Extent2D scissorExtent{pipelineDesc.mScissorRect.x, pipelineDesc.mScissorRect.y};
-
-    vk::Viewport viewPort{0.0f, 0.0f, static_cast<float>(viewportExtent.width), static_cast<float>(viewportExtent.height), 0.0f, 1.0f};
-
-    vk::Offset2D offset{0, 0};
-
-    vk::Rect2D scissor{offset, scissorExtent};
-
-    vk::PipelineViewportStateCreateInfo viewPortInfo{};
-    viewPortInfo.setPScissors(&scissor);
-    viewPortInfo.setPViewports(&viewPort);
-    viewPortInfo.setScissorCount(1);
-    viewPortInfo.setViewportCount(1);
-
-    vk::PipelineMultisampleStateCreateInfo multiSampInfo{};
-    multiSampInfo.setSampleShadingEnable(false);
-    multiSampInfo.setRasterizationSamples(vk::SampleCountFlagBits::e1);
-
-    vk::PipelineColorBlendStateCreateInfo blendStateInfo{};
-	blendStateInfo.setLogicOpEnable(false);
-	blendStateInfo.setAttachmentCount(static_cast<uint32_t>(blendState.size()));
-	blendStateInfo.setPAttachments(blendState.data());
-
-    vk::PipelineDepthStencilStateCreateInfo depthStencilInfo{};
-    const bool depthTest = pipelineDesc.mDepthTest != DepthTest::None;
-    depthStencilInfo.setDepthTestEnable(depthTest);
-    depthStencilInfo.setDepthWriteEnable(depthTest);
-    depthStencilInfo.setDepthCompareOp([testOp = pipelineDesc.mDepthTest] {
-       switch(testOp)
-       {
-            case DepthTest::Less:
-                return vk::CompareOp::eLess;
-            case DepthTest::None:
-                return vk::CompareOp::eNever;
-            case DepthTest::LessEqual:
-                return vk::CompareOp::eLessOrEqual;
-            case DepthTest::Equal:
-                return vk::CompareOp::eEqual;
-            case DepthTest::GreaterEqual:
-                return vk::CompareOp::eGreaterOrEqual;
-            case DepthTest::Greater:
-                return vk::CompareOp::eGreater;
-       }
-    }());
-    depthStencilInfo.setDepthBoundsTestEnable(false);
-
-    vk::GraphicsPipelineCreateInfo pipelineCreateInfo{};
-    pipelineCreateInfo.setStageCount(static_cast<uint32_t>(shaderInfo.size()));
-    pipelineCreateInfo.setPStages(shaderInfo.data());
-    pipelineCreateInfo.setPVertexInputState(&vertexInputInfo);
-    pipelineCreateInfo.setPInputAssemblyState(&inputAssemblyInfo);
-    pipelineCreateInfo.setPTessellationState(nullptr); // We don't handle tesselation shaders yet
-    pipelineCreateInfo.setPViewportState(&viewPortInfo);
-    pipelineCreateInfo.setPRasterizationState(&rasterInfo);
-    pipelineCreateInfo.setPColorBlendState(&blendStateInfo);
-    pipelineCreateInfo.setPMultisampleState(&multiSampInfo);
-    pipelineCreateInfo.setPDepthStencilState(&depthStencilInfo);
-    pipelineCreateInfo.setPDynamicState(nullptr);
-    pipelineCreateInfo.setLayout(pipelineLayout);
-    pipelineCreateInfo.setRenderPass(renderPass);
-
-    return mDevice.createGraphicsPipeline(nullptr, pipelineCreateInfo);
+	return pipeline;
 }
 
 
-vk::Pipeline RenderDevice::generatePipeline(const ComputeTask& task,
-                                            const vk::PipelineLayout& pipelineLayout)
+std::shared_ptr<ComputePipeline> RenderDevice::generatePipeline(const ComputeTask& task,
+                                            const vk::DescriptorSetLayout& descriptorSetLayout)
 {
-    const ComputePipelineDescription PipelineDesc = task.getPipelineDescription();
+    const ComputePipelineDescription pipelineDesc = task.getPipelineDescription();
+	const vk::PipelineLayout pipelineLayout = generatePipelineLayout(descriptorSetLayout, task);
 
-    vk::PipelineShaderStageCreateInfo computeShaderInfo{};
-    computeShaderInfo.setModule(PipelineDesc.mComputeShader.getShaderModule());
-    computeShaderInfo.setPName("main");
-    computeShaderInfo.setStage(vk::ShaderStageFlagBits::eCompute);
+	std::shared_ptr<ComputePipeline> pipeline = std::make_unique<ComputePipeline>(this, pipelineDesc);
+	pipeline->setLayout(pipelineLayout);
+	pipeline->compile(task);
 
-    vk::ComputePipelineCreateInfo pipelineInfo{};
-    pipelineInfo.setStage(computeShaderInfo);
-    pipelineInfo.setLayout(pipelineLayout);
-
-    return mDevice.createComputePipeline(nullptr, pipelineInfo);
+	return pipeline;
 }
 
 
@@ -428,30 +351,14 @@ vk::RenderPass	RenderDevice::generateRenderPass(const GraphicsTask& task)
 }
 
 
-vk::PipelineRasterizationStateCreateInfo RenderDevice::generateRasterizationInfo(const GraphicsTask& task)
+std::vector<vk::PipelineShaderStageCreateInfo> RenderDevice::generateShaderStagesInfo(GraphicsPipelineDescription& pipelineDesc)
 {
-    const GraphicsPipelineDescription pipelineDesc = task.getPipelineDescription();
-
-    vk::PipelineRasterizationStateCreateInfo rastInfo{};
-    rastInfo.setRasterizerDiscardEnable(false);
-    rastInfo.setDepthBiasClamp(false);
-    rastInfo.setPolygonMode(vk::PolygonMode::eFill); // output filled in fragments
-    rastInfo.setLineWidth(1.0f);
-    if(pipelineDesc.mUseBackFaceCulling){
-        rastInfo.setCullMode(vk::CullModeFlagBits::eBack); // cull fragments from the back
-        rastInfo.setFrontFace(vk::FrontFace::eClockwise);
-    } else {
-        rastInfo.setCullMode(vk::CullModeFlagBits::eNone);
-    }
-    rastInfo.setDepthBiasEnable(false);
-
-    return rastInfo;
-}
-
-
-std::vector<vk::PipelineShaderStageCreateInfo> RenderDevice::generateShaderStagesInfo(const GraphicsTask& task)
-{
-    const GraphicsPipelineDescription pipelineDesc = task.getPipelineDescription();
+	// Make sure that all shaders have been compiled by this point.
+	if (!pipelineDesc.mVertexShader.hasBeenCompiled())
+	{
+		pipelineDesc.mVertexShader.compile();
+		pipelineDesc.mFragmentShader.compile();
+	}
 
     std::vector<vk::PipelineShaderStageCreateInfo> shaderStages;
 
@@ -463,6 +370,9 @@ std::vector<vk::PipelineShaderStageCreateInfo> RenderDevice::generateShaderStage
 
     if(pipelineDesc.mGeometryShader)
     {
+		if (!pipelineDesc.mGeometryShader.value().hasBeenCompiled())
+			pipelineDesc.mGeometryShader.value().compile();
+
         vk::PipelineShaderStageCreateInfo geometryStage{};
         geometryStage.setStage(vk::ShaderStageFlagBits::eGeometry);
         geometryStage.setPName("main"); //entry point of the shader
@@ -472,6 +382,9 @@ std::vector<vk::PipelineShaderStageCreateInfo> RenderDevice::generateShaderStage
 
     if(pipelineDesc.mHullShader)
     {
+		if (!pipelineDesc.mHullShader.value().hasBeenCompiled())
+			pipelineDesc.mHullShader.value().compile();
+
         vk::PipelineShaderStageCreateInfo hullStage{};
         hullStage.setStage(vk::ShaderStageFlagBits::eTessellationControl);
         hullStage.setPName("main"); //entry point of the shader
@@ -479,8 +392,11 @@ std::vector<vk::PipelineShaderStageCreateInfo> RenderDevice::generateShaderStage
         shaderStages.push_back(hullStage);
     }
 
-    if(pipelineDesc.mHullShader)
+    if(pipelineDesc.mTesselationControlShader)
     {
+		if (!pipelineDesc.mTesselationControlShader.value().hasBeenCompiled())
+			pipelineDesc.mTesselationControlShader.value().compile();
+
         vk::PipelineShaderStageCreateInfo tesseStage{};
         tesseStage.setStage(vk::ShaderStageFlagBits::eTessellationEvaluation);
         tesseStage.setPName("main"); //entry point of the shader
@@ -496,6 +412,54 @@ std::vector<vk::PipelineShaderStageCreateInfo> RenderDevice::generateShaderStage
 
     return shaderStages;
 }
+
+
+std::vector<vk::PipelineShaderStageCreateInfo> RenderDevice::generateIndexedShaderStagesInfo(GraphicsPipelineDescription& pipelineDesc)
+{
+	std::vector<vk::PipelineShaderStageCreateInfo> shaderStages;
+
+	vk::PipelineShaderStageCreateInfo vertexStage{};
+	vertexStage.setStage(vk::ShaderStageFlagBits::eVertex);
+	vertexStage.setPName("main"); //entry point of the shader
+	vertexStage.setModule(pipelineDesc.mInstancedVertexShader.value().getShaderModule());
+	shaderStages.push_back(vertexStage);
+
+	if (pipelineDesc.mGeometryShader)
+	{
+		vk::PipelineShaderStageCreateInfo geometryStage{};
+		geometryStage.setStage(vk::ShaderStageFlagBits::eGeometry);
+		geometryStage.setPName("main"); //entry point of the shader
+		geometryStage.setModule(pipelineDesc.mGeometryShader.value().getShaderModule());
+		shaderStages.push_back(geometryStage);
+	}
+
+	if (pipelineDesc.mHullShader)
+	{
+		vk::PipelineShaderStageCreateInfo hullStage{};
+		hullStage.setStage(vk::ShaderStageFlagBits::eTessellationControl);
+		hullStage.setPName("main"); //entry point of the shader
+		hullStage.setModule(pipelineDesc.mHullShader.value().getShaderModule());
+		shaderStages.push_back(hullStage);
+	}
+
+	if (pipelineDesc.mHullShader)
+	{
+		vk::PipelineShaderStageCreateInfo tesseStage{};
+		tesseStage.setStage(vk::ShaderStageFlagBits::eTessellationEvaluation);
+		tesseStage.setPName("main"); //entry point of the shader
+		tesseStage.setModule(pipelineDesc.mTesselationControlShader.value().getShaderModule());
+		shaderStages.push_back(tesseStage);
+	}
+
+	vk::PipelineShaderStageCreateInfo fragmentStage{};
+	fragmentStage.setStage(vk::ShaderStageFlagBits::eFragment);
+	fragmentStage.setPName("main"); //entry point of the shader
+	fragmentStage.setModule(pipelineDesc.mFragmentShader.getShaderModule());
+	shaderStages.push_back(fragmentStage);
+
+	return shaderStages;
+}
+
 
 
 vk::DescriptorSetLayout RenderDevice::generateDescriptorSetLayout(const RenderTask& task)
@@ -560,130 +524,6 @@ vk::DescriptorSetLayout RenderDevice::generateDescriptorSetLayout(const RenderTa
 }
 
 
-std::pair<vk::VertexInputBindingDescription, std::vector<vk::VertexInputAttributeDescription>> RenderDevice::generateVertexInput(const GraphicsTask& task)
-{
-    const int vertexInputs = task.getVertexAttributes();
-
-	const bool hasPosition2 = vertexInputs & VertexAttributes::Position2;
-	const bool hasPosition3 = vertexInputs & VertexAttributes::Position3;
-	const bool hasPosition4 = vertexInputs & VertexAttributes::Position4;
-	const bool hasTextureCoords = vertexInputs & VertexAttributes::TextureCoordinates;
-    const bool hasNormals = vertexInputs & VertexAttributes::Normals;
-    const bool hasAlbedo = vertexInputs & VertexAttributes::Albedo;
-	const bool hasMaterial = vertexInputs & VertexAttributes::Material;
-
-	uint32_t positionSize = 0;
-	if(hasPosition2)
-		positionSize = 8;
-	else if(hasPosition3)
-		positionSize = 12;
-	else if(hasPosition4)
-		positionSize = 16;
-
-    const uint32_t vertexStride = positionSize + (hasTextureCoords ? 8 : 0) + (hasNormals ? 16 : 0) + (hasAlbedo ? 4 : 0) + (hasMaterial ? 4 : 0);
-
-    vk::VertexInputBindingDescription bindingDesc{};
-	bindingDesc.setStride(vertexStride);
-    bindingDesc.setBinding(0);
-    bindingDesc.setInputRate(vk::VertexInputRate::eVertex); // only support the same model for instances draws currently.
-
-    std::vector<vk::VertexInputAttributeDescription> attribs;
-    uint8_t currentOffset = 0;
-    uint8_t currentLocation  = 0;
-
-	if(hasPosition2)
-	{
-		vk::VertexInputAttributeDescription attribDescPos{};
-		attribDescPos.setBinding(0);
-		attribDescPos.setLocation(currentLocation);
-		attribDescPos.setFormat(vk::Format::eR32G32Sfloat);
-		attribDescPos.setOffset(currentOffset);
-
-		attribs.push_back(attribDescPos);
-		currentOffset += 8;
-		++currentLocation;
-	}
-
-	if(hasPosition3)
-	{
-		vk::VertexInputAttributeDescription attribDescPos{};
-		attribDescPos.setBinding(0);
-		attribDescPos.setLocation(currentLocation);
-        attribDescPos.setFormat(vk::Format::eR32G32B32Sfloat);
-		attribDescPos.setOffset(currentOffset);
-
-		attribs.push_back(attribDescPos);
-		currentOffset += 12;
-		++currentLocation;
-	}
-
-	if(hasPosition4)
-    {
-        vk::VertexInputAttributeDescription attribDescPos{};
-        attribDescPos.setBinding(0);
-        attribDescPos.setLocation(currentLocation);
-        attribDescPos.setFormat(vk::Format::eR32G32B32A32Sfloat);
-        attribDescPos.setOffset(currentOffset);
-
-        attribs.push_back(attribDescPos);
-		currentOffset += 16;
-        ++currentLocation;
-    }
-
-    if(hasTextureCoords)
-    {
-        vk::VertexInputAttributeDescription attribDescTex{};
-        attribDescTex.setBinding(0);
-        attribDescTex.setLocation(currentLocation);
-        attribDescTex.setFormat(vk::Format::eR32G32Sfloat);
-        attribDescTex.setOffset(currentOffset);
-
-        attribs.push_back(attribDescTex);
-        currentOffset += 8;
-        ++currentLocation;
-    }
-
-    if(hasNormals)
-    {
-        vk::VertexInputAttributeDescription attribDescNormal{};
-        attribDescNormal.setBinding(0);
-        attribDescNormal.setLocation(currentLocation);
-        attribDescNormal.setFormat(vk::Format::eR32G32B32A32Sfloat);
-        attribDescNormal.setOffset(currentOffset);
-
-        attribs.push_back(attribDescNormal);
-        currentOffset += 16;
-        ++currentLocation;
-    }
-
-    if(hasAlbedo)
-    {
-        vk::VertexInputAttributeDescription attribDescAlbedo{};
-        attribDescAlbedo.setBinding(0);
-        attribDescAlbedo.setLocation(currentLocation);
-		attribDescAlbedo.setFormat(vk::Format::eR8G8B8A8Unorm);
-        attribDescAlbedo.setOffset(currentOffset);
-
-        attribs.push_back(attribDescAlbedo);
-		currentOffset += 4;
-		++currentLocation;
-    }
-
-	if(hasMaterial)
-	{
-		vk::VertexInputAttributeDescription attribDescAlbedo{};
-		attribDescAlbedo.setBinding(0);
-		attribDescAlbedo.setLocation(currentLocation);
-		attribDescAlbedo.setFormat(vk::Format::eR32Uint);
-		attribDescAlbedo.setOffset(currentOffset);
-
-		attribs.push_back(attribDescAlbedo);
-	}
-
-    return {bindingDesc, attribs};
-}
-
-
 vk::PipelineLayout RenderDevice::generatePipelineLayout(vk::DescriptorSetLayout descLayout, const RenderTask& task)
 {
     vk::PipelineLayoutCreateInfo info{};
@@ -712,73 +552,6 @@ vk::PipelineLayout RenderDevice::generatePipelineLayout(vk::DescriptorSetLayout 
 }
 
 
-std::vector<vk::PipelineColorBlendAttachmentState> RenderDevice::generateColourBlendState(const GraphicsTask& task)
-{
-	std::vector<vk::PipelineColorBlendAttachmentState> blendState;
-
-	const auto& outputAttachments = task.getOuputAttachments();
-	const auto pipelineDesc = task.getPipelineDescription();
-
-	const auto blendAdjuster = [](const BlendMode op)
-	{
-		vk::BlendOp adjustedOp;
-
-		switch(op)
-		{
-			case BlendMode::Add:
-				adjustedOp = vk::BlendOp::eAdd;
-				break;
-
-			case BlendMode::Subtract:
-				adjustedOp = vk::BlendOp::eSubtract;
-				break;
-
-			case BlendMode::ReverseSubtract:
-				adjustedOp = vk::BlendOp::eReverseSubtract;
-				break;
-
-			case BlendMode::Min:
-				adjustedOp = vk::BlendOp::eMin;
-				break;
-
-			case BlendMode::Max:
-				adjustedOp = vk::BlendOp::eMax;
-				break;
-
-			default:
-				adjustedOp = vk::BlendOp::eAdd;
-		}
-
-		return adjustedOp;
-	};
-
-	for(const auto& [name, type, format, loadOp] : outputAttachments)
-	{
-		// Don't generate blend info for depth attachments.
-		if(format == Format::D32Float || format == Format::D24S8Float)
-			continue;
-
-		const vk::BlendOp alphaBlendOp = blendAdjuster(pipelineDesc.mAlphaBlendMode);
-		const vk::BlendOp colourBlendop = blendAdjuster(pipelineDesc.mColourBlendMode);
-
-		vk::PipelineColorBlendAttachmentState colorAttachState{};
-		// write to all components by default.
-		colorAttachState.setColorWriteMask(vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG |  vk::ColorComponentFlagBits::eB |  vk::ColorComponentFlagBits::eA); // write to all color components
-		colorAttachState.setBlendEnable(pipelineDesc.mColourBlendMode != BlendMode::None);
-		colorAttachState.setColorBlendOp(colourBlendop);
-		colorAttachState.setAlphaBlendOp(alphaBlendOp);
-		colorAttachState.setSrcColorBlendFactor(vk::BlendFactor::eSrcColor);
-		colorAttachState.setDstColorBlendFactor(vk::BlendFactor::eDstColor);
-		colorAttachState.setSrcAlphaBlendFactor(vk::BlendFactor::eSrcAlpha);
-		colorAttachState.setDstAlphaBlendFactor(vk::BlendFactor::eDstAlpha);
-
-		blendState.push_back(colorAttachState);
-	}
-
-	return blendState;
-}
-
-
 void RenderDevice::generateVulkanResources(RenderGraph& graph)
 {
 	auto task = graph.taskBegin();
@@ -787,7 +560,7 @@ void RenderDevice::generateVulkanResources(RenderGraph& graph)
 
 	while( task != graph.taskEnd())
     {
-		if ((*resource).mPipeline != vk::Pipeline{ nullptr })
+		if ((*resource).mPipeline && (*resource).mPipeline->getHandle() != vk::Pipeline{ nullptr })
 		{
 			++task;
 			++resource;
@@ -800,12 +573,9 @@ void RenderDevice::generateVulkanResources(RenderGraph& graph)
             GraphicsPipelineHandles pipelineHandles = createPipelineHandles(graphicsTask);
 
             vulkanResources& taskResources = *resource;
-            taskResources.mPipeline = pipelineHandles.mPipeline;
-            taskResources.mPipelineLayout = pipelineHandles.mPipelineLayout;
+            taskResources.mPipeline = pipelineHandles.mGraphicsPipeline;
             taskResources.mDescSetLayout = pipelineHandles.mDescriptorSetLayout;
             taskResources.mRenderPass = pipelineHandles.mRenderPass;
-            taskResources.mVertexBindingDescription = pipelineHandles.mVertexBindingDescription;
-            taskResources.mVertexAttributeDescription = pipelineHandles.mVertexAttributeDescription;
             // Frame buffers and descset get created/written in a diferent place.
         }
         else
@@ -814,8 +584,7 @@ void RenderDevice::generateVulkanResources(RenderGraph& graph)
             ComputePipelineHandles pipelineHandles = createPipelineHandles(computeTask);
 
             vulkanResources& taskResources = *resource;
-            taskResources.mPipeline = pipelineHandles.mPipeline;
-            taskResources.mPipelineLayout = pipelineHandles.mPipelineLayout;
+            taskResources.mPipeline = pipelineHandles.mComputePipeline;
             taskResources.mDescSetLayout = pipelineHandles.mDescriptorSetLayout;
         }
 		++task;
@@ -1062,7 +831,7 @@ void RenderDevice::execute(RenderGraph& graph)
             passBegin.setRenderArea(renderArea);
             if(!clearValues.empty())
             {
-                passBegin.setClearValueCount(clearValues.size());
+                passBegin.setClearValueCount(static_cast<uint32_t>(clearValues.size()));
                 passBegin.setPClearValues(clearValues.data());
             }
 
@@ -1082,7 +851,7 @@ void RenderDevice::execute(RenderGraph& graph)
         vk::CommandBuffer& secondaryCmdBuffer = currentCommandPool->getBufferForQueue(QueueType::Graphics, cmdBufferIndex);
         secondaryCmdBuffer.begin(secondaryBegin);
 
-        secondaryCmdBuffer.bindPipeline(bindPoint, resources.mPipeline);
+        secondaryCmdBuffer.bindPipeline(bindPoint, resources.mPipeline->getHandle());
 
         if(graph.getVertexBuffer())
             secondaryCmdBuffer.bindVertexBuffers(0, { graph.getVertexBuffer()->getBuffer() }, {0});
@@ -1092,7 +861,7 @@ void RenderDevice::execute(RenderGraph& graph)
 
         // Don't bind descriptor sets if we have no input attachments.
 		if (resources.mDescSet != vk::DescriptorSet{ nullptr })
-            secondaryCmdBuffer.bindDescriptorSets(bindPoint, resources.mPipelineLayout, 0, 1,  &resources.mDescSet, 0, nullptr);
+            secondaryCmdBuffer.bindDescriptorSets(bindPoint, resources.mPipeline->getLayoutHandle(), 0, 1,  &resources.mDescSet, 0, nullptr);
 
 		(*task).recordCommands(secondaryCmdBuffer, graph, resources);
 

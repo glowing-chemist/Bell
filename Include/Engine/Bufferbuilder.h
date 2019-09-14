@@ -17,6 +17,11 @@ public:
 		return mBytes;
 	}
 
+    void reset()
+    {
+        mBytes.clear();
+    }
+
 private:
 
 	std::vector<unsigned char> mBytes;

@@ -29,11 +29,7 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallbackFunc(
 
     BELL_LOG_ARGS("VALIDATION LAYER: %s", msg)
 
-#ifdef _MSC_VER 
-	__debugbreak;
-#else
-    asm("int3");
-#endif
+    BELL_TRAP;
 
     return true;
 

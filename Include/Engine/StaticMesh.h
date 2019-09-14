@@ -46,12 +46,12 @@ public:
 
     void addPass(const PassType passType)
     {
-        mPassTypes = static_cast<PassType>(static_cast<uint64_t>(mPassTypes) | static_cast<uint64_t>(passType));
+        mPassTypes |= static_cast<uint64_t>(passType);
     }
 
     PassType getPassTypes() const
     {
-        return mPassTypes;
+        return static_cast<PassType>(mPassTypes);
     }
 
 private:
@@ -68,7 +68,7 @@ private:
     std::vector<uint32_t> mIndexData;
 	AABB mAABB;
 
-    PassType mPassTypes;
+    uint64_t mPassTypes;
 };
 
 #endif

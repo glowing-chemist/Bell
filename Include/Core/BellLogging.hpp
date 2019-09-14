@@ -19,23 +19,17 @@
 
 #endif
 
-
-// BELL_ASSRT
-#ifndef NDEBUG
-
-#define BELL_ASSERT(condition, msg) if(!(condition)) printf(msg #condition);
-
-#else
-
-#define BELL_ASSERT(condition, msg)
-
-#endif
-
-
 // BELL_TRAP
 #ifndef NDEBUG
 
+#ifdef _MSC_VER
+
+#define BELL_TRAP __debugbreak
+
+#else
 #define BELL_TRAP __asm("int3")
+
+#endif
 
 #else
 
@@ -43,5 +37,16 @@
 
 #endif
 
+
+// BELL_ASSRT
+#ifndef NDEBUG
+
+#define BELL_ASSERT(condition, msg) if(!(condition)) { printf(msg #condition); BELL_TRAP; }
+
+#else
+
+#define BELL_ASSERT(condition, msg)
+
+#endif
 
 #endif

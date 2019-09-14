@@ -3,6 +3,7 @@
 
 #include "Core/RenderInstance.hpp"
 #include "Core/RenderDevice.hpp"
+#include "Core/PerFrameResource.hpp"
 
 #include "RenderGraph/RenderGraph.hpp"
 
@@ -42,6 +43,12 @@ public:
 
     Camera& getCurrentSceneCamera();
 
+    BufferBuilder& getVertexBufferBuilder()
+    { return mVertexBuilder; }
+
+    BufferBuilder& getIndexBufferBuilder()
+    { return mIndexBuilder; }
+
 	Image&  getSwapChainImage()
 		{ return mRenderDevice.getSwapChainImage(); }
 
@@ -64,6 +71,17 @@ public:
 						const std::string& = "");
 
 	Shader getShader(const std::string& path);
+
+    bool isGraphicsTask(const PassType) const;
+    bool isComputeTask(const PassType) const;
+
+    std::unique_ptr<Technique<GraphicsTask>>                   getSingleGraphicsTechnique(const PassType);
+    std::unique_ptr<PerFrameResource<Technique<GraphicsTask>>> getGraphicsTechnique(const PassType);
+    std::unique_ptr<Technique<ComputeTask>>                    getSingleComputeTechnique(const PassType);
+    std::unique_ptr<PerFrameResource<Technique<ComputeTask>>>  getComputeTechnique(const PassType);
+
+    // returns an vertex and index buffer offset.
+    std::pair<uint64_t, uint64_t> addMeshToBuffer(const StaticMesh*);
 
     void   setImageInScene(const std::string& name, const ImageView& image)
 		{ mCurrentRenderGraph.bindImage(name, image); }
@@ -124,11 +142,14 @@ private:
 
 	std::unordered_map<std::string, Shader> mShaderCache;
 
+    PerFrameResource<Buffer> mVertexBuffer;
+    PerFrameResource<Buffer> mIndexBuffer;
+
 	// Global uniform buffers
 
 	// Name: CameraBuffer
 	CameraBuffer mCameraBuffer;
-	Buffer mDeviceCameraBuffer;
+    PerFrameResource<Buffer> mDeviceCameraBuffer;
 
 	// Name: SSAOBuffer
 	SSAOBuffer mSSAOBUffer;

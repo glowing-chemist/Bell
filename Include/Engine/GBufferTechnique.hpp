@@ -9,6 +9,7 @@
 #include "RenderGraph/GraphicsTask.hpp"
 
 #include "Engine.hpp"
+#include "Engine/DefaultResourceSlots.hpp"
 
 
 class GBufferTechnique : public Technique<GraphicsTask>
@@ -20,7 +21,8 @@ public:
 	virtual PassType getPassType() const final override
 		{ return PassType::GBuffer; }
 
-	virtual GraphicsTask& getTaskToRecord() final override;
+    virtual GraphicsTask& getTask() final override
+    { return mTask; }
 
 	Image& getDepthImage()
 		{ return mDepthImage; }
@@ -29,7 +31,7 @@ public:
 		{ return mDepthView; }
 
 	std::string getDepthName() const
-		{ return "GBuffer Depth"; }
+        { return kGBufferDepth; }
 
 
 	Image& getAlbedoImage()
@@ -39,7 +41,7 @@ public:
 		{ return mAlbedoView; }
 
 	std::string getAlbedoName() const
-		{ return "GBuffer Albedo"; }
+        { return kGBufferAlbedo; }
 
 
 	Image& getNormalsImage()
@@ -49,7 +51,7 @@ public:
 		{ return mNormalsView; }
 
 	std::string getNormalsName() const
-	 { return "GBuffer Normals"; }
+     { return kGBufferNormals; }
 
 
 	Image& getSpecularImage()
@@ -59,7 +61,9 @@ public:
 		{ return mSpecularView; }
 
 	std::string getSpecularName() const
-		{ return "Gbuffer Specular"; }
+        { return kGBufferSpecular; }
+
+    virtual void bindResources(RenderGraph&) const override final;
 
 private:
 
@@ -77,7 +81,70 @@ private:
 
 	GraphicsPipelineDescription mPipelineDescription;
 	GraphicsTask mTask;
-	bool mTaskInitialised;
+};
+
+
+class GBufferPreDepthTechnique : public Technique<GraphicsTask>
+{
+public:
+    GBufferPreDepthTechnique(Engine*);
+    virtual ~GBufferPreDepthTechnique() = default;
+
+    virtual PassType getPassType() const final override
+        { return PassType::GBufferPreDepth; }
+
+    void setDepthName(const std::string& depthName)
+    {  mDepthName = depthName; }
+
+    virtual GraphicsTask& getTask() final override
+    { return mTask; }
+
+    Image& getAlbedoImage()
+        { return mAlbedoImage; }
+
+    ImageView& getAlbedoView()
+        { return mAlbedoView; }
+
+    std::string getAlbedoName() const
+        { return kGBufferAlbedo; }
+
+
+    Image& getNormalsImage()
+        { return mNormalsImage; }
+
+    ImageView& getNormalsView()
+        { return mNormalsView; }
+
+    std::string getNormalsName() const
+     { return kGBufferNormals; }
+
+
+    Image& getSpecularImage()
+        { return mSpecularImage; }
+
+    ImageView& getSpecularView()
+        { return mSpecularView; }
+
+    std::string getSpecularName() const
+        { return kGBufferSpecular; }
+
+    virtual void bindResources(RenderGraph&) const override final;
+
+private:
+
+    std::string mDepthName;
+
+    Image mAlbedoImage;
+    ImageView mAlbedoView;
+
+    Image mNormalsImage;
+    ImageView mNormalsView;
+
+    Image mSpecularImage;
+    ImageView mSpecularView;
+
+    GraphicsPipelineDescription mPipelineDescription;
+    GraphicsTask mTask;
 };
 
 
