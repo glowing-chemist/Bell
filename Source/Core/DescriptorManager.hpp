@@ -41,11 +41,11 @@ private:
         bool operator()(const std::vector<std::pair<std::string, AttachmentType>>& lhs,
                       const std::vector<std::pair<std::string, AttachmentType>>& rhs) const noexcept
         {
-            return std::equal(lhs.begin(), lhs.end(), rhs.begin(), rhs.end(), [] (const std::pair<std::string, AttachmentType>& lhs,
-                                                                                 const std::pair<std::string, AttachmentType>& rhs)
-            {
-                return lhs.second < rhs.second;
-            });
+			return std::lexicographical_compare(lhs.begin(), lhs.end(), rhs.begin(), rhs.end(), [] (const std::pair<std::string, AttachmentType>& lhs,
+																								   const std::pair<std::string, AttachmentType>& rhs)
+							  {
+								  return lhs.second < rhs.second;
+							  });
         }
     };
 
