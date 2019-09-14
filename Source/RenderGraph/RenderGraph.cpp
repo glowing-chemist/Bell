@@ -114,7 +114,7 @@ void RenderGraph::addDependancy(const std::string& dependancy, const std::string
 
 void RenderGraph::compileDependancies()
 {
-    std::set<std::pair<uint32_t, uint32_t>> mDependancies;
+	std::set<std::pair<uint32_t, uint32_t>> dependancies;
 
     for(size_t i = 0; i < mTaskOrder.size(); ++i)
     {
@@ -139,7 +139,7 @@ void RenderGraph::compileDependancies()
                         if(outResources[outerIndex].mName == inResources[innerIndex].first)
                         {
                             // Innertask reads from a
-                            mDependancies.insert({i, j});
+							dependancies.insert({i, j});
                         }
                     }
                 }
@@ -162,13 +162,15 @@ void RenderGraph::compileDependancies()
                                  outResources[outerIndex].second == AttachmentType::IndirectBuffer))
                         {
                             // Innertask reads from a
-                            mDependancies.insert({i, j});
+							dependancies.insert({i, j});
                         }
                     }
                 }
             }
         }
     }
+
+	mTaskDependancies.insert(mTaskDependancies.begin(), dependancies.begin(), dependancies.end());
 }
 
 
