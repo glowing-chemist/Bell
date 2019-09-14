@@ -18,55 +18,58 @@ class StaticMesh
 {
 public:
 	
-	StaticMesh(const std::string& filePath, const int vertexAttributes);
-	StaticMesh(const std::string& filePath, const int vertexAttributes, const uint32_t materialID);
+    StaticMesh(const std::string& filePath, const int vertexAttributes);
+    StaticMesh(const std::string& filePath, const int vertexAttributes, const uint32_t materialID);
     StaticMesh(const aiMesh* mesh, const int vertexAttributes, const uint32_t materialID);
     StaticMesh(const aiMesh* mesh, const int vertexAttributes);
 
 
-	const AABB& getAABB() const
-	{
-		return mAABB;
-	}
+    const AABB& getAABB() const
+    {
+	return mAABB;
+    }
 
     AABB& getAABB()
     {
-        return mAABB;
+	return mAABB;
     }
 
-	const std::vector<unsigned char>& getVertexData() const
-	{
-        return mVertexData;
-	}
+    const std::vector<unsigned char>& getVertexData() const
+    {
+	return mVertexData;
+    }
 
     const std::vector<uint32_t>& getIndexData() const
-	{
-        return mIndexData;
-	}
+    {
+	return mIndexData;
+    }
 
     void addPass(const PassType passType)
     {
-        mPassTypes |= static_cast<uint64_t>(passType);
+	mPassTypes |= static_cast<uint64_t>(passType);
     }
 
     PassType getPassTypes() const
     {
-        return static_cast<PassType>(mPassTypes);
+	return static_cast<PassType>(mPassTypes);
     }
 
 private:
 
+    void configure(const aiMesh* mesh, const int vertexAttributes, const uint32_t materialID);
+    void configure(const aiMesh* mesh, const int vertexAttributes);
+
     void writeVertexVector4(const aiVector3D&, const uint32_t);
     void writeVertexVector2(const aiVector2D&, const uint32_t);
-	void writeVertexFloat(const float, const uint32_t);
-	void WriteVertexInt(const uint32_t, const uint32_t);
+    void writeVertexFloat(const float, const uint32_t);
+    void WriteVertexInt(const uint32_t, const uint32_t);
 
-	uint32_t getPrimitiveSize(const aiPrimitiveType) const;
+    uint32_t getPrimitiveSize(const aiPrimitiveType) const;
 
 
-	std::vector<unsigned char> mVertexData;
+    std::vector<unsigned char> mVertexData;
     std::vector<uint32_t> mIndexData;
-	AABB mAABB;
+    AABB mAABB;
 
     uint64_t mPassTypes;
 };

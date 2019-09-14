@@ -25,7 +25,7 @@ StaticMesh::StaticMesh(const std::string& path, const int vertAttributes) :
 
     const aiMesh* mesh = model->mMeshes[0];
 
-    StaticMesh(mesh, vertAttributes);
+	configure(mesh, vertAttributes);
 }
 
 
@@ -47,11 +47,23 @@ StaticMesh::StaticMesh(const std::string& path, const int vertAttributes, const 
 
 	const aiMesh* mesh = model->mMeshes[0];
 
-    StaticMesh(mesh, vertAttributes, materialID);
+	configure(mesh, vertAttributes, materialID);
 }
 
 
-StaticMesh::StaticMesh(const aiMesh* mesh, const int vertAttributes, const uint32_t materialID)
+StaticMesh::StaticMesh(const aiMesh* mesh, const int vertexAttributes, const uint32_t materialID)
+{
+	configure(mesh, vertexAttributes, materialID);
+}
+
+
+StaticMesh::StaticMesh(const aiMesh* mesh, const int vertexAttributes)
+{
+	configure(mesh, vertexAttributes);
+}
+
+
+void StaticMesh::configure(const aiMesh* mesh, const int vertAttributes, const uint32_t materialID)
 {
     const unsigned int primitiveType = mesh->mPrimitiveTypes;
 
@@ -136,7 +148,7 @@ StaticMesh::StaticMesh(const aiMesh* mesh, const int vertAttributes, const uint3
 }
 
 
-StaticMesh::StaticMesh(const aiMesh* mesh, const int vertAttributes)
+void StaticMesh::configure(const aiMesh* mesh, const int vertAttributes)
 {
     const unsigned int primitiveType = mesh->mPrimitiveTypes;
 
