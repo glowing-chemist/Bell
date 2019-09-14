@@ -63,8 +63,6 @@ public:
 
 private:
 
-	bool mTaskInitialised;
-
 	std::string mDepthName;
 	std::string mVertexNormalsName;
 	std::string mMaterialName;

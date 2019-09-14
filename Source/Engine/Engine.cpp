@@ -53,7 +53,7 @@ void Engine::transitionScene()
 void Engine::setScene(const std::string& path)
 {
     mCurrentScene = Scene(path);
-    // For now don't include material ID, some more work will be needed to expose that correctly.
+    // TODO For now don't include material ID, some more work will be needed to expose that correctly.
     mCurrentScene.loadFromFile(VertexAttributes::Position4 | VertexAttributes::TextureCoordinates | VertexAttributes::Normals);
 }
 

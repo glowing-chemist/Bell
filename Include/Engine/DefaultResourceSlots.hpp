@@ -16,4 +16,6 @@ constexpr char kBlinnPhongLighting[]= "BlinnPhongLight";
 constexpr char kCameraBuffer[]	    = "CameraBuffer";
 constexpr char kLightBuffer[]	    = "LightBuffer";
 
+constexpr char kFrameBufer[]        = "FrameBuffer";
+
 #endif
