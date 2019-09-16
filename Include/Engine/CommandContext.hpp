@@ -45,7 +45,7 @@ public:
     CommandContext& bindSamplerViews(const Sampler* view, const char** slots, uint32_t start, uint32_t count);
     CommandContext& bindRenderTargets(const ImageView* view, const char** slots, const LoadOp*, uint32_t start, uint32_t count);
     CommandContext& setVertexAttributes(const int attr)
-    { mCurrentVertexAttributes = attr; }
+    { mCurrentVertexAttributes = attr; return *this; }
 
     // Functions that record graphics commands
     void draw(const uint32_t vertexOffset, const uint32_t numberOfVerticies);
