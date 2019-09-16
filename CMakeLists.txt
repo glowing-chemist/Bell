@@ -106,6 +106,7 @@ set(BELL_SOURCE
     Source/Engine/BlinnPhongTechnique.cpp
 
     Source/Engine/TechniqueGraph.cpp
+    Source/Engine/CommandContext.cpp
     )
 
 set(DearImGUI_SOURCE

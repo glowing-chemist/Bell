@@ -327,6 +327,30 @@ void Engine::render()
 }
 
 
+void Engine::submitCommandRecorder(CommandContext &ccx)
+{
+    RenderGraph& renderGraph = ccx.finialise();
+
+    auto& vertexData = mVertexBuilder.finishRecording();
+
+    auto& indexData = mIndexBuilder.finishRecording();
+
+    mVertexBuffer->resize(static_cast<uint32_t>(vertexData.size()), false);
+    mIndexBuffer->resize(static_cast<uint32_t>(indexData.size()), false);
+
+    mVertexBuffer->setContents(vertexData.data(), static_cast<uint32_t>(vertexData.size()));
+    mIndexBuffer->setContents(indexData.data(), static_cast<uint32_t>(indexData.size()));
+
+    mVertexBuilder.reset();
+    mIndexBuilder.reset();
+
+    renderGraph.bindVertexBuffer(*mVertexBuffer);
+    renderGraph.bindIndexBuffer(*mIndexBuffer);
+
+    mRenderDevice.execute(renderGraph);
+}
+
+
 void Engine::updateGlobalUniformBuffers()
 {
 	auto& currentCamera = getCurrentSceneCamera();

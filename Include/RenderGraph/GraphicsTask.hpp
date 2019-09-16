@@ -223,10 +223,15 @@ public:
 
 	int getVertexAttributes() const { return mVertexAttributes; }
 
-	void addDrawCall(const uint32_t vertexOffset, const uint32_t numberOfVerticies) 
+    void addDrawCall(const uint32_t vertexOffset, const uint32_t vertexCount)
 	{ 
-			mDrawCalls.push_back({DrawType::Standard, vertexOffset, numberOfVerticies, 0, 0, 1, "", glm::mat4(1.0f)});
+            mDrawCalls.push_back({DrawType::Standard, vertexOffset, vertexCount, 0, 0, 1, "", glm::mat4(1.0f)});
 	}
+
+    void addInstancedDraw(const uint32_t vertexOffset, const uint32_t vertexCount, const uint32_t instanceCount)
+    {
+        mDrawCalls.push_back({DrawType::Instanced, vertexOffset, vertexCount, 0, 0, instanceCount, "", glm::mat4(1.0f)});
+    }
 
 	void addIndexedDrawCall(const uint32_t vertexOffset, const uint32_t indexOffset, const uint32_t numberOfIndicies) 
 	{ 

@@ -9,6 +9,7 @@
 
 #include "Engine/Scene.h"
 #include "Engine/Camera.hpp"
+#include "Engine/CommandContext.hpp"
 #include "Engine/Bufferbuilder.h"
 #include "Engine/UniformBuffers.h"
 #include "Engine/Technique.hpp"
@@ -19,6 +20,7 @@
 
 #include <cstdint>
 #include <map>
+#include <mutex>
 #include <string>
 #include <variant>
 
@@ -115,6 +117,8 @@ public:
 	void swap()
 		{ mRenderDevice.swap(); }
 
+    void submitCommandRecorder(CommandContext& ccx);
+
     GLFWwindow* getWindow()
         { return mWindow; }
 
@@ -159,6 +163,8 @@ private:
 	void updateGlobalUniformBuffers();
 
     std::map<std::string, std::variant<int64_t, double>> mRenderVariables;
+
+    std::mutex mSubmissionLock;
 
     GLFWwindow* mWindow;
 };
