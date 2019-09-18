@@ -22,7 +22,8 @@ ImageView::ImageView(Image& parentImage,
     mLOD{lod},
     mLODCount{lodCount},
 	mLevel{level},
-	mLevelCount{levelCount}
+	mLevelCount{levelCount},
+	mIsSwapchain{parentImage.isSwapchainImage()}
 {
 	const vk::ImageAspectFlags adjustedViewType = [viewType]()
 	{

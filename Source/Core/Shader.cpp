@@ -137,7 +137,9 @@ Shader::Shader(RenderDevice* device, const std::string& path) :
 Shader::~Shader()
 {
     if(mCompiled && release())
+	{
         getDevice()->destroyShaderModule(mShaderModule);
+	}
 }
 
 
@@ -194,6 +196,11 @@ bool Shader::compile()
     mShaderModule = getDevice()->createShaderModule(shaderModuleInfo);
 
     mCompiled = true;
+	mSPIRV.clear();
+
+#ifndef NDEBUG // get rid of the source when not in debug builds to save memory.
+	mGLSLSource.clear();
+#endif
 
     return true;
 }
@@ -207,6 +214,9 @@ bool Shader::reload()
     if(std::filesystem::last_write_time(mFilePath) > mLastFileAccessTime)
 #endif
 	{
+		if(mCompiled && release())
+			getDevice()->destroyShaderModule(mShaderModule);
+
         // Reload the modified source
         std::ifstream sourceFile{mFilePath};
         std::string source{std::istreambuf_iterator<char>(sourceFile), std::istreambuf_iterator<char>()};
