@@ -12,13 +12,19 @@ CommandContext::CommandContext() :
     mCurrentResourceBindings{},
     mCurrentFrameBuffer{},
     mPushConstantsEnabled{false},
-    mThunkedDrawCalls(50), // preallocate some storage here
-    mThunkedDispatches(10),
+	mThunkedDrawCalls(),
+	mThunkedDispatches(),
     mImages{},
     mImageArrays{},
     mBuffers{},
     mSamplers{}
-{}
+{
+	// preallocate some storage here
+	mThunkedDrawCalls.reserve(50);
+	mThunkedDispatches.reserve(10);
+
+	reset();
+}
 
 
 CommandContext& CommandContext::setGraphicsPipelineState(const GraphicsPipelineDescription& state)
@@ -47,7 +53,7 @@ CommandContext& CommandContext::setCompuetPipelineState(const ComputePipelineDes
 }
 
 
-CommandContext& CommandContext::bindImageViews(const ImageView* view, const char** slots, uint32_t start, uint32_t count)
+CommandContext& CommandContext::bindImageViews(const ImageView* view, const char* const* slots, uint32_t start, uint32_t count)
 {
     BELL_ASSERT(start + count <= 16, "Attempting to bind image views out of bounds \n")
 
@@ -67,7 +73,7 @@ CommandContext& CommandContext::bindImageViews(const ImageView* view, const char
         vk::Extent3D extent = view[i].getImageExtent();
         if(extent.height > 0)
             type = AttachmentType::Texture2D;
-        if(extent.depth > 0)
+		if(extent.depth > 1)
             type = AttachmentType::Texture3D;
 
         binding.mType = type;
@@ -81,7 +87,7 @@ CommandContext& CommandContext::bindImageViews(const ImageView* view, const char
 }
 
 
-CommandContext& CommandContext::bindImageViewArrays(const ImageViewArray* view, const char** slots, uint32_t start, uint32_t count)
+CommandContext& CommandContext::bindImageViewArrays(const ImageViewArray* view, const char* const* slots, uint32_t start, uint32_t count)
 {
     BELL_ASSERT(start + count <= 16, "Attempting to bind image views out of bounds \n")
 
@@ -106,7 +112,7 @@ CommandContext& CommandContext::bindImageViewArrays(const ImageViewArray* view, 
 }
 
 
-CommandContext& CommandContext::bindStorageTextureViews(const ImageView* view, const char** slots, uint32_t start, uint32_t count)
+CommandContext& CommandContext::bindStorageTextureViews(const ImageView* view, const char* const* slots, uint32_t start, uint32_t count)
 {
     BELL_ASSERT(start + count <= 16, "Attempting to bind storage texture views out of bounds \n")
 
@@ -125,7 +131,7 @@ CommandContext& CommandContext::bindStorageTextureViews(const ImageView* view, c
         vk::Extent3D extent = view[i].getImageExtent();
         if(extent.height > 0)
             type = AttachmentType::Image2D;
-        if(extent.depth > 0)
+		if(extent.depth > 1)
             type = AttachmentType::Image3D;
 
         binding.mType = type;
@@ -140,7 +146,7 @@ CommandContext& CommandContext::bindStorageTextureViews(const ImageView* view, c
 }
 
 
-CommandContext& CommandContext::bindUniformBufferViews(const BufferView* view, const char** slots, uint32_t start, uint32_t count)
+CommandContext& CommandContext::bindUniformBufferViews(const BufferView* view, const char* const* slots, uint32_t start, uint32_t count)
 {
     BELL_ASSERT(start + count <= 16, "Attempting to bind uniform buffer views out of bounds \n")
 
@@ -165,7 +171,7 @@ CommandContext& CommandContext::bindUniformBufferViews(const BufferView* view, c
 }
 
 
-CommandContext& CommandContext::bindStorageBufferViews(const BufferView* view, const char** slots, uint32_t start, uint32_t count)
+CommandContext& CommandContext::bindStorageBufferViews(const BufferView* view, const char* const* slots, uint32_t start, uint32_t count)
 {
     BELL_ASSERT(start + count <= 16, "Attempting to bind storage buffers views out of bounds \n")
 
@@ -190,7 +196,7 @@ CommandContext& CommandContext::bindStorageBufferViews(const BufferView* view, c
 }
 
 
-CommandContext& CommandContext::bindSamplerViews(const Sampler* samp, const char** slots, uint32_t start, uint32_t count)
+CommandContext& CommandContext::bindSamplers(const Sampler* samp, const char* const* slots, uint32_t start, uint32_t count)
 {
     BELL_ASSERT(start + count <= 16, "Attempting to bind samplers out of bounds \n")
 
@@ -215,7 +221,7 @@ CommandContext& CommandContext::bindSamplerViews(const Sampler* samp, const char
 }
 
 
-CommandContext& CommandContext::bindRenderTargets(const ImageView* view, const char** slots, const LoadOp* ops, uint32_t start, uint32_t count)
+CommandContext& CommandContext::bindRenderTargets(const ImageView* view, const char* const* slots, const LoadOp* ops, uint32_t start, uint32_t count)
 {
     BELL_ASSERT(start + count <= 16, "Attempting to bind image views out of bounds \n")
 
@@ -232,15 +238,22 @@ CommandContext& CommandContext::bindRenderTargets(const ImageView* view, const c
         binding.mFormat = view[i].getImageViewFormat();
         binding.mLoadOp = ops[i];
 
-        // convert from extent to AttachmentType
-        AttachmentType type = AttachmentType::RenderTarget1D;
-        vk::Extent3D extent = view[i].getImageExtent();
-        if(extent.height > 0)
-            type = AttachmentType::RenderTarget2D;
-        if(extent.depth > 0)
-            type = AttachmentType::RenderTarget3D;
+		if(!view[i].isSwapChain())
+		{
+			// convert from extent to AttachmentType
+			AttachmentType type = AttachmentType::RenderTarget1D;
+			vk::Extent3D extent = view[i].getImageExtent();
+			if(extent.height > 0)
+				type = AttachmentType::RenderTarget2D;
+			if(extent.depth > 1)
+				type = AttachmentType::RenderTarget3D;
 
-        binding.mType = type;
+			binding.mType = type;
+		}
+		else
+		{
+			binding.mType = AttachmentType::SwapChain;
+		}
 
         mImages.insert({slots[i], view[i]});
 
@@ -248,6 +261,33 @@ CommandContext& CommandContext::bindRenderTargets(const ImageView* view, const c
     }
 
     return *this;
+}
+
+
+CommandContext& CommandContext::bindDepthStencilView(const ImageView* view, const char* const* slots,  const LoadOp* ops, uint32_t start, uint32_t count)
+{
+	BELL_ASSERT(start + count <= 16, "Attempting to bind depth out of bounds \n")
+
+	if(mCurrentRecordingState == RecordingState::Commands)
+		addTaskToGraph();
+
+	mCurrentRecordingState = RecordingState::Resources;
+
+	for(uint32_t i = 0; i < count; ++i)
+	{
+		RenderTargetInfo binding{};
+		binding.mName = slots[i];
+		binding.mBound = true;
+		binding.mFormat = view[i].getImageViewFormat();
+		binding.mLoadOp = ops[i];
+		binding.mType = AttachmentType::Depth;
+
+		mImages.insert({slots[i], view[i]});
+
+		mCurrentFrameBuffer[start + i] = binding;
+	}
+
+	return *this;
 }
 
 
@@ -324,10 +364,20 @@ void CommandContext::resetBindings()
 {
     // Flush any pending work.
     if(!mThunkedDrawCalls.empty() || !mThunkedDispatches.empty())
+	{
         addTaskToGraph();
+	}
 
-    std::memset(mCurrentResourceBindings.data(), 0, sizeof(BindingInfo) * 16);
-    std::memset(mCurrentFrameBuffer.data(), 0, sizeof(RenderTargetInfo) * 16);
+	for(auto& binding : mCurrentResourceBindings)
+	{
+		binding.mBound = false;
+	}
+	for(auto& target : mCurrentFrameBuffer)
+	{
+		target.mBound = false;
+	}
+
+
     mPushConstantsEnabled = false;
     mCurrentVertexAttributes = 0;
 }
@@ -343,8 +393,15 @@ void CommandContext::reset()
     mBuffers.clear();
     mSamplers.clear();
 
-    std::memset(mCurrentResourceBindings.data(), 0, sizeof(BindingInfo) * 16);
-    std::memset(mCurrentFrameBuffer.data(), 0, sizeof(RenderTargetInfo) * 16);
+	for(auto& binding : mCurrentResourceBindings)
+	{
+		binding.mBound = false;
+	}
+	for(auto& target : mCurrentFrameBuffer)
+	{
+		target.mBound = false;
+	}
+
     mPushConstantsEnabled = false;
     mCurrentVertexAttributes = 0;
 }
@@ -353,7 +410,31 @@ void CommandContext::reset()
 RenderGraph& CommandContext::finialise()
 {
     if(!mThunkedDrawCalls.empty() || !mThunkedDispatches.empty())
+	{
         addTaskToGraph();
+	}
+
+	for(const auto&[name, image] : mImages)
+	{
+		mRenderGraph.bindImage(name, image);
+	}
+
+	for(const auto&[name, imageArray] : mImageArrays)
+	{
+		mRenderGraph.bindImageArray(name, imageArray);
+	}
+
+	for(const auto&[name, buffer] :mBuffers)
+	{
+		mRenderGraph.bindBuffer(name, buffer);
+	}
+
+	for(const auto&[name, sampler] : mSamplers)
+	{
+		mRenderGraph.bindSampler(name, sampler);
+	}
+
+	mRenderGraph.compileDependancies();
 
     return mRenderGraph;
 }
@@ -390,6 +471,11 @@ void CommandContext::addTaskToGraph()
 
             task.addOutput(renderTarget.mName, renderTarget.mType, renderTarget.mFormat, renderTarget.mLoadOp);
         }
+
+		if(mPushConstantsEnabled)
+		{
+			task.addInput("PushConstants", AttachmentType::PushConstants);
+		}
 
         for(const auto& call : mThunkedDrawCalls)
         {
@@ -445,6 +531,11 @@ void CommandContext::addTaskToGraph()
             task.addInput(binding.mName, binding.mType);
         }
 
+		if(mPushConstantsEnabled)
+		{
+			task.addInput("PushConstants", AttachmentType::PushConstants);
+		}
+
         for(const auto& call : mThunkedDispatches)
         {
             switch(call.mDispatchType)
@@ -465,4 +556,6 @@ void CommandContext::addTaskToGraph()
 
     mThunkedDrawCalls.clear();
     mThunkedDispatches.clear();
+
+	mCurrentRecordingState = RecordingState::Resources;
 }

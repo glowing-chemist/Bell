@@ -37,14 +37,15 @@ public:
     CommandContext& setCompuetPipelineState(const ComputePipelineDescription&);
 
     // Chainable functions for binding resources
-    CommandContext& bindImageViews(const ImageView* view, const char** slots, uint32_t start, uint32_t count);
-    CommandContext& bindImageViewArrays(const ImageViewArray* view, const char** slots, uint32_t start, uint32_t count);
-    CommandContext& bindStorageTextureViews(const ImageView* view, const char** slots, uint32_t start, uint32_t count);
-    CommandContext& bindUniformBufferViews(const BufferView* view, const char** slots, uint32_t start, uint32_t count);
-    CommandContext& bindStorageBufferViews(const BufferView* view, const char** slots, uint32_t start, uint32_t count);
-    CommandContext& bindSamplerViews(const Sampler* view, const char** slots, uint32_t start, uint32_t count);
-    CommandContext& bindRenderTargets(const ImageView* view, const char** slots, const LoadOp*, uint32_t start, uint32_t count);
-    CommandContext& setVertexAttributes(const int attr)
+	CommandContext& bindImageViews(const ImageView* view, const char* const* slots, const uint32_t start, const uint32_t count);
+	CommandContext& bindImageViewArrays(const ImageViewArray* view, const char* const* slots, const uint32_t start, const uint32_t count);
+	CommandContext& bindStorageTextureViews(const ImageView* view, const char* const * slots, const uint32_t start, const uint32_t count);
+	CommandContext& bindUniformBufferViews(const BufferView* view, const char* const * slots, const uint32_t start, const uint32_t count);
+	CommandContext& bindStorageBufferViews(const BufferView* view, const char* const * slots, const uint32_t start,const uint32_t count);
+	CommandContext& bindSamplers(const Sampler* view, const char* const * slots, const uint32_t start, const uint32_t count);
+	CommandContext& bindRenderTargets(const ImageView* view, const char* const * slots, const LoadOp*, const uint32_t start, const uint32_t count);
+	CommandContext& bindDepthStencilView(const ImageView* view, const char* const* slots, const LoadOp*, const uint32_t start, const uint32_t count);
+	CommandContext& setVertexAttributes(const int attr)
     { mCurrentVertexAttributes = attr; return *this; }
 
     // Functions that record graphics commands
