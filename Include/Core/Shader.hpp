@@ -53,11 +53,8 @@ private:
     EShLanguage mShaderStage;
 
     bool mCompiled;
-#ifdef _MSC_VER  // MSVC still doesn't support std::filesystem ...
-	std::experimental::filesystem::file_time_type mLastFileAccessTime;
-#else
-    std::filesystem::file_time_type mLastFileAccessTime;
-#endif
+
+	fs::file_time_type mLastFileAccessTime;
 };
 
 
