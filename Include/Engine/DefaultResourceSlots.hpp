@@ -2,20 +2,23 @@
 #define DEFAULTRESOURCESLOTS_HPP
 
 
-constexpr char kGBufferDepth[]	    = "DepthBuffer";
-constexpr char kGBufferNormals[]    = "GBufferNormals";
-constexpr char kPreDepth[]	    = "PreDepth";
-constexpr char kGBufferAlbedo[]	    = "GBufferAlbedo";
-constexpr char kGBufferSpecular[]   = "GBufferSpecular";
-constexpr char kGBufferMaterialID[] = "GBUfferMaterialID";
-constexpr char kGBufferUV[]	    = "GBUfferUV";
-constexpr char kSSAO[]		    = "SSAO";
-constexpr char kDefaultSampler[]    = "defaultSampler";
-constexpr char kBlinnPhongLighting[]= "BlinnPhongLight";
+constexpr const char* kGBufferDepth	    = "DepthBuffer";
+constexpr const char* kGBufferNormals   = "GBufferNormals";
+constexpr const char* kPreDepth	    = "PreDepth";
+constexpr const char* kGBufferAlbedo	    = "GBufferAlbedo";
+constexpr const char* kGBufferSpecular   = "GBufferSpecular";
+constexpr const char* kGBufferMaterialID = "GBUfferMaterialID";
+constexpr const char* kGBufferUV	    = "GBUfferUV";
+constexpr const char* kSSAO		    = "SSAO";
+constexpr const char* kSSAOBuffer		= "SSAOBuf";
+constexpr const char* kDefaultSampler    = "defaultSampler";
+constexpr const char* kBlinnPhongLighting= "BlinnPhongLight";
+constexpr const char* kMaterials		 = "Materials";
 
-constexpr char kCameraBuffer[]	    = "CameraBuffer";
-constexpr char kLightBuffer[]	    = "LightBuffer";
+constexpr const char* kCameraBuffer	    = "CameraBuffer";
+constexpr const char* kLightBuffer	    = "LightBuffer";
+constexpr const char* kMaterialMappings = "MaterialMappings";
 
-constexpr char kFrameBufer[]        = "FrameBuffer";
+constexpr const char *kFrameBufer        = "FrameBuffer";
 
 #endif
