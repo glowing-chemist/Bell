@@ -818,7 +818,7 @@ void RenderDevice::execute(RenderGraph& graph)
         if (resources.mRenderPass)
         {
             const auto& graphicsTask = static_cast<const GraphicsTask&>(*task);
-            const auto pipelineDesc = graphicsTask.getPipelineDescription();
+			const auto& pipelineDesc = graphicsTask.getPipelineDescription();
             vk::Rect2D renderArea{ {0, 0}, {pipelineDesc.mViewport.x, pipelineDesc.mViewport.y} };
 
             const std::vector<vk::ClearValue> clearValues = graphicsTask.getClearValues();
