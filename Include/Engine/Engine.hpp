@@ -119,6 +119,9 @@ public:
 
     void submitCommandRecorder(CommandContext& ccx);
 
+	void flushWait()
+	{ mRenderDevice.flushWait(); }
+
     GLFWwindow* getWindow()
         { return mWindow; }
 
