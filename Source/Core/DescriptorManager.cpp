@@ -117,6 +117,10 @@ void DescriptorManager::writeDescriptors(std::vector<vk::DescriptorSet>& descSet
                             case AttachmentType::Texture2D:
                             case AttachmentType::Texture3D:
                                 return vk::DescriptorType::eSampledImage;
+
+							default:
+								BELL_TRAP;
+								return vk::DescriptorType::eCombinedImageSampler;
                         }
                     }();
 
