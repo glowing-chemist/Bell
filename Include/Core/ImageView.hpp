@@ -74,6 +74,9 @@ public:
 	ImageViewType getType() const
 		{ return mType; }
 
+	bool isSwapChain() const
+	{ return mIsSwapchain; }
+
 
 private:
 
@@ -91,6 +94,8 @@ private:
     uint32_t mLODCount;
     uint32_t mLevel;
 	uint32_t mLevelCount;
+
+	bool mIsSwapchain;
 };
 
 // Alias array of images (will split this in to a separate class if we need any  more functionality).

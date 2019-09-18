@@ -87,6 +87,9 @@ public:
     Allocation      getMemory() const
                         { return mImageMemory; }
 
+	bool			isSwapchainImage() const
+	{ return !mIsOwned; }
+
 private:
     Allocation mImageMemory;
     vk::Image mImage;
