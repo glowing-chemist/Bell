@@ -95,10 +95,10 @@ public:
 		{ mCurrentRenderGraph.bindSampler(name, sampler); }
 
 	void setVertexBufferforScene(const Buffer& vertBuf)
-		{ mCurrentRenderGraph.bindVertexBuffer(vertBuf); }
+		{ *mVertexBuffer = vertBuf; }
 
 	void setIndexBufferforScene(const Buffer& indexBuf)
-		{ mCurrentRenderGraph.bindIndexBuffer(indexBuf); }
+		{ *mIndexBuffer = indexBuf; }
 
     void recordOverlay(const ImDrawData*);
 
