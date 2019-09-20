@@ -118,14 +118,25 @@ void RenderGraph::compileDependancies()
 
     for(size_t i = 0; i < mTaskOrder.size(); ++i)
     {
+		const RenderTask& outerTask = getTask(mTaskOrder[i].first, mTaskOrder[i].second);
+
+		bool outerDepthWrite = false;
+		{
+			if(outerTask.taskType() == TaskType::Graphics)
+			{
+				const auto& outerGraphicsTask = static_cast<const GraphicsTask&>(outerTask);
+
+				outerDepthWrite = outerGraphicsTask.getPipelineDescription().mDepthWrite;
+			}
+		}
+
         for(size_t j = 0; j < mTaskOrder.size(); ++j)
         {
             // Don't generate dependancies between the same task (shouldn't be possible anyway).
             if(i == j)
                 continue;
 
-            const RenderTask& outerTask = getTask(mTaskOrder[i].first, mTaskOrder[i].second);
-            const RenderTask& innerTask = getTask(mTaskOrder[j].first, mTaskOrder[j].second);
+			const RenderTask& innerTask = getTask(mTaskOrder[j].first, mTaskOrder[j].second);
 
             // generate dependancies between framebuffer writes and "descriptor" reads.
             {
@@ -135,8 +146,9 @@ void RenderGraph::compileDependancies()
                 for(size_t outerIndex = 0; outerIndex < outResources.size(); ++outerIndex)
                 {
                     for(size_t innerIndex = 0; innerIndex < inResources.size(); ++innerIndex)
-                    {
-                        if(outResources[outerIndex].mName == inResources[innerIndex].first)
+                    {						
+						if(outResources[outerIndex].mName == inResources[innerIndex].first &&
+								!(outResources[outerIndex].mType == AttachmentType::Depth && !outerDepthWrite))
                         {
                             // Innertask reads from a
 							dependancies.insert({i, j});
@@ -167,6 +179,25 @@ void RenderGraph::compileDependancies()
                     }
                 }
             }
+
+			// generate dependancies for depth -> depth (output, output)
+			{
+				const std::vector<RenderTask::OutputAttachmentInfo>& outResources = outerTask.getOuputAttachments();
+				const std::vector<RenderTask::OutputAttachmentInfo>& inResources = innerTask.getOuputAttachments();
+
+				for(size_t outerIndex = 0; outerIndex < outResources.size(); ++outerIndex)
+				{
+					for(size_t innerIndex = 0; innerIndex < inResources.size(); ++innerIndex)
+					{
+						if(outResources[outerIndex].mType == AttachmentType::Depth && inResources[innerIndex].mType == AttachmentType::Depth
+								&& outResources[outerIndex].mName == inResources[innerIndex].mName
+								&& outerDepthWrite)
+						{
+							dependancies.insert({i, j});
+						}
+					}
+				}
+			}
         }
     }
 
@@ -363,13 +394,13 @@ uint32_t RenderGraph::selectNextTask(const std::vector<uint8_t>& dependancies, c
 		}
 	}
 
-	const uint32_t maxScoringIndex = (*std::max_element(prospectiveTaskIndicies.begin(), prospectiveTaskIndicies.end(),
+	const auto maxElementIt = std::max_element(prospectiveTaskIndicies.begin(), prospectiveTaskIndicies.end(),
 														[](const auto& p1, const auto& p2)
 	{
 		return p1.second < p2.second;
-	})).first;
+	});
 
-	return maxScoringIndex;
+	return (*maxElementIt).first;
 }
 
 
