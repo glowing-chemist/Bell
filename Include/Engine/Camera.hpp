@@ -68,6 +68,12 @@ public:
     glm::mat4 getViewMatrix() const;
     glm::mat4 getPerspectiveMatrix() const;
 
+	float getNearPlane() const
+	{ return mNearPlaneDistance; }
+
+	float getFarPlane() const
+	{ return mFarPlaneDistance; }
+
     Frustum getFrustum() const;
 
 private:
