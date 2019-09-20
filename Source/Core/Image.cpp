@@ -220,7 +220,7 @@ void Image::setContents(const void* data,
     copyInfo.setBufferImageHeight(0);
     copyInfo.setBufferRowLength(0);
 
-    copyInfo.setImageSubresource({vk::ImageAspectFlagBits::eColor, 0, 0, 1});
+	copyInfo.setImageSubresource({vk::ImageAspectFlagBits::eColor, lod, level, 1});
 
     copyInfo.setImageOffset({offsetx, offsety, offsetz}); // copy to the image starting at the start (0, 0, 0)
     copyInfo.setImageExtent(getExtent(level, lod));
