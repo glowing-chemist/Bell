@@ -74,7 +74,6 @@ enum class AttachmentType
 	RenderTarget1D,
 	RenderTarget2D,
 	RenderTarget3D,
-	SwapChain,
 	Depth,
 	UniformBuffer,
 	DataBuffer,

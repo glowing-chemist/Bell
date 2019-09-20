@@ -238,22 +238,15 @@ CommandContext& CommandContext::bindRenderTargets(const ImageView* view, const c
         binding.mFormat = view[i].getImageViewFormat();
         binding.mLoadOp = ops[i];
 
-		if(!view[i].isSwapChain())
-		{
-			// convert from extent to AttachmentType
-			AttachmentType type = AttachmentType::RenderTarget1D;
-			vk::Extent3D extent = view[i].getImageExtent();
-			if(extent.height > 0)
-				type = AttachmentType::RenderTarget2D;
-			if(extent.depth > 1)
-				type = AttachmentType::RenderTarget3D;
+		// convert from extent to AttachmentType
+		AttachmentType type = AttachmentType::RenderTarget1D;
+		vk::Extent3D extent = view[i].getImageExtent();
+		if(extent.height > 0)
+			type = AttachmentType::RenderTarget2D;
+		if(extent.depth > 1)
+			type = AttachmentType::RenderTarget3D;
 
-			binding.mType = type;
-		}
-		else
-		{
-			binding.mType = AttachmentType::SwapChain;
-		}
+		binding.mType = type;
 
         mImages.insert({slots[i], view[i]});
 

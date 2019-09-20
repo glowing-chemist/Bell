@@ -24,9 +24,6 @@ vk::ImageLayout getVulkanImageLayout(const AttachmentType type)
 		case AttachmentType::Depth:
 			return vk::ImageLayout::eDepthStencilAttachmentOptimal;
 
-		case AttachmentType::SwapChain:
-			return vk::ImageLayout::eColorAttachmentOptimal;
-
 		default:
 			return vk::ImageLayout::eColorAttachmentOptimal;
 	}

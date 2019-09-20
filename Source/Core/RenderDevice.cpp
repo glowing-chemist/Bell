@@ -303,14 +303,8 @@ vk::RenderPass	RenderDevice::generateRenderPass(const GraphicsTask& task)
         // eventually I will implment a render pass system that is aware of what comes beofer and after it
         // in order to avoid having to do manula barriers for all transitions.
         attachmentDesc.setInitialLayout((layout));
-        if(type == AttachmentType::SwapChain)
-        {
-            attachmentDesc.setFinalLayout(vk::ImageLayout::ePresentSrcKHR);
-        }
-        else
-        {
-            attachmentDesc.setFinalLayout(layout);
-        }
+		attachmentDesc.setFinalLayout(layout);
+
 		vk::AttachmentLoadOp op = [loadop](){
 			switch(loadop)
 			{
@@ -874,6 +868,13 @@ void RenderDevice::execute(RenderGraph& graph)
 
 		++cmdBufferIndex;
     }
+
+	// Transition the frameBuffer to a presentable format (hehe).
+	BarrierRecorder frameBufferTransition{this};
+	auto& frameBufferView = getSwapChainImageView();
+	frameBufferTransition.transitionImageLayout(frameBufferView, vk::ImageLayout::ePresentSrcKHR);
+
+	execute(frameBufferTransition);
 
 	primaryCmdBuffer.end();
 
