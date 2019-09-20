@@ -14,6 +14,7 @@ constexpr const char* kSSAOBuffer		= "SSAOBuf";
 constexpr const char* kDefaultSampler    = "defaultSampler";
 constexpr const char* kBlinnPhongLighting= "BlinnPhongLight";
 constexpr const char* kMaterials		 = "Materials";
+constexpr const char* kSkyBox			 = "SkyBox";
 
 constexpr const char* kCameraBuffer	    = "CameraBuffer";
 constexpr const char* kLightBuffer	    = "LightBuffer";
