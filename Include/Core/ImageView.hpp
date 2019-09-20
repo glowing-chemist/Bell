@@ -7,6 +7,7 @@
 
 
 class Image;
+class SubResourceInfo;
 class BarrierRecorder;
 
 
@@ -47,12 +48,9 @@ public:
 	Format getImageViewFormat() const
         { return mImageFormat; }
 
-    vk::ImageLayout getImageLayout() const
-        { return mLayout; }
+	vk::ImageLayout getImageLayout(const uint32_t level = 0, const uint32_t LOD = 0) const;
 
-    vk::Extent3D getImageExtent() const
-        { return mExtent; }
-
+	vk::Extent3D getImageExtent(const uint32_t level = 0, const uint32_t LOD = 0) const;
 	ImageUsage getImageUsage() const
         { return mUsage; }
 
@@ -86,9 +84,9 @@ private:
 	ImageViewType mType;
 
 	Format mImageFormat;
-    vk::ImageLayout mLayout;
-    vk::Extent3D mExtent;
 	ImageUsage mUsage;
+
+	SubResourceInfo* mSubResourceInfo;
 
     uint32_t mLOD;
     uint32_t mLODCount;

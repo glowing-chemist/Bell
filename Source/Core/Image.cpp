@@ -49,6 +49,8 @@ Image::Image(RenderDevice* dev,
     mImageMemory = getDevice()->getMemoryManager()->Allocate(imageRequirements.size, imageRequirements.alignment, false);
     getDevice()->getMemoryManager()->BindImage(mImage, mImageMemory);
 
+	mSubResourceInfo = new std::vector<SubResourceInfo>{};
+
     for(uint32_t arrayLevel = 0; arrayLevel < mNumberOfLevels; ++arrayLevel)
     {
         vk::Extent3D extent{x, y, z};
@@ -61,7 +63,7 @@ Image::Image(RenderDevice* dev,
 
             extent = vk::Extent3D{extent.width / 2, extent.height / 2, extent.depth / 2};
 
-            mSubResourceInfo.push_back(subInfo);
+			mSubResourceInfo->push_back(subInfo);
         }
     }
 
@@ -100,6 +102,8 @@ Image::Image(RenderDevice* dev,
     if(x != 0 && y != 0 && z == 1) mType = vk::ImageType::e2D;
     if(x != 0 && y != 0 && z >  1) mType = vk::ImageType::e3D;
 
+	mSubResourceInfo = new std::vector<SubResourceInfo>{};
+
     for(uint32_t arrayLevel = 0; arrayLevel < mNumberOfLevels; ++arrayLevel)
     {
         vk::Extent3D extent{x, y, z};
@@ -112,7 +116,7 @@ Image::Image(RenderDevice* dev,
 
             extent = vk::Extent3D{extent.width / 2, extent.height / 2, extent.depth / 2};
 
-            mSubResourceInfo.push_back(subInfo);
+			mSubResourceInfo->push_back(subInfo);
         }
     }
 
@@ -128,8 +132,11 @@ Image::~Image()
     const bool shouldDestroy = release() && mIsOwned;
 
     // Don't add a moved from image to the defered queue.
-    if(shouldDestroy && mImage != vk::Image(nullptr))
+	if(shouldDestroy && mImage != vk::Image(nullptr))
+	{
         getDevice()->destroyImage(*this);
+		delete mSubResourceInfo;
+	}
 }
 
 
@@ -161,7 +168,10 @@ void Image::swap(Image& other)
 	mUsage = other.mUsage;
 	other.mUsage = Usage;
 
-    mSubResourceInfo.swap(other.mSubResourceInfo);
+	std::vector<SubResourceInfo>* temp;
+	temp = mSubResourceInfo;
+	mSubResourceInfo = other.mSubResourceInfo;
+	other.mSubResourceInfo = temp;
 
 	mNumberOfMips = other.mNumberOfMips;
 	other.mNumberOfMips = NumberOfMips;
@@ -250,13 +260,5 @@ void Image::setContents(const void* data,
     // each time.
     stagingBuffer.updateLastAccessed(getDevice()->getCurrentSubmissionIndex());
     updateLastAccessed(getDevice()->getCurrentSubmissionIndex());
-}
-
-
-
-void    Image::generateMips(const uint32_t)
-{
-    // Do with a compute dispatch?
-    // possibly allow a custom kernel to be passed in?
 }
 

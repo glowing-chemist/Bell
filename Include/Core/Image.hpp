@@ -16,9 +16,17 @@
 class RenderDevice;
 
 
+struct SubResourceInfo
+{
+	vk::ImageLayout mLayout;
+	vk::Extent3D mExtent;
+};
+
+
 class Image final : public GPUResource, public DeviceChild
 {
 	friend BarrierRecorder;
+	friend ImageView;
 public:
 
     Image(RenderDevice*,
@@ -70,7 +78,6 @@ public:
 
     uint32_t        numberOfMips() const { return mNumberOfMips; }
     uint32_t        numberOfLevels() const { return mNumberOfLevels; }
-    void            generateMips(const uint32_t);
 
 	Format		getFormat() const
 						{ return mFormat; }
@@ -79,10 +86,10 @@ public:
 						{ return mUsage; }
 
     vk::ImageLayout getLayout(const uint32_t level, const uint32_t LOD) const
-                        { return mSubResourceInfo[(level * mNumberOfMips) + LOD].mLayout; }
+						{ return (*mSubResourceInfo)[(level * mNumberOfMips) + LOD].mLayout; }
 
     vk::Extent3D    getExtent(const uint32_t level, const uint32_t LOD) const
-                        { return mSubResourceInfo[(level * mNumberOfMips) + LOD].mExtent; }
+						{ return (*mSubResourceInfo)[(level * mNumberOfMips) + LOD].mExtent; }
 
     Allocation      getMemory() const
                         { return mImageMemory; }
@@ -94,12 +101,7 @@ private:
     Allocation mImageMemory;
     vk::Image mImage;
 
-    struct SubResourceInfo
-    {
-        vk::ImageLayout mLayout;
-        vk::Extent3D mExtent;
-    };
-    std::vector<SubResourceInfo> mSubResourceInfo;
+	std::vector<SubResourceInfo>* mSubResourceInfo;
     uint32_t mNumberOfMips;
     uint32_t mNumberOfLevels;
 

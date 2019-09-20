@@ -83,7 +83,7 @@ void BarrierRecorder::transitionImageLayout(Image& image, const vk::ImageLayout 
 				barrier.setSubresourceRange({vk::ImageAspectFlagBits::eColor, mipLevel, 1, arrayLevel, 1});
             }
 
-            image.mSubResourceInfo[(arrayLevel * image.numberOfMips()) + mipLevel].mLayout = layout;
+			image.mSubResourceInfo->at((arrayLevel * image.numberOfMips()) + mipLevel).mLayout = layout;
 
             mImageMemoryBarriers.push_back({image.getOwningQueueType(), barrier});
         }
@@ -142,7 +142,13 @@ void BarrierRecorder::transitionImageLayout(ImageView& imageView, const vk::Imag
 
     mImageMemoryBarriers.push_back({imageView.getOwningQueueType(), barrier});
 
-    imageView.mLayout = layout;
+	for(uint32_t arrayLevel = 0; arrayLevel < imageView.getLevelCount(); ++arrayLevel)
+	{
+		for(uint32_t mipLevel = 0; mipLevel < imageView.getMipsCount(); ++mipLevel)
+		{
+			imageView.mSubResourceInfo[(arrayLevel * imageView.getMipsCount()) + mipLevel].mLayout = layout;
+		}
+	}
 }
 
 

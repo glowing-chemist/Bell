@@ -15,10 +15,9 @@ ImageView::ImageView(Image& parentImage,
     mImageHandle{parentImage.getImage()},
     mImageMemory{parentImage.getMemory()},
 	mType{viewType},
-    mImageFormat{parentImage.getFormat()},
-    mLayout{parentImage.getLayout(level, lod)},
-    mExtent{parentImage.getExtent(level, lod)},
+	mImageFormat{parentImage.getFormat()},
     mUsage{parentImage.getUsage()},
+	mSubResourceInfo{nullptr},
     mLOD{lod},
     mLODCount{lodCount},
 	mLevel{level},
@@ -36,6 +35,8 @@ ImageView::ImageView(Image& parentImage,
 				return vk::ImageAspectFlagBits::eDepth;
 		}
 	}();
+
+	mSubResourceInfo  = &(*parentImage.mSubResourceInfo)[(level * mLODCount) + mLOD];
 
     vk::ImageSubresourceRange subresourceRange{};
     subresourceRange.setBaseMipLevel(lod);
@@ -117,8 +118,7 @@ ImageView::ImageView(ImageView&& rhs) :
 	mType = rhs.mType;
 
 	mImageFormat = rhs.mImageFormat;
-	mLayout = rhs.mLayout;
-	mExtent = rhs.mExtent;
+	mSubResourceInfo = rhs.mSubResourceInfo;
 	mUsage = rhs.mUsage;
 
 	mLOD = rhs.mLOD;
@@ -129,3 +129,14 @@ ImageView::ImageView(ImageView&& rhs) :
 	rhs.mImageViewHandle = vk::ImageView{nullptr};
 }
 
+
+vk::ImageLayout ImageView::getImageLayout(const uint32_t level, const uint32_t LOD) const
+{
+	return mSubResourceInfo[(level * mLODCount) + LOD].mLayout;
+}
+
+
+vk::Extent3D ImageView::getImageExtent(const uint32_t level, const uint32_t LOD) const
+{
+	return mSubResourceInfo[(level * mLODCount) + LOD].mExtent;
+}
