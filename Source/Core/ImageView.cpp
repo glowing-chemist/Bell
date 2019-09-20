@@ -57,7 +57,7 @@ ImageView::ImageView(Image& parentImage,
     if(extent.depth > 1)
         type = vk::ImageViewType::e3D;
 
-	if(extent.depth > 1 && parentImage.getUsage() & ImageUsage::CubeMap)
+	if(parentImage.getUsage() & ImageUsage::CubeMap)
 		type = vk::ImageViewType::eCube;
 
 
