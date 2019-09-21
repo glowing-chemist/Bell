@@ -6,6 +6,8 @@ layout(rgba8_snorm, binding = 0) uniform image2D inImage;
 layout(r8_unorm, binding = 1) uniform readonly image2D outImage;
 
 
+layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
+
 void main()
 {
 	// Assumes images are the same size.
