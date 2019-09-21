@@ -14,8 +14,8 @@ struct CameraBuffer
 	
     glm::mat4 mInvertedCameraMatrix;
 
-	float mNeaPlane;
-	float mFarPlane;
+    float mNeaPlane;
+    float mFarPlane;
 	
     glm::vec2 mFrameBufferSize;
 

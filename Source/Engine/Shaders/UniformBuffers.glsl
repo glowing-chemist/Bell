@@ -5,7 +5,10 @@ struct CameraBuffer
         mat4 view;    
         mat4 perspective;    
             
-        mat4 invertedCamera;      
+        mat4 invertedCamera;
+
+        float nearPlane;
+        float farPlane;
       
         vec2 frameBufferSize;
 
