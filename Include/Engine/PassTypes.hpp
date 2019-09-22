@@ -67,6 +67,7 @@ enum class AttachmentType
 	Texture1D,
 	Texture2D,
 	Texture3D,
+	TextureArray,
 	Sampler,
 	Image1D,
 	Image2D,

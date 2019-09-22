@@ -100,7 +100,7 @@ CommandContext& CommandContext::bindImageViewArrays(const ImageViewArray* view, 
     {
         BindingInfo binding{};
         binding.mName = slots[i];
-        binding.mType = AttachmentType::Texture2D;
+		binding.mType = AttachmentType::TextureArray;
         binding.mBound = true;
 
         mImageArrays.insert({slots[i], view[i]});

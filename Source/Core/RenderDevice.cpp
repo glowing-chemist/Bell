@@ -503,7 +503,7 @@ vk::DescriptorSetLayout RenderDevice::generateDescriptorSetLayout(const RenderTa
         vk::DescriptorSetLayoutBinding layoutBinding{};
         layoutBinding.setBinding(curretnBinding++);
         layoutBinding.setDescriptorType(descriptorType);
-        layoutBinding.setDescriptorCount(1);
+		layoutBinding.setDescriptorCount(type == AttachmentType::TextureArray ? BINDLESS_ARRAY_SIZE : 1);
         // TODO make this less general in the future/effiecent.
         layoutBinding.setStageFlags(vk::ShaderStageFlagBits::eAll);
 
