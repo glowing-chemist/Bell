@@ -148,10 +148,9 @@ void DescriptorManager::writeDescriptors(std::vector<vk::DescriptorSet>& descSet
 						imageInfos.push_back(generateDescriptorImageInfo(view, vk::ImageLayout::eShaderReadOnlyOptimal));
 					}
 
-					descWrite.setPImageInfo(&imageInfos[imageInfos.size() - imageViews.size() - 1]);
+					descWrite.setPImageInfo(&imageInfos[imageInfos.size() - imageViews.size()]);
 					descWrite.setDescriptorType(vk::DescriptorType::eSampledImage);
 					descWrite.setDescriptorCount(static_cast<uint32_t>(imageViews.size()));
-
 					break;
 				}
 
