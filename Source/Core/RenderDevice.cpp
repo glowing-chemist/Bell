@@ -10,6 +10,9 @@
 #include <limits>
 #include <vector>
 
+// Constants
+constexpr uint32_t BINDLESS_ARRAY_SIZE = 16; // set to a super low limit for now.
+
 
 RenderDevice::RenderDevice(vk::Instance instance,
 						   vk::PhysicalDevice physDev,
@@ -465,7 +468,7 @@ vk::DescriptorSetLayout RenderDevice::generateDescriptorSetLayout(const RenderTa
 
     for(const auto& [name, type] : inputAttachments)
     {
-        // TRanslate between Bell enums to the vulkan equivelent.
+		// Translate between Bell enums to the vulkan equivelent.
         vk::DescriptorType descriptorType = [type]()
         {
             switch(type)
@@ -473,6 +476,7 @@ vk::DescriptorSetLayout RenderDevice::generateDescriptorSetLayout(const RenderTa
             case AttachmentType::Texture1D:
             case AttachmentType::Texture2D:
             case AttachmentType::Texture3D:
+			case AttachmentType::TextureArray:
 				return vk::DescriptorType::eSampledImage;
 
             case AttachmentType::Image1D:
