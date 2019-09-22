@@ -41,7 +41,7 @@
 // BELL_ASSRT
 #ifndef NDEBUG
 
-#define BELL_ASSERT(condition, msg) if(!(condition)) { printf(msg #condition); BELL_TRAP; }
+#define BELL_ASSERT(condition, msg) if(!(condition)) { printf(msg #condition "\n"); BELL_TRAP; }
 
 #else
 
