@@ -6,7 +6,7 @@ mat3 tangentSpaceMatrix(const vec3 vertNormal, const vec3 view, const vec4 uvDer
 {
 	// we don't/can't compute these here as we're doing defered textureing
 	const vec2 uvDx = uvDerivitives.xy;
-	const vec3 uvDy = uvDerivitives.zw;
+	const vec2 uvDy = uvDerivitives.zw;
 
 	const vec3 viewDx = dFdx(view);
 	const vec3 viewDy = dFdy(view);
@@ -21,4 +21,10 @@ mat3 tangentSpaceMatrix(const vec3 vertNormal, const vec3 view, const vec4 uvDer
 	 float invmax = inversesqrt(max(dot(tangent, tangent), dot(bitangent, bitangent)));
 
 	 return mat3(tangent * invmax, bitangent * invmax, vertNormal);
+}
+
+
+vec3 remapNormals(const vec3 N)
+{
+	return (N - vec3(0.5)) * 2.0;
 }

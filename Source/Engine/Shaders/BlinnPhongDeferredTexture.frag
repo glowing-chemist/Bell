@@ -4,6 +4,8 @@
 #extension GL_EXT_nonuniform_qualifier : enable
 
 #include "UniformBuffers.glsl"
+#include "NormalMapping.glsl"
+
 
 layout(location = 0) in vec2 uv;
 
@@ -31,6 +33,7 @@ layout(binding = 6) uniform texture2D uvWithDerivitives;
 layout(binding = 7) uniform sampler linearSampler;
 
 // an unbound array of matyerial parameter textures
+// In order albedo, normals, rougness, metalness
 layout(binding = 8) uniform texture2D materials[];
 
 layout(push_constant) uniform numberOfLIghts
@@ -50,30 +53,40 @@ void main()
 
 	const vec4 fragUVwithDifferentials = texture(sampler2D(uvWithDerivitives, linearSampler), uv);
 
-	// TODO replace this with sampling the material params array.
-	// Once I get some material tests sorted.
-    vec3 Albedo = vec3(0.7f);
 
     const vec2 xDerivities = unpackUnorm2x16(floatBitsToUint(fragUVwithDifferentials.z));
     const vec2 yDerivities = unpackUnorm2x16(floatBitsToUint(fragUVwithDifferentials.w));
 
-    frameBuffer = textureGrad(sampler2D(materials[nonuniformEXT(materialIndexMapping[materialID].mappedIndex)], linearSampler),
+    vec3 albedo = textureGrad(sampler2D(materials[nonuniformEXT(materialIndexMapping[materialID].mappedIndex)], linearSampler),
     							fragUVwithDifferentials.xy, // UV
     							xDerivities,
-    							yDerivities);
+    							yDerivities).xyz;
+
+    vec3 normal = texture(sampler2D(materials[nonuniformEXT(materialIndexMapping[materialID].mappedIndex) + 1], linearSampler),
+                                fragUVwithDifferentials.xy).xyz;
+
+    normal = remapNormals(normal);
     
     // then calculate lighting as usual    
-    vec3 lighting = Albedo * 0.1; // hard-coded ambient component. TODO maybe replace this with image based lighting.  
+    vec3 lighting = albedo * 0.1; // hard-coded ambient component. TODO maybe replace this with image based lighting.  
     vec3 viewDir = normalize(camera.invertedCamera[3].xyz - worldSpaceFragmentPos);
+
+    {
+        mat3 tbv = tangentSpaceMatrix(vertexNormal, viewDir, vec4(xDerivities, yDerivities));
+
+        normal = tbv * normal;
+
+        normal = normalize(normal);
+    }
 
     // containes the number of lights. 
     for(int i = 0; i < lightParams[0].x; ++i)    
     {    
         // diffuse    
         vec3 lightDir = normalize(lights[i].light.position.xyz  - worldSpaceFragmentPos);    
-        vec3 diffuse = max(dot(vertexNormal, lightDir), 0.0) * Albedo * lights[i].light.albedo.xzy;    
+        vec3 diffuse = max(dot(normal, lightDir), 0.0) * albedo * lights[i].light.albedo.xzy;    
         lighting += diffuse;    
     }    
     
-    frameBuffer += vec4(lighting, 1.0);  
+    frameBuffer = vec4(albedo, 1.0) + vec4(lighting, 1.0);  
 }
