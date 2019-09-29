@@ -219,7 +219,7 @@ GraphicsPipelineHandles RenderDevice::createPipelineHandles(const GraphicsTask& 
 
 ComputePipelineHandles RenderDevice::createPipelineHandles(const ComputeTask& task)
 {
-    if(mComputePipelineCache[task.getPipelineDescription()].mComputePipeline->getHandle() != vk::Pipeline{nullptr})
+	if(mComputePipelineCache[task.getPipelineDescription()].mComputePipeline)
         return mComputePipelineCache[task.getPipelineDescription()];
 
     const vk::DescriptorSetLayout descSetLayout = generateDescriptorSetLayout(task);
