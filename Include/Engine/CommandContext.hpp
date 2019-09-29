@@ -31,7 +31,17 @@ public:
 
 
     void setActiveContextType(const ContextType type)
-    { mCurrentContextType = type; }
+	{
+		if(type == mCurrentContextType)
+			return;
+
+		if(mCurrentRecordingState == RecordingState::Commands)
+				addTaskToGraph();
+
+		mCurrentRecordingState = RecordingState::Resources;
+
+		mCurrentContextType = type;
+	}
 
     CommandContext& setGraphicsPipelineState(const GraphicsPipelineDescription&);
     CommandContext& setCompuetPipelineState(const ComputePipelineDescription&);
