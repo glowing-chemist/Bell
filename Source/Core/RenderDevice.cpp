@@ -935,7 +935,7 @@ void RenderDevice::frameSyncSetup()
 }
 
 
-void RenderDevice::execute(BarrierRecorder& recorder)
+void RenderDevice::execute(BarrierRecorder& recorder, const vk::PipelineStageFlagBits src, const vk::PipelineStageFlagBits dst)
 {
 	for (uint8_t i = 0; i < static_cast<uint8_t>(QueueType::MaxQueues); ++i)
 	{
@@ -949,7 +949,7 @@ void RenderDevice::execute(BarrierRecorder& recorder)
             if(bufferBarriers.empty() && imageBarriers.empty())
                 continue;
 
-            getCurrentCommandPool()->getBufferForQueue(currentQueue).pipelineBarrier(vk::PipelineStageFlagBits::eTopOfPipe, vk::PipelineStageFlagBits::eTransfer,
+			getCurrentCommandPool()->getBufferForQueue(currentQueue).pipelineBarrier(src, dst,
 				vk::DependencyFlagBits::eByRegion,
 				0, nullptr,
                 static_cast<uint32_t>(bufferBarriers.size()), bufferBarriers.data(),

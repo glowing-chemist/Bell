@@ -157,16 +157,16 @@ void RenderGraph::compileDependancies()
                 }
             }
 
-            // generate dependancies between descriptor -> descriptor resources e.g structured buffers.
+			// generate dependancies between descriptor -> descriptor resources e.g structured buffers/ImageStores.
             {
                 const std::vector<std::pair<std::string, AttachmentType>>& outResources = outerTask.getInputAttachments();
-                const std::vector<std::pair<std::string, AttachmentType>>& inResources = innerTask.getInputAttachments();
+				const std::vector<std::pair<std::string, AttachmentType>>& innerResources = innerTask.getInputAttachments();
 
                 for(size_t outerIndex = 0; outerIndex < outResources.size(); ++outerIndex)
                 {
-                    for(size_t innerIndex = 0; innerIndex < inResources.size(); ++innerIndex)
+					for(size_t innerIndex = 0; innerIndex < innerResources.size(); ++innerIndex)
                     {
-                        if(outResources[outerIndex].first == inResources[innerIndex].first &&
+						if(outResources[outerIndex].first == innerResources[innerIndex].first &&
                                 (outResources[outerIndex].second == AttachmentType::Image1D ||
                                  outResources[outerIndex].second == AttachmentType::Image2D ||
                                  outResources[outerIndex].second == AttachmentType::Image3D ||
