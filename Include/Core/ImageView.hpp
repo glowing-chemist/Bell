@@ -58,16 +58,16 @@ public:
         { return mImageMemory; }
 
 	uint32_t getBaseMip() const
-		{ return mLOD; }
+	{ return mMipStart; }
 
 	uint32_t getMipsCount() const
-		{ return mLODCount; }
+	{ return mMipEnd; }
 
 	uint32_t getBaseLevel() const
-		{ return mLevel; }
+	{ return mLayerStart; }
 
 	uint32_t getLevelCount() const
-		{ return mLevelCount; }
+	{ return mLayerEnd; }
 
 	ImageViewType getType() const
 		{ return mType; }
@@ -81,19 +81,21 @@ private:
     vk::Image mImageHandle;
     vk::ImageView mImageViewHandle;
     Allocation mImageMemory;
-	ImageViewType mType;
+    ImageViewType mType;
 
-	Format mImageFormat;
-	ImageUsage mUsage;
+    Format mImageFormat;
+    ImageUsage mUsage;
 
-	SubResourceInfo* mSubResourceInfo;
+    SubResourceInfo* mSubResourceInfo;
 
-    uint32_t mLOD;
-    uint32_t mLODCount;
-    uint32_t mLevel;
-	uint32_t mLevelCount;
+    uint32_t mMipStart;
+    uint32_t mMipEnd;
+    uint32_t mTotalMips;
+    uint32_t mLayerStart;
+    uint32_t mLayerEnd;
+    uint32_t mTotalLayers;
 
-	bool mIsSwapchain;
+    bool mIsSwapchain;
 };
 
 // Alias array of images (will split this in to a separate class if we need any  more functionality).

@@ -8,8 +8,8 @@ ImageView::ImageView(Image& parentImage,
 					 const ImageViewType viewType,
 					 const uint32_t level,
 					 const uint32_t levelCount,
-					 const uint32_t lod,
-					 const uint32_t lodCount) :
+					 const uint32_t mip,
+					 const uint32_t mipCount) :
     GPUResource{parentImage.getDevice()->getCurrentSubmissionIndex()},
     DeviceChild{parentImage.getDevice()},
     mImageHandle{parentImage.getImage()},
@@ -18,10 +18,12 @@ ImageView::ImageView(Image& parentImage,
 	mImageFormat{parentImage.getFormat()},
     mUsage{parentImage.getUsage()},
 	mSubResourceInfo{nullptr},
-    mLOD{lod},
-    mLODCount{lodCount},
-	mLevel{level},
-	mLevelCount{levelCount},
+	mMipStart{mip},
+	mMipEnd{mipCount},
+	mTotalMips{parentImage.numberOfMips()},
+	mLayerStart{level},
+	mLayerEnd{levelCount},
+	mTotalLayers{parentImage.numberOfLevels()},
 	mIsSwapchain{parentImage.isSwapchainImage()}
 {
 	const vk::ImageAspectFlags adjustedViewType = [viewType]()
@@ -36,16 +38,16 @@ ImageView::ImageView(Image& parentImage,
 		}
 	}();
 
-	mSubResourceInfo  = &(*parentImage.mSubResourceInfo)[(level * mLODCount) + mLOD];
+	mSubResourceInfo  = parentImage.mSubResourceInfo->data();
 
     vk::ImageSubresourceRange subresourceRange{};
-    subresourceRange.setBaseMipLevel(lod);
-    subresourceRange.setLevelCount(mLODCount);
+	subresourceRange.setBaseMipLevel(mip);
+	subresourceRange.setLevelCount(mipCount);
     subresourceRange.setBaseArrayLayer(level);
-	subresourceRange.setLayerCount(mLevelCount);
+	subresourceRange.setLayerCount(mLayerEnd);
 	subresourceRange.setAspectMask(adjustedViewType);
 
-    const auto extent = parentImage.getExtent(mLevel, mLOD);
+	const auto extent = parentImage.getExtent(mLayerStart, mMipStart);
 
 	vk::ImageViewType type = vk::ImageViewType::e1D;
 
@@ -102,41 +104,50 @@ ImageView& ImageView::operator=(const ImageView& otherView)
     mImageMemory = otherView.mImageMemory;
     mImageFormat = otherView.mImageFormat;
 
-    mLOD = otherView.mLOD;
-    mLODCount = otherView.mLODCount;
+	mMipStart = otherView.mMipStart;
+	mMipEnd = otherView.mMipEnd;
+	mTotalMips = otherView.mTotalMips;
+
+	mLayerStart = otherView.mLayerStart;
+	mLayerEnd = otherView.mLayerEnd;
+	mTotalLayers = otherView.mTotalLayers;
+
 
     return *this;
 }
 
-ImageView::ImageView(ImageView&& rhs) :
-	GPUResource{rhs},
-	DeviceChild{rhs}
+ImageView::ImageView(ImageView&& otherView) :
+	GPUResource{otherView},
+	DeviceChild{otherView}
 {
-	mImageHandle = rhs.mImageHandle;
-	mImageViewHandle = rhs.mImageViewHandle;
-	mImageMemory = rhs.mImageMemory;
-	mType = rhs.mType;
+	mImageHandle = otherView.mImageHandle;
+	mImageViewHandle = otherView.mImageViewHandle;
+	mImageMemory = otherView.mImageMemory;
+	mType = otherView.mType;
 
-	mImageFormat = rhs.mImageFormat;
-	mSubResourceInfo = rhs.mSubResourceInfo;
-	mUsage = rhs.mUsage;
+	mImageFormat = otherView.mImageFormat;
+	mSubResourceInfo = otherView.mSubResourceInfo;
+	mUsage = otherView.mUsage;
 
-	mLOD = rhs.mLOD;
-	mLODCount = rhs.mLODCount;
-	mLevel = rhs.mLevel;
-	mLevelCount = rhs.mLevelCount;
+	mMipStart = otherView.mMipStart;
+	mMipEnd = otherView.mMipEnd;
+	mTotalMips = otherView.mTotalMips;
 
-	rhs.mImageViewHandle = vk::ImageView{nullptr};
+	mLayerStart = otherView.mLayerStart;
+	mLayerEnd = otherView.mLayerEnd;
+	mTotalLayers = otherView.mTotalLayers;
+
+	otherView.mImageViewHandle = vk::ImageView{nullptr};
 }
 
 
 vk::ImageLayout ImageView::getImageLayout(const uint32_t level, const uint32_t LOD) const
 {
-	return mSubResourceInfo[(level * mLODCount) + LOD].mLayout;
+	return mSubResourceInfo[(level * mTotalMips) + LOD].mLayout;
 }
 
 
 vk::Extent3D ImageView::getImageExtent(const uint32_t level, const uint32_t LOD) const
 {
-	return mSubResourceInfo[(level * mLODCount) + LOD].mExtent;
+	return mSubResourceInfo[(level * mTotalMips) + LOD].mExtent;
 }

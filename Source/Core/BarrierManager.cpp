@@ -93,13 +93,23 @@ void BarrierRecorder::transitionImageLayout(Image& image, const vk::ImageLayout 
 
 void BarrierRecorder::transitionImageLayout(ImageView& imageView, const vk::ImageLayout layout)
 {
-    if (layout == imageView.getImageLayout())
-        return;
+	bool alreadyInLayout = true;
+	for(uint32_t arrayLevel = imageView.getBaseLevel(); arrayLevel < imageView.getBaseLevel() + imageView.getLevelCount(); ++arrayLevel)
+	{
+		for(uint32_t mipLevel = imageView.getBaseMip(); mipLevel < imageView.getBaseMip() + imageView.getMipsCount(); ++mipLevel)
+		{
+			if(imageView.mSubResourceInfo[(arrayLevel * imageView.mTotalMips) + mipLevel].mLayout != layout)
+				alreadyInLayout = false;
+		}
+	}
+
+	if(alreadyInLayout)
+		return;
 
     vk::ImageMemoryBarrier barrier{};
-    barrier.setSrcAccessMask(vk::AccessFlagBits::eMemoryWrite);
-    barrier.setDstAccessMask(vk::AccessFlagBits::eMemoryRead);
-    barrier.setOldLayout(imageView.getImageLayout());
+	barrier.setSrcAccessMask(vk::AccessFlagBits::eMemoryWrite);
+	barrier.setDstAccessMask(vk::AccessFlagBits::eMemoryRead);
+	barrier.setOldLayout(imageView.getImageLayout());
     barrier.setNewLayout(layout);
     barrier.setImage(imageView.getImage());
 	if(layout == vk::ImageLayout::eDepthStencilAttachmentOptimal ||
@@ -114,11 +124,11 @@ void BarrierRecorder::transitionImageLayout(ImageView& imageView, const vk::Imag
 
     mImageMemoryBarriers.push_back({imageView.getOwningQueueType(), barrier});
 
-	for(uint32_t arrayLevel = 0; arrayLevel < imageView.getLevelCount(); ++arrayLevel)
+	for(uint32_t arrayLevel = imageView.getBaseLevel(); arrayLevel < imageView.getBaseLevel() + imageView.getLevelCount(); ++arrayLevel)
 	{
-		for(uint32_t mipLevel = 0; mipLevel < imageView.getMipsCount(); ++mipLevel)
+		for(uint32_t mipLevel = imageView.getBaseMip(); mipLevel < imageView.getBaseMip() + imageView.getMipsCount(); ++mipLevel)
 		{
-			imageView.mSubResourceInfo[(arrayLevel * imageView.getMipsCount()) + mipLevel].mLayout = layout;
+			imageView.mSubResourceInfo[(arrayLevel * imageView.mTotalMips) + mipLevel].mLayout = layout;
 		}
 	}
 }
