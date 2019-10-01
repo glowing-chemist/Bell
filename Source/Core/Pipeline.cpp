@@ -29,7 +29,7 @@ bool ComputePipeline::compile(const RenderTask&)
 }
 
 
-bool GraphicsPipeline::compile(const RenderTask& task)
+bool GraphicsPipeline::compile(const RenderTask&)
 {
 	std::vector<vk::PipelineShaderStageCreateInfo> shaderInfo = getDevice()->generateShaderStagesInfo(mPipelineDescription);
 

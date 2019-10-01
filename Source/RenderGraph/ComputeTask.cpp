@@ -44,7 +44,7 @@ namespace std
         std::hash<std::string> stringHasher{};
 
         size_t hash = 0;
-        hash ^= stringHasher(desc.mComputeShader.getFilePath());
+		hash += stringHasher(desc.mComputeShader.getFilePath());
 
 
         return hash;

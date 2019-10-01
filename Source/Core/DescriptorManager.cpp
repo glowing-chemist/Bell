@@ -17,12 +17,11 @@ DescriptorManager::~DescriptorManager()
 }
 
 
-std::vector<vk::DescriptorSet> DescriptorManager::getDescriptors(RenderGraph& graph, std::vector<vulkanResources>& resources)
+void DescriptorManager::getDescriptors(RenderGraph& graph, std::vector<vulkanResources>& resources)
 {
     // move all descriptor sets pending destruction that have been finished with to the free cache.
     transferFreeDescriptorSets();
 
-    std::vector<vk::DescriptorSet> descSets;
 	uint32_t resourceIndex = 0;
 
 	auto task = graph.taskBegin();
@@ -30,37 +29,18 @@ std::vector<vk::DescriptorSet> DescriptorManager::getDescriptors(RenderGraph& gr
 
     while(task != graph.taskEnd())
     {
-        if((*resource).mDescSet == vk::DescriptorSet{nullptr})
-        {
-            vk::DescriptorSet descSet = allocateDescriptorSet(*task, *resource);
-            descSets.push_back(descSet);
+		vk::DescriptorSet descSet = allocateDescriptorSet(*task, *resource);
 
-            (*resource).mDescSet = descSet;
-        }
-        else if(graph.getDescriptorsNeedUpdating()[resourceIndex])
-        {
-            vk::DescriptorSet descSet = allocateDescriptorSet(*task, *resource);
-            descSets.push_back(descSet);
-
-            mPendingFreeDescriptorSets[(*task).getInputAttachments()].push_back({getDevice()->getCurrentSubmissionIndex(), (*resource).mDescSet});
-
-            (*resource).mDescSet = descSet;
-        }
-        else
-        {
-            descSets.push_back((*resource).mDescSet);
-        }
+		resource->mDescSet = descSet;
 
 		++task;
 		++resource;
 		++resourceIndex;
     }
-
-    return descSets;
 }
 
 
-void DescriptorManager::writeDescriptors(std::vector<vk::DescriptorSet>& descSets, RenderGraph& graph, std::vector<vulkanResources>& resources)
+void DescriptorManager::writeDescriptors(RenderGraph& graph, std::vector<vulkanResources>& resources)
 {
     std::vector<vk::WriteDescriptorSet> descSetWrites;
     std::vector<vk::DescriptorImageInfo> imageInfos;
@@ -79,21 +59,12 @@ void DescriptorManager::writeDescriptors(std::vector<vk::DescriptorSet>& descSet
 
     while(inputBindings != graph.inputBindingEnd())
     {
-        if(!graph.getDescriptorsNeedUpdating()[descIndex])
-        {
-            ++resource;
-            ++inputBindings;
-            ++task;
-            ++descIndex;
-            continue;
-        }
-
         uint32_t bindingIndex = 0;
 
         for(const auto& bindingInfo : *inputBindings)
         {
             vk::WriteDescriptorSet descWrite{};
-            descWrite.setDstSet(descSets[descIndex]);
+			descWrite.setDstSet(resource->mDescSet);
             descWrite.setDstBinding(bindingInfo.mResourceBinding);
 
             const auto& bindings = (*task).getInputAttachments();
@@ -188,8 +159,6 @@ void DescriptorManager::writeDescriptors(std::vector<vk::DescriptorSet>& descSet
 
             descSetWrites.push_back(descWrite);
             ++bindingIndex;
-
-            (*resource).mDescriptorsWritten = true;
         }
 
 		++resource;
@@ -203,9 +172,9 @@ void DescriptorManager::writeDescriptors(std::vector<vk::DescriptorSet>& descSet
 }
 
 
-void DescriptorManager::freeDescriptorSet(const std::vector<std::pair<std::string, AttachmentType>>& layout, vk::DescriptorSet descSet)
+void DescriptorManager::freeDescriptorSet(const vk::DescriptorSetLayout layout, vk::DescriptorSet descSet)
 {
-    mFreeDescriptorSets[layout].push_back(descSet);
+	mPendingFreeDescriptorSets[layout].push_back({getDevice()->getCurrentSubmissionIndex(), descSet});
 }
 
 
@@ -214,10 +183,10 @@ vk::DescriptorSet DescriptorManager::allocateDescriptorSet(const RenderTask& tas
 {    
     std::vector<std::pair<std::string, AttachmentType>> attachments = task.getInputAttachments();
 
-    if(mFreeDescriptorSets[attachments].size() != 0)
+	if(mFreeDescriptorSets[resources.mDescSetLayout].size() != 0)
     {
-        const vk::DescriptorSet descSet = mFreeDescriptorSets[attachments].back();
-        mFreeDescriptorSets[attachments].pop_back();
+		const vk::DescriptorSet descSet = mFreeDescriptorSets[resources.mDescSetLayout].back();
+		mFreeDescriptorSets[resources.mDescSetLayout].pop_back();
 
         return descSet;
     }

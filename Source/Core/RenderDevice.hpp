@@ -226,6 +226,8 @@ private:
 
     void                                                        clearDeferredResources();
 
+	void														clearVulkanResources();
+
     void														frameSyncSetup();
 
     vk::Fence                          createFence(const bool signaled);

@@ -20,10 +20,10 @@ public:
     DescriptorManager(RenderDevice* dev) : DeviceChild{dev} { mPools.push_back(createDescriptorPool()); }
     ~DescriptorManager();
 
-    std::vector<vk::DescriptorSet> getDescriptors(RenderGraph&, std::vector<vulkanResources>&);
-    void                           writeDescriptors(std::vector<vk::DescriptorSet>&, RenderGraph&, std::vector<vulkanResources>&);
+	void						   getDescriptors(RenderGraph&, std::vector<vulkanResources>&);
+	void                           writeDescriptors(RenderGraph&, std::vector<vulkanResources>&);
 
-    void                           freeDescriptorSet(const std::vector<std::pair<std::string, AttachmentType>>&, vk::DescriptorSet);
+	void                           freeDescriptorSet(const vk::DescriptorSetLayout, vk::DescriptorSet);
 
 private:
 
@@ -36,26 +36,11 @@ private:
 
     void                        transferFreeDescriptorSets();
 
-    struct AttachmentComparitor
-    {
-        bool operator()(const std::vector<std::pair<std::string, AttachmentType>>& lhs,
-                      const std::vector<std::pair<std::string, AttachmentType>>& rhs) const noexcept
-        {
-			return std::lexicographical_compare(lhs.begin(), lhs.end(), rhs.begin(), rhs.end(), [] (const std::pair<std::string, AttachmentType>& lhs,
-																								   const std::pair<std::string, AttachmentType>& rhs)
-							  {
-								  return lhs.second < rhs.second;
-							  });
-        }
-    };
+	std::map<vk::DescriptorSetLayout,
+			 std::vector<vk::DescriptorSet>> mFreeDescriptorSets;
 
-    std::map<std::vector<std::pair<std::string, AttachmentType>>,
-             std::vector<vk::DescriptorSet>,
-             AttachmentComparitor> mFreeDescriptorSets;
-
-    std::map<std::vector<std::pair<std::string, AttachmentType>>,
-             std::vector<std::pair<uint64_t, vk::DescriptorSet>>,
-             AttachmentComparitor> mPendingFreeDescriptorSets;
+	std::map<vk::DescriptorSetLayout,
+			 std::vector<std::pair<uint64_t, vk::DescriptorSet>>> mPendingFreeDescriptorSets;
 
     std::vector<vk::DescriptorPool> mPools;
 };

@@ -20,7 +20,6 @@ struct vulkanResources
 
 	std::optional<vk::Framebuffer> mFrameBuffer;
 	vk::DescriptorSet mDescSet;
-	bool mDescriptorsWritten;
 };
 
 

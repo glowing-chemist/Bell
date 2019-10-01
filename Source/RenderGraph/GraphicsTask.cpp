@@ -136,18 +136,18 @@ namespace std
         std::hash<std::string> stringHasher{};
 
         size_t hash = 0;
-        hash ^= stringHasher(desc.mVertexShader.getFilePath());
+		hash += stringHasher(desc.mVertexShader.getFilePath());
 
         if(desc.mGeometryShader)
-            hash ^= stringHasher((desc.mGeometryShader->getFilePath()));
+			hash += stringHasher((desc.mGeometryShader->getFilePath()));
 
         if(desc.mHullShader)
-            hash ^= stringHasher((desc.mHullShader->getFilePath()));
+			hash += stringHasher((desc.mHullShader->getFilePath()));
 
         if(desc.mTesselationControlShader)
-            hash ^= stringHasher((desc.mTesselationControlShader->getFilePath()));
+			hash += stringHasher((desc.mTesselationControlShader->getFilePath()));
 
-        hash ^= stringHasher(desc.mFragmentShader.getFilePath());
+		hash += stringHasher(desc.mFragmentShader.getFilePath());
 
 
         return hash;

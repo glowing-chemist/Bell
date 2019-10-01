@@ -64,7 +64,7 @@ inline const char* passToString(const PassType passType)
 
 enum class AttachmentType
 {
-	Texture1D,
+	Texture1D = 0,
 	Texture2D,
 	Texture3D,
 	TextureArray,

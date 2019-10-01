@@ -8,6 +8,7 @@
 #include <vulkan/vulkan.hpp>
 
 #include <limits>
+#include <memory>
 #include <vector>
 
 // Constants
@@ -553,18 +554,12 @@ vk::PipelineLayout RenderDevice::generatePipelineLayout(vk::DescriptorSetLayout 
 void RenderDevice::generateVulkanResources(RenderGraph& graph)
 {
 	auto task = graph.taskBegin();
+	clearVulkanResources();
     mVulkanResources.resize(graph.mTaskOrder.size());
     auto resource = mVulkanResources.begin();
 
 	while( task != graph.taskEnd())
     {
-		if ((*resource).mPipeline && (*resource).mPipeline->getHandle() != vk::Pipeline{ nullptr })
-		{
-			++task;
-			++resource;
-			continue;
-		}
-
         if((*task).taskType() == TaskType::Graphics)
         {
             const GraphicsTask& graphicsTask = static_cast<const GraphicsTask&>(*task);
@@ -584,6 +579,8 @@ void RenderDevice::generateVulkanResources(RenderGraph& graph)
             vulkanResources& taskResources = *resource;
             taskResources.mPipeline = pipelineHandles.mComputePipeline;
             taskResources.mDescSetLayout = pipelineHandles.mDescriptorSetLayout;
+			taskResources.mRenderPass.reset();
+			taskResources.mFrameBuffer.reset();
         }
 		++task;
 		++resource;
@@ -601,14 +598,14 @@ void RenderDevice::generateFrameBuffers(RenderGraph& graph)
 
 	while(outputBindings != graph.outputBindingEnd())
     {
-        // Just reuse the old frameBuffer if no knew resources have been bound.
-        if(!graph.mFrameBuffersNeedUpdating[taskIndex])
-        {
-            ++resource;
-            ++outputBindings;
+		// Just reuse the old frameBuffer if no knew resources have been bound.
+		if(!graph.mFrameBuffersNeedUpdating[taskIndex])
+		{
+			++resource;
+			++outputBindings;
 			++taskIndex;
-            continue;
-        }
+			continue;
+		}
 
         std::vector<vk::ImageView> imageViews{};
         vk::Extent3D imageExtent;
@@ -636,11 +633,11 @@ void RenderDevice::generateFrameBuffers(RenderGraph& graph)
         info.setLayers(imageExtent.depth);
 
 		// Make sure we don't leak frameBuffers, add them to the pending destruction list.
-        // Conservartively set the fraemBuffer as used in the last frame.
+		// Conservartively set the frameBuffer as used in the last frame.
         if((*resource).mFrameBuffer)
             destroyFrameBuffer(*(*resource).mFrameBuffer, getCurrentSubmissionIndex() - 1);
 
-        (*resource).mFrameBuffer = mDevice.createFramebuffer(info);
+		(*resource).mFrameBuffer = mDevice.createFramebuffer(info);
 
 		++resource;
 		++outputBindings;
@@ -652,8 +649,8 @@ void RenderDevice::generateFrameBuffers(RenderGraph& graph)
 
 void RenderDevice::generateDescriptorSets(RenderGraph & graph)
 {
-    auto descriptorSets = mDescriptorManager.getDescriptors(graph, mVulkanResources);
-    mDescriptorManager.writeDescriptors(descriptorSets, graph, mVulkanResources);
+	mDescriptorManager.getDescriptors(graph, mVulkanResources);
+	mDescriptorManager.writeDescriptors(graph, mVulkanResources);
 }
 
 
@@ -813,6 +810,8 @@ void RenderDevice::execute(RenderGraph& graph)
 
 		vk::CommandBufferUsageFlags commadBufferUsage = vk::CommandBufferUsageFlagBits::eOneTimeSubmit;
 
+		vk::CommandBufferInheritanceInfo secondaryInherit{};
+
         if (resources.mRenderPass)
         {
             const auto& graphicsTask = static_cast<const GraphicsTask&>(*task);
@@ -836,11 +835,10 @@ void RenderDevice::execute(RenderGraph& graph)
             primaryCmdBuffer.beginRenderPass(passBegin, vk::SubpassContents::eSecondaryCommandBuffers);
 
             bindPoint = vk::PipelineBindPoint::eGraphics;
-        }
 
-        vk::CommandBufferInheritanceInfo secondaryInherit{};
-        secondaryInherit.setRenderPass(*resources.mRenderPass);
-        secondaryInherit.setFramebuffer(*resources.mFrameBuffer);
+			secondaryInherit.setRenderPass(*resources.mRenderPass);
+			secondaryInherit.setFramebuffer(*resources.mFrameBuffer);
+        }
 
         vk::CommandBufferBeginInfo secondaryBegin{};
 		secondaryBegin.setFlags(commadBufferUsage);
@@ -1003,6 +1001,22 @@ void RenderDevice::clearDeferredResources()
         else
             break;
     }
+}
+
+
+void RenderDevice::clearVulkanResources()
+{
+	for(auto& resources : mVulkanResources)
+	{
+		if(resources.mFrameBuffer)
+			mFramebuffersPendingDestruction.emplace_back(getCurrentSubmissionIndex(), resources.mFrameBuffer.value());
+		resources.mFrameBuffer.reset();
+
+		mDescriptorManager.freeDescriptorSet(resources.mDescSetLayout, resources.mDescSet);
+		resources.mDescSet = nullptr;
+	}
+
+	mVulkanResources.clear();
 }
 
 
