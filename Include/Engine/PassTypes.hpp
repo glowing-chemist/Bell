@@ -96,7 +96,8 @@ enum class Format
 	R8UNorm,
 	R16G16Unorm,
 	RGBA16UNorm,
-	RGBA16Float
+	RGBA16Float,
+	RGBA32Float
 };
 
 
