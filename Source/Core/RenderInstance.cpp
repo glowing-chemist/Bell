@@ -29,9 +29,9 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallbackFunc(
 
     BELL_LOG_ARGS("VALIDATION LAYER: %s", msg)
 
-    BELL_TRAP;
+	BELL_TRAP;
 
-    return true;
+	return false;
 
 }
 
