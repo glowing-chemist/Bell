@@ -22,8 +22,8 @@ void main()
 	uvWithDerivitives.xy = uv;
 
 	// Pack the derivitives in to a single float this should still give us plenty of precision.
-	uint packedXDerivitives = packUnorm2x16(dFdx(uv));
-	uint packedYDerivitives = packUnorm2x16(dFdy(uv));
+	uint packedXDerivitives = packHalf2x16(dFdxFine(uv));
+	uint packedYDerivitives = packHalf2x16(dFdyFine(uv));
 
 	uvWithDerivitives.z = uintBitsToFloat(packedXDerivitives);
 	uvWithDerivitives.w = uintBitsToFloat(packedYDerivitives);
