@@ -55,6 +55,8 @@ public:
     void moveBackward(const float distance);
     void moveLeft(const float distance);
     void moveRight(const float distance);
+    void moveUp(const float distance);
+    void moveDown(const float distance);
 
     void rotatePitch(const float);
     void rotateYaw(const float);

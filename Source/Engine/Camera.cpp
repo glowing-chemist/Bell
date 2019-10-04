@@ -101,6 +101,18 @@ void Camera::moveRight(const float distance)
 }
 
 
+void Camera::moveUp(const float distance)
+{
+	mPosition += mUp * distance;
+}
+
+
+void Camera::moveDown(const float distance)
+{
+	mPosition -= mUp * distance;
+}
+
+
 void Camera::rotatePitch(const float angle)
 {
 	const float3 rotationAxis = rightDirectionVector();
