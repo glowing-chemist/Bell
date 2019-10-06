@@ -48,7 +48,7 @@ struct MapInfo
 class MemoryManager : public DeviceChild
 {
 public:
-    explicit MemoryManager(RenderDevice*); // one that does
+	explicit MemoryManager(RenderDevice*);
 
     Allocation Allocate(uint64_t size, unsigned long allignment, bool hostMappable);
     void       Free(Allocation alloc);
@@ -56,8 +56,8 @@ public:
     void       BindImage(vk::Image& image, Allocation alloc);
     void       BindBuffer(vk::Buffer& buffer, Allocation alloc);
 
-	void*	   MapAllocation(MapInfo info);
-	void	   UnMapAllocation(MapInfo info);
+	void*	   MapAllocation(const MapInfo& info);
+	void	   UnMapAllocation(const MapInfo& info);
 
     void       Destroy();
 
@@ -86,10 +86,15 @@ private:
     uint32_t mHostMappablePoolIndex;
 	bool mHasHostCoherent;
 
-    std::vector<vk::DeviceMemory> deviceMemoryBackers;
-    std::vector<vk::DeviceMemory> hostMappableMemoryBackers;
-    std::vector<std::list<PoolFragment>>   deviceLocalPools;
-    std::vector<std::list<PoolFragment>>   hostMappablePools;
+	struct MappableMemoryInfo
+	{
+		void* mBaseAddress;
+		vk::DeviceMemory mBackingMemory;
+	};
+	std::vector<MappableMemoryInfo> mDeviceMemoryBackers;
+	std::vector<MappableMemoryInfo> mHostMappableMemoryBackers;
+	std::vector<std::list<PoolFragment>>   mDeviceLocalPools;
+	std::vector<std::list<PoolFragment>>   mHostMappablePools;
 };
 
 #endif

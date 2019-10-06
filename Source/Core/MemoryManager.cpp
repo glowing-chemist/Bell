@@ -118,7 +118,7 @@ void MemoryManager::AllocateDevicePool()
 
     vk::MemoryAllocateInfo allocInfo{256 * 1000000, static_cast<uint32_t>(mDeviceLocalPoolIndex)};
 
-    deviceMemoryBackers.push_back(getDevice()->allocateMemory(allocInfo));
+	mDeviceMemoryBackers.push_back({nullptr, getDevice()->allocateMemory(allocInfo)});
 
     std::list<PoolFragment> fragmentList(4);
     uint64_t offset = 0;
@@ -132,7 +132,7 @@ void MemoryManager::AllocateDevicePool()
         offset += frag.size;
     }
 
-    deviceLocalPools.push_back(fragmentList);
+	mDeviceLocalPools.push_back(fragmentList);
 
     BELL_LOG("Allocated a memory pool")
 }
@@ -140,10 +140,14 @@ void MemoryManager::AllocateDevicePool()
 
 void MemoryManager::AllocateHostMappablePool()
 {
+	const vk::DeviceSize poolSize = 256 * 1000000;
+	vk::MemoryAllocateInfo allocInfo{poolSize, static_cast<uint32_t>(mHostMappablePoolIndex)};
 
-    vk::MemoryAllocateInfo allocInfo{256 * 1000000, static_cast<uint32_t>(mHostMappablePoolIndex)};
+	// Map the entire allocation on creation for persistent mapping.
+	const vk::DeviceMemory backingMemory = getDevice()->allocateMemory(allocInfo);
+	void* baseAddress = getDevice()->mapMemory(backingMemory, poolSize, 0);
 
-    hostMappableMemoryBackers.push_back(getDevice()->allocateMemory(allocInfo));
+	mHostMappableMemoryBackers.push_back({baseAddress, backingMemory});
 
     std::list<PoolFragment> fragmentList(4);
     uint64_t offset = 0;
@@ -157,7 +161,7 @@ void MemoryManager::AllocateHostMappablePool()
         offset += frag.size;
     }
 
-    hostMappablePools.push_back(fragmentList);
+	mHostMappablePools.push_back(fragmentList);
 
     BELL_LOG("Allocated a host mappable memory pool")
 }
@@ -165,26 +169,26 @@ void MemoryManager::AllocateHostMappablePool()
 
 void MemoryManager::FreeDevicePools()
 {
-	for(auto& frags : deviceMemoryBackers)
+	for(auto& frags : mDeviceMemoryBackers)
 	{
-        getDevice()->freeMemory(frags);
+		getDevice()->freeMemory(frags.mBackingMemory);
     }
 }
 
 
 void MemoryManager::FreeHostMappablePools()
 {
-	for(auto& frags : hostMappableMemoryBackers)
+	for(auto& frags : mHostMappableMemoryBackers)
 	{ // we assume that all has been unmapped
-        getDevice()->freeMemory(frags);
+		getDevice()->freeMemory(frags.mBackingMemory);
     }
 }
 
 
 void MemoryManager::MergeFreePools()
 {
-    MergePool(deviceLocalPools);
-    MergePool(hostMappablePools);
+	MergePool(mDeviceLocalPools);
+	MergePool(mHostMappablePools);
 }
 
 
@@ -251,7 +255,7 @@ void MemoryManager::MergePool(std::vector<std::list<PoolFragment> > &pools)
 
 Allocation MemoryManager::AttemptToAllocate(uint64_t size, unsigned long allignment, bool hostMappable)
 {
-    auto& memPools = hostMappable ? hostMappablePools : deviceLocalPools;
+	auto& memPools = hostMappable ? mHostMappablePools : mDeviceLocalPools;
 
     uint32_t poolNum = 0;
     for(auto& pool : memPools) {
@@ -321,7 +325,7 @@ Allocation MemoryManager::Allocate(uint64_t size, unsigned long allignment,  boo
 
 void MemoryManager::Free(Allocation alloc)
 {
-    auto& pools = alloc.hostMappable ? hostMappablePools : deviceLocalPools ;
+	auto& pools = alloc.hostMappable ? mHostMappablePools : mDeviceLocalPools ;
     auto& pool  = pools[alloc.pool];
 
     for(auto& frag : pool) {
@@ -335,40 +339,41 @@ void MemoryManager::Free(Allocation alloc)
 
 void MemoryManager::BindBuffer(vk::Buffer &buffer, Allocation alloc)
 {
-    std::vector<vk::DeviceMemory> pools = alloc.hostMappable ? hostMappableMemoryBackers : deviceMemoryBackers ;
+	const std::vector<MappableMemoryInfo>& pools = alloc.hostMappable ? mHostMappableMemoryBackers : mDeviceMemoryBackers ;
 
-    getDevice()->bindBufferMemory(buffer, pools[alloc.pool], alloc.offset);
+	getDevice()->bindBufferMemory(buffer, pools[alloc.pool].mBackingMemory, alloc.offset);
 }
 
 
 void MemoryManager::BindImage(vk::Image &image, Allocation alloc)
 {
-    std::vector<vk::DeviceMemory> pools = alloc.hostMappable ? hostMappableMemoryBackers : deviceMemoryBackers ;
+	const std::vector<MappableMemoryInfo>& pools = alloc.hostMappable ? mHostMappableMemoryBackers : mDeviceMemoryBackers ;
 
-    getDevice()->bindImageMemory(image, pools[alloc.pool], alloc.offset);
+	getDevice()->bindImageMemory(image, pools[alloc.pool].mBackingMemory, alloc.offset);
 }
 
 
-void* MemoryManager::MapAllocation(MapInfo info)
-{
+void* MemoryManager::MapAllocation(const MapInfo& info)
+{	
 	const Allocation& alloc = info.mMemory;
-	std::vector<vk::DeviceMemory> pools = alloc.hostMappable ? hostMappableMemoryBackers : deviceMemoryBackers;
 
-	return getDevice()->mapMemory(pools[alloc.pool], info.mSize, alloc.offset + info.mOffset);
+	BELL_ASSERT(alloc.hostMappable, "Attempting to map non mappable memory")
+
+	const std::vector<MappableMemoryInfo>& pools = alloc.hostMappable ? mHostMappableMemoryBackers : mDeviceMemoryBackers;
+
+	return static_cast<void*>(static_cast<char*>(pools[alloc.pool].mBaseAddress) + alloc.offset + info.mOffset);
 }
 
 
-void MemoryManager::UnMapAllocation(MapInfo info)
+void MemoryManager::UnMapAllocation(const MapInfo &info)
 {
 	const Allocation& alloc = info.mMemory;
-	std::vector<vk::DeviceMemory> pools = alloc.hostMappable ? hostMappableMemoryBackers : deviceMemoryBackers;
-
-	getDevice()->unmapMemory(pools[alloc.pool]);
+	const std::vector<MappableMemoryInfo>& pools = alloc.hostMappable ? mHostMappableMemoryBackers : mDeviceMemoryBackers;
 
 	if(writeMapsNeedFlushing())
 	{
 		vk::MappedMemoryRange range{};
-		range.setMemory(pools[alloc.pool]);
+		range.setMemory(pools[alloc.pool].mBackingMemory);
 		range.setSize(info.mSize);
 		range.setOffset(alloc.offset + info.mOffset);
 
