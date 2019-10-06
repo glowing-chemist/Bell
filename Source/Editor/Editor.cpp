@@ -193,7 +193,7 @@ void Editor::renderOverlay()
         if(optionalPath)
         {
             mShowFileBrowser = false;
-            mEngine.setScene((*optionalPath).filename().string());
+			mEngine.setScene((*optionalPath).generic_u8string());
         }
     }
 
