@@ -61,6 +61,10 @@ void Scene::loadFromFile(const int vertAttributes)
 
     const aiNode* rootNode = scene->mRootNode;
 
+	// Bit of a hack to avoid use after free when resizing the mesh vector
+	// so just reserve enough sie here.
+	mSceneMeshes.reserve(scene->mNumMeshes);
+
     // parse node is recursive so will add all meshes to teh scene.
     parseNode(scene, rootNode, aiMatrix4x4{}, vertAttributes);
 
