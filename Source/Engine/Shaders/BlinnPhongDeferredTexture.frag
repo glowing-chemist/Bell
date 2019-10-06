@@ -69,7 +69,7 @@ void main()
     
     // then calculate lighting as usual    
     vec3 lighting = albedo * 0.1; // hard-coded ambient component. TODO maybe replace this with image based lighting.  
-    vec3 viewDir = normalize(camera.invertedCamera[3].xyz - worldSpaceFragmentPos);
+    vec3 viewDir = normalize(camera.position - worldSpaceFragmentPos);
 
     {
         mat3 tbv = tangentSpaceMatrix(vertexNormal, viewDir, vec4(xDerivities, yDerivities));
