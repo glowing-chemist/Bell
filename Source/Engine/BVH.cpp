@@ -212,8 +212,15 @@ std::unique_ptr<typename BVH<T>::Node> BVHFactory<T>::partition(std::vector<std:
             shrunkLeft = AABB{top, bottom};
         }
 
-        node->mLeft = partition(leftChildren, shrunkLeft);
-        node->mRight = partition(rightChildren, shrunkRight);
+		if(!leftChildren.empty())
+		{
+			node->mLeft = partition(leftChildren, shrunkLeft);
+		}
+
+		if(!rightChildren.empty())
+		{
+			node->mRight = partition(rightChildren, shrunkRight);
+		}
 	}
 	else
 	{
