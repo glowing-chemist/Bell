@@ -96,6 +96,19 @@ namespace
 				newNode->mOutputs.push_back(Pin{ 0, newNode, "AccumilatedLights", PinType::Texture, PinKind::Output });
 				return newNode;
 			}
+
+			case NodeTypes::DeferredTexturePBRIBL:
+			{
+				std::shared_ptr<EditorNode> newNode = std::make_shared<PassNode>("DeferredTextureBlinnPhongLighting", passType);
+				newNode->mInputs.push_back(Pin{ 0, newNode, "Depth", PinType::Texture, PinKind::Input });
+				newNode->mInputs.push_back(Pin{ 0, newNode, "VertexNormal", PinType::Texture, PinKind::Input });
+				newNode->mInputs.push_back(Pin{ 0, newNode, "Material", PinType::Texture, PinKind::Input });
+				newNode->mInputs.push_back(Pin{ 0, newNode, "UV", PinType::Texture, PinKind::Input });
+				newNode->mInputs.push_back(Pin{ 0, newNode, "skybox", PinType::Texture, PinKind::Input });
+				newNode->mInputs.push_back(Pin{ 0, newNode, "convolved Skybox", PinType::Texture, PinKind::Input });
+				newNode->mOutputs.push_back(Pin{ 0, newNode, "AccumilatedLights", PinType::Texture, PinKind::Output });
+				return newNode;
+			}
         }
     }
 
@@ -329,6 +342,7 @@ void Editor::drawAssistantWindow()
 		   drawPassContextMenu(PassType::InplaceCombine);
 		   drawPassContextMenu(PassType::InplaceCombineSRGB);
 		   drawPassContextMenu(PassType::DeferredTextureBlinnPhongLighting);
+		   drawPassContextMenu(PassType::DeferredTexturePBRIBL);
 
            ImGui::EndMenu();
        }
