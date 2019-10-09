@@ -24,6 +24,35 @@
 #include <string>
 #include <variant>
 
+// Render paths supported by the engine.
+enum class RenderType
+{
+	BindlessForwardPlus,
+	BindlessDeferred
+};
+
+enum class LightingType
+{
+	BlinnPhong,
+	PBR
+};
+
+
+struct RenderOptions
+{
+	RenderOptions() :
+		mRenderType{RenderType::BindlessDeferred},
+		mLightingType{LightingType::PBR},
+		mUseSSAO{false},
+		mRenderOverlay{false} {}
+
+	RenderType mRenderType;
+	LightingType mLightingType;
+
+	bool mUseSSAO;
+	bool mRenderOverlay;
+};
+
 
 class Engine
 {
@@ -144,6 +173,8 @@ private:
 
     RenderGraph mCurrentRenderGraph;
 
+	CommandContext mCommandContext;
+
     Shader mOverlayVertexShader;
     Shader mOverlayFragmentShader;
 
@@ -165,7 +196,7 @@ private:
 
 	void updateGlobalUniformBuffers();
 
-    std::map<std::string, std::variant<int64_t, double>> mRenderVariables;
+	RenderOptions mRenderOptions;
 
     std::mutex mSubmissionLock;
 

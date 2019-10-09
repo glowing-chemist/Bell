@@ -21,6 +21,7 @@ Engine::Engine(GLFWwindow* windowPtr) :
     mIndexBuilder(),
     mOverlayIndexByteOffset(0),
     mCurrentRenderGraph(),
+	mCommandContext(),
     mOverlayVertexShader(&mRenderDevice, "./Shaders/Overlay.vert"),
     mOverlayFragmentShader(&mRenderDevice, "./Shaders/Overlay.frag"),
     mVertexBuffer{getDevice(), vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eTransferDst, 1000, 1000, "Vertex Buffer"},
@@ -30,7 +31,7 @@ Engine::Engine(GLFWwindow* windowPtr) :
 	mSSAOBUffer{},
 	mDeviceSSAOBuffer{getDevice(), vk::BufferUsageFlagBits::eUniformBuffer, sizeof(SSAOBuffer), sizeof(SSAOBuffer), "SSAO Buffer"},
 	mGeneratedSSAOBuffer{false},
-    mRenderVariables(),
+	mRenderOptions(),
     mWindow(windowPtr)
 {
     mOverlayVertexShader.compile();
