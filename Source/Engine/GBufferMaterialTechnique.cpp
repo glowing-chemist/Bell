@@ -40,10 +40,10 @@ GBufferMaterialTechnique::GBufferMaterialTechnique(Engine* eng) :
     mTask.addInput("CameraBuffer", AttachmentType::UniformBuffer);
     mTask.addInput("ModelMatrix", AttachmentType::PushConstants);
 
-    mTask.addOutput("GBuffer Normals",  AttachmentType::Texture2D, Format::R16G16Unorm, LoadOp::Clear_Black);
-    mTask.addOutput("GBuffer UV",       AttachmentType::Texture2D, Format::RGBA8SRGB, LoadOp::Clear_Black);
-    mTask.addOutput("GBuffer Material", AttachmentType::Texture2D, Format::R8UNorm, LoadOp::Clear_Black);
-    mTask.addOutput("GBuffer Depth",    AttachmentType::Depth, Format::D24S8Float, LoadOp::Clear_White);
+	mTask.addOutput("GBuffer Normals",  AttachmentType::Texture2D, Format::R16G16Unorm, SizeClass::Swapchain, LoadOp::Clear_Black);
+	mTask.addOutput("GBuffer UV",       AttachmentType::Texture2D, Format::RGBA8SRGB, SizeClass::Swapchain, LoadOp::Clear_Black);
+	mTask.addOutput("GBuffer Material", AttachmentType::Texture2D, Format::R8UNorm, SizeClass::Swapchain, LoadOp::Clear_Black);
+	mTask.addOutput("GBuffer Depth",    AttachmentType::Depth, Format::D24S8Float, SizeClass::Swapchain, LoadOp::Clear_White);
 }
 
 
@@ -91,10 +91,10 @@ GBufferMaterialPreDepthTechnique::GBufferMaterialPreDepthTechnique(Engine* eng) 
     mTask.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
     mTask.addInput("ModelMatrix", AttachmentType::PushConstants);
 
-    mTask.addOutput(kGBufferNormals,  AttachmentType::Texture2D, Format::R16G16Unorm, LoadOp::Clear_Black);
-    mTask.addOutput(kGBufferUV,       AttachmentType::Texture2D, Format::RGBA8SRGB, LoadOp::Clear_Black);
-    mTask.addOutput(kGBufferMaterialID, AttachmentType::Texture2D, Format::R8UNorm, LoadOp::Clear_Black);
-    mTask.addOutput(mDepthName,         AttachmentType::Depth, Format::D24S8Float, LoadOp::Preserve);
+	mTask.addOutput(kGBufferNormals,  AttachmentType::Texture2D, Format::R16G16Unorm, SizeClass::Swapchain, LoadOp::Clear_Black);
+	mTask.addOutput(kGBufferUV,       AttachmentType::Texture2D, Format::RGBA8SRGB, SizeClass::Swapchain, LoadOp::Clear_Black);
+	mTask.addOutput(kGBufferMaterialID, AttachmentType::Texture2D, Format::R8UNorm, SizeClass::Swapchain, LoadOp::Clear_Black);
+	mTask.addOutput(mDepthName,         AttachmentType::Depth, Format::D24S8Float, SizeClass::Swapchain, LoadOp::Preserve);
 
 }
 

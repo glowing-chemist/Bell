@@ -26,7 +26,7 @@ SSAOTechnique::SSAOTechnique(Engine* eng) :
     mTask.addInput(mDepthNameSlot, AttachmentType::Texture2D);
     mTask.addInput(kDefaultSampler, AttachmentType::Sampler);
 
-    mTask.addOutput(kSSAO, AttachmentType::RenderTarget2D, Format::R8UNorm, LoadOp::Clear_Black);
+	mTask.addOutput(kSSAO, AttachmentType::RenderTarget2D, Format::R8UNorm, SizeClass::HalfSwapchain, LoadOp::Clear_Black);
 
     mTask.addDrawCall(0, 3);
 }

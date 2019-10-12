@@ -236,6 +236,7 @@ CommandContext& CommandContext::bindRenderTargets(const ImageView* view, const c
         binding.mName = slots[i];
         binding.mBound = true;
         binding.mFormat = view[i].getImageViewFormat();
+		binding.mSize = SizeClass::Custom;
         binding.mLoadOp = ops[i];
 
 		// convert from extent to AttachmentType
@@ -257,6 +258,129 @@ CommandContext& CommandContext::bindRenderTargets(const ImageView* view, const c
 }
 
 
+CommandContext& CommandContext::bindImageViews(const char* const* slots, const uint32_t start, const uint32_t count)
+{
+	BELL_ASSERT(start + count <= 16, "Attempting to bind storage buffers views out of bounds \n")
+
+	if(mCurrentRecordingState == RecordingState::Commands)
+		addTaskToGraph();
+
+	mCurrentRecordingState = RecordingState::Resources;
+
+	for(uint32_t i = 0; i < count; ++i)
+	{
+		BindingInfo binding{};
+		binding.mName = slots[i];
+		binding.mType = AttachmentType::Texture2D;
+		binding.mBound = true;
+
+		mCurrentResourceBindings[start + i] = binding;
+	}
+
+	return *this;
+}
+
+
+CommandContext& CommandContext::bindImageViewArrays(const char* const* slots, const uint32_t start, const uint32_t count)
+{
+	BELL_ASSERT(start + count <= 16, "Attempting to bind storage buffers views out of bounds \n")
+
+	if(mCurrentRecordingState == RecordingState::Commands)
+		addTaskToGraph();
+
+	mCurrentRecordingState = RecordingState::Resources;
+
+	for(uint32_t i = 0; i < count; ++i)
+	{
+		BindingInfo binding{};
+		binding.mName = slots[i];
+		binding.mType = AttachmentType::TextureArray;
+		binding.mBound = true;
+
+		mCurrentResourceBindings[start + i] = binding;
+	}
+
+	return *this;
+}
+
+
+CommandContext& CommandContext::bindStorageTextureViews(const char* const * slots, const uint32_t start, const uint32_t count)
+{
+	BELL_ASSERT(start + count <= 16, "Attempting to bind storage buffers views out of bounds \n")
+
+	if(mCurrentRecordingState == RecordingState::Commands)
+		addTaskToGraph();
+
+	mCurrentRecordingState = RecordingState::Resources;
+
+	for(uint32_t i = 0; i < count; ++i)
+	{
+		BindingInfo binding{};
+		binding.mName = slots[i];
+		binding.mType = AttachmentType::Image2D;
+		binding.mBound = true;
+
+		mCurrentResourceBindings[start + i] = binding;
+	}
+
+	return *this;
+}
+
+
+CommandContext& CommandContext::bindRenderTargets(const char* const * slots, const Format* formats, const SizeClass* sizes, const LoadOp* ops, const uint32_t start, const uint32_t count)
+{
+	BELL_ASSERT(start + count <= 16, "Attempting to bind image views out of bounds \n")
+
+	if(mCurrentRecordingState == RecordingState::Commands)
+		addTaskToGraph();
+
+	mCurrentRecordingState = RecordingState::Resources;
+
+	for(uint32_t i = 0; i < count; ++i)
+	{
+		RenderTargetInfo binding{};
+		binding.mName = slots[i];
+		binding.mBound = true;
+		binding.mFormat = formats[i];
+		binding.mSize = sizes[i];
+		binding.mLoadOp = ops[i];
+
+		binding.mType = AttachmentType::RenderTarget2D;
+
+		mCurrentFrameBuffer[start + i] = binding;
+	}
+
+	return *this;
+}
+
+
+CommandContext& CommandContext::bindDepthStencilView(const char* const * slots, const Format* formats, const SizeClass* sizes, const LoadOp* ops, const uint32_t start, const uint32_t count)
+{
+	BELL_ASSERT(start + count <= 16, "Attempting to bind image views out of bounds \n")
+
+	if(mCurrentRecordingState == RecordingState::Commands)
+		addTaskToGraph();
+
+	mCurrentRecordingState = RecordingState::Resources;
+
+	for(uint32_t i = 0; i < count; ++i)
+	{
+		RenderTargetInfo binding{};
+		binding.mName = slots[i];
+		binding.mBound = true;
+		binding.mFormat = formats[i];
+		binding.mSize = sizes[i];
+		binding.mLoadOp = ops[i];
+
+		binding.mType = AttachmentType::Depth;
+
+		mCurrentFrameBuffer[start + i] = binding;
+	}
+
+	return *this;
+}
+
+
 CommandContext& CommandContext::bindDepthStencilView(const ImageView* view, const char* const* slots,  const LoadOp* ops, uint32_t start, uint32_t count)
 {
 	BELL_ASSERT(start + count <= 16, "Attempting to bind depth out of bounds \n")
@@ -272,6 +396,7 @@ CommandContext& CommandContext::bindDepthStencilView(const ImageView* view, cons
 		binding.mName = slots[i];
 		binding.mBound = true;
 		binding.mFormat = view[i].getImageViewFormat();
+		binding.mSize = SizeClass::Custom;
 		binding.mLoadOp = ops[i];
 		binding.mType = AttachmentType::Depth;
 
@@ -462,7 +587,7 @@ void CommandContext::addTaskToGraph()
             if(!renderTarget.mBound)
                 break;
 
-            task.addOutput(renderTarget.mName, renderTarget.mType, renderTarget.mFormat, renderTarget.mLoadOp);
+			task.addOutput(renderTarget.mName, renderTarget.mType, renderTarget.mFormat, renderTarget.mSize, renderTarget.mLoadOp);
         }
 
 		if(mPushConstantsEnabled)

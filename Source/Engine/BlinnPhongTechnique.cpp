@@ -38,7 +38,7 @@ BlinnPhongDeferredTexturesTechnique::BlinnPhongDeferredTexturesTechnique(Engine*
     // Bound by the engine.
     mTask.addInput(kDefaultSampler, AttachmentType::Sampler);
 
-    mTask.addOutput(getLightTextureName(), AttachmentType::RenderTarget2D, Format::RGBA8SRGB, LoadOp::Clear_Black);
+	mTask.addOutput(getLightTextureName(), AttachmentType::RenderTarget2D, Format::RGBA8SRGB, SizeClass::Swapchain, LoadOp::Clear_Black);
 }
 
 

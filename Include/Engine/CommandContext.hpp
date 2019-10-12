@@ -46,7 +46,7 @@ public:
     CommandContext& setGraphicsPipelineState(const GraphicsPipelineDescription&);
     CommandContext& setCompuetPipelineState(const ComputePipelineDescription&);
 
-    // Chainable functions for binding resources
+	// Chainable functions for binding persistent resources
 	CommandContext& bindImageViews(const ImageView* view, const char* const* slots, const uint32_t start, const uint32_t count);
 	CommandContext& bindImageViewArrays(const ImageViewArray* view, const char* const* slots, const uint32_t start, const uint32_t count);
 	CommandContext& bindStorageTextureViews(const ImageView* view, const char* const * slots, const uint32_t start, const uint32_t count);
@@ -57,6 +57,14 @@ public:
 	CommandContext& bindDepthStencilView(const ImageView* view, const char* const* slots, const LoadOp*, const uint32_t start, const uint32_t count);
 	CommandContext& setVertexAttributes(const int attr)
     { mCurrentVertexAttributes = attr; return *this; }
+
+	// For binding non-persistent resources (currently only images)
+	CommandContext& bindImageViews(const char* const* slots, const uint32_t start, const uint32_t count);
+	CommandContext& bindImageViewArrays(const char* const* slots, const uint32_t start, const uint32_t count);
+	CommandContext& bindStorageTextureViews(const char* const * slots, const uint32_t start, const uint32_t count);
+	CommandContext& bindRenderTargets(const char* const * slots, const Format*, const SizeClass*, const LoadOp*, const uint32_t start, const uint32_t count);
+	CommandContext& bindDepthStencilView(const char* const * slots, const Format*, const SizeClass*, const LoadOp*, const uint32_t start, const uint32_t count);
+
 
     // Functions that record graphics commands
     void draw(const uint32_t vertexOffset, const uint32_t numberOfVerticies);
@@ -111,6 +119,7 @@ private:
         std::string mName; // also slot
         AttachmentType mType;
         Format mFormat;
+		SizeClass mSize;
         LoadOp mLoadOp;
         bool mBound;
     };

@@ -321,7 +321,7 @@ void GraphicsPipeline::setFrameBufferBlendStates(const RenderTask& task)
 		return adjustedOp;
 	};
 
-	for (const auto& [name, type, format, loadOp] : outputAttachments)
+	for (const auto& [name, type, format, size, loadOp] : outputAttachments)
 	{
 		// Don't generate blend info for depth attachments.
 		if (format == Format::D32Float || format == Format::D24S8Float)

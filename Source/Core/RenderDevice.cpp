@@ -279,7 +279,7 @@ vk::RenderPass	RenderDevice::generateRenderPass(const GraphicsTask& task)
     std::vector<vk::AttachmentReference> depthAttachmentRef{};
     uint32_t outputAttatchmentCounter = 0;
 
-	for(const auto& [name, type, format, loadop] : outputAttachments)
+	for(const auto& [name, type, format, size, loadop] : outputAttachments)
     {
         // We only care about images here.
         if(type == AttachmentType::DataBuffer ||
@@ -786,6 +786,7 @@ vk::Sampler RenderDevice::getImmutableSampler(const Sampler& samplerDesc)
 
 void RenderDevice::execute(RenderGraph& graph)
 {
+	graph.generateNonPersistentImages(this);
 	graph.reorderTasks();
 	graph.mergeTasks();
 

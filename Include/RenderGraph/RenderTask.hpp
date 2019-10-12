@@ -21,6 +21,14 @@ enum class LoadOp
     Clear_Black
 };
 
+enum class SizeClass
+{
+	Swapchain,
+	HalfSwapchain,
+	QuarterSwapchain,
+	Custom
+};
+
 enum class TaskType
 {
 	Graphics,
@@ -42,9 +50,9 @@ public:
     }
 
     // Loadop has no effect on ComputeTasks
-	virtual void addOutput(const std::string& name, const AttachmentType attachmentType, const Format format, const LoadOp op = LoadOp::Preserve)
+	virtual void addOutput(const std::string& name, const AttachmentType attachmentType, const Format format, const SizeClass size = SizeClass::Custom, const LoadOp op = LoadOp::Preserve)
     {
-	   mOutputAttachments.push_back({name, attachmentType, format, op});
+	   mOutputAttachments.push_back({name, attachmentType, format, size, op});
     }
 
 
@@ -52,10 +60,11 @@ public:
 
     struct OutputAttachmentInfo
     {
-        std::string mName;
-        AttachmentType mType;
+		std::string		mName;
+		AttachmentType	mType;
 		Format			mFormat;
-        LoadOp         mLoadOp;
+		SizeClass		mSize;
+		LoadOp			mLoadOp;
     };
 
     const std::vector<std::pair<std::string, AttachmentType>>& getInputAttachments() const

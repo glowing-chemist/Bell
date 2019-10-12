@@ -112,6 +112,8 @@ public:
 		uint32_t mResourceBinding;
 	};
 
+	void generateNonPersistentImages(RenderDevice*);
+
 private:
 
     void reorderTasks();
@@ -147,6 +149,18 @@ private:
     // the actual sampler objects are stored on the device a they live for the
     // life of the renderer.
     std::vector<std::pair<std::string, Sampler>> mSamplers;
+
+	// Store the images created per frame.
+	struct NonPersistentImage
+	{
+		NonPersistentImage(const Image& i, const ImageView& v) :
+			mImage{i},
+			mImageView{v} {}
+
+		Image mImage;
+		ImageView mImageView;
+	};
+	std::vector<NonPersistentImage> mNonPersistentImages;
 };
 
 

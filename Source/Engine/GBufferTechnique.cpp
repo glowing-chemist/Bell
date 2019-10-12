@@ -38,10 +38,10 @@ GBufferTechnique::GBufferTechnique(Engine* eng) :
 
     mTask.addInput("Model Matrix", AttachmentType::PushConstants);
 
-    mTask.addOutput(kGBufferNormals, AttachmentType::Texture2D, Format::R16G16Unorm, LoadOp::Clear_Black);
-    mTask.addOutput(kGBufferAlbedo, AttachmentType::Texture2D, Format::RGBA8SRGB, LoadOp::Clear_Black);
-    mTask.addOutput(kGBufferSpecular, AttachmentType::Texture2D, Format::R8UNorm, LoadOp::Clear_Black);
-    mTask.addOutput(kGBufferDepth, AttachmentType::Depth, Format::D32Float, LoadOp::Clear_White);
+	mTask.addOutput(kGBufferNormals, AttachmentType::Texture2D, Format::R16G16Unorm, SizeClass::Swapchain, LoadOp::Clear_Black);
+	mTask.addOutput(kGBufferAlbedo, AttachmentType::Texture2D, Format::RGBA8SRGB, SizeClass::Swapchain, LoadOp::Clear_Black);
+	mTask.addOutput(kGBufferSpecular, AttachmentType::Texture2D, Format::R8UNorm, SizeClass::Swapchain, LoadOp::Clear_Black);
+	mTask.addOutput(kGBufferDepth, AttachmentType::Depth, Format::D32Float, SizeClass::Swapchain, LoadOp::Clear_White);
 }
 
 
@@ -87,10 +87,10 @@ GBufferPreDepthTechnique::GBufferPreDepthTechnique(Engine* eng) :
 
     mTask.addInput("Model Matrix", AttachmentType::PushConstants);
 
-    mTask.addOutput(kGBufferNormals,  AttachmentType::Texture2D, Format::R16G16Unorm, LoadOp::Clear_Black);
-    mTask.addOutput(kGBufferAlbedo,   AttachmentType::Texture2D, Format::RGBA8SRGB, LoadOp::Clear_Black);
-    mTask.addOutput(kGBufferSpecular, AttachmentType::Texture2D, Format::R8UNorm, LoadOp::Clear_Black);
-    mTask.addOutput(mDepthName,         AttachmentType::Depth, Format::D32Float, LoadOp::Preserve);
+	mTask.addOutput(kGBufferNormals,  AttachmentType::Texture2D, Format::R16G16Unorm, SizeClass::Swapchain, LoadOp::Clear_Black);
+	mTask.addOutput(kGBufferAlbedo,   AttachmentType::Texture2D, Format::RGBA8SRGB, SizeClass::Swapchain, LoadOp::Clear_Black);
+	mTask.addOutput(kGBufferSpecular, AttachmentType::Texture2D, Format::R8UNorm, SizeClass::Swapchain, LoadOp::Clear_Black);
+	mTask.addOutput(mDepthName,         AttachmentType::Depth, Format::D32Float, SizeClass::Swapchain, LoadOp::Preserve);
 }
 
 

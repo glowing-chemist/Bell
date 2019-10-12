@@ -2,6 +2,7 @@
 #include "RenderDevice.hpp"
 #include "Core/ConversionUtils.hpp"
 
+
 Image::Image(RenderDevice* dev,
 			 const Format format,
 			 const ImageUsage usage,

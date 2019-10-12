@@ -1,5 +1,6 @@
 
 #include "RenderGraph/RenderGraph.hpp"
+#include "Core/RenderDevice.hpp"
 #include "Core/BellLogging.hpp"
 
 #include <algorithm>
@@ -253,7 +254,7 @@ void RenderGraph::bindImage(const std::string& name, const ImageView &image)
 void RenderGraph::bindImageArray(const std::string& name, const ImageViewArray& imageArray)
 {
 	const uint32_t currentImageArrayIndex = static_cast<uint32_t>(mImageViewArrays.size());
-	mImageViewArrays.emplace_back(name, imageArray);
+	mImageViewArrays.emplace_back(name, imageArray);	
 
 	bindResource(name, currentImageArrayIndex, ResourceType::ImageArray);
 }
@@ -288,6 +289,56 @@ void RenderGraph::bindIndexBuffer(const Buffer& buffer)
 {
 	mIndexBuffer.reset();
     mIndexBuffer = buffer;
+}
+
+
+void RenderGraph::generateNonPersistentImages(RenderDevice* dev)
+{
+	// Currently (and probably will only ever) support creating non persistent resources for graphics tasks.
+	for(const auto& task : mGraphicsTasks)
+	{
+		const auto& outputs = task.getOuputAttachments();
+
+		for(const auto& output : outputs)
+		{
+			// Means it is a persistent resource.
+			if(output.mSize == SizeClass::Custom)
+				continue;
+
+			const auto [width, height] = [=]() -> std::pair<uint32_t, uint32_t>
+			{
+				const uint32_t swapChainWidth = dev->getSwapChain()->getSwapChainImageWidth();
+				const uint32_t swapChainHeight = dev->getSwapChain()->getSwapChainImageHeight();
+
+				switch(output.mSize)
+				{
+					case SizeClass::Swapchain:
+						return {swapChainWidth, swapChainHeight};
+
+					case SizeClass::HalfSwapchain:
+						return {swapChainWidth / 2, swapChainHeight / 2 };
+
+					case SizeClass::QuarterSwapchain:
+						return {swapChainWidth / 4, swapChainHeight / 4 };
+
+					default:
+						BELL_TRAP;
+						return {swapChainWidth, swapChainHeight};
+				}
+			}();
+
+			Image generatedImage(dev, output.mFormat, (output.mType == AttachmentType::Depth ?
+									 ImageUsage::DepthStencil :  ImageUsage::ColourAttachment) | ImageUsage::Sampled,
+								 width, height, 1, 1, 1, 1, output.mName);
+
+			ImageView view{generatedImage, output.mType == AttachmentType::Depth ?
+												ImageViewType::Depth :  ImageViewType::Colour};
+
+			mNonPersistentImages.emplace_back(generatedImage, view);
+
+			bindImage(output.mName, view);
+		}
+	}
 }
 
 

@@ -21,5 +21,5 @@ PreDepthTechnique::PreDepthTechnique(Engine* eng) :
 {
     mTask.setVertexAttributes(VertexAttributes::Position4 | VertexAttributes::Normals | VertexAttributes::TextureCoordinates);
 
-    mTask.addOutput(getDepthName(), AttachmentType::Depth, Format::D32Float, LoadOp::Clear_White);
+	mTask.addOutput(getDepthName(), AttachmentType::Depth, Format::D32Float, SizeClass::Swapchain, LoadOp::Clear_White);
 }
