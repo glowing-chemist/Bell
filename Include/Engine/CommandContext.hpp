@@ -22,6 +22,15 @@ enum class ContextType {
 };
 
 
+struct OutputAttachmentDesc
+{
+	std::string mSlot;
+	Format mFormat;
+	SizeClass mSize;
+	LoadOp mOp;
+};
+
+
 class CommandContext
 {
 
@@ -62,8 +71,8 @@ public:
 	CommandContext& bindImageViews(const char* const* slots, const uint32_t start, const uint32_t count);
 	CommandContext& bindImageViewArrays(const char* const* slots, const uint32_t start, const uint32_t count);
 	CommandContext& bindStorageTextureViews(const char* const * slots, const uint32_t start, const uint32_t count);
-	CommandContext& bindRenderTargets(const char* const * slots, const Format*, const SizeClass*, const LoadOp*, const uint32_t start, const uint32_t count);
-	CommandContext& bindDepthStencilView(const char* const * slots, const Format*, const SizeClass*, const LoadOp*, const uint32_t start, const uint32_t count);
+	CommandContext& bindRenderTargets(const OutputAttachmentDesc*, const uint32_t start, const uint32_t count);
+	CommandContext& bindDepthStencilView(const OutputAttachmentDesc*, const uint32_t start, const uint32_t count);
 
 
     // Functions that record graphics commands

@@ -327,7 +327,7 @@ CommandContext& CommandContext::bindStorageTextureViews(const char* const * slot
 }
 
 
-CommandContext& CommandContext::bindRenderTargets(const char* const * slots, const Format* formats, const SizeClass* sizes, const LoadOp* ops, const uint32_t start, const uint32_t count)
+CommandContext& CommandContext::bindRenderTargets(const OutputAttachmentDesc* descs, const uint32_t start, const uint32_t count)
 {
 	BELL_ASSERT(start + count <= 16, "Attempting to bind image views out of bounds \n")
 
@@ -339,11 +339,11 @@ CommandContext& CommandContext::bindRenderTargets(const char* const * slots, con
 	for(uint32_t i = 0; i < count; ++i)
 	{
 		RenderTargetInfo binding{};
-		binding.mName = slots[i];
+		binding.mName = descs[i].mSlot;
 		binding.mBound = true;
-		binding.mFormat = formats[i];
-		binding.mSize = sizes[i];
-		binding.mLoadOp = ops[i];
+		binding.mFormat = descs[i].mFormat;
+		binding.mSize = descs[i].mSize;
+		binding.mLoadOp = descs[i].mOp;
 
 		binding.mType = AttachmentType::RenderTarget2D;
 
@@ -354,7 +354,7 @@ CommandContext& CommandContext::bindRenderTargets(const char* const * slots, con
 }
 
 
-CommandContext& CommandContext::bindDepthStencilView(const char* const * slots, const Format* formats, const SizeClass* sizes, const LoadOp* ops, const uint32_t start, const uint32_t count)
+CommandContext& CommandContext::bindDepthStencilView(const OutputAttachmentDesc* descs, const uint32_t start, const uint32_t count)
 {
 	BELL_ASSERT(start + count <= 16, "Attempting to bind image views out of bounds \n")
 
@@ -366,11 +366,11 @@ CommandContext& CommandContext::bindDepthStencilView(const char* const * slots, 
 	for(uint32_t i = 0; i < count; ++i)
 	{
 		RenderTargetInfo binding{};
-		binding.mName = slots[i];
+		binding.mName = descs[i].mSlot;
 		binding.mBound = true;
-		binding.mFormat = formats[i];
-		binding.mSize = sizes[i];
-		binding.mLoadOp = ops[i];
+		binding.mFormat = descs[i].mFormat;
+		binding.mSize = descs[i].mSize;
+		binding.mLoadOp = descs[i].mOp;
 
 		binding.mType = AttachmentType::Depth;
 
