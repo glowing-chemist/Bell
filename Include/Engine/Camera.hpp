@@ -82,7 +82,7 @@ private:
 
     // Get the vector perpendicular to the direction vector (rotated 90 degrees clockwise)
     float3 rightDirectionVector() const
-        { return glm::cross(mDirection, mUp); }
+    { return glm::cross(glm::normalize(mDirection), mUp); }
 
     float3 mPosition;
     float3 mDirection;
