@@ -8,8 +8,8 @@ mat3 tangentSpaceMatrix(const vec3 vertNormal, const vec3 view, const vec4 uvDer
 	const vec2 uvDx = uvDerivitives.xy;
 	const vec2 uvDy = uvDerivitives.zw;
 
-	const vec3 viewDx = dFdx(view);
-	const vec3 viewDy = dFdy(view);
+	const vec3 viewDx = dFdxFine(view);
+	const vec3 viewDy = dFdyFine(view);
 
 	 // solve the linear system 
 	 vec3 dp2perp = cross(viewDy, vertNormal);
@@ -26,5 +26,5 @@ mat3 tangentSpaceMatrix(const vec3 vertNormal, const vec3 view, const vec4 uvDer
 
 vec3 remapNormals(const vec3 N)
 {
-	return (N - vec3(0.5)) * 2.0;
+	return (N - vec3(0.5f)) * 2.0;
 }

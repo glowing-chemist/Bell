@@ -51,16 +51,17 @@ void main()
 
 	const uint materialID = texture(usampler2D(materialIDTexture, linearSampler), uv).x;
 
-	const vec3 vertexNormal = (texture(sampler2D(vertexNormals, linearSampler), uv).xyz * 2.0f) - 1.0f;
+	vec3 vertexNormal = texture(sampler2D(vertexNormals, linearSampler), uv).xyz;
+	vertexNormal = normalize(remapNormals(vertexNormal));
 
 	const vec4 fragUVwithDifferentials = texture(sampler2D(uvWithDerivitives, linearSampler), uv);
 
 	const vec2 xDerivities = unpackHalf2x16(floatBitsToUint(fragUVwithDifferentials.z));
     const vec2 yDerivities = unpackHalf2x16(floatBitsToUint(fragUVwithDifferentials.w));
 
-    vec3 viewDir = normalize(camera.position - worldSpaceFragmentPos.xyz);
+    const vec3 viewDir = normalize(camera.position - worldSpaceFragmentPos.xyz);
 
-    vec3 baseAlbedo = textureGrad(sampler2D(materials[nonuniformEXT(materialIndexMapping[materialID])], linearSampler),
+    const vec3 baseAlbedo = textureGrad(sampler2D(materials[nonuniformEXT(materialIndexMapping[materialID])], linearSampler),
                                 fragUVwithDifferentials.xy,
                                 xDerivities,
                                 yDerivities).xyz;
@@ -72,10 +73,10 @@ void main()
     normal = remapNormals(normal);
     normal = normalize(normal);
 
-    float rougness = texture(sampler2D(materials[nonuniformEXT(materialIndexMapping[materialID]) + 2], linearSampler),
+    const float rougness = texture(sampler2D(materials[nonuniformEXT(materialIndexMapping[materialID]) + 2], linearSampler),
                                 fragUVwithDifferentials.xy).x;
 
-    float metalness = texture(sampler2D(materials[nonuniformEXT(materialIndexMapping[materialID]) + 3], linearSampler),
+    const float metalness = texture(sampler2D(materials[nonuniformEXT(materialIndexMapping[materialID]) + 3], linearSampler),
                                 fragUVwithDifferentials.xy).x;
 
 	{
@@ -86,17 +87,17 @@ void main()
     	normal = normalize(normal);
 	}
 
-	vec3 lightDir = reflect(-viewDir, normal);
+	const vec3 lightDir = reflect(-viewDir, normal);
 
-	float lodLevel = rougness * 10.0;
+	const float lodLevel = rougness * 10.0f;
 
-	vec3 radiance = texture(samplerCube(ConvolvedSkybox, linearSampler), lightDir, lodLevel).xyz;
+	const vec3 radiance = texture(samplerCube(ConvolvedSkybox, linearSampler), lightDir, lodLevel).xyz;
 
-    vec3 irradiance = texture(samplerCube(skyBox, linearSampler), normal, 0).xyz;
+    const vec3 irradiance = texture(samplerCube(skyBox, linearSampler), normal).xyz;
 
-    vec3 FssEss = analyticalDFG(baseAlbedo, rougness, dot(normal, viewDir));
+    const vec3 FssEss = analyticalDFG(baseAlbedo, rougness, dot(normal, viewDir));
 
-    vec3 diffuseColor = baseAlbedo.xyz * (1.0 - DIELECTRIC_SPECULAR) * (1.0 - metalness);
+    const vec3 diffuseColor = baseAlbedo.xyz * (1.0 - DIELECTRIC_SPECULAR) * (1.0 - metalness);
 
     frameBuffer = vec4(FssEss * radiance + diffuseColor * irradiance, 1.0);
 }
