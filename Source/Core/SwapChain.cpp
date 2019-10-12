@@ -21,19 +21,19 @@ vk::SurfaceFormatKHR chooseSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>
     return formats[0]; // if not pick the first format
 }
 
-unsigned int SwapChain::getSwapChainImageWidth() const
+uint32_t SwapChain::getSwapChainImageWidth() const
 {
     return mSwapChainExtent.width;
 }
 
 
-unsigned int SwapChain::getSwapChainImageHeight() const
+uint32_t SwapChain::getSwapChainImageHeight() const
 {
     return mSwapChainExtent.height;
 }
 
 
-unsigned int SwapChain::getNumberOfSwapChainImages() const
+uint32_t SwapChain::getNumberOfSwapChainImages() const
 {
     return mSwapChainImages.size();
 }

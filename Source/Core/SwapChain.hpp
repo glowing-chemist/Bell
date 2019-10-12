@@ -27,10 +27,10 @@ public:
 
     vk::Format getSwapChainImageFormat() const;
 
-    unsigned int getSwapChainImageWidth() const;
-    unsigned int getSwapChainImageHeight() const;
+	uint32_t getSwapChainImageWidth() const;
+	uint32_t getSwapChainImageHeight() const;
 
-    unsigned int getNumberOfSwapChainImages() const;
+	uint32_t getNumberOfSwapChainImages() const;
 
     ImageView& getImageView(const size_t index)
         { return mImageViews[index]; }
