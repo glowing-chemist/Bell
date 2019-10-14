@@ -208,11 +208,7 @@ bool Shader::compile()
 
 bool Shader::reload()
 {
-#ifdef _MSC_VER // MSVC still doesn't support std::filesystem ...
-	if (std::experimental::filesystem::last_write_time(mFilePath) > mLastFileAccessTime)
-#else
     if(std::filesystem::last_write_time(mFilePath) > mLastFileAccessTime)
-#endif
 	{
 		if(mCompiled && release())
 			getDevice()->destroyShaderModule(mShaderModule);

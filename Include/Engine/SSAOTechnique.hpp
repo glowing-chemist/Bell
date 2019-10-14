@@ -24,9 +24,6 @@ public:
 	void setDepthName(const std::string& depthSlot)
 	{ mDepthNameSlot = depthSlot; }
 
-	Image& getSSAOImage()
-		{ return mSSAOImage; }
-
 	std::string getSSAOImageName() const
         { return kSSAO; }
 
@@ -41,9 +38,6 @@ public:
 private:
 
 	std::string mDepthNameSlot;
-
-	Image mSSAOImage;
-	ImageView mSSAOIMageView;
 
 	Sampler mLinearSampler;
 

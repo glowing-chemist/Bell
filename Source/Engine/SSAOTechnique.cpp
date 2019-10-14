@@ -4,11 +4,8 @@
 
 SSAOTechnique::SSAOTechnique(Engine* eng) :
 	Technique{"SSAO", eng->getDevice()},
-	mSSAOImage{getDevice(), Format::R8UNorm, ImageUsage::Sampled | ImageUsage::ColourAttachment,
-			   getDevice()->getSwapChain()->getSwapChainImageWidth() / 2, getDevice()->getSwapChain()->getSwapChainImageHeight() / 2, 1},
-	mSSAOIMageView{mSSAOImage, ImageViewType::Colour},
 	mLinearSampler{SamplerType::Linear},
-    mPipelineDesc{eng->getShader("Shaders/FullScreenTriangle.vert")
+    	mPipelineDesc{eng->getShader("Shaders/FullScreenTriangle.vert")
                   ,eng->getShader("Shaders/SSAO.frag"),
 				  Rect{getDevice()->getSwapChain()->getSwapChainImageWidth() / 2,
 						getDevice()->getSwapChain()->getSwapChainImageHeight() / 2},
@@ -34,6 +31,5 @@ SSAOTechnique::SSAOTechnique(Engine* eng) :
 
 void SSAOTechnique::bindResources(RenderGraph& graph) const
 {
-    graph.bindImage(kSSAO, mSSAOIMageView);
     graph.bindSampler(kDefaultSampler, mLinearSampler);
 }

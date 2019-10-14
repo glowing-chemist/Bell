@@ -144,10 +144,10 @@ std::unique_ptr<Technique<GraphicsTask>> Engine::getSingleGraphicsTechnique(cons
 }
 
 
-std::unique_ptr<PerFrameResource<Technique<GraphicsTask>>> Engine::getGraphicsTechnique(const PassType passType)
-{
+//std::unique_ptr<PerFrameResource<Technique<GraphicsTask>>> Engine::getGraphicsTechnique(const PassType passType)
+//{
 
-}
+//}
 
 
 std::unique_ptr<Technique<ComputeTask>> Engine::getSingleComputeTechnique(const PassType passType)
@@ -173,10 +173,10 @@ std::unique_ptr<Technique<ComputeTask>> Engine::getSingleComputeTechnique(const 
 }
 
 
-std::unique_ptr<PerFrameResource<Technique<ComputeTask>>> Engine::getComputeTechnique(const PassType passType)
-{
+//std::unique_ptr<PerFrameResource<Technique<ComputeTask>>> Engine::getComputeTechnique(const PassType passType)
+//{
 
-}
+//}
 
 
 bool Engine::isGraphicsTask(const PassType passType) const

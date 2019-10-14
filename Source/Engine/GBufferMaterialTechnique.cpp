@@ -3,27 +3,6 @@
 
 GBufferMaterialTechnique::GBufferMaterialTechnique(Engine* eng) :
     Technique{"GBufferMaterial", eng->getDevice()},
-
-	mDepthImage{getDevice(), Format::D24S8Float, ImageUsage::DepthStencil | ImageUsage::Sampled,
-				getDevice()->getSwapChain()->getSwapChainImageWidth(), getDevice()->getSwapChain()->getSwapChainImageHeight(),
-				1, 1, 1, 1, "Depth Buffer"},
-	mDepthView{mDepthImage, ImageViewType::Depth},
-
-	mMaterialImage{getDevice(), Format::R32Uint, ImageUsage::ColourAttachment | ImageUsage::Sampled,
-				 getDevice()->getSwapChain()->getSwapChainImageWidth(), getDevice()->getSwapChain()->getSwapChainImageHeight(),
-				 1, 1, 1, 1, "Material Buffer"},
-	mMaterialView{mMaterialImage, ImageViewType::Colour},
-
-	mNormalsImage{getDevice(), Format::R16G16Unorm, ImageUsage::ColourAttachment | ImageUsage::Sampled,
-				  getDevice()->getSwapChain()->getSwapChainImageWidth(), getDevice()->getSwapChain()->getSwapChainImageHeight(),
-				  1, 1, 1, 1, "Normals Buffer"},
-	mNormalsView{mNormalsImage, ImageViewType::Colour},
-
-	mUVImage{getDevice(), Format::RGBA32SFloat, ImageUsage::ColourAttachment | ImageUsage::Sampled,
-				   getDevice()->getSwapChain()->getSwapChainImageWidth(), getDevice()->getSwapChain()->getSwapChainImageHeight(),
-				   1, 1, 1, 1, "UV Buffer"},
-	mUVView{mUVImage, ImageViewType::Colour},
-
     mPipelineDescription{eng->getShader("./Shaders/GBufferPassThroughMaterial.vert"),
                          eng->getShader("./Shaders/GBufferMaterial.frag"),
                          Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
@@ -49,10 +28,6 @@ GBufferMaterialTechnique::GBufferMaterialTechnique(Engine* eng) :
 
 void GBufferMaterialTechnique::bindResources(RenderGraph& graph) const
 {
-    graph.bindImage(kGBufferDepth, mDepthView);
-    graph.bindImage(kGBufferMaterialID, mMaterialView);
-    graph.bindImage(kGBufferNormals, mNormalsView);
-    graph.bindImage(kGBufferUV, mUVView);
 }
 
 
@@ -60,21 +35,6 @@ GBufferMaterialPreDepthTechnique::GBufferMaterialPreDepthTechnique(Engine* eng) 
     Technique{"GBufferMaterialPreDepth", eng->getDevice()},
 
     mDepthName{kPreDepth},
-    mMaterialImage{getDevice(), Format::R32Uint, ImageUsage::ColourAttachment | ImageUsage::Sampled,
-                 getDevice()->getSwapChain()->getSwapChainImageWidth(), getDevice()->getSwapChain()->getSwapChainImageHeight(),
-                 1, 1, 1, 1, "Material Buffer"},
-    mMaterialView{mMaterialImage, ImageViewType::Colour},
-
-    mNormalsImage{getDevice(), Format::R16G16Unorm, ImageUsage::ColourAttachment | ImageUsage::Sampled,
-                  getDevice()->getSwapChain()->getSwapChainImageWidth(), getDevice()->getSwapChain()->getSwapChainImageHeight(),
-                  1, 1, 1, 1, "Normals Buffer"},
-    mNormalsView{mNormalsImage, ImageViewType::Colour},
-
-    mUVImage{getDevice(), Format::RGBA32SFloat, ImageUsage::ColourAttachment | ImageUsage::Sampled,
-                   getDevice()->getSwapChain()->getSwapChainImageWidth(), getDevice()->getSwapChain()->getSwapChainImageHeight(),
-                   1, 1, 1, 1, "UV Buffer"},
-    mUVView{mUVImage, ImageViewType::Colour},
-
     mPipelineDescription{eng->getShader("./Shaders/GBufferPassThroughMaterial.vert"),
                          eng->getShader("./Shaders/GBufferMaterial.frag"),
                          Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
@@ -101,7 +61,4 @@ GBufferMaterialPreDepthTechnique::GBufferMaterialPreDepthTechnique(Engine* eng) 
 
 void GBufferMaterialPreDepthTechnique::bindResources(RenderGraph& graph) const
 {
-    graph.bindImage(kGBufferMaterialID, mMaterialView);
-    graph.bindImage(kGBufferNormals, mNormalsView);
-    graph.bindImage(kGBufferUV, mUVView);
 }
