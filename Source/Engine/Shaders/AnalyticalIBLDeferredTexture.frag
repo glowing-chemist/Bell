@@ -73,7 +73,7 @@ void main()
     normal = remapNormals(normal);
     normal = normalize(normal);
 
-    const float rougness = texture(sampler2D(materials[nonuniformEXT(materialIndexMapping[materialID]) + 2], linearSampler),
+    const float roughness = texture(sampler2D(materials[nonuniformEXT(materialIndexMapping[materialID]) + 2], linearSampler),
                                 fragUVwithDifferentials.xy).x;
 
     const float metalness = texture(sampler2D(materials[nonuniformEXT(materialIndexMapping[materialID]) + 3], linearSampler),
@@ -89,13 +89,14 @@ void main()
 
 	const vec3 lightDir = reflect(-viewDir, normal);
 
-	const float lodLevel = rougness * 10.0f;
+	const float lodLevel = roughness * 10.0f;
 
 	const vec3 radiance = texture(samplerCube(ConvolvedSkybox, linearSampler), lightDir, lodLevel).xyz;
 
     const vec3 irradiance = texture(samplerCube(skyBox, linearSampler), normal).xyz;
 
-    const vec3 FssEss = analyticalDFG(baseAlbedo, rougness, dot(normal, viewDir));
+    const float remappedRoughness = pow(1.0f - roughness, 4.0f);
+    const vec3 FssEss = analyticalDFG(baseAlbedo, remappedRoughness, dot(normal, viewDir));
 
     const vec3 diffuseColor = baseAlbedo.xyz * (1.0 - DIELECTRIC_SPECULAR) * (1.0 - metalness);
 

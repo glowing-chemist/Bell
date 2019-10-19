@@ -77,7 +77,7 @@ void main()
     normal = remapNormals(normal);
     normal = normalize(normal);
 
-    float rougness = texture(sampler2D(materials[nonuniformEXT(materialIndexMapping[materialID]) + 2], linearSampler),
+    float roughness = texture(sampler2D(materials[nonuniformEXT(materialIndexMapping[materialID]) + 2], linearSampler),
                                 fragUVwithDifferentials.xy).x;
 
     float metalness = texture(sampler2D(materials[nonuniformEXT(materialIndexMapping[materialID]) + 3], linearSampler),
