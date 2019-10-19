@@ -100,18 +100,20 @@ void main()
     for(int i = 0; i < lightParams[0].x; ++i)    
     {    
         // diffuse    
-        vec3 lightDir = normalize(lights[i].light.position.xyz  - worldSpaceFragmentPos.xyz);    
+        vec3 lightDir = lights[i].light.position.xyz  - worldSpaceFragmentPos.xyz;
+        const float lightDistance = length(lightDir);
+        lightDir = normalize(lightDir); 
         vec3 diffuse = max(dot(normal, lightDir), 0.0) * lights[i].light.albedo.xzy;    
-        diffuseLighting += diffuse;
+        diffuseLighting += diffuse / lightDistance;
 
         // specular
         vec3 halfVector = normalize(lightDir + viewDir);
         float NdotH = dot( normal, halfVector );
-        specularLighting += pow(clamp(NdotH, 0.0f, 1.0f), 16.0f) * lights[i].light.albedo.xzy;
+        specularLighting += pow(clamp(NdotH, 0.0f, 1.0f), 16.0f) * lights[i].light.albedo.xzy / lightDistance;
     }
 
     const vec3 reflect = reflect(-viewDir, normal); 
-    const float lodLevel = rougness * 10.0f;
+    const float lodLevel = roughness * 10.0f;
 
     const vec3 radiance = texture(samplerCube(ConvolvedSkybox, linearSampler), reflect, lodLevel).xyz;
 
