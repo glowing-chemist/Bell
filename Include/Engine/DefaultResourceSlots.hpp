@@ -21,6 +21,8 @@ constexpr const char* kCameraBuffer	    = "CameraBuffer";
 constexpr const char* kLightBuffer	    = "LightBuffer";
 constexpr const char* kMaterialMappings = "MaterialMappings";
 
-constexpr const char *kFrameBufer        = "FrameBuffer";
+constexpr const char* kFrameBufer        = "FrameBuffer";
+
+constexpr const char* kDFGLUT			= "DFG";
 
 #endif
