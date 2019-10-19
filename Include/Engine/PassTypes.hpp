@@ -17,7 +17,7 @@
                     GBUfferMaterialPreDepth = 1 << 9, \
 					InplaceCombine = 1 << 10, \
 					InplaceCombineSRGB = 1 << 11, \
-					DeferredTexturePBRIBL = 1 << 12 \
+					DeferredTexturePBRIBL = 1 << 12
 
 // An enum to keep track of which 
 enum class PassType : uint64_t

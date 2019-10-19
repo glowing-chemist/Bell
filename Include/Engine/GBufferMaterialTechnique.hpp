@@ -24,41 +24,17 @@ public:
     virtual GraphicsTask& getTask() final override
     { return mTask; }
 
-	Image& getDepthImage()
-		{ return mDepthImage; }
-
-	ImageView& getDepthView()
-		{ return mDepthView; }
-
 	std::string getDepthName() const
         { return kGBufferDepth; }
 
 
-	Image& getMaterialImage()
-		{ return mMaterialImage; }
-
-	ImageView& getMaterialView()
-		{ return mMaterialView; }
-
-    std::string getMaterialName() const
+    	std::string getMaterialName() const
         { return kGBufferMaterialID; }
 
-
-	Image& getNormalsImage()
-		{ return mNormalsImage; }
-
-	ImageView& getNormalsView()
-		{ return mNormalsView; }
 
 	std::string getNormalsName() const
      { return kGBufferNormals; }
 
-
-	Image& getUVImage()
-		{ return mUVImage; }
-
-	ImageView& getUVView()
-		{ return mUVView; }
 
 	std::string getUVName() const
         { return kGBufferUV; }
@@ -66,20 +42,8 @@ public:
     virtual void bindResources(RenderGraph&) const override final;
 
 private:
-
-	Image mDepthImage;
-	ImageView mDepthView;
-
-	Image mMaterialImage;
-	ImageView mMaterialView;
-
-	Image mNormalsImage;
-	ImageView mNormalsView;
-
-	Image mUVImage;
-	ImageView mUVView;
-
-	GraphicsPipelineDescription mPipelineDescription;
+    
+    	GraphicsPipelineDescription mPipelineDescription;
 	GraphicsTask mTask;
 };
 
@@ -99,31 +63,14 @@ public:
     void setDepthName(const std::string& depthName)
         { mDepthName = depthName; }
 
-    Image& getMaterialImage()
-        { return mMaterialImage; }
-
-    ImageView& getMaterialView()
-        { return mMaterialView; }
 
     std::string getMaterialName() const
         { return kGBufferMaterialID; }
 
 
-    Image& getNormalsImage()
-        { return mNormalsImage; }
-
-    ImageView& getNormalsView()
-        { return mNormalsView; }
-
     std::string getNormalsName() const
      { return kGBufferNormals; }
 
-
-    Image& getUVImage()
-        { return mUVImage; }
-
-    ImageView& getUVView()
-        { return mUVView; }
 
     std::string getUVName() const
         { return kGBufferUV; }
@@ -133,15 +80,6 @@ public:
 private:
 
     std::string mDepthName;
-
-    Image mMaterialImage;
-    ImageView mMaterialView;
-
-    Image mNormalsImage;
-    ImageView mNormalsView;
-
-    Image mUVImage;
-    ImageView mUVView;
 
     GraphicsPipelineDescription mPipelineDescription;
     GraphicsTask mTask;

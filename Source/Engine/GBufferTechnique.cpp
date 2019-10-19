@@ -3,28 +3,7 @@
 
 GBufferTechnique::GBufferTechnique(Engine* eng) :
 	Technique{"GBuffer", eng->getDevice()},
-
-	mDepthImage{getDevice(), Format::D24S8Float, ImageUsage::DepthStencil | ImageUsage::Sampled,
-				getDevice()->getSwapChain()->getSwapChainImageWidth(), getDevice()->getSwapChain()->getSwapChainImageHeight(),
-				1, 1, 1, 1, "Depth Buffer"},
-	mDepthView{mDepthImage, ImageViewType::Depth},
-
-	mAlbedoImage{getDevice(), Format::RGBA8SRGB, ImageUsage::ColourAttachment | ImageUsage::Sampled,
-				 getDevice()->getSwapChain()->getSwapChainImageWidth(), getDevice()->getSwapChain()->getSwapChainImageHeight(),
-				 1, 1, 1, 1, "Albedo Buffer"},
-	mAlbedoView{mAlbedoImage, ImageViewType::Colour},
-
-	mNormalsImage{getDevice(), Format::R16G16Unorm, ImageUsage::ColourAttachment | ImageUsage::Sampled,
-				  getDevice()->getSwapChain()->getSwapChainImageWidth(), getDevice()->getSwapChain()->getSwapChainImageHeight(),
-				  1, 1, 1, 1, "Normals Buffer"},
-	mNormalsView{mNormalsImage, ImageViewType::Colour},
-
-	mSpecularImage{getDevice(), Format::R8UNorm, ImageUsage::ColourAttachment | ImageUsage::Sampled,
-				   getDevice()->getSwapChain()->getSwapChainImageWidth(), getDevice()->getSwapChain()->getSwapChainImageHeight(),
-				   1, 1, 1, 1, "Specular Buffer"},
-	mSpecularView{mSpecularImage, ImageViewType::Colour},
-
-    mPipelineDescription{eng->getShader("./Shaders/GBufferPassThrough.vert"),
+    	mPipelineDescription{eng->getShader("./Shaders/GBufferPassThrough.vert"),
                          eng->getShader("./Shaders/GBuffer.frag"),
                          Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
                                getDevice()->getSwapChain()->getSwapChainImageHeight()},
@@ -47,32 +26,12 @@ GBufferTechnique::GBufferTechnique(Engine* eng) :
 
 void GBufferTechnique::bindResources(RenderGraph& graph) const
 {
-    graph.bindImage(kGBufferAlbedo, mAlbedoView);
-    graph.bindImage(kGBufferNormals, mNormalsView);
-    graph.bindImage(kGBufferDepth, mDepthView);
-    graph.bindImage(kGBufferSpecular, mSpecularView);
 }
 
 
 GBufferPreDepthTechnique::GBufferPreDepthTechnique(Engine* eng) :
     Technique{"GBufferPreDepth", eng->getDevice()},
-
-    mAlbedoImage{getDevice(), Format::RGBA8SRGB, ImageUsage::ColourAttachment | ImageUsage::Sampled,
-                 getDevice()->getSwapChain()->getSwapChainImageWidth(), getDevice()->getSwapChain()->getSwapChainImageHeight(),
-                 1, 1, 1, 1, "Albedo Buffer"},
-    mAlbedoView{mAlbedoImage, ImageViewType::Colour},
-
-    mNormalsImage{getDevice(), Format::R16G16Unorm, ImageUsage::ColourAttachment | ImageUsage::Sampled,
-                  getDevice()->getSwapChain()->getSwapChainImageWidth(), getDevice()->getSwapChain()->getSwapChainImageHeight(),
-                  1, 1, 1, 1, "Normals Buffer"},
-    mNormalsView{mNormalsImage, ImageViewType::Colour},
-
-    mSpecularImage{getDevice(), Format::R8UNorm, ImageUsage::ColourAttachment | ImageUsage::Sampled,
-                   getDevice()->getSwapChain()->getSwapChainImageWidth(), getDevice()->getSwapChain()->getSwapChainImageHeight(),
-                   1, 1, 1, 1, "Specular Buffer"},
-    mSpecularView{mSpecularImage, ImageViewType::Colour},
-
-    mPipelineDescription{eng->getShader("./Shaders/GBufferPassThrough.vert"),
+        mPipelineDescription{eng->getShader("./Shaders/GBufferPassThrough.vert"),
                          eng->getShader("./Shaders/GBuffer.frag"),
                          Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
                                getDevice()->getSwapChain()->getSwapChainImageHeight()},
@@ -96,7 +55,4 @@ GBufferPreDepthTechnique::GBufferPreDepthTechnique(Engine* eng) :
 
 void GBufferPreDepthTechnique::bindResources(RenderGraph& graph) const
 {
-    graph.bindImage(kGBufferAlbedo, mAlbedoView);
-    graph.bindImage(kGBufferNormals, mNormalsView);
-    graph.bindImage(kGBufferSpecular, mSpecularView);
 }

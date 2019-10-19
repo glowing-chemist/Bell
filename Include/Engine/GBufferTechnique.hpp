@@ -24,41 +24,16 @@ public:
     virtual GraphicsTask& getTask() final override
     { return mTask; }
 
-	Image& getDepthImage()
-		{ return mDepthImage; }
-
-	ImageView& getDepthView()
-		{ return mDepthView; }
-
 	std::string getDepthName() const
         { return kGBufferDepth; }
-
-
-	Image& getAlbedoImage()
-		{ return mAlbedoImage; }
-
-	ImageView& getAlbedoView()
-		{ return mAlbedoView; }
 
 	std::string getAlbedoName() const
         { return kGBufferAlbedo; }
 
 
-	Image& getNormalsImage()
-		{ return mNormalsImage; }
-
-	ImageView& getNormalsView()
-		{ return mNormalsView; }
-
 	std::string getNormalsName() const
      { return kGBufferNormals; }
 
-
-	Image& getSpecularImage()
-		{ return mSpecularImage; }
-
-	ImageView& getSpecularView()
-		{ return mSpecularView; }
 
 	std::string getSpecularName() const
         { return kGBufferSpecular; }
@@ -66,18 +41,6 @@ public:
     virtual void bindResources(RenderGraph&) const override final;
 
 private:
-
-	Image mDepthImage;
-	ImageView mDepthView;
-
-	Image mAlbedoImage;
-	ImageView mAlbedoView;
-
-	Image mNormalsImage;
-	ImageView mNormalsView;
-
-	Image mSpecularImage;
-	ImageView mSpecularView;
 
 	GraphicsPipelineDescription mPipelineDescription;
 	GraphicsTask mTask;
@@ -99,33 +62,15 @@ public:
     virtual GraphicsTask& getTask() final override
     { return mTask; }
 
-    Image& getAlbedoImage()
-        { return mAlbedoImage; }
-
-    ImageView& getAlbedoView()
-        { return mAlbedoView; }
-
-    std::string getAlbedoName() const
+        std::string getAlbedoName() const
         { return kGBufferAlbedo; }
 
 
-    Image& getNormalsImage()
-        { return mNormalsImage; }
-
-    ImageView& getNormalsView()
-        { return mNormalsView; }
-
-    std::string getNormalsName() const
+        std::string getNormalsName() const
      { return kGBufferNormals; }
 
 
-    Image& getSpecularImage()
-        { return mSpecularImage; }
-
-    ImageView& getSpecularView()
-        { return mSpecularView; }
-
-    std::string getSpecularName() const
+        std::string getSpecularName() const
         { return kGBufferSpecular; }
 
     virtual void bindResources(RenderGraph&) const override final;
@@ -133,15 +78,6 @@ public:
 private:
 
     std::string mDepthName;
-
-    Image mAlbedoImage;
-    ImageView mAlbedoView;
-
-    Image mNormalsImage;
-    ImageView mNormalsView;
-
-    Image mSpecularImage;
-    ImageView mSpecularView;
 
     GraphicsPipelineDescription mPipelineDescription;
     GraphicsTask mTask;
