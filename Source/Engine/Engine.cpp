@@ -278,7 +278,7 @@ void Engine::recordOverlay(const ImDrawData* drawData)
 	task.addInput("OverlayUBO", AttachmentType::UniformBuffer);
     task.addInput("OverlayTexture", AttachmentType::Texture2D);
 	task.addInput(kDefaultSampler, AttachmentType::Sampler);
-	task.addOutput(kFrameBufer, AttachmentType::RenderTarget2D, getSwapChainImage().getFormat(), SizeClass::Swapchain, LoadOp::Clear_Black);
+	task.addOutput(kFrameBufer, AttachmentType::RenderTarget2D, getSwapChainImage().getFormat(), SizeClass::Custom, LoadOp::Clear_Black);
 
     // Render command lists
     uint32_t vertexOffset = 0;
