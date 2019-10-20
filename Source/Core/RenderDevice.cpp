@@ -84,18 +84,18 @@ RenderDevice::~RenderDevice()
     mSwapChain.destroy();
 
     // We can ignore lastUsed as we have just waited till all work has finished.
-    for(auto& [lastUsed, handle, memory, imageView] : mImagesPendingDestruction)
+    for(auto& [lastUsed, handle, memory] : mImagesPendingDestruction)
     {
-        if(imageView != vk::ImageView{nullptr})
-            mDevice.destroyImageView(imageView);
-
-        if(handle != vk::Image{nullptr})
-        {
-            mDevice.destroyImage(handle);
-            mMemoryManager.Free(memory);
-        }
+        mDevice.destroyImage(handle);
+		mMemoryManager.Free(memory);
     }
     mImagesPendingDestruction.clear();
+
+	for (const auto& [lastyUSed, view] : mImageViewsPendingDestruction)
+	{
+		mDevice.destroyImageView(view);
+	}
+	mImageViewsPendingDestruction.clear();
 
     for(auto& [lastUsed, handle, memory] : mBuffersPendingDestruction)
     {
@@ -975,12 +975,10 @@ void RenderDevice::clearDeferredResources()
 
     for(uint32_t i = 0; i < mImagesPendingDestruction.size(); ++i)
     {
-        auto& [submission, image, memory, imageView] = mImagesPendingDestruction.front();
+        const auto& [submission, image, memory] = mImagesPendingDestruction.front();
 
         if(submission <= mFinishedSubmission)
         {
-            if(imageView != vk::ImageView{nullptr})
-                mDevice.destroyImageView(imageView);
             mDevice.destroyImage(image);
             getMemoryManager()->Free(memory);
             mImagesPendingDestruction.pop_front();
@@ -988,6 +986,19 @@ void RenderDevice::clearDeferredResources()
         else
             break;
     }
+
+	for (uint32_t i = 0; i < mImageViewsPendingDestruction.size(); ++i)
+	{
+		const auto& [submission, view] = mImageViewsPendingDestruction.front();
+
+		if (submission <= mFinishedSubmission)
+		{
+			mDevice.destroyImageView(view);
+			mImageViewsPendingDestruction.pop_front();
+		}
+		else
+			break;
+	}
 
     for(uint32_t i = 0; i < mBuffersPendingDestruction.size(); ++i)
     {

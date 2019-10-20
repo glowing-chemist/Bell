@@ -61,8 +61,8 @@ public:
     vk::Image                          createImage(const vk::ImageCreateInfo& info)
                                             { return mDevice.createImage(info); }
 
-    void                               destroyImage(Image& image) { mImagesPendingDestruction.push_back({image.getLastAccessed(), image.getImage(), image.getMemory(), nullptr}); }
-    void                               destroyImageView(ImageView& view) { mImagesPendingDestruction.push_back({view.getLastAccessed(), view.getImage(), view.getImageMemory(), view.getImageView()}); }
+    void                               destroyImage(Image& image) { mImagesPendingDestruction.push_back({image.getLastAccessed(), image.getImage(), image.getMemory()}); }
+    void                               destroyImageView(ImageView& view) { mImageViewsPendingDestruction.push_back({view.getLastAccessed(), view.getImageView()}); }
 
     vk::ImageView                      createImageView(const vk::ImageViewCreateInfo& info)
                                             { return mDevice.createImageView(info); }
@@ -265,9 +265,15 @@ private:
         uint64_t mLastUsed;
         vk::Image mImageHandle;
         Allocation mImageMemory;
-        vk::ImageView mCurrentImageView;
     };
     std::deque<ImageDestructionInfo> mImagesPendingDestruction;
+
+	struct ImageViewDestructionInfo
+	{
+		uint64_t mLastUsed;
+		vk::ImageView mView;
+	};
+	std::deque<ImageViewDestructionInfo> mImageViewsPendingDestruction;
 
     struct BufferDestructionInfo
     {
