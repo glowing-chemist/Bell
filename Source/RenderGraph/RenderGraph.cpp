@@ -618,6 +618,9 @@ void RenderGraph::reset()
 	mInputResources.clear();
 	mOutputResources.clear();
 
+	// clear non-persistent resources
+	mNonPersistentImages.clear();
+
 	// Clear all jobs
 	mGraphicsTasks.clear();
 	mComputeTasks.clear();
