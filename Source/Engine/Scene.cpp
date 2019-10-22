@@ -6,6 +6,7 @@
 
 #include <algorithm>
 #include <iterator>
+#include <limits>
 
 
 Scene::Scene(const std::string& name) :
@@ -13,6 +14,7 @@ Scene::Scene(const std::string& name) :
     mSceneMeshes(),
     mStaticMeshBoundingVolume(),
     mDynamicMeshBoundingVolume(),
+	mSceneAABB(float3(std::numeric_limits<float>::max()), float3(std::numeric_limits<float>::min())),
     mSceneCamera(float3(), float3()),
     mFinalised(false)
 {
@@ -150,11 +152,11 @@ void Scene::finalise()
     if(firstTime)
     {
         //Build the static meshes BVH structure.
-        std::vector<std::pair<AABB, MeshInstance*>> staticBVHMeshes{};
+        std::vector<typename BVHFactory<MeshInstance*>::BuilderNode> staticBVHMeshes{};
 
         std::transform(mStaticMeshInstances.begin(), mStaticMeshInstances.end(), std::back_inserter(staticBVHMeshes),
                        [](MeshInstance& instance)
-                        { return std::pair<AABB, MeshInstance*>{instance.mMesh->getAABB() * instance.mTransformation, &instance}; } );
+                        { return BVHFactory<MeshInstance*>::BuilderNode{instance.mMesh->getAABB() * instance.mTransformation, &instance}; } );
 
         BVHFactory<MeshInstance*> staticBVHFactory(mSceneAABB, staticBVHMeshes);
 
@@ -162,11 +164,11 @@ void Scene::finalise()
     }
 
     //Build the dynamic meshes BVH structure.
-    std::vector<std::pair<AABB, MeshInstance*>> dynamicBVHMeshes{};
+    std::vector<typename BVHFactory<MeshInstance*>::BuilderNode> dynamicBVHMeshes{};
 
     std::transform(mDynamicMeshInstances.begin(), mDynamicMeshInstances.end(), std::back_inserter(dynamicBVHMeshes),
                    [](MeshInstance& instance)
-                    { return std::pair<AABB, MeshInstance*>{instance.mMesh->getAABB() * instance.mTransformation, &instance}; } );
+                    { return BVHFactory<MeshInstance*>::BuilderNode{instance.mMesh->getAABB() * instance.mTransformation, &instance}; } );
 
     // Not all scenes contain dynamic meshes.
     if(!dynamicBVHMeshes.empty())

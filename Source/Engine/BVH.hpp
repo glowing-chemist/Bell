@@ -42,10 +42,10 @@ public:
     };
 
 private:
-    std::vector<T>              getIntersections(const Ray&, const std::unique_ptr<Node>&) const;
-    std::vector<std::pair<T, float>>   getIntersectionsWithDistance(const Ray&, std::unique_ptr<Node>&, const float distance) const;
+    std::vector<T>						getIntersections(const Ray&, const std::unique_ptr<Node>&) const;
+    std::vector<std::pair<T, float>>	getIntersectionsWithDistance(const Ray&, std::unique_ptr<Node>&, const float distance) const;
 
-	std::vector<T>              containedWithin(const Frustum&, const std::unique_ptr<Node>&, const EstimationMode) const;
+	std::vector<T>						containedWithin(const Frustum&, const std::unique_ptr<Node>&, const EstimationMode) const;
 
     std::unique_ptr<Node> mRoot;
 };
@@ -55,10 +55,17 @@ template<typename T>
 class BVHFactory
 {
 public:
-    BVHFactory(const AABB& rootBox) : mRootBoundingBox{rootBox}, mBoundingBoxes{} {}
-    BVHFactory(const AABB& rootBox, std::vector<std::pair<AABB, T>>& data) : mRootBoundingBox{rootBox},
-                                                                            mBoundingBoxes{data} {}
 
+	struct BuilderNode
+	{
+		AABB mBox;
+		T mValue;
+	};
+
+
+    BVHFactory(const AABB& rootBox) : mRootBoundingBox{rootBox}, mBoundingBoxes{} {}
+    BVHFactory(const AABB& rootBox, std::vector<BuilderNode>& data) : mRootBoundingBox{rootBox},
+                                                                            mBoundingBoxes{data} {}
     void addAABB(const AABB& box, const T& value)
         { mBoundingBoxes.push_back({box, value}); }
 
@@ -66,11 +73,11 @@ public:
 
 private:
 
-    std::unique_ptr<typename BVH<T>::Node> partition(std::vector<std::pair<AABB, T>>&, const AABB&) const;
-    std::pair<AABB, AABB> splitAABB(const AABB&) const;
+    std::unique_ptr<typename BVH<T>::Node> partition(std::vector<BuilderNode>&, const AABB&) const;
+    std::pair<std::pair<AABB, std::vector<BuilderNode>>, std::pair<AABB, std::vector<BuilderNode>>> splitAABB(const AABB&, std::vector<BuilderNode>& nodes) const;
 
     AABB mRootBoundingBox; // AABB that all others are contained within.
-    std::vector<std::pair<AABB, T>> mBoundingBoxes;
+    std::vector<BuilderNode> mBoundingBoxes;
 };
 
 

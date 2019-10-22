@@ -55,7 +55,7 @@ std::vector<T>   BVH<T>::allIntersections(const Ray& ray) const
 
 
 template<typename T>
-std::vector<T> BVH<T>::containedWithin(const Frustum& frustum, const std::unique_ptr<Node>& node, const EstimationMode estimationMode) const
+std::vector<T> BVH<T>::containedWithin(const Frustum& frustum, const std::unique_ptr<typename BVH<T>::Node>& node, const EstimationMode estimationMode) const
 {
 	if (!frustum.isContainedWithin(node->mBoundingBox, estimationMode))
 		return {};
@@ -104,7 +104,7 @@ std::vector<T> BVH<T>::containedWithin(const Frustum& frustum, const EstimationM
 
 
 template<typename T>
-std::vector<T> BVH<T>::getIntersections(const Ray& ray, const std::unique_ptr<Node>& node) const
+std::vector<T> BVH<T>::getIntersections(const Ray& ray, const std::unique_ptr<typename BVH<T>::Node>& node) const
 {
     if(node->mBoundingBox.intersectionDistance(ray) == NO_INTERSECTION)
         return {};
@@ -165,49 +165,47 @@ BVH<T> BVHFactory<T>::generateBVH()
 
 
 template<typename T>
-std::unique_ptr<typename BVH<T>::Node> BVHFactory<T>::partition(std::vector<std::pair<AABB, T>>& elements, const AABB& containingBox) const
+std::unique_ptr<typename BVH<T>::Node> BVHFactory<T>::partition(std::vector<typename BVHFactory<T>::BuilderNode>& elements, const AABB& containingBox) const
 {
     std::unique_ptr<typename BVH<T>::Node> node = std::make_unique<typename BVH<T>::Node>();
 	node->mBoundingBox = containingBox;
 
 	if (elements.size() > 2)
 	{
-		const auto[leftSplit, rightSplit] = splitAABB(containingBox);
+		auto[leftSplit, rightSplit] = splitAABB(containingBox, elements);
 		
-		const auto leftBoxIter = std::partition(elements.begin(), elements.end(), [&leftSplit](const std::pair<AABB, T>& pair)
-        { return leftSplit.contains(pair.first, EstimationMode::Under); });
 
-		std::vector<std::pair<AABB, T>> rightChildren{ elements.begin(), leftBoxIter };
-		std::vector<std::pair<AABB, T>> leftChildren{leftBoxIter, elements.end()};
+		std::vector<typename BVHFactory<T>::BuilderNode>& leftChildren = leftSplit.second;
+		std::vector<typename BVHFactory<T>::BuilderNode>& rightChildren = rightSplit.second;
 
 
         // Shrink
-        AABB shrunkRight{{-std::numeric_limits<float>::infinity(),
-                    -std::numeric_limits<float>::infinity(),
-                    -std::numeric_limits<float>::infinity() },
-                    {std::numeric_limits<float>::infinity(),
+        AABB shrunkRight{{std::numeric_limits<float>::infinity(),
                     std::numeric_limits<float>::infinity(),
-                    std::numeric_limits<float>::infinity()}};
+                    std::numeric_limits<float>::infinity() },
+                    {-std::numeric_limits<float>::infinity(),
+                    -std::numeric_limits<float>::infinity(),
+                    -std::numeric_limits<float>::infinity()}};
 
         for(const auto&[aabb, val] : rightChildren)
         {
-            const float3 bottom = componentWiseMin(aabb.getBottom(), shrunkRight.getBottom());
-            const float3 top = componentWiseMax(aabb.getTop(), shrunkRight.getTop());
+            const float3 bottom = componentWiseMax(aabb.getBottom(), shrunkRight.getBottom());
+            const float3 top = componentWiseMin(aabb.getTop(), shrunkRight.getTop());
 
             shrunkRight = AABB{top, bottom};
         }
 
-        AABB shrunkLeft{{-std::numeric_limits<float>::infinity(),
-                    -std::numeric_limits<float>::infinity(),
-                    -std::numeric_limits<float>::infinity() },
-                    {std::numeric_limits<float>::infinity(),
+        AABB shrunkLeft{{std::numeric_limits<float>::infinity(),
                     std::numeric_limits<float>::infinity(),
-                    std::numeric_limits<float>::infinity()}};
+                    std::numeric_limits<float>::infinity() },
+                    {-std::numeric_limits<float>::infinity(),
+                    -std::numeric_limits<float>::infinity(),
+                    -std::numeric_limits<float>::infinity()}};
 
         for(const auto&[aabb, val] : leftChildren)
         {
-            const float3 bottom = componentWiseMin(aabb.getBottom(), shrunkLeft.getBottom());
-            const float3 top = componentWiseMax(aabb.getTop(), shrunkLeft.getTop());
+            const float3 bottom = componentWiseMax(aabb.getBottom(), shrunkLeft.getBottom());
+            const float3 top = componentWiseMin(aabb.getTop(), shrunkLeft.getTop());
 
             shrunkLeft = AABB{top, bottom};
         }
@@ -227,13 +225,13 @@ std::unique_ptr<typename BVH<T>::Node> BVHFactory<T>::partition(std::vector<std:
         std::unique_ptr<typename BVH<T>::Node> leftNode = std::make_unique<typename BVH<T>::Node>();
         std::unique_ptr<typename BVH<T>::Node> rightNode = std::make_unique<typename BVH<T>::Node>();
 
-		leftNode->mBoundingBox = elements[0].first;
-		leftNode->mLeafValue = elements[0].second;
+		leftNode->mBoundingBox = elements[0].mBox;
+		leftNode->mLeafValue = elements[0].mValue;
 
 		if (elements.size() > 1)
 		{
-			rightNode->mBoundingBox = elements[1].first;
-			rightNode->mLeafValue = elements[1].second;
+			rightNode->mBoundingBox = elements[1].mBox;
+			rightNode->mLeafValue = elements[1].mValue;
 		}
 
         node->mLeft = std::move(leftNode);
@@ -246,38 +244,44 @@ std::unique_ptr<typename BVH<T>::Node> BVHFactory<T>::partition(std::vector<std:
 
 // Split the AABB along its largest axis.
 template<typename T>
-std::pair<AABB, AABB> BVHFactory<T>::splitAABB(const AABB& aabb) const
+std::pair<std::pair<AABB, std::vector<typename BVHFactory<T>::BuilderNode>>, std::pair<AABB, std::vector<typename BVHFactory<T>::BuilderNode>>>
+	BVHFactory<T>::splitAABB(const AABB& aabb, std::vector<typename BVHFactory<T>::BuilderNode>& nodes) const
 {
-	const Cube aabbCube = aabb.getCube();
+	const float3 bottomRight = aabb.getBottom();
+	const float3 topLeft = aabb.getTop();
 
-	const float xLength = glm::length(aabbCube.mUpper1 - aabbCube.mUpper4);
-	const float yLength = glm::length(aabbCube.mUpper1 - aabbCube.mLower1);
-	const float zLength = glm::length(aabbCube.mUpper1 - aabbCube.mUpper2);
+	const float3 diagonal = bottomRight - topLeft;
 
+	const float xLength = diagonal.x;
+	const float yLength = diagonal.y;
+	const float zLength = diagonal.z;
+	
 	const bool xMax = std::max(xLength, std::max(yLength, zLength)) == xLength;
 	const bool yMax = std::max(yLength, std::max(xLength, zLength)) == yLength;
+	const bool zMax = std::max(zLength, std::max(xLength, yLength)) == zLength;
+	
+	const float3 splitDirection = { xMax ? 1.0f : 0.0f, yMax ? 1.0f : 0.0f, zMax ? 1.0f : 0.0f };
+	const float3 invertedSplit = -(splitDirection - 1.0f);
 
-	if (xMax)
+	float3 averageDistance{0.0f, 0.0f, 0.0f};
+	for (const auto& node : nodes)
 	{
-		AABB first{ aabbCube.mUpper1, float3{ aabbCube.mLower3.x - (xLength / 2.0f), aabbCube.mLower3.y, aabbCube.mLower3.z } };
-		AABB second{ float3{aabbCube.mUpper1.x + (xLength / 2.0f), aabbCube.mUpper1.y, aabbCube.mUpper1.z}, aabbCube.mLower3 };
-
-		return { first, second };
+		averageDistance += node.mBox.getBottom() - topLeft;
 	}
-	else if (yMax)
-	{
-		AABB first{ aabbCube.mUpper1, float3{ aabbCube.mLower3.x, aabbCube.mLower3.y - (yLength / 2.0f), aabbCube.mLower3.z} };
-		AABB second{ float3{aabbCube.mUpper1.x, aabbCube.mUpper1.y + (yLength / 2.0f), aabbCube.mUpper1.z}, aabbCube.mLower3 };
 
-		return { first, second };
-	}
-	else
-	{
-		AABB first{ aabbCube.mUpper1, float3{ aabbCube.mLower3.x , aabbCube.mLower3.y, aabbCube.mLower3.z - (zLength / 2.0f) } };
-        AABB second{ float3{aabbCube.mUpper1.x, aabbCube.mUpper1.y, aabbCube.mUpper1.z + (zLength / 2.0f)}, aabbCube.mLower3 };
+	averageDistance /= float(nodes.size());
 
-		return { first, second };
-	}
+	averageDistance *= splitDirection;
+
+	const AABB leftBox{topLeft, topLeft + averageDistance + (invertedSplit * diagonal)};
+	const AABB rightBox{ topLeft + averageDistance, bottomRight};
+
+	const auto mid = std::partition(nodes.begin(), nodes.end(), [&leftBox](const auto& node)
+		{
+			return leftBox.contains(node.mBox, EstimationMode::Over);
+		});
+
+	return std::make_pair(std::make_pair(leftBox, std::vector<typename BVHFactory<T>::BuilderNode>{nodes.begin(), mid}), std::make_pair(rightBox, std::vector<typename BVHFactory<T>::BuilderNode>{mid, nodes.end()}));
 }
 
 
