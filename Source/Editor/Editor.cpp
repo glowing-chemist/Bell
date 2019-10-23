@@ -100,7 +100,7 @@ namespace
 
 			case NodeTypes::DeferredTexturePBRIBL:
 			{
-				std::shared_ptr<EditorNode> newNode = std::make_shared<PassNode>("DeferredTextureBlinnPhongLighting", passType);
+				std::shared_ptr<EditorNode> newNode = std::make_shared<PassNode>("PBR IBL", passType);
 				newNode->mInputs.push_back(Pin{ 0, newNode, "Depth", PinType::Texture, PinKind::Input });
 				newNode->mInputs.push_back(Pin{ 0, newNode, "VertexNormal", PinType::Texture, PinKind::Input });
 				newNode->mInputs.push_back(Pin{ 0, newNode, "Material", PinType::Texture, PinKind::Input });
