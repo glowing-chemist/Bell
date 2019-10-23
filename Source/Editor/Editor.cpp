@@ -1,5 +1,6 @@
 
 #include "Editor/Editor.h"
+#include "Engine/DefaultResourceSlots.hpp"
 
 #include "imgui.h"
 
@@ -233,9 +234,9 @@ void Editor::renderOverlay()
 
 	mEngine.recordOverlay(draw_data);
 
-	mEngine.setSamperInScene("FontSampler", mFontsSampler);
+	mEngine.setSamperInScene(kDefaultSampler, mFontsSampler);
     mEngine.setImageInScene("OverlayTexture", mOverlayTextureView);
-    mEngine.setImageInScene("FrameBuffer", mEngine.getSwaChainImageView());
+	mEngine.setImageInScene(kFrameBufer, mEngine.getSwaChainImageView());
 	mEngine.setBufferInScene("OverlayUBO", mOverlayTranslationUBO);
 }
 
