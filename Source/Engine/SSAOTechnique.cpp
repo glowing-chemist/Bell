@@ -33,3 +33,9 @@ void SSAOTechnique::bindResources(RenderGraph& graph) const
 {
     graph.bindSampler(kDefaultSampler, mLinearSampler);
 }
+
+
+void SSAOTechnique::render(RenderGraph& graph, const std::vector<const Scene::MeshInstance *>& meshes)
+{
+
+}

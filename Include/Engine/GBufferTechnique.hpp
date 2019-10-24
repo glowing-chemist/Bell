@@ -12,7 +12,7 @@
 #include "Engine/DefaultResourceSlots.hpp"
 
 
-class GBufferTechnique : public Technique<GraphicsTask>
+class GBufferTechnique : public Technique
 {
 public:
 	GBufferTechnique(Engine*);
@@ -20,9 +20,6 @@ public:
 
 	virtual PassType getPassType() const final override
 		{ return PassType::GBuffer; }
-
-    virtual GraphicsTask& getTask() final override
-    { return mTask; }
 
 	std::string getDepthName() const
         { return kGBufferDepth; }
@@ -38,7 +35,8 @@ public:
 	std::string getSpecularName() const
         { return kGBufferSpecular; }
 
-    virtual void bindResources(RenderGraph&) const override final;
+	virtual void bindResources(RenderGraph&) const override final {};
+	virtual void render(RenderGraph &, const std::vector<const Scene::MeshInstance *> &) override final;
 
 private:
 
@@ -47,7 +45,7 @@ private:
 };
 
 
-class GBufferPreDepthTechnique : public Technique<GraphicsTask>
+class GBufferPreDepthTechnique : public Technique
 {
 public:
     GBufferPreDepthTechnique(Engine*);
@@ -59,21 +57,19 @@ public:
     void setDepthName(const std::string& depthName)
     {  mDepthName = depthName; }
 
-    virtual GraphicsTask& getTask() final override
-    { return mTask; }
-
-        std::string getAlbedoName() const
+	std::string getAlbedoName() const
         { return kGBufferAlbedo; }
 
 
-        std::string getNormalsName() const
+	std::string getNormalsName() const
      { return kGBufferNormals; }
 
 
-        std::string getSpecularName() const
+	std::string getSpecularName() const
         { return kGBufferSpecular; }
 
-    virtual void bindResources(RenderGraph&) const override final;
+	virtual void bindResources(RenderGraph&) const override final {};
+	virtual void render(RenderGraph &, const std::vector<const Scene::MeshInstance *> &) override final;
 
 private:
 

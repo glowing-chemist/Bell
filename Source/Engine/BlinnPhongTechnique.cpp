@@ -42,7 +42,7 @@ BlinnPhongDeferredTexturesTechnique::BlinnPhongDeferredTexturesTechnique(Engine*
 }
 
 
-void BlinnPhongDeferredTexturesTechnique::bindResources(RenderGraph& graph) const
+void BlinnPhongDeferredTexturesTechnique::render(RenderGraph& graph, const std::vector<const Scene::MeshInstance *>& meshes)
 {
-    graph.bindImage(kBlinnPhongLighting, mLightingView);
+
 }

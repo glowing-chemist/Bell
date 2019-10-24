@@ -10,7 +10,7 @@
 #include <string>
 
 
-class PreDepthTechnique : public Technique<GraphicsTask>
+class PreDepthTechnique : public Technique
 {
 public:
     PreDepthTechnique(Engine* dev);
@@ -18,9 +18,6 @@ public:
 
     virtual PassType getPassType() const final override
     { return PassType::DepthPre; }
-
-    virtual GraphicsTask& getTask() final override
-    { return mTask; }
 
     Image& getDepthImage()
     { return mDepthImage; }
@@ -33,6 +30,7 @@ public:
 
     virtual void bindResources(RenderGraph& graph) const override final
     { graph.bindImage(getDepthName(), mDepthView); }
+	virtual void render(RenderGraph &, const std::vector<const Scene::MeshInstance *> &) override final;
 
 
 private:

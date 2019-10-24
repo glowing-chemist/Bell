@@ -12,7 +12,7 @@
 #include "Engine/DefaultResourceSlots.hpp"
 
 
-class GBufferMaterialTechnique : public Technique<GraphicsTask>
+class GBufferMaterialTechnique : public Technique
 {
 public:
 	GBufferMaterialTechnique(Engine*);
@@ -21,14 +21,11 @@ public:
 	virtual PassType getPassType() const final override
 		{ return PassType::GBufferMaterial; }
 
-    virtual GraphicsTask& getTask() final override
-    { return mTask; }
-
 	std::string getDepthName() const
         { return kGBufferDepth; }
 
 
-    	std::string getMaterialName() const
+	std::string getMaterialName() const
         { return kGBufferMaterialID; }
 
 
@@ -39,16 +36,17 @@ public:
 	std::string getUVName() const
         { return kGBufferUV; }
 
-    virtual void bindResources(RenderGraph&) const override final;
+	virtual void bindResources(RenderGraph&) const override final {};
+	virtual void render(RenderGraph &, const std::vector<const Scene::MeshInstance *> &) override final;
 
 private:
     
-    	GraphicsPipelineDescription mPipelineDescription;
+	GraphicsPipelineDescription mPipelineDescription;
 	GraphicsTask mTask;
 };
 
 
-class GBufferMaterialPreDepthTechnique : public Technique<GraphicsTask>
+class GBufferMaterialPreDepthTechnique : public Technique
 {
 public:
     GBufferMaterialPreDepthTechnique(Engine*);
@@ -57,8 +55,6 @@ public:
     virtual PassType getPassType() const final override
         { return PassType::GBUfferMaterialPreDepth; }
 
-    virtual GraphicsTask& getTask() final override
-    { return mTask; }
 
     void setDepthName(const std::string& depthName)
         { mDepthName = depthName; }
@@ -75,7 +71,8 @@ public:
     std::string getUVName() const
         { return kGBufferUV; }
 
-    virtual void bindResources(RenderGraph&) const override final;
+	virtual void bindResources(RenderGraph&) const override final {};
+	virtual void render(RenderGraph &, const std::vector<const Scene::MeshInstance *> &) override final;
 
 private:
 

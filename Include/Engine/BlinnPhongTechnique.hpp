@@ -9,7 +9,7 @@
 
 class Engine;
 
-class BlinnPhongDeferredTexturesTechnique : public Technique<GraphicsTask>
+class BlinnPhongDeferredTexturesTechnique : public Technique
 {
 public:
     BlinnPhongDeferredTexturesTechnique(Engine* dev);
@@ -55,11 +55,9 @@ public:
 		return PassType::DeferredTextureBlinnPhongLighting;
 	}
 
-    virtual GraphicsTask& getTask() override final
-    { return mTask; }
-
-    virtual void bindResources(RenderGraph&) const override final;
-
+	virtual void bindResources(RenderGraph& graph) const override final
+	{ graph.bindImage(kBlinnPhongLighting, mLightingView); }
+	virtual void render(RenderGraph &, const std::vector<const Scene::MeshInstance *> &) override final;
 
 private:
 

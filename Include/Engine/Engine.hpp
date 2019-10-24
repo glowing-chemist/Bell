@@ -106,10 +106,7 @@ public:
     bool isGraphicsTask(const PassType) const;
     bool isComputeTask(const PassType) const;
 
-    std::unique_ptr<Technique<GraphicsTask>>                   getSingleGraphicsTechnique(const PassType);
-    std::unique_ptr<PerFrameResource<Technique<GraphicsTask>>> getGraphicsTechnique(const PassType);
-    std::unique_ptr<Technique<ComputeTask>>                    getSingleComputeTechnique(const PassType);
-    std::unique_ptr<PerFrameResource<Technique<ComputeTask>>>  getComputeTechnique(const PassType);
+	void registerPass(const PassType);
 
     // returns an vertex and index buffer offset.
     std::pair<uint64_t, uint64_t> addMeshToBuffer(const StaticMesh*);
@@ -159,6 +156,11 @@ public:
 
 private:
 
+	void renderSceneBindlessDefferred(const LightingType);
+	void renderSceneBindlessForwardPlus(const LightingType);
+
+	std::unique_ptr<Technique>                   getSingleTechnique(const PassType);
+
     RenderInstance mRenderInstance;
     RenderDevice mRenderDevice;
 
@@ -172,6 +174,7 @@ private:
     uint64_t mOverlayIndexByteOffset;
 
     RenderGraph mCurrentRenderGraph;
+	std::vector<std::unique_ptr<Technique>> mTechniques;
 
 	CommandContext mCommandContext;
 

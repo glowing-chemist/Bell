@@ -9,7 +9,7 @@
 #include <string>
 
 
-class SSAOTechnique : public Technique<GraphicsTask>
+class SSAOTechnique : public Technique
 {
 public:
 	SSAOTechnique(Engine* dev);
@@ -17,9 +17,6 @@ public:
 
 	virtual PassType getPassType() const final override
 		{ return PassType::SSAO; }
-
-    virtual GraphicsTask& getTask() final override
-    { return mTask; }
 
 	void setDepthName(const std::string& depthSlot)
 	{ mDepthNameSlot = depthSlot; }
@@ -34,6 +31,7 @@ public:
         { return kDefaultSampler; }
 
     virtual void bindResources(RenderGraph&) const override final;
+	virtual void render(RenderGraph &, const std::vector<const Scene::MeshInstance *> &) override final;
 
 private:
 

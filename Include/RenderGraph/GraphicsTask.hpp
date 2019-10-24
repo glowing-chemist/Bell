@@ -213,7 +213,7 @@ namespace std
 class GraphicsTask : public RenderTask
 {
 public:
-    GraphicsTask(const std::string& name, const GraphicsPipelineDescription& desc) : RenderTask{name}, mPipelineDescription{ desc } {}
+	GraphicsTask(const std::string& name, const GraphicsPipelineDescription& desc) : RenderTask{name}, mPipelineDescription{ desc }, mVertexAttributes{0}, mVertexBufferOffset{0} {}
 	
 	const GraphicsPipelineDescription& getPipelineDescription() const { return mPipelineDescription; }
 	GraphicsPipelineDescription& getPipelineDescription() { return mPipelineDescription; }
@@ -266,6 +266,12 @@ public:
 
 	void clearCalls() override final { mDrawCalls.clear(); }
 
+	void setVertexBufferOffset(const uint32_t offset)
+	{ mVertexBufferOffset = offset; }
+
+	uint32_t getVertexBufferOffset() const
+	{ return mVertexBufferOffset; }
+
 	uint32_t recordedCommandCount() const override final { return mDrawCalls.size(); }
 
 	TaskType taskType() const override final { return TaskType::Graphics; }
@@ -292,6 +298,8 @@ private:
 	GraphicsPipelineDescription mPipelineDescription;
 	
 	int mVertexAttributes;
+
+	uint32_t mVertexBufferOffset;
 };
 
 

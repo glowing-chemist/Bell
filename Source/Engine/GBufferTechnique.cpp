@@ -24,8 +24,9 @@ GBufferTechnique::GBufferTechnique(Engine* eng) :
 }
 
 
-void GBufferTechnique::bindResources(RenderGraph& graph) const
+void GBufferTechnique::render(RenderGraph& graph, const std::vector<const Scene::MeshInstance *>& meshes)
 {
+
 }
 
 
@@ -53,6 +54,7 @@ GBufferPreDepthTechnique::GBufferPreDepthTechnique(Engine* eng) :
 }
 
 
-void GBufferPreDepthTechnique::bindResources(RenderGraph& graph) const
+void GBufferPreDepthTechnique::render(RenderGraph& graph, const std::vector<const Scene::MeshInstance *>& meshes)
 {
+
 }

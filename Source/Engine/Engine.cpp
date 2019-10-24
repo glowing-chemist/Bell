@@ -110,7 +110,7 @@ Shader Engine::getShader(const std::string& path)
 }
 
 
-std::unique_ptr<Technique<GraphicsTask>> Engine::getSingleGraphicsTechnique(const PassType passType)
+std::unique_ptr<Technique> Engine::getSingleTechnique(const PassType passType)
 {
     switch(passType)
     {
@@ -142,41 +142,6 @@ std::unique_ptr<Technique<GraphicsTask>> Engine::getSingleGraphicsTechnique(cons
         }
     }
 }
-
-
-//std::unique_ptr<PerFrameResource<Technique<GraphicsTask>>> Engine::getGraphicsTechnique(const PassType passType)
-//{
-
-//}
-
-
-std::unique_ptr<Technique<ComputeTask>> Engine::getSingleComputeTechnique(const PassType passType)
-{
-    switch(passType)
-    {
-        //case PassType::SSAO:
-        //    return std::make_unique<SSAOComputeTechnique>(this);
-
-        //case PassType::InplaceCombine:
-        //    return std::make_unique<InplaceCombineTechnique>(this);
-
-        //case PassType::InplaceCombineSRGB:
-        //    return std::make_unique<InplaceCombineSRGBTechnique>(this);
-
-        default:
-        {
-            BELL_TRAP;
-
-            return nullptr;
-        }
-    }
-}
-
-
-//std::unique_ptr<PerFrameResource<Technique<ComputeTask>>> Engine::getComputeTechnique(const PassType passType)
-//{
-
-//}
 
 
 bool Engine::isGraphicsTask(const PassType passType) const

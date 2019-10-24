@@ -105,7 +105,6 @@ set(BELL_SOURCE
     Source/Engine/PreDepthTechnique.cpp
     Source/Engine/BlinnPhongTechnique.cpp
 
-    Source/Engine/TechniqueGraph.cpp
     Source/Engine/CommandContext.cpp
     )
 

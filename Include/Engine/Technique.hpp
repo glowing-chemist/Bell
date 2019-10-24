@@ -12,7 +12,6 @@
 #include <string>
 
 
-template<typename T>
 class Technique : public DeviceChild
 {
 public:
@@ -25,12 +24,10 @@ public:
     virtual PassType getPassType() const = 0;
 
     // default empty implementations as most classes won't need to do anything for one of these.
-    virtual void addMesh(const Scene::MeshInstance*, const std::pair<uint32_t, uint32_t>&) {}
-    virtual void finaliseTask() {}
+	virtual void render(RenderGraph&, const std::vector<const Scene::MeshInstance*>&) = 0;
 
     virtual void bindResources(RenderGraph&) const = 0;
 
-    virtual T& getTask() = 0;
 private:
 
     std::string mName;

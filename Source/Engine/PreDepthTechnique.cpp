@@ -23,3 +23,9 @@ PreDepthTechnique::PreDepthTechnique(Engine* eng) :
 
 	mTask.addOutput(getDepthName(), AttachmentType::Depth, Format::D32Float, SizeClass::Swapchain, LoadOp::Clear_White);
 }
+
+
+void PreDepthTechnique::render(RenderGraph& graph, const std::vector<const Scene::MeshInstance *>& meshes)
+{
+
+}
