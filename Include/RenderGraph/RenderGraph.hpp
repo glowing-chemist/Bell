@@ -59,6 +59,8 @@ public:
 
     std::optional<Buffer>& getVertexBuffer() { return mVertexBuffer; }
     std::optional<Buffer>& getIndexBuffer() { return mIndexBuffer; }
+	const std::optional<Buffer>& getVertexBuffer() const { return mVertexBuffer; }
+	const std::optional<Buffer>& getIndexBuffer() const { return mIndexBuffer; }
 
 	RenderTask& getTask(TaskType, uint32_t);
 	const RenderTask& getTask(TaskType, uint32_t) const;

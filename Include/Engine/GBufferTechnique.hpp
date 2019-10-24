@@ -68,7 +68,7 @@ public:
 	std::string getSpecularName() const
         { return kGBufferSpecular; }
 
-	virtual void bindResources(RenderGraph&) const override final {};
+	virtual void bindResources(RenderGraph&) const override final {}
 	virtual void render(RenderGraph &, const std::vector<const Scene::MeshInstance *> &) override final;
 
 private:

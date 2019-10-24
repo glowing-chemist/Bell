@@ -850,9 +850,6 @@ void RenderDevice::execute(RenderGraph& graph)
 
         secondaryCmdBuffer.bindPipeline(bindPoint, resources.mPipeline->getHandle());
 
-        if(graph.getVertexBuffer())
-            secondaryCmdBuffer.bindVertexBuffers(0, { graph.getVertexBuffer()->getBuffer() }, {0});
-
         if(graph.getIndexBuffer())
             secondaryCmdBuffer.bindIndexBuffer(graph.getIndexBuffer()->getBuffer(), 0, vk::IndexType::eUint32);
 

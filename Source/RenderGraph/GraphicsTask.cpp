@@ -13,6 +13,9 @@ void GraphicsTask::recordCommands(vk::CommandBuffer CmdBuffer, const RenderGraph
 		}
 	};
 
+	if(graph.getVertexBuffer())
+		CmdBuffer.bindVertexBuffers(0, { graph.getVertexBuffer()->getBuffer() }, {0});
+
     for(const auto& thunk : mDrawCalls)
     {
         switch (thunk.mDrawType)
