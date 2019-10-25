@@ -125,21 +125,11 @@ Editor::Editor(GLFWwindow* window) :
     mFileBrowser{"/"},
     mShowNodeEditor{false},
     mNodeEditor{"render graph editor", createPassNode},
+	mSetupNeeded(true),
     mEngine{mWindow},
-	mHasUploadedFonts(false),
-	mOverlayFontTexture(mEngine.getDevice(), Format::RGBA8UNorm, ImageUsage::Sampled | ImageUsage::TransferDest, 512, 64, 1, 1, 1, 1, "Font Texture"),
-	mOverlayTextureView(mOverlayFontTexture, ImageViewType::Colour),
-	mUITexture(mEngine.getDevice(), Format::RGBA8UNorm, ImageUsage::Sampled | ImageUsage::ColourAttachment, 1600, 900, 1, 1, 1, 1, "UI Texture"),
-	mUIImageView(mUITexture, ImageViewType::Colour),
-	mOverlayTranslationUBO(mEngine.getDevice(), vk::BufferUsageFlagBits::eUniformBuffer, 16, 16, "Transformations"),
-	mFontsSampler(SamplerType::Linear),
     mInProgressScene{"In construction"}
 {
     ImGui::CreateContext();
-
-	mFontsSampler.setAddressModeU(AddressMode::Repeat);
-	mFontsSampler.setAddressModeV(AddressMode::Repeat);
-	mFontsSampler.setAddressModeW(AddressMode::Repeat);
 }
 
 
@@ -172,25 +162,19 @@ void Editor::run()
 
 void Editor::renderScene()
 {
-
 }
 
 
 void Editor::renderOverlay()
 {
-	ImGuiIO& io = ImGui::GetIO();
-
-	if(!mHasUploadedFonts)
+	// Dummy calls so that ImGui builds it's font texture
+	if(mSetupNeeded)
 	{
+		ImGuiIO& io = ImGui::GetIO();
 		unsigned char* pixels;
 		int width, height;
 		io.Fonts->GetTexDataAsRGBA32(&pixels, &width, &height);
-
-        mOverlayFontTexture.setContents(pixels, static_cast<uint32_t>(width), static_cast<uint32_t>(height), 1);
-
-		mHasUploadedFonts = true;
 	}
-
     ImGui::NewFrame();
 
     drawMenuBar();
@@ -214,35 +198,13 @@ void Editor::renderOverlay()
     // Set up the draw data/ also calls endFrame.
 	ImGui::Render();
 
-	// Set up transformation UBO
-	ImDrawData* draw_data = ImGui::GetDrawData();
-
-	float transformations[4];
-	transformations[0] = 2.0f / draw_data->DisplaySize.x;
-	transformations[1] = 2.0f / draw_data->DisplaySize.y;
-	transformations[2] = -1.0f - draw_data->DisplayPos.x * transformations[0];
-	transformations[3] = -1.0f - draw_data->DisplayPos.y * transformations[1];
-
-	MapInfo mapInfo{};
-	mapInfo.mOffset = 0;
-	mapInfo.mSize = mOverlayTranslationUBO.getSize();
-	void* uboPtr = mOverlayTranslationUBO.map(mapInfo);
-
-	memcpy(uboPtr, &transformations[0], 16);
-
-	mOverlayTranslationUBO.unmap();
-
-	mEngine.recordOverlay(draw_data);
-
-	mEngine.setSamperInScene(kDefaultSampler, mFontsSampler);
-    mEngine.setImageInScene("OverlayTexture", mOverlayTextureView);
-	mEngine.setImageInScene(kFrameBufer, mEngine.getSwaChainImageView());
-	mEngine.setBufferInScene("OverlayUBO", mOverlayTranslationUBO);
+	mEngine.registerPass(PassType::Overlay);
 }
 
 
 void Editor::swap()
 {
+	mEngine.recordScene();
 	mEngine.render();
 	mEngine.swap();
 }

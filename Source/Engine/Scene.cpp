@@ -15,7 +15,7 @@ Scene::Scene(const std::string& name) :
     mStaticMeshBoundingVolume(),
     mDynamicMeshBoundingVolume(),
 	mSceneAABB(float3(std::numeric_limits<float>::max()), float3(std::numeric_limits<float>::min())),
-    mSceneCamera(float3(), float3()),
+	mSceneCamera(float3(), float3(0.0f, 0.0f, 1.0f)),
     mFinalised(false)
 {
 }
@@ -180,13 +180,13 @@ void Scene::finalise()
 }
 
 
-std::vector<Scene::MeshInstance*> Scene::getViewableMeshes() const
+std::vector<const Scene::MeshInstance *> Scene::getViewableMeshes() const
 {
-    std::vector<MeshInstance*> instances;
+	std::vector<const MeshInstance*> instances;
 
     Frustum currentFrustum = mSceneCamera.getFrustum();
 
-    std::vector<MeshInstance*> staticMeshes = mStaticMeshBoundingVolume.containedWithin(currentFrustum, EstimationMode::Over);
+	std::vector<MeshInstance*> staticMeshes = mStaticMeshBoundingVolume.containedWithin(currentFrustum, EstimationMode::Over);
     std::vector<MeshInstance*> dynamicMeshes = mDynamicMeshBoundingVolume.containedWithin(currentFrustum, EstimationMode::Over);
 
     instances.insert(instances.end(), staticMeshes.begin(), staticMeshes.end());

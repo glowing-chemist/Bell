@@ -25,4 +25,6 @@ constexpr const char* kFrameBufer        = "FrameBuffer";
 
 constexpr const char* kDFGLUT			= "DFG";
 
+constexpr const char* kDefaultFontTexture = "Fonts";
+
 #endif

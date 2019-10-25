@@ -9,6 +9,8 @@
 
 void RenderGraph::addTask(const GraphicsTask& task)
 {
+	printf("added task \n");
+
     const uint32_t taskIndex = static_cast<uint32_t>(mGraphicsTasks.size());
     mGraphicsTasks.push_back(task);
 
@@ -457,10 +459,7 @@ uint32_t RenderGraph::selectNextTask(const std::vector<uint8_t>& dependancies, c
 
 void RenderGraph::mergeTasks()
 {
-    static bool hasMerged = false;
-
-    if(hasMerged)
-        return;
+	printf("taskCount: %ld\n", taskCount());
 
     for(uint32_t i = 0; i < taskCount() - 1; ++i)
     {
@@ -488,8 +487,6 @@ void RenderGraph::mergeTasks()
             mOutputResources.erase(mOutputResources.begin() + i + 1);
         }
     }
-
-    hasMerged = true;
 }
 
 

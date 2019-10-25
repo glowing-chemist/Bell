@@ -52,15 +52,9 @@ private:
     bool mShowNodeEditor;
     ImGuiNodeEditor mNodeEditor;
 
-    Engine mEngine;
+	bool mSetupNeeded;
 
-	bool mHasUploadedFonts;
-	Image mOverlayFontTexture;
-    ImageView mOverlayTextureView;
-	Image mUITexture;
-	ImageView mUIImageView;
-	Buffer mOverlayTranslationUBO;
-	Sampler mFontsSampler;
+    Engine mEngine;
 
     Scene mInProgressScene;
 };

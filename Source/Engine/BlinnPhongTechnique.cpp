@@ -42,7 +42,7 @@ BlinnPhongDeferredTexturesTechnique::BlinnPhongDeferredTexturesTechnique(Engine*
 }
 
 
-void BlinnPhongDeferredTexturesTechnique::render(RenderGraph& graph, const std::vector<const Scene::MeshInstance *>& meshes)
+void BlinnPhongDeferredTexturesTechnique::render(RenderGraph& graph, Engine*, const std::vector<const Scene::MeshInstance *>& meshes)
 {
 
 }

@@ -38,7 +38,7 @@ public:
 
     void          finalise();
 
-    std::vector<MeshInstance*> getViewableMeshes() const;
+	std::vector<const MeshInstance*> getViewableMeshes() const;
 
     MeshInstance* getMeshInstance(const InstanceID);
 	

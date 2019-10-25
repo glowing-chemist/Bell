@@ -35,6 +35,9 @@ public:
     ImageView& getImageView(const size_t index)
         { return mImageViews[index]; }
 
+	const ImageView& getImageView(const size_t index) const
+		{ return mImageViews[index]; }
+
     Image& getImage(const size_t index)
         { return mSwapChainImages[index]; }
 

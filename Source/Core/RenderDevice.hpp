@@ -79,6 +79,9 @@ public:
     ImageView&                         getSwapChainImageView()
                                             { return mSwapChain.getImageView(mSwapChain.getCurrentImageIndex()); }
 
+	const ImageView&                   getSwapChainImageView() const
+											{ return mSwapChain.getImageView(mSwapChain.getCurrentImageIndex()); }
+
     vk::Buffer                         createBuffer(const uint32_t, const vk::BufferUsageFlags);
 
     void                               destroyBuffer(Buffer& buffer) { mBuffersPendingDestruction.push_back({buffer.getLastAccessed(), buffer.getBuffer(), buffer.getMemory()}); }

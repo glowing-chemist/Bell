@@ -25,7 +25,7 @@ PreDepthTechnique::PreDepthTechnique(Engine* eng) :
 }
 
 
-void PreDepthTechnique::render(RenderGraph& graph, const std::vector<const Scene::MeshInstance *>& meshes)
+void PreDepthTechnique::render(RenderGraph& graph, Engine *, const std::vector<const Scene::MeshInstance *>& meshes)
 {
 
 }

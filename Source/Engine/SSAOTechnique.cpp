@@ -35,7 +35,7 @@ void SSAOTechnique::bindResources(RenderGraph& graph) const
 }
 
 
-void SSAOTechnique::render(RenderGraph& graph, const std::vector<const Scene::MeshInstance *>& meshes)
+void SSAOTechnique::render(RenderGraph& graph, Engine *, const std::vector<const Scene::MeshInstance *>& meshes)
 {
 
 }

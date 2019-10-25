@@ -104,6 +104,7 @@ set(BELL_SOURCE
     Source/Engine/BlurYTechnique.cpp
     Source/Engine/PreDepthTechnique.cpp
     Source/Engine/BlinnPhongTechnique.cpp
+    Source/Engine/OverlayTechnique.cpp
 
     Source/Engine/CommandContext.cpp
     )

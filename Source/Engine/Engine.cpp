@@ -9,6 +9,7 @@
 #include "Engine/BlurXTechnique.hpp"
 #include "Engine/BlurYTechnique.hpp"
 #include "Engine/BlinnPhongTechnique.hpp"
+#include "Engine/OverlayTechnique.hpp"
 
 
 Engine::Engine(GLFWwindow* windowPtr) :
@@ -21,6 +22,8 @@ Engine::Engine(GLFWwindow* windowPtr) :
     mIndexBuilder(),
     mOverlayIndexByteOffset(0),
     mCurrentRenderGraph(),
+	mTechniques{},
+	mCurrentPasstypes{0},
 	mCommandContext(),
     mOverlayVertexShader(&mRenderDevice, "./Shaders/Overlay.vert"),
     mOverlayFragmentShader(&mRenderDevice, "./Shaders/Overlay.frag"),
@@ -135,6 +138,9 @@ std::unique_ptr<Technique> Engine::getSingleTechnique(const PassType passType)
         case PassType::DeferredTextureBlinnPhongLighting:
             return std::make_unique<BlinnPhongDeferredTexturesTechnique>(this);
 
+		case PassType::Overlay:
+			return std::make_unique<OverlayTechnique>(this);
+
         default:
         {
             BELL_TRAP;
@@ -189,86 +195,30 @@ std::pair<uint64_t, uint64_t> Engine::addMeshToBuffer(const StaticMesh* mesh)
     const auto& indexData = mesh->getIndexData();
 
     const auto vertexOffset = mVertexBuilder.addData(vertexData);
-    const auto indexOffset = mIndexBuilder.addData(indexData);
+	const auto indexOffset = mIndexBuilder.addData(indexData); // TODO remap indicies
 
     return {vertexOffset, indexOffset};
 }
 
 
-void Engine::recordOverlay(const ImDrawData* drawData)
-{
-    const size_t vertexSize = static_cast<size_t>(drawData->TotalVtxCount);
-
-    // ImGui uses uin16_t sized indexs (by default) but we always use 32 bit (this wastes some memory here)
-    // so override this in imconfig.h
-    const size_t indexSize = static_cast<size_t>(drawData->TotalIdxCount);
-
-	std::vector<ImDrawVert> vertexData(vertexSize);
-	std::vector<uint32_t> indexData(indexSize);
-
-	ImDrawVert* vertexPtr = vertexData.data();
-	ImDrawIdx* indexPtr = indexData.data();
-
-    for (int n = 0; n < drawData->CmdListsCount; n++)
-    {
-        const ImDrawList* cmd_list = drawData->CmdLists[n];
-        memcpy(vertexPtr, cmd_list->VtxBuffer.Data, cmd_list->VtxBuffer.Size * sizeof(ImDrawVert));
-        memcpy(indexPtr, cmd_list->IdxBuffer.Data, cmd_list->IdxBuffer.Size * sizeof(ImDrawIdx));
-		vertexPtr += cmd_list->VtxBuffer.Size;
-		indexPtr += cmd_list->IdxBuffer.Size;
-    }
-
-    mOverlayVertexByteOffset = mVertexBuilder.addData(vertexData);
-    mOverlayIndexByteOffset = mIndexBuilder.addData(indexData);
-
-    Rect scissorRect{mRenderDevice.getSwapChain()->getSwapChainImageWidth(),
-                     mRenderDevice.getSwapChain()->getSwapChainImageHeight()};
-
-    Rect viewport{mRenderDevice.getSwapChain()->getSwapChainImageWidth(),
-                  mRenderDevice.getSwapChain()->getSwapChainImageHeight()};
-
-	GraphicsPipelineDescription desc(mOverlayVertexShader,
-                                     mOverlayFragmentShader,
-                                     scissorRect,
-                                     viewport,
-                                     false, // no backface culling
-									 BlendMode::None,
-									 BlendMode::None,
-                                     false, // no depth writes
-									 DepthTest::None,
-									 Primitive::TriangleList);
-
-    GraphicsTask task("ImGuiOverlay", desc);
-    task.setVertexAttributes(VertexAttributes::Position2 | VertexAttributes::TextureCoordinates | VertexAttributes::Albedo);
-	task.addInput("OverlayUBO", AttachmentType::UniformBuffer);
-    task.addInput("OverlayTexture", AttachmentType::Texture2D);
-	task.addInput(kDefaultSampler, AttachmentType::Sampler);
-	task.addOutput(kFrameBufer, AttachmentType::RenderTarget2D, getSwapChainImage().getFormat(), SizeClass::Custom, LoadOp::Clear_Black);
-	task.setVertexBufferOffset(static_cast<uint32_t>(mOverlayVertexByteOffset));
-
-    // Render command lists
-    uint32_t vertexOffset = 0;
-    uint32_t indexOffset = 0;
-    for (int n = 0; n < drawData->CmdListsCount; n++)
-    {
-        const ImDrawList* cmd_list = drawData->CmdLists[n];
-        for (int cmd_i = 0; cmd_i < cmd_list->CmdBuffer.Size; cmd_i++)
-        {
-            const ImDrawCmd* pcmd = &cmd_list->CmdBuffer[cmd_i];
-
-            task.addIndexedDrawCall(vertexOffset, indexOffset, pcmd->ElemCount);
-
-            indexOffset += pcmd->ElemCount;
-        }
-        vertexOffset += cmd_list->VtxBuffer.Size;
-    }
-
-    mCurrentRenderGraph.addTask(task);
-}
-
-
 void Engine::recordScene()
 {
+	printf("record scene\n");
+	const std::vector<const Scene::MeshInstance*> meshes = mCurrentScene.getViewableMeshes();
+
+	printf("technique Count: %ld\n", mTechniques.size());
+
+	BELL_ASSERT(!mTechniques.empty(), "Need at least one technique registered with the engine");
+
+	for(auto& tech : mTechniques)
+	{
+		tech->render(mCurrentRenderGraph, this, meshes);
+	}
+
+	for(auto& tech : mTechniques)
+	{
+		tech->bindResources(mCurrentRenderGraph);
+	}
 }
 
 
@@ -368,5 +318,19 @@ void Engine::updateGlobalUniformBuffers()
 			std::memcpy(SSAOBufferPtr, &mSSAOBUffer, sizeof(SSAOBuffer));
 
 		mDeviceSSAOBuffer.unmap();
+	}
+}
+
+
+void Engine::registerPass(const PassType pass)
+{
+	printf("register pass %ld\n", pass);
+	printf("current passes: %ld\n", mCurrentPasstypes);
+	if((static_cast<uint64_t>(pass) & mCurrentPasstypes) == 0)
+	{
+		printf("addPass\n");
+		mTechniques.push_back(getSingleTechnique(pass));
+
+		mCurrentPasstypes |= static_cast<uint64_t>(pass);
 	}
 }

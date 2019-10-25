@@ -11,6 +11,7 @@
 
 #include <string>
 
+class Engine;
 
 class Technique : public DeviceChild
 {
@@ -24,7 +25,7 @@ public:
     virtual PassType getPassType() const = 0;
 
     // default empty implementations as most classes won't need to do anything for one of these.
-	virtual void render(RenderGraph&, const std::vector<const Scene::MeshInstance*>&) = 0;
+	virtual void render(RenderGraph&, Engine*, const std::vector<const Scene::MeshInstance*>&) = 0;
 
     virtual void bindResources(RenderGraph&) const = 0;
 

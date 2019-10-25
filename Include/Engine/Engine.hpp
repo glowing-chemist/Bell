@@ -83,7 +83,7 @@ public:
 	Image&  getSwapChainImage()
 		{ return mRenderDevice.getSwapChainImage(); }
 
-    ImageView& getSwaChainImageView()
+	ImageView& getSwapChainImageView()
         { return mRenderDevice.getSwapChainImageView(); }
 
 	Image createImage(const uint32_t x,
@@ -111,6 +111,12 @@ public:
     // returns an vertex and index buffer offset.
     std::pair<uint64_t, uint64_t> addMeshToBuffer(const StaticMesh*);
 
+	uint64_t					  addVertexData(const void* ptr, const size_t size)
+		{ return mVertexBuilder.addData(ptr, size); }
+
+	uint64_t					  addIndexData(const std::vector<uint32_t>& idx)
+		{ return mIndexBuilder.addData(idx); }
+
     void   setImageInScene(const std::string& name, const ImageView& image)
 		{ mCurrentRenderGraph.bindImage(name, image); }
 
@@ -125,8 +131,6 @@ public:
 
 	void setIndexBufferforScene(const Buffer& indexBuf)
 		{ *mIndexBuffer = indexBuf; }
-
-    void recordOverlay(const ImDrawData*);
 
     void recordScene();
 
@@ -175,6 +179,7 @@ private:
 
     RenderGraph mCurrentRenderGraph;
 	std::vector<std::unique_ptr<Technique>> mTechniques;
+	uint64_t mCurrentPasstypes;
 
 	CommandContext mCommandContext;
 
