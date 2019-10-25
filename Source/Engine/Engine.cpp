@@ -203,10 +203,7 @@ std::pair<uint64_t, uint64_t> Engine::addMeshToBuffer(const StaticMesh* mesh)
 
 void Engine::recordScene()
 {
-	printf("record scene\n");
 	const std::vector<const Scene::MeshInstance*> meshes = mCurrentScene.getViewableMeshes();
-
-	printf("technique Count: %ld\n", mTechniques.size());
 
 	BELL_ASSERT(!mTechniques.empty(), "Need at least one technique registered with the engine");
 
@@ -324,11 +321,8 @@ void Engine::updateGlobalUniformBuffers()
 
 void Engine::registerPass(const PassType pass)
 {
-	printf("register pass %ld\n", pass);
-	printf("current passes: %ld\n", mCurrentPasstypes);
 	if((static_cast<uint64_t>(pass) & mCurrentPasstypes) == 0)
 	{
-		printf("addPass\n");
 		mTechniques.push_back(getSingleTechnique(pass));
 
 		mCurrentPasstypes |= static_cast<uint64_t>(pass);
