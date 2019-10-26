@@ -25,6 +25,7 @@ include_directories(
 			"${CMAKE_CURRENT_LIST_DIR}/ThirdParty/glslang"
 			"${CMAKE_CURRENT_LIST_DIR}/ThirdParty/imgui-node-editor/NodeEditor/Include"
 		        "${CMAKE_CURRENT_LIST_DIR}/ThirdParty/glm"	
+			"${CMAKE_CURRENT_LIST_DIR}/ThirdParty/stb_image"
 			${glslangIncludeDirs}
 			${glmIncludeDirs}
 		    )
@@ -107,6 +108,9 @@ set(BELL_SOURCE
     Source/Engine/OverlayTechnique.cpp
 
     Source/Engine/CommandContext.cpp
+
+    # used for texture loading
+    ThirdParty/stb_image/stb_image.cpp
     )
 
 set(DearImGUI_SOURCE
