@@ -107,6 +107,11 @@ public:
     bool isComputeTask(const PassType) const;
 
 	void registerPass(const PassType);
+	void clearRegisteredPasses()
+	{
+		mTechniques.clear();
+		mCurrentPasstypes = 0;
+	}
 
     // returns an vertex and index buffer offset.
     std::pair<uint64_t, uint64_t> addMeshToBuffer(const StaticMesh*);
