@@ -24,35 +24,6 @@
 #include <string>
 #include <variant>
 
-// Render paths supported by the engine.
-enum class RenderType
-{
-	BindlessForwardPlus,
-	BindlessDeferred
-};
-
-enum class LightingType
-{
-	BlinnPhong,
-	PBR
-};
-
-
-struct RenderOptions
-{
-	RenderOptions() :
-		mRenderType{RenderType::BindlessDeferred},
-		mLightingType{LightingType::PBR},
-		mUseSSAO{false},
-		mRenderOverlay{false} {}
-
-	RenderType mRenderType;
-	LightingType mLightingType;
-
-	bool mUseSSAO;
-	bool mRenderOverlay;
-};
-
 
 class Engine
 {
@@ -165,9 +136,6 @@ public:
 
 private:
 
-	void renderSceneBindlessDefferred(const LightingType);
-	void renderSceneBindlessForwardPlus(const LightingType);
-
 	std::unique_ptr<Technique>                   getSingleTechnique(const PassType);
 
     RenderInstance mRenderInstance;
@@ -208,8 +176,6 @@ private:
 	bool mGeneratedSSAOBuffer;
 
 	void updateGlobalUniformBuffers();
-
-	RenderOptions mRenderOptions;
 
     std::mutex mSubmissionLock;
 
