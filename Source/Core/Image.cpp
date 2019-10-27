@@ -240,7 +240,7 @@ void Image::setContents(const void* data,
 		// This needs to get recorded before the upload is recorded in to the primrary
 		BarrierRecorder preBarrier{ getDevice() };
 		preBarrier.transitionImageLayout(*this, vk::ImageLayout::eTransferDstOptimal);
-		getDevice()->execute(preBarrier);
+		getDevice()->execute(preBarrier, vk::PipelineStageFlagBits::eTopOfPipe, vk::PipelineStageFlagBits::eTransfer);
 	}
 
     getDevice()->getCurrentCommandPool()
@@ -254,7 +254,7 @@ void Image::setContents(const void* data,
 		// with non discard (blending).
 		BarrierRecorder postRecorder{ getDevice() };
 		postRecorder.transitionImageLayout(*this, vk::ImageLayout::eShaderReadOnlyOptimal);
-		getDevice()->execute(postRecorder);
+		getDevice()->execute(postRecorder, vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eFragmentShader);
 	}
 
     // Maybe try to implement a staging buffer cache so that we don't have to create one

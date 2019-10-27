@@ -807,7 +807,7 @@ void RenderDevice::execute(RenderGraph& graph)
 		
 		vk::PipelineBindPoint bindPoint = vk::PipelineBindPoint::eCompute;
 
-        execute(neededBarriers[cmdBufferIndex - 1]);
+		execute(neededBarriers[cmdBufferIndex - 1], vk::PipelineStageFlagBits::eColorAttachmentOutput, vk::PipelineStageFlagBits::eFragmentShader);
 
 		vk::CommandBufferUsageFlags commadBufferUsage = vk::CommandBufferUsageFlagBits::eOneTimeSubmit;
 
@@ -874,7 +874,7 @@ void RenderDevice::execute(RenderGraph& graph)
 	auto& frameBufferView = getSwapChainImageView();
 	frameBufferTransition.transitionImageLayout(frameBufferView, vk::ImageLayout::ePresentSrcKHR);
 
-	execute(frameBufferTransition);
+	execute(frameBufferTransition, vk::PipelineStageFlagBits::eColorAttachmentOutput, vk::PipelineStageFlagBits::eTopOfPipe);
 
 	primaryCmdBuffer.end();
 
