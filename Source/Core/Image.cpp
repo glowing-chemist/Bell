@@ -1,4 +1,5 @@
 #include "Core/Image.hpp"
+#include "Core/BellLogging.hpp"
 #include "RenderDevice.hpp"
 #include "Core/ConversionUtils.hpp"
 
@@ -23,6 +24,9 @@ Image::Image(RenderDevice* dev,
     mSamples{samples},
     mDebugName{debugName}
 {
+	BELL_ASSERT(x > 0 && y > 0 && z > 0, "Image must have non zero dimensions")
+	BELL_ASSERT(mips > 0 && levels > 0, "Image must have non zero mips and/or levels")
+
     if(x != 0 && y == 0 && z == 0) mType = vk::ImageType::e1D;
     if(x != 0 && y != 0 && z == 1) mType = vk::ImageType::e2D;
     if(x != 0 && y != 0 && z >  1) mType = vk::ImageType::e3D;
@@ -99,6 +103,9 @@ Image::Image(RenderDevice* dev,
         mSamples{samples},
         mDebugName{debugName}
 {
+	BELL_ASSERT(x > 0 && y > 0 && z > 0, "Image must have non zero dimensions")
+	BELL_ASSERT(mips > 0 && levels > 0, "Image must have non zero mips and/or levels")
+
     if(x != 0 && y == 0 && z == 0) mType = vk::ImageType::e1D;
     if(x != 0 && y != 0 && z == 1) mType = vk::ImageType::e2D;
     if(x != 0 && y != 0 && z >  1) mType = vk::ImageType::e3D;
