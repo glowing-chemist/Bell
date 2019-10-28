@@ -145,17 +145,21 @@ void Scene::parseMaterials(const aiScene* scene, Engine* eng)
 	for(uint32_t i = 0; i < scene->mNumMaterials; ++i)
 	{
 		aiString diffuseFilePath;
-		scene->mMaterials[i]->GetTexture(aiTextureType::aiTextureType_DIFFUSE, 0, &diffuseFilePath);
+		aiReturn result = scene->mMaterials[i]->GetTexture(aiTextureType::aiTextureType_DIFFUSE, 0, &diffuseFilePath);
+		BELL_ASSERT(result == aiReturn_SUCCESS, "Failed to load albedo texture")
 
 		aiString normalFilePath;
-		scene->mMaterials[i]->GetTexture(aiTextureType::aiTextureType_NORMALS, 0, &normalFilePath);
+		result = scene->mMaterials[i]->GetTexture(aiTextureType::aiTextureType_NORMALS, 0, &normalFilePath);
+		BELL_ASSERT(result == aiReturn_SUCCESS, "Failed to load normals texture")
 
 		// Assimp doesn't support metalness and roughness properly so load two unknown textures.
 		aiString roughnessFilePath;
-		scene->mMaterials[i]->GetTexture(aiTextureType::aiTextureType_UNKNOWN, 0, &roughnessFilePath);
+		result = scene->mMaterials[i]->GetTexture(aiTextureType::aiTextureType_UNKNOWN, 0, &roughnessFilePath);
+		BELL_ASSERT(result == aiReturn_SUCCESS, "Failed to load roughness texture")
 
 		aiString metalnessFilePath;
-		scene->mMaterials[i]->GetTexture(aiTextureType::aiTextureType_UNKNOWN, 1, &metalnessFilePath);
+		result = scene->mMaterials[i]->GetTexture(aiTextureType::aiTextureType_UNKNOWN, 1, &metalnessFilePath);
+		BELL_ASSERT(result == aiReturn_SUCCESS, "Failed to load metalness texture")
 
 		TextureInfo diffuseInfo = loadTexture(diffuseFilePath.C_Str());
 		Image diffuseTexture(eng->getDevice(), Format::RGBA8SRGB, ImageUsage::Sampled | ImageUsage::TransferDest,
@@ -163,19 +167,19 @@ void Scene::parseMaterials(const aiScene* scene, Engine* eng)
 		diffuseTexture.setContents(diffuseInfo.mData.data(), static_cast<uint32_t>(diffuseInfo.width), static_cast<uint32_t>(diffuseInfo.height), 1);
 
 
-		TextureInfo normalsInfo = loadTexture(diffuseFilePath.C_Str());
+		TextureInfo normalsInfo = loadTexture(normalFilePath.C_Str());
 		Image normalsTexture(eng->getDevice(), Format::RGBA8UNorm, ImageUsage::Sampled | ImageUsage::TransferDest,
 							 static_cast<uint32_t>(normalsInfo.width), static_cast<uint32_t>(normalsInfo.height), 1);
 		normalsTexture.setContents(normalsInfo.mData.data(), static_cast<uint32_t>(normalsInfo.width), static_cast<uint32_t>(normalsInfo.height), 1);
 
 
-		TextureInfo roughnessInfo = loadTexture(diffuseFilePath.C_Str());
+		TextureInfo roughnessInfo = loadTexture(roughnessFilePath.C_Str());
 		Image roughnessTexture(eng->getDevice(), Format::R8UNorm, ImageUsage::Sampled | ImageUsage::TransferDest,
 							 static_cast<uint32_t>(roughnessInfo.width), static_cast<uint32_t>(roughnessInfo.height), 1);
 		roughnessTexture.setContents(roughnessInfo.mData.data(), static_cast<uint32_t>(roughnessInfo.width), static_cast<uint32_t>(roughnessInfo.height), 1);
 
 
-		TextureInfo metalnessInfo = loadTexture(diffuseFilePath.C_Str());
+		TextureInfo metalnessInfo = loadTexture(metalnessFilePath.C_Str());
 		Image metalnessTexture(eng->getDevice(), Format::R8UNorm, ImageUsage::Sampled | ImageUsage::TransferDest,
 							 static_cast<uint32_t>(metalnessInfo.width), static_cast<uint32_t>(metalnessInfo.height), 1);
 		metalnessTexture.setContents(metalnessInfo.mData.data(), static_cast<uint32_t>(metalnessInfo.width), static_cast<uint32_t>(metalnessInfo.height), 1);
