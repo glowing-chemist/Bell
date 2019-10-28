@@ -39,10 +39,12 @@ BlinnPhongDeferredTexturesTechnique::BlinnPhongDeferredTexturesTechnique(Engine*
     mTask.addInput(kDefaultSampler, AttachmentType::Sampler);
 
 	mTask.addOutput(getLightTextureName(), AttachmentType::RenderTarget2D, Format::RGBA8SRGB, SizeClass::Swapchain, LoadOp::Clear_Black);
+
+	mTask.addDrawCall(0, 3);
 }
 
 
-void BlinnPhongDeferredTexturesTechnique::render(RenderGraph& graph, Engine*, const std::vector<const Scene::MeshInstance *>& meshes)
+void BlinnPhongDeferredTexturesTechnique::render(RenderGraph& graph, Engine*, const std::vector<const Scene::MeshInstance *>&)
 {
-
+	graph.addTask(mTask);
 }
