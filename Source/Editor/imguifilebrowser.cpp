@@ -31,9 +31,9 @@ std::optional<fs::path> ImGuiFileBrowser::render()
         }
 
         ImGui::EndGroup();
-
-        ImGui::End();
     }
+
+	ImGui::End();
 
     if(selectedFile != -1)
         return mChildren[selectedFile];
