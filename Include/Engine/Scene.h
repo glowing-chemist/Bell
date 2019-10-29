@@ -93,10 +93,24 @@ private:
 
     void generateSceneAABB(const bool includeStatic);
 
-    void parseNode(const aiScene* scene,
-                   const aiNode* node,
-                   const aiMatrix4x4& parentTransofrmation,
-                   const int vertAttributes);
+	struct AiStringComparitor
+	{
+		bool operator()(const aiString& l, const aiString& r) const noexcept
+		{
+			return strcmp(l.C_Str(), r.C_Str());
+		}
+	};
+
+	using MaterialMappings = std::map<aiString, uint32_t, AiStringComparitor>;
+
+	// return a mapping between mesh name and material index
+	MaterialMappings loadMaterials(Engine*);
+
+	void parseNode(const aiScene* scene,
+				   const aiNode* node,
+				   const aiMatrix4x4& parentTransofrmation,
+				   const int vertAttributes,
+				   const MaterialMappings& materialIndexMappings);
 
     std::string mName;
 

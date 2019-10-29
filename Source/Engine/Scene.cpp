@@ -8,6 +8,7 @@
 #include "stb_image.h"
 
 #include <algorithm>
+#include <fstream>
 #include <iterator>
 #include <limits>
 
@@ -21,15 +22,15 @@ namespace
 		int height;
 	};
 
-	TextureInfo loadTexture(const char* filePath)
+	TextureInfo loadTexture(const char* filePath, int chanels)
 	{
 		int texWidth, texHeight, texChannels;
-		stbi_uc* pixels = stbi_load(filePath, &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+		stbi_uc* pixels = stbi_load(filePath, &texWidth, &texHeight, &texChannels, chanels);
 
 		std::vector<unsigned char> imageData{};
 		imageData.resize(texWidth * texHeight * 4);
 
-		std::memcpy(imageData.data(), pixels, texWidth * texHeight * 4);
+		std::memcpy(imageData.data(), pixels, texWidth * texHeight * chanels);
 
 		stbi_image_free(pixels);
 
@@ -95,8 +96,10 @@ void Scene::loadFromFile(const int vertAttributes, Engine* eng)
 	// so just reserve enough sie here.
 	mSceneMeshes.reserve(scene->mNumMeshes);
 
+	const auto meshMaterials = loadMaterials(eng);
+
 	// parse node is recursive so will add all meshes to the scene.
-    parseNode(scene, rootNode, aiMatrix4x4{}, vertAttributes);
+	parseNode(scene, rootNode, aiMatrix4x4{}, vertAttributes, meshMaterials);
 
     // generate the BVH.
     finalise();
@@ -104,16 +107,20 @@ void Scene::loadFromFile(const int vertAttributes, Engine* eng)
 
 
 void Scene::parseNode(const aiScene* scene,
-                      const aiNode* node,
-                      const aiMatrix4x4& parentTransofrmation,
-                      const int vertAttributes)
+					  const aiNode* node,
+					  const aiMatrix4x4& parentTransofrmation,
+					  const int vertAttributes,
+					  const MaterialMappings& materialIndexMappings)
 {
     aiMatrix4x4 transformation = parentTransofrmation * node->mTransformation;
 
     for(uint32_t i = 0; i < node->mNumMeshes; ++i)
     {
         const aiMesh* currentMesh = scene->mMeshes[node->mMeshes[i]];
-        StaticMesh mesh{currentMesh, vertAttributes};
+
+		const uint32_t materialIndex = materialIndexMappings.find(currentMesh->mName)->second;
+
+		StaticMesh mesh{currentMesh, vertAttributes, materialIndex};
 
         const SceneID meshID = addMesh(mesh, MeshType::Static);
 
@@ -129,8 +136,98 @@ void Scene::parseNode(const aiScene* scene,
     // Recurse through all child nodes
     for(uint32_t i = 0; i < node->mNumChildren; ++i)
     {
-        parseNode(scene, node->mChildren[i], transformation, vertAttributes);
+		parseNode(scene, node->mChildren[i], transformation, vertAttributes, materialIndexMappings);
     }
+}
+
+
+Scene::MaterialMappings Scene::loadMaterials(Engine* eng)
+{
+	// TODO replace this with a lower level file interface to avoid horrible iostream performance.
+	std::ifstream materialFile{};
+	materialFile.open(mName + ".Mat", std::ios::in);
+
+	MaterialMappings materialMappings;
+
+	std::string token;
+	uint32_t materialIndex;
+	uint32_t numMeshes;
+
+	materialFile >> numMeshes;
+
+	for(uint32_t i = 0; i < numMeshes; ++i)
+	{
+		materialFile >> token;
+		materialFile >> materialIndex;
+
+		materialMappings.insert({aiString(token), materialIndex});
+	}
+
+	std::string albedoFile;
+	std::string normalsFile;
+	std::string roughnessFile;
+	std::string metalnessFile;
+	while(materialFile >> token)
+	{
+		if(token == "Material")
+		{
+			materialFile >> materialIndex;
+			continue;
+		}
+		else if(token == "Albedo")
+		{
+			materialFile >> albedoFile;
+		}
+		else if(token == "Normal")
+		{
+			materialFile >> normalsFile;
+		}
+		else if(token == "Roughness")
+		{
+			materialFile >> roughnessFile;
+		}
+		else if(token == "Metalness")
+		{
+			materialFile >> metalnessFile;
+
+			TextureInfo diffuseInfo = loadTexture(albedoFile.c_str(), STBI_rgb_alpha);
+			Image diffuseTexture(eng->getDevice(), Format::RGBA8SRGB, ImageUsage::Sampled | ImageUsage::TransferDest,
+								 static_cast<uint32_t>(diffuseInfo.width), static_cast<uint32_t>(diffuseInfo.height), 1);
+			diffuseTexture.setContents(diffuseInfo.mData.data(), static_cast<uint32_t>(diffuseInfo.width), static_cast<uint32_t>(diffuseInfo.height), 1);
+
+
+			TextureInfo normalsInfo = loadTexture(normalsFile.c_str(), STBI_rgb_alpha);
+			Image normalsTexture(eng->getDevice(), Format::RGBA8UNorm, ImageUsage::Sampled | ImageUsage::TransferDest,
+								 static_cast<uint32_t>(normalsInfo.width), static_cast<uint32_t>(normalsInfo.height), 1);
+			normalsTexture.setContents(normalsInfo.mData.data(), static_cast<uint32_t>(normalsInfo.width), static_cast<uint32_t>(normalsInfo.height), 1);
+
+
+			TextureInfo roughnessInfo = loadTexture(roughnessFile.c_str(), STBI_grey);
+			Image roughnessTexture(eng->getDevice(), Format::R8UNorm, ImageUsage::Sampled | ImageUsage::TransferDest,
+								 static_cast<uint32_t>(roughnessInfo.width), static_cast<uint32_t>(roughnessInfo.height), 1);
+			roughnessTexture.setContents(roughnessInfo.mData.data(), static_cast<uint32_t>(roughnessInfo.width), static_cast<uint32_t>(roughnessInfo.height), 1);
+
+
+			TextureInfo metalnessInfo = loadTexture(metalnessFile.c_str(), STBI_grey);
+			Image metalnessTexture(eng->getDevice(), Format::R8UNorm, ImageUsage::Sampled | ImageUsage::TransferDest,
+								 static_cast<uint32_t>(metalnessInfo.width), static_cast<uint32_t>(metalnessInfo.height), 1);
+			metalnessTexture.setContents(metalnessInfo.mData.data(), static_cast<uint32_t>(metalnessInfo.width), static_cast<uint32_t>(metalnessInfo.height), 1);
+
+			mMaterials.push_back({diffuseTexture, normalsTexture, roughnessTexture, metalnessTexture});
+
+			mMaterialImageViews.emplace_back(diffuseTexture, ImageViewType::Colour);
+			mMaterialImageViews.emplace_back(normalsTexture, ImageViewType::Colour);
+			mMaterialImageViews.emplace_back(roughnessTexture, ImageViewType::Colour);
+			mMaterialImageViews.emplace_back(metalnessTexture, ImageViewType::Colour);
+		}
+		else
+		{
+			BELL_LOG("unrecognised token in material file")
+			BELL_TRAP;
+		}
+	}
+
+	return materialMappings;
 }
 
 
