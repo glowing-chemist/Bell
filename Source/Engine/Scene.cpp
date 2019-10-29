@@ -98,9 +98,6 @@ void Scene::loadFromFile(const int vertAttributes, Engine* eng)
 	// parse node is recursive so will add all meshes to the scene.
     parseNode(scene, rootNode, aiMatrix4x4{}, vertAttributes);
 
-	// Load all the materials referenced by the scene.
-	parseMaterials(scene, eng);
-
     // generate the BVH.
     finalise();
 }
@@ -134,63 +131,6 @@ void Scene::parseNode(const aiScene* scene,
     {
         parseNode(scene, node->mChildren[i], transformation, vertAttributes);
     }
-}
-
-
-void Scene::parseMaterials(const aiScene* scene, Engine* eng)
-{
-	mMaterials.reserve(scene->mNumMaterials);
-	mMaterialImageViews.reserve(scene->mNumMaterials * 4);
-
-	for(uint32_t i = 0; i < scene->mNumMaterials; ++i)
-	{
-		aiString diffuseFilePath;
-		aiReturn result = scene->mMaterials[i]->GetTexture(aiTextureType::aiTextureType_DIFFUSE, 0, &diffuseFilePath);
-		BELL_ASSERT(result == aiReturn_SUCCESS, "Failed to load albedo texture")
-
-		aiString normalFilePath;
-		result = scene->mMaterials[i]->GetTexture(aiTextureType::aiTextureType_NORMALS, 0, &normalFilePath);
-		BELL_ASSERT(result == aiReturn_SUCCESS, "Failed to load normals texture")
-
-		// Assimp doesn't support metalness and roughness properly so load two unknown textures.
-		aiString roughnessFilePath;
-		result = scene->mMaterials[i]->GetTexture(aiTextureType::aiTextureType_UNKNOWN, 0, &roughnessFilePath);
-		BELL_ASSERT(result == aiReturn_SUCCESS, "Failed to load roughness texture")
-
-		aiString metalnessFilePath;
-		result = scene->mMaterials[i]->GetTexture(aiTextureType::aiTextureType_UNKNOWN, 1, &metalnessFilePath);
-		BELL_ASSERT(result == aiReturn_SUCCESS, "Failed to load metalness texture")
-
-		TextureInfo diffuseInfo = loadTexture(diffuseFilePath.C_Str());
-		Image diffuseTexture(eng->getDevice(), Format::RGBA8SRGB, ImageUsage::Sampled | ImageUsage::TransferDest,
-							 static_cast<uint32_t>(diffuseInfo.width), static_cast<uint32_t>(diffuseInfo.height), 1);
-		diffuseTexture.setContents(diffuseInfo.mData.data(), static_cast<uint32_t>(diffuseInfo.width), static_cast<uint32_t>(diffuseInfo.height), 1);
-
-
-		TextureInfo normalsInfo = loadTexture(normalFilePath.C_Str());
-		Image normalsTexture(eng->getDevice(), Format::RGBA8UNorm, ImageUsage::Sampled | ImageUsage::TransferDest,
-							 static_cast<uint32_t>(normalsInfo.width), static_cast<uint32_t>(normalsInfo.height), 1);
-		normalsTexture.setContents(normalsInfo.mData.data(), static_cast<uint32_t>(normalsInfo.width), static_cast<uint32_t>(normalsInfo.height), 1);
-
-
-		TextureInfo roughnessInfo = loadTexture(roughnessFilePath.C_Str());
-		Image roughnessTexture(eng->getDevice(), Format::R8UNorm, ImageUsage::Sampled | ImageUsage::TransferDest,
-							 static_cast<uint32_t>(roughnessInfo.width), static_cast<uint32_t>(roughnessInfo.height), 1);
-		roughnessTexture.setContents(roughnessInfo.mData.data(), static_cast<uint32_t>(roughnessInfo.width), static_cast<uint32_t>(roughnessInfo.height), 1);
-
-
-		TextureInfo metalnessInfo = loadTexture(metalnessFilePath.C_Str());
-		Image metalnessTexture(eng->getDevice(), Format::R8UNorm, ImageUsage::Sampled | ImageUsage::TransferDest,
-							 static_cast<uint32_t>(metalnessInfo.width), static_cast<uint32_t>(metalnessInfo.height), 1);
-		metalnessTexture.setContents(metalnessInfo.mData.data(), static_cast<uint32_t>(metalnessInfo.width), static_cast<uint32_t>(metalnessInfo.height), 1);
-
-		mMaterials.push_back({diffuseTexture, normalsTexture, roughnessTexture, metalnessTexture});
-
-		mMaterialImageViews.emplace_back(diffuseTexture, ImageViewType::Colour);
-		mMaterialImageViews.emplace_back(normalsTexture, ImageViewType::Colour);
-		mMaterialImageViews.emplace_back(roughnessTexture, ImageViewType::Colour);
-		mMaterialImageViews.emplace_back(metalnessTexture, ImageViewType::Colour);
-	}
 }
 
 

@@ -98,8 +98,6 @@ private:
                    const aiMatrix4x4& parentTransofrmation,
                    const int vertAttributes);
 
-	void parseMaterials(const aiScene* scene, Engine*);
-
     std::string mName;
 
     std::vector<std::pair<StaticMesh, MeshType>> mSceneMeshes;
