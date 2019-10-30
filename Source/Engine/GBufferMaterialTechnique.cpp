@@ -26,9 +26,19 @@ GBufferMaterialTechnique::GBufferMaterialTechnique(Engine* eng) :
 }
 
 
-void GBufferMaterialTechnique::render(RenderGraph& graph, Engine *, const std::vector<const Scene::MeshInstance *>& meshes)
+void GBufferMaterialTechnique::render(RenderGraph& graph, Engine* eng, const std::vector<const Scene::MeshInstance *>& meshes)
 {
+	mTask.clearCalls();
 
+	for(const auto& mesh : meshes)
+	{
+		const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->mMesh);
+
+		mTask.addPushConsatntValue(mesh->mTransformation);
+		mTask.addIndexedDrawCall(vertexOffset, indexOffset, mesh->mMesh->getIndexData().size());
+	}
+
+	graph.addTask(mTask);
 }
 
 
@@ -60,7 +70,17 @@ GBufferMaterialPreDepthTechnique::GBufferMaterialPreDepthTechnique(Engine* eng) 
 }
 
 
-void GBufferMaterialPreDepthTechnique::render(RenderGraph& graph, Engine*, const std::vector<const Scene::MeshInstance *>& meshes)
+void GBufferMaterialPreDepthTechnique::render(RenderGraph& graph, Engine* eng, const std::vector<const Scene::MeshInstance *>& meshes)
 {
+	mTask.clearCalls();
 
+	for(const auto& mesh : meshes)
+	{
+		const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->mMesh);
+
+		mTask.addPushConsatntValue(mesh->mTransformation);
+		mTask.addIndexedDrawCall(vertexOffset, indexOffset, mesh->mMesh->getIndexData().size());
+	}
+
+	graph.addTask(mTask);
 }
