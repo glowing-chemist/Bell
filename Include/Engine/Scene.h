@@ -69,6 +69,11 @@ public:
         return mSceneCamera;
     }
 
+	const std::vector<ImageView>& getMaterials() const
+	{
+		return mMaterialImageViews;
+	}
+
     struct MeshInstance
     {
         StaticMesh* mMesh;
