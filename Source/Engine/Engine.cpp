@@ -182,7 +182,7 @@ bool Engine::isGraphicsTask(const PassType passType) const
 }
 
 
-bool Engine::isComputeTask(const PassType passType) const
+bool Engine::isComputeTask(const PassType) const
 {
     return false; // curently no compute techniques implemented.
 }
@@ -204,7 +204,7 @@ void Engine::recordScene()
 {
 	const std::vector<const Scene::MeshInstance*> meshes = mCurrentScene.getViewableMeshes();
 
-	BELL_ASSERT(!mTechniques.empty(), "Need at least one technique registered with the engine");
+	BELL_ASSERT(!mTechniques.empty(), "Need at least one technique registered with the engine")
 
 	for(auto& tech : mTechniques)
 	{
