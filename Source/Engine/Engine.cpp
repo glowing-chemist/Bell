@@ -327,3 +327,9 @@ void Engine::registerPass(const PassType pass)
 		mCurrentPasstypes |= static_cast<uint64_t>(pass);
 	}
 }
+
+
+bool Engine::isPassRegistered(const PassType pass) const
+{
+	return (static_cast<uint64_t>(pass) & mCurrentPasstypes) > 0;
+}
