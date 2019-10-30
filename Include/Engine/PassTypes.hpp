@@ -18,7 +18,10 @@
 					InplaceCombine = 1 << 10, \
 					InplaceCombineSRGB = 1 << 11, \
 					DeferredTexturePBRIBL = 1 << 12, \
-					Overlay = 1 << 13
+					Overlay = 1 << 13, \
+					Skybox = 1 << 14, \
+					ConvolveSkybox = 1 << 15, \
+					DFGGeneration = 1 << 16 \
 
 // An enum to keep track of which 
 enum class PassType : uint64_t
