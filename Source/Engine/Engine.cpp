@@ -215,6 +215,8 @@ void Engine::recordScene()
 	{
 		tech->bindResources(mCurrentRenderGraph);
 	}
+
+	mCurrentRenderGraph.bindImageArray(kMaterials, mCurrentScene.getMaterials());
 }
 
 
