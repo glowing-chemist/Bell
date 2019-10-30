@@ -19,29 +19,23 @@ layout(binding = 0) uniform LightBuffers
 	Light light;
 } lights[];
 
-layout(binding = 1) uniform materiaIndex
-{
-    int materialIndexMapping[MAX_MATERIALS];
-};
-
-
-layout(binding = 2) uniform cameraBuffer
+layout(binding = 1) uniform cameraBuffer
 {
 	CameraBuffer camera;
 };
 
 
-layout(binding = 3) uniform texture2D depth;
-layout(binding = 4) uniform texture2D vertexNormals;
-layout(binding = 5) uniform utexture2D materialIDTexture;
-layout(binding = 6) uniform texture2D uvWithDerivitives;
-layout(binding = 7) uniform textureCube skyBox;
-layout(binding = 8) uniform textureCube ConvolvedSkybox;
-layout(binding = 9) uniform sampler linearSampler;
+layout(binding = 2) uniform texture2D depth;
+layout(binding = 3) uniform texture2D vertexNormals;
+layout(binding = 4) uniform utexture2D materialIDTexture;
+layout(binding = 5) uniform texture2D uvWithDerivitives;
+layout(binding = 6) uniform textureCube skyBox;
+layout(binding = 7) uniform textureCube ConvolvedSkybox;
+layout(binding = 8) uniform sampler linearSampler;
 
 // an unbound array of matyerial parameter textures
 // In order albedo, normals, rougness, metalness
-layout(binding = 10) uniform texture2D materials[];
+layout(binding = 9) uniform texture2D materials[];
 
 layout(push_constant) uniform numberOfLIghts
 {
@@ -66,21 +60,22 @@ void main()
     const vec2 xDerivities = unpackUnorm2x16(floatBitsToUint(fragUVwithDifferentials.z));
     const vec2 yDerivities = unpackUnorm2x16(floatBitsToUint(fragUVwithDifferentials.w));
 
-    vec3 albedo = textureGrad(sampler2D(materials[nonuniformEXT(materialIndexMapping[materialID])], linearSampler),
-    							fragUVwithDifferentials.xy, // UV
-    							xDerivities,
-    							yDerivities).xyz;
+    const vec3 baseAlbedo = textureGrad(sampler2D(materials[nonuniformEXT(materialID * 4)], linearSampler),
+                                fragUVwithDifferentials.xy,
+                                xDerivities,
+                                yDerivities).xyz;
 
-    vec3 normal = texture(sampler2D(materials[nonuniformEXT(materialIndexMapping[materialID]) + 1], linearSampler),
+    vec3 normal = texture(sampler2D(materials[nonuniformEXT(materialID * 4) + 1], linearSampler),
                                 fragUVwithDifferentials.xy).xyz;
 
+    // remap normal
     normal = remapNormals(normal);
     normal = normalize(normal);
 
-    float roughness = texture(sampler2D(materials[nonuniformEXT(materialIndexMapping[materialID]) + 2], linearSampler),
+    const float roughness = texture(sampler2D(materials[nonuniformEXT(materialID * 4) + 2], linearSampler),
                                 fragUVwithDifferentials.xy).x;
 
-    float metalness = texture(sampler2D(materials[nonuniformEXT(materialIndexMapping[materialID]) + 3], linearSampler),
+    const float metalness = texture(sampler2D(materials[nonuniformEXT(materialID * 4) + 3], linearSampler),
                                 fragUVwithDifferentials.xy).x;
     
     // then calculate lighting as usual    
