@@ -14,8 +14,8 @@ BlinnPhongDeferredTexturesTechnique::BlinnPhongDeferredTexturesTechnique(Engine*
 	mLightingTexture{ getDevice(), Format::RGBA8SRGB, ImageUsage::Sampled | ImageUsage::ColourAttachment,
 			   getDevice()->getSwapChain()->getSwapChainImageWidth(), getDevice()->getSwapChain()->getSwapChainImageHeight(), 1 },
 	mLightingView{ mLightingTexture, ImageViewType::Colour },
-	mPipelineDesc{ eng->getShader("FullScreentriangle.vert")
-				  ,eng->getShader("BlinnPhongDeferredTexture.frag") ,
+	mPipelineDesc{ eng->getShader("./Shaders/FullScreentriangle.vert")
+				  ,eng->getShader("./Shaders/BlinnPhongDeferredTexture.frag") ,
 				  Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
 						getDevice()->getSwapChain()->getSwapChainImageHeight()},
 				  Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
