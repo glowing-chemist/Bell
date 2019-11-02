@@ -7,7 +7,7 @@ ConvolveSkyBoxTechnique::ConvolveSkyBoxTechnique(Engine* eng) :
 	mConvolvedSkybox(eng->getDevice(), Format::RGBA8SRGB, ImageUsage::CubeMap | ImageUsage::Sampled | ImageUsage::Storage,
 					 512, 512, 1, 1, 1, 1, "convolved skybox"),
 	mConvolvedView(mConvolvedSkybox, ImageViewType::Colour),
-	mFirstFrame(false)
+	mFirstFrame(true)
 {
 
 }
@@ -40,5 +40,7 @@ void ConvolveSkyBoxTechnique::render(RenderGraph& graph, Engine* eng, const std:
 		{
 			graph.bindImage(slots[i], convolvedMips[i]);
 		}
+
+		mFirstFrame = false;
 	}
 }
