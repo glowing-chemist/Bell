@@ -31,8 +31,9 @@ void ConvolveSkyBoxTechnique::render(RenderGraph& graph, Engine* eng, const std:
 		for(uint32_t i = 0; i < 10; ++i)
 		{
 			convolveTask.addInput(slots[i], AttachmentType::Image2D);
-
 		}
+
+		convolveTask.addDispatch(64, 64, 1);
 
 		graph.addTask(convolveTask);
 
