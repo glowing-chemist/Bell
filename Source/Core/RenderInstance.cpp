@@ -75,7 +75,7 @@ RenderInstance::RenderInstance(GLFWwindow* window)
     std::vector<const char*> requiredExtensionVector{requiredExtensions, requiredExtensions + numExtensions};
 	requiredExtensionVector.push_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
 
-#ifndef NDEBUG
+#if BELL_ENABLE_LOGGING
     requiredExtensionVector.push_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
 #endif
 
@@ -83,7 +83,7 @@ RenderInstance::RenderInstance(GLFWwindow* window)
     instanceInfo.setEnabledExtensionCount(requiredExtensionVector.size());
     instanceInfo.setPpEnabledExtensionNames(requiredExtensionVector.data());
     instanceInfo.setPApplicationInfo(&appInfo);
-#ifndef NDEBUG
+#if BELL_ENABLE_LOGGING
     const auto availableLayers = vk::enumerateInstanceLayerProperties();
     std::vector<const char*> validationLayers = {"VK_LAYER_LUNARG_standard_validation"
 #if DUMP_API
@@ -110,7 +110,7 @@ RenderInstance::RenderInstance(GLFWwindow* window)
 
     mInstance = vk::createInstance(instanceInfo);
 
-#ifndef NDEBUG // add the debug callback as soon as possible
+#if BELL_ENABLE_LOGGING // add the debug callback as soon as possible
     addDebugCallback();
 #endif
 
@@ -221,7 +221,7 @@ std::pair<vk::PhysicalDevice, vk::Device> RenderInstance::findSuitableDevices(in
     deviceInfo.setPQueueCreateInfos(queueInfo.data());
     deviceInfo.setPEnabledFeatures(&physicalFeatures);
 	deviceInfo.setPNext(&descriptorIndexingInfo);
-#ifndef NDEBUG
+#if BELL_ENABLE_LOGGING
     const char* validationLayers = "VK_LAYER_LUNARG_standard_validation";
     deviceInfo.setEnabledLayerCount(1);
     deviceInfo.setPpEnabledLayerNames(&validationLayers);
@@ -236,7 +236,7 @@ RenderInstance::~RenderInstance()
 {
     mInstance.destroySurfaceKHR(mWindowSurface);
     mDevice.destroy();
-#ifndef NDEBUG
+#if BELL_ENABLE_LOGGING
     removeDebugCallback();
 #endif
     mInstance.destroy();

@@ -4,10 +4,10 @@
 #include <stdio.h>
 
 // This file contains logging/assert macros that will print out in debug builds.
-
+#define BELL_ENABLE_LOGGING 1
 
 // BELL_LOG
-#ifndef NDEBUG
+#if BELL_ENABLE_LOGGING
 
 #define BELL_LOG_ARGS(msg_format, ...) printf(msg_format "\n", __VA_ARGS__);
 #define BELL_LOG(msg)		  printf(msg "\n");
@@ -20,7 +20,7 @@
 #endif
 
 // BELL_TRAP
-#ifndef NDEBUG
+#if BELL_ENABLE_LOGGING
 
 #ifdef _MSC_VER
 
@@ -39,7 +39,7 @@
 
 
 // BELL_ASSRT
-#ifndef NDEBUG
+#if BELL_ENABLE_LOGGING
 
 #define BELL_ASSERT(condition, msg) if(!(condition)) { printf(msg #condition "\n"); BELL_TRAP; }
 
