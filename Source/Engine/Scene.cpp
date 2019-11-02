@@ -45,7 +45,10 @@ Scene::Scene(const std::string& name) :
     mDynamicMeshBoundingVolume(),
 	mSceneAABB(float3(std::numeric_limits<float>::max()), float3(std::numeric_limits<float>::min())),
 	mSceneCamera(float3(), float3(0.0f, 0.0f, 1.0f)),
-    mFinalised(false)
+	mFinalised(false),
+	mMaterials{},
+	mMaterialImageViews{},
+	mSkybox{nullptr}
 {
 }
 
@@ -59,7 +62,10 @@ Scene::Scene(Scene&& scene) :
     mDynamicMeshBoundingVolume{std::move(scene.mDynamicMeshBoundingVolume)},
     mSceneAABB{std::move(scene.mSceneAABB)},
     mSceneCamera{std::move(scene.mSceneCamera)},
-    mFinalised{scene.mFinalised.load(std::memory_order::memory_order_relaxed)}
+	mFinalised{scene.mFinalised.load(std::memory_order::memory_order_relaxed)},
+	mMaterials{},
+	mMaterialImageViews{},
+	mSkybox{nullptr}
 {
 }
 
@@ -75,8 +81,28 @@ Scene& Scene::operator=(Scene&& scene)
     mSceneAABB = std::move(scene.mSceneAABB);
     mSceneCamera = std::move(scene.mSceneCamera);
     mFinalised = scene.mFinalised.load(std::memory_order::memory_order_relaxed);
+	mMaterials = std::move(scene.mMaterials);
+	mMaterialImageViews = std::move(scene.mMaterialImageViews);
+	mSkybox = std::move(scene.mSkybox);
 
     return *this;
+}
+
+
+void Scene::loadSkybox(const std::array<std::string, 6>& paths, Engine* eng)
+{
+	mSkybox = std::make_unique<Image>(eng->getDevice(), Format::RGBA8SRGB, ImageUsage::CubeMap | ImageUsage::Sampled | ImageUsage::TransferDest,
+							   512, 512, 1, 1, 1, 1, "Skybox");
+
+	mSkyboxView = std::make_unique<ImageView>(*mSkybox, ImageViewType::Colour);
+
+	uint32_t i = 0;
+	for(const std::string& file : paths)
+	{
+		TextureInfo info = loadTexture(file.c_str(), STBI_rgb_alpha);
+		mSkybox->setContents(info.mData.data(), 512, 512, 1, i);
+		++i;
+	}
 }
 
 

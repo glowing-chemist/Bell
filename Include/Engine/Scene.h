@@ -10,6 +10,7 @@
 
 #include <atomic>
 #include <cstdint>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -44,6 +45,7 @@ public:
     Scene& operator=(Scene&&);
 
 	void loadFromFile(const int vertAttributes, Engine*);
+	void loadSkybox(const std::array<std::string, 6>& path, Engine*);
 
     SceneID       addMesh(const StaticMesh&, MeshType);
     InstanceID    addMeshInstance(const SceneID, const glm::mat4&);
@@ -53,6 +55,10 @@ public:
 	std::vector<const MeshInstance*> getViewableMeshes() const;
 
     MeshInstance* getMeshInstance(const InstanceID);
+	const std::unique_ptr<ImageView>& getSkybox() const
+	{
+		return mSkyboxView;
+	}
 	
     void setCamera(const Camera& camera)
 	{
@@ -91,7 +97,7 @@ public:
 	struct Light
 	{
 		LightType mType;
-		glm::mat4 mTRansformation;
+		glm::mat4 mTransformation;
 	};
 
 private:
@@ -136,6 +142,8 @@ private:
 	std::vector<Material> mMaterials;
 	std::vector<ImageView> mMaterialImageViews;
 
+	std::unique_ptr<Image> mSkybox;
+	std::unique_ptr<ImageView> mSkyboxView;
 };
 
 #endif

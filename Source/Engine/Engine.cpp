@@ -217,6 +217,9 @@ void Engine::recordScene()
 	}
 
 	mCurrentRenderGraph.bindImageArray(kMaterials, mCurrentScene.getMaterials());
+
+	if(mCurrentScene.getSkybox())
+		mCurrentRenderGraph.bindImage(kSkyBox, *mCurrentScene.getSkybox());
 }
 
 
