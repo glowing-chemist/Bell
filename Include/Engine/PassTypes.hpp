@@ -21,7 +21,8 @@
 					Overlay = 1 << 13, \
 					Skybox = 1 << 14, \
 					ConvolveSkybox = 1 << 15, \
-					DFGGeneration = 1 << 16 \
+					DFGGeneration = 1 << 16, \
+					DeferredTextureAnalyticalPBRIBL = 1 << 17 \
 
 // An enum to keep track of which 
 enum class PassType : uint64_t
