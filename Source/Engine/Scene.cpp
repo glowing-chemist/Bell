@@ -92,9 +92,9 @@ Scene& Scene::operator=(Scene&& scene)
 void Scene::loadSkybox(const std::array<std::string, 6>& paths, Engine* eng)
 {
 	mSkybox = std::make_unique<Image>(eng->getDevice(), Format::RGBA8SRGB, ImageUsage::CubeMap | ImageUsage::Sampled | ImageUsage::TransferDest,
-							   512, 512, 1, 1, 1, 1, "Skybox");
+                               512, 512, 1, 1, 6, 1, "Skybox");
 
-	mSkyboxView = std::make_unique<ImageView>(*mSkybox, ImageViewType::Colour);
+    mSkyboxView = std::make_unique<ImageView>(*mSkybox, ImageViewType::Colour, 0, 6);
 
 	uint32_t i = 0;
 	for(const std::string& file : paths)
