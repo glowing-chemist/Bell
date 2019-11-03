@@ -10,6 +10,9 @@
 #include "Engine/BlurYTechnique.hpp"
 #include "Engine/BlinnPhongTechnique.hpp"
 #include "Engine/OverlayTechnique.hpp"
+#include "Engine/AnalyticalImageBasedLightingTechnique.hpp"
+#include "Engine/ConvolveSkyboxTechnique.hpp"
+#include "Engine/SkyboxTechnique.hpp"
 
 
 Engine::Engine(GLFWwindow* windowPtr) :
@@ -140,6 +143,15 @@ std::unique_ptr<Technique> Engine::getSingleTechnique(const PassType passType)
 		case PassType::Overlay:
 			return std::make_unique<OverlayTechnique>(this);
 
+		case PassType::DeferredTextureAnalyticalPBRIBL:
+			return std::make_unique<AnalyticalImageBasedLightingTechnique>(this);
+
+		case PassType::ConvolveSkybox:
+			return std::make_unique<ConvolveSkyBoxTechnique>(this);
+
+		case PassType::Skybox:
+			return std::make_unique<SkyboxTechnique>(this);
+
         default:
         {
             BELL_TRAP;
@@ -182,9 +194,20 @@ bool Engine::isGraphicsTask(const PassType passType) const
 }
 
 
-bool Engine::isComputeTask(const PassType) const
+bool Engine::isComputeTask(const PassType pass) const
 {
-    return false; // curently no compute techniques implemented.
+	switch(pass)
+	{
+		case PassType::DFGGeneration:
+			return true;
+
+		case PassType::ConvolveSkybox:
+			return true;
+
+		default:
+
+			return false;
+	}
 }
 
 

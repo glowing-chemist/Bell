@@ -65,6 +65,15 @@ inline const char* passToString(const PassType passType)
 
 		case PassType::DeferredTexturePBRIBL:
 			return "PBR IBL";
+
+		case PassType::Skybox:
+			return "skybox";
+
+		case PassType::ConvolveSkybox:
+			return "convolveSkybox";
+
+		case PassType::DFGGeneration:
+			return "DFGGenration";
     }
 
     return "UNKNOWN PASS TYPE";
