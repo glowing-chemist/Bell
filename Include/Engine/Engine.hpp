@@ -165,6 +165,8 @@ private:
     PerFrameResource<Buffer> mVertexBuffer;
     PerFrameResource<Buffer> mIndexBuffer;
 
+    Sampler mDefaultSampler;
+
 	// Global uniform buffers
 
 	// Name: CameraBuffer

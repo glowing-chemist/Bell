@@ -10,7 +10,6 @@ OverlayTechnique::OverlayTechnique(Engine* eng) :
 	mFontImageView(mFontTexture, ImageViewType::Colour),
 	mOverlayUniformBuffer(getDevice(), vk::BufferUsageFlagBits::eUniformBuffer, 16, 16, "Transformations"),
 	mOverlayerBufferView(mOverlayUniformBuffer),
-	mFontSampler(SamplerType::Linear),
 	mPipelineDescription(eng->getShader("./Shaders/Overlay.vert"),
 						 eng->getShader("./Shaders/Overlay.frag"),
 						 Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),

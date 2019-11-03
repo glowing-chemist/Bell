@@ -28,7 +28,6 @@ public:
     {
 		graph.bindImage(kDefaultFontTexture, mFontImageView);
 		graph.bindBuffer("OverlayUBO", mOverlayerBufferView);
-		graph.bindSampler(kDefaultSampler, mFontSampler);
 		// TODO remove temp
 		graph.bindImage(kFrameBufer, getDevice()->getSwapChainImageView());
     }
@@ -39,8 +38,6 @@ private:
 
     Buffer mOverlayUniformBuffer;
     BufferView mOverlayerBufferView;
-
-    Sampler mFontSampler;
 
     GraphicsPipelineDescription mPipelineDescription;
 };

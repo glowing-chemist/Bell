@@ -32,7 +32,8 @@ Engine::Engine(GLFWwindow* windowPtr) :
     mOverlayFragmentShader(&mRenderDevice, "./Shaders/Overlay.frag"),
     mVertexBuffer{getDevice(), vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eTransferDst, 1000, 1000, "Vertex Buffer"},
     mIndexBuffer{getDevice(), vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eTransferDst, 1000, 1000, "Index Buffer"},
-	mCameraBuffer{},
+    mDefaultSampler(SamplerType::Linear),
+    mCameraBuffer{},
 	mDeviceCameraBuffer{getDevice(), vk::BufferUsageFlagBits::eUniformBuffer, sizeof(CameraBuffer), sizeof(CameraBuffer), "Camera Buffer"},
 	mSSAOBUffer{},
 	mDeviceSSAOBuffer{getDevice(), vk::BufferUsageFlagBits::eUniformBuffer, sizeof(SSAOBuffer), sizeof(SSAOBuffer), "SSAO Buffer"},
@@ -240,6 +241,7 @@ void Engine::recordScene()
 	}
 
 	mCurrentRenderGraph.bindImageArray(kMaterials, mCurrentScene.getMaterials());
+    mCurrentRenderGraph.bindSampler(kDefaultSampler, mDefaultSampler);
 
 	if(mCurrentScene.getSkybox())
 		mCurrentRenderGraph.bindImage(kSkyBox, *mCurrentScene.getSkybox());
