@@ -141,3 +141,7 @@ set(BELL_EDITOR_SOURCE
 
 add_executable(BELL_EDITOR ${BELL_EDITOR_SOURCE})
 target_link_libraries(BELL_EDITOR BELL imgui_node_editor)
+
+
+add_executable(PASS_EXAMPLE "Examples/PassRegistration.cpp")
+target_link_libraries(PASS_EXAMPLE BELL)
