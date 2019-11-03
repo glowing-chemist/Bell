@@ -17,22 +17,22 @@ layout(location = 0) in vec2 uv;
 layout(location = 0) out vec4 frameBuffer;
 
 
-layout(binding = 1) uniform cameraBuffer
+layout(binding = 0) uniform cameraBuffer
 {
 	CameraBuffer camera;
 };
 
-layout(binding = 2) uniform texture2D depth;
-layout(binding = 3) uniform texture2D vertexNormals;
-layout(binding = 4) uniform utexture2D materialIDTexture;
-layout(binding = 5) uniform texture2D uvWithDerivitives;
-layout(binding = 6) uniform textureCube skyBox;
-layout(binding = 7) uniform textureCube ConvolvedSkybox;
-layout(binding = 8) uniform sampler linearSampler;
+layout(binding = 1) uniform texture2D depth;
+layout(binding = 2) uniform texture2D vertexNormals;
+layout(binding = 3) uniform utexture2D materialIDTexture;
+layout(binding = 4) uniform texture2D uvWithDerivitives;
+layout(binding = 5) uniform textureCube skyBox;
+layout(binding = 6) uniform textureCube ConvolvedSkybox;
+layout(binding = 7) uniform sampler linearSampler;
 
-// an unbound array of matyerial parameter textures
+// an unbound array of material parameter textures
 // In order albedo, normals, rougness, metalness
-layout(binding = 9) uniform texture2D materials[];
+layout(binding = 8) uniform texture2D materials[];
 
 #define MATERIAL_COUNT 		4
 #define DIELECTRIC_SPECULAR 0.04
