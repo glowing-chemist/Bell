@@ -7,6 +7,9 @@
 #include <numeric>
 #include <cstdint>
 
+// TODO unify in RenderDevice.cpp
+#define BINDLESS_ARRAY_SIZE 16ull
+
 
 DescriptorManager::~DescriptorManager()
 {
@@ -46,8 +49,13 @@ void DescriptorManager::writeDescriptors(RenderGraph& graph, std::vector<vulkanR
     std::vector<vk::DescriptorImageInfo> imageInfos;
     std::vector<vk::DescriptorBufferInfo> bufferInfos;
 
-    const uint64_t maxDescWrites = std::accumulate(graph.inputBindingBegin(), graph.inputBindingEnd(), 0,
-                    [](uint64_t accu, auto& vec) {return accu + vec.size(); });
+	const uint64_t maxDescWrites = std::accumulate(graph.inputBindingBegin(), graph.inputBindingEnd(), 0ull,
+					[](uint64_t accu, const auto& vec) {return accu + std::accumulate(vec.begin(), vec.end(), 0ull, []
+																					  (uint64_t accu, const RenderGraph::ResourceBindingInfo& info)
+		{
+			return accu + (info.mResourcetype == RenderGraph::ResourceType::ImageArray ? BINDLESS_ARRAY_SIZE : 1ull);
+		});
+	});
 
     imageInfos.reserve(maxDescWrites);
     bufferInfos.reserve(maxDescWrites);
@@ -167,8 +175,7 @@ void DescriptorManager::writeDescriptors(RenderGraph& graph, std::vector<vulkanR
 		++descIndex;
     }
 
-    getDevice()->writeDescriptorSets(descSetWrites);
-
+	getDevice()->writeDescriptorSets(descSetWrites);
 }
 
 
