@@ -112,6 +112,7 @@ ImageView& ImageView::operator=(const ImageView& otherView)
 	mLayerEnd = otherView.mLayerEnd;
 	mTotalLayers = otherView.mTotalLayers;
 
+	mIsSwapchain = otherView.isSwapChain();
 
     return *this;
 }
@@ -136,6 +137,8 @@ ImageView::ImageView(ImageView&& otherView) :
 	mLayerStart = otherView.mLayerStart;
 	mLayerEnd = otherView.mLayerEnd;
 	mTotalLayers = otherView.mTotalLayers;
+
+	mIsSwapchain = otherView.mIsSwapchain;
 
 	otherView.mImageViewHandle = vk::ImageView{nullptr};
 }
