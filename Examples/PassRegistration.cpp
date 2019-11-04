@@ -73,11 +73,11 @@ int main(int argc, char** argv)
         engine.registerPass(PassType::DeferredTextureAnalyticalPBRIBL);
         engine.registerPass(PassType::Skybox);
 
-        printf("reached end pass registration\n");
-
         engine.recordScene();
+        engine.render();
         engine.swap();
         engine.endFrame();
+        engine.flushWait();
 
         firstFrame = false;
     }
