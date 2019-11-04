@@ -28,8 +28,6 @@ Engine::Engine(GLFWwindow* windowPtr) :
 	mTechniques{},
 	mCurrentPasstypes{0},
 	mCommandContext(),
-    mOverlayVertexShader(&mRenderDevice, "./Shaders/Overlay.vert"),
-    mOverlayFragmentShader(&mRenderDevice, "./Shaders/Overlay.frag"),
     mVertexBuffer{getDevice(), vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eTransferDst, 1000, 1000, "Vertex Buffer"},
     mIndexBuffer{getDevice(), vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eTransferDst, 1000, 1000, "Index Buffer"},
     mDefaultSampler(SamplerType::Linear),
@@ -40,8 +38,6 @@ Engine::Engine(GLFWwindow* windowPtr) :
 	mGeneratedSSAOBuffer{false},
     mWindow(windowPtr)
 {
-    mOverlayVertexShader.compile();
-    mOverlayFragmentShader.compile();
 }
 
 

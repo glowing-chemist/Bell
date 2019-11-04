@@ -157,9 +157,6 @@ private:
 
 	CommandContext mCommandContext;
 
-    Shader mOverlayVertexShader;
-    Shader mOverlayFragmentShader;
-
 	std::unordered_map<std::string, Shader> mShaderCache;
 
     PerFrameResource<Buffer> mVertexBuffer;
