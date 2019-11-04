@@ -36,7 +36,7 @@ public:
 	std::string getUVName() const
         { return kGBufferUV; }
 
-	virtual void bindResources(RenderGraph&) const override final {};
+    virtual void bindResources(RenderGraph&) const override final {}
 	virtual void render(RenderGraph&, Engine*, const std::vector<const Scene::MeshInstance *> &) override final;
 
 private:
