@@ -6,14 +6,14 @@ ConvolveSkyBoxTechnique::ConvolveSkyBoxTechnique(Engine* eng) :
 	mPipelineDesc{eng->getShader("./Shaders/SkyBoxConvolve.comp")},
 	mConvolvedSkybox(eng->getDevice(), Format::RGBA8SRGB, ImageUsage::CubeMap | ImageUsage::Sampled | ImageUsage::Storage,
                      512, 512, 1, 10, 6, 1, "convolved skybox"),
-    mConvolvedView(mConvolvedSkybox, ImageViewType::Colour, 0, 6),
+    mConvolvedView(mConvolvedSkybox, ImageViewType::Colour, 0, 6, 0, 10),
 	mFirstFrame(true)
 {
 
 }
 
 
-void ConvolveSkyBoxTechnique::render(RenderGraph& graph, Engine* eng, const std::vector<const Scene::MeshInstance *>&)
+void ConvolveSkyBoxTechnique::render(RenderGraph& graph, Engine*, const std::vector<const Scene::MeshInstance *>&)
 {
 	if(mFirstFrame)
 	{
