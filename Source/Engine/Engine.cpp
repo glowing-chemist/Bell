@@ -256,17 +256,20 @@ void Engine::render()
 
 	auto& indexData = mIndexBuilder.finishRecording();
 
-    mVertexBuffer->resize(static_cast<uint32_t>(vertexData.size()), false);
-    mIndexBuffer->resize(static_cast<uint32_t>(indexData.size()), false);
+    if(!vertexData.empty() && !indexData.empty())
+    {
+        mVertexBuffer->resize(static_cast<uint32_t>(vertexData.size()), false);
+        mIndexBuffer->resize(static_cast<uint32_t>(indexData.size()), false);
 
-    mVertexBuffer->setContents(vertexData.data(), static_cast<uint32_t>(vertexData.size()));
-    mIndexBuffer->setContents(indexData.data(), static_cast<uint32_t>(indexData.size()));
+        mVertexBuffer->setContents(vertexData.data(), static_cast<uint32_t>(vertexData.size()));
+        mIndexBuffer->setContents(indexData.data(), static_cast<uint32_t>(indexData.size()));
 
-    mVertexBuilder.reset();
-    mIndexBuilder.reset();
+        mVertexBuilder.reset();
+        mIndexBuilder.reset();
 
-    mCurrentRenderGraph.bindVertexBuffer(*mVertexBuffer);
-    mCurrentRenderGraph.bindIndexBuffer(*mIndexBuffer);
+        mCurrentRenderGraph.bindVertexBuffer(*mVertexBuffer);
+        mCurrentRenderGraph.bindIndexBuffer(*mIndexBuffer);
+    }
 
     mRenderDevice.execute(mCurrentRenderGraph);
 }
