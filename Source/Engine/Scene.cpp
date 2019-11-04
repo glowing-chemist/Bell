@@ -63,9 +63,10 @@ Scene::Scene(Scene&& scene) :
     mSceneAABB{std::move(scene.mSceneAABB)},
     mSceneCamera{std::move(scene.mSceneCamera)},
 	mFinalised{scene.mFinalised.load(std::memory_order::memory_order_relaxed)},
-	mMaterials{},
-	mMaterialImageViews{},
-	mSkybox{nullptr}
+    mMaterials{std::move(scene.mMaterials)},
+    mMaterialImageViews{std::move(scene.mMaterialImageViews)},
+    mSkybox{std::move(scene.mSkybox)},
+    mSkyboxView(std::move(scene.mSkyboxView))
 {
 }
 
@@ -84,6 +85,7 @@ Scene& Scene::operator=(Scene&& scene)
 	mMaterials = std::move(scene.mMaterials);
 	mMaterialImageViews = std::move(scene.mMaterialImageViews);
 	mSkybox = std::move(scene.mSkybox);
+    mSkyboxView = std::move(scene.mSkyboxView);
 
     return *this;
 }
