@@ -225,19 +225,19 @@ Scene::MaterialMappings Scene::loadMaterials(Engine* eng)
 
 
 			TextureInfo normalsInfo = loadTexture(normalsFile.c_str(), STBI_rgb_alpha);
-			Image normalsTexture(eng->getDevice(), Format::RGBA8UNorm, ImageUsage::Sampled | ImageUsage::TransferDest,
+            Image normalsTexture(eng->getDevice(), Format::RGBA8SRGB, ImageUsage::Sampled | ImageUsage::TransferDest,
 								 static_cast<uint32_t>(normalsInfo.width), static_cast<uint32_t>(normalsInfo.height), 1);
 			normalsTexture.setContents(normalsInfo.mData.data(), static_cast<uint32_t>(normalsInfo.width), static_cast<uint32_t>(normalsInfo.height), 1);
 
 
-			TextureInfo roughnessInfo = loadTexture(roughnessFile.c_str(), STBI_grey);
-			Image roughnessTexture(eng->getDevice(), Format::R8UNorm, ImageUsage::Sampled | ImageUsage::TransferDest,
+            TextureInfo roughnessInfo = loadTexture(roughnessFile.c_str(), STBI_rgb_alpha);
+            Image roughnessTexture(eng->getDevice(), Format::RGBA8SRGB, ImageUsage::Sampled | ImageUsage::TransferDest,
 								 static_cast<uint32_t>(roughnessInfo.width), static_cast<uint32_t>(roughnessInfo.height), 1);
 			roughnessTexture.setContents(roughnessInfo.mData.data(), static_cast<uint32_t>(roughnessInfo.width), static_cast<uint32_t>(roughnessInfo.height), 1);
 
 
-			TextureInfo metalnessInfo = loadTexture(metalnessFile.c_str(), STBI_grey);
-			Image metalnessTexture(eng->getDevice(), Format::R8UNorm, ImageUsage::Sampled | ImageUsage::TransferDest,
+            TextureInfo metalnessInfo = loadTexture(metalnessFile.c_str(), STBI_rgb_alpha);
+            Image metalnessTexture(eng->getDevice(), Format::RGBA8SRGB, ImageUsage::Sampled | ImageUsage::TransferDest,
 								 static_cast<uint32_t>(metalnessInfo.width), static_cast<uint32_t>(metalnessInfo.height), 1);
 			metalnessTexture.setContents(metalnessInfo.mData.data(), static_cast<uint32_t>(metalnessInfo.width), static_cast<uint32_t>(metalnessInfo.height), 1);
 
