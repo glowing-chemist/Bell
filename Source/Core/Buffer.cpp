@@ -16,6 +16,8 @@ Buffer::Buffer(RenderDevice* dev,
     mStride{stride},
     mName{name}
 {
+    BELL_ASSERT(size > 0 && stride > 0, "size and stride must be greater than 0")
+
     mAllignment = mUsage & vk::BufferUsageFlagBits::eUniformBuffer ?
                                    getDevice()->getLimits().minUniformBufferOffsetAlignment : 1;
 
