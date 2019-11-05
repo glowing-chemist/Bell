@@ -100,8 +100,8 @@ void StaticMesh::configure(const aiMesh* mesh, const int vertAttributes, const u
 
     uint32_t currentOffset = 0;
 
-    float3 topLeft{0.0f, 0.0f, 0.0f};
-    float3 bottumRight{std::numeric_limits<float>::infinity(), std::numeric_limits<float>::infinity(), std::numeric_limits<float>::infinity()};
+    float3 topLeft{std::numeric_limits<float>::infinity(), std::numeric_limits<float>::infinity(), std::numeric_limits<float>::infinity()};
+    float3 bottumRight{-std::numeric_limits<float>::infinity(), -std::numeric_limits<float>::infinity(), -std::numeric_limits<float>::infinity()};
 
 
     // Copy the vertex buffer data.
@@ -190,8 +190,8 @@ void StaticMesh::configure(const aiMesh* mesh, const int vertAttributes)
 
     uint32_t currentOffset = 0;
 
-	float3 topLeft{-std::numeric_limits<float>::infinity(), -std::numeric_limits<float>::infinity(), -std::numeric_limits<float>::infinity()};
-    float3 bottumRight{std::numeric_limits<float>::infinity(), std::numeric_limits<float>::infinity(), std::numeric_limits<float>::infinity()};
+    float3 topLeft{std::numeric_limits<float>::infinity(), std::numeric_limits<float>::infinity(), std::numeric_limits<float>::infinity()};
+    float3 bottumRight{-std::numeric_limits<float>::infinity(), -std::numeric_limits<float>::infinity(), -std::numeric_limits<float>::infinity()};
 
     // Copy the vertex buffer data.
     for(uint32_t i = 0; i < mesh->mNumVertices; ++i)
@@ -202,11 +202,11 @@ void StaticMesh::configure(const aiMesh* mesh, const int vertAttributes)
             currentOffset += 4 * sizeof(float);
 
             // update the AABB positions
-			topLeft = componentWiseMax(topLeft, float3{	mesh->mVertices[i].x,
+            topLeft = componentWiseMin(topLeft, float3{	mesh->mVertices[i].x,
                                                         mesh->mVertices[i].y,
                                                         mesh->mVertices[i].z});
 
-			bottumRight = componentWiseMin(bottumRight, float3{	mesh->mVertices[i].x,
+            bottumRight = componentWiseMax(bottumRight, float3{	mesh->mVertices[i].x,
                                                                 mesh->mVertices[i].y,
                                                                 mesh->mVertices[i].z});
         }
