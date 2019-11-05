@@ -82,7 +82,7 @@ std::vector<T> BVH<T>::containedWithin(const Frustum& frustum, const std::unique
 template<typename T>
 std::vector<T> BVH<T>::containedWithin(const Frustum& frustum, const EstimationMode estimationMode) const
 {
-	if (!mRoot || !frustum.isContainedWithin(mRoot->mBoundingBox, estimationMode))
+    if (!mRoot)
 		return {};
 
 	if (mRoot->mLeafValue)
