@@ -337,9 +337,11 @@ void Scene::finalise()
 
 std::vector<const Scene::MeshInstance *> Scene::getViewableMeshes() const
 {
-	std::vector<const MeshInstance*> instances;
+    std::vector<const MeshInstance*> instances;
 
     Frustum currentFrustum = mSceneCamera.getFrustum();
+
+#if 0  // Do a more basic frustum culling until BVH is fixed.
 
 	std::vector<MeshInstance*> staticMeshes = mStaticMeshBoundingVolume.containedWithin(currentFrustum, EstimationMode::Over);
     std::vector<MeshInstance*> dynamicMeshes = mDynamicMeshBoundingVolume.containedWithin(currentFrustum, EstimationMode::Over);
@@ -348,6 +350,21 @@ std::vector<const Scene::MeshInstance *> Scene::getViewableMeshes() const
     instances.insert(instances.end(), dynamicMeshes.begin(), dynamicMeshes.end());
 
     return instances;
+#else
+
+    for(const auto& mesh : mStaticMeshInstances)
+    {
+            instances.push_back(&mesh);
+    }
+
+    for(const auto& mesh : mDynamicMeshInstances)
+    {
+            instances.push_back(&mesh);
+    }
+
+    return instances;
+
+#endif
 }
 
 
