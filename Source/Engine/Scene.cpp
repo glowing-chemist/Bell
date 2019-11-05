@@ -27,6 +27,8 @@ namespace
 		int texWidth, texHeight, texChannels;
 		stbi_uc* pixels = stbi_load(filePath, &texWidth, &texHeight, &texChannels, chanels);
 
+        BELL_ASSERT(texChannels == chanels, "Texture file has a different ammount of channels than requested")
+
 		std::vector<unsigned char> imageData{};
 		imageData.resize(texWidth * texHeight * 4);
 
@@ -93,7 +95,7 @@ Scene& Scene::operator=(Scene&& scene)
 
 void Scene::loadSkybox(const std::array<std::string, 6>& paths, Engine* eng)
 {
-	mSkybox = std::make_unique<Image>(eng->getDevice(), Format::RGBA8SRGB, ImageUsage::CubeMap | ImageUsage::Sampled | ImageUsage::TransferDest,
+    mSkybox = std::make_unique<Image>(eng->getDevice(), Format::RGBA8SRGB, ImageUsage::CubeMap | ImageUsage::Sampled | ImageUsage::TransferDest,
                                512, 512, 1, 1, 6, 1, "Skybox");
 
     mSkyboxView = std::make_unique<ImageView>(*mSkybox, ImageViewType::Colour, 0, 6);
@@ -101,7 +103,7 @@ void Scene::loadSkybox(const std::array<std::string, 6>& paths, Engine* eng)
 	uint32_t i = 0;
 	for(const std::string& file : paths)
 	{
-		TextureInfo info = loadTexture(file.c_str(), STBI_rgb_alpha);
+        TextureInfo info = loadTexture(file.c_str(), STBI_rgb_alpha);
 		mSkybox->setContents(info.mData.data(), 512, 512, 1, i);
 		++i;
 	}
@@ -219,25 +221,25 @@ Scene::MaterialMappings Scene::loadMaterials(Engine* eng)
 			materialFile >> metalnessFile;
 
 			TextureInfo diffuseInfo = loadTexture(albedoFile.c_str(), STBI_rgb_alpha);
-			Image diffuseTexture(eng->getDevice(), Format::RGBA8SRGB, ImageUsage::Sampled | ImageUsage::TransferDest,
+            Image diffuseTexture(eng->getDevice(), Format::RGBA8UNorm, ImageUsage::Sampled | ImageUsage::TransferDest,
 								 static_cast<uint32_t>(diffuseInfo.width), static_cast<uint32_t>(diffuseInfo.height), 1);
 			diffuseTexture.setContents(diffuseInfo.mData.data(), static_cast<uint32_t>(diffuseInfo.width), static_cast<uint32_t>(diffuseInfo.height), 1);
 
 
 			TextureInfo normalsInfo = loadTexture(normalsFile.c_str(), STBI_rgb_alpha);
-            Image normalsTexture(eng->getDevice(), Format::RGBA8SRGB, ImageUsage::Sampled | ImageUsage::TransferDest,
+            Image normalsTexture(eng->getDevice(), Format::RGBA8UNorm, ImageUsage::Sampled | ImageUsage::TransferDest,
 								 static_cast<uint32_t>(normalsInfo.width), static_cast<uint32_t>(normalsInfo.height), 1);
 			normalsTexture.setContents(normalsInfo.mData.data(), static_cast<uint32_t>(normalsInfo.width), static_cast<uint32_t>(normalsInfo.height), 1);
 
 
-            TextureInfo roughnessInfo = loadTexture(roughnessFile.c_str(), STBI_rgb_alpha);
-            Image roughnessTexture(eng->getDevice(), Format::RGBA8SRGB, ImageUsage::Sampled | ImageUsage::TransferDest,
+            TextureInfo roughnessInfo = loadTexture(roughnessFile.c_str(), STBI_grey);
+            Image roughnessTexture(eng->getDevice(), Format::R8UNorm, ImageUsage::Sampled | ImageUsage::TransferDest,
 								 static_cast<uint32_t>(roughnessInfo.width), static_cast<uint32_t>(roughnessInfo.height), 1);
 			roughnessTexture.setContents(roughnessInfo.mData.data(), static_cast<uint32_t>(roughnessInfo.width), static_cast<uint32_t>(roughnessInfo.height), 1);
 
 
-            TextureInfo metalnessInfo = loadTexture(metalnessFile.c_str(), STBI_rgb_alpha);
-            Image metalnessTexture(eng->getDevice(), Format::RGBA8SRGB, ImageUsage::Sampled | ImageUsage::TransferDest,
+            TextureInfo metalnessInfo = loadTexture(metalnessFile.c_str(), STBI_grey);
+            Image metalnessTexture(eng->getDevice(), Format::R8UNorm, ImageUsage::Sampled | ImageUsage::TransferDest,
 								 static_cast<uint32_t>(metalnessInfo.width), static_cast<uint32_t>(metalnessInfo.height), 1);
 			metalnessTexture.setContents(metalnessInfo.mData.data(), static_cast<uint32_t>(metalnessInfo.width), static_cast<uint32_t>(metalnessInfo.height), 1);
 

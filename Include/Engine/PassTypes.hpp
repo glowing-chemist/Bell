@@ -104,6 +104,8 @@ enum class AttachmentType
 enum class Format
 {
 	RGBA8SRGB,
+    RGB8UNorm,
+    RGB8SRGB,
 	RGB32SFloat,
 	RGBA32SFloat,
 	RGBA8UNorm,
