@@ -354,11 +354,13 @@ std::vector<const Scene::MeshInstance *> Scene::getViewableMeshes() const
 
     for(const auto& mesh : mStaticMeshInstances)
     {
+        if(currentFrustum.isContainedWithin(mesh.mMesh->getAABB() * mesh.mTransformation, EstimationMode::Over))
             instances.push_back(&mesh);
     }
 
     for(const auto& mesh : mDynamicMeshInstances)
     {
+        if(currentFrustum.isContainedWithin(mesh.mMesh->getAABB() * mesh.mTransformation, EstimationMode::Over))
             instances.push_back(&mesh);
     }
 
