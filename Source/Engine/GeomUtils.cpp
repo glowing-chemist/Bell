@@ -9,20 +9,18 @@ bool Plane::isInFrontOf(const AABB& aabb, const EstimationMode estimationMode) c
     const auto aabbVerticies = aabb.getCubeAsVertexArray();
     bool inFrontOf = true;
 
-    if(estimationMode == EstimationMode::Over)
+    if(estimationMode == EstimationMode::Under)
     {
         for(const auto& vertex : aabbVerticies)
         {
-            inFrontOf &= isInFrontOf(vertex);
+            inFrontOf = inFrontOf && isInFrontOf(vertex);
         }
     }
     else
     {
         for(const auto& vertex : aabbVerticies)
         {
-            inFrontOf &= isInFrontOf(vertex);
-
-            if(inFrontOf)
+            if(isInFrontOf(vertex))
                 break;
         }
     }
