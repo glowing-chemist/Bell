@@ -22,22 +22,22 @@ Frustum::Frustum(const float3& position,
 	glm::mat3 rightPlaneRotation = glm::rotate(glm::mat4(1.0f), (angle / 2.0f), up);
     float3 rightVector = glm::normalize(glm::cross(direction, up));
 
-    mLeftPlane = {(position + (direction * (lenght / 2.0f))) * leftPlaneRotation,
-                  rightVector * leftPlaneRotation};
+    mLeftPlane = {leftPlaneRotation * (position + (direction * (lenght / 2.0f))),
+                   leftPlaneRotation * rightVector};
 
-    mRightPLane = {(position + (direction * (lenght / 2.0f))) * rightPlaneRotation,
-                  -rightVector * rightPlaneRotation};
+    mRightPLane = {rightPlaneRotation * (position + (direction * (lenght / 2.0f))),
+                   rightPlaneRotation * -rightVector};
 
 
 	glm::mat3 bottomPlaneRotation = glm::rotate(glm::mat4(1.0f), (angle / 2.0f), rightVector);
 	glm::mat3 topPlaneRotation = glm::rotate(glm::mat4(1.0f), -(angle / 2.0f), rightVector);
     float3 normalisedUp = glm::normalize(up);
 
-    mBottomPlane = {(position + (direction * (lenght / 2.0f))) * bottomPlaneRotation,
-                    normalisedUp * rightPlaneRotation};
+    mBottomPlane = {bottomPlaneRotation * (position + (direction * (lenght / 2.0f))),
+                    rightPlaneRotation * normalisedUp};
 
-    mTopPlane = {(position + (direction * (lenght / 2.0f))) * topPlaneRotation,
-                  -normalisedUp * leftPlaneRotation};
+    mTopPlane = {topPlaneRotation * (position + (direction * (lenght / 2.0f))),
+                   leftPlaneRotation * -normalisedUp};
 }
 
 
@@ -45,12 +45,12 @@ bool Frustum::isContainedWithin(const float4 &point) const
 {
     bool inFrontOf = true;
 
-    inFrontOf &= mNearPlane.isInFrontOf(point);
-    inFrontOf &= mFarPlane.isInFrontOf(point);
-    inFrontOf &= mLeftPlane.isInFrontOf(point);
-    inFrontOf &= mRightPLane.isInFrontOf(point);
-    inFrontOf &= mTopPlane.isInFrontOf(point);
-    inFrontOf &= mBottomPlane.isInFrontOf(point);
+    inFrontOf = inFrontOf && mNearPlane.isInFrontOf(point);
+    inFrontOf = inFrontOf && mFarPlane.isInFrontOf(point);
+    inFrontOf = inFrontOf && mLeftPlane.isInFrontOf(point);
+    inFrontOf = inFrontOf && mRightPLane.isInFrontOf(point);
+    inFrontOf = inFrontOf && mTopPlane.isInFrontOf(point);
+    inFrontOf = inFrontOf && mBottomPlane.isInFrontOf(point);
 
     return inFrontOf;
 }
