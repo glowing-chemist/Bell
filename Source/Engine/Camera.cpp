@@ -66,12 +66,12 @@ bool Frustum::isContainedWithin(const AABB &aabb, const EstimationMode mode) con
 {
     bool inFrontOf = true;
 
-    inFrontOf &= mNearPlane.isInFrontOf(aabb, mode);
-    inFrontOf &= mFarPlane.isInFrontOf(aabb, mode);
-    inFrontOf &= mLeftPlane.isInFrontOf(aabb, mode);
-    inFrontOf &= mRightPLane.isInFrontOf(aabb, mode);
-    inFrontOf &= mTopPlane.isInFrontOf(aabb, mode);
-    inFrontOf &= mBottomPlane.isInFrontOf(aabb, mode);
+    inFrontOf = inFrontOf && mNearPlane.isInFrontOf(aabb, mode);
+    inFrontOf = inFrontOf && mFarPlane.isInFrontOf(aabb, mode);
+    inFrontOf = inFrontOf && mLeftPlane.isInFrontOf(aabb, mode);
+    inFrontOf = inFrontOf && mRightPLane.isInFrontOf(aabb, mode);
+    inFrontOf = inFrontOf && mTopPlane.isInFrontOf(aabb, mode);
+    inFrontOf = inFrontOf && mBottomPlane.isInFrontOf(aabb, mode);
 
     return inFrontOf;
 }
