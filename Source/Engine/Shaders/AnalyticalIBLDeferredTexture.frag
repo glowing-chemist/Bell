@@ -86,12 +86,16 @@ void main()
 
 	const float lodLevel = roughness * 10.0f;
 
-	const vec3 radiance = texture(samplerCube(ConvolvedSkybox, linearSampler), lightDir, lodLevel).xyz;
+	const vec3 radiance = textureLod(samplerCube(ConvolvedSkybox, linearSampler), lightDir, lodLevel).xyz;
 
     const vec3 irradiance = texture(samplerCube(skyBox, linearSampler), normal).xyz;
 
+    const float cosTheta = dot(normal, viewDir);
+
+    const vec3 F = fresnelSchlickRoughness(max(cosTheta, 0.0), mix(vec3(DIELECTRIC_SPECULAR), baseAlbedo, metalness), roughness);
+
     const float remappedRoughness = pow(1.0f - roughness, 4.0f);
-    const vec3 FssEss = analyticalDFG(baseAlbedo, remappedRoughness, dot(normal, viewDir));
+    const vec3 FssEss = analyticalDFG(F, remappedRoughness, cosTheta);
 
     const vec3 diffuseColor = baseAlbedo.xyz * (1.0 - DIELECTRIC_SPECULAR) * (1.0 - metalness);
 

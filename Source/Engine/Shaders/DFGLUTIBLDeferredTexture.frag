@@ -95,8 +95,9 @@ void main()
 
     const vec3 diffuseColor = baseAlbedo.xyz * (1.0 - DIELECTRIC_SPECULAR) * (1.0 - metalness);
     const vec3 F0 = mix(vec3(DIELECTRIC_SPECULAR), baseAlbedo.xyz, metalness);
+    const vec3 F = fresnelSchlickRoughness(max(NoV, 0.0), F0, roughness);
 
-    const vec3 FssEss = F0 * f_ab.x + f_ab.y;
+    const vec3 FssEss = F * f_ab.x + f_ab.y;
 
     frameBuffer = vec4(FssEss * radiance + diffuseColor * irradiance, 1.0);
 }
