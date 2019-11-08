@@ -143,5 +143,9 @@ add_executable(BELL_EDITOR ${BELL_EDITOR_SOURCE})
 target_link_libraries(BELL_EDITOR BELL imgui_node_editor)
 
 
+# Example targets TODO move in to seperate cmakelist
 add_executable(PASS_EXAMPLE "Examples/PassRegistration.cpp")
 target_link_libraries(PASS_EXAMPLE BELL)
+
+add_executable(COMMAND_CONTEXT_EXAMPLE "Examples/CommandContext.cpp")
+target_link_libraries(COMMAND_CONTEXT_EXAMPLE BELL)
