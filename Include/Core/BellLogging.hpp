@@ -3,8 +3,14 @@
 
 #include <stdio.h>
 
+#ifndef NDEBUG
+#define ENABLE_LOGGING 1
+#else
+#define ENABLE_LOGGING 0
+#endif
+
 // This file contains logging/assert macros that will print out in debug builds.
-#define BELL_ENABLE_LOGGING 1
+#define BELL_ENABLE_LOGGING ENABLE_LOGGING
 
 // BELL_LOG
 #if BELL_ENABLE_LOGGING
