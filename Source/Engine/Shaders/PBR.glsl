@@ -1,4 +1,5 @@
 #define PI 3.14159
+#define DIELECTRIC_SPECULAR 0.04
 
 
 // polynomial aproximation of a monte carlo integrated DFG function.
@@ -73,13 +74,26 @@ vec2 Hammersley(uint i, uint N)
 }
 
 
-vec3 fresnelSchlick(float cosTheta, vec3 F0)
-{
-    return F0 + (1.0 - F0) * pow(1.0 - cosTheta, 5.0);
-}
-
-
 vec3 fresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness)
 {
     return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(1.0 - cosTheta, 5.0);
-}  
+}
+
+
+vec3 calculateDiffuseGlobalIBL(vec3 dA, float M, vec3 irradiance)
+{
+    const vec3 diffuseColor = dA * (1.0 - DIELECTRIC_SPECULAR) * (1.0 - M);
+
+    return diffuseColor * irradiance;
+}
+
+
+vec3 calculateSpecularGlobalIBL(float R, vec3 N, vec3 V, float M, vec3 dA, vec3 radiance, vec2 DFG)
+{
+    const float NoV = dot(N, V);
+
+    const vec3 F0 = mix(vec3(DIELECTRIC_SPECULAR), dA, M);
+    const vec3 F = fresnelSchlickRoughness(max(NoV, 0.0), F0, R);
+
+    return (F * DFG.x + DFG.y) * radiance;
+}

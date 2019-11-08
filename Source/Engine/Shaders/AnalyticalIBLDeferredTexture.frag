@@ -97,7 +97,7 @@ void main()
     const float remappedRoughness = pow(1.0f - roughness, 4.0f);
     const vec3 FssEss = analyticalDFG(F, remappedRoughness, cosTheta);
 
-    const vec3 diffuseColor = baseAlbedo.xyz * (1.0 - DIELECTRIC_SPECULAR) * (1.0 - metalness);
+    const vec3 diffuse = calculateDiffuseGlobalIBL(baseAlbedo.xyz, metalness, irradiance);
 
-    frameBuffer = vec4(FssEss * radiance + diffuseColor * irradiance, 1.0);
+    frameBuffer = vec4(FssEss * radiance + diffuse, 1.0);
 }
