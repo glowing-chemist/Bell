@@ -42,8 +42,10 @@ void main()
 
 	const uint materialID = texture(usampler2D(materialIDTexture, linearSampler), uv).x;
 
-	vec3 vertexNormal = texture(sampler2D(vertexNormals, linearSampler), uv).xyz;
-	vertexNormal = normalize(remapNormals(vertexNormal));
+    vec3 vertexNormal;
+	vertexNormal = texture(sampler2D(vertexNormals, linearSampler), uv).xyz;
+	vertexNormal = remapNormals(vertexNormal);
+    vertexNormal = normalize(vertexNormal);
 
 	const vec4 fragUVwithDifferentials = texture(sampler2D(uvWithDerivitives, linearSampler), uv);
 

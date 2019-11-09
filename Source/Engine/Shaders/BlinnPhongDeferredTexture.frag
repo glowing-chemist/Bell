@@ -51,8 +51,10 @@ void main()
 
 	const uint materialID = texture(usampler2D(materialIDTexture, linearSampler), uv).x;
 
-	vec3 vertexNormal = texture(sampler2D(vertexNormals, linearSampler), uv).xyz;
-    vertexNormal = normalize(remapNormals(vertexNormal));
+	vec3 vertexNormal;
+    vertexNormal = texture(sampler2D(vertexNormals, linearSampler), uv).xyz;
+    vertexNormal = remapNormals(vertexNormal.xy);
+    vertexNormal = normalize(vertexNormal);
 
 	const vec4 fragUVwithDifferentials = texture(sampler2D(uvWithDerivitives, linearSampler), uv);
 
@@ -114,5 +116,5 @@ void main()
 
     const vec3 irradiance = texture(samplerCube(skyBox, linearSampler), normal, 0).xyz;
     
-    frameBuffer = vec4(albedo * (specularLighting + irradiance) + (diffuseLighting + radiance), 1.0f);  
+    frameBuffer = vec4(baseAlbedo * (specularLighting + irradiance) + (diffuseLighting + radiance), 1.0f);  
 }

@@ -26,5 +26,17 @@ mat3 tangentSpaceMatrix(const vec3 vertNormal, const vec3 view, const vec4 uvDer
 
 vec3 remapNormals(const vec3 N)
 {
-	return (N - vec3(0.5f)) * 2.0;
+	return (N - 0.5f) * 2.0;
+}
+
+
+vec2 remapNormals(const vec2 N)
+{
+	return (N - 0.5f) * 2.0;
+}
+
+
+float reconstructNormalAxis(const vec2 N)
+{
+	return sqrt(1.0f - dot(N.xy, N.xy));
 }
