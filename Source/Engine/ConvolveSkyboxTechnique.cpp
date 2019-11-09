@@ -4,7 +4,7 @@
 ConvolveSkyBoxTechnique::ConvolveSkyBoxTechnique(Engine* eng) :
 	Technique("convolveskybox", eng->getDevice()),
 	mPipelineDesc{eng->getShader("./Shaders/SkyBoxConvolve.comp")},
-	mConvolvedSkybox(eng->getDevice(), Format::RGBA8SRGB, ImageUsage::CubeMap | ImageUsage::Sampled | ImageUsage::Storage,
+	mConvolvedSkybox(eng->getDevice(), Format::RGBA8UNorm, ImageUsage::CubeMap | ImageUsage::Sampled | ImageUsage::Storage,
                      512, 512, 1, 10, 6, 1, "convolved skybox"),
     mConvolvedView(mConvolvedSkybox, ImageViewType::Colour, 0, 6, 0, 10),
 	mFirstFrame(true)
