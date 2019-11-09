@@ -11,7 +11,8 @@ StaticMesh::StaticMesh(const std::string& path, const int vertAttributes) :
 	mVertexData{},
 	mIndexData{},
     mAABB{},
-    mPassTypes{static_cast<uint64_t>(PassType::EditorDefault)}
+    mPassTypes{static_cast<uint64_t>(PassType::EditorDefault)},
+    mVertexAttributes(vertAttributes)
 {
     Assimp::Importer importer;
 
@@ -33,7 +34,8 @@ StaticMesh::StaticMesh(const std::string& path, const int vertAttributes, const 
 	mVertexData{},
 	mIndexData{},
     mAABB{},
-    mPassTypes{static_cast<uint64_t>(PassType::EditorDefault)}
+    mPassTypes{static_cast<uint64_t>(PassType::EditorDefault)},
+    mVertexAttributes(vertAttributes)
 {
 	Assimp::Importer importer;
 
@@ -51,13 +53,15 @@ StaticMesh::StaticMesh(const std::string& path, const int vertAttributes, const 
 }
 
 
-StaticMesh::StaticMesh(const aiMesh* mesh, const int vertexAttributes, const uint32_t materialID)
+StaticMesh::StaticMesh(const aiMesh* mesh, const int vertexAttributes, const uint32_t materialID) :
+    mVertexAttributes(vertexAttributes)
 {
 	configure(mesh, vertexAttributes, materialID);
 }
 
 
-StaticMesh::StaticMesh(const aiMesh* mesh, const int vertexAttributes)
+StaticMesh::StaticMesh(const aiMesh* mesh, const int vertexAttributes) :
+    mVertexAttributes(vertexAttributes)
 {
 	configure(mesh, vertexAttributes);
 }
@@ -79,7 +83,7 @@ void StaticMesh::configure(const aiMesh* mesh, const int vertAttributes, const u
 
     const bool albedoNeeded = mesh->HasVertexColors(0) && (vertAttributes & VertexAttributes::Albedo);
 
-    const uint32_t vertexStride =   ((positionNeeded ? primitiveSize * 1 : 0) +
+    const uint32_t vertexStride =   ((positionNeeded ? primitiveSize : 0) +
                                     (UVNeeded ? 2 : 0) +
                                     (normalsNeeded ? 4 : 0) +
                                     (albedoNeeded ? 4 : 0) +
@@ -173,7 +177,7 @@ void StaticMesh::configure(const aiMesh* mesh, const int vertAttributes)
                                     (UVNeeded ? 2 : 0) +
                                     (normalsNeeded ? 4 : 0) +
                                     (albedoNeeded ? 4 : 0) +
-                                    (materialNeeded != 0 ? 1 : 0)) * sizeof(float);
+                                    (materialNeeded ? 1 : 0)) * sizeof(float);
 
     // assume triangles atm
     mIndexData.resize(mesh->mNumFaces * mesh->mFaces[0].mNumIndices);

@@ -26,32 +26,37 @@ public:
 
     const AABB& getAABB() const
     {
-	return mAABB;
+        return mAABB;
     }
 
     AABB& getAABB()
     {
-	return mAABB;
+        return mAABB;
     }
 
     const std::vector<unsigned char>& getVertexData() const
     {
-	return mVertexData;
+        return mVertexData;
     }
 
     const std::vector<uint32_t>& getIndexData() const
     {
-	return mIndexData;
+        return mIndexData;
     }
 
     void addPass(const PassType passType)
     {
-	mPassTypes |= static_cast<uint64_t>(passType);
+        mPassTypes |= static_cast<uint64_t>(passType);
     }
 
     PassType getPassTypes() const
     {
-	return static_cast<PassType>(mPassTypes);
+        return static_cast<PassType>(mPassTypes);
+    }
+
+    int getVertexAttributes() const
+    {
+        return mVertexAttributes;
     }
 
 private:
@@ -72,6 +77,7 @@ private:
     AABB mAABB;
 
     uint64_t mPassTypes;
+    int mVertexAttributes;
 };
 
 #endif
