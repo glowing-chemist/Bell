@@ -21,9 +21,9 @@ GBufferMaterialTechnique::GBufferMaterialTechnique(Engine* eng) :
     mTask.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
     mTask.addInput("ModelMatrix", AttachmentType::PushConstants);
 
-    mTask.addOutput(kGBufferNormals,  AttachmentType::Texture2D, Format::R16G16Unorm, SizeClass::Swapchain, LoadOp::Clear_Black);
-    mTask.addOutput(kGBufferUV,       AttachmentType::Texture2D, Format::RGBA32Float, SizeClass::Swapchain, LoadOp::Clear_Black);
-    mTask.addOutput(kGBufferMaterialID, AttachmentType::Texture2D, Format::R8UNorm, SizeClass::Swapchain, LoadOp::Clear_Black);
+    mTask.addOutput(kGBufferNormals,  AttachmentType::RenderTarget2D, Format::R16G16Unorm, SizeClass::Swapchain, LoadOp::Clear_Black);
+    mTask.addOutput(kGBufferUV,       AttachmentType::RenderTarget2D, Format::RGBA32Float, SizeClass::Swapchain, LoadOp::Clear_Black);
+    mTask.addOutput(kGBufferMaterialID, AttachmentType::RenderTarget2D, Format::R8UNorm, SizeClass::Swapchain, LoadOp::Clear_Black);
     mTask.addOutput(kGBufferDepth,    AttachmentType::Depth, Format::D32Float, SizeClass::Swapchain, LoadOp::Clear_White);
 }
 
@@ -64,9 +64,9 @@ GBufferMaterialPreDepthTechnique::GBufferMaterialPreDepthTechnique(Engine* eng) 
     mTask.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
     mTask.addInput("ModelMatrix", AttachmentType::PushConstants);
 
-	mTask.addOutput(kGBufferNormals,  AttachmentType::Texture2D, Format::R16G16Unorm, SizeClass::Swapchain, LoadOp::Clear_Black);
-	mTask.addOutput(kGBufferUV,       AttachmentType::Texture2D, Format::RGBA8SRGB, SizeClass::Swapchain, LoadOp::Clear_Black);
-	mTask.addOutput(kGBufferMaterialID, AttachmentType::Texture2D, Format::R8UNorm, SizeClass::Swapchain, LoadOp::Clear_Black);
+	mTask.addOutput(kGBufferNormals,  AttachmentType::RenderTarget2D, Format::R16G16Unorm, SizeClass::Swapchain, LoadOp::Clear_Black);
+	mTask.addOutput(kGBufferUV,       AttachmentType::RenderTarget2D, Format::RGBA8SRGB, SizeClass::Swapchain, LoadOp::Clear_Black);
+	mTask.addOutput(kGBufferMaterialID, AttachmentType::RenderTarget2D, Format::R8UNorm, SizeClass::Swapchain, LoadOp::Clear_Black);
 	mTask.addOutput(mDepthName,         AttachmentType::Depth, Format::D24S8Float, SizeClass::Swapchain, LoadOp::Preserve);
 
 }

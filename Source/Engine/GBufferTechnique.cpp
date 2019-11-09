@@ -17,9 +17,9 @@ GBufferTechnique::GBufferTechnique(Engine* eng) :
 
     mTask.addInput("Model Matrix", AttachmentType::PushConstants);
 
-	mTask.addOutput(kGBufferNormals, AttachmentType::Texture2D, Format::R16G16Unorm, SizeClass::Swapchain, LoadOp::Clear_Black);
-	mTask.addOutput(kGBufferAlbedo, AttachmentType::Texture2D, Format::RGBA8SRGB, SizeClass::Swapchain, LoadOp::Clear_Black);
-	mTask.addOutput(kGBufferSpecular, AttachmentType::Texture2D, Format::R8UNorm, SizeClass::Swapchain, LoadOp::Clear_Black);
+	mTask.addOutput(kGBufferNormals, AttachmentType::RenderTarget2D, Format::R16G16Unorm, SizeClass::Swapchain, LoadOp::Clear_Black);
+	mTask.addOutput(kGBufferAlbedo, AttachmentType::RenderTarget2D, Format::RGBA8SRGB, SizeClass::Swapchain, LoadOp::Clear_Black);
+	mTask.addOutput(kGBufferSpecular, AttachmentType::RenderTarget2D, Format::R8UNorm, SizeClass::Swapchain, LoadOp::Clear_Black);
 	mTask.addOutput(kGBufferDepth, AttachmentType::Depth, Format::D32Float, SizeClass::Swapchain, LoadOp::Clear_White);
 }
 
@@ -57,9 +57,9 @@ GBufferPreDepthTechnique::GBufferPreDepthTechnique(Engine* eng) :
 
     mTask.addInput("Model Matrix", AttachmentType::PushConstants);
 
-	mTask.addOutput(kGBufferNormals,  AttachmentType::Texture2D, Format::R16G16Unorm, SizeClass::Swapchain, LoadOp::Clear_Black);
-	mTask.addOutput(kGBufferAlbedo,   AttachmentType::Texture2D, Format::RGBA8SRGB, SizeClass::Swapchain, LoadOp::Clear_Black);
-	mTask.addOutput(kGBufferSpecular, AttachmentType::Texture2D, Format::R8UNorm, SizeClass::Swapchain, LoadOp::Clear_Black);
+	mTask.addOutput(kGBufferNormals,  AttachmentType::RenderTarget2D, Format::R16G16Unorm, SizeClass::Swapchain, LoadOp::Clear_Black);
+	mTask.addOutput(kGBufferAlbedo,   AttachmentType::RenderTarget2D, Format::RGBA8SRGB, SizeClass::Swapchain, LoadOp::Clear_Black);
+	mTask.addOutput(kGBufferSpecular, AttachmentType::RenderTarget2D, Format::R8UNorm, SizeClass::Swapchain, LoadOp::Clear_Black);
 	mTask.addOutput(mDepthName,         AttachmentType::Depth, Format::D32Float, SizeClass::Swapchain, LoadOp::Preserve);
 }
 
