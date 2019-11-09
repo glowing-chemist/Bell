@@ -46,13 +46,13 @@ int main(int argc, char** argv)
         Camera& camera = engine.getCurrentSceneCamera();
 
         if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-            camera.moveForward(0.05f);
+            camera.moveForward(0.5f);
         if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-            camera.moveBackward(0.05f);
+            camera.moveBackward(0.5f);
         if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-            camera.moveLeft(0.05f);
+            camera.moveLeft(0.5f);
         if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-            camera.moveRight(0.05f);
+            camera.moveRight(0.5f);
         if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
             camera.rotateYaw(1.0f);
         if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
