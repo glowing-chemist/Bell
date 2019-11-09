@@ -8,9 +8,6 @@
 #include "UniformBuffers.glsl"
 
 
-#define MAX_MATERIALS 256
-
-
 layout(location = 0) in vec2 uv;
 
 
@@ -35,7 +32,6 @@ layout(binding = 7) uniform sampler linearSampler;
 layout(binding = 8) uniform texture2D materials[];
 
 #define MATERIAL_COUNT 		4
-#define DIELECTRIC_SPECULAR 0.04
 
 void main()
 {
