@@ -491,7 +491,7 @@ bool RenderGraph::areSupersets(const RenderTask& task1, const RenderTask& task2)
     if(task1.taskType() != task2.taskType())
         return false;
 
-	auto outputPred = [](const auto& lhs, const auto& rhs)
+	auto outputPred = [](const RenderTask::OutputAttachmentInfo& lhs, const RenderTask::OutputAttachmentInfo& rhs)
 	{
 		return lhs.mName == rhs.mName; // Should be strong enough?
 	};
@@ -502,16 +502,16 @@ bool RenderGraph::areSupersets(const RenderTask& task1, const RenderTask& task2)
 	};
 
 	bool isFrameBufferSubset = std::search(task1.getOuputAttachments().begin(), task1.getOuputAttachments().end(),
-								  task2.getOuputAttachments().begin(), task2.getOuputAttachments().end(), outputPred) == task2.getOuputAttachments().end();
+								  task2.getOuputAttachments().begin(), task2.getOuputAttachments().end(), outputPred) == task1.getOuputAttachments().end();
 
-	isFrameBufferSubset |= std::search(task2.getOuputAttachments().begin(), task2.getOuputAttachments().end(),
-								  task1.getOuputAttachments().begin(), task1.getOuputAttachments().end(), outputPred) == task1.getOuputAttachments().end();
+	isFrameBufferSubset = isFrameBufferSubset || std::search(task2.getOuputAttachments().begin(), task2.getOuputAttachments().end(),
+								  task1.getOuputAttachments().begin(), task1.getOuputAttachments().end(), outputPred) == task2.getOuputAttachments().end();
 
 	bool isDescriptorSubset = std::search(task1.getInputAttachments().begin(), task1.getInputAttachments().end(),
-							  task2.getInputAttachments().begin(), task2.getInputAttachments().end(), inputPred) == task2.getInputAttachments().end();
+							  task2.getInputAttachments().begin(), task2.getInputAttachments().end(), inputPred) == task1.getInputAttachments().end();
 
-	isDescriptorSubset |= std::search(task2.getInputAttachments().begin(), task2.getInputAttachments().end(),
-							  task1.getInputAttachments().begin(), task1.getInputAttachments().end(), inputPred) == task1.getInputAttachments().end();
+	isDescriptorSubset = isDescriptorSubset || std::search(task2.getInputAttachments().begin(), task2.getInputAttachments().end(),
+							  task1.getInputAttachments().begin(), task1.getInputAttachments().end(), inputPred) == task2.getInputAttachments().end();
 
     return isFrameBufferSubset && isDescriptorSubset;
 }
