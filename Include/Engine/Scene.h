@@ -106,13 +106,13 @@ private:
 
 	struct AiStringComparitor
 	{
-		bool operator()(const aiString& l, const aiString& r) const noexcept
+        bool operator()(const aiString& l, const aiString& r) const noexcept
 		{
-			return strcmp(l.C_Str(), r.C_Str());
+            return memcmp(l.C_Str(), r.C_Str(), std::min(l.length, r.length)) < 0;
 		}
 	};
 
-	using MaterialMappings = std::map<aiString, uint32_t, AiStringComparitor>;
+    using MaterialMappings = std::map<aiString, uint32_t, AiStringComparitor>;
 
 	// return a mapping between mesh name and material index
 	MaterialMappings loadMaterials(Engine*);
