@@ -61,17 +61,17 @@ void main()
                                 xDerivities,
                                 yDerivities).xyz;
 
-    vec3 normal = texture(sampler2D(materials[nonuniformEXT(materialID * 4) + 1], linearSampler),
+    vec3 normal = texture(sampler2D(materials[nonuniformEXT((materialID * 4) + 1)], linearSampler),
                                 fragUVwithDifferentials.xy).xyz;
 
     // remap normal
     normal = remapNormals(normal);
     normal = normalize(normal);
 
-    const float roughness = texture(sampler2D(materials[nonuniformEXT(materialID * 4) + 2], linearSampler),
+    const float roughness = texture(sampler2D(materials[nonuniformEXT((materialID * 4) + 2)], linearSampler),
                                 fragUVwithDifferentials.xy).x;
 
-    const float metalness = texture(sampler2D(materials[nonuniformEXT(materialID * 4) + 3], linearSampler),
+    const float metalness = texture(sampler2D(materials[nonuniformEXT((materialID * 4) + 3)], linearSampler),
                                 fragUVwithDifferentials.xy).x;
 
 	{
