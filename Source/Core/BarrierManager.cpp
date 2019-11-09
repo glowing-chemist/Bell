@@ -109,7 +109,7 @@ void BarrierRecorder::transitionImageLayout(ImageView& imageView, const vk::Imag
     vk::ImageMemoryBarrier barrier{};
 	barrier.setSrcAccessMask(vk::AccessFlagBits::eMemoryWrite);
 	barrier.setDstAccessMask(vk::AccessFlagBits::eMemoryRead);
-	barrier.setOldLayout(imageView.getImageLayout());
+	barrier.setOldLayout(imageView.getImageLayout(imageView.getBaseLevel(), imageView.getBaseMip()));
     barrier.setNewLayout(layout);
     barrier.setImage(imageView.getImage());
 	if(layout == vk::ImageLayout::eDepthStencilAttachmentOptimal ||
