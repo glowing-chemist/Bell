@@ -62,8 +62,11 @@ vk::Format getVulkanImageFormat(const Format format)
 		case Format::R8UNorm:
 			return vk::Format::eR8Unorm;
 
-		case Format::R16G16Unorm:
+		case Format::RG16UNorm:
 			return vk::Format::eR16G16Unorm;
+
+		case Format::RGB16UNorm:
+			return vk::Format::eR16G16B16Unorm;
 
 		case Format::RGBA16UNorm:
 			return vk::Format::eR16G16B16A16Unorm;
