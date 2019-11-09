@@ -30,7 +30,7 @@
 
 #ifdef _MSC_VER
 
-#define BELL_TRAP __debugbreak
+#define BELL_TRAP __debugbreak()
 
 #else
 #define BELL_TRAP __asm("int3")
