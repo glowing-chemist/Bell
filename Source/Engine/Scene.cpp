@@ -47,7 +47,7 @@ Scene::Scene(const std::string& name) :
     mStaticMeshBoundingVolume(),
     mDynamicMeshBoundingVolume(),
 	mSceneAABB(float3(std::numeric_limits<float>::max()), float3(std::numeric_limits<float>::min())),
-	mSceneCamera(float3(), float3(0.0f, 0.0f, 1.0f)),
+	mSceneCamera(float3(), float3(0.0f, 0.0f, 1.0f), 0.1f, 100.0f),
 	mFinalised(false),
 	mMaterials{},
 	mMaterialImageViews{},
