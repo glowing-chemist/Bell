@@ -2,7 +2,7 @@
 #define DEFAULTRESOURCESLOTS_HPP
 
 
-constexpr const char* kGBufferDepth	    = "DepthBuffer";
+constexpr const char* kGBufferDepth	    = "GbufferDepth";
 constexpr const char* kGBufferNormals   = "GBufferNormals";
 constexpr const char* kPreDepth	    = "PreDepth";
 constexpr const char* kGBufferAlbedo	    = "GBufferAlbedo";
