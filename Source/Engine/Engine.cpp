@@ -213,7 +213,33 @@ std::pair<uint64_t, uint64_t> Engine::addMeshToBuffer(const StaticMesh* mesh)
     const auto& indexData = mesh->getIndexData();
 
     const auto vertexOffset = mVertexBuilder.addData(vertexData);
-	const auto indexOffset = mIndexBuilder.addData(indexData); // TODO remap indicies
+
+    const int vertAttributes = mesh->getVertexAttributes();
+    const bool positionNeeded = ((vertAttributes & VertexAttributes::Position2 ||
+                                                     vertAttributes & VertexAttributes::Position3 ||
+                                                     vertAttributes & VertexAttributes::Position4)) > 0;
+
+    const bool UVNeeded = (vertAttributes & VertexAttributes::TextureCoordinates) > 0;
+
+    const bool normalsNeeded = (vertAttributes & VertexAttributes::Normals) > 0;
+
+    const bool albedoNeeded =  (vertAttributes & VertexAttributes::Albedo) > 0;
+
+    const bool materialNeeded = (vertAttributes & VertexAttributes::Material) > 0;
+
+    const uint32_t vertexStride =   ((positionNeeded ? 4 : 0) +
+                                    (UVNeeded ? 2 : 0) +
+                                    (normalsNeeded ? 4 : 0) +
+                                    (albedoNeeded ? 4 : 0) +
+                                    materialNeeded) * sizeof(float);
+
+    std::vector<uint32_t> remappedIndicies(indexData.size());
+    std::transform(indexData.begin(), indexData.end(), remappedIndicies.begin(), [vertSize = vertexOffset / vertexStride](const uint32_t index)
+    {
+        return index + vertSize;
+    });
+
+    const auto indexOffset = mIndexBuilder.addData(remappedIndicies);
 
     return {vertexOffset, indexOffset};
 }
