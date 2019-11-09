@@ -178,7 +178,7 @@ Scene::MaterialMappings Scene::loadMaterials(Engine* eng)
 {
 	// TODO replace this with a lower level file interface to avoid horrible iostream performance.
 	std::ifstream materialFile{};
-	materialFile.open(mName + ".Mat", std::ios::in);
+    materialFile.open(mName + ".mat", std::ios::in);
 
 	MaterialMappings materialMappings;
 
