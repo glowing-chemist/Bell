@@ -33,7 +33,7 @@ void GBufferTechnique::render(RenderGraph& graph, Engine* eng, const std::vector
 		const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->mMesh);
 
 		mTask.addPushConsatntValue(mesh->mTransformation);
-		mTask.addIndexedDrawCall(vertexOffset, indexOffset, mesh->mMesh->getIndexData().size());
+		mTask.addIndexedDrawCall(0, indexOffset / sizeof(uint32_t), mesh->mMesh->getIndexData().size());
 	}
 
 	graph.addTask(mTask);
@@ -73,7 +73,7 @@ void GBufferPreDepthTechnique::render(RenderGraph& graph, Engine* eng, const std
 		const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->mMesh);
 
 		mTask.addPushConsatntValue(mesh->mTransformation);
-		mTask.addIndexedDrawCall(vertexOffset, indexOffset, mesh->mMesh->getIndexData().size());
+		mTask.addIndexedDrawCall(0, indexOffset / sizeof(uint32_t), mesh->mMesh->getIndexData().size());
 	}
 
 	graph.addTask(mTask);
