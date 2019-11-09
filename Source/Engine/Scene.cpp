@@ -27,12 +27,13 @@ namespace
 		int texWidth, texHeight, texChannels;
 		stbi_uc* pixels = stbi_load(filePath, &texWidth, &texHeight, &texChannels, chanels);
 
+        BELL_LOG_ARGS("loading texture file: %s", filePath)
         BELL_ASSERT(texChannels == chanels, "Texture file has a different ammount of channels than requested")
 
 		std::vector<unsigned char> imageData{};
-		imageData.resize(texWidth * texHeight * 4);
+        imageData.resize(texWidth * texHeight * 4);
 
-		std::memcpy(imageData.data(), pixels, texWidth * texHeight * chanels);
+        std::memcpy(imageData.data(), pixels, texWidth * texHeight * chanels);
 
 		stbi_image_free(pixels);
 
