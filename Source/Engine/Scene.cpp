@@ -148,7 +148,10 @@ void Scene::parseNode(const aiScene* scene,
     {
         const aiMesh* currentMesh = scene->mMeshes[node->mMeshes[i]];
 
-		const uint32_t materialIndex = materialIndexMappings.find(currentMesh->mName)->second;
+        const auto nameIt = materialIndexMappings.find(currentMesh->mName);
+        BELL_ASSERT(nameIt != materialIndexMappings.end(), "Unabel to find mesh material index")
+
+        const uint32_t materialIndex = nameIt->second;
 
 		StaticMesh mesh{currentMesh, vertAttributes, materialIndex};
 
