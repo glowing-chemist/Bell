@@ -110,6 +110,7 @@ set(BELL_SOURCE
     Source/Engine/ConvolveSkyboxTechnique.cpp
     Source/Engine/DFGGenerationTechnique.cpp
     Source/Engine/AnalyticalImageBasedLightingTechnique.cpp
+	Source/Engine/ImageBasedLightingTechnique.cpp
 
     Source/Engine/CommandContext.cpp
 

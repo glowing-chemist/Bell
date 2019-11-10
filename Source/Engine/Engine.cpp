@@ -11,6 +11,8 @@
 #include "Engine/BlinnPhongTechnique.hpp"
 #include "Engine/OverlayTechnique.hpp"
 #include "Engine/AnalyticalImageBasedLightingTechnique.hpp"
+#include "Engine/ImageBasedLightingTechnique.hpp"
+#include "Engine/DFGGenerationTechnique.hpp"
 #include "Engine/ConvolveSkyboxTechnique.hpp"
 #include "Engine/SkyboxTechnique.hpp"
 
@@ -142,11 +144,17 @@ std::unique_ptr<Technique> Engine::getSingleTechnique(const PassType passType)
 		case PassType::DeferredTextureAnalyticalPBRIBL:
 			return std::make_unique<AnalyticalImageBasedLightingTechnique>(this);
 
+		case PassType::DeferredTexturePBRIBL:
+			return std::make_unique<ImageBasedLightingTechnique>(this);
+
 		case PassType::ConvolveSkybox:
 			return std::make_unique<ConvolveSkyBoxTechnique>(this);
 
 		case PassType::Skybox:
 			return std::make_unique<SkyboxTechnique>(this);
+
+		case PassType::DFGGeneration:
+			return std::make_unique<DFGGenerationTechnique>(this);
 
         default:
         {

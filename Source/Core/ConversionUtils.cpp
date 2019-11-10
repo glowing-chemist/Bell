@@ -83,6 +83,9 @@ vk::Format getVulkanImageFormat(const Format format)
         case Format::RGB8SRGB:
             return vk::Format::eR8G8B8Srgb;
 
+		case Format::RG32Float:
+			return vk::Format::eR32G32Sfloat;
+
 		default:
 			return vk::Format::eR8G8B8A8Srgb;
 	}

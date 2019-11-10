@@ -67,8 +67,9 @@ int main(int argc, char** argv)
 
 
         engine.registerPass(PassType::ConvolveSkybox);
+		engine.registerPass(PassType::DFGGeneration);
         engine.registerPass(PassType::GBufferMaterial);
-        engine.registerPass(PassType::DeferredTextureAnalyticalPBRIBL);
+        engine.registerPass(PassType::DeferredTexturePBRIBL);
         engine.registerPass(PassType::Skybox);
 
         engine.recordScene();

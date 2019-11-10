@@ -127,7 +127,7 @@ int main()
 		convolderSkyBoxMips.push_back(ImageView{convolvedSkyBox, ImageViewType::Colour, 0, 6, i});
 	}
 
-	Image integratedDFG = engine.createImage(512, 512, 1, 1, 1, 1, Format::R16G16Unorm, ImageUsage::Sampled | ImageUsage::Storage, "Intergrated DFG");
+	Image integratedDFG = engine.createImage(512, 512, 1, 1, 1, 1, Format::RG16UNorm, ImageUsage::Sampled | ImageUsage::Storage, "Intergrated DFG");
 	ImageView integratedDFGView{integratedDFG, ImageViewType::Colour};
 
 	Buffer cameraBuffer = engine.createBuffer(sizeof (CameraBuffer), sizeof (CameraBuffer), vk::BufferUsageFlagBits::eUniformBuffer, "CameraBuffer");
