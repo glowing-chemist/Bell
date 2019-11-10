@@ -28,8 +28,6 @@ public:
     {
 		graph.bindImage(kDefaultFontTexture, mFontImageView);
 		graph.bindBuffer("OverlayUBO", mOverlayerBufferView);
-		// TODO remove temp
-		graph.bindImage(kFrameBufer, getDevice()->getSwapChainImageView());
     }
 
 private:
