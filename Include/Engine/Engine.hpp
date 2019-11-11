@@ -118,7 +118,10 @@ public:
 	}
 
 	void endFrame()
-		{ mRenderDevice.endFrame(); }
+	{
+		mVertexCache.clear();
+		mRenderDevice.endFrame(); 
+	}
 
     void render();
 	void swap()
@@ -146,10 +149,10 @@ private:
     Scene mLoadingScene;
 
     BufferBuilder mVertexBuilder;
-    uint64_t mOverlayVertexByteOffset;
 
     BufferBuilder mIndexBuilder;
-    uint64_t mOverlayIndexByteOffset;
+
+	std::unordered_map < const StaticMesh*, std::pair<uint64_t, uint64_t>> mVertexCache;
 
     RenderGraph mCurrentRenderGraph;
 	std::vector<std::unique_ptr<Technique>> mTechniques;

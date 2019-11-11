@@ -23,9 +23,7 @@ Engine::Engine(GLFWwindow* windowPtr) :
     mCurrentScene("Initial current scene"),
     mLoadingScene("Initial loading scene"),
     mVertexBuilder(),
-    mOverlayVertexByteOffset(0),
     mIndexBuilder(),
-    mOverlayIndexByteOffset(0),
     mCurrentRenderGraph(),
 	mTechniques{},
 	mCurrentPasstypes{0},
@@ -217,6 +215,10 @@ bool Engine::isComputeTask(const PassType pass) const
 
 std::pair<uint64_t, uint64_t> Engine::addMeshToBuffer(const StaticMesh* mesh)
 {
+	const auto it = mVertexCache.find(mesh);
+	if (it != mVertexCache.end())
+		return it->second;
+
     const auto& vertexData = mesh->getVertexData();
     const auto& indexData = mesh->getIndexData();
 
@@ -248,6 +250,8 @@ std::pair<uint64_t, uint64_t> Engine::addMeshToBuffer(const StaticMesh* mesh)
     });
 
     const auto indexOffset = mIndexBuilder.addData(remappedIndicies);
+
+	mVertexCache.insert(std::make_pair( mesh, std::pair<uint64_t, uint64_t>{vertexOffset, indexOffset }));
 
     return {vertexOffset, indexOffset};
 }
