@@ -90,7 +90,7 @@ target_link_libraries("${PROJECT_NAME}_BASE" ${BELL_BASE_DEPENDANCIES})
 set(BELL_SOURCE
     Source/Engine/Engine.cpp
     Source/Engine/AABB.cpp
-    Source/Engine/BVH.cpp
+    Source/Engine/OctTree.cpp
     Source/Engine/Camera.cpp
     Source/Engine/GraphResolver.cpp
     Source/Engine/StaticMesh.cpp

@@ -70,10 +70,10 @@ bool AABB::contains(const AABB& aabb, const EstimationMode estimationMode) const
 	const auto verticies = aabb.getCubeAsVertexArray();
 	
 	bool inside = true;
-	for (const auto vertex : verticies)
+	for (const auto& vertex : verticies)
 	{
 		const bool isInside = contains(vertex);
-		inside &= isInside;
+		inside = inside && isInside;
 
 		if (estimationMode == EstimationMode::Under && isInside)
 			return isInside;
@@ -88,7 +88,7 @@ AABB& AABB::operator*(const glm::mat3& mat)
     // Keep track of the max/min values seen on each axis
     // so tha we still have an AABB not an OOBB.
     const auto cubeVerticies= getCubeAsVertexArray();
-    for(auto& vertex : cubeVerticies)
+    for(const auto& vertex : cubeVerticies)
     {
         mTopFrontLeft = componentWiseMin(mTopFrontLeft, mat * vertex);
         mBottomBackRight = componentWiseMax(mBottomBackRight, mat * vertex);

@@ -311,30 +311,30 @@ void Scene::finalise()
     if(firstTime)
     {
         //Build the static meshes BVH structure.
-        std::vector<typename BVHFactory<MeshInstance*>::BuilderNode> staticBVHMeshes{};
+        std::vector<typename OctTreeFactory<MeshInstance*>::BuilderNode> staticBVHMeshes{};
 
         std::transform(mStaticMeshInstances.begin(), mStaticMeshInstances.end(), std::back_inserter(staticBVHMeshes),
                        [](MeshInstance& instance)
-                        { return BVHFactory<MeshInstance*>::BuilderNode{instance.mMesh->getAABB() * instance.mTransformation, &instance}; } );
+                        { return OctTreeFactory<MeshInstance*>::BuilderNode{instance.mMesh->getAABB() * instance.mTransformation, &instance}; } );
 
-        BVHFactory<MeshInstance*> staticBVHFactory(mSceneAABB, staticBVHMeshes);
+        OctTreeFactory<MeshInstance*> staticBVHFactory(mSceneAABB, staticBVHMeshes);
 
-        mStaticMeshBoundingVolume = staticBVHFactory.generateBVH();
+        mStaticMeshBoundingVolume = staticBVHFactory.generateOctTree(3);
     }
 
     //Build the dynamic meshes BVH structure.
-    std::vector<typename BVHFactory<MeshInstance*>::BuilderNode> dynamicBVHMeshes{};
+    std::vector<typename OctTreeFactory<MeshInstance*>::BuilderNode> dynamicBVHMeshes{};
 
     std::transform(mDynamicMeshInstances.begin(), mDynamicMeshInstances.end(), std::back_inserter(dynamicBVHMeshes),
                    [](MeshInstance& instance)
-                    { return BVHFactory<MeshInstance*>::BuilderNode{instance.mMesh->getAABB() * instance.mTransformation, &instance}; } );
+                    { return OctTreeFactory<MeshInstance*>::BuilderNode{instance.mMesh->getAABB() * instance.mTransformation, &instance}; } );
 
     // Not all scenes contain dynamic meshes.
     if(!dynamicBVHMeshes.empty())
     {
-        BVHFactory<MeshInstance*> dynamicBVHFactory(mSceneAABB, dynamicBVHMeshes);
+        OctTreeFactory<MeshInstance*> dynamicBVHFactory(mSceneAABB, dynamicBVHMeshes);
 
-        mStaticMeshBoundingVolume = dynamicBVHFactory.generateBVH();
+        mStaticMeshBoundingVolume = dynamicBVHFactory.generateOctTree(3);
     }
 }
 
@@ -345,8 +345,6 @@ std::vector<const Scene::MeshInstance *> Scene::getViewableMeshes() const
 
     Frustum currentFrustum = mSceneCamera.getFrustum();
 
-#if 0  // Do a more basic frustum culling until BVH is fixed.
-
 	std::vector<MeshInstance*> staticMeshes = mStaticMeshBoundingVolume.containedWithin(currentFrustum, EstimationMode::Over);
     std::vector<MeshInstance*> dynamicMeshes = mDynamicMeshBoundingVolume.containedWithin(currentFrustum, EstimationMode::Over);
 
@@ -354,23 +352,6 @@ std::vector<const Scene::MeshInstance *> Scene::getViewableMeshes() const
     instances.insert(instances.end(), dynamicMeshes.begin(), dynamicMeshes.end());
 
     return instances;
-#else
-
-    for(const auto& mesh : mStaticMeshInstances)
-    {
-        if(currentFrustum.isContainedWithin(mesh.mMesh->getAABB() * mesh.mTransformation, EstimationMode::Over))
-            instances.push_back(&mesh);
-    }
-
-    for(const auto& mesh : mDynamicMeshInstances)
-    {
-        if(currentFrustum.isContainedWithin(mesh.mMesh->getAABB() * mesh.mTransformation, EstimationMode::Over))
-            instances.push_back(&mesh);
-    }
-
-    return instances;
-
-#endif
 }
 
 

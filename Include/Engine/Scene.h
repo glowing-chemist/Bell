@@ -4,7 +4,7 @@
 #include "Core/Image.hpp"
 #include "Core/ImageView.hpp"
 
-#include "Engine/BVH.hpp"
+#include "Engine/OctTree.hpp"
 #include "Engine/Camera.hpp"
 #include "Engine/StaticMesh.h"
 
@@ -130,8 +130,8 @@ private:
     std::vector<MeshInstance> mStaticMeshInstances;
     std::vector<MeshInstance> mDynamicMeshInstances;
 
-    BVH<MeshInstance*> mStaticMeshBoundingVolume;
-    BVH<MeshInstance*> mDynamicMeshBoundingVolume;
+    OctTree<MeshInstance*> mStaticMeshBoundingVolume;
+    OctTree<MeshInstance*> mDynamicMeshBoundingVolume;
 
     AABB mSceneAABB;
 
