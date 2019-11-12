@@ -1,6 +1,7 @@
 #include <limits>
 #include <algorithm>
 #include <numeric>
+#include <set>
 
 #include "Engine/OctTree.hpp"
 #include "Engine/GeomUtils.h"
@@ -15,29 +16,29 @@ std::vector<T> OctTree<T>::containedWithin(const Frustum& frustum, const std::un
 	if (frustum.isContainedWithin(node->mBoundingBox, EstimationMode::Under))
 		return node->mValues;
 
-	std::vector<T> values{};
+	std::set<T> values{};
 
 	for (const auto& childNode : node->mChildren)
 	{
 		if (!childNode)
 		{
-			values.insert(values.end(), node->mValues.begin(), node->mValues.end());
+			values.insert(node->mValues.begin(), node->mValues.end());
 		}
 		else if (frustum.isContainedWithin(childNode->mBoundingBox, estimationMode))
 		{
-			values.insert(values.end(), node->mValues.begin(), node->mValues.end());
+			values.insert(node->mValues.begin(), node->mValues.end());
 		}
 		else
 		{
 			for (const auto& subNode : node->mChildren)
 			{
 				const auto v = containedWithin(frustum, subNode, estimationMode);
-				values.insert(values.end(), v.begin(), v.end());
+				values.insert(v.begin(), v.end());
 			} 
 		}
 	}
 
-    return values;
+	return std::vector<T>{values.begin(), values.end()};
 }
 
 
