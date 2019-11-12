@@ -388,16 +388,11 @@ void RenderGraph::reorderTasks()
         newOutputBindings.push_back((std::move(mOutputResources[taskIndexToAdd])));
         newFrameBuffersNeedUpdating.push_back(mFrameBuffersNeedUpdating[taskIndexToAdd]);
         newDescriptorsNeedUpdating.push_back(mDescriptorsNeedUpdating[taskIndexToAdd]);
-
-		uint32_t dependancyIndex = 0;
-		for (const auto& dependancy : mTaskDependancies)
-		{
-			if (dependancy.first == taskIndexToAdd)
+		
+		mTaskDependancies.erase(std::remove_if(mTaskDependancies.begin(), mTaskDependancies.end(), [=](const auto& dependancy)
 			{
-				mTaskDependancies.erase(mTaskDependancies.begin() + dependancyIndex);
-			}
-			++dependancyIndex;
-		}
+				return dependancy.first == taskIndexToAdd;
+			}), mTaskDependancies.end());
 	}
 
 	mTaskOrder.swap(newTaskOrder);
