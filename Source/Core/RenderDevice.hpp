@@ -98,6 +98,9 @@ public:
 	void							   resetCommandPool(vk::CommandPool& pool)
 											{ mDevice.resetCommandPool(pool, vk::CommandPoolResetFlags{}); }
 
+	void							   resetDescriptorPool(vk::DescriptorPool& pool)
+											{ mDevice.resetDescriptorPool(pool); }
+
     vk::ShaderModule                   createShaderModule(const vk::ShaderModuleCreateInfo& info)
                                             { return mDevice.createShaderModule(info); }
 

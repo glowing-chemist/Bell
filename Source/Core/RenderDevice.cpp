@@ -887,6 +887,7 @@ void RenderDevice::startFrame()
     frameSyncSetup();
     getCurrentCommandPool()->reset();
     clearDeferredResources();
+	mDescriptorManager.reset();
     ++mCurrentSubmission;
     ++mFinishedSubmission;
 }
@@ -1021,7 +1022,6 @@ void RenderDevice::clearVulkanResources()
 			mFramebuffersPendingDestruction.emplace_back(getCurrentSubmissionIndex(), resources.mFrameBuffer.value());
 		resources.mFrameBuffer.reset();
 
-		mDescriptorManager.freeDescriptorSet(resources.mDescSetLayout, resources.mDescSet);
 		resources.mDescSet = nullptr;
 	}
 

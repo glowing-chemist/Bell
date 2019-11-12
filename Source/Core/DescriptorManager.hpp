@@ -11,19 +11,20 @@
 #include <vector>
 #include <map>
 
+
 class RenderDevice;
 
 
 class DescriptorManager : public DeviceChild
 {
 public:
-    DescriptorManager(RenderDevice* dev) : DeviceChild{dev} { mPools.push_back(createDescriptorPool()); }
+	DescriptorManager(RenderDevice* dev);
     ~DescriptorManager();
 
-	void						   getDescriptors(RenderGraph&, std::vector<vulkanResources>&);
-	void                           writeDescriptors(RenderGraph&, std::vector<vulkanResources>&);
+	void	 getDescriptors(RenderGraph&, std::vector<vulkanResources>&);
+	void     writeDescriptors(RenderGraph&, std::vector<vulkanResources>&);
 
-	void                           freeDescriptorSet(const vk::DescriptorSetLayout, vk::DescriptorSet);
+	void	 reset();
 
 private:
 
@@ -32,17 +33,21 @@ private:
 
     vk::DescriptorSet			allocateDescriptorSet(const RenderTask&, const vulkanResources&);
 
-    vk::DescriptorPool			createDescriptorPool();
+	struct DescriptorPool
+	{
+		size_t mStorageImageCount;
+		size_t mSampledImageCount;
+		size_t mSamplerCount;
+		size_t mUniformBufferCount;
+		size_t mStorageBufferCount;
+		vk::DescriptorPool mPool;
+	};
 
-    void                        transferFreeDescriptorSets();
+	DescriptorPool& findSuitablePool(const std::vector<std::pair<std::string, AttachmentType>>&);
 
-	std::map<vk::DescriptorSetLayout,
-			 std::vector<vk::DescriptorSet>> mFreeDescriptorSets;
+	DescriptorPool	createDescriptorPool();
 
-	std::map<vk::DescriptorSetLayout,
-			 std::vector<std::pair<uint64_t, vk::DescriptorSet>>> mPendingFreeDescriptorSets;
-
-    std::vector<vk::DescriptorPool> mPools;
+    std::vector<std::vector<DescriptorPool>> mPools;
 };
 
 

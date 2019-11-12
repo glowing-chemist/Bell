@@ -11,20 +11,30 @@
 #define BINDLESS_ARRAY_SIZE 16ull
 
 
+DescriptorManager::DescriptorManager(RenderDevice* dev) :
+	DeviceChild{ dev }
+{
+	for (uint32_t i = 0; i < getDevice()->getSwapChainImageCount(); ++i)
+	{
+		mPools.push_back({ createDescriptorPool() });
+	}
+}
+
+
 DescriptorManager::~DescriptorManager()
 {
-    for(auto& pool : mPools)
+    for(auto& pools : mPools)
     {
-        getDevice()->destroyDescriptorPool(pool);
-    }
+		for (auto& pool : pools)
+		{
+			getDevice()->destroyDescriptorPool(pool.mPool);
+		}
+	}
 }
 
 
 void DescriptorManager::getDescriptors(RenderGraph& graph, std::vector<vulkanResources>& resources)
 {
-    // move all descriptor sets pending destruction that have been finished with to the free cache.
-    transferFreeDescriptorSets();
-
 	uint32_t resourceIndex = 0;
 
 	auto task = graph.taskBegin();
@@ -179,57 +189,27 @@ void DescriptorManager::writeDescriptors(RenderGraph& graph, std::vector<vulkanR
 }
 
 
-void DescriptorManager::freeDescriptorSet(const vk::DescriptorSetLayout layout, vk::DescriptorSet descSet)
-{
-	mPendingFreeDescriptorSets[layout].push_back({getDevice()->getCurrentSubmissionIndex(), descSet});
-}
-
-
 vk::DescriptorSet DescriptorManager::allocateDescriptorSet(const RenderTask& task,
                                                            const vulkanResources& resources)
 {    
-    std::vector<std::pair<std::string, AttachmentType>> attachments = task.getInputAttachments();
+    const std::vector<std::pair<std::string, AttachmentType>>& attachments = task.getInputAttachments();
 
-	if(mFreeDescriptorSets[resources.mDescSetLayout].size() != 0)
-    {
-		const vk::DescriptorSet descSet = mFreeDescriptorSets[resources.mDescSetLayout].back();
-		mFreeDescriptorSets[resources.mDescSetLayout].pop_back();
+	// Find a pool with enough descriptors in to fufill the request.
+	DescriptorPool pool = findSuitablePool(attachments);
 
-        return descSet;
-    }
+    vk::DescriptorSetAllocateInfo allocInfo{};
+    allocInfo.setDescriptorPool(pool.mPool);
+    allocInfo.setDescriptorSetCount(1);
+    allocInfo.setPSetLayouts(&resources.mDescSetLayout);
 
-    for(auto& pool : mPools)
-    {
-        vk::DescriptorSetAllocateInfo allocInfo{};
-        allocInfo.setDescriptorPool(pool);
-        allocInfo.setDescriptorSetCount(1);
-        allocInfo.setPSetLayouts(&resources.mDescSetLayout);
+    vk::DescriptorSet descSet = getDevice()->allocateDescriptorSet(allocInfo)[0];
 
-        try
-        {
-            vk::DescriptorSet descSet = getDevice()->allocateDescriptorSet(allocInfo)[0];
+    return descSet;
 
-            return descSet;
-
-            // TODO: check we're allocating from the first pool, if not swap it with the first pool
-            // as this one still has descriptor sets to allocate
-        }
-        catch (...)
-        {
-            BELL_LOG("pool exhausted trying next descriptor pool")
-        }
-    }
-
-
-	// We have failed to allocate from any of the exhisting pools
-	// so allocate create a new one and allocate a set from it.
-	mPools.insert(mPools.begin(), createDescriptorPool());
-
-    return allocateDescriptorSet(task, resources);
 }
 
 
-vk::DescriptorPool DescriptorManager::createDescriptorPool()
+DescriptorManager::DescriptorPool DescriptorManager::createDescriptorPool()
 {
     // This pool size had been picked pretty randomly so may need to change this in the future.
     vk::DescriptorPoolSize uniformBufferDescPoolSize{};
@@ -258,12 +238,22 @@ vk::DescriptorPool DescriptorManager::createDescriptorPool()
                                                         imageDescPoolSize,
                                                         storageImageDescPoolSize};
 
-    vk::DescriptorPoolCreateInfo uniformBufferDescPoolInfo{};
-    uniformBufferDescPoolInfo.setPoolSizeCount(descPoolSizes.size());
-    uniformBufferDescPoolInfo.setPPoolSizes(descPoolSizes.data());
-    uniformBufferDescPoolInfo.setMaxSets(100);
+    vk::DescriptorPoolCreateInfo DescPoolInfo{};
+	DescPoolInfo.setPoolSizeCount(descPoolSizes.size());
+	DescPoolInfo.setPPoolSizes(descPoolSizes.data());
+	DescPoolInfo.setMaxSets(300);
 
-    return getDevice()->createDescriptorPool(uniformBufferDescPoolInfo);
+	DescriptorPool newPool
+	{
+		100,
+		100,
+		100,
+		100,
+		100,
+		getDevice()->createDescriptorPool(DescPoolInfo)
+	};
+
+	return newPool;
 }
 
 
@@ -288,21 +278,100 @@ vk::DescriptorBufferInfo DescriptorManager::generateDescriptorBufferInfo(BufferV
 }
 
 
-void DescriptorManager::transferFreeDescriptorSets()
+void DescriptorManager::reset()
 {
-    for(auto& [attachmentTypes, submissionIndexAndDescriptorSet] : mPendingFreeDescriptorSets)
-    {
-        uint32_t descriptorIndex = 0;
-        for(const auto&[lastUsedSubmissionIndex, descriptorSet] : submissionIndexAndDescriptorSet)
-        {
-            if(lastUsedSubmissionIndex <= getDevice()->getFinishedSubmissionIndex())
-            {
-                mFreeDescriptorSets[attachmentTypes].push_back(descriptorSet);
+	const auto frameindex = getDevice()->getCurrentFrameIndex();
 
-                submissionIndexAndDescriptorSet.erase(submissionIndexAndDescriptorSet.begin() + descriptorIndex);
-            }
-            ++descriptorIndex;
-        }
-    }
+	std::vector<DescriptorPool>& pools = mPools[frameindex];
+
+	for (auto& pool : pools)
+	{
+		getDevice()->resetDescriptorPool(pool.mPool);
+	}
 }
 
+
+DescriptorManager::DescriptorPool& DescriptorManager::findSuitablePool(const std::vector<std::pair<std::string, AttachmentType>>& attachments)
+{
+	size_t requiredStorageImageDescriptors = 0;
+	size_t requiredSampledImageDescriptors = 0;
+	size_t requiredSamplerDescriptors = 0;
+	size_t requiredUniformBufferDescriptors = 0;
+	size_t requiredStorageBufferDescriptors = 0;
+
+	for (const auto& atta : attachments)
+	{
+		switch (atta.second)
+		{
+
+		case AttachmentType::DataBuffer:
+			requiredStorageBufferDescriptors++;
+			break;
+
+		case AttachmentType::UniformBuffer:
+			requiredUniformBufferDescriptors++;
+			break;
+
+		case AttachmentType::Texture1D:
+		case AttachmentType::Texture2D:
+		case AttachmentType::Texture3D:
+			requiredSampledImageDescriptors++;
+			break;
+
+		case AttachmentType::Image1D:
+		case AttachmentType::Image2D:
+		case AttachmentType::Image3D:
+			requiredStorageImageDescriptors++;
+			break;
+
+		case AttachmentType::TextureArray:
+			requiredSampledImageDescriptors += BINDLESS_ARRAY_SIZE;
+			break;
+
+		case AttachmentType::Sampler:
+			requiredSamplerDescriptors++;
+			break;
+
+		default:
+			break;
+		}
+	}
+
+	std::vector<DescriptorPool>& framePools = mPools[getDevice()->getCurrentFrameIndex()];
+
+	auto it = std::find_if(framePools.begin(), framePools.end(), [=](const DescriptorPool& p)
+		{
+			return	requiredStorageImageDescriptors <= p.mStorageImageCount &&
+					requiredSampledImageDescriptors <= p.mSampledImageCount &&
+					requiredSamplerDescriptors <= p.mSamplerCount &&
+					requiredUniformBufferDescriptors <= p.mUniformBufferCount &&
+					requiredStorageBufferDescriptors <= p.mStorageBufferCount;
+		});
+
+	if (it != framePools.end())
+	{
+		DescriptorPool& pool = *it;
+
+		pool.mStorageImageCount -= requiredStorageImageDescriptors;
+		pool.mSampledImageCount -= requiredSampledImageDescriptors;
+		pool.mSamplerCount		-= requiredSamplerDescriptors;
+		pool.mUniformBufferCount -= requiredUniformBufferDescriptors;
+		pool.mStorageBufferCount -= requiredStorageBufferDescriptors;
+
+		return pool;
+	}
+	else
+	{
+		framePools.push_back(createDescriptorPool());
+
+		DescriptorPool& pool = framePools.back();
+
+		pool.mStorageImageCount -= requiredStorageImageDescriptors;
+		pool.mSampledImageCount -= requiredSampledImageDescriptors;
+		pool.mSamplerCount -= requiredSamplerDescriptors;
+		pool.mUniformBufferCount -= requiredUniformBufferDescriptors;
+		pool.mStorageBufferCount -= requiredStorageBufferDescriptors;
+
+		return pool;
+	}
+}
