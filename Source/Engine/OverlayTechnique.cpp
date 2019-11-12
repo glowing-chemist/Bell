@@ -37,6 +37,9 @@ void OverlayTechnique::render(RenderGraph& graph, Engine* engine, const std::vec
 {
 	ImDrawData* drawData = ImGui::GetDrawData();
 
+	if (!drawData)
+		return;
+
 	float transformations[4];
 	transformations[0] = 2.0f / drawData->DisplaySize.x;
 	transformations[1] = 2.0f / drawData->DisplaySize.y;
@@ -74,14 +77,14 @@ void OverlayTechnique::render(RenderGraph& graph, Engine* engine, const std::vec
 	}
 
 	const auto overlayVertexByteOffset = engine->addVertexData(vertexData.data(), vertexData.size() * sizeof(ImDrawVert));
-	engine->addIndexData(indexData);
+	const auto indexBufferOffset = engine->addIndexData(indexData);
 
 	GraphicsTask task("ImGuiOverlay", mPipelineDescription);
 	task.setVertexAttributes(VertexAttributes::Position2 | VertexAttributes::TextureCoordinates | VertexAttributes::Albedo);
 	task.addInput("OverlayUBO", AttachmentType::UniformBuffer);
 	task.addInput(kDefaultFontTexture, AttachmentType::Texture2D);
 	task.addInput(kDefaultSampler, AttachmentType::Sampler);
-	task.addOutput(kFrameBufer, AttachmentType::RenderTarget2D, engine->getSwapChainImage().getFormat(), SizeClass::Custom, LoadOp::Clear_Black);
+	task.addOutput(kFrameBufer, AttachmentType::RenderTarget2D, engine->getSwapChainImage().getFormat(), SizeClass::Custom, LoadOp::Preserve);
 	task.setVertexBufferOffset(static_cast<uint32_t>(overlayVertexByteOffset));
 
 	// Render command lists
@@ -94,7 +97,7 @@ void OverlayTechnique::render(RenderGraph& graph, Engine* engine, const std::vec
 		{
 			const ImDrawCmd* pcmd = &cmd_list->CmdBuffer[cmd_i];
 
-			task.addIndexedDrawCall(vertexOffset, indexOffset, pcmd->ElemCount);
+			task.addIndexedDrawCall(vertexOffset, (indexBufferOffset / sizeof(uint32_t)) + indexOffset, pcmd->ElemCount);
 
 			indexOffset += pcmd->ElemCount;
 		}
