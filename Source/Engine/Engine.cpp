@@ -308,6 +308,8 @@ void Engine::render()
         mCurrentRenderGraph.bindIndexBuffer(*mIndexBuffer);
     }
 
+	mCurrentRenderGraph.compileDependancies();
+
     mRenderDevice.execute(mCurrentRenderGraph);
 }
 
