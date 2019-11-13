@@ -2,13 +2,65 @@
 #include <vector>
 #include <string>
 
+#include <imgui.h>
+
 #include "Engine/Engine.hpp"
+
+struct ImGuiOptions
+{
+	bool useLUT = true;
+};
+
+static ImGuiOptions graphicsOptions;
+
+bool renderMenu(GLFWwindow* win)
+{
+	double cursorPosx, cursorPosy;
+	glfwGetCursorPos(win, &cursorPosx, &cursorPosy);
+
+	ImGuiIO& io = ImGui::GetIO();
+	io.MousePos = ImVec2(static_cast<float>(cursorPosx),
+		static_cast<float>(cursorPosy));
+
+	bool mousePressed[5];
+	for (uint32_t i = 0; i < 5; ++i)
+	{
+		const auto pressed = glfwGetMouseButton(win, i);
+
+		mousePressed[i] = pressed == GLFW_PRESS;
+	}
+	memcpy(&io.MouseDown[0], &mousePressed[0], sizeof(bool) * 5);
+
+	int w, h;
+	int display_w, display_h;
+	glfwGetWindowSize(win, &w, &h);
+	glfwGetFramebufferSize(win, &display_w, &display_h);
+	io.DisplaySize = ImVec2(static_cast<float>(w), static_cast<float>(h));
+	if (w > 0 && h > 0)
+		io.DisplayFramebufferScale = ImVec2(static_cast<float>(display_w) / w, static_cast<float>(display_h) / h);
+
+	ImGuiOptions optionsCopy = graphicsOptions;
+
+	ImGui::NewFrame();
+
+	ImGui::SetNextWindowSize({ 200, 300 });
+
+	ImGui::Begin("options");
+
+	ImGui::Checkbox("Enable DFGLUT", &graphicsOptions.useLUT);
+
+	ImGui::End();
+
+	ImGui::Render();
+
+	return std::memcmp(&graphicsOptions, &optionsCopy, sizeof(ImGuiOptions)) != 0;
+}
 
 
 int main(int argc, char** argv)
 {
-    const uint32_t windowWidth = 800;
-    const uint32_t windowHeight = 600;
+    const uint32_t windowWidth = 1200;
+    const uint32_t windowHeight = 1200;
 
     bool firstFrame = true;
 
@@ -17,6 +69,9 @@ int main(int argc, char** argv)
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
 
+	ImGui::CreateContext();
+	auto& io = ImGui::GetIO();
+	io.DisplaySize = ImVec2{ windowHeight, windowWidth };
 
     GLFWwindow* window = glfwCreateWindow(windowWidth, windowHeight, "Pass registration example", nullptr, nullptr);
     if(window == nullptr)
@@ -62,15 +117,31 @@ int main(int argc, char** argv)
         if(glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS)
             camera.moveDown(0.5f);
 
-        if(!firstFrame)
-            engine.startFrame();
+		bool unregisterpasses = false;
 
+		if (!firstFrame)
+		{
+			engine.startFrame();
+			unregisterpasses = renderMenu(window);
+		}
+
+		if(unregisterpasses)
+			engine.clearRegisteredPasses();
 
         engine.registerPass(PassType::ConvolveSkybox);
-		engine.registerPass(PassType::DFGGeneration);
-        engine.registerPass(PassType::GBufferMaterial);
-        engine.registerPass(PassType::DeferredTexturePBRIBL);
+		
+		if (graphicsOptions.useLUT)
+		{
+			engine.registerPass(PassType::DFGGeneration);
+			engine.registerPass(PassType::DeferredTexturePBRIBL);
+		}
+		else
+			engine.registerPass(PassType::DeferredTextureAnalyticalPBRIBL);
+
+		engine.registerPass(PassType::GBufferMaterial);
         engine.registerPass(PassType::Skybox);
+		engine.registerPass(PassType::Overlay);
+		engine.registerPass(PassType::Composite);
 
         engine.recordScene();
         engine.render();
