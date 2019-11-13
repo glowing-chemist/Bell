@@ -22,7 +22,8 @@
 					Skybox = 1 << 14, \
 					ConvolveSkybox = 1 << 15, \
 					DFGGeneration = 1 << 16, \
-					DeferredTextureAnalyticalPBRIBL = 1 << 17 \
+					DeferredTextureAnalyticalPBRIBL = 1 << 17, \
+					Composite = 1 << 18 \
 
 // An enum to keep track of which 
 enum class PassType : uint64_t

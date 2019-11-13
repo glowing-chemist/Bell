@@ -15,6 +15,7 @@
 #include "Engine/DFGGenerationTechnique.hpp"
 #include "Engine/ConvolveSkyboxTechnique.hpp"
 #include "Engine/SkyboxTechnique.hpp"
+#include "Engine/CompositeTechnique.hpp"
 
 
 Engine::Engine(GLFWwindow* windowPtr) :
@@ -153,6 +154,9 @@ std::unique_ptr<Technique> Engine::getSingleTechnique(const PassType passType)
 
 		case PassType::DFGGeneration:
 			return std::make_unique<DFGGenerationTechnique>(this);
+
+		case PassType::Composite:
+			return std::make_unique<CompositeTechnique>(this);
 
         default:
         {

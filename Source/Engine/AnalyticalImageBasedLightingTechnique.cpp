@@ -23,8 +23,8 @@ AnalyticalImageBasedLightingTechnique::AnalyticalImageBasedLightingTechnique(Eng
 	mTask.addInput(kDefaultSampler, AttachmentType::Sampler);
 	mTask.addInput(kMaterials, AttachmentType::TextureArray);
 
-	mTask.addOutput(kFrameBufer, AttachmentType::RenderTarget2D, eng->getDevice()->getSwapChainImage().getFormat(),
-					SizeClass::Custom, LoadOp::Clear_Black);
+	mTask.addOutput(kGlobalLighting, AttachmentType::RenderTarget2D, Format::RGBA8UNorm,
+					SizeClass::Swapchain, LoadOp::Clear_Black);
 
 	mTask.addDrawCall(0, 3);
 }

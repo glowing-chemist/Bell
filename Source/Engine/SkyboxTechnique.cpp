@@ -17,7 +17,8 @@ SkyboxTechnique::SkyboxTechnique(Engine* eng) :
 	mTask.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
 	mTask.addInput(kSkyBox, AttachmentType::Texture2D);
 	mTask.addInput(kDefaultSampler, AttachmentType::Sampler);
-    mTask.addOutput(kFrameBufer, AttachmentType::RenderTarget2D, getDevice()->getSwapChainImage().getFormat());
+
+    mTask.addOutput(kGlobalLighting, AttachmentType::RenderTarget2D, Format::RGBA8UNorm);
     mTask.addOutput(kGBufferDepth, AttachmentType::Depth, Format::D32Float);
 
 	mTask.addDrawCall(0, 3);

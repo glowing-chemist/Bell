@@ -22,7 +22,7 @@ out gl_PerVertex {
     
 void main()
 {
-        gl_Position = vec4(fragPos * ubo.trans.xy + ubo.trans.zw, 0.0f, 1.0f);
-        outTexCoord = inText;
+	gl_Position = vec4(fragPos * ubo.trans.xy + ubo.trans.zw, 0.0f, 1.0f);
+	outTexCoord = inText;
 	outAlbedo = inAlbedo;
 }

@@ -22,6 +22,9 @@ constexpr const char* kLightBuffer	    = "LightBuffer";
 constexpr const char* kMaterialMappings = "MaterialMappings";
 
 constexpr const char* kFrameBufer        = "FrameBuffer";
+constexpr const char* kGlobalLighting	 = "GlobalLighting";
+constexpr const char* kAnalyticLighting  = "AnalyticLighting";
+constexpr const char* kOverlay			 = "Overlay";
 
 constexpr const char* kDFGLUT			= "DFG";
 
