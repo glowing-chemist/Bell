@@ -115,7 +115,7 @@ std::vector<vk::ClearValue> GraphicsTask::getClearValues() const
     {
             if(attatchment.mLoadOp == LoadOp::Clear_Black)
             {
-                clearValues.emplace_back(std::array<float, 4>{0.0f, 0.0f, 0.0f, 1.0f});
+                clearValues.emplace_back(std::array<float, 4>{0.0f, 0.0f, 0.0f, 0.0f});
             }
 			else if(attatchment.mLoadOp == LoadOp::Clear_White)
             {
