@@ -199,6 +199,7 @@ void Editor::renderOverlay()
 	ImGui::Render();
 
 	mEngine.registerPass(PassType::Overlay);
+	mEngine.registerPass(PassType::Composite);
 }
 
 
