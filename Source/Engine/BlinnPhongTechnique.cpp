@@ -11,9 +11,6 @@ BlinnPhongDeferredTexturesTechnique::BlinnPhongDeferredTexturesTechnique(Engine*
     mVertexNormalsName{kGBufferNormals},
     mMaterialName{kGBufferMaterialID},
     mUVName{kGBufferUV},
-	mLightingTexture{ getDevice(), Format::RGBA8SRGB, ImageUsage::Sampled | ImageUsage::ColourAttachment,
-			   getDevice()->getSwapChain()->getSwapChainImageWidth(), getDevice()->getSwapChain()->getSwapChainImageHeight(), 1 },
-	mLightingView{ mLightingTexture, ImageViewType::Colour },
 	mPipelineDesc{ eng->getShader("./Shaders/FullScreentriangle.vert")
 				  ,eng->getShader("./Shaders/BlinnPhongDeferredTexture.frag") ,
 				  Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
@@ -26,14 +23,16 @@ BlinnPhongDeferredTexturesTechnique::BlinnPhongDeferredTexturesTechnique(Engine*
     mTask.setVertexAttributes(0);
 
     // These are always availble, and updated and bound by the engine.
-    mTask.addInput(kLightBuffer, AttachmentType::UniformBuffer);
-    mTask.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
-    mTask.addInput(kGBufferMaterialID, AttachmentType::UniformBuffer);
-
-    mTask.addInput(mDepthName, AttachmentType::Texture2D);
-    mTask.addInput(mVertexNormalsName, AttachmentType::Texture2D);
-    mTask.addInput(mMaterialName, AttachmentType::Texture2D);
-    mTask.addInput(mUVName, AttachmentType::Texture2D);
+	mTask.addInput(kLightBuffer, AttachmentType::UniformBuffer);
+	mTask.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
+	mTask.addInput(kGBufferDepth, AttachmentType::Texture2D);
+	mTask.addInput(kGBufferNormals, AttachmentType::Texture2D);
+	mTask.addInput(kGBufferMaterialID, AttachmentType::Texture2D);
+	mTask.addInput(kGBufferUV, AttachmentType::Texture2D);
+	mTask.addInput(kSkyBox, AttachmentType::Texture2D);
+	mTask.addInput(kConvolvedSkyBox, AttachmentType::Texture2D);
+	mTask.addInput(kDefaultSampler, AttachmentType::Sampler);
+	mTask.addInput(kMaterials, AttachmentType::ShaderResourceSet);
 
     // Bound by the engine.
     mTask.addInput(kDefaultSampler, AttachmentType::Sampler);

@@ -83,7 +83,7 @@ public:
 	{
 		mRenderPass = pass;
 	}
-	void setDescriptorLayout(const vk::DescriptorSetLayout layout)
+	void setDescriptorLayouts(const std::vector< vk::DescriptorSetLayout>& layout)
 	{
 		mDescSetLayout = layout;
 	}
@@ -97,7 +97,7 @@ private:
 
 	GraphicsPipelineDescription mPipelineDescription;
 
-	vk::DescriptorSetLayout mDescSetLayout;
+	std::vector< vk::DescriptorSetLayout> mDescSetLayout;
 	vk::VertexInputBindingDescription mVertexDescription;
 	std::vector<vk::VertexInputAttributeDescription> mVertexAttribs;
 	vk::RenderPass mRenderPass;

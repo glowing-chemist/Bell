@@ -87,6 +87,8 @@ public:
 
     GPUResource& operator=(const GPUResource& other)
     {
+		RefCount::operator=(other);
+
         mNeedsUpdating = other.mNeedsUpdating;
         mLastAccessed = other.mLastAccessed;
         mCurrentQueue = other.mCurrentQueue;

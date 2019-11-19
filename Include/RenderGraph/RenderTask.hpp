@@ -67,7 +67,13 @@ public:
 		LoadOp			mLoadOp;
     };
 
-    const std::vector<std::pair<std::string, AttachmentType>>& getInputAttachments() const
+	struct InputAttachmentInfo
+	{
+		std::string mName;
+		AttachmentType mType;
+	};
+
+    const std::vector<InputAttachmentInfo>& getInputAttachments() const
         { return mInputAttachments; }
 
     const std::vector<OutputAttachmentInfo>& getOuputAttachments() const
@@ -90,7 +96,7 @@ protected:
     std::string mName;
 
     std::vector<OutputAttachmentInfo> mOutputAttachments;
-    std::vector<std::pair<std::string, AttachmentType>> mInputAttachments;
+    std::vector<InputAttachmentInfo> mInputAttachments;
 };
 
 

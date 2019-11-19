@@ -9,10 +9,10 @@
 #include "Core/Buffer.hpp"
 #include "Core/BufferView.hpp"
 #include "Core/Sampler.hpp"
+#include "Core/ShaderResourceSet.hpp"
 
 #include <iterator>
 #include <string>
-#include <map>
 #include <optional>
 #include <vector>
 #include <tuple>
@@ -52,6 +52,7 @@ public:
 	void bindImageArray(const std::string&, const ImageViewArray&);
 	void bindBuffer(const std::string&, const BufferView &);
     void bindSampler(const std::string&, const Sampler&);
+	void bindShaderResourceSet(const std::string&, const ShaderResourceSet&);
 
     // These are special because they are used by every task that has vertex attributes
     void bindVertexBuffer(const Buffer&);
@@ -65,8 +66,9 @@ public:
 	RenderTask& getTask(TaskType, uint32_t);
 	const RenderTask& getTask(TaskType, uint32_t) const;
 
-	const BufferView &getBoundBuffer(const std::string&) const;
+	const BufferView& getBoundBuffer(const std::string&) const;
     const ImageView&  getBoundImageView(const std::string&) const;
+	const ShaderResourceSet& getBoundShaderResourceSet(const std::string& slot) const;
 
 	void reset();
 
@@ -98,7 +100,8 @@ public:
         Image,
 		ImageArray,
         Sampler,
-        Buffer
+        Buffer,
+		SRS
     };
 	ImageView&		getImageView(const uint32_t index);
 	ImageViewArray& getImageArrayViews(const uint32_t index);
@@ -148,9 +151,8 @@ private:
     std::vector<std::pair<std::string, ImageView>> mImageViews;
 	std::vector<std::pair<std::string, ImageViewArray>> mImageViewArrays;
 	std::vector<std::pair<std::string, BufferView>> mBufferViews;
-    // the actual sampler objects are stored on the device a they live for the
-    // life of the renderer.
     std::vector<std::pair<std::string, Sampler>> mSamplers;
+	std::vector<std::pair<std::string, ShaderResourceSet>> mSRS;
 
 	// Store the images created per frame.
 	struct NonPersistentImage

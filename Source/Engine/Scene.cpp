@@ -28,7 +28,7 @@ namespace
 		stbi_uc* pixels = stbi_load(filePath, &texWidth, &texHeight, &texChannels, chanels);
 
         BELL_LOG_ARGS("loading texture file: %s", filePath)
-        BELL_ASSERT(texChannels == chanels, "Texture file has a different ammount of channels than requested")
+        //BELL_ASSERT(texChannels == chanels, "Texture file has a different ammount of channels than requested")
 
 		std::vector<unsigned char> imageData{};
         imageData.resize(texWidth * texHeight * 4);
@@ -47,7 +47,7 @@ Scene::Scene(const std::string& name) :
     mStaticMeshBoundingVolume(),
     mDynamicMeshBoundingVolume(),
 	mSceneAABB(float3(std::numeric_limits<float>::max()), float3(std::numeric_limits<float>::min())),
-	mSceneCamera(float3(), float3(0.0f, 0.0f, 1.0f), 0.1f, 100.0f),
+	mSceneCamera(float3(), float3(0.0f, 0.0f, 1.0f), 0.1f, 500.0f),
 	mFinalised(false),
 	mMaterials{},
 	mMaterialImageViews{},

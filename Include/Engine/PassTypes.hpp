@@ -98,7 +98,8 @@ enum class AttachmentType
 	UniformBuffer,
 	DataBuffer,
 	IndirectBuffer,
-	PushConstants
+	PushConstants,
+	ShaderResourceSet
 };
 
 

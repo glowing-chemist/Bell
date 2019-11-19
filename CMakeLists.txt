@@ -48,7 +48,6 @@ endif()
 set(BELL_BASE_SOURCE
 	# Core files (dependant on vulkan) 
 	Source/Core/RenderInstance.cpp
-	Source/Core/RenderDevice.cpp
 	Source/Core/Image.cpp
 	Source/Core/ImageView.cpp
 	Source/Core/Buffer.cpp
@@ -62,7 +61,9 @@ set(BELL_BASE_SOURCE
 	Source/Core/Sampler.cpp
 	Source/Core/Pipeline.cpp
 	Source/Core/PipelineCache.cpp
-
+	Source/Core/ShaderResourceSet.cpp
+	Source/Core/RenderDevice.cpp
+	
 	# RenderGraph files (backend independant)
 	Source/RenderGraph/GraphicsTask.cpp
 	Source/RenderGraph/ComputeTask.cpp

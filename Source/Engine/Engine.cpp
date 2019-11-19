@@ -31,6 +31,7 @@ Engine::Engine(GLFWwindow* windowPtr) :
 	mCommandContext(),
     mVertexBuffer{getDevice(), vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eTransferDst, 1000000, 1000000, "Vertex Buffer"},
     mIndexBuffer{getDevice(), vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eTransferDst, 1000000, 1000000, "Index Buffer"},
+	mMaterials{getDevice()},
     mDefaultSampler(SamplerType::Linear),
     mCameraBuffer{},
 	mDeviceCameraBuffer{getDevice(), vk::BufferUsageFlagBits::eUniformBuffer, sizeof(CameraBuffer), sizeof(CameraBuffer), "Camera Buffer"},
@@ -58,12 +59,22 @@ void Engine::setScene(const std::string& path)
 {
     mCurrentScene = Scene(path);
     mCurrentScene.loadFromFile(VertexAttributes::Position4 | VertexAttributes::TextureCoordinates | VertexAttributes::Normals | VertexAttributes::Material, this);
+
+	// Set up the SRS for the materials.
+	const auto& materials = mCurrentScene.getMaterials();
+	mMaterials.addSampledImageArray(materials);
+	mMaterials.finalise();
 }
 
 
 void Engine::setScene(Scene& scene)
 {
     mCurrentScene = std::move(scene);
+
+	// Set up the SRS for the materials.
+	const auto& materials = mCurrentScene.getMaterials();
+	mMaterials.addSampledImageArray(materials);
+	mMaterials.finalise();
 }
 
 
@@ -279,7 +290,7 @@ void Engine::recordScene()
 
     updateGlobalUniformBuffers();
 
-	mCurrentRenderGraph.bindImageArray(kMaterials, mCurrentScene.getMaterials());
+	mCurrentRenderGraph.bindShaderResourceSet(kMaterials, mMaterials);
     mCurrentRenderGraph.bindBuffer(kCameraBuffer, *mDeviceCameraBuffer);
     mCurrentRenderGraph.bindSampler(kDefaultSampler, mDefaultSampler);
 

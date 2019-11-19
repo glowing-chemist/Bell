@@ -142,13 +142,13 @@ void RenderGraph::compileDependancies()
             // generate dependancies between framebuffer writes and "descriptor" reads.
             {
                 const std::vector<RenderTask::OutputAttachmentInfo>& outResources = outerTask.getOuputAttachments();
-                const std::vector<std::pair<std::string, AttachmentType>>& inResources = innerTask.getInputAttachments();
+                const std::vector<RenderTask::InputAttachmentInfo>& inResources = innerTask.getInputAttachments();
 
                 for(size_t outerIndex = 0; outerIndex < outResources.size(); ++outerIndex)
                 {
                     for(size_t innerIndex = 0; innerIndex < inResources.size(); ++innerIndex)
                     {						
-						if(outResources[outerIndex].mName == inResources[innerIndex].first &&
+						if(outResources[outerIndex].mName == inResources[innerIndex].mName &&
 								!(outResources[outerIndex].mType == AttachmentType::Depth && !outerDepthWrite))
                         {
                             // Innertask reads from a
@@ -160,19 +160,19 @@ void RenderGraph::compileDependancies()
 
 			// generate dependancies between descriptor -> descriptor resources e.g structured buffers/ImageStores.
             {
-                const std::vector<std::pair<std::string, AttachmentType>>& outResources = outerTask.getInputAttachments();
-				const std::vector<std::pair<std::string, AttachmentType>>& innerResources = innerTask.getInputAttachments();
+                const std::vector<RenderTask::InputAttachmentInfo>& outResources = outerTask.getInputAttachments();
+				const std::vector<RenderTask::InputAttachmentInfo>& innerResources = innerTask.getInputAttachments();
 
                 for(size_t outerIndex = 0; outerIndex < outResources.size(); ++outerIndex)
                 {
 					for(size_t innerIndex = 0; innerIndex < innerResources.size(); ++innerIndex)
                     {
-						if(outResources[outerIndex].first == innerResources[innerIndex].first &&
-                                (outResources[outerIndex].second == AttachmentType::Image1D ||
-                                 outResources[outerIndex].second == AttachmentType::Image2D ||
-                                 outResources[outerIndex].second == AttachmentType::Image3D ||
-                                 outResources[outerIndex].second == AttachmentType::DataBuffer ||
-                                 outResources[outerIndex].second == AttachmentType::IndirectBuffer))
+						if(outResources[outerIndex].mName == innerResources[innerIndex].mName &&
+                                (outResources[outerIndex].mType == AttachmentType::Image1D ||
+                                 outResources[outerIndex].mType == AttachmentType::Image2D ||
+                                 outResources[outerIndex].mType == AttachmentType::Image3D ||
+                                 outResources[outerIndex].mType == AttachmentType::DataBuffer ||
+                                 outResources[outerIndex].mType == AttachmentType::IndirectBuffer))
                         {
                             // Innertask reads from a
 							dependancies.insert({i, j});
@@ -216,7 +216,7 @@ void RenderGraph::bindResource(const std::string& name, const uint32_t index, co
         uint32_t inputAttachmentIndex = 0;
         for(const auto& input : task.getInputAttachments())
         {
-            if(input.first == name)
+            if(input.mName == name)
             {
                 mInputResources[taskOrderIndex].push_back({name, resourcetype, index, inputAttachmentIndex});
                 mDescriptorsNeedUpdating[taskOrderIndex] = true;
@@ -275,6 +275,12 @@ void RenderGraph::bindSampler(const std::string& name, const Sampler& type)
     mSamplers.emplace_back(name, type);
 
     bindResource(name, samplerIndex, ResourceType::Sampler);
+}
+
+
+void RenderGraph::bindShaderResourceSet(const std::string& name, const ShaderResourceSet& set)
+{
+	mSRS.emplace_back(name, set);
 }
 
 
@@ -493,7 +499,7 @@ bool RenderGraph::areSupersets(const RenderTask& task1, const RenderTask& task2)
 
 	auto inputPred = [](const auto& lhs, const auto& rhs)
 	{
-		return lhs.first == rhs.first; // Should be strong enough?
+		return lhs.mName == rhs.mName; // Should be strong enough?
 	};
 
 	bool isFrameBufferSubset = std::search(task1.getOuputAttachments().begin(), task1.getOuputAttachments().end(),
@@ -588,21 +594,33 @@ BufferView& RenderGraph::getBuffer(const uint32_t index)
 
 const BufferView& RenderGraph::getBoundBuffer(const std::string& name) const
 {
-	auto itr = std::find_if(mBufferViews.begin(), mBufferViews.end(), [&name](const std::pair<std::string, BufferView>& entry) { return name == entry.first; });
+	const auto it = std::find_if(mBufferViews.begin(), mBufferViews.end(), [&name](const std::pair<std::string, BufferView>& entry) { return name == entry.first; });
 
-	BELL_ASSERT(itr != mBufferViews.end(), "Buffer not found")
+	BELL_ASSERT(it != mBufferViews.end(), "Buffer not found")
 
-    return (*itr).second;
+    return (*it).second;
 }
 
 
 const ImageView& RenderGraph::getBoundImageView(const std::string& name) const
 {
-    auto itr = std::find_if(mImageViews.begin(), mImageViews.end(), [&name](const std::pair<std::string, ImageView>& entry) { return name == entry.first; });
+    const auto it = std::find_if(mImageViews.begin(), mImageViews.end(), [&name](const std::pair<std::string, ImageView>& entry) { return name == entry.first; });
 
-    BELL_ASSERT(itr != mImageViews.end(), "Image not found")
+    BELL_ASSERT(it != mImageViews.end(), "Image not found")
 
-    return (*itr).second;
+    return (*it).second;
+}
+
+
+const ShaderResourceSet& RenderGraph::getBoundShaderResourceSet(const std::string& slot) const
+{
+	const auto it = std::find_if(mSRS.begin(), mSRS.end(), [&slot](const auto& s) {
+		return s.first == slot;
+		});
+
+	BELL_ASSERT(it != mSRS.end(), "SRS not found")
+
+	return (*it).second;
 }
 
 

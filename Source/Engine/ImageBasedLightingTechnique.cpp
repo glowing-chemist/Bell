@@ -22,7 +22,7 @@ ImageBasedLightingTechnique::ImageBasedLightingTechnique(Engine* eng) :
 	mTask.addInput(kSkyBox, AttachmentType::Texture2D);
 	mTask.addInput(kConvolvedSkyBox, AttachmentType::Texture2D);
 	mTask.addInput(kDefaultSampler, AttachmentType::Sampler);
-	mTask.addInput(kMaterials, AttachmentType::TextureArray);
+	mTask.addInput(kMaterials, AttachmentType::ShaderResourceSet);
 
 	mTask.addOutput(kGlobalLighting, AttachmentType::RenderTarget2D, Format::RGBA8UNorm,
 		SizeClass::Swapchain, LoadOp::Clear_Black);

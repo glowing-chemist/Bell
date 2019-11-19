@@ -17,6 +17,7 @@
 #include "Core/ImageView.hpp"
 #include "Core/Sampler.hpp"
 #include "Core/Pipeline.hpp"
+#include "Core/ShaderResourceSet.hpp"
 #include "RenderGraph/GraphicsTask.hpp"
 #include "RenderGraph/ComputeTask.hpp"
 #include "RenderGraph/RenderGraph.hpp"
@@ -35,13 +36,13 @@ struct GraphicsPipelineHandles
 {
 	std::shared_ptr<GraphicsPipeline> mGraphicsPipeline;
     vk::RenderPass mRenderPass;
-    vk::DescriptorSetLayout mDescriptorSetLayout;
+	std::vector< vk::DescriptorSetLayout> mDescriptorSetLayout;
 };
 
 struct ComputePipelineHandles
 {
 	std::shared_ptr<ComputePipeline> mComputePipeline;
-    vk::DescriptorSetLayout mDescriptorSetLayout;
+	std::vector< vk::DescriptorSetLayout> mDescriptorSetLayout;
 };
 
 
@@ -85,6 +86,8 @@ public:
     vk::Buffer                         createBuffer(const uint32_t, const vk::BufferUsageFlags);
 
     void                               destroyBuffer(Buffer& buffer) { mBuffersPendingDestruction.push_back({buffer.getLastAccessed(), buffer.getBuffer(), buffer.getMemory()}); }
+
+	void							   destroyShaderResourceSet(const ShaderResourceSet& set) { mSRSPendingDestruction.push_back({ set.getLastAccessed(), set.getPool(), set.getLayout(), set.getDescriptorSet() }); }
 
     vk::CommandPool					   createCommandPool(const vk::CommandPoolCreateInfo& info)
 											{ return mDevice.createCommandPool(info); }
@@ -150,14 +153,15 @@ public:
 		return mDevice.createGraphicsPipeline(nullptr, info);
 	}
 
-    GraphicsPipelineHandles            createPipelineHandles(const GraphicsTask&);
-    ComputePipelineHandles             createPipelineHandles(const ComputeTask&);
+    GraphicsPipelineHandles            createPipelineHandles(const GraphicsTask&, const RenderGraph&);
+    ComputePipelineHandles             createPipelineHandles(const ComputeTask&, const RenderGraph&);
 
     // Accessors
     SwapChain*                         getSwapChain() { return &mSwapChain; }
     MemoryManager*                     getMemoryManager() { return &mMemoryManager; }
 	CommandPool*					   getCurrentCommandPool() { return &mCommandPools[getCurrentFrameIndex()]; }
     vk::PhysicalDevice*                getPhysicalDevice() { return &mPhysicalDevice; }
+	DescriptorManager*				   getDescriptorManager() { return &mDescriptorManager; }
 
     // Only these two can do usefull work when const
     const SwapChain*                         getSwapChain() const { return &mSwapChain; }
@@ -206,26 +210,31 @@ public:
 	std::vector<vk::PipelineShaderStageCreateInfo>              generateShaderStagesInfo(GraphicsPipelineDescription&);
 	std::vector<vk::PipelineShaderStageCreateInfo>              generateIndexedShaderStagesInfo(GraphicsPipelineDescription&);
 
+	template<typename B>
+	vk::DescriptorSetLayout										generateDescriptorSetLayoutBindings(const std::vector<B>&);
+
 private:
 
-    vk::DescriptorSetLayout                                     generateDescriptorSetLayout(const RenderTask&);
+	vk::DescriptorSetLayout				                        generateDescriptorSetLayout(const RenderTask&);
 
-	vk::PipelineLayout                                          generatePipelineLayout(vk::DescriptorSetLayout, const RenderTask&);
+	vk::PipelineLayout                                          generatePipelineLayout(const std::vector< vk::DescriptorSetLayout>&, const RenderTask&);
 
     vk::RenderPass                                              generateRenderPass(const GraphicsTask&);
 
     std::shared_ptr<GraphicsPipeline>                                            generatePipeline(const GraphicsTask&,
-																				 const vk::DescriptorSetLayout descSetLayout,
+																				 const std::vector< vk::DescriptorSetLayout>& descSetLayout,
 																				 const vk::RenderPass&);
 
     std::shared_ptr<ComputePipeline>                                             generatePipeline(const ComputeTask&,
-                                                                                 const vk::DescriptorSetLayout&);
+                                                                                 const std::vector< vk::DescriptorSetLayout>&);
 
 	void														generateVulkanResources(RenderGraph&);
 
     void                                                        generateDescriptorSets(RenderGraph&);
 
     void                                                        generateFrameBuffers(RenderGraph&);
+
+	std::vector<vk::DescriptorSetLayout>						generateShaderResourceSetLayouts(const RenderTask&, const RenderGraph&);
 
     std::vector<BarrierRecorder>                                recordBarriers(RenderGraph&);
 
@@ -288,6 +297,15 @@ private:
         Allocation mBufferMemory;
     };
     std::deque<BufferDestructionInfo> mBuffersPendingDestruction;
+
+	struct ShaderResourceSetsInfo
+	{
+		uint64_t mLastUsed;
+		vk::DescriptorPool mPool;
+		vk::DescriptorSetLayout mLayout;
+		vk::DescriptorSet mDescSet;
+	};
+	std::deque<ShaderResourceSetsInfo> mSRSPendingDestruction;
 
 	std::vector<vulkanResources> mVulkanResources;
 

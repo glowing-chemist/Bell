@@ -142,6 +142,7 @@ private:
 	std::vector<Material> mMaterials;
 	std::vector<ImageView> mMaterialImageViews;
 
+
 	std::unique_ptr<Image> mSkybox;
 	std::unique_ptr<ImageView> mSkyboxView;
 };

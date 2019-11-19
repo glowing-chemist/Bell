@@ -4,6 +4,8 @@
 #include "Core/ConversionUtils.hpp"
 #include "Core/Pipeline.hpp"
 
+#include "RenderGraph/RenderGraph.hpp"
+
 #include <glslang/Public/ShaderLang.h>
 #include <vulkan/vulkan.hpp>
 
@@ -122,15 +124,20 @@ RenderDevice::~RenderDevice()
         mDevice.destroyPipeline(graphicsHandles.mGraphicsPipeline->getHandle());
         mDevice.destroyPipelineLayout(graphicsHandles.mGraphicsPipeline->getLayoutHandle());
         mDevice.destroyRenderPass(graphicsHandles.mRenderPass);
-        mDevice.destroyDescriptorSetLayout(graphicsHandles.mDescriptorSetLayout);
+        mDevice.destroyDescriptorSetLayout(graphicsHandles.mDescriptorSetLayout[0]); // if there are any more they will get destroyed elsewhere.
     }
 
     for(auto& [desc, computeHandles]: mComputePipelineCache)
     {
         mDevice.destroyPipeline(computeHandles.mComputePipeline->getHandle());
         mDevice.destroyPipelineLayout(computeHandles.mComputePipeline->getLayoutHandle());
-        mDevice.destroyDescriptorSetLayout(computeHandles.mDescriptorSetLayout);
+        mDevice.destroyDescriptorSetLayout(computeHandles.mDescriptorSetLayout[0]);
     }
+
+	for (auto& [submission, pool, layout, set] : mSRSPendingDestruction)
+	{
+		mDevice.destroyDescriptorSetLayout(layout);
+	}
 
     for(auto& fence : mFrameFinished)
     {
@@ -200,33 +207,36 @@ uint32_t RenderDevice::getQueueFamilyIndex(const QueueType type) const
 }
 
 
-GraphicsPipelineHandles RenderDevice::createPipelineHandles(const GraphicsTask& task)
+GraphicsPipelineHandles RenderDevice::createPipelineHandles(const GraphicsTask& task, const RenderGraph& graph)
 {
     if(mGraphicsPipelineCache[task.getPipelineDescription()].mGraphicsPipeline)
         return mGraphicsPipelineCache[task.getPipelineDescription()];
 
-    const vk::DescriptorSetLayout descSetLayout = generateDescriptorSetLayout(task);
     const vk::RenderPass renderPass = generateRenderPass(task);
-    const auto pipeline = generatePipeline( task,
-													descSetLayout,
-													renderPass);
 
-    GraphicsPipelineHandles handles{pipeline, renderPass, descSetLayout};
+	const std::vector<vk::DescriptorSetLayout> SRSLayouts = generateShaderResourceSetLayouts(task, graph);
+
+    const auto pipeline = generatePipeline( task,
+											SRSLayouts,
+											renderPass);
+
+    GraphicsPipelineHandles handles{pipeline, renderPass, SRSLayouts };
     mGraphicsPipelineCache[task.getPipelineDescription()] = handles;
 
     return handles;
 }
 
 
-ComputePipelineHandles RenderDevice::createPipelineHandles(const ComputeTask& task)
+ComputePipelineHandles RenderDevice::createPipelineHandles(const ComputeTask& task, const RenderGraph& graph)
 {
 	if(mComputePipelineCache[task.getPipelineDescription()].mComputePipeline)
         return mComputePipelineCache[task.getPipelineDescription()];
 
-    const vk::DescriptorSetLayout descSetLayout = generateDescriptorSetLayout(task);
-    const auto pipeline = generatePipeline(task, descSetLayout);
+	const std::vector<vk::DescriptorSetLayout> SRSLayouts = generateShaderResourceSetLayouts(task, graph);
 
-    ComputePipelineHandles handles{pipeline, descSetLayout};
+    const auto pipeline = generatePipeline(task, SRSLayouts);
+
+    ComputePipelineHandles handles{pipeline, SRSLayouts };
     mComputePipelineCache[task.getPipelineDescription()] = handles;
 
     return handles;
@@ -234,15 +244,15 @@ ComputePipelineHandles RenderDevice::createPipelineHandles(const ComputeTask& ta
 
 
 std::shared_ptr<GraphicsPipeline> RenderDevice::generatePipeline(const GraphicsTask& task,
-											const vk::DescriptorSetLayout descSetLayout,
-											const vk::RenderPass &renderPass)
+																 const std::vector< vk::DescriptorSetLayout>& descSetLayout,
+																 const vk::RenderPass &renderPass)
 {
     const GraphicsPipelineDescription& pipelineDesc = task.getPipelineDescription();
 	const vk::PipelineLayout pipelineLayout = generatePipelineLayout(descSetLayout, task);
 
 	std::shared_ptr<GraphicsPipeline> pipeline = std::make_shared<GraphicsPipeline>(this, pipelineDesc);
 	pipeline->setLayout(pipelineLayout);
-	pipeline->setDescriptorLayout(descSetLayout);
+	pipeline->setDescriptorLayouts(descSetLayout);
 	pipeline->setFrameBufferBlendStates(task);
 	pipeline->setRenderPass(renderPass);
 	pipeline->setVertexAttributes(task.getVertexAttributes());
@@ -254,7 +264,7 @@ std::shared_ptr<GraphicsPipeline> RenderDevice::generatePipeline(const GraphicsT
 
 
 std::shared_ptr<ComputePipeline> RenderDevice::generatePipeline(const ComputeTask& task,
-                                            const vk::DescriptorSetLayout& descriptorSetLayout)
+																const std::vector< vk::DescriptorSetLayout>& descriptorSetLayout)
 {
     const ComputePipelineDescription pipelineDesc = task.getPipelineDescription();
 	const vk::PipelineLayout pipelineLayout = generatePipelineLayout(descriptorSetLayout, task);
@@ -459,80 +469,87 @@ std::vector<vk::PipelineShaderStageCreateInfo> RenderDevice::generateIndexedShad
 }
 
 
+template<typename B>
+vk::DescriptorSetLayout RenderDevice::generateDescriptorSetLayoutBindings(const std::vector<B>& bindings)
+{
+	std::vector<vk::DescriptorSetLayoutBinding> layoutBindings{};
+	layoutBindings.reserve(bindings.size());
+
+	uint32_t currentBinding = 0;
+
+	for (const auto& [unused, type] : bindings)
+	{
+		// Translate between Bell enums to the vulkan equivelent.
+		vk::DescriptorType descriptorType = [type]()
+		{
+			switch (type)
+			{
+			case AttachmentType::Texture1D:
+			case AttachmentType::Texture2D:
+			case AttachmentType::Texture3D:
+			case AttachmentType::TextureArray:
+				return vk::DescriptorType::eSampledImage;
+
+			case AttachmentType::Image1D:
+			case AttachmentType::Image2D:
+			case AttachmentType::Image3D:
+				return vk::DescriptorType::eStorageImage;
+
+			case AttachmentType::DataBuffer:
+				return vk::DescriptorType::eStorageBufferDynamic;
+
+			case AttachmentType::UniformBuffer:
+				return vk::DescriptorType::eUniformBuffer;
+
+			case AttachmentType::Sampler:
+				return vk::DescriptorType::eSampler;
+
+				// Ignore push constants for now.
+			}
+
+			return vk::DescriptorType::eCombinedImageSampler; // For now use this to indicate push_constants (terrible I know)
+		}();
+
+		// This indicates it's a push constant which we don't need to handle when allocating descriptor
+		// sets.
+		if (descriptorType == vk::DescriptorType::eCombinedImageSampler)
+			continue;
+
+		vk::DescriptorSetLayoutBinding layoutBinding{};
+		layoutBinding.setBinding(currentBinding++);
+		layoutBinding.setDescriptorType(descriptorType);
+		layoutBinding.setDescriptorCount(type == AttachmentType::TextureArray ? BINDLESS_ARRAY_SIZE : 1);
+		layoutBinding.setStageFlags(vk::ShaderStageFlagBits::eAll);
+
+		layoutBindings.push_back(layoutBinding);
+	}
+
+	vk::DescriptorSetLayoutCreateInfo descSetLayoutInfo{};
+	descSetLayoutInfo.setPBindings(layoutBindings.data());
+	descSetLayoutInfo.setBindingCount(static_cast<uint32_t>(layoutBindings.size()));
+
+	return  mDevice.createDescriptorSetLayout(descSetLayoutInfo);
+}
+
 
 vk::DescriptorSetLayout RenderDevice::generateDescriptorSetLayout(const RenderTask& task)
 {
     const auto& inputAttachments = task.getInputAttachments();
 
-    std::vector<vk::DescriptorSetLayoutBinding> layoutBindings;
-    uint32_t curretnBinding = 0;
-
-    for(const auto& [name, type] : inputAttachments)
-    {
-		// Translate between Bell enums to the vulkan equivelent.
-        vk::DescriptorType descriptorType = [type]()
-        {
-            switch(type)
-            {
-            case AttachmentType::Texture1D:
-            case AttachmentType::Texture2D:
-            case AttachmentType::Texture3D:
-			case AttachmentType::TextureArray:
-				return vk::DescriptorType::eSampledImage;
-
-            case AttachmentType::Image1D:
-            case AttachmentType::Image2D:
-            case AttachmentType::Image3D:
-                return vk::DescriptorType::eStorageImage;
-
-           case AttachmentType::DataBuffer:
-                return vk::DescriptorType::eStorageBufferDynamic;
-
-           case AttachmentType::UniformBuffer:
-                return vk::DescriptorType::eUniformBuffer;
-
-           case AttachmentType::Sampler:
-                return vk::DescriptorType::eSampler;
-
-           // Ignore push constants for now.
-            }
-
-            return vk::DescriptorType::eCombinedImageSampler; // For now use this to indicate push_constants (terrible I know)
-        }();
-
-		// This indicates it's a push constant which we don't need to handle when allocating descriptor
-		// sets.
-		if(descriptorType == vk::DescriptorType::eCombinedImageSampler)
-			continue;
-
-        vk::DescriptorSetLayoutBinding layoutBinding{};
-        layoutBinding.setBinding(curretnBinding++);
-        layoutBinding.setDescriptorType(descriptorType);
-		layoutBinding.setDescriptorCount(type == AttachmentType::TextureArray ? BINDLESS_ARRAY_SIZE : 1);
-        // TODO make this less general in the future/effiecent.
-        layoutBinding.setStageFlags(vk::ShaderStageFlagBits::eAll);
-
-        layoutBindings.push_back(layoutBinding);
-    }
-
-    vk::DescriptorSetLayoutCreateInfo descSetLayoutInfo{};
-    descSetLayoutInfo.setPBindings(layoutBindings.data());
-    descSetLayoutInfo.setBindingCount(static_cast<uint32_t>(layoutBindings.size()));
-
-    return mDevice.createDescriptorSetLayout(descSetLayoutInfo);
+	return  generateDescriptorSetLayoutBindings(inputAttachments);
 }
 
 
-vk::PipelineLayout RenderDevice::generatePipelineLayout(vk::DescriptorSetLayout descLayout, const RenderTask& task)
+vk::PipelineLayout RenderDevice::generatePipelineLayout(const std::vector< vk::DescriptorSetLayout>& descLayout, const RenderTask& task)
 {
     vk::PipelineLayoutCreateInfo info{};
-    info.setSetLayoutCount(1);
-    info.setPSetLayouts(&descLayout);
+    info.setSetLayoutCount(descLayout.size());
+    info.setPSetLayouts(descLayout.data());
 
 	const auto& inputAttachments = task.getInputAttachments();
 	const bool hasPushConstants =  std::find_if(inputAttachments.begin(), inputAttachments.end(), [](const auto& attachment)
 	{
-		return attachment.second == AttachmentType::PushConstants;
+		return attachment.mType == AttachmentType::PushConstants;
 	}) != inputAttachments.end();
 
 	// at least for now just use a mat4 for push constants.
@@ -563,7 +580,7 @@ void RenderDevice::generateVulkanResources(RenderGraph& graph)
         if((*task).taskType() == TaskType::Graphics)
         {
             const GraphicsTask& graphicsTask = static_cast<const GraphicsTask&>(*task);
-            GraphicsPipelineHandles pipelineHandles = createPipelineHandles(graphicsTask);
+            GraphicsPipelineHandles pipelineHandles = createPipelineHandles(graphicsTask, graph);
 
             vulkanResources& taskResources = *resource;
             taskResources.mPipeline = pipelineHandles.mGraphicsPipeline;
@@ -574,7 +591,7 @@ void RenderDevice::generateVulkanResources(RenderGraph& graph)
         else
         {
             const ComputeTask& computeTask = static_cast<const ComputeTask&>(*task);
-            ComputePipelineHandles pipelineHandles = createPipelineHandles(computeTask);
+            ComputePipelineHandles pipelineHandles = createPipelineHandles(computeTask, graph);
 
             vulkanResources& taskResources = *resource;
             taskResources.mPipeline = pipelineHandles.mComputePipeline;
@@ -647,6 +664,24 @@ void RenderDevice::generateFrameBuffers(RenderGraph& graph)
 }
 
 
+std::vector<vk::DescriptorSetLayout> RenderDevice::generateShaderResourceSetLayouts(const RenderTask& task, const RenderGraph& graph)
+{
+	std::vector<vk::DescriptorSetLayout> layouts{};
+	layouts.push_back(generateDescriptorSetLayout(task));
+
+	const auto& inputs = task.getInputAttachments();
+	for (const auto& [slot, type] : inputs)
+	{
+		if (type == AttachmentType::ShaderResourceSet)
+		{
+			layouts.push_back(graph.getBoundShaderResourceSet(slot).getLayout());
+		}
+	}
+
+	return layouts;
+}
+
+
 void RenderDevice::generateDescriptorSets(RenderGraph & graph)
 {
 	mDescriptorManager.getDescriptors(graph, mVulkanResources);
@@ -679,7 +714,7 @@ std::vector<BarrierRecorder> RenderDevice::recordBarriers(RenderGraph& graph)
 				   imageView.getImageUsage() & ImageUsage::Storage)
 				{
 					// fetch the attachment type for the current image view and get what layout the image needs to be in.
-					const vk::ImageLayout layout = getVulkanImageLayout((*taskIt).getInputAttachments()[resource.mResourceBinding].second);
+					const vk::ImageLayout layout = getVulkanImageLayout((*taskIt).getInputAttachments()[resource.mResourceBinding].mType);
 
 					recorder.transitionImageLayout(imageView, layout);
 				}
@@ -853,9 +888,7 @@ void RenderDevice::execute(RenderGraph& graph)
         if(graph.getIndexBuffer())
             secondaryCmdBuffer.bindIndexBuffer(graph.getIndexBuffer()->getBuffer(), 0, vk::IndexType::eUint32);
 
-        // Don't bind descriptor sets if we have no input attachments.
-		if (resources.mDescSet != vk::DescriptorSet{ nullptr })
-            secondaryCmdBuffer.bindDescriptorSets(bindPoint, resources.mPipeline->getLayoutHandle(), 0, 1,  &resources.mDescSet, 0, nullptr);
+		secondaryCmdBuffer.bindDescriptorSets(bindPoint, resources.mPipeline->getLayoutHandle(), 0, resources.mDescSet.size(), resources.mDescSet.data(), 0, nullptr);
 
 		(*task).recordCommands(secondaryCmdBuffer, graph, resources);
 
@@ -1006,11 +1039,25 @@ void RenderDevice::clearDeferredResources()
         {
             mDevice.destroyBuffer(buffer);
             getMemoryManager()->Free(memory);
+            getMemoryManager()->Free(memory);
             mBuffersPendingDestruction.pop_front();
         }
         else
             break;
     }
+
+	for (uint32_t i = 0; i < mSRSPendingDestruction.size(); ++i)
+	{
+		auto& [submission, pool, layout, set] = mSRSPendingDestruction.front();
+
+		if (submission <= mFinishedSubmission)
+		{
+			mDevice.destroyDescriptorSetLayout(layout);
+			mSRSPendingDestruction.pop_front();
+		}
+		else
+			break;
+	}
 }
 
 
@@ -1022,7 +1069,7 @@ void RenderDevice::clearVulkanResources()
 			mFramebuffersPendingDestruction.emplace_back(getCurrentSubmissionIndex(), resources.mFrameBuffer.value());
 		resources.mFrameBuffer.reset();
 
-		resources.mDescSet = nullptr;
+		resources.mDescSet.clear();
 	}
 
 	mVulkanResources.clear();
@@ -1090,3 +1137,6 @@ void    RenderDevice::bindImageMemory(vk::Image& image, vk::DeviceMemory memory,
     mDevice.bindImageMemory(image, memory, offset);
 }
 
+
+template
+vk::DescriptorSetLayout RenderDevice::generateDescriptorSetLayoutBindings(const std::vector<ShaderResourceSet::ResourceInfo>&);

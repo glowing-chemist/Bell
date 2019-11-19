@@ -3,6 +3,7 @@
 
 #include <memory>
 #include <optional>
+#include <vector>
 #include <vulkan/vulkan.hpp>
 
 class RenderDevice;
@@ -12,14 +13,14 @@ class Pipeline;
 struct vulkanResources
 {
 	std::shared_ptr<Pipeline> mPipeline;
-	vk::DescriptorSetLayout mDescSetLayout;
+	std::vector<vk::DescriptorSetLayout> mDescSetLayout;
 	// Only needed for graphics tasks
 	std::optional<vk::RenderPass> mRenderPass;
 	std::optional<vk::VertexInputBindingDescription> mVertexBindingDescription;
 	std::optional<std::vector<vk::VertexInputAttributeDescription>> mVertexAttributeDescription;
 
 	std::optional<vk::Framebuffer> mFrameBuffer;
-	vk::DescriptorSet mDescSet;
+	std::vector<vk::DescriptorSet> mDescSet;
 };
 
 

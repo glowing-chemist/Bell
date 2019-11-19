@@ -16,5 +16,5 @@ void main()
 	const vec4 lighting = texture(sampler2D(globalLighting, defaultSampler), uv);
 	const vec4 overlay = texture(sampler2D(overlay, defaultSampler), uv);
 
-	frameBuffer = ((1.0f - overlay.w) * lighting) + overlay;;
+	frameBuffer = ((1.0f - overlay.w) * lighting) + overlay;
 }
