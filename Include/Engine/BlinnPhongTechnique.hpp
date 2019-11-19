@@ -15,16 +15,6 @@ public:
     BlinnPhongDeferredTexturesTechnique(Engine* dev);
     virtual ~BlinnPhongDeferredTexturesTechnique() = default;
 
-	Image& getLightingImage()
-	{
-		return mLightingTexture;
-	}
-
-	ImageView& getLightingView()
-	{
-		return mLightingView;
-	}
-
     std::string getLightTextureName()
 	{
         return kBlinnPhongLighting;
@@ -56,7 +46,7 @@ public:
 	}
 
 	virtual void bindResources(RenderGraph& graph) const override final
-	{ graph.bindImage(kBlinnPhongLighting, mLightingView); }
+	{}
 	virtual void render(RenderGraph&, Engine*, const std::vector<const Scene::MeshInstance *> &) override final;
 
 private:
@@ -65,9 +55,6 @@ private:
 	std::string mVertexNormalsName;
 	std::string mMaterialName;
 	std::string mUVName;
-
-	Image mLightingTexture;
-	ImageView mLightingView;
 
 	GraphicsPipelineDescription mPipelineDesc;
 	GraphicsTask mTask;
