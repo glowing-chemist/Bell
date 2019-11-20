@@ -1,5 +1,7 @@
 #include "ImGuiNodeEditor.h"
+
 #include "Core/BellLogging.hpp"
+#include "Engine/Engine.hpp"
 
 #include <algorithm>
 
@@ -38,7 +40,7 @@ void ImGuiNodeEditor::addNode(const uint64_t nodeType)
 }
 
 
-void ImGuiNodeEditor::addNode(const std::shared_ptr<EditorNode>& newNode)
+void ImGuiNodeEditor::addNode(std::shared_ptr<EditorNode>& newNode)
 {
     newNode->mID = mCurrentID++;
 
@@ -124,6 +126,15 @@ void ImGuiNodeEditor::draw()
     ax::NodeEditor::End();
 
     ax::NodeEditor::SetCurrentEditor(nullptr);
+}
+
+
+void ImGuiNodeEditor::addPasses(Engine& eng)
+{
+	for (const auto& node : mNodes)
+	{
+		eng.registerPass(static_cast<PassType>(node->mType));
+	}
 }
 
 

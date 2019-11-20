@@ -9,6 +9,10 @@
 #include <string>
 #include <vector>
 
+
+class Engine;
+
+
 enum class NodeTypes : uint64_t
 {
     PASS_TYPES,
@@ -138,9 +142,11 @@ public:
     ~ImGuiNodeEditor();
 
     void addNode(const uint64_t);
-    void addNode(const std::shared_ptr<EditorNode>&);
+    void addNode(std::shared_ptr<EditorNode>&);
 
     void draw();
+
+	void addPasses(Engine&);
 
 private:
 

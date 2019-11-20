@@ -162,6 +162,7 @@ void Editor::run()
 
 void Editor::renderScene()
 {
+	mNodeEditor.addPasses(mEngine);
 }
 
 
