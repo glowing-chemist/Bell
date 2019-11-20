@@ -57,3 +57,9 @@ void CompositeTechnique::render(RenderGraph& graph, Engine* eng, const std::vect
 		graph.addTask(compositeTask);
 	}
 }
+
+
+void CompositeTechnique::bindResources(RenderGraph& graph) const
+{
+	graph.bindImage(kFrameBufer, getDevice()->getSwapChainImageView());
+}

@@ -294,9 +294,6 @@ void Engine::recordScene()
     mCurrentRenderGraph.bindBuffer(kCameraBuffer, *mDeviceCameraBuffer);
     mCurrentRenderGraph.bindSampler(kDefaultSampler, mDefaultSampler);
 
-    // TODO TEMP will be handled in the composition pass eventually
-    mCurrentRenderGraph.bindImage(kFrameBufer, getSwapChainImageView());
-
 	if(mCurrentScene.getSkybox())
 		mCurrentRenderGraph.bindImage(kSkyBox, *mCurrentScene.getSkybox());
 }
