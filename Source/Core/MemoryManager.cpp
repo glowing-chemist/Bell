@@ -10,6 +10,14 @@
 #include <algorithm>
 
 
+namespace
+{
+	uint64_t nextAlignedAddress(const uint64_t address, const uint64_t alignment) // Alignemt must be a power of 2!
+	{
+		return (address + alignment - 1) & ~(alignment - 1);
+	}
+}
+
 bool operator==(const PoolFragment& lhs, const PoolFragment& rhs)
 {
     return lhs.DeviceLocal == rhs.DeviceLocal
@@ -116,7 +124,7 @@ void MemoryManager::findPoolIndicies()
 void MemoryManager::AllocateDevicePool()
 {
 
-    vk::MemoryAllocateInfo allocInfo{256 * 1000000, static_cast<uint32_t>(mDeviceLocalPoolIndex)};
+    vk::MemoryAllocateInfo allocInfo{256 * 1024 * 1024, static_cast<uint32_t>(mDeviceLocalPoolIndex)};
 
 	mDeviceMemoryBackers.push_back({nullptr, getDevice()->allocateMemory(allocInfo)});
 
@@ -126,7 +134,7 @@ void MemoryManager::AllocateDevicePool()
 	{
         frag.free = true;
         frag.DeviceLocal = true;
-        frag.size = 64 * 1000000;
+        frag.size = 64 * 1024 * 1024;
         frag.offset = offset;
 
         offset += frag.size;
@@ -140,7 +148,7 @@ void MemoryManager::AllocateDevicePool()
 
 void MemoryManager::AllocateHostMappablePool()
 {
-	const vk::DeviceSize poolSize = 256 * 1000000;
+	const vk::DeviceSize poolSize = 256 * 1024 * 1024;
 	vk::MemoryAllocateInfo allocInfo{poolSize, static_cast<uint32_t>(mHostMappablePoolIndex)};
 
 	// Map the entire allocation on creation for persistent mapping.
@@ -155,7 +163,7 @@ void MemoryManager::AllocateHostMappablePool()
 	{
         frag.free = true;
         frag.DeviceLocal = true;
-        frag.size = 64 * 1000000;
+        frag.size = 64 * 1024 * 1024;
         frag.offset = offset;
 
         offset += frag.size;
@@ -193,7 +201,7 @@ void MemoryManager::MergeFreePools()
 
 
 void MemoryManager::MergePool(std::vector<std::list<PoolFragment> > &pools)
-{ // this is expensive on a a list so only call when really needed
+{ // this is expensive on a list so only call when really needed
 	for(auto& pool : pools)
 	{
         // loop forwards through all the fragments and mark any free fragments ajasent to a free fragment as can be merged
@@ -213,7 +221,8 @@ void MemoryManager::MergePool(std::vector<std::list<PoolFragment> > &pools)
 			if(fragment.free)
 			{
                 fragmentFree = true;
-			} else
+			}
+			else
 			{
                 fragmentFree = false;
             }
@@ -261,32 +270,35 @@ Allocation MemoryManager::AttemptToAllocate(uint64_t size, unsigned long allignm
     for(auto& pool : memPools) {
         for(auto fragIter = pool.begin(); fragIter != pool.end(); ++fragIter) {
             PoolFragment frag = *fragIter;
-			if(frag.free && frag.size >= size)
+
+			uint64_t alignedAddress = nextAlignedAddress(frag.offset, allignment);
+			const uint64_t alignedOffset = alignedAddress - frag.offset;
+
+			if(frag.free && frag.size >= size + alignedOffset)
 			{
-                unsigned int allignedoffset = 0;
-				while((frag.offset  + allignedoffset) % allignment != 0)
-				{
-                    ++allignedoffset;
-                    if(size + allignedoffset > frag.size) continue; // make sure there is enought size to be alligned
-                }
                 Allocation alloc;
-                alloc.offset = frag.offset + allignedoffset;
+                alloc.offset = alignedAddress;
                 alloc.fragOffset = frag.offset;
                 alloc.hostMappable = hostMappable;
                 alloc.deviceLocal = true;
                 alloc.pool = poolNum;
                 alloc.size = size;
 
-				if(size + allignedoffset < (frag.size / 2))
+				if(size + alignedOffset < (frag.size / 2))
 				{ // we'd be wasting more than half the fragment, so split it up
                     PoolFragment fragToInsert;
                     fragToInsert.DeviceLocal = true;
                     fragToInsert.free = true;
-                    fragToInsert.offset = frag.offset + size + allignedoffset;
-                    fragToInsert.size = frag.size - size - allignedoffset;
+                    fragToInsert.offset = alignedAddress + size;
+                    fragToInsert.size = frag.size - (size + alignedOffset);
 
-                    fragIter->size = size + allignedoffset;
-                    pool.insert(fragIter, fragToInsert);
+                    fragIter->size = size + alignedOffset;
+
+					// Make sure we insert the split fragment infront of the allocated one
+					// otherwise fragment merging won't work correctly.
+					auto inFrontIt = fragIter;
+					++inFrontIt;
+                    pool.insert(inFrontIt, fragToInsert);
                 }
                 fragIter->free = false;
                 return alloc;
