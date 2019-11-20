@@ -545,3 +545,4 @@ DescriptorManager::DescriptorPool& DescriptorManager::findSuitablePool(const std
 		return pool;
 	}
 }
+

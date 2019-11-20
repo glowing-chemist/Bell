@@ -46,7 +46,12 @@ Engine::Engine(GLFWwindow* windowPtr) :
 void Engine::loadScene(const std::string& path)
 {
     mLoadingScene = Scene(path);
-	mLoadingScene.loadFromFile(VertexAttributes::Position4 | VertexAttributes::TextureCoordinates | VertexAttributes::Normals, this);
+	mLoadingScene.loadFromFile(VertexAttributes::Position4 | VertexAttributes::TextureCoordinates | VertexAttributes::Normals | VertexAttributes::Material, this);
+
+	// Set up the SRS for the materials.
+	const auto& materials = mCurrentScene.getMaterials();
+	mMaterials.addSampledImageArray(materials);
+	mMaterials.finalise();
 }
 
 void Engine::transitionScene()
