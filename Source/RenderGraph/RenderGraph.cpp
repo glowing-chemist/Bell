@@ -630,6 +630,7 @@ void RenderGraph::reset()
     mImageViews.clear();
 	mBufferViews.clear();
 	mSamplers.clear();
+	mSRS.clear();
 
 	mInputResources.clear();
 	mOutputResources.clear();
