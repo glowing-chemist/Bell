@@ -82,7 +82,7 @@ struct EditorNode
         ImGui::EndGroup();
     }
 
-    EditorNode(const char* name, const uint64_t type, ImColor color = ImColor(255, 255, 255)):
+    EditorNode(const char* name, const uint64_t type, ImColor color):
         mID(0), mName(name), mColor(color), mType(type), mSize(0, 0)
     {}
 };
@@ -107,7 +107,7 @@ struct Link
 struct PassNode : EditorNode
 {
     PassNode(const char* name, const uint64_t type, ImColor color = ImColor(255, 255, 255)) :
-        EditorNode(name, color, type)
+        EditorNode(name, type, color)
     {}
 
     virtual void draw() override final;
@@ -117,7 +117,7 @@ struct PassNode : EditorNode
 struct ResourceNode : EditorNode
 {
     ResourceNode(const char* name, const uint64_t type, ImColor color = ImColor(255, 255, 255)) :
-        EditorNode(name, color, type)
+        EditorNode(name, type, color)
     {
         // reserve some space to use as a buffer.
         mName.reserve(16);
