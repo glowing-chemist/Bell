@@ -12,7 +12,9 @@ StaticMesh::StaticMesh(const std::string& path, const int vertAttributes) :
 	mIndexData{},
     mAABB{},
     mPassTypes{static_cast<uint64_t>(PassType::EditorDefault)},
-    mVertexAttributes(vertAttributes)
+	mVertexCount(0),
+    mVertexAttributes(vertAttributes),
+	mVertexStride(0)
 {
     Assimp::Importer importer;
 
@@ -35,7 +37,9 @@ StaticMesh::StaticMesh(const std::string& path, const int vertAttributes, const 
 	mIndexData{},
     mAABB{},
     mPassTypes{static_cast<uint64_t>(PassType::EditorDefault)},
-    mVertexAttributes(vertAttributes)
+	mVertexCount(0),
+    mVertexAttributes(vertAttributes),
+	mVertexStride(0)
 {
 	Assimp::Importer importer;
 
@@ -88,6 +92,9 @@ void StaticMesh::configure(const aiMesh* mesh, const int vertAttributes, const u
                                     (normalsNeeded ? 4 : 0) +
                                     (albedoNeeded ? 4 : 0) +
                                     1) * sizeof(float);
+
+	mVertexStride = vertexStride;
+	mVertexCount = mesh->mNumVertices;
 
     // assume triangles atm
     mIndexData.resize(mesh->mNumFaces * mesh->mFaces[0].mNumIndices);
@@ -178,6 +185,9 @@ void StaticMesh::configure(const aiMesh* mesh, const int vertAttributes)
                                     (normalsNeeded ? 4 : 0) +
                                     (albedoNeeded ? 4 : 0) +
                                     (materialNeeded ? 1 : 0)) * sizeof(float);
+
+	mVertexStride = vertexStride;
+	mVertexCount = mesh->mNumVertices;
 
     // assume triangles atm
     mIndexData.resize(mesh->mNumFaces * mesh->mFaces[0].mNumIndices);

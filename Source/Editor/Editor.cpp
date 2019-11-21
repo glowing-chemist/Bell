@@ -147,7 +147,7 @@ void Editor::run()
 
 		startFrame();
 
-        // Only draw the scene is we're in scene mode else draw the
+        // Only draw the scene if we're in scene mode else draw the
         // pass/shader graphs.
         if(mMode == 0)
             renderScene();

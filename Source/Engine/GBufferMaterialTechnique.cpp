@@ -32,13 +32,21 @@ void GBufferMaterialTechnique::render(RenderGraph& graph, Engine* eng, const std
 {
 	mTask.clearCalls();
 
-	for(const auto& mesh : meshes)
+	uint64_t minVertexOffset = ~0ul;
+
+	uint32_t vertexBufferOffset = 0;
+	for (const auto& mesh : meshes)
 	{
 		const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->mMesh);
+		minVertexOffset = std::min(minVertexOffset, vertexOffset);
 
 		mTask.addPushConsatntValue(mesh->mTransformation);
-		mTask.addIndexedDrawCall(0, indexOffset / sizeof(uint32_t), mesh->mMesh->getIndexData().size());
+		mTask.addIndexedDrawCall(vertexBufferOffset, indexOffset / sizeof(uint32_t), mesh->mMesh->getIndexData().size());
+
+		vertexBufferOffset += mesh->mMesh->getVertexCount();
 	}
+
+	mTask.setVertexBufferOffset(minVertexOffset);
 
 	graph.addTask(mTask);
 }
@@ -76,13 +84,21 @@ void GBufferMaterialPreDepthTechnique::render(RenderGraph& graph, Engine* eng, c
 {
 	mTask.clearCalls();
 
-	for(const auto& mesh : meshes)
+	uint64_t minVertexOffset = ~0ul;
+
+	uint32_t vertexBufferOffset = 0;
+	for (const auto& mesh : meshes)
 	{
 		const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->mMesh);
+		minVertexOffset = std::min(minVertexOffset, vertexOffset);
 
 		mTask.addPushConsatntValue(mesh->mTransformation);
-		mTask.addIndexedDrawCall(0, indexOffset / sizeof(uint32_t), mesh->mMesh->getIndexData().size());
+		mTask.addIndexedDrawCall(vertexBufferOffset, indexOffset / sizeof(uint32_t), mesh->mMesh->getIndexData().size());
+
+		vertexBufferOffset += mesh->mMesh->getVertexCount();
 	}
+
+	mTask.setVertexBufferOffset(minVertexOffset);
 
 	graph.addTask(mTask);
 }

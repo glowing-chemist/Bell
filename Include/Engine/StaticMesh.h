@@ -59,6 +59,16 @@ public:
         return mVertexAttributes;
     }
 
+	uint32_t getVertexStride() const
+	{
+		return mVertexStride;
+	}
+
+	uint64_t getVertexCount() const
+	{
+		return mVertexCount;
+	}
+
 private:
 
     void configure(const aiMesh* mesh, const int vertexAttributes, const uint32_t materialID);
@@ -77,7 +87,9 @@ private:
     AABB mAABB;
 
     uint64_t mPassTypes;
+	uint64_t mVertexCount;
     int mVertexAttributes;
+	uint32_t mVertexStride;
 };
 
 #endif
