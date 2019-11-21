@@ -268,6 +268,28 @@ void Editor::pumpInputQueue()
 	io.DisplaySize = ImVec2(static_cast<float>(w), static_cast<float>(h));
 	if (w > 0 && h > 0)
 		io.DisplayFramebufferScale = ImVec2(static_cast<float>(display_w) / w, static_cast<float>(display_h) / h);
+
+	if (mMode == EditorMode::SceneView) 
+	{
+		Camera& camera = mEngine.getCurrentSceneCamera();
+
+		if (glfwGetKey(mWindow, GLFW_KEY_W) == GLFW_PRESS)
+			camera.moveForward(0.5f);
+		if (glfwGetKey(mWindow, GLFW_KEY_S) == GLFW_PRESS)
+			camera.moveBackward(0.5f);
+		if (glfwGetKey(mWindow, GLFW_KEY_A) == GLFW_PRESS)
+			camera.moveLeft(0.5f);
+		if (glfwGetKey(mWindow, GLFW_KEY_D) == GLFW_PRESS)
+			camera.moveRight(0.5f);
+		if (glfwGetKey(mWindow, GLFW_KEY_Q) == GLFW_PRESS)
+			camera.rotateYaw(1.0f);
+		if (glfwGetKey(mWindow, GLFW_KEY_E) == GLFW_PRESS)
+			camera.rotateYaw(-1.0f);
+		if (glfwGetKey(mWindow, GLFW_KEY_SPACE) == GLFW_PRESS)
+			camera.moveUp((0.5f));
+		if (glfwGetKey(mWindow, GLFW_KEY_C) == GLFW_PRESS)
+			camera.moveDown(0.5f);
+	}
 }
 
 
