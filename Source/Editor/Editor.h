@@ -36,6 +36,8 @@ private:
 
     void drawPassContextMenu(const PassType);
 
+	void loadScene(const std::string&);
+
     GLFWwindow* mWindow;
 
     struct CursorPosition

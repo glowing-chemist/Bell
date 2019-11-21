@@ -216,7 +216,7 @@ void Editor::renderOverlay()
         if(optionalPath)
         {
             mShowFileBrowser = false;
-			mEngine.setScene((*optionalPath).generic_u8string());
+			loadScene((*optionalPath).generic_u8string());
         }
     }
 
@@ -372,4 +372,22 @@ void Editor::drawPassContextMenu(const PassType passType)
     {
         mNodeEditor.addNode(static_cast<uint64_t>(passType));
     }
+}
+
+
+void Editor::loadScene(const std::string& scene)
+{
+	// Default Editor skybox.
+	std::array<std::string, 6> skybox{	"./skybox/peaks_ft.tga",
+										"./skybox/peaks_bk.tga", 
+										"./skybox/peaks_up.tga", 
+										"./skybox/peaks_dn.tga", 
+										"./skybox/peaks_rt.tga", 
+										"./skybox/peaks_lf.tga" };
+
+	Scene testScene(scene);
+	testScene.loadFromFile(VertexAttributes::Position4 | VertexAttributes::Normals | VertexAttributes::TextureCoordinates | VertexAttributes::Material, &mEngine);
+	testScene.loadSkybox(skybox, &mEngine);
+
+	mEngine.setScene(testScene);
 }
