@@ -50,4 +50,6 @@ void ImGuiFileBrowser::populateChildren()
     {
         mChildren.emplace_back(child);
     }
+
+	mChildren.emplace_back(mCurrentDirectory / "..");
 }
