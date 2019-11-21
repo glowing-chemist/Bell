@@ -8,6 +8,11 @@
 
 #include "GLFW/glfw3.h"
 
+enum EditorMode
+{
+	SceneView = 0,
+	NodeEditor = 1
+};
 
 class Editor
 {

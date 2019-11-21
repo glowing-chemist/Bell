@@ -165,17 +165,23 @@ Editor::~Editor()
 
 void Editor::run()
 {
+	int previousMode = 0;
+
     while(!glfwWindowShouldClose(mWindow))
     {
         pumpInputQueue();
 
 		startFrame();
 
+		if (previousMode != mMode)
+			mEngine.clearRegisteredPasses();
+
         // Only draw the scene if we're in scene mode else draw the
         // pass/shader graphs.
         if(mMode == 0)
             renderScene();
 
+		previousMode = mMode;
 		renderOverlay();
 
 		swap();
@@ -206,7 +212,7 @@ void Editor::renderOverlay()
     drawAssistantWindow();
 
     // We are on Pass/shader graph mode
-    if(mMode == 1)
+    if(mMode == EditorMode::NodeEditor)
         mNodeEditor.draw();
 
     if(mShowFileBrowser)
@@ -278,10 +284,6 @@ void Editor::drawMenuBar()
 				if(ImGui::MenuItem("Close current Scene"))
 				{
 
-                }
-                if(ImGui::MenuItem("Add new mesh"))
-                {
-                    mShowFileBrowser = true;
                 }
 
 				ImGui::EndMenu();
