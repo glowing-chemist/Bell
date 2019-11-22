@@ -324,6 +324,8 @@ vk::RenderPass	RenderDevice::generateRenderPass(const GraphicsTask& task)
 			{
 				case LoadOp::Preserve:
 					return vk::AttachmentLoadOp::eLoad;
+				case LoadOp::Nothing:
+					return vk::AttachmentLoadOp::eDontCare;
 				default:
 					return vk::AttachmentLoadOp::eClear;
 			}

@@ -17,6 +17,7 @@ class vulkanResources;
 enum class LoadOp
 {
     Preserve,
+	Nothing,
     Clear_White,
     Clear_Black
 };
