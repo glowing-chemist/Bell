@@ -47,16 +47,21 @@ public:
     uint32_t getNextImageIndex(vk::Semaphore&);
 	uint32_t getCurrentImageIndex() const { return mCurrentImageIndex; }
 
-	void present(vk::Queue&, vk::Semaphore&);
+	void present(VkQueue, VkSemaphore);
 
 private:
     SwapChainSupportDetails querySwapchainSupport(vk::PhysicalDevice, vk::SurfaceKHR);
     vk::Extent2D chooseSwapExtent(const vk::SurfaceCapabilitiesKHR&, GLFWwindow*);
 
+	void initialize();
+	void recreateSwapchain();
+
     void createSwapChainImageViews();
 
 	uint32_t mCurrentImageIndex;
     vk::SwapchainKHR mSwapChain;
+	vk::SurfaceKHR mSurface;
+	GLFWwindow* mWindow;
     std::vector<Image> mSwapChainImages;
     std::vector<ImageView> mImageViews;
     vk::Extent2D mSwapChainExtent;

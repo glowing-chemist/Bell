@@ -70,52 +70,11 @@ vk::Extent2D SwapChain::chooseSwapExtent(const vk::SurfaceCapabilitiesKHR&, GLFW
 
 SwapChain::SwapChain(RenderDevice* Device, vk::SurfaceKHR windowSurface, GLFWwindow* window) :
     DeviceChild{Device},
-    mCurrentImageIndex{0}
+    mCurrentImageIndex{0},
+	mSurface{windowSurface},
+	mWindow{window}
 {
-    SwapChainSupportDetails swapDetails = querySwapchainSupport(*getDevice()->getPhysicalDevice(), windowSurface);
-    vk::SurfaceFormatKHR swapFormat = chooseSurfaceFormat(swapDetails.formats);
-    vk::PresentModeKHR presMode = choosePresentMode(swapDetails.presentModes);
-    vk::Extent2D swapExtent = chooseSwapExtent(swapDetails.capabilities, window);
-
-    uint32_t images = 0;
-    if(swapDetails.capabilities.maxImageCount == 0) { // some intel GPUs return max image count of 0 so work around this here
-        images = swapDetails.capabilities.minImageCount + 1;
-    } else {
-        images = swapDetails.capabilities.minImageCount + 1 > swapDetails.capabilities.maxImageCount ? swapDetails.capabilities.maxImageCount: swapDetails.capabilities.minImageCount + 1;
-    }
-
-    vk::SwapchainCreateInfoKHR info{}; // fill out the format and presentation mode info
-    info.setSurface(windowSurface);
-    info.setImageExtent(swapExtent);
-    info.setPresentMode(presMode);
-    info.setImageColorSpace(swapFormat.colorSpace);
-    info.setImageFormat(swapFormat.format);
-    info.setMinImageCount(images);
-    info.setImageArrayLayers(1);
-    info.setImageUsage(vk::ImageUsageFlagBits::eColorAttachment);
-    info.setImageSharingMode(vk::SharingMode::eExclusive); // graphics and present are the same queue
-    info.setPreTransform(swapDetails.capabilities.currentTransform);
-    info.setCompositeAlpha(vk::CompositeAlphaFlagBitsKHR::eOpaque);
-    info.setPresentMode(presMode);
-    info.setClipped(true);
-
-    mSwapChain = getDevice()->createSwapchain(info);
-    mSwapChainExtent = swapExtent;
-    mSwapChainFormat = swapFormat.format;
-
-    auto swapChainImages = getDevice()->getSwapchainImages(mSwapChain);
-    for(vk::Image image : swapChainImages)
-    {
-        mSwapChainImages.emplace_back(getDevice(),
-                                      image,
-									  getBellImageFormat(mSwapChainFormat),
-									  ImageUsage::ColourAttachment,
-                                      swapExtent.width,
-                                      swapExtent.height,
-                                      1, 1, 1, 1, "SwapChain");
-    }
-
-    createSwapChainImageViews();
+	initialize();
 }
 
 
@@ -152,7 +111,7 @@ void SwapChain::createSwapChainImageViews()
         mImageViews.push_back(imgeView);
     }
 
-    BELL_LOG_ARGS("created %ld image Views", mSwapChainImages.size())
+    BELL_LOG_ARGS("created %zu image Views", mSwapChainImages.size())
 }
 
 
@@ -164,14 +123,87 @@ uint32_t SwapChain::getNextImageIndex(vk::Semaphore& sem)
 }
 
 
-void SwapChain::present(vk::Queue& presentQueue, vk::Semaphore& waitSemaphore)
+void SwapChain::present(VkQueue presentQueue, VkSemaphore waitSemaphore)
 {
-	vk::PresentInfoKHR info{};
-    info.setPSwapchains(&mSwapChain);
-	info.setSwapchainCount(1);
-    info.setPWaitSemaphores(&waitSemaphore);
-    info.setWaitSemaphoreCount(1);
-	info.setPImageIndices(&mCurrentImageIndex);
+	// needed for calling the C API (in order to handle errors correclty)
+	VkSwapchainKHR tempSwapchain = mSwapChain;
 
-	presentQueue.presentKHR(info);
+	VkPresentInfoKHR info{};
+	info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+    info.pSwapchains = &tempSwapchain;
+	info.swapchainCount = 1;
+    info.pWaitSemaphores = &waitSemaphore;
+    info.waitSemaphoreCount = 1;
+	info.pImageIndices = &mCurrentImageIndex;
+
+	VkResult result = vkQueuePresentKHR(presentQueue, &info);
+
+	if (result == VK_ERROR_OUT_OF_DATE_KHR)
+		recreateSwapchain();
+}
+
+
+void SwapChain::recreateSwapchain()
+{
+	destroy();
+
+	// Just hang tight until the window is un minimized.
+	int width = 0, height = 0;
+	glfwGetFramebufferSize(mWindow, &width, &height);
+	while (width == 0 || height == 0) {
+		glfwGetFramebufferSize(mWindow, &width, &height);
+		glfwWaitEvents();
+	}
+
+	initialize();
+}
+
+
+void SwapChain::initialize()
+{
+	SwapChainSupportDetails swapDetails = querySwapchainSupport(*getDevice()->getPhysicalDevice(), mSurface);
+	vk::SurfaceFormatKHR swapFormat = chooseSurfaceFormat(swapDetails.formats);
+	vk::PresentModeKHR presMode = choosePresentMode(swapDetails.presentModes);
+	vk::Extent2D swapExtent = chooseSwapExtent(swapDetails.capabilities, mWindow);
+
+	uint32_t images = 0;
+	if (swapDetails.capabilities.maxImageCount == 0) { // some intel GPUs return max image count of 0 so work around this here
+		images = swapDetails.capabilities.minImageCount + 1;
+	}
+	else {
+		images = swapDetails.capabilities.minImageCount + 1 > swapDetails.capabilities.maxImageCount ? swapDetails.capabilities.maxImageCount : swapDetails.capabilities.minImageCount + 1;
+	}
+
+	vk::SwapchainCreateInfoKHR info{}; // fill out the format and presentation mode info
+	info.setSurface(mSurface);
+	info.setImageExtent(swapExtent);
+	info.setPresentMode(presMode);
+	info.setImageColorSpace(swapFormat.colorSpace);
+	info.setImageFormat(swapFormat.format);
+	info.setMinImageCount(images);
+	info.setImageArrayLayers(1);
+	info.setImageUsage(vk::ImageUsageFlagBits::eColorAttachment);
+	info.setImageSharingMode(vk::SharingMode::eExclusive); // graphics and present are the same queue
+	info.setPreTransform(swapDetails.capabilities.currentTransform);
+	info.setCompositeAlpha(vk::CompositeAlphaFlagBitsKHR::eOpaque);
+	info.setPresentMode(presMode);
+	info.setClipped(true);
+
+	mSwapChain = getDevice()->createSwapchain(info);
+	mSwapChainExtent = swapExtent;
+	mSwapChainFormat = swapFormat.format;
+
+	auto swapChainImages = getDevice()->getSwapchainImages(mSwapChain);
+	for (vk::Image image : swapChainImages)
+	{
+		mSwapChainImages.emplace_back(getDevice(),
+			image,
+			getBellImageFormat(mSwapChainFormat),
+			ImageUsage::ColourAttachment,
+			std::max(swapExtent.width, 1u),
+			std::max(swapExtent.height, 1u),
+			1, 1, 1, 1, "SwapChain");
+	}
+
+	createSwapChainImageViews();
 }

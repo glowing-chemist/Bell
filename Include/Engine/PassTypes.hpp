@@ -67,6 +67,9 @@ inline const char* passToString(const PassType passType)
 		case PassType::DeferredTexturePBRIBL:
 			return "PBR IBL";
 
+		case PassType::DeferredTextureAnalyticalPBRIBL:
+			return "Analytical IBL";
+
 		case PassType::Skybox:
 			return "skybox";
 
