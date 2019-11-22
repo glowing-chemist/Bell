@@ -62,6 +62,31 @@ void ImGuiNodeEditor::draw()
 {
     ax::NodeEditor::SetCurrentEditor(mContext);
 
+	ImGuiIO& io = ImGui::GetIO();
+
+	if (io.MouseClicked[2]) // check for middle mouse click
+	{
+		// Handle deleting nodes/links
+		std::vector<ax::NodeEditor::NodeId> nodeIds(ax::NodeEditor::GetSelectedObjectCount());
+		std::vector<ax::NodeEditor::LinkId> linkIds(ax::NodeEditor::GetSelectedObjectCount());
+
+		const auto nodeCount = ax::NodeEditor::GetSelectedNodes(nodeIds.data(), nodeIds.size());
+		const auto linkCount = ax::NodeEditor::GetSelectedLinks(linkIds.data(), linkIds.size());
+
+		nodeIds.resize(nodeCount);
+		linkIds.resize(linkCount);
+
+		for (const auto id : nodeIds)
+		{
+			ax::NodeEditor::DeleteNode(id);
+		}
+
+		for (const auto id : linkIds)
+		{
+			ax::NodeEditor::DeleteLink(id);
+		}
+	}
+
     ax::NodeEditor::Begin(mName.c_str());
 
         for(const auto& node : mNodes)
@@ -98,11 +123,23 @@ void ImGuiNodeEditor::draw()
 
 		if (ax::NodeEditor::BeginDelete())
 		{
+
+			ax::NodeEditor::NodeId deleteNodeId;
+			while (ax::NodeEditor::QueryDeletedNode(&deleteNodeId))
+			{
+				if (ax::NodeEditor::AcceptDeletedItem())
+				{
+					mNodes.erase(std::remove_if(mNodes.begin(), mNodes.end(), [deleteNodeId](const auto& node)
+					{
+						return node->mID == deleteNodeId;
+					}), mNodes.end());
+				}
+			}
+
 			// There may be many links marked for deletion, let's loop over them.
 			ax::NodeEditor::LinkId deletedLinkId;
 			while (ax::NodeEditor::QueryDeletedLink(&deletedLinkId))
 			{
-				// TODO Add deletion logic.
 				if (ax::NodeEditor::AcceptDeletedItem())
 				{
 					mLinks.erase(std::remove_if(mLinks.begin(), mLinks.end(), [deletedLinkId](const auto& link)
@@ -205,8 +242,6 @@ void PassNode::draw()
 void ResourceNode::draw()
 {
     ax::NodeEditor::BeginNode(mID);
-
-        //ImGui::InputText("Resource Name", mName.data(), mName.size());
 
         beginColumn();
 
