@@ -151,6 +151,7 @@ public:
 private:
 
     const Pin& findPin(const ax::NodeEditor::PinId);
+	void generateLinks(const std::shared_ptr<EditorNode>&);
 
     std::string mName;
 

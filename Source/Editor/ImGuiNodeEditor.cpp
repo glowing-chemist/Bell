@@ -36,6 +36,7 @@ void ImGuiNodeEditor::addNode(const uint64_t nodeType)
         output.mID = mCurrentID++;
     }
 
+	generateLinks(newNode);
     mNodes.push_back(std::move(newNode));
 }
 
@@ -54,6 +55,7 @@ void ImGuiNodeEditor::addNode(std::shared_ptr<EditorNode>& newNode)
         output.mID = mCurrentID++;
     }
 
+	generateLinks(newNode);
     mNodes.push_back(std::move(newNode));
 }
 
@@ -200,6 +202,34 @@ const Pin& ImGuiNodeEditor::findPin(const ax::NodeEditor::PinId pinID)
     BELL_TRAP;
 }
 
+
+void ImGuiNodeEditor::generateLinks(const std::shared_ptr<EditorNode>& newNode)
+{
+	for (const auto& node : mNodes)
+	{
+		for (const auto& output : node->mOutputs)
+		{
+			for (const auto& input : newNode->mInputs)
+			{
+				if (output.mName == input.mName)
+				{
+					mLinks.emplace_back(mCurrentID++, output.mID, input.mID);
+				}
+			}
+		}
+
+		for (const auto& input : node->mInputs)
+		{
+			for (const auto& output : newNode->mOutputs)
+			{
+				if (output.mName == input.mName)
+				{
+					mLinks.emplace_back(mCurrentID++, output.mID, input.mID);
+				}
+			}
+		}
+	}
+}
 
 void PassNode::draw()
 {
