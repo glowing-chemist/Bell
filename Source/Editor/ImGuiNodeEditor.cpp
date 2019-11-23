@@ -214,10 +214,12 @@ void PassNode::draw()
         for (const auto& input : mInputs)
         {
             ax::NodeEditor::BeginPin(input.mID, ax::NodeEditor::PinKind::Input);
+			ax::NodeEditor::PinPivotAlignment(ImVec2(1.0f, 0.5f));
+			ax::NodeEditor::PinPivotSize(ImVec2(0, 0));
 
             ImGui::TextUnformatted(input.mName.c_str());
 
-            ax::NodeEditor::EndPin();
+			ax::NodeEditor::EndPin();
         }
 
         nextColumn();
@@ -227,6 +229,8 @@ void PassNode::draw()
         for (const auto& input : mOutputs)
         {
             ax::NodeEditor::BeginPin(input.mID, ax::NodeEditor::PinKind::Output);
+			ax::NodeEditor::PinPivotAlignment(ImVec2(1.0f, 0.5f));
+			ax::NodeEditor::PinPivotSize(ImVec2(0, 0));
 
             ImGui::TextUnformatted(input.mName.c_str());
 
