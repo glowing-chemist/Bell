@@ -452,6 +452,8 @@ uint32_t RenderGraph::selectNextTask(const std::vector<uint8_t>& dependancies, c
 		return p1.second < p2.second;
 	});
 
+	BELL_ASSERT(maxElementIt != prospectiveTaskIndicies.end(), "Unable to find next task")
+
 	return (*maxElementIt).first;
 }
 
@@ -503,16 +505,16 @@ bool RenderGraph::areSupersets(const RenderTask& task1, const RenderTask& task2)
 	};
 
 	bool isFrameBufferSubset = std::search(task1.getOuputAttachments().begin(), task1.getOuputAttachments().end(),
-								  task2.getOuputAttachments().begin(), task2.getOuputAttachments().end(), outputPred) != task1.getOuputAttachments().end();
+								  task2.getOuputAttachments().begin(), task2.getOuputAttachments().end(), outputPred) == task1.getOuputAttachments().begin();
 
 	isFrameBufferSubset = isFrameBufferSubset || std::search(task2.getOuputAttachments().begin(), task2.getOuputAttachments().end(),
-								  task1.getOuputAttachments().begin(), task1.getOuputAttachments().end(), outputPred) != task2.getOuputAttachments().end();
+								  task1.getOuputAttachments().begin(), task1.getOuputAttachments().end(), outputPred) == task2.getOuputAttachments().begin();
 
 	bool isDescriptorSubset = std::search(task1.getInputAttachments().begin(), task1.getInputAttachments().end(),
-							  task2.getInputAttachments().begin(), task2.getInputAttachments().end(), inputPred) != task1.getInputAttachments().end();
+							  task2.getInputAttachments().begin(), task2.getInputAttachments().end(), inputPred) == task1.getInputAttachments().begin();
 
 	isDescriptorSubset = isDescriptorSubset || std::search(task2.getInputAttachments().begin(), task2.getInputAttachments().end(),
-							  task1.getInputAttachments().begin(), task1.getInputAttachments().end(), inputPred) != task2.getInputAttachments().end();
+							  task1.getInputAttachments().begin(), task1.getInputAttachments().end(), inputPred) == task2.getInputAttachments().begin();
 
     return isFrameBufferSubset && isDescriptorSubset;
 }
@@ -634,6 +636,9 @@ void RenderGraph::reset()
 
 	mInputResources.clear();
 	mOutputResources.clear();
+
+	mFrameBuffersNeedUpdating.clear();
+	mDescriptorsNeedUpdating.clear();
 
 	// clear non-persistent resources
 	mNonPersistentImages.clear();

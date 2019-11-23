@@ -4,26 +4,26 @@
 #include <cstdint>
 
 
-#define PASS_TYPES  DepthPre = 0, \
-                    GBuffer = 1, \
-                    Animation = 1 << 1, \
-                    DeferredTextureBlinnPhongLighting = 1 << 2, \
-                    Shadow = 1 << 3, \
-                    CascadingShadow = 1 << 4, \
-                    SSAO = 1 << 5, \
-                    GBufferMaterial = 1 << 6, \
-                    EditorDefault = 1 << 7, \
-                    GBufferPreDepth = 1 << 8, \
-                    GBUfferMaterialPreDepth = 1 << 9, \
-					InplaceCombine = 1 << 10, \
-					InplaceCombineSRGB = 1 << 11, \
-					DeferredTexturePBRIBL = 1 << 12, \
-					Overlay = 1 << 13, \
-					Skybox = 1 << 14, \
-					ConvolveSkybox = 1 << 15, \
-					DFGGeneration = 1 << 16, \
-					DeferredTextureAnalyticalPBRIBL = 1 << 17, \
-					Composite = 1 << 18 \
+#define PASS_TYPES  DepthPre = 1, \
+                    GBuffer = 1 << 1, \
+                    Animation = 1 << 2, \
+                    DeferredTextureBlinnPhongLighting = 1 << 3, \
+                    Shadow = 1 << 4, \
+                    CascadingShadow = 1 << 5, \
+                    SSAO = 1 << 6, \
+                    GBufferMaterial = 1 << 7, \
+                    EditorDefault = 1 << 8, \
+                    GBufferPreDepth = 1 << 9, \
+                    GBUfferMaterialPreDepth = 1 << 10, \
+					InplaceCombine = 1 << 11, \
+					InplaceCombineSRGB = 1 << 12, \
+					DeferredTexturePBRIBL = 1 << 13, \
+					Overlay = 1 << 14, \
+					Skybox = 1 << 15, \
+					ConvolveSkybox = 1 << 16, \
+					DFGGeneration = 1 << 17, \
+					DeferredTextureAnalyticalPBRIBL = 1 << 18, \
+					Composite = 1 << 19 \
 
 // An enum to keep track of which 
 enum class PassType : uint64_t

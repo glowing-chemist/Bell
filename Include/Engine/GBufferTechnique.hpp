@@ -54,26 +54,11 @@ public:
     virtual PassType getPassType() const final override
         { return PassType::GBufferPreDepth; }
 
-    void setDepthName(const std::string& depthName)
-    {  mDepthName = depthName; }
-
-	std::string getAlbedoName() const
-        { return kGBufferAlbedo; }
-
-
-	std::string getNormalsName() const
-     { return kGBufferNormals; }
-
-
-	std::string getSpecularName() const
-        { return kGBufferSpecular; }
 
 	virtual void bindResources(RenderGraph&) const override final {}
 	virtual void render(RenderGraph&, Engine*, const std::vector<const Scene::MeshInstance *> &) override final;
 
 private:
-
-    std::string mDepthName;
 
     GraphicsPipelineDescription mPipelineDescription;
     GraphicsTask mTask;

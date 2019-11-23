@@ -4,7 +4,6 @@
 
 constexpr const char* kGBufferDepth	    = "GbufferDepth";
 constexpr const char* kGBufferNormals   = "GBufferNormals";
-constexpr const char* kPreDepth	    = "PreDepth";
 constexpr const char* kGBufferAlbedo	    = "GBufferAlbedo";
 constexpr const char* kGBufferSpecular   = "GBufferSpecular";
 constexpr const char* kGBufferMaterialID = "GBUfferMaterialID";

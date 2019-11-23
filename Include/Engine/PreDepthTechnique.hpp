@@ -19,24 +19,15 @@ public:
     virtual PassType getPassType() const final override
     { return PassType::DepthPre; }
 
-    Image& getDepthImage()
-    { return mDepthImage; }
-
-    ImageView& getDepthView()
-    { return mDepthView; }
-
     std::string getDepthName() const
-    { return kPreDepth; }
+    { return kGBufferDepth; }
 
     virtual void bindResources(RenderGraph& graph) const override final
-    { graph.bindImage(getDepthName(), mDepthView); }
+    {}
 	virtual void render(RenderGraph&, Engine*, const std::vector<const Scene::MeshInstance *> &) override final;
 
 
 private:
-
-    Image mDepthImage;
-    ImageView mDepthView;
 
     GraphicsPipelineDescription mPipelineDescription;
     GraphicsTask mTask;

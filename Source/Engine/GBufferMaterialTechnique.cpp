@@ -55,7 +55,7 @@ void GBufferMaterialTechnique::render(RenderGraph& graph, Engine* eng, const std
 GBufferMaterialPreDepthTechnique::GBufferMaterialPreDepthTechnique(Engine* eng) :
     Technique{"GBufferMaterialPreDepth", eng->getDevice()},
 
-    mDepthName{kPreDepth},
+    mDepthName{kGBufferDepth},
     mPipelineDescription{eng->getShader("./Shaders/GBufferPassThroughMaterial.vert"),
                          eng->getShader("./Shaders/GBufferMaterial.frag"),
                          Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
@@ -72,10 +72,10 @@ GBufferMaterialPreDepthTechnique::GBufferMaterialPreDepthTechnique(Engine* eng) 
     mTask.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
     mTask.addInput("ModelMatrix", AttachmentType::PushConstants);
 
-	mTask.addOutput(kGBufferNormals,  AttachmentType::RenderTarget2D, Format::RGBA8UNorm, SizeClass::Swapchain, LoadOp::Clear_Black);
-	mTask.addOutput(kGBufferUV,       AttachmentType::RenderTarget2D, Format::RGBA8SRGB, SizeClass::Swapchain, LoadOp::Clear_Black);
+	mTask.addOutput(kGBufferNormals, AttachmentType::RenderTarget2D, Format::RGBA8UNorm, SizeClass::Swapchain, LoadOp::Clear_Black);
+	mTask.addOutput(kGBufferUV, AttachmentType::RenderTarget2D, Format::RGBA32Float, SizeClass::Swapchain, LoadOp::Clear_Black);
 	mTask.addOutput(kGBufferMaterialID, AttachmentType::RenderTarget2D, Format::R32Uint, SizeClass::Swapchain, LoadOp::Clear_Black);
-	mTask.addOutput(mDepthName,         AttachmentType::Depth, Format::D24S8Float, SizeClass::Swapchain, LoadOp::Preserve);
+	mTask.addOutput(kGBufferDepth,     AttachmentType::Depth, Format::D32Float, SizeClass::Custom, LoadOp::Preserve);
 
 }
 
