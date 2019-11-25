@@ -16,6 +16,7 @@
 #include "Engine/ConvolveSkyboxTechnique.hpp"
 #include "Engine/SkyboxTechnique.hpp"
 #include "Engine/CompositeTechnique.hpp"
+#include "Engine/ForwardIBLTechnique.hpp"
 
 
 Engine::Engine(GLFWwindow* windowPtr) :
@@ -173,6 +174,9 @@ std::unique_ptr<Technique> Engine::getSingleTechnique(const PassType passType)
 
 		case PassType::Composite:
 			return std::make_unique<CompositeTechnique>(this);
+
+		case PassType::ForwardIBL:
+			return std::make_unique<ForwardIBLTechnique>(this);
 
         default:
         {

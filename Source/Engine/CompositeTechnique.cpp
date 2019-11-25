@@ -15,7 +15,7 @@ void CompositeTechnique::render(RenderGraph& graph, Engine* eng, const std::vect
 	const auto viewPortY = eng->getSwapChainImage().getExtent(0, 0).height;
 
 	if ((eng->isPassRegistered(PassType::DeferredTextureAnalyticalPBRIBL) || eng->isPassRegistered(PassType::DeferredTexturePBRIBL) ||
-		eng->isPassRegistered(PassType::DeferredTextureBlinnPhongLighting)) && eng->isPassRegistered(PassType::Overlay))
+		eng->isPassRegistered(PassType::DeferredTextureBlinnPhongLighting) || eng->isPassRegistered(PassType::ForwardIBL)) && eng->isPassRegistered(PassType::Overlay))
 	{
 		GraphicsPipelineDescription desc
 		(

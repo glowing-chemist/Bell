@@ -23,7 +23,8 @@
 					ConvolveSkybox = 1 << 16, \
 					DFGGeneration = 1 << 17, \
 					DeferredTextureAnalyticalPBRIBL = 1 << 18, \
-					Composite = 1 << 19 \
+					Composite = 1 << 19, \
+					ForwardIBL = 1 << 20 \
 
 // An enum to keep track of which 
 enum class PassType : uint64_t
@@ -69,6 +70,9 @@ inline const char* passToString(const PassType passType)
 
 		case PassType::DeferredTextureAnalyticalPBRIBL:
 			return "Analytical IBL";
+
+		case PassType::ForwardIBL:
+			return "ForwardIBL";
 
 		case PassType::Skybox:
 			return "skybox";

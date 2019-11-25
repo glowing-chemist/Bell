@@ -113,6 +113,7 @@ set(BELL_SOURCE
     Source/Engine/AnalyticalImageBasedLightingTechnique.cpp
 	Source/Engine/ImageBasedLightingTechnique.cpp
     Source/Engine/CompositeTechnique.cpp
+	Source/Engine/ForwardIBLTechnique.cpp
 
     Source/Engine/CommandContext.cpp
 

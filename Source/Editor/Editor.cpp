@@ -147,6 +147,17 @@ namespace
 				newNode->mOutputs.push_back(Pin{ 0, newNode, kDFGLUT, PinType::Texture, PinKind::Output });
 				return newNode;
 			}
+
+			case NodeTypes::ForwardIBL:
+			{
+				std::shared_ptr<EditorNode> newNode = std::make_shared<PassNode>("ForwardIBL", passType);
+				newNode->mInputs.push_back(Pin{ 0, newNode, kDFGLUT, PinType::Texture, PinKind::Input });
+				newNode->mInputs.push_back(Pin{ 0, newNode, kGBufferDepth, PinType::Texture, PinKind::Input });
+				newNode->mInputs.push_back(Pin{ 0, newNode, kSkyBox, PinType::Texture, PinKind::Input });
+				newNode->mInputs.push_back(Pin{ 0, newNode, kConvolvedSkyBox, PinType::Texture, PinKind::Input });
+				newNode->mOutputs.push_back(Pin{ 0, newNode, kGlobalLighting, PinType::Texture, PinKind::Output });
+				return newNode;
+			}
         }
     }
 
@@ -370,6 +381,7 @@ void Editor::drawAssistantWindow()
 		   drawPassContextMenu(PassType::DeferredTextureBlinnPhongLighting);
 		   drawPassContextMenu(PassType::DeferredTexturePBRIBL);
 		   drawPassContextMenu(PassType::DeferredTextureAnalyticalPBRIBL);
+		   drawPassContextMenu(PassType::ForwardIBL);
 		   drawPassContextMenu(PassType::Skybox);
 		   drawPassContextMenu(PassType::ConvolveSkybox);
 		   drawPassContextMenu(PassType::DFGGeneration);
