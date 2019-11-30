@@ -13,6 +13,7 @@ struct CameraBuffer
     glm::mat4 mPerspectiveMatrix;
 	
     glm::mat4 mInvertedCameraMatrix;
+	glm::mat4 mInvertedPerspective;
 
     float mNeaPlane;
     float mFarPlane;

@@ -24,7 +24,8 @@
 					DFGGeneration = 1 << 17, \
 					DeferredTextureAnalyticalPBRIBL = 1 << 18, \
 					Composite = 1 << 19, \
-					ForwardIBL = 1 << 20 \
+					ForwardIBL = 1 << 20, \
+					LightFroxelation = 1 << 21 \
 
 // An enum to keep track of which 
 enum class PassType : uint64_t
@@ -82,6 +83,9 @@ inline const char* passToString(const PassType passType)
 
 		case PassType::DFGGeneration:
 			return "DFGGenration";
+
+		case PassType::LightFroxelation:
+			return "LightFroxelation";
     }
 
     return "UNKNOWN PASS TYPE";
@@ -129,7 +133,8 @@ enum class Format
 	RGBA16SNorm,
 	RGBA16Float,
 	RG32Float,
-	RGBA32Float
+	RGBA32Float,
+	RGBA16UInt
 };
 
 

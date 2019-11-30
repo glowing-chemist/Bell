@@ -6,6 +6,7 @@ struct CameraBuffer
         mat4 perspective;    
             
         mat4 invertedCamera;
+        mat4 invertedPerspective;
 
         float nearPlane;
         float farPlane;

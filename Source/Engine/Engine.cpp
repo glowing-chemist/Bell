@@ -17,6 +17,7 @@
 #include "Engine/SkyboxTechnique.hpp"
 #include "Engine/CompositeTechnique.hpp"
 #include "Engine/ForwardIBLTechnique.hpp"
+#include "Engine/LightFroxelationTechnique.hpp"
 
 
 Engine::Engine(GLFWwindow* windowPtr) :
@@ -178,6 +179,9 @@ std::unique_ptr<Technique> Engine::getSingleTechnique(const PassType passType)
 		case PassType::ForwardIBL:
 			return std::make_unique<ForwardIBLTechnique>(this);
 
+		case PassType::LightFroxelation:
+			return std::make_unique<LightFroxelationTechnique>(this);
+
         default:
         {
             BELL_TRAP;
@@ -228,6 +232,9 @@ bool Engine::isComputeTask(const PassType pass) const
 			return true;
 
 		case PassType::ConvolveSkybox:
+			return true;
+
+		case PassType::LightFroxelation:
 			return true;
 
 		default:
@@ -341,8 +348,11 @@ void Engine::updateGlobalUniformBuffers()
 	mCameraBuffer.mViewMatrix = currentCamera.getViewMatrix();
 	mCameraBuffer.mPerspectiveMatrix = currentCamera.getPerspectiveMatrix();
 	mCameraBuffer.mInvertedCameraMatrix = glm::inverse(mCameraBuffer.mPerspectiveMatrix * mCameraBuffer.mViewMatrix);
+	mCameraBuffer.mInvertedPerspective = glm::inverse(mCameraBuffer.mPerspectiveMatrix);
 	mCameraBuffer.mFrameBufferSize = glm::vec2{getSwapChainImage().getExtent(0, 0).width, getSwapChainImage().getExtent(0, 0).height};
 	mCameraBuffer.mPosition = currentCamera.getPosition();
+	mCameraBuffer.mNeaPlane = currentCamera.getNearPlane();
+	mCameraBuffer.mFarPlane = currentCamera.getFarPlane();
 
 	MapInfo mapInfo{};
 	mapInfo.mSize = sizeof(CameraBuffer);

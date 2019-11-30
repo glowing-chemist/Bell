@@ -158,6 +158,14 @@ namespace
 				newNode->mOutputs.push_back(Pin{ 0, newNode, kGlobalLighting, PinType::Texture, PinKind::Output });
 				return newNode;
 			}
+
+			case NodeTypes::LightFroxelation:
+			{
+				std::shared_ptr<EditorNode> newNode = std::make_shared<PassNode>("ForwardIBL", passType);
+				newNode->mInputs.push_back(Pin{ 0, newNode, kGBufferDepth, PinType::Texture, PinKind::Input });
+				newNode->mOutputs.push_back(Pin{ 0, newNode, kActiveFroxels, PinType::Texture, PinKind::Output });
+				return newNode;
+			}
         }
     }
 
@@ -385,6 +393,7 @@ void Editor::drawAssistantWindow()
 		   drawPassContextMenu(PassType::Skybox);
 		   drawPassContextMenu(PassType::ConvolveSkybox);
 		   drawPassContextMenu(PassType::DFGGeneration);
+		   drawPassContextMenu(PassType::LightFroxelation);
 
            ImGui::EndMenu();
        }

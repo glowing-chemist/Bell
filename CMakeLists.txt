@@ -111,9 +111,10 @@ set(BELL_SOURCE
     Source/Engine/ConvolveSkyboxTechnique.cpp
     Source/Engine/DFGGenerationTechnique.cpp
     Source/Engine/AnalyticalImageBasedLightingTechnique.cpp
-	Source/Engine/ImageBasedLightingTechnique.cpp
+    Source/Engine/ImageBasedLightingTechnique.cpp
     Source/Engine/CompositeTechnique.cpp
-	Source/Engine/ForwardIBLTechnique.cpp
+    Source/Engine/ForwardIBLTechnique.cpp
+    Source/Engine/LightFroxelationTechnique.cpp
 
     Source/Engine/CommandContext.cpp
 
