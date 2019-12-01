@@ -11,9 +11,10 @@
 
 enum class DeviceFeaturesFlags {
     Geometry = 1,
-    Tessalation = 2,
-    Discrete = 4,
-    Compute = 8
+    Tessalation = 1 << 1,
+    Discrete = 1 << 2,
+    Compute = 1 << 3,
+	Subgroup = 1 << 4 
 };
 
 int operator|(DeviceFeaturesFlags, DeviceFeaturesFlags);
@@ -23,7 +24,8 @@ bool operator&(int, DeviceFeaturesFlags);
 
 const QueueIndicies getAvailableQueues(vk::SurfaceKHR windowSurface, vk::PhysicalDevice& dev);
 
-class RenderInstance {
+class RenderInstance 
+{
 public:
     RenderInstance(GLFWwindow*);
     ~RenderInstance();
@@ -38,6 +40,7 @@ public:
 
 private:
     std::pair<vk::PhysicalDevice, vk::Device> findSuitableDevices(const int DeviceFeatureFlags = 0);
+	bool									  hasSubgroupSupport(vk::PhysicalDevice);
 
     vk::Instance mInstance;
     vk::Device mDevice;

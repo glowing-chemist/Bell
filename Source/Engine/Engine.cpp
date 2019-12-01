@@ -22,7 +22,7 @@
 
 Engine::Engine(GLFWwindow* windowPtr) :
     mRenderInstance(windowPtr),
-    mRenderDevice(mRenderInstance.createRenderDevice(DeviceFeaturesFlags::Compute | DeviceFeaturesFlags::Discrete)),
+    mRenderDevice(mRenderInstance.createRenderDevice(DeviceFeaturesFlags::Compute | DeviceFeaturesFlags::Discrete | DeviceFeaturesFlags::Subgroup)),
     mCurrentScene("Initial current scene"),
     mLoadingScene("Initial loading scene"),
     mVertexBuilder(),

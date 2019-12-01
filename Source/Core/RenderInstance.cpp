@@ -64,10 +64,9 @@ RenderInstance::RenderInstance(GLFWwindow* window)
 
     vk::ApplicationInfo appInfo{};
     appInfo.setPApplicationName("Quango");
-    appInfo.setApiVersion(VK_MAKE_VERSION(0, 1, 0));
+    appInfo.setApiVersion(VK_MAKE_VERSION(1, 1, 0));
     appInfo.setPEngineName("Bell");
-    appInfo.setEngineVersion(VK_MAKE_VERSION(0, 1, 0));
-    appInfo.setApiVersion(VK_API_VERSION_1_0);
+    appInfo.setEngineVersion(VK_MAKE_VERSION(1, 0, 0));
 
     uint32_t numExtensions = 0;
     const char* const* requiredExtensions = glfwGetRequiredInstanceExtensions(&numExtensions);
@@ -132,14 +131,15 @@ RenderDevice RenderInstance::createRenderDevice(const int DeviceFeatureFlags)
 
 std::pair<vk::PhysicalDevice, vk::Device> RenderInstance::findSuitableDevices(int DeviceFeatureFlags)
 {
-    bool GeometryWanted = DeviceFeatureFlags & DeviceFeaturesFlags::Geometry;
-    bool TessWanted     = DeviceFeatureFlags & DeviceFeaturesFlags::Tessalation;
-    bool DiscreteWanted = DeviceFeatureFlags & DeviceFeaturesFlags::Discrete;
-    bool ComputeWanted  = DeviceFeatureFlags & DeviceFeaturesFlags::Compute;
+    bool geometryWanted = DeviceFeatureFlags & DeviceFeaturesFlags::Geometry;
+    bool tessWanted     = DeviceFeatureFlags & DeviceFeaturesFlags::Tessalation;
+    bool discreteWanted = DeviceFeatureFlags & DeviceFeaturesFlags::Discrete;
+    bool computeWanted  = DeviceFeatureFlags & DeviceFeaturesFlags::Compute;
+	bool subgroupWanted = DeviceFeatureFlags & DeviceFeaturesFlags::Subgroup;
 
     auto availableDevices = mInstance.enumeratePhysicalDevices();
-    std::vector<int> deviceScores(availableDevices.size());
 
+	int physDeviceIndex = -1;
     for(uint32_t i = 0; i < availableDevices.size(); i++) {
         const vk::PhysicalDeviceProperties properties = availableDevices[i].getProperties();
         const vk::PhysicalDeviceFeatures   features   = availableDevices[i].getFeatures();
@@ -147,15 +147,24 @@ std::pair<vk::PhysicalDevice, vk::Device> RenderInstance::findSuitableDevices(in
 
         BELL_LOG_ARGS("Device Found: %s", properties.deviceName)
 
-        if(GeometryWanted && features.geometryShader) deviceScores[i] += 1;
-        if(TessWanted && features.tessellationShader) deviceScores[i] += 1;
-        if(DiscreteWanted && properties.deviceType == vk::PhysicalDeviceType::eDiscreteGpu) deviceScores[i] += 1;
-        if(ComputeWanted && (queueIndices.ComputeQueueIndex != -1)) deviceScores[i] += 1; // check if a compute queue is available
+		if (geometryWanted && !features.geometryShader)
+			continue;
+		if (tessWanted && !features.tessellationShader)
+			continue;
+		if (discreteWanted && !(properties.deviceType == vk::PhysicalDeviceType::eDiscreteGpu))
+			continue;
+		if (computeWanted && !(queueIndices.ComputeQueueIndex != -1))
+			continue;
+		if(subgroupWanted && !(hasSubgroupSupport(availableDevices[i])))
+			continue;
+
+		// We have a device that has all requested features.
+		physDeviceIndex = i;
+		break;
+
     }
 
-    auto maxScoreeDeviceOffset = std::max_element(deviceScores.begin(), deviceScores.end());
-    auto physicalDeviceIndex = std::distance(deviceScores.begin(), maxScoreeDeviceOffset);
-    vk::PhysicalDevice physicalDevice = availableDevices[physicalDeviceIndex];
+    vk::PhysicalDevice physicalDevice = availableDevices[physDeviceIndex];
 
     BELL_LOG_ARGS("Device selected: %s", physicalDevice.getProperties().deviceName)
 
@@ -207,7 +216,7 @@ std::pair<vk::PhysicalDevice, vk::Device> RenderInstance::findSuitableDevices(in
 	BELL_ASSERT(extensionsToEnable.size() >= requireDeviceExtensions.size(), "Missing required extension!")
 
     vk::PhysicalDeviceFeatures physicalFeatures{};
-    physicalFeatures.geometryShader = GeometryWanted;
+    physicalFeatures.geometryShader = geometryWanted;
     physicalFeatures.setSamplerAnisotropy(true);
 
 	vk::PhysicalDeviceDescriptorIndexingFeaturesEXT descriptorIndexingInfo{};
@@ -279,6 +288,19 @@ GLFWwindow* RenderInstance::getWindow() const
 vk::SurfaceKHR RenderInstance::getSurface() const
 {
     return mWindowSurface;
+}
+
+
+bool RenderInstance::hasSubgroupSupport(vk::PhysicalDevice physDev)
+{
+	vk::PhysicalDeviceProperties2 properties{};
+	vk::PhysicalDeviceSubgroupProperties subgroupProperties{};
+
+	properties.pNext = &subgroupProperties;
+
+	physDev.getProperties2(&properties);
+
+	return subgroupProperties.subgroupSize > 1;
 }
 
 
