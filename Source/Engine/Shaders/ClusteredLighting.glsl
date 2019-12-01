@@ -2,11 +2,7 @@
 #define FROXEL_TILE_SIZE  32
 #define LIGHTS_PER_FROXEL 16
 
-
-float lineariseDepth(const float depth, const float near, const float far)
-{
-	return  (2.0f * near) / (far + near - depth * (far - near));
-}
+#include "Utilities.glsl"
 
 
 uint getFroxelIndex(const uvec3 position)
