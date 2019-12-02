@@ -1,5 +1,5 @@
 #include "Engine/DFGGenerationTechnique.hpp"
-#include "ENgine/Engine.hpp"
+#include "Engine/Engine.hpp"
 
 
 DFGGenerationTechnique::DFGGenerationTechnique(Engine* eng) :
