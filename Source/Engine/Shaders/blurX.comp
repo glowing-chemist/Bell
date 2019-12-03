@@ -23,6 +23,7 @@ void main()
 	sharedLine[gl_LocalInvocationID.x] = imageLoad(inImage, dispatchLocation.xy);
 
 	// wait for the shared memory to be fully populated.
+	groupMemoryBarrier();
 	barrier();
 
 	if(dispatchLocation.x >= size.x)
