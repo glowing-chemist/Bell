@@ -152,6 +152,8 @@ namespace std
 
 		hash += stringHasher(desc.mFragmentShader.getFilePath());
 
+		if (desc.mDepthWrite)
+			hash = ~hash;
 
         return hash;
     }
