@@ -123,7 +123,7 @@ private:
 				   const int vertAttributes,
 				   const MaterialMappings& materialIndexMappings);
 
-    std::string mName;
+    std::filesystem::path mName;
 
     std::vector<std::pair<StaticMesh, MeshType>> mSceneMeshes;
 
