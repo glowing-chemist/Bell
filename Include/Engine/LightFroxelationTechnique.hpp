@@ -26,8 +26,18 @@ private:
 	ComputePipelineDescription mActiveFroxelsDesc;
 	ComputeTask				   mActiveFroxels;
 
+	ComputePipelineDescription mIndirectArgsDesc;
+	ComputeTask				   mIndirectArgs;
+
 	Image					   mActiveFroxelsImage;
 	ImageView				   mActiveFroxelsImageView;
+
+	Buffer					   mActiveFroxlesBuffer;
+	BufferView				   mActiveFroxlesBufferView;
+	BufferView				   mActiveFroxelsCounter;
+
+	Buffer					   mIndirectArgsBuffer;
+	BufferView				   mIndirectArgsView;
 };
 
 #endif

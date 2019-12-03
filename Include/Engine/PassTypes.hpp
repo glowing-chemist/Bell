@@ -134,6 +134,7 @@ enum class Format
 	RGBA16Float,
 	RG32Float,
 	RGBA32Float,
+	R16UInt,
 	RGBA16UInt
 };
 

@@ -137,7 +137,7 @@ namespace
 			case NodeTypes::Skybox:
 			{
 				std::shared_ptr<EditorNode> newNode = std::make_shared<PassNode>("Skybox", passType);
-				newNode->mInputs.push_back(Pin{ 0, newNode, kSkyBox, PinType::Texture, PinKind::Input });
+				newNode->mOutputs.push_back(Pin{ 0, newNode, kSkyBox, PinType::Texture, PinKind::Output });
 				return newNode;
 			}
 
@@ -161,7 +161,7 @@ namespace
 
 			case NodeTypes::LightFroxelation:
 			{
-				std::shared_ptr<EditorNode> newNode = std::make_shared<PassNode>("ForwardIBL", passType);
+				std::shared_ptr<EditorNode> newNode = std::make_shared<PassNode>("LightFroxelation", passType);
 				newNode->mInputs.push_back(Pin{ 0, newNode, kGBufferDepth, PinType::Texture, PinKind::Input });
 				newNode->mOutputs.push_back(Pin{ 0, newNode, kActiveFroxels, PinType::Texture, PinKind::Output });
 				return newNode;

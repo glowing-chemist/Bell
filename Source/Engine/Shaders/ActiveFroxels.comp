@@ -5,7 +5,7 @@
 #include "ClusteredLighting.glsl"
 #include "UniformBuffers.glsl"
 
-layout(rgba16ui, binding = 0) uniform writeonly uimage2D activeFroxels;
+layout(r32ui, binding = 0) uniform writeonly uimage2D activeFroxels;
 
 layout(binding = 1) uniform texture2D depth;
 
@@ -16,11 +16,27 @@ layout(binding = 2) uniform cameraBuffer
 
 layout(binding = 3) uniform sampler linearSampler;
 
-layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
+layout(std430, binding = 4) buffer visibleFroxlesCounter
+{
+	uint counter;
+};
 
+layout(std430, binding = 5) buffer visibleFroxles
+{
+	uvec3 froxel[];
+};
+
+layout(local_size_x = 32, local_size_y = 32, local_size_z = 1) in;
+
+shared uint froxelBitSet;
 
 void main()
 {
+	if(gl_LocalInvocationID.x == 0 && gl_LocalInvocationID.y == 0 && gl_LocalInvocationID.z == 0)
+	{
+		froxelBitSet = 0;
+	}
+
 	vec2 size = textureSize(sampler2D(depth, linearSampler), 0);
 
 	vec2 uv = vec2(gl_GlobalInvocationID.xy) / size;
@@ -28,7 +44,31 @@ void main()
 	float depth = texture(sampler2D(depth, linearSampler), uv).x;
 
 	uvec3 froxelPos = getFroxelPosition(uv, depth, size, camera.nearPlane, camera.farPlane, 90.0f);
+	uint froxelIndex = getFroxelIndex(froxelPos, uvec2(size));
 
 	if(gl_GlobalInvocationID.x <= size.x && gl_GlobalInvocationID.y <= size.y)
-		imageStore(activeFroxels, ivec2(gl_GlobalInvocationID.xy), uvec4(froxelPos, 1));
+		imageStore(activeFroxels, ivec2(gl_GlobalInvocationID.xy), uvec4(froxelIndex, 0, 0, 0));
+
+	// Shared memory must be zeroed by now.
+	groupMemoryBarrier();
+	barrier();
+
+	if(depth != 1.0f) // Don't count pixels 
+		atomicOr(froxelBitSet, 1 << froxelPos.z);
+
+	groupMemoryBarrier();
+	barrier();
+
+	uint visibleFroxels = bitCount(froxelBitSet);
+
+	if(gl_LocalInvocationIndex < DEPTH_SUBDIVISIONS) // Max number of depth slices.
+	{
+		if((froxelBitSet.x & 1 << gl_LocalInvocationIndex) > 0)
+		{
+			uint offset = atomicAdd(counter, 1u);
+
+			froxel[offset] = uvec3(froxelPos.xy, gl_LocalInvocationIndex);
+
+		}
+	}
 }
