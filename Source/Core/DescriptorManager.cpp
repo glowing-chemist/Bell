@@ -101,13 +101,13 @@ void DescriptorManager::writeDescriptors(RenderGraph& graph, std::vector<vulkanR
             descWrite.setDstBinding(bindingInfo.mResourceBinding);
 
             const auto& bindings = (*task).getInputAttachments();
+			const AttachmentType attachmentType = bindings[bindingInfo.mResourceBinding].mType;
 
             switch(bindingInfo.mResourcetype)
             {
                 case RenderGraph::ResourceType::Image:
                 {
 					// We assume that no sampling happens from the swapchain image.
-					const AttachmentType attachmentType = bindings[bindingInfo.mResourceBinding].mType;
 					const vk::DescriptorType type = [attachmentType]()
                     {
                         switch(attachmentType)
@@ -180,7 +180,7 @@ void DescriptorManager::writeDescriptors(RenderGraph& graph, std::vector<vulkanR
 
                     descWrite.setPBufferInfo(&bufferInfos.back());
 
-					if(bufferView.getUsage() & vk::BufferUsageFlagBits::eUniformBuffer)
+					if(attachmentType == AttachmentType::UniformBuffer)
                         descWrite.setDescriptorType(vk::DescriptorType::eUniformBuffer);
                     else
                         descWrite.setDescriptorType(vk::DescriptorType::eStorageBuffer);

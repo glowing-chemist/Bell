@@ -498,7 +498,7 @@ vk::DescriptorSetLayout RenderDevice::generateDescriptorSetLayoutBindings(const 
 				return vk::DescriptorType::eStorageImage;
 
 			case AttachmentType::DataBuffer:
-				return vk::DescriptorType::eStorageBufferDynamic;
+				return vk::DescriptorType::eStorageBuffer;
 
 			case AttachmentType::UniformBuffer:
 				return vk::DescriptorType::eUniformBuffer;

@@ -2,7 +2,7 @@
 #include "Core/RenderDevice.hpp"
 
 
-BufferView::BufferView(Buffer& parentBuffer, const uint32_t offset, const uint32_t size) :
+BufferView::BufferView(Buffer& parentBuffer, const uint64_t offset, const uint64_t size) :
 	DeviceChild{parentBuffer.getDevice()},
 	mOffset{offset},
 	mSize{size},
@@ -10,8 +10,4 @@ BufferView::BufferView(Buffer& parentBuffer, const uint32_t offset, const uint32
 	mBufferMemory{parentBuffer.getMemory()},
 	mUsage{parentBuffer.getUsage()}
 {
-	// If no explicit range was given use the entire buffer.
-	if(mSize == kWholeBufferLength)
-		mSize = parentBuffer.getSize();
 }
-

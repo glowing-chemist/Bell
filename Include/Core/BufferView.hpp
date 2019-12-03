@@ -9,25 +9,22 @@
 
 class BarrierRecorder;
 
-constexpr uint32_t kWholeBufferLength = std::numeric_limits<uint32_t>::max();
-
-
 class BufferView : public DeviceChild
 {
     friend BarrierRecorder;
 public:
 
-    BufferView(Buffer&, const uint32_t offset = 0, const uint32_t size = kWholeBufferLength);
+    BufferView(Buffer&, const uint64_t offset = 0, const uint64_t size = VK_WHOLE_SIZE);
     // buffer views don't manage any resources so can have a trivial destructor.
     ~BufferView() = default;
 
     vk::Buffer getBuffer() const
     { return mBufferHandle; }
 
-    uint32_t getOffset() const
+    uint64_t getOffset() const
     { return mOffset; }
 
-    uint32_t getSize() const
+    uint64_t getSize() const
     { return mSize; }
 
     vk::BufferUsageFlags getUsage() const
@@ -36,8 +33,8 @@ public:
 
 private:
 
-    uint32_t mOffset;
-    uint32_t mSize;
+    uint64_t mOffset;
+    uint64_t mSize;
 
     vk::Buffer mBufferHandle;
     Allocation mBufferMemory;
