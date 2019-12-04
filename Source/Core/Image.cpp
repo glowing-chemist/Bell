@@ -224,7 +224,7 @@ void Image::setContents(const void* data,
                         const int32_t offsetz)
 {
     const uint32_t size = xsize * ysize * zsize * getPixelSize(mFormat);
-    Buffer stagingBuffer(getDevice(), vk::BufferUsageFlagBits::eTransferSrc, size, 1, "Staging Buffer");
+    Buffer stagingBuffer(getDevice(), BufferUsage::TransferSrc, size, 1, "Staging Buffer");
 
 	MapInfo mapInfo{};
 	mapInfo.mOffset = 0;

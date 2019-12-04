@@ -1,11 +1,12 @@
 #include "Core/Buffer.hpp"
-#include "RenderDevice.hpp"
+#include "Core/RenderDevice.hpp"
 #include "Core/BarrierManager.hpp"
 #include "Core/BellLogging.hpp"
+#include "Core/ConversionUtils.hpp"
 
 
 Buffer::Buffer(RenderDevice* dev,
-	   vk::BufferUsageFlags usage,
+	   BufferUsage usage,
 	   const uint32_t size,
 	   const uint32_t stride,
 	   const std::string &name) :
@@ -18,10 +19,10 @@ Buffer::Buffer(RenderDevice* dev,
 {
     BELL_ASSERT(size > 0 && stride > 0, "size and stride must be greater than 0")
 
-    mAllignment = mUsage & vk::BufferUsageFlagBits::eUniformBuffer ?
+    mAllignment = mUsage & BufferUsage::Uniform ?
                                    getDevice()->getLimits().minUniformBufferOffsetAlignment : 1;
 
-    mBuffer = getDevice()->createBuffer(mSize, mUsage);
+    mBuffer = getDevice()->createBuffer(mSize, getVulkanBufferUsage(mUsage));
     const vk::MemoryRequirements bufferMemReqs = getDevice()->getMemoryRequirements(mBuffer);
     mBufferMemory = getDevice()->getMemoryManager()->Allocate(bufferMemReqs.size, bufferMemReqs.alignment, isMappable());
     getDevice()->getMemoryManager()->BindBuffer(mBuffer, mBufferMemory);
@@ -73,7 +74,7 @@ void Buffer::swap(Buffer& other)
 	vk::Buffer Buffer = mBuffer;
 	Allocation BufferMemory = mBufferMemory;
 	MapInfo CurrentMap = mCurrentMap;
-	vk::BufferUsageFlags Usage = mUsage;
+	BufferUsage Usage = mUsage;
 	uint32_t Size = mSize;
 	uint32_t Stride = mStride;
 	uint32_t Allignment = mAllignment;
@@ -143,7 +144,7 @@ void Buffer::setContents(const void* data, const uint32_t size, const uint32_t o
     }
     else
     {
-        Buffer stagingBuffer(getDevice(), vk::BufferUsageFlagBits::eTransferSrc, size, mStride, "Staging Buffer");
+        Buffer stagingBuffer(getDevice(), BufferUsage::TransferSrc, size, mStride, "Staging Buffer");
 
         MapInfo mapInfo{};
         mapInfo.mOffset = 0;
@@ -212,7 +213,7 @@ bool Buffer::resize(const uint32_t newSize, const bool preserContents)
 
 void Buffer::resizePreserveContents(const uint32_t newSize)
 {
-    vk::Buffer newBuffer = getDevice()->createBuffer(newSize, mUsage);
+    vk::Buffer newBuffer = getDevice()->createBuffer(newSize, getVulkanBufferUsage(mUsage));
     const vk::MemoryRequirements bufferMemReqs = getDevice()->getMemoryRequirements(newBuffer);
     Allocation newMemory = getDevice()->getMemoryManager()->Allocate(bufferMemReqs.size, bufferMemReqs.alignment, isMappable());
     getDevice()->getMemoryManager()->BindBuffer(newBuffer, newMemory);
@@ -242,7 +243,7 @@ void Buffer::resizePreserveContents(const uint32_t newSize)
 
 void Buffer::resizeDiscardContents(const uint32_t newSize)
 {
-    vk::Buffer newBuffer = getDevice()->createBuffer(newSize, mUsage);
+    vk::Buffer newBuffer = getDevice()->createBuffer(newSize, getVulkanBufferUsage(mUsage));
     const vk::MemoryRequirements bufferMemReqs = getDevice()->getMemoryRequirements(newBuffer);
     Allocation newMemory = getDevice()->getMemoryManager()->Allocate(bufferMemReqs.size, bufferMemReqs.alignment, isMappable());
     getDevice()->getMemoryManager()->BindBuffer(newBuffer, newMemory);

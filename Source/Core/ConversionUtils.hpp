@@ -13,6 +13,8 @@ vk::Format getVulkanImageFormat(const Format);
 
 vk::ImageUsageFlags getVulkanImageUsage(const ImageUsage);
 
+vk::BufferUsageFlags getVulkanBufferUsage(const BufferUsage);
+
 uint32_t getPixelSize(const Format);
 
 Format getBellImageFormat(const vk::Format);

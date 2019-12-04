@@ -130,13 +130,13 @@ int main()
 	Image integratedDFG = engine.createImage(512, 512, 1, 1, 1, 1, Format::RG16UNorm, ImageUsage::Sampled | ImageUsage::Storage, "Intergrated DFG");
 	ImageView integratedDFGView{integratedDFG, ImageViewType::Colour};
 
-	Buffer cameraBuffer = engine.createBuffer(sizeof (CameraBuffer), sizeof (CameraBuffer), vk::BufferUsageFlagBits::eUniformBuffer, "CameraBuffer");
+	Buffer cameraBuffer = engine.createBuffer(sizeof (CameraBuffer), sizeof (CameraBuffer), BufferUsage::Uniform, "CameraBuffer");
 	BufferView cameraBufferView{cameraBuffer};
 
-	Buffer ssaoBuffer = engine.createBuffer(sizeof (SSAOBuffer), sizeof (SSAOBuffer), vk::BufferUsageFlagBits::eUniformBuffer, "SSAOBuf");
+	Buffer ssaoBuffer = engine.createBuffer(sizeof (SSAOBuffer), sizeof (SSAOBuffer), BufferUsage::Uniform, "SSAOBuf");
 	BufferView	ssaoBufferView{ssaoBuffer};
 
-	Buffer lightBuffer = engine.createBuffer(sizeof(Light), sizeof(Light), vk::BufferUsageFlagBits::eUniformBuffer, "LightBuf");
+	Buffer lightBuffer = engine.createBuffer(sizeof(Light), sizeof(Light), BufferUsage::Uniform, "LightBuf");
 	BufferView lightBufferView{lightBuffer};
 
 	Sampler linearSampler{SamplerType::Linear};

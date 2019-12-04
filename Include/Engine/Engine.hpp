@@ -69,7 +69,7 @@ public:
 
 	Buffer createBuffer(const uint32_t size,
 						const uint32_t stride,
-						vk::BufferUsageFlags,
+						BufferUsage,
 						const std::string& = "");
 
 	Shader getShader(const std::string& path);

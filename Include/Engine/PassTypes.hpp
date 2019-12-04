@@ -161,5 +161,27 @@ inline uint32_t operator&(const ImageUsage& lhs, const ImageUsage& rhs)
 }
 
 
+enum class BufferUsage : uint32_t
+{
+	Vertex = 1,
+	Index = 1 << 1,
+	Uniform = 1 << 2,
+	DataBuffer = 1 << 3,
+	IndirectArgs = 1 << 4,
+	TransferDest = 1 << 5,
+	TransferSrc = 1 << 6
+};
+
+inline BufferUsage operator|(const BufferUsage& lhs, const BufferUsage& rhs)
+{
+	return static_cast<BufferUsage>(static_cast<uint32_t>(lhs) | static_cast<uint32_t>(rhs));
+}
+
+inline uint32_t operator&(const BufferUsage& lhs, const BufferUsage& rhs)
+{
+	return static_cast<uint32_t>(lhs)& static_cast<uint32_t>(rhs);
+}
+
+
 #endif
 

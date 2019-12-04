@@ -8,7 +8,7 @@ OverlayTechnique::OverlayTechnique(Engine* eng) :
 	Technique{"Overlay", eng->getDevice()},
 	mFontTexture(getDevice(), Format::RGBA8UNorm, ImageUsage::Sampled | ImageUsage::TransferDest, 512, 64, 1, 1, 1, 1, "Font Texture"),
 	mFontImageView(mFontTexture, ImageViewType::Colour),
-	mOverlayUniformBuffer(getDevice(), vk::BufferUsageFlagBits::eUniformBuffer, 16, 16, "Transformations"),
+	mOverlayUniformBuffer(getDevice(), BufferUsage::Uniform, 16, 16, "Transformations"),
 	mOverlayerBufferView(mOverlayUniformBuffer),
 	mPipelineDescription(eng->getShader("./Shaders/Overlay.vert"),
 						 eng->getShader("./Shaders/Overlay.frag"),

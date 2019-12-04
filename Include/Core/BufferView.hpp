@@ -27,7 +27,7 @@ public:
     uint64_t getSize() const
     { return mSize; }
 
-    vk::BufferUsageFlags getUsage() const
+    BufferUsage getUsage() const
     { return mUsage; }
 
 
@@ -38,7 +38,7 @@ private:
 
     vk::Buffer mBufferHandle;
     Allocation mBufferMemory;
-    vk::BufferUsageFlags mUsage;
+    BufferUsage mUsage;
 
 };
 

@@ -8,6 +8,7 @@
 #include "Core/DeviceChild.hpp"
 #include "Core/MemoryManager.hpp"
 
+#include "Engine/PassTypes.hpp"
 
 class RenderDevice;
 
@@ -16,7 +17,7 @@ class Buffer final : public GPUResource, public DeviceChild
 {
 public:
     Buffer(RenderDevice* dev,
-           vk::BufferUsageFlags usage,
+           BufferUsage usage,
            const uint32_t size,
            const uint32_t stride,
 		   const std::string& = "");
@@ -38,7 +39,7 @@ public:
 	vk::Buffer getBuffer() const
 		{ return mBuffer; }
 
-    vk::BufferUsageFlags getUsage() const
+    BufferUsage getUsage() const
         { return mUsage; }
 
 	Allocation getMemory() const
@@ -62,15 +63,15 @@ private:
 
     inline bool isMappable() const
     {
-        return static_cast<bool>(mUsage & vk::BufferUsageFlagBits::eTransferSrc ||
-        mUsage & vk::BufferUsageFlagBits::eUniformBuffer);
+        return static_cast<bool>(mUsage & BufferUsage::TransferSrc ||
+        mUsage & BufferUsage::Uniform);
     }
 
     vk::Buffer mBuffer;
     Allocation mBufferMemory;
 	MapInfo mCurrentMap;
 
-    vk::BufferUsageFlags mUsage;
+    BufferUsage mUsage;
     uint32_t mSize;
     uint32_t mStride;
     uint32_t mAllignment;

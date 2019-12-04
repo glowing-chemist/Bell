@@ -14,10 +14,10 @@ LightFroxelationTechnique::LightFroxelationTechnique(Engine* eng) :
 		eng->getDevice()->getSwapChainImageView().getImageExtent().height, 1, 1, 1, 1, "ActiveFroxels"),
 	mActiveFroxelsImageView(mActiveFroxelsImage, ImageViewType::Colour),
 	// Assumes an avergae max of 10 active froxels per screen space tile.
-	mActiveFroxlesBuffer(eng->getDevice(), vk::BufferUsageFlagBits::eStorageBuffer | vk::BufferUsageFlagBits::eUniformBuffer | vk::BufferUsageFlagBits::eTransferDst, sizeof(uint32_t) * 3 * (28 * 50 * 10), sizeof(uint32_t) * 3 *(28 * 50 * 10), "ActiveFroxelBuffer"),
+	mActiveFroxlesBuffer(eng->getDevice(), BufferUsage::DataBuffer | BufferUsage::Uniform | BufferUsage::TransferDest, sizeof(uint32_t) * 3 * (28 * 50 * 10), sizeof(uint32_t) * 3 *(28 * 50 * 10), "ActiveFroxelBuffer"),
 	mActiveFroxlesBufferView(mActiveFroxlesBuffer, eng->getDevice()->getLimits().minStorageBufferOffsetAlignment),
 	mActiveFroxelsCounter(mActiveFroxlesBuffer, 0u, static_cast<uint32_t>(sizeof(uint32_t))),
-	mIndirectArgsBuffer(eng->getDevice(), vk::BufferUsageFlagBits::eStorageBuffer | vk::BufferUsageFlagBits::eIndirectBuffer, sizeof(uint32_t) * 3, sizeof(uint32_t) * 3, "FroxelIndirectArgs"),
+	mIndirectArgsBuffer(eng->getDevice(), BufferUsage::DataBuffer | BufferUsage::IndirectArgs, sizeof(uint32_t) * 3, sizeof(uint32_t) * 3, "FroxelIndirectArgs"),
 	mIndirectArgsView(mIndirectArgsBuffer)
 {
 	mActiveFroxels.addInput(kActiveFroxels, AttachmentType::Image2D);

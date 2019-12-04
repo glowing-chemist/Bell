@@ -31,14 +31,14 @@ Engine::Engine(GLFWwindow* windowPtr) :
 	mTechniques{},
 	mCurrentPasstypes{0},
 	mCommandContext(),
-    mVertexBuffer{getDevice(), vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eTransferDst, 1000000, 1000000, "Vertex Buffer"},
-    mIndexBuffer{getDevice(), vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eTransferDst, 1000000, 1000000, "Index Buffer"},
+    mVertexBuffer{getDevice(), BufferUsage::Vertex | BufferUsage::TransferDest, 1000000, 1000000, "Vertex Buffer"},
+    mIndexBuffer{getDevice(), BufferUsage::Index | BufferUsage::TransferDest, 1000000, 1000000, "Index Buffer"},
 	mMaterials{getDevice()},
     mDefaultSampler(SamplerType::Linear),
     mCameraBuffer{},
-	mDeviceCameraBuffer{getDevice(), vk::BufferUsageFlagBits::eUniformBuffer, sizeof(CameraBuffer), sizeof(CameraBuffer), "Camera Buffer"},
+	mDeviceCameraBuffer{getDevice(), BufferUsage::Uniform, sizeof(CameraBuffer), sizeof(CameraBuffer), "Camera Buffer"},
 	mSSAOBUffer{},
-	mDeviceSSAOBuffer{getDevice(), vk::BufferUsageFlagBits::eUniformBuffer, sizeof(SSAOBuffer), sizeof(SSAOBuffer), "SSAO Buffer"},
+	mDeviceSSAOBuffer{getDevice(), BufferUsage::Uniform, sizeof(SSAOBuffer), sizeof(SSAOBuffer), "SSAO Buffer"},
 	mGeneratedSSAOBuffer{false},
     mWindow(windowPtr)
 {
@@ -106,7 +106,7 @@ Image Engine::createImage(const uint32_t x,
 
 Buffer Engine::createBuffer(const uint32_t size,
 					const uint32_t stride,
-					vk::BufferUsageFlags usage,
+					BufferUsage usage,
 					const std::string& name)
 {
 	return Buffer{&mRenderDevice, usage, size, stride, name};

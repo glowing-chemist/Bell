@@ -125,6 +125,36 @@ vk::ImageUsageFlags getVulkanImageUsage(const ImageUsage usage)
 }
 
 
+vk::BufferUsageFlags getVulkanBufferUsage(const BufferUsage usage)
+{
+	vk::BufferUsageFlags vulkanFlags = static_cast<vk::BufferUsageFlags>(0);
+
+	if (usage & BufferUsage::Vertex)
+		vulkanFlags |= vk::BufferUsageFlagBits::eVertexBuffer;
+
+	if (usage & BufferUsage::Index)
+		vulkanFlags |= vk::BufferUsageFlagBits::eIndexBuffer;
+
+	if (usage & BufferUsage::Uniform)
+		vulkanFlags |= vk::BufferUsageFlagBits::eUniformBuffer;
+
+	if (usage & BufferUsage::DataBuffer)
+		vulkanFlags |= vk::BufferUsageFlagBits::eStorageBuffer;
+
+	if (usage & BufferUsage::IndirectArgs)
+		vulkanFlags |= vk::BufferUsageFlagBits::eIndirectBuffer;
+
+	if (usage & BufferUsage::TransferSrc)
+		vulkanFlags |= vk::BufferUsageFlagBits::eTransferSrc;
+
+	if (usage & BufferUsage::TransferDest)
+		vulkanFlags |= vk::BufferUsageFlagBits::eTransferDst;
+
+
+	return vulkanFlags;
+}
+
+
 uint32_t getPixelSize(const Format format)
 {
 	uint32_t result = 4;
