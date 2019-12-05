@@ -13,7 +13,7 @@ GBufferTechnique::GBufferTechnique(Engine* eng) :
 
     mTask{"GBuffer", mPipelineDescription}
 {
-    mTask.setVertexAttributes(VertexAttributes::Position4 | VertexAttributes::Normals | VertexAttributes::TextureCoordinates);
+    mTask.setVertexAttributes(VertexAttributes::Position4 | VertexAttributes::Normals | VertexAttributes::TextureCoordinates | VertexAttributes::Material);
 
     mTask.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
     mTask.addInput(kDefaultSampler, AttachmentType::Sampler);
@@ -63,8 +63,7 @@ GBufferPreDepthTechnique::GBufferPreDepthTechnique(Engine* eng) :
 
     mTask{"GBufferPreDepth", mPipelineDescription}
 {
-    mTask.setVertexAttributes(VertexAttributes::Position4 | VertexAttributes::Albedo |
-                              VertexAttributes::Normals | VertexAttributes::TextureCoordinates);
+    mTask.setVertexAttributes(VertexAttributes::Position4 | VertexAttributes::Normals | VertexAttributes::TextureCoordinates | VertexAttributes::Material);
 
     mTask.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
     mTask.addInput(kDefaultSampler, AttachmentType::Sampler);

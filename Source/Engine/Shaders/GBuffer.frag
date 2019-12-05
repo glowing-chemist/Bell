@@ -18,7 +18,7 @@ layout(location = 1) out vec3 outNormals;
 layout(location = 2) out vec2 outMetalnessRoughness;
 
 
-layout(binding = 0) uniform UniformBufferObject 
+layout(set = 0, binding = 0) uniform UniformBufferObject 
 {    
     CameraBuffer camera;
 }; 
@@ -39,7 +39,6 @@ void main()
     normal = normalize(normal);
 
     const float roughness = texture(sampler2D(materials[nonuniformEXT(materialID * 4) + 2], linearSampler), uv).x;
-
     const float metalness = texture(sampler2D(materials[nonuniformEXT(materialID * 4) + 3], linearSampler), uv).x;
 
     const vec2 xDerivities = dFdxFine(uv);

@@ -24,8 +24,8 @@ namespace
             case NodeTypes::GBuffer:
             {
                 std::shared_ptr<EditorNode> newNode = std::make_shared<PassNode>("GBuffer", passType);
-                newNode->mOutputs.push_back(Pin{0, newNode, kGBufferAlbedo, PinType::Texture, PinKind::Output});
                 newNode->mOutputs.push_back(Pin{0, newNode, kGBufferNormals, PinType::Texture, PinKind::Output});
+                newNode->mOutputs.push_back(Pin{0, newNode, kGBufferAlbedo, PinType::Texture, PinKind::Output});
                 newNode->mOutputs.push_back(Pin{0, newNode, kGBufferMetalnessRoughness, PinType::Texture, PinKind::Output});
                 newNode->mOutputs.push_back(Pin{0, newNode, kGBufferDepth, PinType::Texture, PinKind::Output});
                 return newNode;
@@ -64,8 +64,8 @@ namespace
                 std::shared_ptr<EditorNode> newNode = std::make_shared<PassNode>("GBufferPreDepth", passType);
                 newNode->mOutputs.push_back(Pin{0, newNode, kGBufferNormals, PinType::Texture, PinKind::Output});
                 newNode->mOutputs.push_back(Pin{0, newNode, kGBufferAlbedo, PinType::Texture, PinKind::Output});
-                newNode->mOutputs.push_back(Pin{0, newNode, kGBufferSpecular, PinType::Texture, PinKind::Output});
-                newNode->mInputs.push_back(Pin{0, newNode,  kGBufferDepth, PinType::Texture, PinKind::Input});
+                newNode->mOutputs.push_back(Pin{0, newNode, kGBufferMetalnessRoughness, PinType::Texture, PinKind::Output});
+                newNode->mInputs.push_back(Pin{0, newNode, kGBufferDepth, PinType::Texture, PinKind::Input});
                 return newNode;
             }
 
@@ -130,6 +130,7 @@ namespace
             case NodeTypes::DeferredPBRIBL:
             {
                 std::shared_ptr<EditorNode> newNode = std::make_shared<PassNode>("Analytical deferred texuring IBL", passType);
+                newNode->mInputs.push_back(Pin{ 0, newNode, kDFGLUT, PinType::Texture, PinKind::Input });
                 newNode->mInputs.push_back(Pin{ 0, newNode, kGBufferNormals, PinType::Texture, PinKind::Input });
                 newNode->mInputs.push_back(Pin{ 0, newNode, kGBufferAlbedo, PinType::Texture, PinKind::Input });
                 newNode->mInputs.push_back(Pin{ 0, newNode, kGBufferMetalnessRoughness, PinType::Texture, PinKind::Input });
@@ -150,7 +151,8 @@ namespace
 			case NodeTypes::Skybox:
 			{
 				std::shared_ptr<EditorNode> newNode = std::make_shared<PassNode>("Skybox", passType);
-				newNode->mOutputs.push_back(Pin{ 0, newNode, kSkyBox, PinType::Texture, PinKind::Output });
+                newNode->mInputs.push_back(Pin{ 0, newNode, kGBufferDepth, PinType::Texture, PinKind::Input });
+                newNode->mOutputs.push_back(Pin{ 0, newNode, kSkyBox, PinType::Texture, PinKind::Output });
 				return newNode;
 			}
 

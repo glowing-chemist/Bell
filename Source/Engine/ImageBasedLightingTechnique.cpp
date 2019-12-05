@@ -6,7 +6,7 @@
 ImageBasedLightingDeferredTexturingTechnique::ImageBasedLightingDeferredTexturingTechnique(Engine* eng) :
 	Technique("GlobalIBL", eng->getDevice()),
 	mPipelineDesc{ eng->getShader("./Shaders/FullScreenTriangle.vert")
-			  ,eng->getShader("./Shaders/DFGLUTIBLDeferredTexture.frag"),
+              ,eng->getShader("./Shaders/DFGIBLDeferredTexturing.frag"),
 			  Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
 					getDevice()->getSwapChain()->getSwapChainImageHeight()},
 			  Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
@@ -41,6 +41,7 @@ DeferredImageBasedLightingTechnique::DeferredImageBasedLightingTechnique(Engine*
               getDevice()->getSwapChain()->getSwapChainImageHeight()} },
     mTask("GlobalIBL", mPipelineDesc)
 {
+    mTask.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
     mTask.addInput(kDFGLUT, AttachmentType::Texture2D);
     mTask.addInput(kGBufferDepth, AttachmentType::Texture2D);
     mTask.addInput(kGBufferNormals, AttachmentType::Texture2D);

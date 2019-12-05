@@ -17,7 +17,6 @@ public:
 		return PassType::DeferredTexturePBRIBL;
 	}
 
-	// default empty implementations as most classes won't need to do anything for one of these.
 	virtual void render(RenderGraph& graph, Engine*, const std::vector<const Scene::MeshInstance*>&) override final
 	{
 		graph.addTask(mTask);
@@ -44,7 +43,6 @@ public:
         return PassType::DeferredPBRIBL;
     }
 
-    // default empty implementations as most classes won't need to do anything for one of these.
     virtual void render(RenderGraph& graph, Engine*, const std::vector<const Scene::MeshInstance*>&) override final
     {
         graph.addTask(mTask);

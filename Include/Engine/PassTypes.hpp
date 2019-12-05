@@ -70,6 +70,9 @@ inline const char* passToString(const PassType passType)
 		case PassType::DeferredTexturePBRIBL:
             return "Deferred texturing IBL";
 
+        case PassType::DeferredPBRIBL:
+            return "Deferred PBR IBL";
+
 		case PassType::DeferredTextureAnalyticalPBRIBL:
             return "Analytical deferred texturing IBL";
 
