@@ -15,12 +15,15 @@ GBufferTechnique::GBufferTechnique(Engine* eng) :
 {
     mTask.setVertexAttributes(VertexAttributes::Position4 | VertexAttributes::Normals | VertexAttributes::TextureCoordinates);
 
+    mTask.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
+    mTask.addInput(kDefaultSampler, AttachmentType::Sampler);
+    mTask.addInput(kMaterials, AttachmentType::ShaderResourceSet);
     mTask.addInput("Model Matrix", AttachmentType::PushConstants);
 
-	mTask.addOutput(kGBufferNormals, AttachmentType::RenderTarget2D, Format::RGBA8UNorm, SizeClass::Swapchain, LoadOp::Clear_Black);
-	mTask.addOutput(kGBufferAlbedo, AttachmentType::RenderTarget2D, Format::RGBA8SRGB, SizeClass::Swapchain, LoadOp::Clear_Black);
-	mTask.addOutput(kGBufferSpecular, AttachmentType::RenderTarget2D, Format::R8UNorm, SizeClass::Swapchain, LoadOp::Clear_Black);
-	mTask.addOutput(kGBufferDepth, AttachmentType::Depth, Format::D32Float, SizeClass::Swapchain, LoadOp::Clear_White);
+    mTask.addOutput(kGBufferAlbedo,    AttachmentType::RenderTarget2D, Format::RGBA8UNorm, SizeClass::Swapchain, LoadOp::Clear_Black);
+    mTask.addOutput(kGBufferNormals,     AttachmentType::RenderTarget2D, Format::RGBA8UNorm, SizeClass::Swapchain, LoadOp::Clear_Black);
+    mTask.addOutput(kGBufferMetalnessRoughness,   AttachmentType::RenderTarget2D, Format::RG8UNorm, SizeClass::Swapchain, LoadOp::Clear_Black);
+    mTask.addOutput(kGBufferDepth,      AttachmentType::Depth, Format::D32Float, SizeClass::Swapchain, LoadOp::Clear_White);
 }
 
 
@@ -63,12 +66,15 @@ GBufferPreDepthTechnique::GBufferPreDepthTechnique(Engine* eng) :
     mTask.setVertexAttributes(VertexAttributes::Position4 | VertexAttributes::Albedo |
                               VertexAttributes::Normals | VertexAttributes::TextureCoordinates);
 
+    mTask.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
+    mTask.addInput(kDefaultSampler, AttachmentType::Sampler);
+    mTask.addInput(kMaterials, AttachmentType::ShaderResourceSet);
     mTask.addInput("Model Matrix", AttachmentType::PushConstants);
 
-	mTask.addOutput(kGBufferNormals,  AttachmentType::RenderTarget2D, Format::RGBA8UNorm, SizeClass::Swapchain, LoadOp::Clear_Black);
-	mTask.addOutput(kGBufferAlbedo,   AttachmentType::RenderTarget2D, Format::RGBA8SRGB, SizeClass::Swapchain, LoadOp::Clear_Black);
-	mTask.addOutput(kGBufferSpecular, AttachmentType::RenderTarget2D, Format::R8UNorm, SizeClass::Swapchain, LoadOp::Clear_Black);
-	mTask.addOutput(kGBufferDepth,         AttachmentType::Depth, Format::D32Float, SizeClass::Custom, LoadOp::Preserve);
+    mTask.addOutput(kGBufferAlbedo,  AttachmentType::RenderTarget2D, Format::RGBA8UNorm, SizeClass::Swapchain, LoadOp::Clear_Black);
+    mTask.addOutput(kGBufferNormals,   AttachmentType::RenderTarget2D, Format::RGBA8UNorm, SizeClass::Swapchain, LoadOp::Clear_Black);
+    mTask.addOutput(kGBufferMetalnessRoughness,   AttachmentType::RenderTarget2D, Format::RG8UNorm, SizeClass::Swapchain, LoadOp::Clear_Black);
+    mTask.addOutput(kGBufferDepth,    AttachmentType::Depth, Format::D32Float, SizeClass::Custom, LoadOp::Preserve);
 }
 
 

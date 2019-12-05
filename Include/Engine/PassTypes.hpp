@@ -25,7 +25,8 @@
 					DeferredTextureAnalyticalPBRIBL = 1 << 18, \
 					Composite = 1 << 19, \
 					ForwardIBL = 1 << 20, \
-					LightFroxelation = 1 << 21 \
+                    LightFroxelation = 1 << 21, \
+                    DeferredPBRIBL = 1 << 22 \
 
 // An enum to keep track of which 
 enum class PassType : uint64_t
@@ -67,10 +68,10 @@ inline const char* passToString(const PassType passType)
 			return "DeferredTextureBlinnPhong";
 
 		case PassType::DeferredTexturePBRIBL:
-			return "PBR IBL";
+            return "Deferred texturing IBL";
 
 		case PassType::DeferredTextureAnalyticalPBRIBL:
-			return "Analytical IBL";
+            return "Analytical deferred texturing IBL";
 
 		case PassType::ForwardIBL:
 			return "ForwardIBL";
@@ -127,6 +128,7 @@ enum class Format
 	D24S8Float,
 	R32Uint,
 	R8UNorm,
+    RG8UNorm,
 	RG16UNorm,
 	RGB16UNorm,
 	RGBA16UNorm,

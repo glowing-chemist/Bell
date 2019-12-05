@@ -162,7 +162,10 @@ std::unique_ptr<Technique> Engine::getSingleTechnique(const PassType passType)
 			return std::make_unique<AnalyticalImageBasedLightingTechnique>(this);
 
 		case PassType::DeferredTexturePBRIBL:
-			return std::make_unique<ImageBasedLightingTechnique>(this);
+			return std::make_unique<ImageBasedLightingDeferredTexturingTechnique>(this);
+
+        case PassType::DeferredPBRIBL:
+            return std::make_unique<DeferredImageBasedLightingTechnique>(this);
 
 		case PassType::ConvolveSkybox:
 			return std::make_unique<ConvolveSkyBoxTechnique>(this);

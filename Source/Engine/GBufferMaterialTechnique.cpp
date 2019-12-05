@@ -6,7 +6,7 @@
 GBufferMaterialTechnique::GBufferMaterialTechnique(Engine* eng) :
     Technique{"GBufferMaterial", eng->getDevice()},
     mPipelineDescription{eng->getShader("./Shaders/GBufferPassThroughMaterial.vert"),
-                         eng->getShader("./Shaders/GBufferMaterial.frag"),
+                         eng->getShader("./Shaders/GBufferDeferredTexturing.frag"),
                          Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
                                getDevice()->getSwapChain()->getSwapChainImageHeight()},
                          Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
@@ -57,7 +57,7 @@ GBufferMaterialPreDepthTechnique::GBufferMaterialPreDepthTechnique(Engine* eng) 
 
     mDepthName{kGBufferDepth},
     mPipelineDescription{eng->getShader("./Shaders/GBufferPassThroughMaterial.vert"),
-                         eng->getShader("./Shaders/GBufferMaterial.frag"),
+                         eng->getShader("./Shaders/GBufferDeferredTexturing.frag"),
                          Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
                                getDevice()->getSwapChain()->getSwapChainImageHeight()},
                          Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),

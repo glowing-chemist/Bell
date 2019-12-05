@@ -24,9 +24,9 @@ namespace
             case NodeTypes::GBuffer:
             {
                 std::shared_ptr<EditorNode> newNode = std::make_shared<PassNode>("GBuffer", passType);
-                newNode->mOutputs.push_back(Pin{0, newNode, kGBufferNormals, PinType::Texture, PinKind::Output});
                 newNode->mOutputs.push_back(Pin{0, newNode, kGBufferAlbedo, PinType::Texture, PinKind::Output});
-                newNode->mOutputs.push_back(Pin{0, newNode, kGBufferSpecular, PinType::Texture, PinKind::Output});
+                newNode->mOutputs.push_back(Pin{0, newNode, kGBufferNormals, PinType::Texture, PinKind::Output});
+                newNode->mOutputs.push_back(Pin{0, newNode, kGBufferMetalnessRoughness, PinType::Texture, PinKind::Output});
                 newNode->mOutputs.push_back(Pin{0, newNode, kGBufferDepth, PinType::Texture, PinKind::Output});
                 return newNode;
             }
@@ -102,7 +102,7 @@ namespace
 
 			case NodeTypes::DeferredTexturePBRIBL:
 			{
-				std::shared_ptr<EditorNode> newNode = std::make_shared<PassNode>("PBR IBL", passType);
+                std::shared_ptr<EditorNode> newNode = std::make_shared<PassNode>("Deferred texuring IBL", passType);
 				newNode->mInputs.push_back(Pin{ 0, newNode, kDFGLUT, PinType::Texture, PinKind::Input });
 				newNode->mInputs.push_back(Pin{ 0, newNode, kGBufferNormals, PinType::Texture, PinKind::Input });
 				newNode->mInputs.push_back(Pin{ 0, newNode, kGBufferUV, PinType::Texture, PinKind::Input });
@@ -116,7 +116,7 @@ namespace
 
 			case NodeTypes::DeferredTextureAnalyticalPBRIBL:
 			{
-				std::shared_ptr<EditorNode> newNode = std::make_shared<PassNode>("Analytical IBL", passType);
+                std::shared_ptr<EditorNode> newNode = std::make_shared<PassNode>("Analytical deferred texuring IBL", passType);
 				newNode->mInputs.push_back(Pin{ 0, newNode, kGBufferNormals, PinType::Texture, PinKind::Input });
 				newNode->mInputs.push_back(Pin{ 0, newNode, kGBufferUV, PinType::Texture, PinKind::Input });
 				newNode->mInputs.push_back(Pin{ 0, newNode, kGBufferMaterialID, PinType::Texture, PinKind::Input });
@@ -126,6 +126,19 @@ namespace
 				newNode->mOutputs.push_back(Pin{ 0, newNode, kGlobalLighting, PinType::Texture, PinKind::Output });
 				return newNode;
 			}
+
+            case NodeTypes::DeferredPBRIBL:
+            {
+                std::shared_ptr<EditorNode> newNode = std::make_shared<PassNode>("Analytical deferred texuring IBL", passType);
+                newNode->mInputs.push_back(Pin{ 0, newNode, kGBufferNormals, PinType::Texture, PinKind::Input });
+                newNode->mInputs.push_back(Pin{ 0, newNode, kGBufferAlbedo, PinType::Texture, PinKind::Input });
+                newNode->mInputs.push_back(Pin{ 0, newNode, kGBufferMetalnessRoughness, PinType::Texture, PinKind::Input });
+                newNode->mInputs.push_back(Pin{ 0, newNode, kGBufferDepth, PinType::Texture, PinKind::Input });
+                newNode->mInputs.push_back(Pin{ 0, newNode, kSkyBox, PinType::Texture, PinKind::Input });
+                newNode->mInputs.push_back(Pin{ 0, newNode, kConvolvedSkyBox, PinType::Texture, PinKind::Input });
+                newNode->mOutputs.push_back(Pin{ 0, newNode, kGlobalLighting, PinType::Texture, PinKind::Output });
+                return newNode;
+            }
 
 			case NodeTypes::ConvolveSkybox:
 			{
@@ -389,6 +402,7 @@ void Editor::drawAssistantWindow()
 		   drawPassContextMenu(PassType::DeferredTextureBlinnPhongLighting);
 		   drawPassContextMenu(PassType::DeferredTexturePBRIBL);
 		   drawPassContextMenu(PassType::DeferredTextureAnalyticalPBRIBL);
+           drawPassContextMenu(PassType::DeferredPBRIBL);
 		   drawPassContextMenu(PassType::ForwardIBL);
 		   drawPassContextMenu(PassType::Skybox);
 		   drawPassContextMenu(PassType::ConvolveSkybox);

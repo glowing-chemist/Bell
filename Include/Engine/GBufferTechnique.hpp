@@ -21,20 +21,6 @@ public:
 	virtual PassType getPassType() const final override
 		{ return PassType::GBuffer; }
 
-	std::string getDepthName() const
-        { return kGBufferDepth; }
-
-	std::string getAlbedoName() const
-        { return kGBufferAlbedo; }
-
-
-	std::string getNormalsName() const
-     { return kGBufferNormals; }
-
-
-	std::string getSpecularName() const
-        { return kGBufferSpecular; }
-
 	virtual void bindResources(RenderGraph&) const override final {};
 	virtual void render(RenderGraph&, Engine*, const std::vector<const Scene::MeshInstance *> &) override final;
 
