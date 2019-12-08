@@ -38,7 +38,7 @@ public:
     void addDispatch(const uint32_t x, const uint32_t y, const uint32_t z) { mComputeCalls.push_back({DispatchType::Standard, x, y, z, ""}); }
     void addIndirectDispatch(const uint32_t x, const uint32_t y, const uint32_t z) { mComputeCalls.push_back({DispatchType::Indirect, x, y, z, ""}); }
 
-	void addOutput(const std::string& name, const AttachmentType attachmentType, const Format, const SizeClass size = SizeClass::Custom, const LoadOp = LoadOp::Preserve) override final
+    void addOutput(const std::string& name, const AttachmentType attachmentType, const Format, const SizeClass = SizeClass::Custom, const LoadOp = LoadOp::Preserve) override final
     {
         // All outputs needs to be part of the descriptor set for compute pipelies
         // as compuite shaders writes don't go to the framebuffer.
@@ -52,7 +52,7 @@ public:
 
 	void clearCalls() override final { mComputeCalls.clear(); }
 
-	uint32_t recordedCommandCount() const override final { return mComputeCalls.size(); }
+    uint32_t recordedCommandCount() const override final { return static_cast<uint32_t>(mComputeCalls.size()); }
 
 	TaskType taskType() const override final { return TaskType::Compute; }
 
