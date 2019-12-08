@@ -25,6 +25,17 @@ public:
         }
     }
 
+    template<typename ...Args, typename K>
+    PerFrameResource(PerFrameResource<K>& parent, Args&& ... args) :
+        DeviceChild{parent.getDevice()},
+        mData{}
+    {
+        for(uint32_t i = 0; i < getDevice()->getSwapChainImageCount(); ++i)
+        {
+            mData.emplace_back(parent.get(i), std::forward<Args>(args)...);
+        }
+    }
+
     template<typename E>
     PerFrameResource(E* eng) :
         DeviceChild{eng->getDevice()},
@@ -60,6 +71,9 @@ public:
 
     T& operator*()
      { return mData[getDevice()->getCurrentFrameIndex()]; }
+
+    T& get(const uint32_t index)
+    { return mData[index]; }
 
 private:
 
