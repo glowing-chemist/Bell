@@ -53,7 +53,7 @@ void main()
 	groupMemoryBarrier();
 	barrier();
 
-	if(depth != 1.0f) // Don't count pixels 
+	if(depth != 1.0f) // Don't count pixels that are on the far plane (as we don't calculate lighting on the skybox)
 		atomicOr(froxelBitSet, 1 << froxelPos.z);
 
 	groupMemoryBarrier();

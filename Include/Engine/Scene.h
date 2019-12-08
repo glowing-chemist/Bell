@@ -96,9 +96,14 @@ public:
 
 	struct Light
 	{
-		LightType mType;
-		glm::mat4 mTransformation;
+        float4 mPosition;
+        float4 mDirection;
+        float4 mALbedo;
+        float4 mInfluenceAndType;
 	};
+
+    const std::vector<Light>& getLights() const
+    { return mLights; }
 
 private:
 
@@ -142,6 +147,7 @@ private:
 	std::vector<Material> mMaterials;
 	std::vector<ImageView> mMaterialImageViews;
 
+    std::vector<Light> mLights;
 
 	std::unique_ptr<Image> mSkybox;
 	std::unique_ptr<ImageView> mSkyboxView;

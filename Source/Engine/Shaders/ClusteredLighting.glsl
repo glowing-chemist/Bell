@@ -7,6 +7,26 @@
 #include "Utilities.glsl"
 
 
+// light Types:
+// 0 - point
+// 1 - spot
+// 2 - square
+// 3 - strip
+struct Light
+{
+	vec4 position;
+	vec4 direction; // direction for spotlight.
+	vec4 albedo;
+	vec4 influenceAndType; // (influence, lightType)
+};
+
+struct AABB
+{
+	vec3 topLeft; // smallest
+	vec3 bottomRight; // largest
+};
+
+
 uint getFroxelIndex(const uvec3 position, const uvec2 size)
 {
 	return position.x + (position.y * (size.x / FROXEL_TILE_SIZE)) + (position.z * ((size.x * size.y) / (FROXEL_TILE_SIZE * FROXEL_TILE_SIZE)));
@@ -25,9 +45,59 @@ uvec3 getFroxelPosition(const vec2 uv, const float depth, const vec2 size, const
 	//const float Sy = size.y / FROXEL_TILE_SIZE; 
 	//const float kn = floor((log(depthVS / nearPlane)) / (log(1 + (2 * tan(radians(FOV / 2.0f)) / Sy))));
 
-	// Version with a fixed (DEPTH_SUBDIVISIONS) number if subdivisions.
+	// Version with a fixed (DEPTH_SUBDIVISIONS) number of subdivisions.
 	const float k1 = (farPlane - nearPlane) / pow(DEPTH_SUBDIVISION_FACTOR, DEPTH_SUBDIVISIONS);
 	const float kn = floor(log(depthVS / k1) / log(DEPTH_SUBDIVISION_FACTOR));
 
 	return uvec3(xyFroxel, kn);
+}
+
+
+vec2 getWidthHeight(const float linearDepth, const float FOV, const vec2 framebufferSize)
+{
+	const float height = 2.0f * tan(radians(FOV) / 2.0f) * linearDepth;
+
+	const float aspect = framebufferSize.x / framebufferSize.y;
+	const float width = height * aspect;
+
+	return vec2(width, height);
+}
+
+
+AABB getFroxelAABB(const uvec3 froxelPosition, const float FOV, const vec2 framebufferSize)
+{
+	const float nearDepth = pow(DEPTH_SUBDIVISION_FACTOR, froxelPosition.z);
+	const vec2 nearWidthHeight = getWidthHeight(nearDepth, FOV, framebufferSize);
+	vec3 nearViewSpace;
+	nearViewSpace.xy = (froxelPosition.xy / (framebufferSize / FROXEL_TILE_SIZE)) * nearWidthHeight;
+	nearViewSpace.z = nearDepth;
+
+	const float farDepth = pow(DEPTH_SUBDIVISION_FACTOR, froxelPosition.z - 1u);
+	const vec2 farWidthHeight = getWidthHeight(farDepth, FOV, framebufferSize);
+	vec3 farViewSpace;
+	farViewSpace.xy = (froxelPosition.xy / (framebufferSize / FROXEL_TILE_SIZE)) * farWidthHeight;
+	farViewSpace.z = farDepth;
+
+	return AABB(nearViewSpace, vec3(0));
+}
+
+
+// Interscetion helpers
+bool sphereAABBIntersection(const vec3 centre, const float radius, const AABB aabb)
+{
+	const float r2 = radius * radius;
+	bvec3 lessThan = bvec3(centre.x < aabb.topLeft.x,
+							centre.y < aabb.topLeft.y,
+							centre.z < aabb.topLeft.z);
+	vec3 dmin = mix(vec3(0.0f), sqrt(centre - aabb.topLeft), lessThan);
+
+	bvec3 greaterThan = bvec3(centre.x > aabb.bottomRight.x,
+								centre.y > aabb.bottomRight.y,
+								centre.z > aabb.bottomRight.z);
+	dmin += mix(vec3(0.0f), sqrt(centre - aabb.bottomRight), greaterThan);
+
+	// Sum the results.
+	dmin.x = dot(dmin, vec3(1.0f));
+
+	return dmin.x <= r2;
 }

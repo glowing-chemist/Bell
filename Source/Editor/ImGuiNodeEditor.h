@@ -17,7 +17,7 @@ enum class NodeTypes : uint64_t
 {
     PASS_TYPES,
     Texture,
-    BUffer
+    Buffer
 };
 
 

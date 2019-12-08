@@ -179,7 +179,11 @@ private:
 	Buffer mDeviceSSAOBuffer;
 	bool mGeneratedSSAOBuffer;
 
-	void updateGlobalUniformBuffers();
+    PerFrameResource<Buffer> mLightBuffer;
+    PerFrameResource<BufferView> mLightBufferView;
+    PerFrameResource<ShaderResourceSet> mLightsSRS;
+
+    void updateGlobalBuffers();
 
     std::mutex mSubmissionLock;
 

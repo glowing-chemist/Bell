@@ -3,6 +3,7 @@
 #extension GL_GOOGLE_include_directive : enable
 #extension GL_EXT_nonuniform_qualifier : enable
 
+#include "ClusteredLighting.glsl"
 #include "UniformBuffers.glsl"
 #include "NormalMapping.glsl"
 

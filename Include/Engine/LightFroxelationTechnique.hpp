@@ -5,6 +5,8 @@
 #include "Core/Image.hpp"
 #include "Core/ImageView.hpp"
 #include "RenderGraph/ComputeTask.hpp"
+#include "Core/PerFrameResource.hpp"
+
 
 class LightFroxelationTechnique : public Technique
 {
@@ -23,21 +25,34 @@ public:
 
 private:
 
-	ComputePipelineDescription mActiveFroxelsDesc;
-	ComputeTask				   mActiveFroxels;
+    ComputePipelineDescription      mActiveFroxelsDesc;
+    ComputeTask                     mActiveFroxels;
 
-	ComputePipelineDescription mIndirectArgsDesc;
-	ComputeTask				   mIndirectArgs;
+    ComputePipelineDescription      mIndirectArgsDesc;
+    ComputeTask                     mIndirectArgs;
 
-	Image					   mActiveFroxelsImage;
-	ImageView				   mActiveFroxelsImageView;
+    ComputePipelineDescription      mClearCountersDesc;
+    ComputeTask                     mClearCounters;
 
-	Buffer					   mActiveFroxlesBuffer;
-	BufferView				   mActiveFroxlesBufferView;
-	BufferView				   mActiveFroxelsCounter;
+    ComputePipelineDescription      mLightAsignmentDesc;
+    ComputeTask                     mLightAsignment;
 
-	Buffer					   mIndirectArgsBuffer;
-	BufferView				   mIndirectArgsView;
+    PerFrameResource<Image>         mActiveFroxelsImage;
+    PerFrameResource<ImageView>     mActiveFroxelsImageView;
+
+    PerFrameResource<Buffer>        mActiveFroxlesBuffer;
+    PerFrameResource<BufferView>    mActiveFroxlesBufferView;
+    PerFrameResource<BufferView>	mActiveFroxelsCounter;
+
+    PerFrameResource<Buffer>		mIndirectArgsBuffer;
+    PerFrameResource<BufferView>	mIndirectArgsView;
+
+    PerFrameResource<Buffer>        mSparseFroxelBuffer;
+    PerFrameResource<BufferView>    mSparseFroxelBufferView;
+
+    PerFrameResource<Buffer>        mLightIndexBuffer;
+    PerFrameResource<BufferView>    mLightIndexBufferView;
+    PerFrameResource<BufferView>    mLightIndexCounterView;
 };
 
 #endif

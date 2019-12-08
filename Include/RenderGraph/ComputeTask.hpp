@@ -36,7 +36,7 @@ public:
         { return mPipelineDescription; }
 
     void addDispatch(const uint32_t x, const uint32_t y, const uint32_t z) { mComputeCalls.push_back({DispatchType::Standard, x, y, z, ""}); }
-    void addIndirectDispatch(const uint32_t x, const uint32_t y, const uint32_t z) { mComputeCalls.push_back({DispatchType::Indirect, x, y, z, ""}); }
+    void addIndirectDispatch(const std::string& indirectBufferSlot) { mComputeCalls.push_back({DispatchType::Indirect, 0, 0, 0, indirectBufferSlot}); }
 
     void addOutput(const std::string& name, const AttachmentType attachmentType, const Format, const SizeClass = SizeClass::Custom, const LoadOp = LoadOp::Preserve) override final
     {

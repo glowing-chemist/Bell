@@ -21,6 +21,8 @@ struct CameraBuffer
     glm::vec2 mFrameBufferSize;
 
     glm::vec3 mPosition;
+
+    float mFOV;
 };
 
 

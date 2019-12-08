@@ -1,0 +1,94 @@
+#version 450
+#extension GL_ARB_separate_shader_objects : enable
+#extension GL_GOOGLE_include_directive : enable
+
+#include "ClusteredLighting.glsl"
+#include "UniformBuffers.glsl"
+
+
+layout(std430, set = 0,  binding = 0) buffer visibleFroxlesCounter
+{
+	uint visibleCounter;
+};
+
+layout(std430, set = 0,  binding = 1) buffer visibleFroxles
+{
+	uvec3 froxel[];
+};
+
+layout(std430, set = 0,  binding = 2) buffer froxelIndixCounter
+{
+	uint indexCounter;
+};
+
+layout(std430, set = 0,  binding = 3) buffer froxelIndicies
+{
+	uint indicies[];
+};
+
+layout(std430, set = 0, binding = 4) buffer sparseFroxels
+{
+	uvec2 sparseFroxelList[];
+};
+
+layout(binding = 5) uniform cameraBuffer
+{
+	CameraBuffer camera;
+};
+
+layout(std430, set = 1, binding = 0) buffer sceneLights
+{
+	uint  lightCount;
+	Light lights[];
+};
+
+layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
+
+
+void main()
+{
+	const uint froxelIndex = atomicAdd(visibleCounter, -1) - 1; // need the value after the opertation.
+	const uvec3 froxelToProcess = froxel[froxelIndex];
+
+	const AABB aabb = getFroxelAABB(froxelToProcess, camera.fov, camera.frameBufferSize);
+
+	uint nextFreeSlot = 0;
+	uint lightIndicies[LIGHTS_PER_FROXEL];
+
+	for(uint i = 0; i < lightCount; ++i)
+	{
+		const Light light = lights[i];
+		switch(uint(light.influenceAndType.y))
+		{
+			case 0:
+			{
+				const bool intersects = sphereAABBIntersection(light.position.xyz, light.influenceAndType.x, aabb);
+				if(intersects)
+				{
+					lightIndicies[nextFreeSlot++] = i;
+				}
+				break;
+			}
+
+			// TODO add more light types as and when supported.
+
+			// Should never hit here.
+			default:
+				continue;
+		}
+
+		// Don't evaluate any more light if we have asigned all.
+		if(nextFreeSlot == LIGHTS_PER_FROXEL)
+			break;
+	}
+
+	// Update the global data structures.
+	uint startLightIndex = atomicAdd(indexCounter, nextFreeSlot);
+
+	for(uint i = 0; i < nextFreeSlot; ++i)
+	{
+		indicies[startLightIndex + i] = lightIndicies[i];
+	}
+
+	sparseFroxelList[froxelIndex] = uvec2(startLightIndex, nextFreeSlot);
+}

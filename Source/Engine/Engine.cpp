@@ -27,21 +27,30 @@ Engine::Engine(GLFWwindow* windowPtr) :
     mLoadingScene("Initial loading scene"),
     mVertexBuilder(),
     mIndexBuilder(),
+    mMaterials{getDevice()},
     mCurrentRenderGraph(),
 	mTechniques{},
 	mCurrentPasstypes{0},
 	mCommandContext(),
     mVertexBuffer{getDevice(), BufferUsage::Vertex | BufferUsage::TransferDest, 1000000, 1000000, "Vertex Buffer"},
     mIndexBuffer{getDevice(), BufferUsage::Index | BufferUsage::TransferDest, 1000000, 1000000, "Index Buffer"},
-	mMaterials{getDevice()},
     mDefaultSampler(SamplerType::Linear),
     mCameraBuffer{},
 	mDeviceCameraBuffer{getDevice(), BufferUsage::Uniform, sizeof(CameraBuffer), sizeof(CameraBuffer), "Camera Buffer"},
 	mSSAOBUffer{},
 	mDeviceSSAOBuffer{getDevice(), BufferUsage::Uniform, sizeof(SSAOBuffer), sizeof(SSAOBuffer), "SSAO Buffer"},
 	mGeneratedSSAOBuffer{false},
+    mLightBuffer(getDevice(), BufferUsage::DataBuffer | BufferUsage::TransferDest, (sizeof(Scene::Light) * 1000) + sizeof(uint32_t), (sizeof(Scene::Light) * 1000) + sizeof(uint32_t), "LightBuffer"),
+    mLightBufferView(mLightBuffer),
+    mLightsSRS(getDevice()),
     mWindow(windowPtr)
 {
+    for(uint32_t i = 0; i < getDevice()->getSwapChainImageCount(); ++i)
+    {
+        mLightsSRS.get(i).addDataBufferRW(mLightBufferView.get(i));
+        mLightsSRS.get(i).finalise();
+    }
+
 }
 
 
@@ -282,10 +291,12 @@ void Engine::recordScene()
 		tech->bindResources(mCurrentRenderGraph);
 	}
 
-    updateGlobalUniformBuffers();
+    updateGlobalBuffers();
 
 	mCurrentRenderGraph.bindShaderResourceSet(kMaterials, mMaterials);
     mCurrentRenderGraph.bindBuffer(kCameraBuffer, *mDeviceCameraBuffer);
+    mCurrentRenderGraph.bindShaderResourceSet(kLightBuffer, *mLightsSRS);
+    mCurrentRenderGraph.bindBuffer(kSSAOBuffer, mDeviceSSAOBuffer);
     mCurrentRenderGraph.bindSampler(kDefaultSampler, mDefaultSampler);
 
 	if(mCurrentScene.getSkybox())
@@ -344,7 +355,7 @@ void Engine::submitCommandRecorder(CommandContext &ccx)
 }
 
 
-void Engine::updateGlobalUniformBuffers()
+void Engine::updateGlobalBuffers()
 {
 	auto& currentCamera = getCurrentSceneCamera();
 
@@ -356,6 +367,7 @@ void Engine::updateGlobalUniformBuffers()
 	mCameraBuffer.mPosition = currentCamera.getPosition();
 	mCameraBuffer.mNeaPlane = currentCamera.getNearPlane();
 	mCameraBuffer.mFarPlane = currentCamera.getFarPlane();
+    mCameraBuffer.mFOV = currentCamera.getFOV();
 
 	MapInfo mapInfo{};
 	mapInfo.mSize = sizeof(CameraBuffer);
@@ -398,6 +410,11 @@ void Engine::updateGlobalUniformBuffers()
 
 		mDeviceSSAOBuffer.unmap();
 	}
+
+    mLightBuffer->setContents(static_cast<int>(mCurrentScene.getLights().size()), sizeof(uint32_t));
+
+    if(!mCurrentScene.getLights().empty())
+        mLightBuffer->setContents(mCurrentScene.getLights().data(), static_cast<uint32_t>(mCurrentScene.getLights().size() * sizeof(Scene::Light)), sizeof(uint32_t));
 }
 
 

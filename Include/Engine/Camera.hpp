@@ -76,6 +76,9 @@ public:
 	float getFarPlane() const
 	{ return mFarPlaneDistance; }
 
+    float getFOV() const
+    { return mFieldOfView; }
+
     Frustum getFrustum() const;
 
 private:
