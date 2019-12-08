@@ -32,7 +32,9 @@ public:
 	void addSampledImageArray(const ImageViewArray&);
 	void addSampler(const Sampler&);
 	void addUniformBuffer(const BufferView&);
-	void addDataBuffer(const BufferView&);
+    void addDataBufferRO(const BufferView&);
+    void addDataBufferRW(const BufferView&);
+    void addDataBufferWO(const BufferView&);
 	void finalise();
 
 	vk::DescriptorSetLayout getLayout() const

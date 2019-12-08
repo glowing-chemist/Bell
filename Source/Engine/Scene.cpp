@@ -12,7 +12,6 @@
 #include <iterator>
 #include <limits>
 
-
 namespace
 {
 	struct TextureInfo

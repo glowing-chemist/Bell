@@ -125,13 +125,30 @@ void ShaderResourceSet::addUniformBuffer(const BufferView& view)
 	mResources.push_back({ index, AttachmentType::UniformBuffer });
 }
 
-
-void ShaderResourceSet::addDataBuffer(const BufferView& view)
+void ShaderResourceSet::addDataBufferRO(const BufferView& view)
 {
-	const auto index = mBufferViews.size();
-	mBufferViews.push_back(view);
+    const auto index = mBufferViews.size();
+    mBufferViews.push_back(view);
 
-	mResources.push_back({ index, AttachmentType::DataBuffer });
+    mResources.push_back({ index, AttachmentType::DataBufferRO });
+}
+
+
+void ShaderResourceSet::addDataBufferRW(const BufferView& view)
+{
+    const auto index = mBufferViews.size();
+    mBufferViews.push_back(view);
+
+    mResources.push_back({ index, AttachmentType::DataBufferRW });
+}
+
+
+void ShaderResourceSet::addDataBufferWO(const BufferView& view)
+{
+    const auto index = mBufferViews.size();
+    mBufferViews.push_back(view);
+
+    mResources.push_back({ index, AttachmentType::DataBufferWO });
 }
 
 
@@ -169,11 +186,18 @@ void ShaderResourceSet::finalise()
 		}
 
 		case AttachmentType::UniformBuffer:
-		case AttachmentType::DataBuffer:
+        case AttachmentType::DataBufferRO:
+        case AttachmentType::DataBufferRW:
+        case AttachmentType::DataBufferWO:
 		{
 			writes.emplace_back(resource.mType, binding, 0, nullptr, &mBufferViews[resource.mIndex], nullptr);
 			break;
 		}
+
+        default:
+            // THis attachment type doesn't make sense to add to a SRS.
+            BELL_TRAP;
+            break;
 
 		}
 		++binding;

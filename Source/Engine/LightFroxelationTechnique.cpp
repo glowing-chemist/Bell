@@ -24,11 +24,11 @@ LightFroxelationTechnique::LightFroxelationTechnique(Engine* eng) :
 	mActiveFroxels.addInput(kGBufferDepth, AttachmentType::Texture2D);
 	mActiveFroxels.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
 	mActiveFroxels.addInput(kDefaultSampler, AttachmentType::Sampler);
-	mActiveFroxels.addInput("ActiveFroxelBufferCounter", AttachmentType::DataBuffer);
-	mActiveFroxels.addInput(kActiveFroxelBuffer, AttachmentType::DataBuffer);
+    mActiveFroxels.addInput("ActiveFroxelBufferCounter", AttachmentType::DataBufferRW);
+    mActiveFroxels.addInput(kActiveFroxelBuffer, AttachmentType::DataBufferRO);
 
 	mIndirectArgs.addInput("ActiveFroxelBufferCounter", AttachmentType::UniformBuffer);
-	mIndirectArgs.addInput("FroxelIndirectArgs", AttachmentType::DataBuffer);
+    mIndirectArgs.addInput("FroxelIndirectArgs", AttachmentType::DataBufferRO);
 	mIndirectArgs.addDispatch(1, 1, 1);
 
 	uint32_t zeroCounter = 0;
@@ -42,7 +42,7 @@ void LightFroxelationTechnique::render(RenderGraph& graph, Engine* eng, const st
 
 	const auto extent = eng->getDevice()->getSwapChainImageView().getImageExtent();
 
-	mActiveFroxels.addDispatch(std::ceil(extent.width / 32.0f), std::ceil(extent.height / 32.0f), 1);
+    mActiveFroxels.addDispatch(static_cast<uint32_t>(std::ceil(extent.width / 32.0f)), static_cast<uint32_t>(std::ceil(extent.height / 32.0f)), 1);
 
 	graph.addTask(mActiveFroxels);
 	graph.addTask(mIndirectArgs);

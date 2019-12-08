@@ -168,10 +168,17 @@ void RenderGraph::compileDependancies()
 					for(size_t innerIndex = 0; innerIndex < innerResources.size(); ++innerIndex)
                     {
 						if(outResources[outerIndex].mName == innerResources[innerIndex].mName &&
+                                // Assumes ImageND are used as read write or read Only.
                                 (outResources[outerIndex].mType == AttachmentType::Image1D ||
                                  outResources[outerIndex].mType == AttachmentType::Image2D ||
                                  outResources[outerIndex].mType == AttachmentType::Image3D ||
-                                 outResources[outerIndex].mType == AttachmentType::DataBuffer ||
+                                 // If the outer task writes to the buffer and the inner reads we need
+                                 // to emit a dependancy to enforce writing before reading.
+                                 ((outResources[outerIndex].mType == AttachmentType::DataBufferWO ||
+                                  outResources[outerIndex].mType == AttachmentType::DataBufferRW) &&
+                                  (innerResources[innerIndex].mType == AttachmentType::DataBufferRO ||
+                                  innerResources[innerIndex].mType == AttachmentType::DataBufferRW)) ||
+                                 // Indirect buffers are readOnly (written as (WO) data buffers)
                                  outResources[outerIndex].mType == AttachmentType::IndirectBuffer))
                         {
                             // Innertask reads from a
@@ -202,7 +209,7 @@ void RenderGraph::compileDependancies()
         }
     }
 
-	mTaskDependancies.insert(mTaskDependancies.begin(), dependancies.begin(), dependancies.end());
+    mTaskDependancies.insert(mTaskDependancies.end(), dependancies.begin(), dependancies.end());
 }
 
 

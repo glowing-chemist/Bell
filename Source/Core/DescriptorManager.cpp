@@ -234,7 +234,7 @@ vk::DescriptorSet DescriptorManager::writeShaderResourceSet(const vk::Descriptor
 		case AttachmentType::Image2D:
 		case AttachmentType::Image3D:
 		{
-			BELL_ASSERT(writes[i].mImage, "Attachment type set incorrectly");
+            BELL_ASSERT(writes[i].mImage, "Attachment type set incorrectly")
 			const auto& imageView = *writes[i].mImage;
 
 			vk::ImageLayout adjustedLayout = imageView.getType() == ImageViewType::Depth ? vk::ImageLayout::eDepthStencilReadOnlyOptimal : getVulkanImageLayout(attachmentType);
@@ -253,7 +253,7 @@ vk::DescriptorSet DescriptorManager::writeShaderResourceSet(const vk::Descriptor
 		case AttachmentType::Texture2D:
 		case AttachmentType::Texture3D:
 		{
-			BELL_ASSERT(writes[i].mImage, "Attachment type set incorrectly");
+            BELL_ASSERT(writes[i].mImage, "Attachment type set incorrectly")
 			const auto& imageView = *writes[i].mImage;
 
 			vk::ImageLayout adjustedLayout = imageView.getType() == ImageViewType::Depth ? vk::ImageLayout::eDepthStencilReadOnlyOptimal : getVulkanImageLayout(attachmentType);
@@ -271,7 +271,7 @@ vk::DescriptorSet DescriptorManager::writeShaderResourceSet(const vk::Descriptor
 		// Image arrays can only be sampled in this renderer (at least for now).
 		case AttachmentType::TextureArray:
 		{
-			BELL_ASSERT(writes[i].mImage, "Attachment type set incorrectly");
+            BELL_ASSERT(writes[i].mImage, "Attachment type set incorrectly")
 			const auto* imageViews = writes[i].mImage;
 
 			for(uint32_t k = 0; k < writes[i].mArraySize; ++k)
@@ -287,7 +287,7 @@ vk::DescriptorSet DescriptorManager::writeShaderResourceSet(const vk::Descriptor
 
 		case AttachmentType::Sampler:
 		{
-			BELL_ASSERT(writes[i].mSampler, "Attachment type set incorrectly");
+            BELL_ASSERT(writes[i].mSampler, "Attachment type set incorrectly")
 			vk::DescriptorImageInfo info{};
 			info.setSampler(getDevice()->getImmutableSampler(*writes[i].mSampler));
 
@@ -302,7 +302,7 @@ vk::DescriptorSet DescriptorManager::writeShaderResourceSet(const vk::Descriptor
 
 		case AttachmentType::UniformBuffer:
 		{
-			BELL_ASSERT(writes[i].mBuffer, "Attachment type set incorrectly");
+            BELL_ASSERT(writes[i].mBuffer, "Attachment type set incorrectly")
 			auto& bufferView = *writes[i].mBuffer;
 			vk::DescriptorBufferInfo info = generateDescriptorBufferInfo(bufferView);
 			bufferInfos.push_back(info);
@@ -314,9 +314,11 @@ vk::DescriptorSet DescriptorManager::writeShaderResourceSet(const vk::Descriptor
 			break;
 		}
 
-		case AttachmentType::DataBuffer:
+        case AttachmentType::DataBufferRO:
+        case AttachmentType::DataBufferRW:
+        case AttachmentType::DataBufferWO:
 		{
-			BELL_ASSERT(writes[i].mBuffer, "Attachment type set incorrectly");
+            BELL_ASSERT(writes[i].mBuffer, "Attachment type set incorrectly")
 			auto& bufferView = *writes[i].mBuffer;
 			vk::DescriptorBufferInfo info = generateDescriptorBufferInfo(bufferView);
 			bufferInfos.push_back(info);
@@ -327,6 +329,11 @@ vk::DescriptorSet DescriptorManager::writeShaderResourceSet(const vk::Descriptor
 			descWrite.setDescriptorCount(1);
 			break;
 		}
+
+        default:
+            // Other attachment types don't get written in descripotor sets e.g push constants or frame buffer types.
+            BELL_TRAP;
+            break;
 		}
 
 		descSetWrites.push_back(descWrite);
@@ -476,7 +483,9 @@ DescriptorManager::DescriptorPool& DescriptorManager::findSuitablePool(const std
 		switch (attachment.mType)
 		{
 
-		case AttachmentType::DataBuffer:
+        case AttachmentType::DataBufferRO:
+        case AttachmentType::DataBufferRW:
+        case AttachmentType::DataBufferWO:
 			requiredStorageBufferDescriptors++;
 			break;
 

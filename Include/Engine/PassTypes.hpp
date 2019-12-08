@@ -111,7 +111,9 @@ enum class AttachmentType
 	RenderTarget3D,
 	Depth,
 	UniformBuffer,
-	DataBuffer,
+    DataBufferRO,
+    DataBufferWO,
+    DataBufferRW,
 	IndirectBuffer,
 	PushConstants,
 	ShaderResourceSet

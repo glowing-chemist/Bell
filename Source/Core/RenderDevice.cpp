@@ -292,7 +292,9 @@ vk::RenderPass	RenderDevice::generateRenderPass(const GraphicsTask& task)
 	for(const auto& [name, type, format, size, loadop] : outputAttachments)
     {
         // We only care about images here.
-        if(type == AttachmentType::DataBuffer ||
+        if(type == AttachmentType::DataBufferRO ||
+           type == AttachmentType::DataBufferRW ||
+           type == AttachmentType::DataBufferWO ||
            type == AttachmentType::PushConstants ||
            type == AttachmentType::UniformBuffer)
         {
@@ -497,7 +499,9 @@ vk::DescriptorSetLayout RenderDevice::generateDescriptorSetLayoutBindings(const 
 			case AttachmentType::Image3D:
 				return vk::DescriptorType::eStorageImage;
 
-			case AttachmentType::DataBuffer:
+            case AttachmentType::DataBufferRO:
+            case AttachmentType::DataBufferRW:
+            case AttachmentType::DataBufferWO:
 				return vk::DescriptorType::eStorageBuffer;
 
 			case AttachmentType::UniformBuffer:

@@ -184,7 +184,7 @@ CommandContext& CommandContext::bindStorageBufferViews(const BufferView* view, c
     {
         BindingInfo binding{};
         binding.mName = slots[i];
-        binding.mType = AttachmentType::DataBuffer;
+        binding.mType = AttachmentType::DataBufferRW;
         binding.mBound = true;
 
         mBuffers.insert({slots[i], view[i]});
