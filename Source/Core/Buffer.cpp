@@ -20,7 +20,7 @@ Buffer::Buffer(RenderDevice* dev,
     BELL_ASSERT(size > 0 && stride > 0, "size and stride must be greater than 0")
 
     mAllignment = mUsage & BufferUsage::Uniform ?
-                                   getDevice()->getLimits().minUniformBufferOffsetAlignment : 1;
+                                   static_cast<uint32_t>(getDevice()->getLimits().minUniformBufferOffsetAlignment) : 1u;
 
     mBuffer = getDevice()->createBuffer(mSize, getVulkanBufferUsage(mUsage));
     const vk::MemoryRequirements bufferMemReqs = getDevice()->getMemoryRequirements(mBuffer);
@@ -126,8 +126,6 @@ Buffer::Buffer(Buffer&& rhs) :
 
 void Buffer::setContents(const void* data, const uint32_t size, const uint32_t offset)
 {
-    const uint32_t entries = size / mStride;
-
     if(isMappable())
     {
         BELL_ASSERT(size <= mSize, "Attempting to map a larger range than the buffer supports.")
@@ -144,35 +142,80 @@ void Buffer::setContents(const void* data, const uint32_t size, const uint32_t o
     }
     else
     {
-        Buffer stagingBuffer(getDevice(), BufferUsage::TransferSrc, size, mStride, "Staging Buffer");
+        BELL_ASSERT((mUsage & BufferUsage::TransferDest) != 0, "Buffer needs usage transfer dest")
+
+        // Copy the data in to the command buffer and then perform the copy from there.
+        if(size <= 1 << 16)
+        {
+
+            getDevice()->getCurrentCommandPool()->getBufferForQueue(QueueType::Graphics)
+                    .updateBuffer(mBuffer, offset, size, data);
+        }
+        else
+        {
+            Buffer stagingBuffer(getDevice(), BufferUsage::TransferSrc, size, mStride, "Staging Buffer");
+
+            MapInfo mapInfo{};
+            mapInfo.mOffset = 0;
+            mapInfo.mSize = stagingBuffer.getSize();
+            void* mappedBuffer = stagingBuffer.map(mapInfo);
+
+                std::memcpy(mappedBuffer, data, size);
+
+            stagingBuffer.unmap();
+
+            vk::BufferCopy copyInfo{};
+            copyInfo.setSize(size);
+            copyInfo.setSrcOffset(0);
+            copyInfo.setDstOffset(offset);
+
+            getDevice()->getCurrentCommandPool()->getBufferForQueue(QueueType::Graphics)
+                    .copyBuffer(stagingBuffer.getBuffer(), getBuffer(), copyInfo);
+
+            // TODO: Implement a staging buffer cache so that we don't have to create one
+            // each time.
+            stagingBuffer.updateLastAccessed(getDevice()->getCurrentSubmissionIndex());
+        }
+    }
+    updateLastAccessed(getDevice()->getCurrentSubmissionIndex());
+}
+
+
+void Buffer::setContents(const int data,
+                 const uint32_t size,
+                 const uint32_t offset)
+{
+    if(isMappable())
+    {
+        BELL_ASSERT(size <= mSize, "Attempting to map a larger range than the buffer supports.")
 
         MapInfo mapInfo{};
-        mapInfo.mOffset = 0;
-        mapInfo.mSize = stagingBuffer.getSize();
-        void* mappedBuffer = stagingBuffer.map(mapInfo);
+        mapInfo.mOffset = offset;
+        mapInfo.mSize = size;
 
-            std::memcpy(mappedBuffer, data, size);
+        void* mappedBuffer = map(mapInfo);
 
-        stagingBuffer.unmap();
+        std::memset(mappedBuffer, data, size);
 
-        vk::BufferCopy copyInfo{};
-        copyInfo.setSize(size);
-        copyInfo.setSrcOffset(0);
-        copyInfo.setDstOffset(offset);
+        unmap();
+    }
+    else
+    {
+        BELL_ASSERT((mUsage & BufferUsage::TransferDest) != 0, "Buffer needs usage transfer dest")
+        BELL_ASSERT((size & 3) == 0, "Size must be aligned to 4 bytes")
 
         getDevice()->getCurrentCommandPool()->getBufferForQueue(QueueType::Graphics)
-                .copyBuffer(stagingBuffer.getBuffer(), getBuffer(), copyInfo);
-
-        // TODO: Implement a staging buffer cache so that we don't have to create one
-        // each time.
-        stagingBuffer.updateLastAccessed(getDevice()->getCurrentSubmissionIndex());
+                .fillBuffer(mBuffer, offset, size, static_cast<uint32_t>(data));
     }
+
     updateLastAccessed(getDevice()->getCurrentSubmissionIndex());
 }
 
 
 void* Buffer::map(MapInfo& mapInfo)
 {
+    BELL_ASSERT(isMappable(), "Buffer is not mappable")
+
 	mapInfo.mMemory = mBufferMemory;
 	mCurrentMap = mapInfo;
 
@@ -184,6 +227,8 @@ void* Buffer::map(MapInfo& mapInfo)
 
 void  Buffer::unmap()
 {
+    BELL_ASSERT(isMappable(), "Buffer is not mappable")
+
 	updateLastAccessed(getDevice()->getCurrentSubmissionIndex());
 
 	getDevice()->getMemoryManager()->UnMapAllocation(mCurrentMap);
@@ -195,8 +240,8 @@ bool Buffer::resize(const uint32_t newSize, const bool preserContents)
     if(newSize <= mSize)
         return false;
 
-	// if the stride is the same as the size (it's one contiguos data block)
-	// we need to update the stride.
+    // if the stride is the same as the size (it's one contiguos data block)
+    // we need to update the stride.
 	if (mSize == mStride)
 		mStride = newSize;
 

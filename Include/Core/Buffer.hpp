@@ -52,6 +52,11 @@ public:
                      const uint32_t size,
                      const uint32_t offset = 0);
 
+    // Repeat the data in the range (start + offset, start + offset + size]
+    void setContents(const int data,
+                     const uint32_t size,
+                     const uint32_t offset = 0);
+
 
 	void*   map(MapInfo &mapInfo);
     void    unmap();
