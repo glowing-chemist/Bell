@@ -8,7 +8,7 @@
 
 layout(std430, set = 0,  binding = 0) buffer visibleFroxlesCounter
 {
-	uint visibleCounter;
+	int visibleCounter;
 };
 
 layout(std430, set = 0,  binding = 1) buffer visibleFroxles
@@ -42,12 +42,13 @@ layout(std430, set = 1, binding = 0) buffer sceneLights
 	Light lights[];
 };
 
-layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
+layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
 
 
 void main()
 {
-	const uint froxelIndex = atomicAdd(visibleCounter, -1) - 1; // need the value after the opertation.
+	const uint froxelIndex = uint(atomicAdd(visibleCounter, -1) - 1); // need the value after the opertation.
+
 	const uvec3 froxelToProcess = froxel[froxelIndex];
 
 	const AABB aabb = getFroxelAABB(froxelToProcess, camera.fov, camera.frameBufferSize);

@@ -30,10 +30,10 @@ LightFroxelationTechnique::LightFroxelationTechnique(Engine* eng) :
     mIndirectArgsBuffer(eng->getDevice(), BufferUsage::DataBuffer | BufferUsage::IndirectArgs, sizeof(uint32_t) * 3, sizeof(uint32_t) * 3, "FroxelIndirectArgs"),
     mIndirectArgsView(mIndirectArgsBuffer),
 
-    mSparseFroxelBuffer(eng->getDevice(), BufferUsage::DataBuffer, sizeof(uint32_t) * 2 * (28 * 50 * 10), sizeof(uint32_t) * 2 * (28 * 50 * 10), kSparseFroxels),
+    mSparseFroxelBuffer(eng->getDevice(), BufferUsage::DataBuffer, sizeof(uint32_t) * 2 * (30 * 50 * 32), sizeof(uint32_t) * 2 * (30 * 50 * 32), kSparseFroxels),
     mSparseFroxelBufferView(mSparseFroxelBuffer),
 
-    mLightIndexBuffer(eng->getDevice(), BufferUsage::DataBuffer, sizeof(uint32_t) * (28 * 50 * 16), sizeof(uint32_t) * (28 * 50 * 16), kLightIndicies),
+    mLightIndexBuffer(eng->getDevice(), BufferUsage::DataBuffer, sizeof(uint32_t) * (28 * 50 * 10 * 16), sizeof(uint32_t) * (28 * 50 * 10 * 16), kLightIndicies),
     mLightIndexBufferView(mLightIndexBuffer, eng->getDevice()->getLimits().minStorageBufferOffsetAlignment),
     mLightIndexCounterView(mLightIndexBuffer, 0, static_cast<uint32_t>(sizeof(uint32_t)))
 {
