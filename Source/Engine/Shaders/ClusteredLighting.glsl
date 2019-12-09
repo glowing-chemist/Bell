@@ -89,12 +89,14 @@ bool sphereAABBIntersection(const vec3 centre, const float radius, const AABB aa
 	bvec3 lessThan = bvec3(centre.x < aabb.topLeft.x,
 							centre.y < aabb.topLeft.y,
 							centre.z < aabb.topLeft.z);
-	vec3 dmin = mix(vec3(0.0f), sqrt(centre - aabb.topLeft), lessThan);
+	const vec3 lessDistance = centre - aabb.topLeft;
+	vec3 dmin = mix(vec3(0.0f), lessDistance * lessDistance, lessThan);
 
 	bvec3 greaterThan = bvec3(centre.x > aabb.bottomRight.x,
 								centre.y > aabb.bottomRight.y,
 								centre.z > aabb.bottomRight.z);
-	dmin += mix(vec3(0.0f), sqrt(centre - aabb.bottomRight), greaterThan);
+	const vec3 greaterDistance = centre - aabb.bottomRight; 
+	dmin += mix(vec3(0.0f), greaterDistance * greaterDistance, greaterThan);
 
 	// Sum the results.
 	dmin.x = dot(dmin, vec3(1.0f));
