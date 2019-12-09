@@ -413,6 +413,18 @@ void RenderGraph::reorderTasks()
     mOutputResources.swap(newOutputBindings);
     mFrameBuffersNeedUpdating.swap(newFrameBuffersNeedUpdating);
     mDescriptorsNeedUpdating.swap(mDescriptorsNeedUpdating);
+
+#if 0 // Enable to print out task submission order.
+
+	BELL_LOG("Task submission order:");
+
+	for (const auto& [type, index] : mTaskOrder)
+	{
+		const auto& task = getTask(type, index);
+		BELL_LOG_ARGS("%s", task.getName().c_str());
+	}
+
+#endif
 }
 
 
