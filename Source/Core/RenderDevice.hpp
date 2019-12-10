@@ -236,9 +236,6 @@ private:
 
 	std::vector<vk::DescriptorSetLayout>						generateShaderResourceSetLayouts(const RenderTask&, const RenderGraph&);
 
-    std::vector<BarrierRecorder>                                recordBarriers(RenderGraph&);
-
-
     void                                                        clearDeferredResources();
 
 	void														clearVulkanResources();

@@ -12,6 +12,7 @@
 class Image;
 class ImageView;
 class Buffer;
+class BufferView;
 
 class BarrierRecorder : DeviceChild
 {
@@ -24,9 +25,10 @@ public:
 	void transitionImageLayout(Image&, const vk::ImageLayout);
     void transitionImageLayout(ImageView&, const vk::ImageLayout);
 
-    void makeContentsVisible(Image&);
-    void makeContentsVisible(ImageView&);
-    void makeContentsVisible(Buffer&);
+    void makeContentsVisible(const Image&);
+    void makeContentsVisible(const ImageView&);
+    void makeContentsVisible(const Buffer&);
+	void makeContentsVisible(const BufferView&);
 
 	std::vector<vk::ImageMemoryBarrier> getImageBarriers(QueueType);
 	std::vector<vk::BufferMemoryBarrier> getBufferBarriers(QueueType);

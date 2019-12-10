@@ -695,63 +695,6 @@ void RenderDevice::generateDescriptorSets(RenderGraph & graph)
 }
 
 
-std::vector<BarrierRecorder> RenderDevice::recordBarriers(RenderGraph& graph)
-{
-    std::vector<BarrierRecorder> barriers{};
-
-	auto taskIt = graph.taskBegin();
-
-    for(uint32_t i = 0; i < graph.mInputResources.size(); ++i)
-    {
-        const auto& inputResources = graph.mInputResources[i];
-        const auto& outputResources = graph.mOutputResources[i];
-
-        BarrierRecorder recorder{this};
-
-        for(const auto& resource : inputResources)
-        {
-            // For now only handle image layout transitions
-            // Will handle visibility later (only needed when swapping between compute and graphics)
-            if(resource.mResourcetype == RenderGraph::ResourceType::Image)
-            {
-                ImageView& imageView = graph.getImageView(resource.mResourceIndex);
-
-				if(imageView.getImageUsage() & ImageUsage::ColourAttachment ||
-				   imageView.getImageUsage() & ImageUsage::Storage)
-				{
-					// fetch the attachment type for the current image view and get what layout the image needs to be in.
-					const vk::ImageLayout layout = getVulkanImageLayout((*taskIt).getInputAttachments()[resource.mResourceBinding].mType);
-
-					recorder.transitionImageLayout(imageView, layout);
-				}
-				else if(imageView.getImageUsage() & ImageUsage::DepthStencil)
-					recorder.transitionImageLayout(imageView, vk::ImageLayout::eDepthStencilReadOnlyOptimal);
-            }
-        }
-
-        for(const auto& resource : outputResources)
-        {
-            // For now only handle image layout transitions
-            // Will handle visibility later (only needed when swapping between compute and graphics)
-            if(resource.mResourcetype == RenderGraph::ResourceType::Image)
-            {
-                ImageView& imageView = graph.getImageView(resource.mResourceIndex);
-
-				if(imageView.getImageUsage() & ImageUsage::ColourAttachment)
-                    recorder.transitionImageLayout(imageView, vk::ImageLayout::eColorAttachmentOptimal);
-				else if(imageView.getImageUsage() & ImageUsage::DepthStencil)
-                    recorder.transitionImageLayout(imageView, vk::ImageLayout::eDepthStencilAttachmentOptimal);
-            }
-        }
-
-        barriers.push_back(recorder);
-		++taskIt;
-    }
-
-    return barriers;
-}
-
-
 vk::Fence RenderDevice::createFence(const bool signaled)
 {
     vk::FenceCreateInfo info{};
@@ -833,7 +776,7 @@ void RenderDevice::execute(RenderGraph& graph)
 
     generateVulkanResources(graph);
 
-    std::vector<BarrierRecorder> neededBarriers = recordBarriers(graph);
+	std::vector<BarrierRecorder> neededBarriers = graph.generateBarriers(this);
 
 	CommandPool* currentCommandPool = getCurrentCommandPool();
     currentCommandPool->reserve(static_cast<uint32_t>(graph.taskCount()) + 1, QueueType::Graphics); // +1 for the primary cmd buffer all the secondaries will be recorded in to.

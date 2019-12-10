@@ -2,9 +2,12 @@
 #include "RenderGraph/RenderGraph.hpp"
 #include "Core/RenderDevice.hpp"
 #include "Core/BellLogging.hpp"
+#include "Core/ConversionUtils.hpp"
 
 #include <algorithm>
+#include <map>
 #include <set>
+#include <string>
 
 
 void RenderGraph::addTask(const GraphicsTask& task)
@@ -642,6 +645,117 @@ const ShaderResourceSet& RenderGraph::getBoundShaderResourceSet(const std::strin
 	BELL_ASSERT(it != mSRS.end(), "SRS not found")
 
 	return (*it).second;
+}
+
+
+std::vector<BarrierRecorder> RenderGraph::generateBarriers(RenderDevice* dev)
+{
+	std::vector<BarrierRecorder> barriers{};
+	barriers.reserve(mTaskOrder.size());
+
+	struct ResourceUsageEntries
+	{
+		ImageView* mImage;
+		BufferView* mBuffer;
+
+		struct taskIndex
+		{
+			uint32_t mTaskIndex;
+			AttachmentType mStateRequired;
+		};
+		std::vector<taskIndex> mRequiredStates;
+	};
+
+	std::map<std::string, ResourceUsageEntries> resourceEntries;
+
+	// Gather when all resources are used/how.
+	for (uint32_t i = 0; i < mTaskOrder.size(); ++i)
+	{
+		barriers.emplace_back(dev);
+
+		const auto& inputResources = mInputResources[i];
+		const auto& outputResources = mOutputResources[i];
+		const auto& [type, index] = mTaskOrder[i];
+		const auto& task = getTask(type, index);
+
+		for (const auto& resource : inputResources)
+		{
+			if (resource.mResourcetype == RenderGraph::ResourceType::Image)
+			{
+				if (resourceEntries.find(resource.mName) == resourceEntries.end())
+				{
+					ImageView& imageView = getImageView(resource.mResourceIndex);
+					resourceEntries[resource.mName].mImage = &imageView;
+				}
+
+			}
+			else if (resource.mResourcetype == RenderGraph::ResourceType::Buffer)
+			{
+				if (resourceEntries.find(resource.mName) == resourceEntries.end())
+				{
+					BufferView& bufView = getBuffer(resource.mResourceIndex);
+					resourceEntries[resource.mName].mBuffer = &bufView;
+				}
+			}
+			else
+				continue;
+
+			resourceEntries[resource.mName].mRequiredStates.push_back({ i, task.getInputAttachments()[resource.mResourceBinding].mType });
+
+		}
+
+		for (const auto& resource : outputResources)
+		{
+			if (resource.mResourcetype == RenderGraph::ResourceType::Image)
+			{
+				if (resourceEntries.find(resource.mName) == resourceEntries.end())
+				{
+					ImageView& imageView = getImageView(resource.mResourceIndex);
+					resourceEntries[resource.mName].mImage = &imageView;
+				}
+
+			}
+			else
+				continue;
+
+			resourceEntries[resource.mName].mRequiredStates.push_back({ i, task.getOuputAttachments()[resource.mResourceBinding].mType });
+		}
+	}
+
+	for (const auto& [slot, entries] : resourceEntries)
+	{
+		ResourceUsageEntries::taskIndex previous;
+
+		if (entries.mImage)
+		{
+			const auto layout = entries.mImage->getImageLayout(entries.mImage->getBaseLevel(), entries.mImage->getBaseMip());
+			previous = { ~0u, getAttachmentType(layout) }; // intended overflow.
+		}
+
+		for (const auto& entry : entries.mRequiredStates)
+		{
+			// publish all buffer writes as soon as possible.
+			if (entry.mStateRequired == AttachmentType::DataBufferRW ||
+				entry.mStateRequired == AttachmentType::DataBufferWO)
+				barriers[static_cast<uint64_t>(entry.mTaskIndex) + 1].makeContentsVisible(*entries.mBuffer);
+
+			if (entries.mImage)
+			{
+				if (entry.mStateRequired != previous.mStateRequired)
+				{
+					vk::ImageLayout layout = entries.mImage->getImageUsage() & ImageUsage::DepthStencil ?
+						entry.mStateRequired == AttachmentType::Depth ? vk::ImageLayout::eDepthStencilAttachmentOptimal :  vk::ImageLayout::eDepthStencilReadOnlyOptimal
+						: getVulkanImageLayout(entry.mStateRequired);
+
+					barriers[previous.mTaskIndex + 1].transitionImageLayout(*entries.mImage, layout);
+				}
+			}
+
+			previous = entry;
+		}
+	}
+
+	return barriers;
 }
 
 

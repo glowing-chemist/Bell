@@ -70,6 +70,8 @@ public:
     const ImageView&  getBoundImageView(const std::string&) const;
 	const ShaderResourceSet& getBoundShaderResourceSet(const std::string& slot) const;
 
+	std::vector<BarrierRecorder> generateBarriers(RenderDevice*);
+
 	void reset();
 
 	uint64_t taskCount() const { return mTaskOrder.size(); }

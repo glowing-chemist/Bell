@@ -9,6 +9,8 @@
 
 vk::ImageLayout getVulkanImageLayout(const AttachmentType);
 
+AttachmentType getAttachmentType(const vk::ImageLayout);
+
 vk::Format getVulkanImageFormat(const Format);
 
 vk::ImageUsageFlags getVulkanImageUsage(const ImageUsage);

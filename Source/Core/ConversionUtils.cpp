@@ -30,6 +30,29 @@ vk::ImageLayout getVulkanImageLayout(const AttachmentType type)
 
 }
 
+// This conversion looses dimensionality.
+AttachmentType getAttachmentType(const vk::ImageLayout layout)
+{
+	switch (layout)
+	{
+	case vk::ImageLayout::eColorAttachmentOptimal:
+		return AttachmentType::RenderTarget2D;
+
+	case vk::ImageLayout::eGeneral:
+		return AttachmentType::Image2D;
+
+	case vk::ImageLayout::eShaderReadOnlyOptimal:
+		return AttachmentType::Texture2D;
+
+	case vk::ImageLayout::eDepthStencilAttachmentOptimal:
+		return AttachmentType::Depth;
+
+	default:
+		return AttachmentType::PushConstants;// to indicate undefined layout.
+	}
+}
+
+
 
 vk::Format getVulkanImageFormat(const Format format)
 {

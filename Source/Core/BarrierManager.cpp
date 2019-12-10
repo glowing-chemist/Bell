@@ -1,6 +1,7 @@
 #include "BarrierManager.hpp"
 #include "Core/Image.hpp"
 #include "Core/Buffer.hpp"
+#include "Core/BufferView.hpp"
 #include "RenderDevice.hpp"
 
 #include <algorithm>
@@ -134,7 +135,7 @@ void BarrierRecorder::transitionImageLayout(ImageView& imageView, const vk::Imag
 }
 
 
-void BarrierRecorder::makeContentsVisible(Image& image)
+void BarrierRecorder::makeContentsVisible(const Image& image)
 {
 
 	for(uint32_t arrayLevel = 0; arrayLevel < image.numberOfLevels(); ++arrayLevel)
@@ -196,7 +197,7 @@ void BarrierRecorder::makeContentsVisible(Image& image)
 }
 
 
-void BarrierRecorder::makeContentsVisible(ImageView& imageView)
+void BarrierRecorder::makeContentsVisible(const ImageView& imageView)
 {	
 	const vk::ImageLayout layout = imageView.getImageLayout();
 
@@ -251,14 +252,25 @@ void BarrierRecorder::makeContentsVisible(ImageView& imageView)
 }
 
 
-void BarrierRecorder::makeContentsVisible(Buffer& buffer)
+void BarrierRecorder::makeContentsVisible(const Buffer& buffer)
 {
     vk::BufferMemoryBarrier barrier{};
-    barrier.setSrcAccessMask(vk::AccessFlagBits::eMemoryWrite);
-    barrier.setDstAccessMask(vk::AccessFlagBits::eMemoryRead);
+	barrier.setSrcAccessMask(vk::AccessFlagBits::eMemoryWrite);
+	barrier.setDstAccessMask(vk::AccessFlagBits::eMemoryRead);
     barrier.setBuffer(buffer.getBuffer());
 
     mBufferMemoryBarriers.push_back({buffer.getOwningQueueType(), barrier});
+}
+
+
+void BarrierRecorder::makeContentsVisible(const BufferView& buffer)
+{
+	vk::BufferMemoryBarrier barrier{};
+	barrier.setSrcAccessMask(vk::AccessFlagBits::eMemoryWrite);
+	barrier.setDstAccessMask(vk::AccessFlagBits::eMemoryRead);
+	barrier.setBuffer(buffer.getBuffer());
+
+	mBufferMemoryBarriers.push_back({ QueueType::Graphics, barrier });
 }
 
 
