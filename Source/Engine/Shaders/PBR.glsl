@@ -80,7 +80,7 @@ vec3 fresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness)
 }
 
 
-vec3 calculateDiffuseGlobalIBL(vec3 dA, float M, vec3 irradiance)
+vec3 calculateDiffuse(vec3 dA, float M, vec3 irradiance)
 {
     const vec3 diffuseColor = dA * (1.0 - DIELECTRIC_SPECULAR) * (1.0 - M);
 
@@ -88,7 +88,7 @@ vec3 calculateDiffuseGlobalIBL(vec3 dA, float M, vec3 irradiance)
 }
 
 
-vec3 calculateSpecularGlobalIBL(float R, vec3 N, vec3 V, float M, vec3 dA, vec3 radiance, vec2 DFG)
+vec3 calculateSpecular(float R, vec3 N, vec3 V, float M, vec3 dA, vec3 radiance, vec2 DFG)
 {
     const float NoV = dot(N, V);
 
