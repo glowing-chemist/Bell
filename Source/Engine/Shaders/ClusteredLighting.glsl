@@ -17,7 +17,8 @@ struct Light
 	vec4 position;
 	vec4 direction; // direction for spotlight.
 	vec4 albedo;
-	vec4 influenceAndType; // (influence, lightType)
+	float influence;
+	uint type;
 };
 
 struct AABB

@@ -1,7 +1,6 @@
 #version 450
 #extension GL_ARB_separate_shader_objects : enable
 #extension GL_GOOGLE_include_directive : enable
-#extension GL_EXT_nonuniform_qualifier : enable
 
 #include "PBR.glsl"
 #include "NormalMapping.glsl"
@@ -46,9 +45,7 @@ void main()
     const vec3 viewDir = normalize(camera.position - worldSpaceFragmentPos.xyz);
 
     const vec3 baseAlbedo = texture(sampler2D(Albedo, linearSampler), uv).xyz;
-
     const float roughness = texture(sampler2D(MetalnessRoughness, linearSampler), uv).y;
-
     const float metalness = texture(sampler2D(MetalnessRoughness, linearSampler), uv).x;
 
 
@@ -63,7 +60,7 @@ void main()
 
     const vec2 f_ab = texture(sampler2D(DFG, linearSampler), vec2(NoV, roughness)).xy;
 
-    const vec3 diffuse = calculateDiffuse(baseAlbedo.xyz, metalness, irradiance);
+    const vec3 diffuse = calculateDiffuse(baseAlbedo, metalness, irradiance);
     const vec3 specular = calculateSpecular(roughness * roughness, normal, viewDir, metalness, baseAlbedo.xyz, radiance, f_ab);
 
     frameBuffer = vec4(specular + diffuse, 1.0);

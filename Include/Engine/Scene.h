@@ -26,11 +26,11 @@ enum class MeshType
 	Static
 };
 
-enum class LightType
+enum class LightType : uint32_t
 {
-	Point,
-	Spot,
-	Area
+	Point = 0,
+	Spot = 1,
+	Area = 2
 };
 
 
@@ -99,7 +99,8 @@ public:
         float4 mPosition;
         float4 mDirection;
         float4 mALbedo;
-        float4 mInfluenceAndType;
+        float mInfluence;
+		LightType mType;
 	};
 
     const std::vector<Light>& getLights() const
@@ -127,6 +128,8 @@ private:
 				   const aiMatrix4x4& parentTransofrmation,
 				   const int vertAttributes,
 				   const MaterialMappings& materialIndexMappings);
+
+	void addLights(const aiScene* scene);
 
     std::filesystem::path mName;
 

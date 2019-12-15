@@ -59,7 +59,7 @@ void main()
 	for(uint i = 0; i < lightCount; ++i)
 	{
 		const Light light = lights[i];
-		switch(uint(light.influenceAndType.y))
+		switch(uint(light.type))
 		{
 			case 0:
 			{

@@ -131,6 +131,8 @@ void Scene::loadFromFile(const int vertAttributes, Engine* eng)
 	// parse node is recursive so will add all meshes to the scene.
 	parseNode(scene, rootNode, aiMatrix4x4{}, vertAttributes, meshMaterials);
 
+    addLights(scene);
+
     // generate the BVH.
     finalise();
 }
@@ -170,6 +172,44 @@ void Scene::parseNode(const aiScene* scene,
     for(uint32_t i = 0; i < node->mNumChildren; ++i)
     {
 		parseNode(scene, node->mChildren[i], transformation, vertAttributes, materialIndexMappings);
+    }
+}
+
+
+void Scene::addLights(const aiScene* scene)
+{
+    mLights.reserve(scene->mNumLights);
+
+    for (uint32_t i = 0; i < scene->mNumLights; ++i)
+    {
+        const aiLight* light = scene->mLights[i];
+
+        Light sceneLight;
+
+        sceneLight.mType = [&]()
+        {
+            switch (light->mType)
+            {
+            case aiLightSource_POINT:
+                return LightType::Point;
+
+            case aiLightSource_SPOT:
+                return LightType::Spot;
+
+            case aiLightSource_AREA:
+                return LightType::Area;
+
+            default:
+                return LightType::Point;
+            }
+        }();
+
+        sceneLight.mInfluence = light->mAttenuationLinear;
+        sceneLight.mPosition = float4(light->mPosition.x, light->mPosition.y, light->mPosition.z, 1.0f);
+        sceneLight.mDirection = float4(light->mDirection.x, light->mDirection.y, light->mDirection.z, 1.0f);
+        sceneLight.mALbedo = float4(light->mColorDiffuse.r, light->mColorDiffuse.g, light->mColorDiffuse.b, 1.0f);
+
+        mLights.push_back(sceneLight);
     }
 }
 
