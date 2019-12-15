@@ -3,6 +3,7 @@
 
 
 #include "Engine/Technique.hpp"
+#include "Core/PerFrameResource.hpp"
 #include "Engine/DefaultResourceSlots.hpp"
 
 
@@ -19,15 +20,15 @@ public:
 
 	virtual void render(RenderGraph& graph, Engine*, const std::vector<const Scene::MeshInstance*>&) override final
 	{
-		mAnalyticalLighting.updateLastAccessed();
-		mAnalyticalLightingView.updateLastAccessed();
+		mAnalyticalLighting->updateLastAccessed();
+		mAnalyticalLightingView->updateLastAccessed();
 
 		graph.addTask(mTask);
 	}
 
 	virtual void bindResources(RenderGraph& graph) const override final
 	{
-		graph.bindImage(kAnalyticLighting, mAnalyticalLightingView);
+		graph.bindImage(kAnalyticLighting, *mAnalyticalLightingView);
 		graph.bindSampler("PointSampler", mPointSampler);
 	}
 
@@ -36,8 +37,8 @@ private:
 	ComputePipelineDescription mPipelineDesc;
 	ComputeTask mTask;
 
-	Image mAnalyticalLighting;
-	ImageView mAnalyticalLightingView;
+	PerFrameResource<Image> mAnalyticalLighting;
+	PerFrameResource<ImageView> mAnalyticalLightingView;
 
 	Sampler mPointSampler;
 };

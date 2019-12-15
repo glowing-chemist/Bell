@@ -290,7 +290,7 @@ void Engine::recordScene()
 		tech->render(mCurrentRenderGraph, this, meshes);
 	}
 
-	for(auto& tech : mTechniques)
+	for(const auto& tech : mTechniques)
 	{
 		tech->bindResources(mCurrentRenderGraph);
 	}

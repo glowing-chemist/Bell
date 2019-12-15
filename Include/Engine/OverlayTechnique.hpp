@@ -6,6 +6,7 @@
 #include "Core/ImageView.hpp"
 #include "Core/Buffer.hpp"
 #include "Core/BufferView.hpp"
+#include "Core/PerFrameResource.hpp"
 
 #include "Engine/DefaultResourceSlots.hpp"
 #include "Technique.hpp"
@@ -27,15 +28,15 @@ public:
     virtual void bindResources(RenderGraph& graph) const override
     {
 		graph.bindImage(kDefaultFontTexture, mFontImageView);
-		graph.bindBuffer("OverlayUBO", mOverlayerBufferView);
+		graph.bindBuffer("OverlayUBO", *mOverlayerBufferView);
     }
 
 private:
     Image mFontTexture;
     ImageView mFontImageView;
 
-    Buffer mOverlayUniformBuffer;
-    BufferView mOverlayerBufferView;
+    PerFrameResource<Buffer> mOverlayUniformBuffer;
+    PerFrameResource<BufferView> mOverlayerBufferView;
 
     GraphicsPipelineDescription mPipelineDescription;
 };

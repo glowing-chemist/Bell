@@ -35,6 +35,10 @@ OverlayTechnique::OverlayTechnique(Engine* eng) :
 
 void OverlayTechnique::render(RenderGraph& graph, Engine* engine, const std::vector<const Scene::MeshInstance *>&)
 {
+	mOverlayUniformBuffer->updateLastAccessed();
+	mFontTexture.updateLastAccessed();
+	mFontImageView.updateLastAccessed();
+
 	ImDrawData* drawData = ImGui::GetDrawData();
 
 	GraphicsTask task("ImGuiOverlay", mPipelineDescription);
@@ -55,12 +59,12 @@ void OverlayTechnique::render(RenderGraph& graph, Engine* engine, const std::vec
 
 		MapInfo mapInfo{};
 		mapInfo.mOffset = 0;
-		mapInfo.mSize = mOverlayUniformBuffer.getSize();
-		void* uboPtr = mOverlayUniformBuffer.map(mapInfo);
+		mapInfo.mSize = mOverlayUniformBuffer->getSize();
+		void* uboPtr = mOverlayUniformBuffer->map(mapInfo);
 
 		memcpy(uboPtr, &transformations[0], 16);
 
-		mOverlayUniformBuffer.unmap();
+		mOverlayUniformBuffer->unmap();
 
 		const size_t vertexSize = static_cast<size_t>(drawData->TotalVtxCount);
 
