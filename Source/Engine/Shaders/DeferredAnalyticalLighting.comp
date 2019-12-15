@@ -21,16 +21,17 @@ layout(set = 0, binding = 3) uniform texture2D vertexNormals;
 layout(set = 0, binding = 4) uniform texture2D Albedo;
 layout(set = 0, binding = 5) uniform texture2D MetalnessRoughness;
 layout(set = 0, binding = 6) uniform sampler linearSampler;
+layout(set = 0, binding = 7) uniform sampler pointSampler;
 
 // Light lists
-layout(std430, set = 0, binding = 7) buffer readonly sparseFroxels
+layout(std430, set = 0, binding = 8) buffer readonly sparseFroxels
 {
 	uvec2 sparseFroxelList[];
 };
 
-layout(r32ui, set = 0, binding = 8) uniform readonly uimage2D activeFroxels;
+layout(set = 0, binding = 9) uniform utexture2D activeFroxels;
 
-layout(rgba8, set = 0, binding = 9) uniform writeonly image2D accumilatedLight;
+layout(rgba8, set = 0, binding = 10) uniform writeonly image2D accumilatedLight;
 
 layout(std430, set = 1, binding = 0) buffer sceneLights
 {
@@ -59,7 +60,7 @@ void main()
     const float roughness = texture(sampler2D(MetalnessRoughness, linearSampler), uv).y;
     float metalness = texture(sampler2D(MetalnessRoughness, linearSampler), uv).x;
 
-    const uint froxelIndex = imageLoad(activeFroxels, ivec2(gl_GlobalInvocationID.xy)).x;
+    const uint froxelIndex = texture(usampler2D(activeFroxels, pointSampler), uv).x;
     const uvec2 lightListIndicies = sparseFroxelList[froxelIndex];
 
     vec4 accum = vec4(0.0f);

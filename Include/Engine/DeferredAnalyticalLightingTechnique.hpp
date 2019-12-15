@@ -25,6 +25,7 @@ public:
 	virtual void bindResources(RenderGraph& graph) const override final
 	{
 		graph.bindImage(kAnalyticLighting, mAnalyticalLightingView);
+		graph.bindSampler("PointSampler", mPointSampler);
 	}
 
 private:
@@ -34,6 +35,8 @@ private:
 
 	Image mAnalyticalLighting;
 	ImageView mAnalyticalLightingView;
+
+	Sampler mPointSampler;
 };
 
 #endif

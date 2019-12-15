@@ -8,7 +8,8 @@ DeferredAnalyticalLightingTechnique::DeferredAnalyticalLightingTechnique(Engine*
 	mTask("deferred analytical lighting", mPipelineDesc),
 	mAnalyticalLighting(eng->getDevice(), Format::RGBA8UNorm, ImageUsage::Sampled | ImageUsage::Storage, eng->getSwapChainImage().getExtent(0, 0).width, 
 		eng->getSwapChainImage().getExtent(0, 0).height, 1, 1, 1, 1, kAnalyticLighting),
-	mAnalyticalLightingView(mAnalyticalLighting, ImageViewType::Colour)
+	mAnalyticalLightingView(mAnalyticalLighting, ImageViewType::Colour),
+	mPointSampler(SamplerType::Point)
 {
 	mTask.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
 	mTask.addInput(kDFGLUT, AttachmentType::Texture2D);
@@ -17,8 +18,10 @@ DeferredAnalyticalLightingTechnique::DeferredAnalyticalLightingTechnique(Engine*
 	mTask.addInput(kGBufferAlbedo, AttachmentType::Texture2D);
 	mTask.addInput(kGBufferMetalnessRoughness, AttachmentType::Texture2D);
 	mTask.addInput(kDefaultSampler, AttachmentType::Sampler);
+	mTask.addInput("PointSampler", AttachmentType::Sampler);
 	mTask.addInput(kSparseFroxels, AttachmentType::DataBufferRO);
 	mTask.addInput(kActiveFroxels, AttachmentType::Texture2D);
+	mTask.addInput(kAnalyticLighting, AttachmentType::Image2D);
 	mTask.addInput(kLightBuffer, AttachmentType::ShaderResourceSet);
 
 	mTask.addDispatch(	eng->getSwapChainImage().getExtent(0, 0).width / 8,
