@@ -1,0 +1,102 @@
+#version 450
+#extension GL_ARB_separate_shader_objects : enable
+#extension GL_GOOGLE_include_directive : enable
+
+#include "PBR.glsl"
+#include "UniformBuffers.glsl"
+#include "NormalMapping.glsl"
+#include "ClusteredLighting.glsl"
+
+layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
+
+layout(set = 0, binding = 0) uniform cameraBuffer
+{
+	CameraBuffer camera;
+};
+
+// GBuffer
+layout(set = 0, binding = 1) uniform texture2D DFG;
+layout(set = 0, binding = 2) uniform texture2D depth;
+layout(set = 0, binding = 3) uniform texture2D vertexNormals;
+layout(set = 0, binding = 4) uniform texture2D Albedo;
+layout(set = 0, binding = 5) uniform texture2D MetalnessRoughness;
+layout(set = 0, binding = 6) uniform sampler linearSampler;
+
+// Light lists
+layout(std430, set = 0, binding = 7) buffer readonly sparseFroxels
+{
+	uvec2 sparseFroxelList[];
+};
+
+layout(r32ui, set = 0, binding = 8) uniform readonly uimage2D activeFroxels;
+
+layout(rgba8, set = 0, binding = 9) uniform writeonly image2D accumilatedLight;
+
+layout(std430, set = 1, binding = 0) buffer sceneLights
+{
+	uint  lightCount;
+	Light lights[];
+};
+
+void main()
+{
+	const vec2 gbufferSize = textureSize(sampler2D(depth, linearSampler), 0);
+	const vec2 uv = vec2(gl_GlobalInvocationID.xy) / gbufferSize;
+
+	const float fragmentDepth = texture(sampler2D(depth, linearSampler), uv).x;
+
+	vec4 worldSpaceFragmentPos = camera.invertedCamera * vec4(uv, fragmentDepth, 1.0f);
+	worldSpaceFragmentPos /= worldSpaceFragmentPos.w;
+
+	vec3 normal;
+    normal = texture(sampler2D(vertexNormals, linearSampler), uv).xyz;
+    normal = remapNormals(normal);
+    normal = normalize(normal);
+
+    const vec3 viewDir = normalize(camera.position - worldSpaceFragmentPos.xyz);
+
+    vec3 baseAlbedo = texture(sampler2D(Albedo, linearSampler), uv).xyz;
+    const float roughness = texture(sampler2D(MetalnessRoughness, linearSampler), uv).y;
+    float metalness = texture(sampler2D(MetalnessRoughness, linearSampler), uv).x;
+
+    const uint froxelIndex = imageLoad(activeFroxels, ivec2(gl_GlobalInvocationID.xy)).x;
+    const uvec2 lightListIndicies = sparseFroxelList[froxelIndex];
+
+    vec4 accum = vec4(0.0f);
+
+    for(uint i = 0; i < lightListIndicies.y; ++i)
+    {
+    	Light light = lights[lightListIndicies.x + i];
+
+    	switch(uint(light.type))
+		{
+			case 0:
+			{
+				const vec4 lightDir = light.position - worldSpaceFragmentPos;
+				const float lightDistance = length(lightDir);
+				const vec3 halfVector = normalize(lightDir.xyz + viewDir);
+    			const float NoH = dot(halfVector, viewDir);
+
+				const float lodLevel = roughness * 10.0f;
+
+				vec3 radiance = light.albedo.xyz * (1.0f / (lightDistance * lightDistance));
+
+    			const vec2 f_ab = texture(sampler2D(DFG, linearSampler), vec2(NoH, roughness)).xy;
+
+    			vec3 diffuse = calculateDiffuseLambert(baseAlbedo, metalness, radiance);
+    			const vec3 specular = calculateSpecular(roughness * roughness, halfVector, viewDir, metalness, baseAlbedo, radiance, f_ab);
+
+    			accum += vec4(specular + diffuse, 1.0f);
+				break;
+			}
+
+			// TODO add more light types as and when supported.
+
+			// Should never hit here.
+			default:
+				continue;
+		}
+    }
+
+    imageStore(accumilatedLight, ivec2(gl_GlobalInvocationID.xy), accum);
+}

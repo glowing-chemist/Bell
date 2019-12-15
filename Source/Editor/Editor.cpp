@@ -182,6 +182,19 @@ namespace
 				newNode->mOutputs.push_back(Pin{ 0, newNode, kActiveFroxels, PinType::Texture, PinKind::Output });
 				return newNode;
 			}
+
+			case NodeTypes::DeferredAnalyticalLighting:
+			{
+				std::shared_ptr<EditorNode> newNode = std::make_shared<PassNode>("Analytical deferred texuring IBL", passType);
+				newNode->mInputs.push_back(Pin{ 0, newNode, kDFGLUT, PinType::Texture, PinKind::Input });
+				newNode->mInputs.push_back(Pin{ 0, newNode, kGBufferNormals, PinType::Texture, PinKind::Input });
+				newNode->mInputs.push_back(Pin{ 0, newNode, kGBufferAlbedo, PinType::Texture, PinKind::Input });
+				newNode->mInputs.push_back(Pin{ 0, newNode, kGBufferMetalnessRoughness, PinType::Texture, PinKind::Input });
+				newNode->mInputs.push_back(Pin{ 0, newNode, kGBufferDepth, PinType::Texture, PinKind::Input });
+				newNode->mInputs.push_back(Pin{ 0, newNode, kActiveFroxels, PinType::Texture, PinKind::Input });
+				newNode->mOutputs.push_back(Pin{ 0, newNode, kAnalyticLighting, PinType::Texture, PinKind::Output });
+				return newNode;
+			}
         }
     }
 
@@ -411,6 +424,7 @@ void Editor::drawAssistantWindow()
 		   drawPassContextMenu(PassType::ConvolveSkybox);
 		   drawPassContextMenu(PassType::DFGGeneration);
 		   drawPassContextMenu(PassType::LightFroxelation);
+		   drawPassContextMenu(PassType::DeferredAnalyticalLighting);
 
            ImGui::EndMenu();
        }

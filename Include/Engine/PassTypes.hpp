@@ -26,7 +26,11 @@
 					Composite = 1 << 19, \
 					ForwardIBL = 1 << 20, \
                     LightFroxelation = 1 << 21, \
-                    DeferredPBRIBL = 1 << 22 \
+                    DeferredPBRIBL = 1 << 22, \
+					DeferredAnalyticalLighting = 1 << 23, \
+					ForwardAnalyticalLighting = 1 << 24, \
+					DeferredCombinedLighting = 1 << 25, \
+					ForwardCombinedLighting = 1 << 26 \
 
 // An enum to keep track of which 
 enum class PassType : uint64_t
@@ -90,6 +94,9 @@ inline const char* passToString(const PassType passType)
 
 		case PassType::LightFroxelation:
 			return "LightFroxelation";
+
+		case PassType::DeferredAnalyticalLighting:
+			return "Deferred analytical lighting";
     }
 
     return "UNKNOWN PASS TYPE";

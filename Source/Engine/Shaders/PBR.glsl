@@ -88,7 +88,15 @@ vec3 calculateDiffuse(vec3 dA, float M, vec3 irradiance)
 }
 
 
-vec3 calculateSpecular(float R, vec3 N, vec3 V, float M, vec3 dA, vec3 radiance, vec2 DFG)
+vec3 calculateDiffuseLambert(vec3 dA, float M, vec3 irradiance)
+{
+    const vec3 diffuseColor = dA * (1.0 - DIELECTRIC_SPECULAR) * (1.0 - M);
+
+    return (diffuseColor * irradiance) / PI;
+}
+
+
+vec3 calculateSpecular(const float R, const vec3 N, const vec3 V, const float M, const vec3 dA, const vec3 radiance, const vec2 DFG)
 {
     const float NoV = dot(N, V);
 

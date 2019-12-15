@@ -18,6 +18,7 @@
 #include "Engine/CompositeTechnique.hpp"
 #include "Engine/ForwardIBLTechnique.hpp"
 #include "Engine/LightFroxelationTechnique.hpp"
+#include "Engine/DeferredAnalyticalLightingTechnique.hpp"
 
 
 Engine::Engine(GLFWwindow* windowPtr) :
@@ -193,6 +194,9 @@ std::unique_ptr<Technique> Engine::getSingleTechnique(const PassType passType)
 
 		case PassType::LightFroxelation:
 			return std::make_unique<LightFroxelationTechnique>(this);
+
+		case PassType::DeferredAnalyticalLighting:
+			return std::make_unique<DeferredAnalyticalLightingTechnique>(this);
 
         default:
         {
