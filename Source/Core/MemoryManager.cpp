@@ -123,8 +123,8 @@ void MemoryManager::findPoolIndicies()
 
 void MemoryManager::AllocateDevicePool()
 {
-
-    vk::MemoryAllocateInfo allocInfo{256 * 1024 * 1024, static_cast<uint32_t>(mDeviceLocalPoolIndex)};
+    constexpr vk::DeviceSize poolSize =  256 * 1024 * 1024;
+    vk::MemoryAllocateInfo allocInfo{ poolSize, static_cast<uint32_t>(mDeviceLocalPoolIndex)};
 
 	mDeviceMemoryBackers.push_back({nullptr, getDevice()->allocateMemory(allocInfo)});
 
@@ -134,7 +134,7 @@ void MemoryManager::AllocateDevicePool()
 	{
         frag.free = true;
         frag.DeviceLocal = true;
-        frag.size = 64 * 1024 * 1024;
+        frag.size = poolSize / 4;
         frag.offset = offset;
 
         offset += frag.size;
@@ -148,7 +148,7 @@ void MemoryManager::AllocateDevicePool()
 
 void MemoryManager::AllocateHostMappablePool()
 {
-	const vk::DeviceSize poolSize = 256 * 1024 * 1024;
+	constexpr vk::DeviceSize poolSize = 256 * 1024 * 1024;
 	vk::MemoryAllocateInfo allocInfo{poolSize, static_cast<uint32_t>(mHostMappablePoolIndex)};
 
 	// Map the entire allocation on creation for persistent mapping.
@@ -163,7 +163,7 @@ void MemoryManager::AllocateHostMappablePool()
 	{
         frag.free = true;
         frag.DeviceLocal = true;
-        frag.size = 64 * 1024 * 1024;
+        frag.size = poolSize / 4;
         frag.offset = offset;
 
         offset += frag.size;

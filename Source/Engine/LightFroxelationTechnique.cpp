@@ -77,6 +77,7 @@ void LightFroxelationTechnique::render(RenderGraph& graph, Engine* eng, const st
     graph.addTask(mLightListAsignment);
 
     mActiveFroxelsImageView->updateLastAccessed();
+    mActiveFroxelsImage->updateLastAccessed();
     mActiveFroxlesBuffer->updateLastAccessed();
     mSparseFroxelBuffer->updateLastAccessed();
     mLightIndexBuffer->updateLastAccessed();
