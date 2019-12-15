@@ -19,8 +19,8 @@ void RenderGraph::addTask(const GraphicsTask& task)
     // Also add a vulkan resources and inputs/outputs for each task, zero initialised
     mInputResources.emplace_back();
     mOutputResources.emplace_back();
-    mFrameBuffersNeedUpdating.emplace_back();
-    mDescriptorsNeedUpdating.emplace_back();
+    mFrameBuffersNeedUpdating.push_back(false);
+    mDescriptorsNeedUpdating.push_back(false);
 }
 
 
@@ -34,8 +34,8 @@ void RenderGraph::addTask(const ComputeTask& task)
     // Also add a vulkan resources and inputs/outputs for each task, zero initialised
     mInputResources.emplace_back();
     mOutputResources.emplace_back();
-    mFrameBuffersNeedUpdating.emplace_back();
-    mDescriptorsNeedUpdating.emplace_back();
+    mFrameBuffersNeedUpdating.push_back(false);
+    mDescriptorsNeedUpdating.push_back(false);
 }
 
 
