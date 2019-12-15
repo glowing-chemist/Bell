@@ -988,7 +988,6 @@ void RenderDevice::clearDeferredResources()
         {
             mDevice.destroyBuffer(buffer);
             getMemoryManager()->Free(memory);
-            getMemoryManager()->Free(memory);
             mBuffersPendingDestruction.pop_front();
         }
         else
