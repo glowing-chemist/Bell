@@ -15,6 +15,9 @@ ConvolveSkyBoxTechnique::ConvolveSkyBoxTechnique(Engine* eng) :
 
 void ConvolveSkyBoxTechnique::render(RenderGraph& graph, Engine*, const std::vector<const Scene::MeshInstance *>&)
 {
+	mConvolvedSkybox.updateLastAccessed();
+	mConvolvedView.updateLastAccessed();
+
 	if(mFirstFrame)
 	{
 		std::vector<ImageView> convolvedMips{};
