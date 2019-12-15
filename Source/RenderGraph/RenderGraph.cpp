@@ -39,6 +39,12 @@ void RenderGraph::addTask(const ComputeTask& task)
 }
 
 
+void RenderGraph::addDependancy(const RenderTask& dependancy, const RenderTask& dependant)
+{
+	addDependancy(dependancy.getName(), dependant.getName());
+}
+
+
 void RenderGraph::addDependancy(const std::string& dependancy, const std::string& dependant)
 {
 	// Find the task index in mGraphicsTasks/mComputeTaskss

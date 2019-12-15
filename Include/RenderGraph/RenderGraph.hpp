@@ -43,6 +43,7 @@ public:
     void addTask(const GraphicsTask&);
     void addTask(const ComputeTask&);
 
+	void addDependancy(const RenderTask& dependancy, const RenderTask& dependant);
     void addDependancy(const std::string& dependancy, const std::string& dependant);
 
     // compiles the dependancy graph based on slots (assuming resources are finished writing to by their first read from)

@@ -6,8 +6,8 @@ DeferredAnalyticalLightingTechnique::DeferredAnalyticalLightingTechnique(Engine*
 	Technique("deferred analytical lighting", eng->getDevice()),
 	mPipelineDesc{ eng->getShader("./Shaders/DeferredAnalyticalLighting.comp") },
 	mTask("deferred analytical lighting", mPipelineDesc),
-	mAnalyticalLighting(eng->getDevice(), Format::RGBA8UNorm, ImageUsage::Sampled | ImageUsage::Storage, eng->getSwapChainImage().getExtent(0, 0).width, 
-		eng->getSwapChainImage().getExtent(0, 0).height, 1, 1, 1, 1, kAnalyticLighting),
+	mAnalyticalLighting(eng->getDevice(), Format::RGBA8UNorm, ImageUsage::Sampled | ImageUsage::Storage, eng->getSwapChainImageView().getImageExtent().width, 
+		eng->getSwapChainImageView().getImageExtent().height, 1, 1, 1, 1, kAnalyticLighting),
 	mAnalyticalLightingView(mAnalyticalLighting, ImageViewType::Colour),
 	mPointSampler(SamplerType::Point)
 {

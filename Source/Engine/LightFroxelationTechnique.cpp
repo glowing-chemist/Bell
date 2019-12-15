@@ -16,15 +16,15 @@ LightFroxelationTechnique::LightFroxelationTechnique(Engine* eng) :
     mClearCountersDesc{eng->getShader("./Shaders/LightFroxelationClearCounters.comp")},
     mClearCounters("clearFroxelationCounters", mClearCountersDesc),
     mLightAsignmentDesc{eng->getShader("./Shaders/FroxelationGenerateLightLists.comp")},
-    mLightAsignment("LightAsignment", mLightAsignmentDesc),
+    mLightListAsignment("LightAsignment", mLightAsignmentDesc),
 
 	mActiveFroxelsImage(eng->getDevice(), Format::R32Uint, ImageUsage::Storage | ImageUsage::Sampled, eng->getDevice()->getSwapChainImageView().getImageExtent().width,
 		eng->getDevice()->getSwapChainImageView().getImageExtent().height, 1, 1, 1, 1, "ActiveFroxels"),
 	mActiveFroxelsImageView(mActiveFroxelsImage, ImageViewType::Colour),
 
     // Assumes an avergae max of 10 active froxels per screen space tile.
-    mActiveFroxlesBuffer(eng->getDevice(), BufferUsage::DataBuffer | BufferUsage::Uniform, sizeof(uint32_t) * 3 * (28 * 50 * 10), sizeof(uint32_t) * 3 * (28 * 50 * 10), "ActiveFroxelBuffer"),
-	mActiveFroxlesBufferView(mActiveFroxlesBuffer, eng->getDevice()->getLimits().minStorageBufferOffsetAlignment),
+    mActiveFroxlesBuffer(eng->getDevice(), BufferUsage::DataBuffer | BufferUsage::Uniform, sizeof(uint32_t) * 3 * (30 * 50 * 10), sizeof(uint32_t) * 3 * (30 * 50 * 10), "ActiveFroxelBuffer"),
+	mActiveFroxlesBufferView(mActiveFroxlesBuffer, std::max(eng->getDevice()->getLimits().minStorageBufferOffsetAlignment, sizeof(uint32_t))),
     mActiveFroxelsCounter(mActiveFroxlesBuffer, 0u, static_cast<uint32_t>(sizeof(uint32_t))),
 
     mIndirectArgsBuffer(eng->getDevice(), BufferUsage::DataBuffer | BufferUsage::IndirectArgs, sizeof(vk::DispatchIndirectCommand), sizeof(vk::DispatchIndirectCommand), "FroxelIndirectArgs"),
@@ -33,8 +33,8 @@ LightFroxelationTechnique::LightFroxelationTechnique(Engine* eng) :
     mSparseFroxelBuffer(eng->getDevice(), BufferUsage::DataBuffer, sizeof(uint32_t) * 2 * (30 * 50 * 32), sizeof(uint32_t) * 2 * (30 * 50 * 32), kSparseFroxels),
     mSparseFroxelBufferView(mSparseFroxelBuffer),
 
-    mLightIndexBuffer(eng->getDevice(), BufferUsage::DataBuffer, sizeof(uint32_t) * (28 * 50 * 10 * 16), sizeof(uint32_t) * (28 * 50 * 10 * 16), kLightIndicies),
-    mLightIndexBufferView(mLightIndexBuffer, eng->getDevice()->getLimits().minStorageBufferOffsetAlignment),
+    mLightIndexBuffer(eng->getDevice(), BufferUsage::DataBuffer, sizeof(uint32_t) * (30 * 50 * 10 * 16), sizeof(uint32_t) * (30 * 50 * 10 * 16), kLightIndicies),
+    mLightIndexBufferView(mLightIndexBuffer, std::max(eng->getDevice()->getLimits().minStorageBufferOffsetAlignment, sizeof(uint32_t))),
     mLightIndexCounterView(mLightIndexBuffer, 0, static_cast<uint32_t>(sizeof(uint32_t)))
 {
     mClearCounters.addInput(kActiveFroxelsCounter, AttachmentType::DataBufferWO);
@@ -52,14 +52,14 @@ LightFroxelationTechnique::LightFroxelationTechnique(Engine* eng) :
     mIndirectArgs.addInput(kFroxelIndirectArgs, AttachmentType::DataBufferWO);
 	mIndirectArgs.addDispatch(1, 1, 1);
 
-    mLightAsignment.addInput(kActiveFroxelsCounter, AttachmentType::DataBufferRO);
-    mLightAsignment.addInput(kActiveFroxelBuffer, AttachmentType::DataBufferRO);
-    mLightAsignment.addInput(kLightIndexCounter, AttachmentType::DataBufferRW);
-    mLightAsignment.addInput(kLightIndicies, AttachmentType::DataBufferWO);
-    mLightAsignment.addInput(kSparseFroxels, AttachmentType::DataBufferWO);
-    mLightAsignment.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
-    mLightAsignment.addInput(kLightBuffer, AttachmentType::ShaderResourceSet);
-    mLightAsignment.addIndirectDispatch(kFroxelIndirectArgs);
+    mLightListAsignment.addInput(kActiveFroxelsCounter, AttachmentType::DataBufferRO);
+    mLightListAsignment.addInput(kActiveFroxelBuffer, AttachmentType::DataBufferRO);
+    mLightListAsignment.addInput(kLightIndexCounter, AttachmentType::DataBufferRW);
+    mLightListAsignment.addInput(kLightIndicies, AttachmentType::DataBufferWO);
+    mLightListAsignment.addInput(kSparseFroxels, AttachmentType::DataBufferWO);
+    mLightListAsignment.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
+    mLightListAsignment.addInput(kLightBuffer, AttachmentType::ShaderResourceSet);
+    mLightListAsignment.addIndirectDispatch(kFroxelIndirectArgs);
 }
 
 
@@ -74,7 +74,16 @@ void LightFroxelationTechnique::render(RenderGraph& graph, Engine* eng, const st
     graph.addTask(mClearCounters);
 	graph.addTask(mActiveFroxels);
 	graph.addTask(mIndirectArgs);
-    graph.addTask(mLightAsignment);
+    graph.addTask(mLightListAsignment);
+
+    mActiveFroxelsImageView->updateLastAccessed();
+    mActiveFroxlesBuffer->updateLastAccessed();
+    mSparseFroxelBuffer->updateLastAccessed();
+    mLightIndexBuffer->updateLastAccessed();
+    mIndirectArgsBuffer->updateLastAccessed();
+
+    // add explicit dependancy between indirect arg generation and consumption as not currently handled in dependancy compilation atm (possible TODO)
+    graph.addDependancy(mIndirectArgs, mLightListAsignment);
 }
 
 

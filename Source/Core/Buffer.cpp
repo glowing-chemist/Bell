@@ -174,10 +174,10 @@ void Buffer::setContents(const void* data, const uint32_t size, const uint32_t o
 
             // TODO: Implement a staging buffer cache so that we don't have to create one
             // each time.
-            stagingBuffer.updateLastAccessed(getDevice()->getCurrentSubmissionIndex());
+            stagingBuffer.updateLastAccessed();
         }
     }
-    updateLastAccessed(getDevice()->getCurrentSubmissionIndex());
+    updateLastAccessed();
 }
 
 
@@ -208,7 +208,7 @@ void Buffer::setContents(const int data,
                 .fillBuffer(mBuffer, offset, size, static_cast<uint32_t>(data));
     }
 
-    updateLastAccessed(getDevice()->getCurrentSubmissionIndex());
+    updateLastAccessed();
 }
 
 
@@ -219,7 +219,7 @@ void* Buffer::map(MapInfo& mapInfo)
 	mapInfo.mMemory = mBufferMemory;
 	mCurrentMap = mapInfo;
 
-	updateLastAccessed(getDevice()->getCurrentSubmissionIndex());
+	updateLastAccessed();
 
 	return getDevice()->getMemoryManager()->MapAllocation(mapInfo);
 }
@@ -229,7 +229,7 @@ void  Buffer::unmap()
 {
     BELL_ASSERT(isMappable(), "Buffer is not mappable")
 
-	updateLastAccessed(getDevice()->getCurrentSubmissionIndex());
+	updateLastAccessed();
 
 	getDevice()->getMemoryManager()->UnMapAllocation(mCurrentMap);
 }
@@ -250,7 +250,7 @@ bool Buffer::resize(const uint32_t newSize, const bool preserContents)
     else
         resizeDiscardContents(newSize);
 
-    updateLastAccessed(getDevice()->getCurrentSubmissionIndex());
+    updateLastAccessed();
 
     return true;
 }
@@ -299,4 +299,10 @@ void Buffer::resizeDiscardContents(const uint32_t newSize)
     mBuffer = newBuffer;
     mBufferMemory = newMemory;
     mSize = newSize;
+}
+
+
+void Buffer::updateLastAccessed()
+{
+    GPUResource::updateLastAccessed(getDevice()->getCurrentSubmissionIndex());
 }

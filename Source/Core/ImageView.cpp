@@ -154,3 +154,9 @@ vk::Extent3D ImageView::getImageExtent(const uint32_t level, const uint32_t LOD)
 {
 	return mSubResourceInfo[(level * mTotalMips) + LOD].mExtent;
 }
+
+
+void ImageView::updateLastAccessed()
+{
+	GPUResource::updateLastAccessed(getDevice()->getCurrentSubmissionIndex());
+}

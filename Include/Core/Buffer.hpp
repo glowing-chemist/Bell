@@ -61,6 +61,8 @@ public:
 	void*   map(MapInfo &mapInfo);
     void    unmap();
 
+    void    updateLastAccessed();
+
 private:
 
     void resizePreserveContents(const uint32_t);

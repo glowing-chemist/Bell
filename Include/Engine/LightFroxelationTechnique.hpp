@@ -35,7 +35,7 @@ private:
     ComputeTask                     mClearCounters;
 
     ComputePipelineDescription      mLightAsignmentDesc;
-    ComputeTask                     mLightAsignment;
+    ComputeTask                     mLightListAsignment;
 
     PerFrameResource<Image>         mActiveFroxelsImage;
     PerFrameResource<ImageView>     mActiveFroxelsImageView;

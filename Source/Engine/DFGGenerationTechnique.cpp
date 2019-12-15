@@ -16,6 +16,9 @@ DFGGenerationTechnique::DFGGenerationTechnique(Engine* eng) :
 
 void DFGGenerationTechnique::render(RenderGraph& graph, Engine*, const std::vector<const Scene::MeshInstance*>&)
 {
+	mDFGLUT.updateLastAccessed();
+	mDFGLUTView.updateLastAccessed();
+
 	if (mFirstFrame)
 	{
 		graph.addTask(mTask);

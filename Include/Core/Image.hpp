@@ -97,6 +97,8 @@ public:
 	bool			isSwapchainImage() const
 	{ return !mIsOwned; }
 
+    void updateLastAccessed();
+
 private:
     Allocation mImageMemory;
     vk::Image mImage;

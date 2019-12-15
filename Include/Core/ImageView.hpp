@@ -75,6 +75,7 @@ public:
 	bool isSwapChain() const
 	{ return mIsSwapchain; }
 
+    void updateLastAccessed();
 
 private:
 
