@@ -75,6 +75,11 @@ public:
     T& get(const uint32_t index)
     { return mData[index]; }
 
+    const T& get(const uint32_t index) const
+    {
+        return mData[index];
+    }
+
 private:
 
     std::vector<T> mData;
