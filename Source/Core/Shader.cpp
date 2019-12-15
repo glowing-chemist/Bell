@@ -195,6 +195,8 @@ bool Shader::compile()
     shaderModuleInfo.setCodeSize(mSPIRV.size() * 4);
     mShaderModule = getDevice()->createShaderModule(shaderModuleInfo);
 
+	getDevice()->setDebugName(mFilePath.string(), *reinterpret_cast<uint64_t*>(&mShaderModule), vk::DebugReportObjectTypeEXT::eShaderModule);
+
     mCompiled = true;
 	mSPIRV.clear();
 
