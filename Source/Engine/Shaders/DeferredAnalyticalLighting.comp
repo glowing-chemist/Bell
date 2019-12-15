@@ -44,6 +44,9 @@ void main()
 	const vec2 gbufferSize = textureSize(sampler2D(depth, linearSampler), 0);
 	const vec2 uv = vec2(gl_GlobalInvocationID.xy) / gbufferSize;
 
+	if(gl_GlobalInvocationID.x >= gbufferSize.x || gl_GlobalInvocationID.y >= gbufferSize.y)
+		return;
+
 	const float fragmentDepth = texture(sampler2D(depth, linearSampler), uv).x;
 
 	vec4 worldSpaceFragmentPos = camera.invertedCamera * vec4(uv, fragmentDepth, 1.0f);

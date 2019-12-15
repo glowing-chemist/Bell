@@ -24,7 +24,10 @@ DeferredAnalyticalLightingTechnique::DeferredAnalyticalLightingTechnique(Engine*
 	mTask.addInput(kAnalyticLighting, AttachmentType::Image2D);
 	mTask.addInput(kLightBuffer, AttachmentType::ShaderResourceSet);
 
-	mTask.addDispatch(	eng->getSwapChainImage().getExtent(0, 0).width / 8,
-						eng->getSwapChainImage().getExtent(0, 0).height / 8,
+	const float threadGroupWidth = eng->getSwapChainImage().getExtent(0, 0).width;
+	const float threadGroupHeight = eng->getSwapChainImage().getExtent(0, 0).height;
+
+	mTask.addDispatch(	static_cast<uint32_t>(std::ceil(threadGroupWidth / 8.0f)),
+						static_cast<uint32_t>(std::ceil(threadGroupHeight / 8.0f)),
 						1);
 }
