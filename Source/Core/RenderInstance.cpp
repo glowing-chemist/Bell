@@ -253,7 +253,9 @@ void RenderInstance::addDebugCallback()
 {
     VkDebugUtilsMessengerCreateInfoEXT callbackCreateInfo{};
     callbackCreateInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
-    callbackCreateInfo.flags = VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT;
+    callbackCreateInfo.flags = 0;
+    callbackCreateInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT;
+    callbackCreateInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT;
     callbackCreateInfo.pfnUserCallback = debugCallbackFunc;
 
     auto* createMessenger = reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>(mInstance.getProcAddr("vkCreateDebugUtilsMessengerEXT"));
@@ -262,7 +264,8 @@ void RenderInstance::addDebugCallback()
         BELL_LOG("Inserting debug callback")
 
         auto call = static_cast<VkDebugUtilsMessengerEXT>(mDebugMessenger);
-        createMessenger(mInstance, &callbackCreateInfo, nullptr, &call);
+        VkResult result = createMessenger(mInstance, &callbackCreateInfo, nullptr, &call);
+        BELL_ASSERT(result == VK_SUCCESS, "Failed to insert debug callback")
         mDebugMessenger = call;
     }
 }

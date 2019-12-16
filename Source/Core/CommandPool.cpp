@@ -17,7 +17,7 @@ CommandPool::CommandPool(RenderDevice* renderDevice) :
 	{
 		createInfo.setQueueFamilyIndex(getDevice()->getQueueFamilyIndex(static_cast<QueueType>(queueFamiltTypeIndex)));
 		// we reset the pools every 3 frames so set these as transient.
-		createInfo.setFlags(vk::CommandPoolCreateFlagBits::eTransient);
+        createInfo.setFlags(SUBMISSION_PER_TASK ? vk::CommandPoolCreateFlagBits::eResetCommandBuffer : vk::CommandPoolCreateFlagBits::eTransient);
 		++queueFamiltTypeIndex;
 	}
 
@@ -57,7 +57,7 @@ uint32_t CommandPool::getNumberOfBuffersForQueue(const QueueType queueType)
 {
     const auto& bufferPool = getCommandBuffers(queueType);
 
-	return bufferPool.size();
+    return static_cast<uint32_t>(bufferPool.size());
 }
 
 
@@ -76,7 +76,7 @@ void CommandPool::reserve(const uint32_t number, const QueueType queueType)
         auto commandBuffer = allocateCommandBuffers(1, queueType, true)[0];
 
         vk::CommandBufferBeginInfo primaryBegin{};
-        primaryBegin.setFlags(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
+        primaryBegin.setFlags(SUBMISSION_PER_TASK ? vk::CommandBufferUsageFlags{} : vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
 
         commandBuffer.begin(primaryBegin);
 

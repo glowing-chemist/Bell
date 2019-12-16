@@ -775,15 +775,30 @@ void RenderDevice::execute(RenderGraph& graph)
 
     vk::CommandBuffer primaryCmdBuffer = currentCommandPool->getBufferForQueue(QueueType::Graphics);
 
+#if SUBMISSION_PER_TASK
+    bool firstTask = true;
+#endif
+
 	uint32_t cmdBufferIndex = 1;
 	auto vulkanResource = mVulkanResources.begin();
 	for (auto task = graph.taskBegin(); task != graph.taskEnd(); ++task, ++vulkanResource)
 	{
+
+#if SUBMISSION_PER_TASK
+      if(!firstTask)
+      {
+          primaryCmdBuffer.reset(vk::CommandBufferResetFlags{});
+
+          vk::CommandBufferBeginInfo primaryBegin{};
+          primaryCmdBuffer.begin(primaryBegin);
+      }
+#endif
+
         const auto& resources = *vulkanResource;
 		
 		vk::PipelineBindPoint bindPoint = vk::PipelineBindPoint::eCompute;
 
-		execute(neededBarriers[cmdBufferIndex - 1], vk::PipelineStageFlagBits::eColorAttachmentOutput, vk::PipelineStageFlagBits::eFragmentShader);
+        execute(neededBarriers[cmdBufferIndex - 1], vk::PipelineStageFlagBits::eColorAttachmentOutput, vk::PipelineStageFlagBits::eFragmentShader);
 
 		vk::CommandBufferUsageFlags commadBufferUsage = vk::CommandBufferUsageFlagBits::eOneTimeSubmit;
 
@@ -840,7 +855,17 @@ void RenderDevice::execute(RenderGraph& graph)
 		if (resources.mRenderPass)
 			primaryCmdBuffer.endRenderPass();
 
-		++cmdBufferIndex;
+#if SUBMISSION_PER_TASK
+        primaryCmdBuffer.end();
+
+        submitFrame();
+
+        flushWait();
+
+        firstTask = false;
+#endif
+
+        ++cmdBufferIndex;
     }
 
 	// Transition the frameBuffer to a presentable format (hehe).
@@ -1019,6 +1044,7 @@ void RenderDevice::clearVulkanResources()
 void RenderDevice::setDebugName(const std::string& name, const uint64_t handle, const VkObjectType objectType)
 {
     VkDebugUtilsObjectNameInfoEXT lableInfo{};
+    lableInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
     lableInfo.objectType = objectType;
     lableInfo.objectHandle = handle;
     lableInfo.pObjectName = name.c_str();

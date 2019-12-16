@@ -22,6 +22,11 @@
 #include "RenderGraph/ComputeTask.hpp"
 #include "RenderGraph/RenderGraph.hpp"
 
+
+// Debug option for finding which task is causing a device loss.
+#define SUBMISSION_PER_TASK 1
+
+
 struct GLFWwindow;
 
 struct QueueIndicies
