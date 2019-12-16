@@ -19,7 +19,7 @@
 static VKAPI_ATTR VkBool32 debugCallbackFunc(
         VkDebugUtilsMessageSeverityFlagBitsEXT,
         VkDebugUtilsMessageTypeFlagsEXT,
-        const VkDebugUtilsMessengerCallbackDataEXT*      pCallbackData,
+        const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
         void*)
 {
 
@@ -293,8 +293,8 @@ vk::SurfaceKHR RenderInstance::getSurface() const
 
 bool RenderInstance::hasSubgroupSupport(vk::PhysicalDevice physDev)
 {
-	vk::PhysicalDeviceProperties2 properties{};
-	vk::PhysicalDeviceSubgroupProperties subgroupProperties{};
+    vk::PhysicalDeviceProperties2 properties;
+	vk::PhysicalDeviceSubgroupProperties subgroupProperties;
 
 	properties.pNext = &subgroupProperties;
 

@@ -8,6 +8,7 @@
 #include "Engine/Camera.hpp"
 #include "Engine/StaticMesh.h"
 
+#include <algorithm>
 #include <atomic>
 #include <cstdint>
 #include <memory>
