@@ -44,7 +44,7 @@ private:
 
     vk::Instance mInstance;
     vk::Device mDevice;
-    vk::DebugReportCallbackEXT mDebugCallback;
+    vk::DebugUtilsMessengerEXT mDebugMessenger;
     vk::SurfaceKHR mWindowSurface;
     GLFWwindow* mWindow;
 };

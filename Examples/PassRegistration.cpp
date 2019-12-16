@@ -25,7 +25,7 @@ bool renderMenu(GLFWwindow* win)
 	bool mousePressed[5];
 	for (uint32_t i = 0; i < 5; ++i)
 	{
-		const auto pressed = glfwGetMouseButton(win, i);
+        const auto pressed = glfwGetMouseButton(win, static_cast<int>(i));
 
 		mousePressed[i] = pressed == GLFW_PRESS;
 	}

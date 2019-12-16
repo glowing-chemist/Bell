@@ -74,7 +74,7 @@ Image::Image(RenderDevice* dev,
 
 	if(mDebugName != "")
 	{
-		getDevice()->setDebugName(mDebugName, reinterpret_cast<uint64_t>(VkImage(mImage)), vk::DebugReportObjectTypeEXT::eImage);
+        getDevice()->setDebugName(mDebugName, reinterpret_cast<uint64_t>(VkImage(mImage)), VK_OBJECT_TYPE_IMAGE);
 	}
 }
 
@@ -130,7 +130,7 @@ Image::Image(RenderDevice* dev,
 
 	if(mDebugName != "")
 	{
-		getDevice()->setDebugName(mDebugName, reinterpret_cast<uint64_t>(VkImage(mImage)), vk::DebugReportObjectTypeEXT::eImage);
+        getDevice()->setDebugName(mDebugName, reinterpret_cast<uint64_t>(VkImage(mImage)), VK_OBJECT_TYPE_IMAGE);
 	}
 }
 

@@ -16,18 +16,14 @@
 
 #define DUMP_API 0
 
-static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallbackFunc(
-    VkDebugReportFlagsEXT,
-    VkDebugReportObjectTypeEXT,
-    uint64_t,
-    size_t,
-    int32_t,
-    const char*,
-    const char* msg,
-    void*)
+static VKAPI_ATTR VkBool32 debugCallbackFunc(
+        VkDebugUtilsMessageSeverityFlagBitsEXT,
+        VkDebugUtilsMessageTypeFlagsEXT,
+        const VkDebugUtilsMessengerCallbackDataEXT*      pCallbackData,
+        void*)
 {
 
-    BELL_LOG_ARGS("VALIDATION LAYER: %s", msg)
+    BELL_LOG_ARGS("VALIDATION LAYER: %s", pCallbackData->pMessage)
 
 	BELL_TRAP;
 
@@ -75,7 +71,7 @@ RenderInstance::RenderInstance(GLFWwindow* window)
 	requiredExtensionVector.push_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
 
 #if BELL_ENABLE_LOGGING
-    requiredExtensionVector.push_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
+    requiredExtensionVector.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 #endif
 
     vk::InstanceCreateInfo instanceInfo{};
@@ -104,7 +100,7 @@ RenderInstance::RenderInstance(GLFWwindow* window)
     if(layersFound != validationLayers.size()) throw std::runtime_error{"Running in debug but validation layers not found"};
 
     instanceInfo.setEnabledLayerCount(validationLayers.size());
-    instanceInfo.setPpEnabledLayerNames(validationLayers.data());
+    instanceInfo.setPpEnabledLayerNames(validationLayers.data());    
 #endif
 
     mInstance = vk::createInstance(instanceInfo);
@@ -189,13 +185,13 @@ std::pair<vk::PhysicalDevice, vk::Device> RenderInstance::findSuitableDevices(in
 															  VK_KHR_MAINTENANCE3_EXTENSION_NAME
 															 };
 
-	const std::vector<const char*> optionalDeviceExtensions = {VK_EXT_DEBUG_MARKER_EXTENSION_NAME};
+    const std::vector<const char*> optionalDeviceExtensions = {/* used to contain a retired extension but left in incase I need it in the future */};
 
 	std::vector<const char*> extensionsToEnable{};
 
 	const auto deviceExtensionproperties = physicalDevice.enumerateDeviceExtensionProperties();
 
-	for(const auto availableExtensions : deviceExtensionproperties)
+    for(const auto& availableExtensions : deviceExtensionproperties)
 	{
 		for(const auto* extension : requireDeviceExtensions)
 		{
@@ -255,27 +251,28 @@ RenderInstance::~RenderInstance()
 
 void RenderInstance::addDebugCallback()
 {
-    VkDebugReportCallbackCreateInfoEXT callbackCreateInfo{};
-    callbackCreateInfo.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CREATE_INFO_EXT;
-    callbackCreateInfo.flags = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT | VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT;
-    callbackCreateInfo.pfnCallback = debugCallbackFunc;
+    VkDebugUtilsMessengerCreateInfoEXT callbackCreateInfo{};
+    callbackCreateInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+    callbackCreateInfo.flags = VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT;
+    callbackCreateInfo.pfnUserCallback = debugCallbackFunc;
 
-    auto* createCallback = reinterpret_cast<PFN_vkCreateDebugReportCallbackEXT>(mInstance.getProcAddr("vkCreateDebugReportCallbackEXT"));
-    if(createCallback != nullptr) {
+    auto* createMessenger = reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>(mInstance.getProcAddr("vkCreateDebugUtilsMessengerEXT"));
+    BELL_ASSERT(createMessenger, "Unable to create debug utils messenger")
+    if(createMessenger != nullptr) {
         BELL_LOG("Inserting debug callback")
 
-        auto call = static_cast<VkDebugReportCallbackEXT>(mDebugCallback);
-        createCallback(mInstance, &callbackCreateInfo, nullptr, &call);
-        mDebugCallback = call;
+        auto call = static_cast<VkDebugUtilsMessengerEXT>(mDebugMessenger);
+        createMessenger(mInstance, &callbackCreateInfo, nullptr, &call);
+        mDebugMessenger = call;
     }
 }
 
 
 void RenderInstance::removeDebugCallback()
 {
-    auto* destroyCallback = reinterpret_cast<PFN_vkDestroyDebugReportCallbackEXT>(mInstance.getProcAddr("vkDestroyDebugReportCallbackEXT"));
-    if(destroyCallback != nullptr)
-        destroyCallback(mInstance, mDebugCallback, nullptr);
+    auto* destroyMessenger = reinterpret_cast<PFN_vkDestroyDebugUtilsMessengerEXT>(mInstance.getProcAddr("vkDestroyDebugUtilsMessengerEXT"));
+    if(destroyMessenger != nullptr)
+        destroyMessenger(mInstance, mDebugMessenger, nullptr);
 }
 
 

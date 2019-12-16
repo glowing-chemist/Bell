@@ -29,7 +29,7 @@ Buffer::Buffer(RenderDevice* dev,
 
 	if(mName != "")
 	{
-		getDevice()->setDebugName(mName, reinterpret_cast<uint64_t>(VkBuffer(mBuffer)), vk::DebugReportObjectTypeEXT::eBuffer);
+        getDevice()->setDebugName(mName, reinterpret_cast<uint64_t>(VkBuffer(mBuffer)), VK_OBJECT_TYPE_BUFFER);
 	}
 }
 

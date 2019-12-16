@@ -27,7 +27,6 @@ RenderDevice::RenderDevice(vk::Instance instance,
     mDevice{dev},
     mPhysicalDevice{physDev},
 	mInstance(instance),
-	mHasDebugLableSupport{false},
     mSwapChain{this, surface, window},
     mMemoryManager{this},
 	mDescriptorManager{this}
@@ -68,13 +67,6 @@ RenderDevice::RenderDevice(vk::Instance instance,
     vk::EventCreateInfo eventInfo{};
     mDebugEvent = mDevice.createEvent(eventInfo);
 #endif
-
-	// Check for the debug names extension
-	for(const auto extensionProperty : mPhysicalDevice.enumerateDeviceExtensionProperties())
-	{
-		if(strcmp(VK_EXT_DEBUG_MARKER_EXTENSION_NAME, extensionProperty.extensionName) == 0)
-			mHasDebugLableSupport = true;
-	}
 }
 
 
@@ -1024,21 +1016,20 @@ void RenderDevice::clearVulkanResources()
 }
 
 
-void RenderDevice::setDebugName(const std::string& name, const uint64_t handle, const vk::DebugReportObjectTypeEXT objectType)
+void RenderDevice::setDebugName(const std::string& name, const uint64_t handle, const VkObjectType objectType)
 {
-	vk::DebugMarkerObjectNameInfoEXT markerInfo{};
-	markerInfo.setObject(handle);
-	markerInfo.setObjectType(objectType);
-	markerInfo.setPObjectName(name.c_str());
+    VkDebugUtilsObjectNameInfoEXT lableInfo{};
+    lableInfo.objectType = objectType;
+    lableInfo.objectHandle = handle;
+    lableInfo.pObjectName = name.c_str();
 
-	static auto* debugMarkerFunction = reinterpret_cast<PFN_vkDebugMarkerSetObjectNameEXT>(mInstance.getProcAddr("vkDebugMarkerSetObjectNameEXT"));
+    static auto* debugMarkerFunction = reinterpret_cast<PFN_vkSetDebugUtilsObjectNameEXT>(mInstance.getProcAddr("vkSetDebugUtilsObjectNameEXT"));
 
-	if(debugMarkerFunction != nullptr && mHasDebugLableSupport)
-	{
-		VkDebugMarkerObjectNameInfoEXT Info = markerInfo;
-		Info.sType = VK_STRUCTURE_TYPE_DEBUG_MARKER_OBJECT_NAME_INFO_EXT;
-		debugMarkerFunction(mDevice, &Info);
-	}
+    if(debugMarkerFunction != nullptr)
+    {
+
+        debugMarkerFunction(mDevice, &lableInfo);
+    }
 }
 
 

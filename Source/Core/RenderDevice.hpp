@@ -169,7 +169,7 @@ public:
 
     vk::Sampler                        getImmutableSampler(const Sampler& sampler);
 
-	void							   setDebugName(const std::string&, const uint64_t, const vk::DebugReportObjectTypeEXT);
+    void							   setDebugName(const std::string&, const uint64_t, const VkObjectType);
 
 
     // Memory management functions
@@ -331,8 +331,6 @@ private:
     std::unordered_map<ComputePipelineDescription, ComputePipelineHandles> mComputePipelineCache;
 
     std::unordered_map<Sampler, vk::Sampler> mImmutableSamplerCache;
-
-	bool mHasDebugLableSupport;
 
     SwapChain mSwapChain;
     std::vector<CommandPool> mCommandPools;
