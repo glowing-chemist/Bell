@@ -24,7 +24,7 @@
 
 
 // Debug option for finding which task is causing a device loss.
-#define SUBMISSION_PER_TASK 1
+#define SUBMISSION_PER_TASK 0
 
 
 struct GLFWwindow;
