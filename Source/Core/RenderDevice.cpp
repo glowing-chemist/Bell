@@ -838,6 +838,7 @@ void RenderDevice::execute(RenderGraph& graph)
 
         vk::CommandBuffer& secondaryCmdBuffer = currentCommandPool->getBufferForQueue(QueueType::Graphics, cmdBufferIndex);
         secondaryCmdBuffer.begin(secondaryBegin);
+        setDebugName((*task).getName(), reinterpret_cast<uint64_t>(VkCommandBuffer(secondaryCmdBuffer)), VK_OBJECT_TYPE_COMMAND_BUFFER);
 
         secondaryCmdBuffer.bindPipeline(bindPoint, resources.mPipeline->getHandle());
 

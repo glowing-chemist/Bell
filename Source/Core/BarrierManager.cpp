@@ -94,19 +94,6 @@ void BarrierRecorder::transitionImageLayout(Image& image, const vk::ImageLayout 
 
 void BarrierRecorder::transitionImageLayout(ImageView& imageView, const vk::ImageLayout layout)
 {
-	bool alreadyInLayout = true;
-	for(uint32_t arrayLevel = imageView.getBaseLevel(); arrayLevel < imageView.getBaseLevel() + imageView.getLevelCount(); ++arrayLevel)
-	{
-		for(uint32_t mipLevel = imageView.getBaseMip(); mipLevel < imageView.getBaseMip() + imageView.getMipsCount(); ++mipLevel)
-		{
-			if(imageView.mSubResourceInfo[(arrayLevel * imageView.mTotalMips) + mipLevel].mLayout != layout)
-				alreadyInLayout = false;
-		}
-	}
-
-	if(alreadyInLayout)
-		return;
-
     vk::ImageMemoryBarrier barrier{};
 	barrier.setSrcAccessMask(vk::AccessFlagBits::eMemoryWrite);
 	barrier.setDstAccessMask(vk::AccessFlagBits::eMemoryRead);

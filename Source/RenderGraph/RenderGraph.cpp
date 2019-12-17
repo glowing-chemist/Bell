@@ -672,7 +672,9 @@ std::vector<BarrierRecorder> RenderGraph::generateBarriers(RenderDevice* dev)
 		std::vector<taskIndex> mRequiredStates;
 	};
 
-	std::map<std::string, ResourceUsageEntries> resourceEntries;
+	std::map<uint32_t, ResourceUsageEntries> resourceEntries;
+	std::unordered_map<std::string, uint32_t> resourceIndicies;
+	uint32_t nextResourceIndex = 0;
 
 	// Gather when all resources are used/how.
 	for (uint32_t i = 0; i < mTaskOrder.size(); ++i)
@@ -684,51 +686,68 @@ std::vector<BarrierRecorder> RenderGraph::generateBarriers(RenderDevice* dev)
 		const auto& [type, index] = mTaskOrder[i];
 		const auto& task = getTask(type, index);
 
-		for (const auto& resource : inputResources)
+		for (auto j = 0u; j < std::max(inputResources.size(), outputResources.size()); ++j)
 		{
-			if (resource.mResourcetype == RenderGraph::ResourceType::Image)
+			if (j < inputResources.size())
 			{
-				if (resourceEntries.find(resource.mName) == resourceEntries.end())
+				const auto& resource = inputResources[j];
+
+				uint32_t resourceIndex = ~0u;
+
+				if (resource.mResourcetype == RenderGraph::ResourceType::Image)
 				{
-					ImageView& imageView = getImageView(resource.mResourceIndex);
-					resourceEntries[resource.mName].mImage = &imageView;
+					if (resourceIndicies.find(resource.mName) == resourceIndicies.end())
+					{
+						resourceIndex = nextResourceIndex++;
+						resourceIndicies[resource.mName] = resourceIndex;
+						ImageView& imageView = getImageView(resource.mResourceIndex);
+						resourceEntries[resourceIndex].mImage = &imageView;
+					}
+					else
+						resourceIndex = resourceIndicies[resource.mName];
+
+				}
+				else if (resource.mResourcetype == RenderGraph::ResourceType::Buffer)
+				{
+					if (resourceIndicies.find(resource.mName) == resourceIndicies.end())
+					{
+						resourceIndex = nextResourceIndex++;
+						resourceIndicies[resource.mName] = resourceIndex;
+						BufferView& bufView = getBuffer(resource.mResourceIndex);
+						resourceEntries[resourceIndex].mBuffer = &bufView;
+					}
+					else
+						resourceIndex = resourceIndicies[resource.mName];
 				}
 
+				resourceEntries[resourceIndex].mRequiredStates.push_back({ i, task.getInputAttachments()[resource.mResourceBinding].mType });
 			}
-			else if (resource.mResourcetype == RenderGraph::ResourceType::Buffer)
+
+			if (j < outputResources.size())
 			{
-				if (resourceEntries.find(resource.mName) == resourceEntries.end())
+				const auto& resource = outputResources[j];
+
+				if (resource.mResourcetype == RenderGraph::ResourceType::Image)
 				{
-					BufferView& bufView = getBuffer(resource.mResourceIndex);
-					resourceEntries[resource.mName].mBuffer = &bufView;
+					uint32_t resourceIndex;
+
+					if (resourceIndicies.find(resource.mName) == resourceIndicies.end())
+					{
+						resourceIndex = nextResourceIndex++;
+						resourceIndicies[resource.mName] = resourceIndex;
+						ImageView & imageView = getImageView(resource.mResourceIndex);
+						resourceEntries[resourceIndex].mImage = &imageView;
+					}
+					else
+						resourceIndex = resourceIndicies[resource.mName];
+
+					resourceEntries[resourceIndex].mRequiredStates.push_back({ i, task.getOuputAttachments()[resource.mResourceBinding].mType });
 				}
 			}
-			else
-				continue;
-
-			resourceEntries[resource.mName].mRequiredStates.push_back({ i, task.getInputAttachments()[resource.mResourceBinding].mType });
-
-		}
-
-		for (const auto& resource : outputResources)
-		{
-			if (resource.mResourcetype == RenderGraph::ResourceType::Image)
-			{
-				if (resourceEntries.find(resource.mName) == resourceEntries.end())
-				{
-					ImageView& imageView = getImageView(resource.mResourceIndex);
-					resourceEntries[resource.mName].mImage = &imageView;
-				}
-
-			}
-			else
-				continue;
-
-			resourceEntries[resource.mName].mRequiredStates.push_back({ i, task.getOuputAttachments()[resource.mResourceBinding].mType });
 		}
 	}
 
-	for (const auto& [slot, entries] : resourceEntries)
+	for (const auto& [index, entries] : resourceEntries)
 	{
 		ResourceUsageEntries::taskIndex previous;
 
