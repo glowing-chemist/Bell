@@ -249,10 +249,10 @@ private:
 
     vk::Fence                          createFence(const bool signaled);
 
-    void                               destroyImage(vk::Image& image)
+    void                               destroyImage(const vk::Image& image)
                                             { mDevice.destroyImage(image); }
 
-    void                               destroyBuffer(vk::Buffer& buffer )
+    void                               destroyBuffer(const vk::Buffer& buffer )
                                             { mDevice.destroyBuffer(buffer); }
 
     void                               destroyFrameBuffer(vk::Framebuffer& frameBuffer, uint64_t frameIndex)

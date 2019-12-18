@@ -7,6 +7,8 @@ constexpr const char* kFroxelIndirectArgs = "FroxelIndirectArgs";
 constexpr const char* kLightIndexCounter = "lightIndexCounter";
 constexpr const char* kActiveFroxelsCounter = "ActiveFroxelsCounter";
 
+static_assert(sizeof(vk::DispatchIndirectCommand) == sizeof(uint32_t[3]), "Indirect args struct does not match required shader layout");
+
 LightFroxelationTechnique::LightFroxelationTechnique(Engine* eng) :
 	Technique("LightFroxelation", eng->getDevice()),
 	mActiveFroxelsDesc{eng->getShader("./Shaders/ActiveFroxels.comp")},
@@ -28,7 +30,7 @@ LightFroxelationTechnique::LightFroxelationTechnique(Engine* eng) :
     mActiveFroxelsCounter(mActiveFroxlesBuffer, 0u, static_cast<uint32_t>(sizeof(uint32_t))),
 
     mIndirectArgsBuffer(eng->getDevice(), BufferUsage::DataBuffer | BufferUsage::IndirectArgs, sizeof(vk::DispatchIndirectCommand), sizeof(vk::DispatchIndirectCommand), "FroxelIndirectArgs"),
-    mIndirectArgsView(mIndirectArgsBuffer),
+    mIndirectArgsView(mIndirectArgsBuffer, 0, sizeof(vk::DispatchIndirectCommand)),
 
     mSparseFroxelBuffer(eng->getDevice(), BufferUsage::DataBuffer, sizeof(uint32_t) * 2 * (30 * 50 * 32), sizeof(uint32_t) * 2 * (30 * 50 * 32), kSparseFroxels),
     mSparseFroxelBufferView(mSparseFroxelBuffer),

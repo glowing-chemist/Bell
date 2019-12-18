@@ -288,7 +288,8 @@ vk::RenderPass	RenderDevice::generateRenderPass(const GraphicsTask& task)
            type == AttachmentType::DataBufferRW ||
            type == AttachmentType::DataBufferWO ||
            type == AttachmentType::PushConstants ||
-           type == AttachmentType::UniformBuffer)
+           type == AttachmentType::UniformBuffer ||
+           type == AttachmentType::ShaderResourceSet)
         {
                 ++outputAttatchmentCounter;
                 continue;
@@ -977,7 +978,7 @@ void RenderDevice::clearDeferredResources()
 
         if(submission <= mFinishedSubmission)
         {
-            mDevice.destroyImage(image);
+            destroyImage(image);
             getMemoryManager()->Free(memory);
             mImagesPendingDestruction.pop_front();
         }
@@ -1004,7 +1005,7 @@ void RenderDevice::clearDeferredResources()
 
         if(submission <= mFinishedSubmission)
         {
-            mDevice.destroyBuffer(buffer);
+            destroyBuffer(buffer);
             getMemoryManager()->Free(memory);
             mBuffersPendingDestruction.pop_front();
         }
