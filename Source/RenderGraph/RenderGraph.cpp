@@ -188,7 +188,7 @@ void RenderGraph::compileDependancies()
                                   (innerResources[innerIndex].mType == AttachmentType::DataBufferRO ||
                                   innerResources[innerIndex].mType == AttachmentType::DataBufferRW)) ||
                                  // Indirect buffers are readOnly (written as (WO) data buffers)
-                                 outResources[outerIndex].mType == AttachmentType::IndirectBuffer))
+                                 innerResources[innerIndex].mType == AttachmentType::IndirectBuffer))
                         {
                             // Innertask reads from a
 							dependancies.insert({i, j});
@@ -749,20 +749,36 @@ std::vector<BarrierRecorder> RenderGraph::generateBarriers(RenderDevice* dev)
 
 	for (const auto& [index, entries] : resourceEntries)
 	{
-		ResourceUsageEntries::taskIndex previous;
+		ResourceUsageEntries::taskIndex previous{~0u, AttachmentType::PushConstants};
 
 		if (entries.mImage)
 		{
 			const auto layout = entries.mImage->getImageLayout(entries.mImage->getBaseLevel(), entries.mImage->getBaseMip());
-			previous = { ~0u, getAttachmentType(layout) }; // intended overflow.
+			previous.mStateRequired = getAttachmentType(layout); // intended overflow.
 		}
 
 		for (const auto& entry : entries.mRequiredStates)
 		{
-			// publish all buffer writes as soon as possible.
-			if (entry.mStateRequired == AttachmentType::DataBufferRW ||
-				entry.mStateRequired == AttachmentType::DataBufferWO)
-				barriers[static_cast<uint64_t>(entry.mTaskIndex) + 1].makeContentsVisible(*entries.mBuffer);
+
+			if (entries.mBuffer)
+			{
+				// publish all buffer writes as soon as possible.
+				if (entry.mStateRequired == AttachmentType::DataBufferRW ||
+					entry.mStateRequired == AttachmentType::DataBufferRO)
+				{
+					const auto& [type, _] = mTaskOrder[entry.mTaskIndex];
+
+					if (type == TaskType::Graphics)
+						barriers[previous.mTaskIndex + 1].makeContentsVisibleToGraphics(*entries.mBuffer);
+					else
+						barriers[previous.mTaskIndex + 1].makeContentsVisibleToCompute(*entries.mBuffer);
+				}
+				// This is better habdled with a memory barrier rather than a resource barrier.
+				else if (entry.mStateRequired == AttachmentType::IndirectBuffer)
+				{
+					barriers[previous.mTaskIndex + 1].memoryBarrierComputeToCompute();
+				}
+			}
 
 			if (entries.mImage)
 			{

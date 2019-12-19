@@ -280,9 +280,9 @@ void Buffer::resizePreserveContents(const uint32_t newSize)
     mSize = newSize;
 
     BarrierRecorder barrier{getDevice()};
-    barrier.makeContentsVisible(*this);
+    barrier.makeContentsVisibleFromTransfer(*this);
 
-	getDevice()->execute(barrier, vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eVertexInput);
+	getDevice()->execute(barrier);
 }
 
 

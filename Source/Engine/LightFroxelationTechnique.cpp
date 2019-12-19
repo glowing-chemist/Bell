@@ -61,6 +61,7 @@ LightFroxelationTechnique::LightFroxelationTechnique(Engine* eng) :
     mLightListAsignment.addInput(kSparseFroxels, AttachmentType::DataBufferWO);
     mLightListAsignment.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
     mLightListAsignment.addInput(kLightBuffer, AttachmentType::ShaderResourceSet);
+    mLightListAsignment.addInput(kFroxelIndirectArgs, AttachmentType::IndirectBuffer);
     mLightListAsignment.addIndirectDispatch(kFroxelIndirectArgs);
 }
 
@@ -84,9 +85,6 @@ void LightFroxelationTechnique::render(RenderGraph& graph, Engine* eng, const st
     mSparseFroxelBuffer->updateLastAccessed();
     mLightIndexBuffer->updateLastAccessed();
     mIndirectArgsBuffer->updateLastAccessed();
-
-    // add explicit dependancy between indirect arg generation and consumption as not currently handled in dependancy compilation atm (possible TODO)
-    graph.addDependancy(mIndirectArgs, mLightListAsignment);
 }
 
 

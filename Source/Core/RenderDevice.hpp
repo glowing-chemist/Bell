@@ -204,9 +204,7 @@ public:
 
     void                               flushWait() const { mDevice.waitIdle(); }
 
-	void							   execute(BarrierRecorder& recorder,
-											   const vk::PipelineStageFlagBits src = vk::PipelineStageFlagBits::eBottomOfPipe,
-											   const vk::PipelineStageFlagBits dst = vk::PipelineStageFlagBits::eTopOfPipe);
+	void							   execute(BarrierRecorder& recorder);
 
     void							   submitFrame();
     void							   swap();

@@ -509,7 +509,7 @@ vk::DescriptorSetLayout RenderDevice::generateDescriptorSetLayoutBindings(const 
 			return vk::DescriptorType::eCombinedImageSampler; // For now use this to indicate push_constants (terrible I know)
 		}();
 
-		// This indicates it's a push constant which we don't need to handle when allocating descriptor
+		// This indicates it's a push constant (or indirect buffer) which we don't need to handle when allocating descriptor
 		// sets.
 		if (descriptorType == vk::DescriptorType::eCombinedImageSampler)
 			continue;
@@ -799,7 +799,7 @@ void RenderDevice::execute(RenderGraph& graph)
 		
 		vk::PipelineBindPoint bindPoint = vk::PipelineBindPoint::eCompute;
 
-        execute(neededBarriers[cmdBufferIndex - 1], vk::PipelineStageFlagBits::eColorAttachmentOutput, vk::PipelineStageFlagBits::eFragmentShader);
+        execute(neededBarriers[cmdBufferIndex - 1]);
 
 		vk::CommandBufferUsageFlags commadBufferUsage = vk::CommandBufferUsageFlagBits::eOneTimeSubmit;
 
@@ -875,7 +875,7 @@ void RenderDevice::execute(RenderGraph& graph)
 	auto& frameBufferView = getSwapChainImageView();
 	frameBufferTransition.transitionImageLayout(frameBufferView, vk::ImageLayout::ePresentSrcKHR);
 
-	execute(frameBufferTransition, vk::PipelineStageFlagBits::eColorAttachmentOutput, vk::PipelineStageFlagBits::eTopOfPipe);
+	execute(frameBufferTransition);
 
 	primaryCmdBuffer.end();
 
@@ -933,7 +933,7 @@ void RenderDevice::frameSyncSetup()
 }
 
 
-void RenderDevice::execute(BarrierRecorder& recorder, const vk::PipelineStageFlagBits src, const vk::PipelineStageFlagBits dst)
+void RenderDevice::execute(BarrierRecorder& recorder)
 {
 	for (uint8_t i = 0; i < static_cast<uint8_t>(QueueType::MaxQueues); ++i)
 	{
@@ -947,7 +947,7 @@ void RenderDevice::execute(BarrierRecorder& recorder, const vk::PipelineStageFla
             if(bufferBarriers.empty() && imageBarriers.empty())
                 continue;
 
-			getCurrentCommandPool()->getBufferForQueue(currentQueue).pipelineBarrier(src, dst,
+			getCurrentCommandPool()->getBufferForQueue(currentQueue).pipelineBarrier(recorder.getSource(), recorder.getDestination(),
 				vk::DependencyFlagBits::eByRegion,
 				0, nullptr,
                 static_cast<uint32_t>(bufferBarriers.size()), bufferBarriers.data(),

@@ -7,7 +7,14 @@
 #include <algorithm>
 
 
-BarrierRecorder::BarrierRecorder(RenderDevice* device) : DeviceChild(device) {}
+BarrierRecorder::BarrierRecorder(RenderDevice* device) : 
+	DeviceChild(device),
+	mImageMemoryBarriers{},
+	mBufferMemoryBarriers{},
+	mMemoryBarriers{},
+	mSrc{vk::PipelineStageFlagBits::eBottomOfPipe},
+	mDst{ vk::PipelineStageFlagBits::eTopOfPipe }
+{}
 
 
 void BarrierRecorder::transferResourceToQueue(Image& image, const QueueType queueType)
@@ -122,6 +129,221 @@ void BarrierRecorder::transitionImageLayout(ImageView& imageView, const vk::Imag
 }
 
 
+void BarrierRecorder::makeContentsVisibleToCompute(const Image& img)
+{
+	mSrc = static_cast<vk::PipelineStageFlags>(std::min(static_cast<uint32_t>(mSrc), static_cast<uint32_t>(vk::PipelineStageFlagBits::eComputeShader)));
+	mDst = static_cast<vk::PipelineStageFlags>(std::max(static_cast<uint32_t>(mDst), static_cast<uint32_t>(vk::PipelineStageFlagBits::eComputeShader)));
+
+	makeContentsVisible(img);
+}
+
+
+void BarrierRecorder::makeContentsVisibleToCompute(const ImageView& view)
+{
+	mSrc = static_cast<vk::PipelineStageFlags>(std::min(static_cast<uint32_t>(mSrc), static_cast<uint32_t>(vk::PipelineStageFlagBits::eComputeShader)));
+	mDst = static_cast<vk::PipelineStageFlags>(std::max(static_cast<uint32_t>(mDst), static_cast<uint32_t>(vk::PipelineStageFlagBits::eComputeShader)));
+
+	makeContentsVisible(view);
+}
+
+
+void BarrierRecorder::makeContentsVisibleToCompute(const Buffer& buf)
+{
+	mSrc = static_cast<vk::PipelineStageFlags>(std::min(static_cast<uint32_t>(mSrc), static_cast<uint32_t>(vk::PipelineStageFlagBits::eComputeShader)));
+	mDst = static_cast<vk::PipelineStageFlags>(std::max(static_cast<uint32_t>(mDst), static_cast<uint32_t>(vk::PipelineStageFlagBits::eComputeShader)));
+
+	vk::AccessFlags dstAccess = vk::AccessFlagBits::eMemoryRead;
+
+	if (buf.getUsage() & BufferUsage::IndirectArgs)
+		dstAccess |= vk::AccessFlagBits::eIndirectCommandRead;
+
+	vk::BufferMemoryBarrier barrier{};
+	barrier.setSrcAccessMask(vk::AccessFlagBits::eMemoryWrite);
+	barrier.setDstAccessMask(dstAccess);
+	barrier.setBuffer(buf.getBuffer());
+
+	mBufferMemoryBarriers.push_back({ buf.getOwningQueueType(), barrier });
+}
+
+
+void BarrierRecorder::makeContentsVisibleToCompute(const BufferView& view)
+{
+	mSrc = static_cast<vk::PipelineStageFlags>(std::min(static_cast<uint32_t>(mSrc), static_cast<uint32_t>(vk::PipelineStageFlagBits::eComputeShader)));
+	mDst = static_cast<vk::PipelineStageFlags>(std::max(static_cast<uint32_t>(mDst), static_cast<uint32_t>(vk::PipelineStageFlagBits::eComputeShader)));
+
+	vk::AccessFlags dstAccess = vk::AccessFlagBits::eMemoryRead;
+
+	if (view.getUsage() & BufferUsage::IndirectArgs)
+		dstAccess |= vk::AccessFlagBits::eIndirectCommandRead;
+
+	vk::BufferMemoryBarrier barrier{};
+	barrier.setSrcAccessMask(vk::AccessFlagBits::eMemoryWrite);
+	barrier.setDstAccessMask(dstAccess);
+	barrier.setBuffer(view.getBuffer());
+
+	mBufferMemoryBarriers.push_back({ QueueType::Graphics, barrier });
+}
+
+
+void BarrierRecorder::makeContentsVisibleToGraphics(const Image& img)
+{
+	mSrc = static_cast<vk::PipelineStageFlags>(std::min(static_cast<uint32_t>(mSrc), static_cast<uint32_t>(vk::PipelineStageFlagBits::eColorAttachmentOutput)));
+	mDst = static_cast<vk::PipelineStageFlags>(std::max(static_cast<uint32_t>(mDst), static_cast<uint32_t>(vk::PipelineStageFlagBits::eVertexShader)));
+
+	makeContentsVisible(img);
+}
+
+
+void BarrierRecorder::makeContentsVisibleToGraphics(const ImageView& view)
+{
+	mSrc = static_cast<vk::PipelineStageFlags>(std::min(static_cast<uint32_t>(mSrc), static_cast<uint32_t>(vk::PipelineStageFlagBits::eColorAttachmentOutput)));
+	mDst = static_cast<vk::PipelineStageFlags>(std::max(static_cast<uint32_t>(mDst), static_cast<uint32_t>(vk::PipelineStageFlagBits::eVertexShader)));
+
+	makeContentsVisible(view);
+}
+
+
+void BarrierRecorder::makeContentsVisibleToGraphics(const Buffer& buf)
+{
+	mSrc = static_cast<vk::PipelineStageFlags>(std::min(static_cast<uint32_t>(mSrc), static_cast<uint32_t>(vk::PipelineStageFlagBits::eComputeShader)));
+	mDst = static_cast<vk::PipelineStageFlags>(std::max(static_cast<uint32_t>(mDst), static_cast<uint32_t>(vk::PipelineStageFlagBits::eVertexShader)));
+
+	vk::AccessFlags dstAccess = vk::AccessFlagBits::eMemoryRead;
+
+	if (buf.getUsage() & BufferUsage::IndirectArgs)
+		dstAccess |= vk::AccessFlagBits::eIndirectCommandRead;
+
+	vk::BufferMemoryBarrier barrier{};
+	barrier.setSrcAccessMask(vk::AccessFlagBits::eMemoryWrite);
+	barrier.setDstAccessMask(dstAccess);
+	barrier.setBuffer(buf.getBuffer());
+
+	mBufferMemoryBarriers.push_back({ buf.getOwningQueueType(), barrier });
+}
+
+
+void BarrierRecorder::makeContentsVisibleToGraphics(const BufferView& view)
+{
+	mSrc = static_cast<vk::PipelineStageFlags>(std::min(static_cast<uint32_t>(mSrc), static_cast<uint32_t>(vk::PipelineStageFlagBits::eComputeShader)));
+	mDst = static_cast<vk::PipelineStageFlags>(std::max(static_cast<uint32_t>(mDst), static_cast<uint32_t>(vk::PipelineStageFlagBits::eVertexShader)));
+
+	vk::AccessFlags dstAccess = vk::AccessFlagBits::eMemoryRead;
+
+	if (view.getUsage() & BufferUsage::IndirectArgs)
+		dstAccess |= vk::AccessFlagBits::eIndirectCommandRead;
+
+	vk::BufferMemoryBarrier barrier{};
+	barrier.setSrcAccessMask(vk::AccessFlagBits::eMemoryWrite);
+	barrier.setDstAccessMask(dstAccess);
+	barrier.setBuffer(view.getBuffer());
+
+	mBufferMemoryBarriers.push_back({ QueueType::Graphics, barrier });
+}
+
+
+void BarrierRecorder::makeContentsVisibleFromTransfer(const Image& img)
+{
+	mSrc = static_cast<vk::PipelineStageFlags>(std::min(static_cast<uint32_t>(mSrc), static_cast<uint32_t>(vk::PipelineStageFlagBits::eTransfer)));
+	mDst = static_cast<vk::PipelineStageFlags>(std::max(static_cast<uint32_t>(mDst), static_cast<uint32_t>(vk::PipelineStageFlagBits::eVertexShader)));
+
+	const auto layout = img.getLayout(0, 0);
+
+	vk::ImageMemoryBarrier barrier{};
+	barrier.setSrcAccessMask(vk::AccessFlagBits::eTransferWrite);
+	barrier.setDstAccessMask(vk::AccessFlagBits::eShaderRead);
+	barrier.setOldLayout(layout);
+	barrier.setNewLayout(layout);
+	if (layout == vk::ImageLayout::eDepthStencilAttachmentOptimal ||
+		layout == vk::ImageLayout::eDepthStencilReadOnlyOptimal)
+	{
+		barrier.setSubresourceRange({ vk::ImageAspectFlagBits::eDepth, 0, img.numberOfMips(), 0, img.numberOfLevels() });
+	}
+	else
+	{
+		barrier.setSubresourceRange({ vk::ImageAspectFlagBits::eColor, 0, img.numberOfMips(), 0, img.numberOfLevels() });
+	}
+
+	mImageMemoryBarriers.push_back({ img.getOwningQueueType(), barrier });
+}
+
+
+void BarrierRecorder::makeContentsVisibleFromTransfer(const ImageView& view)
+{
+	mSrc = static_cast<vk::PipelineStageFlags>(std::min(static_cast<uint32_t>(mSrc), static_cast<uint32_t>(vk::PipelineStageFlagBits::eTransfer)));
+	mDst = static_cast<vk::PipelineStageFlags>(std::max(static_cast<uint32_t>(mDst), static_cast<uint32_t>(vk::PipelineStageFlagBits::eVertexShader)));
+
+	const auto layout = view.getImageLayout();
+
+	vk::ImageMemoryBarrier barrier{};
+	barrier.setSrcAccessMask(vk::AccessFlagBits::eTransferWrite);
+	barrier.setDstAccessMask(vk::AccessFlagBits::eShaderRead);
+	barrier.setOldLayout(layout);
+	barrier.setNewLayout(layout);
+	if (layout == vk::ImageLayout::eDepthStencilAttachmentOptimal ||
+		layout == vk::ImageLayout::eDepthStencilReadOnlyOptimal)
+	{
+		barrier.setSubresourceRange({ vk::ImageAspectFlagBits::eDepth, view.getBaseMip(), view.getMipsCount(), view.getBaseLevel(), view.getLevelCount() });
+	}
+	else
+	{
+		barrier.setSubresourceRange({ vk::ImageAspectFlagBits::eColor, view.getBaseMip(), view.getMipsCount(), view.getBaseLevel(), view.getLevelCount() });
+	}
+
+	mImageMemoryBarriers.push_back({ view.getOwningQueueType(), barrier });
+}
+
+
+void BarrierRecorder::makeContentsVisibleFromTransfer(const Buffer& buf)
+{
+	mSrc = static_cast<vk::PipelineStageFlags>(std::min(static_cast<uint32_t>(mSrc), static_cast<uint32_t>(vk::PipelineStageFlagBits::eTransfer)));
+	mDst = static_cast<vk::PipelineStageFlags>(std::max(static_cast<uint32_t>(mDst), static_cast<uint32_t>(vk::PipelineStageFlagBits::eVertexInput)));
+
+	vk::AccessFlags dstAccess = vk::AccessFlagBits::eMemoryRead;
+
+	if (buf.getUsage() & BufferUsage::IndirectArgs)
+		dstAccess |= vk::AccessFlagBits::eIndirectCommandRead;
+
+	vk::BufferMemoryBarrier barrier{};
+	barrier.setSrcAccessMask(vk::AccessFlagBits::eMemoryWrite);
+	barrier.setDstAccessMask(dstAccess);
+	barrier.setBuffer(buf.getBuffer());
+
+	mBufferMemoryBarriers.push_back({ buf.getOwningQueueType(), barrier });
+}
+
+
+void BarrierRecorder::makeContentsVisibleFromTransfer(const BufferView& view)
+{
+	mSrc = static_cast<vk::PipelineStageFlags>(std::min(static_cast<uint32_t>(mSrc), static_cast<uint32_t>(vk::PipelineStageFlagBits::eTransfer)));
+	mDst = static_cast<vk::PipelineStageFlags>(std::max(static_cast<uint32_t>(mDst), static_cast<uint32_t>(vk::PipelineStageFlagBits::eVertexInput)));
+
+	vk::AccessFlags dstAccess = vk::AccessFlagBits::eMemoryRead;
+
+	if (view.getUsage() & BufferUsage::IndirectArgs)
+		dstAccess |= vk::AccessFlagBits::eIndirectCommandRead;
+
+	vk::BufferMemoryBarrier barrier{};
+	barrier.setSrcAccessMask(vk::AccessFlagBits::eTransferWrite);
+	barrier.setDstAccessMask(dstAccess);
+	barrier.setBuffer(view.getBuffer());
+
+	mBufferMemoryBarriers.push_back({ QueueType::Graphics, barrier });
+}
+
+
+void BarrierRecorder::memoryBarrierComputeToCompute()
+{
+	mSrc = static_cast<vk::PipelineStageFlags>(std::min(static_cast<uint32_t>(mSrc), static_cast<uint32_t>(vk::PipelineStageFlagBits::eComputeShader)));
+	mDst = static_cast<vk::PipelineStageFlags>(std::max(static_cast<uint32_t>(mDst), static_cast<uint32_t>(vk::PipelineStageFlagBits::eComputeShader)));
+
+	vk::MemoryBarrier barrier{};
+	barrier.setSrcAccessMask(vk::AccessFlagBits::eMemoryWrite);
+	barrier.setDstAccessMask(vk::AccessFlagBits::eMemoryRead | vk::AccessFlagBits::eIndirectCommandRead);
+
+	mMemoryBarriers.push_back({ QueueType::Graphics, barrier });
+}
+
+
 void BarrierRecorder::makeContentsVisible(const Image& image)
 {
 
@@ -139,7 +361,7 @@ void BarrierRecorder::makeContentsVisible(const Image& image)
 						return vk::AccessFlagBits::eShaderWrite;
 
 					case vk::ImageLayout::eColorAttachmentOptimal:
-						return vk::AccessFlagBits::eShaderWrite;
+						return vk::AccessFlagBits::eColorAttachmentWrite;
 
 
 					default:
@@ -155,7 +377,7 @@ void BarrierRecorder::makeContentsVisible(const Image& image)
 						return vk::AccessFlagBits::eShaderRead;
 
 					case vk::ImageLayout::eColorAttachmentOptimal:
-						return vk::AccessFlagBits::eShaderRead;
+						return vk::AccessFlagBits::eColorAttachmentRead;
 
 
 					default:
@@ -190,33 +412,33 @@ void BarrierRecorder::makeContentsVisible(const ImageView& imageView)
 
 	const vk::AccessFlags srcAccess = [layout]()
 	{
-		switch(layout)
+		switch (layout)
 		{
-			case vk::ImageLayout::eGeneral:
-				return vk::AccessFlagBits::eShaderWrite;
+		case vk::ImageLayout::eGeneral:
+			return vk::AccessFlagBits::eShaderWrite;
 
-			case vk::ImageLayout::eColorAttachmentOptimal:
-				return vk::AccessFlagBits::eShaderWrite;
+		case vk::ImageLayout::eColorAttachmentOptimal:
+			return vk::AccessFlagBits::eColorAttachmentWrite;
 
 
-			default:
-				return vk::AccessFlagBits::eMemoryWrite;
+		default:
+			return vk::AccessFlagBits::eMemoryWrite;
 		}
 	}();
 
 	const vk::AccessFlags dstAccess = [layout]()
 	{
-		switch(layout)
+		switch (layout)
 		{
-			case vk::ImageLayout::eGeneral:
-				return vk::AccessFlagBits::eShaderRead;
+		case vk::ImageLayout::eGeneral:
+			return vk::AccessFlagBits::eShaderRead;
 
-			case vk::ImageLayout::eColorAttachmentOptimal:
-				return vk::AccessFlagBits::eShaderRead;
+		case vk::ImageLayout::eColorAttachmentOptimal:
+			return vk::AccessFlagBits::eColorAttachmentRead;
 
 
-			default:
-				return vk::AccessFlagBits::eMemoryRead;
+		default:
+			return vk::AccessFlagBits::eMemoryRead;
 		}
 	}();
 
@@ -236,28 +458,6 @@ void BarrierRecorder::makeContentsVisible(const ImageView& imageView)
     }
 
     mImageMemoryBarriers.push_back({imageView.getOwningQueueType(), barrier});
-}
-
-
-void BarrierRecorder::makeContentsVisible(const Buffer& buffer)
-{
-    vk::BufferMemoryBarrier barrier{};
-	barrier.setSrcAccessMask(vk::AccessFlagBits::eMemoryWrite);
-	barrier.setDstAccessMask(vk::AccessFlagBits::eMemoryRead);
-    barrier.setBuffer(buffer.getBuffer());
-
-    mBufferMemoryBarriers.push_back({buffer.getOwningQueueType(), barrier});
-}
-
-
-void BarrierRecorder::makeContentsVisible(const BufferView& buffer)
-{
-	vk::BufferMemoryBarrier barrier{};
-	barrier.setSrcAccessMask(vk::AccessFlagBits::eMemoryWrite);
-	barrier.setDstAccessMask(vk::AccessFlagBits::eMemoryRead);
-	barrier.setBuffer(buffer.getBuffer());
-
-	mBufferMemoryBarriers.push_back({ QueueType::Graphics, barrier });
 }
 
 

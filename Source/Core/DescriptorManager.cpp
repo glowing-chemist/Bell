@@ -180,9 +180,11 @@ void DescriptorManager::writeDescriptors(RenderGraph& graph, std::vector<vulkanR
 
                     descWrite.setPBufferInfo(&bufferInfos.back());
 
-					if(attachmentType == AttachmentType::UniformBuffer)
-                        descWrite.setDescriptorType(vk::DescriptorType::eUniformBuffer);
-                    else
+					if (attachmentType == AttachmentType::IndirectBuffer)
+						continue;
+					else if (attachmentType == AttachmentType::UniformBuffer)
+						descWrite.setDescriptorType(vk::DescriptorType::eUniformBuffer);
+					else
                         descWrite.setDescriptorType(vk::DescriptorType::eStorageBuffer);
 
 					descWrite.setDescriptorCount(1);
