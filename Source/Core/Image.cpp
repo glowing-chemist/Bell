@@ -63,7 +63,7 @@ Image::Image(RenderDevice* dev,
         for(uint32_t mipsLevel = 0; mipsLevel < mNumberOfMips; ++mipsLevel)
         {
             SubResourceInfo subInfo{};
-            subInfo.mLayout = vk::ImageLayout::eUndefined;
+            subInfo.mLayout = ImageLayout::Undefined;
             subInfo.mExtent = extent;
 
             extent = vk::Extent3D{extent.width / 2, extent.height / 2, extent.depth / 2};
@@ -119,7 +119,7 @@ Image::Image(RenderDevice* dev,
         for(uint32_t mipsLevel = 0; mipsLevel < mNumberOfMips; ++mipsLevel)
         {
             SubResourceInfo subInfo{};
-            subInfo.mLayout = vk::ImageLayout::eUndefined;
+            subInfo.mLayout =ImageLayout::Undefined;
             subInfo.mExtent = extent;
 
             extent = vk::Extent3D{extent.width / 2, extent.height / 2, extent.depth / 2};
@@ -246,7 +246,7 @@ void Image::setContents(const void* data,
 	{
 		// This needs to get recorded before the upload is recorded in to the primrary
 		BarrierRecorder preBarrier{ getDevice() };
-		preBarrier.transitionImageLayout(*this, vk::ImageLayout::eTransferDstOptimal);
+		preBarrier.transitionLayout(*this, ImageLayout::TransferDst, Hazard::WriteAfterRead, SyncPoint::TopOfPipe, SyncPoint::TransferSource);
 		getDevice()->execute(preBarrier);
 	}
 
@@ -260,7 +260,7 @@ void Image::setContents(const void* data,
 		// Image will probably be sampled from next, will need to handle seperatly if it will be used to write to
 		// with non discard (blending).
 		BarrierRecorder postRecorder{ getDevice() };
-		postRecorder.transitionImageLayout(*this, vk::ImageLayout::eShaderReadOnlyOptimal);
+		postRecorder.transitionLayout(*this, ImageLayout::Sampled, Hazard::ReadAfterWrite, SyncPoint::TransferDestination, SyncPoint::VertexShader);
 		getDevice()->execute(postRecorder);
 	}
 

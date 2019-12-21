@@ -280,7 +280,7 @@ void Buffer::resizePreserveContents(const uint32_t newSize)
     mSize = newSize;
 
     BarrierRecorder barrier{getDevice()};
-    barrier.makeContentsVisibleFromTransfer(*this);
+    barrier.memoryBarrier(*this, Hazard::ReadAfterWrite, SyncPoint::TransferDestination, SyncPoint::VertexInput);
 
 	getDevice()->execute(barrier);
 }

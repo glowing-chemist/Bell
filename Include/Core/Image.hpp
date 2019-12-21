@@ -15,10 +15,9 @@
 
 class RenderDevice;
 
-
 struct SubResourceInfo
 {
-	vk::ImageLayout mLayout;
+	ImageLayout mLayout;
 	vk::Extent3D mExtent;
 };
 
@@ -85,7 +84,7 @@ public:
 	ImageUsage	getUsage() const
 						{ return mUsage; }
 
-    vk::ImageLayout getLayout(const uint32_t level, const uint32_t LOD) const
+    ImageLayout getLayout(const uint32_t level, const uint32_t LOD) const
 						{ return (*mSubResourceInfo)[(level * mNumberOfMips) + LOD].mLayout; }
 
     vk::Extent3D    getExtent(const uint32_t level, const uint32_t LOD) const

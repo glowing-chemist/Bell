@@ -2,6 +2,7 @@
 #include "Core/Image.hpp"
 #include "Core/Buffer.hpp"
 #include "Core/BufferView.hpp"
+#include "Core/ConversionUtils.hpp"
 #include "RenderDevice.hpp"
 
 #include <algorithm>
@@ -12,28 +13,50 @@ BarrierRecorder::BarrierRecorder(RenderDevice* device) :
 	mImageMemoryBarriers{},
 	mBufferMemoryBarriers{},
 	mMemoryBarriers{},
-	mSrc{vk::PipelineStageFlagBits::eBottomOfPipe},
-	mDst{ vk::PipelineStageFlagBits::eTopOfPipe }
+	mSrc{SyncPoint::TopOfPipe},
+	mDst{ SyncPoint::BottomOfPipe }
 {}
 
 
-void BarrierRecorder::transferResourceToQueue(Image& image, const QueueType queueType)
+void BarrierRecorder::transferResourceToQueue(Image& image, const QueueType queueType, const Hazard hazard, const SyncPoint src, const SyncPoint dst)
 {
 	if (queueType == image.getOwningQueueType())
 		return;
 
+	updateSyncPoints(src, dst);
+
+	vk::AccessFlags srcAccess;
+	vk::AccessFlags dstAccess;
+
+	switch (hazard)
+	{
+	case Hazard::ReadAfterWrite:
+	{
+		srcAccess = vk::AccessFlagBits::eShaderWrite;
+		dstAccess = vk::AccessFlagBits::eShaderRead;
+		break;
+	}
+
+	case Hazard::WriteAfterRead:
+	{
+		srcAccess = vk::AccessFlagBits::eShaderRead;
+		dstAccess = vk::AccessFlagBits::eShaderWrite;
+		break;
+	}
+	}
+
 	vk::ImageMemoryBarrier releaseBarrier{};
 	releaseBarrier.setSrcQueueFamilyIndex(getDevice()->getQueueFamilyIndex(image.getOwningQueueType()));
 	releaseBarrier.setDstQueueFamilyIndex(getDevice()->getQueueFamilyIndex(queueType));
-	releaseBarrier.setSrcAccessMask(vk::AccessFlagBits::eMemoryWrite);
-	releaseBarrier.setDstAccessMask(vk::AccessFlagBits::eMemoryRead);
+	releaseBarrier.setSrcAccessMask(srcAccess);
+	releaseBarrier.setDstAccessMask(dstAccess);
 	releaseBarrier.setImage(image.getImage());
 
 	vk::ImageMemoryBarrier aquireBarrier{};
 	aquireBarrier.setSrcQueueFamilyIndex(getDevice()->getQueueFamilyIndex(image.getOwningQueueType()));
 	aquireBarrier.setDstQueueFamilyIndex(getDevice()->getQueueFamilyIndex(queueType));
-	aquireBarrier.setSrcAccessMask(vk::AccessFlagBits::eMemoryWrite);
-	releaseBarrier.setDstAccessMask(vk::AccessFlagBits::eMemoryRead);
+	aquireBarrier.setSrcAccessMask(dstAccess);
+	releaseBarrier.setDstAccessMask(srcAccess);
 	aquireBarrier.setImage(image.getImage());
 
 	mImageMemoryBarriers.push_back({image.getOwningQueueType(), releaseBarrier});
@@ -43,24 +66,51 @@ void BarrierRecorder::transferResourceToQueue(Image& image, const QueueType queu
 }
 
 
-void BarrierRecorder::transferResourceToQueue(Buffer& buffer, const QueueType queueType)
+void BarrierRecorder::transferResourceToQueue(Buffer& buffer, const QueueType queueType, const Hazard hazard, const SyncPoint src, const SyncPoint dst)
 {
 	if (queueType == buffer.getOwningQueueType())
 		return;
 
+	updateSyncPoints(src, dst);
+
+	vk::AccessFlags srcAccess;
+	vk::AccessFlags dstAccess;
+
+	switch (hazard)
+	{
+	case Hazard::ReadAfterWrite:
+	{
+		srcAccess = vk::AccessFlagBits::eMemoryWrite;
+		dstAccess = vk::AccessFlagBits::eMemoryRead;
+
+		if (buffer.getUsage() & BufferUsage::IndirectArgs)
+			dstAccess |= vk::AccessFlagBits::eIndirectCommandRead;
+		break;
+	}
+
+	case Hazard::WriteAfterRead:
+	{
+		srcAccess = vk::AccessFlagBits::eMemoryRead;
+		dstAccess = vk::AccessFlagBits::eMemoryWrite;
+		break;
+	}
+	}
+
 	vk::BufferMemoryBarrier releaseBarrier{};
 	releaseBarrier.setSrcQueueFamilyIndex(getDevice()->getQueueFamilyIndex(buffer.getOwningQueueType()));
 	releaseBarrier.setDstQueueFamilyIndex(getDevice()->getQueueFamilyIndex(queueType));
-	releaseBarrier.setSrcAccessMask(vk::AccessFlagBits::eMemoryWrite);
-	releaseBarrier.setDstAccessMask(vk::AccessFlagBits::eMemoryRead);
+	releaseBarrier.setSrcAccessMask(srcAccess);
+	releaseBarrier.setDstAccessMask(dstAccess);
 	releaseBarrier.setBuffer(buffer.getBuffer());
+	releaseBarrier.setSize(buffer.getSize());
 
 	vk::BufferMemoryBarrier aquireBarrier{};
 	aquireBarrier.setSrcQueueFamilyIndex(getDevice()->getQueueFamilyIndex(buffer.getOwningQueueType()));
 	aquireBarrier.setDstQueueFamilyIndex(getDevice()->getQueueFamilyIndex(queueType));
-	aquireBarrier.setSrcAccessMask(vk::AccessFlagBits::eMemoryWrite);
-	releaseBarrier.setDstAccessMask(vk::AccessFlagBits::eMemoryRead);
+	aquireBarrier.setSrcAccessMask(dstAccess);
+	releaseBarrier.setDstAccessMask(srcAccess);
 	aquireBarrier.setBuffer(buffer.getBuffer());
+	aquireBarrier.setSize(buffer.getSize());
 
 	mBufferMemoryBarriers.push_back({ buffer.getOwningQueueType(), releaseBarrier });
 	mBufferMemoryBarriers.push_back({ queueType, aquireBarrier });
@@ -69,403 +119,493 @@ void BarrierRecorder::transferResourceToQueue(Buffer& buffer, const QueueType qu
 }
 
 
-void BarrierRecorder::transitionImageLayout(Image& image, const vk::ImageLayout layout)
+void BarrierRecorder::memoryBarrier(Image& img, const Hazard hazard, const SyncPoint src, const SyncPoint dst)
 {
-    for(uint32_t arrayLevel = 0; arrayLevel < image.numberOfLevels(); ++arrayLevel)
-    {
-        for(uint32_t mipLevel = 0; mipLevel < image.numberOfMips(); ++mipLevel)
-        {
-            vk::ImageMemoryBarrier barrier{};
-            barrier.setSrcAccessMask(vk::AccessFlagBits::eMemoryWrite);
-            barrier.setDstAccessMask(vk::AccessFlagBits::eMemoryRead);
-            barrier.setOldLayout(image.getLayout(arrayLevel, mipLevel));
-            barrier.setNewLayout(layout);
-            barrier.setImage(image.getImage());
-			if(layout == vk::ImageLayout::eDepthStencilAttachmentOptimal ||
-			   layout == vk::ImageLayout::eDepthStencilReadOnlyOptimal)
-			{
-				barrier.setSubresourceRange({vk::ImageAspectFlagBits::eDepth, mipLevel, 1, arrayLevel, 1});
-			}
-			else
-			{
-				barrier.setSubresourceRange({vk::ImageAspectFlagBits::eColor, mipLevel, 1, arrayLevel, 1});
-            }
+	updateSyncPoints(src, dst);
 
-			image.mSubResourceInfo->at((arrayLevel * image.numberOfMips()) + mipLevel).mLayout = layout;
-
-            mImageMemoryBarriers.push_back({image.getOwningQueueType(), barrier});
-        }
-    }
-}
-
-
-void BarrierRecorder::transitionImageLayout(ImageView& imageView, const vk::ImageLayout layout)
-{
-    vk::ImageMemoryBarrier barrier{};
-	barrier.setSrcAccessMask(vk::AccessFlagBits::eMemoryWrite);
-	barrier.setDstAccessMask(vk::AccessFlagBits::eMemoryRead);
-	barrier.setOldLayout(imageView.getImageLayout(imageView.getBaseLevel(), imageView.getBaseMip()));
-    barrier.setNewLayout(layout);
-    barrier.setImage(imageView.getImage());
-	if(layout == vk::ImageLayout::eDepthStencilAttachmentOptimal ||
-		layout == vk::ImageLayout::eDepthStencilReadOnlyOptimal)
+	ImageLayout layout = img.getLayout(0, 0);
+	bool splitBarriers = true;
+	for (uint32_t i = 0; i < img.numberOfLevels(); ++i)
 	{
-		barrier.setSubresourceRange({vk::ImageAspectFlagBits::eDepth, imageView.getBaseMip(), imageView.getMipsCount(), imageView.getBaseLevel(), imageView.getLevelCount()});
-	}
-	else
-	{
-		barrier.setSubresourceRange({vk::ImageAspectFlagBits::eColor, imageView.getBaseMip(), imageView.getMipsCount(), imageView.getBaseLevel(), imageView.getLevelCount()});
-    }
-
-    mImageMemoryBarriers.push_back({imageView.getOwningQueueType(), barrier});
-
-	for(uint32_t arrayLevel = imageView.getBaseLevel(); arrayLevel < imageView.getBaseLevel() + imageView.getLevelCount(); ++arrayLevel)
-	{
-		for(uint32_t mipLevel = imageView.getBaseMip(); mipLevel < imageView.getBaseMip() + imageView.getMipsCount(); ++mipLevel)
+		for (uint32_t j = 0; j < img.numberOfMips(); ++j)
 		{
-			imageView.mSubResourceInfo[(arrayLevel * imageView.mTotalMips) + mipLevel].mLayout = layout;
+			splitBarriers = splitBarriers && img.getLayout(i, j) != layout;
 		}
 	}
-}
 
+	vk::AccessFlags srcAccess;
+	vk::AccessFlags dstAccess;
 
-void BarrierRecorder::makeContentsVisibleToCompute(const Image& img)
-{
-	mSrc = static_cast<vk::PipelineStageFlags>(std::min(static_cast<uint32_t>(mSrc), static_cast<uint32_t>(vk::PipelineStageFlagBits::eComputeShader)));
-	mDst = static_cast<vk::PipelineStageFlags>(std::max(static_cast<uint32_t>(mDst), static_cast<uint32_t>(vk::PipelineStageFlagBits::eComputeShader)));
-
-	makeContentsVisible(img);
-}
-
-
-void BarrierRecorder::makeContentsVisibleToCompute(const ImageView& view)
-{
-	mSrc = static_cast<vk::PipelineStageFlags>(std::min(static_cast<uint32_t>(mSrc), static_cast<uint32_t>(vk::PipelineStageFlagBits::eComputeShader)));
-	mDst = static_cast<vk::PipelineStageFlags>(std::max(static_cast<uint32_t>(mDst), static_cast<uint32_t>(vk::PipelineStageFlagBits::eComputeShader)));
-
-	makeContentsVisible(view);
-}
-
-
-void BarrierRecorder::makeContentsVisibleToCompute(const Buffer& buf)
-{
-	mSrc = static_cast<vk::PipelineStageFlags>(std::min(static_cast<uint32_t>(mSrc), static_cast<uint32_t>(vk::PipelineStageFlagBits::eComputeShader)));
-	mDst = static_cast<vk::PipelineStageFlags>(std::max(static_cast<uint32_t>(mDst), static_cast<uint32_t>(vk::PipelineStageFlagBits::eComputeShader)));
-
-	vk::AccessFlags dstAccess = vk::AccessFlagBits::eMemoryRead;
-
-	if (buf.getUsage() & BufferUsage::IndirectArgs)
-		dstAccess |= vk::AccessFlagBits::eIndirectCommandRead;
-
-	vk::BufferMemoryBarrier barrier{};
-	barrier.setSrcAccessMask(vk::AccessFlagBits::eMemoryWrite);
-	barrier.setDstAccessMask(dstAccess);
-	barrier.setBuffer(buf.getBuffer());
-
-	mBufferMemoryBarriers.push_back({ buf.getOwningQueueType(), barrier });
-}
-
-
-void BarrierRecorder::makeContentsVisibleToCompute(const BufferView& view)
-{
-	mSrc = static_cast<vk::PipelineStageFlags>(std::min(static_cast<uint32_t>(mSrc), static_cast<uint32_t>(vk::PipelineStageFlagBits::eComputeShader)));
-	mDst = static_cast<vk::PipelineStageFlags>(std::max(static_cast<uint32_t>(mDst), static_cast<uint32_t>(vk::PipelineStageFlagBits::eComputeShader)));
-
-	vk::AccessFlags dstAccess = vk::AccessFlagBits::eMemoryRead;
-
-	if (view.getUsage() & BufferUsage::IndirectArgs)
-		dstAccess |= vk::AccessFlagBits::eIndirectCommandRead;
-
-	vk::BufferMemoryBarrier barrier{};
-	barrier.setSrcAccessMask(vk::AccessFlagBits::eMemoryWrite);
-	barrier.setDstAccessMask(dstAccess);
-	barrier.setBuffer(view.getBuffer());
-
-	mBufferMemoryBarriers.push_back({ QueueType::Graphics, barrier });
-}
-
-
-void BarrierRecorder::makeContentsVisibleToGraphics(const Image& img)
-{
-	mSrc = static_cast<vk::PipelineStageFlags>(std::min(static_cast<uint32_t>(mSrc), static_cast<uint32_t>(vk::PipelineStageFlagBits::eColorAttachmentOutput)));
-	mDst = static_cast<vk::PipelineStageFlags>(std::max(static_cast<uint32_t>(mDst), static_cast<uint32_t>(vk::PipelineStageFlagBits::eVertexShader)));
-
-	makeContentsVisible(img);
-}
-
-
-void BarrierRecorder::makeContentsVisibleToGraphics(const ImageView& view)
-{
-	mSrc = static_cast<vk::PipelineStageFlags>(std::min(static_cast<uint32_t>(mSrc), static_cast<uint32_t>(vk::PipelineStageFlagBits::eColorAttachmentOutput)));
-	mDst = static_cast<vk::PipelineStageFlags>(std::max(static_cast<uint32_t>(mDst), static_cast<uint32_t>(vk::PipelineStageFlagBits::eVertexShader)));
-
-	makeContentsVisible(view);
-}
-
-
-void BarrierRecorder::makeContentsVisibleToGraphics(const Buffer& buf)
-{
-	mSrc = static_cast<vk::PipelineStageFlags>(std::min(static_cast<uint32_t>(mSrc), static_cast<uint32_t>(vk::PipelineStageFlagBits::eComputeShader)));
-	mDst = static_cast<vk::PipelineStageFlags>(std::max(static_cast<uint32_t>(mDst), static_cast<uint32_t>(vk::PipelineStageFlagBits::eVertexShader)));
-
-	vk::AccessFlags dstAccess = vk::AccessFlagBits::eMemoryRead;
-
-	if (buf.getUsage() & BufferUsage::IndirectArgs)
-		dstAccess |= vk::AccessFlagBits::eIndirectCommandRead;
-
-	vk::BufferMemoryBarrier barrier{};
-	barrier.setSrcAccessMask(vk::AccessFlagBits::eMemoryWrite);
-	barrier.setDstAccessMask(dstAccess);
-	barrier.setBuffer(buf.getBuffer());
-
-	mBufferMemoryBarriers.push_back({ buf.getOwningQueueType(), barrier });
-}
-
-
-void BarrierRecorder::makeContentsVisibleToGraphics(const BufferView& view)
-{
-	mSrc = static_cast<vk::PipelineStageFlags>(std::min(static_cast<uint32_t>(mSrc), static_cast<uint32_t>(vk::PipelineStageFlagBits::eComputeShader)));
-	mDst = static_cast<vk::PipelineStageFlags>(std::max(static_cast<uint32_t>(mDst), static_cast<uint32_t>(vk::PipelineStageFlagBits::eVertexShader)));
-
-	vk::AccessFlags dstAccess = vk::AccessFlagBits::eMemoryRead;
-
-	if (view.getUsage() & BufferUsage::IndirectArgs)
-		dstAccess |= vk::AccessFlagBits::eIndirectCommandRead;
-
-	vk::BufferMemoryBarrier barrier{};
-	barrier.setSrcAccessMask(vk::AccessFlagBits::eMemoryWrite);
-	barrier.setDstAccessMask(dstAccess);
-	barrier.setBuffer(view.getBuffer());
-
-	mBufferMemoryBarriers.push_back({ QueueType::Graphics, barrier });
-}
-
-
-void BarrierRecorder::makeContentsVisibleFromTransfer(const Image& img)
-{
-	mSrc = static_cast<vk::PipelineStageFlags>(std::min(static_cast<uint32_t>(mSrc), static_cast<uint32_t>(vk::PipelineStageFlagBits::eTransfer)));
-	mDst = static_cast<vk::PipelineStageFlags>(std::max(static_cast<uint32_t>(mDst), static_cast<uint32_t>(vk::PipelineStageFlagBits::eVertexShader)));
-
-	const auto layout = img.getLayout(0, 0);
-
-	vk::ImageMemoryBarrier barrier{};
-	barrier.setSrcAccessMask(vk::AccessFlagBits::eTransferWrite);
-	barrier.setDstAccessMask(vk::AccessFlagBits::eShaderRead);
-	barrier.setOldLayout(layout);
-	barrier.setNewLayout(layout);
-	if (layout == vk::ImageLayout::eDepthStencilAttachmentOptimal ||
-		layout == vk::ImageLayout::eDepthStencilReadOnlyOptimal)
+	switch (hazard)
 	{
-		barrier.setSubresourceRange({ vk::ImageAspectFlagBits::eDepth, 0, img.numberOfMips(), 0, img.numberOfLevels() });
-	}
-	else
+	case Hazard::ReadAfterWrite:
 	{
-		barrier.setSubresourceRange({ vk::ImageAspectFlagBits::eColor, 0, img.numberOfMips(), 0, img.numberOfLevels() });
+		srcAccess = vk::AccessFlagBits::eShaderWrite;
+		dstAccess = vk::AccessFlagBits::eShaderRead;
+		break;
 	}
 
-	mImageMemoryBarriers.push_back({ img.getOwningQueueType(), barrier });
-}
-
-
-void BarrierRecorder::makeContentsVisibleFromTransfer(const ImageView& view)
-{
-	mSrc = static_cast<vk::PipelineStageFlags>(std::min(static_cast<uint32_t>(mSrc), static_cast<uint32_t>(vk::PipelineStageFlagBits::eTransfer)));
-	mDst = static_cast<vk::PipelineStageFlags>(std::max(static_cast<uint32_t>(mDst), static_cast<uint32_t>(vk::PipelineStageFlagBits::eVertexShader)));
-
-	const auto layout = view.getImageLayout();
-
-	vk::ImageMemoryBarrier barrier{};
-	barrier.setSrcAccessMask(vk::AccessFlagBits::eTransferWrite);
-	barrier.setDstAccessMask(vk::AccessFlagBits::eShaderRead);
-	barrier.setOldLayout(layout);
-	barrier.setNewLayout(layout);
-	if (layout == vk::ImageLayout::eDepthStencilAttachmentOptimal ||
-		layout == vk::ImageLayout::eDepthStencilReadOnlyOptimal)
+	case Hazard::WriteAfterRead:
 	{
-		barrier.setSubresourceRange({ vk::ImageAspectFlagBits::eDepth, view.getBaseMip(), view.getMipsCount(), view.getBaseLevel(), view.getLevelCount() });
+		srcAccess = vk::AccessFlagBits::eShaderRead;
+		dstAccess = vk::AccessFlagBits::eShaderWrite;
+		break;
 	}
-	else
-	{
-		barrier.setSubresourceRange({ vk::ImageAspectFlagBits::eColor, view.getBaseMip(), view.getMipsCount(), view.getBaseLevel(), view.getLevelCount() });
 	}
 
-	mImageMemoryBarriers.push_back({ view.getOwningQueueType(), barrier });
-}
-
-
-void BarrierRecorder::makeContentsVisibleFromTransfer(const Buffer& buf)
-{
-	mSrc = static_cast<vk::PipelineStageFlags>(std::min(static_cast<uint32_t>(mSrc), static_cast<uint32_t>(vk::PipelineStageFlagBits::eTransfer)));
-	mDst = static_cast<vk::PipelineStageFlags>(std::max(static_cast<uint32_t>(mDst), static_cast<uint32_t>(vk::PipelineStageFlagBits::eVertexInput)));
-
-	vk::AccessFlags dstAccess = vk::AccessFlagBits::eMemoryRead;
-
-	if (buf.getUsage() & BufferUsage::IndirectArgs)
-		dstAccess |= vk::AccessFlagBits::eIndirectCommandRead;
-
-	vk::BufferMemoryBarrier barrier{};
-	barrier.setSrcAccessMask(vk::AccessFlagBits::eMemoryWrite);
-	barrier.setDstAccessMask(dstAccess);
-	barrier.setBuffer(buf.getBuffer());
-
-	mBufferMemoryBarriers.push_back({ buf.getOwningQueueType(), barrier });
-}
-
-
-void BarrierRecorder::makeContentsVisibleFromTransfer(const BufferView& view)
-{
-	mSrc = static_cast<vk::PipelineStageFlags>(std::min(static_cast<uint32_t>(mSrc), static_cast<uint32_t>(vk::PipelineStageFlagBits::eTransfer)));
-	mDst = static_cast<vk::PipelineStageFlags>(std::max(static_cast<uint32_t>(mDst), static_cast<uint32_t>(vk::PipelineStageFlagBits::eVertexInput)));
-
-	vk::AccessFlags dstAccess = vk::AccessFlagBits::eMemoryRead;
-
-	if (view.getUsage() & BufferUsage::IndirectArgs)
-		dstAccess |= vk::AccessFlagBits::eIndirectCommandRead;
-
-	vk::BufferMemoryBarrier barrier{};
-	barrier.setSrcAccessMask(vk::AccessFlagBits::eTransferWrite);
-	barrier.setDstAccessMask(dstAccess);
-	barrier.setBuffer(view.getBuffer());
-
-	mBufferMemoryBarriers.push_back({ QueueType::Graphics, barrier });
-}
-
-
-void BarrierRecorder::memoryBarrierComputeToCompute()
-{
-	mSrc = static_cast<vk::PipelineStageFlags>(std::min(static_cast<uint32_t>(mSrc), static_cast<uint32_t>(vk::PipelineStageFlagBits::eComputeShader)));
-	mDst = static_cast<vk::PipelineStageFlags>(std::max(static_cast<uint32_t>(mDst), static_cast<uint32_t>(vk::PipelineStageFlagBits::eComputeShader)));
-
-	vk::MemoryBarrier barrier{};
-	barrier.setSrcAccessMask(vk::AccessFlagBits::eMemoryWrite);
-	barrier.setDstAccessMask(vk::AccessFlagBits::eMemoryRead | vk::AccessFlagBits::eIndirectCommandRead);
-
-	mMemoryBarriers.push_back({ QueueType::Graphics, barrier });
-}
-
-
-void BarrierRecorder::makeContentsVisible(const Image& image)
-{
-
-	for(uint32_t arrayLevel = 0; arrayLevel < image.numberOfLevels(); ++arrayLevel)
+	if (splitBarriers)
 	{
-		for(uint32_t mipLevel = 0; mipLevel < image.numberOfMips(); ++mipLevel)
+		for (uint32_t i = 0; i < img.numberOfLevels(); ++i)
 		{
-			const vk::ImageLayout layout = image.getLayout(arrayLevel, mipLevel);
-
-			const vk::AccessFlags srcAccess = [layout]()
+			for (uint32_t j = 0; j < img.numberOfMips(); ++j)
 			{
-				switch(layout)
+				vk::ImageMemoryBarrier barrier{};
+				barrier.setSrcAccessMask(srcAccess);
+				barrier.setDstAccessMask(dstAccess);
+				barrier.setOldLayout(getVulkanImageLayout(img.getLayout(i, j)));
+				barrier.setNewLayout(getVulkanImageLayout(img.getLayout(i, j)));
+				if (img.getLayout(0, 0) == ImageLayout::DepthStencil ||
+					img.getLayout(0, 0) == ImageLayout::DepthStencilRO)
 				{
-					case vk::ImageLayout::eGeneral:
-						return vk::AccessFlagBits::eShaderWrite;
-
-					case vk::ImageLayout::eColorAttachmentOptimal:
-						return vk::AccessFlagBits::eColorAttachmentWrite;
-
-
-					default:
-						return vk::AccessFlagBits::eMemoryWrite;
+					barrier.setSubresourceRange({ vk::ImageAspectFlagBits::eDepth, j, 1, i, 1 });
 				}
-			}();
-
-			const vk::AccessFlags dstAccess = [layout]()
-			{
-				switch(layout)
+				else
 				{
-					case vk::ImageLayout::eGeneral:
-						return vk::AccessFlagBits::eShaderRead;
-
-					case vk::ImageLayout::eColorAttachmentOptimal:
-						return vk::AccessFlagBits::eColorAttachmentRead;
-
-
-					default:
-						return vk::AccessFlagBits::eMemoryRead;
+					barrier.setSubresourceRange({ vk::ImageAspectFlagBits::eColor, j, 1, i, 1 });
 				}
-			}();
 
-			vk::ImageMemoryBarrier barrier{};
-			barrier.setSrcAccessMask(srcAccess);
-			barrier.setDstAccessMask(dstAccess);
-			barrier.setOldLayout(layout);
-			barrier.setNewLayout(layout);
-			if(image.getLayout(arrayLevel, mipLevel) == vk::ImageLayout::eDepthStencilAttachmentOptimal ||
-				image.getLayout(arrayLevel, mipLevel) == vk::ImageLayout::eDepthStencilReadOnlyOptimal)
-			{
-				barrier.setSubresourceRange({vk::ImageAspectFlagBits::eDepth, mipLevel, 1, arrayLevel, 1});
+				mImageMemoryBarriers.push_back({ img.getOwningQueueType(), barrier });
 			}
-			else
-			{
-				barrier.setSubresourceRange({vk::ImageAspectFlagBits::eColor, mipLevel, 1, arrayLevel, 1});
-			}
-
-			mImageMemoryBarriers.push_back({image.getOwningQueueType(), barrier});
 		}
+	}
+	else
+	{
+		vk::ImageMemoryBarrier barrier{};
+		barrier.setSrcAccessMask(srcAccess);
+		barrier.setDstAccessMask(dstAccess);
+		barrier.setOldLayout(getVulkanImageLayout(layout));
+		barrier.setNewLayout(getVulkanImageLayout(layout));
+		if (img.getLayout(0, 0) == ImageLayout::DepthStencil ||
+			img.getLayout(0, 0) == ImageLayout::DepthStencilRO)
+		{
+			barrier.setSubresourceRange({ vk::ImageAspectFlagBits::eDepth, 0, img.numberOfMips(), 0, img.numberOfLevels() });
+		}
+		else
+		{
+			barrier.setSubresourceRange({ vk::ImageAspectFlagBits::eColor, 0, img.numberOfMips(), 0, img.numberOfLevels() });
+		}
+
+		mImageMemoryBarriers.push_back({ img.getOwningQueueType(), barrier });
 	}
 }
 
 
-void BarrierRecorder::makeContentsVisible(const ImageView& imageView)
-{	
-	const vk::ImageLayout layout = imageView.getImageLayout();
+void BarrierRecorder::memoryBarrier(ImageView& img, const Hazard hazard, const SyncPoint src, const SyncPoint dst)
+{
+	updateSyncPoints(src, dst);
 
-	const vk::AccessFlags srcAccess = [layout]()
+	ImageLayout layout = img.getImageLayout(0, 0);
+	bool splitBarriers = true;
+	for (uint32_t i = img.getBaseLevel(); i < img.getBaseLevel() + img.getLevelCount(); ++i)
 	{
-		switch (layout)
+		for (uint32_t j = img.getBaseMip(); j < img.getBaseMip() + img.getMipsCount(); ++j)
 		{
-		case vk::ImageLayout::eGeneral:
-			return vk::AccessFlagBits::eShaderWrite;
-
-		case vk::ImageLayout::eColorAttachmentOptimal:
-			return vk::AccessFlagBits::eColorAttachmentWrite;
-
-
-		default:
-			return vk::AccessFlagBits::eMemoryWrite;
+			splitBarriers = splitBarriers && img.getImageLayout(i, j) != layout;
 		}
-	}();
+	}
 
-	const vk::AccessFlags dstAccess = [layout]()
+	vk::AccessFlags srcAccess;
+	vk::AccessFlags dstAccess;
+
+	switch (hazard)
 	{
-		switch (layout)
+	case Hazard::ReadAfterWrite:
+	{
+		srcAccess = vk::AccessFlagBits::eShaderWrite;
+		dstAccess = vk::AccessFlagBits::eShaderRead;
+		break;
+	}
+
+	case Hazard::WriteAfterRead:
+	{
+		srcAccess = vk::AccessFlagBits::eShaderRead;
+		dstAccess = vk::AccessFlagBits::eShaderWrite;
+		break;
+	}
+	}
+
+	if (splitBarriers)
+	{
+		for (uint32_t i = img.getBaseLevel(); i < img.getBaseLevel() + img.getLevelCount(); ++i)
 		{
-		case vk::ImageLayout::eGeneral:
-			return vk::AccessFlagBits::eShaderRead;
+			for (uint32_t j = img.getBaseMip(); j < img.getBaseMip() + img.getMipsCount(); ++j)
+			{
+				vk::ImageMemoryBarrier barrier{};
+				barrier.setSrcAccessMask(srcAccess);
+				barrier.setDstAccessMask(dstAccess);
+				barrier.setOldLayout(getVulkanImageLayout(img.getImageLayout(i, j)));
+				barrier.setNewLayout(getVulkanImageLayout(img.getImageLayout(i, j)));
+				if (img.getImageLayout(0, 0) == ImageLayout::DepthStencil ||
+					img.getImageLayout(0, 0) == ImageLayout::DepthStencilRO)
+				{
+					barrier.setSubresourceRange({ vk::ImageAspectFlagBits::eDepth, j, 1, i, 1 });
+				}
+				else
+				{
+					barrier.setSubresourceRange({ vk::ImageAspectFlagBits::eColor, j, 1, i, 1 });
+				}
 
-		case vk::ImageLayout::eColorAttachmentOptimal:
-			return vk::AccessFlagBits::eColorAttachmentRead;
-
-
-		default:
-			return vk::AccessFlagBits::eMemoryRead;
+				mImageMemoryBarriers.push_back({ img.getOwningQueueType(), barrier });
+			}
 		}
-	}();
+	}
+	else
+	{
+		vk::ImageMemoryBarrier barrier{};
+		barrier.setSrcAccessMask(srcAccess);
+		barrier.setDstAccessMask(dstAccess);
+		barrier.setOldLayout(getVulkanImageLayout(layout));
+		barrier.setNewLayout(getVulkanImageLayout(layout));
+		if (img.getImageLayout(0, 0) == ImageLayout::DepthStencil ||
+			img.getImageLayout(0, 0) == ImageLayout::DepthStencilRO)
+		{
+			barrier.setSubresourceRange({ vk::ImageAspectFlagBits::eDepth, img.getBaseMip(), img.getMipsCount(), img.getBaseLevel(), img.getLevelCount() });
+		}
+		else
+		{
+			barrier.setSubresourceRange({ vk::ImageAspectFlagBits::eColor, img.getBaseMip(), img.getMipsCount(), img.getBaseLevel(), img.getLevelCount() });
+		}
 
-    vk::ImageMemoryBarrier barrier{};
+		mImageMemoryBarriers.push_back({ img.getOwningQueueType(), barrier });
+	}
+}
+
+
+void BarrierRecorder::memoryBarrier(Buffer& buf, const Hazard hazard, const SyncPoint src, const SyncPoint dst)
+{
+	updateSyncPoints(src, dst);
+
+	vk::AccessFlags srcAccess;
+	vk::AccessFlags dstAccess;
+
+	switch (hazard)
+	{
+	case Hazard::ReadAfterWrite:
+	{
+		srcAccess = vk::AccessFlagBits::eMemoryWrite;
+		dstAccess = vk::AccessFlagBits::eMemoryRead;
+
+		if (buf.getUsage() & BufferUsage::IndirectArgs)
+			dstAccess |= vk::AccessFlagBits::eIndirectCommandRead;
+		break;
+	}
+
+	case Hazard::WriteAfterRead:
+	{
+		srcAccess = vk::AccessFlagBits::eMemoryRead;
+		dstAccess = vk::AccessFlagBits::eMemoryWrite;
+		break;
+	}
+	}
+
+	vk::BufferMemoryBarrier barrier{};
 	barrier.setSrcAccessMask(srcAccess);
 	barrier.setDstAccessMask(dstAccess);
-	barrier.setOldLayout(layout);
-	barrier.setNewLayout(layout);
-	if(imageView.getImageLayout() == vk::ImageLayout::eDepthStencilAttachmentOptimal ||
-		imageView.getImageLayout() == vk::ImageLayout::eDepthStencilReadOnlyOptimal)
-	{
-		barrier.setSubresourceRange({vk::ImageAspectFlagBits::eDepth, imageView.getBaseMip(), imageView.getMipsCount(), imageView.getBaseLevel(), imageView.getLevelCount()});
-	}
-	else
-	{
-		barrier.setSubresourceRange({vk::ImageAspectFlagBits::eColor, imageView.getBaseMip(), imageView.getMipsCount(), imageView.getBaseLevel(), imageView.getLevelCount()});
-    }
+	barrier.setBuffer(buf.getBuffer());
+	barrier.setSize(buf.getSize());
 
-    mImageMemoryBarriers.push_back({imageView.getOwningQueueType(), barrier});
+	mBufferMemoryBarriers.push_back({ buf.getOwningQueueType(), barrier });
 }
 
 
-std::vector<vk::ImageMemoryBarrier> BarrierRecorder::getImageBarriers(QueueType type)
+void BarrierRecorder::memoryBarrier(BufferView& buf, const Hazard hazard, const SyncPoint src, const SyncPoint dst)
+{
+	updateSyncPoints(src, dst);
+
+	vk::AccessFlags srcAccess;
+	vk::AccessFlags dstAccess;
+
+	switch (hazard)
+	{
+	case Hazard::ReadAfterWrite:
+	{
+		srcAccess = vk::AccessFlagBits::eMemoryWrite;
+		dstAccess = vk::AccessFlagBits::eMemoryRead;
+
+		if (buf.getUsage() & BufferUsage::IndirectArgs)
+			dstAccess |= vk::AccessFlagBits::eIndirectCommandRead;
+		break;
+	}
+
+	case Hazard::WriteAfterRead:
+	{
+		srcAccess = vk::AccessFlagBits::eMemoryRead;
+		dstAccess = vk::AccessFlagBits::eMemoryWrite;
+		break;
+	}
+	}
+
+	vk::BufferMemoryBarrier barrier{};
+	barrier.setSrcAccessMask(srcAccess);
+	barrier.setDstAccessMask(dstAccess);
+	barrier.setBuffer(buf.getBuffer());
+	barrier.setSize(buf.getSize());
+	barrier.setOffset(buf.getOffset());
+
+	mBufferMemoryBarriers.push_back({ QueueType::Graphics, barrier });
+}
+
+
+void BarrierRecorder::memoryBarrier(const Hazard hazard, const SyncPoint src, const SyncPoint dst)
+{
+	updateSyncPoints(src, dst);
+
+	vk::AccessFlags srcAccess;
+	vk::AccessFlags dstAccess;
+	switch (hazard)
+	{
+	case Hazard::ReadAfterWrite:
+	{
+		srcAccess = vk::AccessFlagBits::eMemoryWrite | vk::AccessFlagBits::eShaderWrite;
+		dstAccess = vk::AccessFlagBits::eMemoryRead | vk::AccessFlagBits::eShaderRead | vk::AccessFlagBits::eIndirectCommandRead;
+
+		break;
+	}
+
+	case Hazard::WriteAfterRead:
+	{
+		srcAccess = vk::AccessFlagBits::eMemoryRead | vk::AccessFlagBits::eShaderRead;
+		dstAccess = vk::AccessFlagBits::eMemoryWrite | vk::AccessFlagBits::eShaderWrite;
+		break;
+	}
+	}
+
+	vk::MemoryBarrier barrier{srcAccess, dstAccess};
+
+	mMemoryBarriers.push_back({ QueueType::Graphics ,barrier });
+
+}
+
+
+void BarrierRecorder::transitionLayout(Image& img, const ImageLayout newLayout, const Hazard hazard, const SyncPoint src, const SyncPoint dst)
+{
+	updateSyncPoints(src, dst);
+
+	ImageLayout layout = img.getLayout(0, 0);
+	bool splitBarriers = true;
+	for (uint32_t i = 0; i < img.numberOfLevels(); ++i)
+	{
+		for (uint32_t j = 0; j < img.numberOfMips(); ++j)
+		{
+			splitBarriers = splitBarriers && img.getLayout(i, j) != layout;
+		}
+	}
+
+	vk::AccessFlags srcAccess;
+	vk::AccessFlags dstAccess;
+
+	switch (hazard)
+	{
+	case Hazard::ReadAfterWrite:
+	{
+		if (src == SyncPoint::VertexShader ||
+			src == SyncPoint::FragmentShader ||
+			src == SyncPoint::ComputeShader)
+			srcAccess = vk::AccessFlagBits::eShaderWrite;
+		else
+			srcAccess = vk::AccessFlagBits::eMemoryWrite;
+
+		if (dst == SyncPoint::VertexShader ||
+			dst == SyncPoint::FragmentShader ||
+			dst == SyncPoint::ComputeShader)
+			dstAccess = vk::AccessFlagBits::eShaderRead;
+		else
+			srcAccess = vk::AccessFlagBits::eMemoryRead;
+
+		break;
+	}
+
+	case Hazard::WriteAfterRead:
+	{
+		if (src == SyncPoint::VertexShader ||
+			src == SyncPoint::FragmentShader ||
+			src == SyncPoint::ComputeShader)
+			srcAccess = vk::AccessFlagBits::eShaderRead;
+		else
+			srcAccess = vk::AccessFlagBits::eMemoryRead;
+
+		if (dst == SyncPoint::VertexShader ||
+			dst == SyncPoint::FragmentShader ||
+			dst == SyncPoint::ComputeShader)
+			dstAccess = vk::AccessFlagBits::eShaderWrite;
+		else
+			srcAccess = vk::AccessFlagBits::eMemoryWrite;
+
+		break;
+	}
+	}
+
+	if (splitBarriers)
+	{
+		for (uint32_t i = 0; i < img.numberOfLevels(); ++i)
+		{
+			for (uint32_t j = 0; j < img.numberOfMips(); ++j)
+			{
+				vk::ImageMemoryBarrier barrier{};
+				barrier.setSrcAccessMask(srcAccess);
+				barrier.setDstAccessMask(dstAccess);
+				barrier.setOldLayout(getVulkanImageLayout(img.getLayout(i, j)));
+				barrier.setNewLayout(getVulkanImageLayout(newLayout));
+				if (newLayout == ImageLayout::DepthStencil ||
+					newLayout == ImageLayout::DepthStencilRO)
+				{
+					barrier.setSubresourceRange({ vk::ImageAspectFlagBits::eDepth, j, 1, i, 1 });
+				}
+				else
+				{
+					barrier.setSubresourceRange({ vk::ImageAspectFlagBits::eColor, j, 1, i, 1 });
+				}
+				barrier.setImage(img.getImage());
+
+				mImageMemoryBarriers.push_back({ img.getOwningQueueType(), barrier });
+			}
+		}
+	}
+	else
+	{
+		vk::ImageMemoryBarrier barrier{};
+		barrier.setSrcAccessMask(srcAccess);
+		barrier.setDstAccessMask(dstAccess);
+		barrier.setOldLayout(getVulkanImageLayout(layout));
+		barrier.setNewLayout(getVulkanImageLayout(newLayout));
+		if (newLayout == ImageLayout::DepthStencil ||
+			newLayout == ImageLayout::DepthStencilRO)
+		{
+			barrier.setSubresourceRange({ vk::ImageAspectFlagBits::eDepth, 0, img.numberOfMips(), 0, img.numberOfLevels() });
+		}
+		else
+		{
+			barrier.setSubresourceRange({ vk::ImageAspectFlagBits::eColor, 0, img.numberOfMips(), 0, img.numberOfLevels() });
+		}
+		barrier.setImage(img.getImage());
+
+		mImageMemoryBarriers.push_back({ img.getOwningQueueType(), barrier });
+	}
+}
+
+
+void BarrierRecorder::transitionLayout(ImageView& img, const ImageLayout newLayout, const Hazard hazard, const SyncPoint src, const SyncPoint dst)
+{
+	updateSyncPoints(src, dst);
+
+	ImageLayout layout = img.getImageLayout(0, 0);
+	bool splitBarriers = true;
+	for (uint32_t i = img.getBaseLevel(); i < img.getBaseLevel() + img.getLevelCount(); ++i)
+	{
+		for (uint32_t j = img.getBaseMip(); j < img.getBaseMip() + img.getMipsCount(); ++j)
+		{
+			splitBarriers = splitBarriers && img.getImageLayout(i, j) != layout;
+		}
+	}
+
+	vk::AccessFlags srcAccess;
+	vk::AccessFlags dstAccess;
+
+	switch (hazard)
+	{
+	case Hazard::ReadAfterWrite:
+	{
+		if (src == SyncPoint::VertexShader ||
+			src == SyncPoint::FragmentShader ||
+			src == SyncPoint::ComputeShader)
+			srcAccess = vk::AccessFlagBits::eShaderWrite;
+		else
+			srcAccess = vk::AccessFlagBits::eMemoryWrite;
+
+		if (dst == SyncPoint::VertexShader ||
+			dst == SyncPoint::FragmentShader ||
+			dst == SyncPoint::ComputeShader)
+			dstAccess = vk::AccessFlagBits::eShaderRead;
+		else
+			srcAccess = vk::AccessFlagBits::eMemoryRead;
+
+		break;
+	}
+
+	case Hazard::WriteAfterRead:
+	{
+		if (src == SyncPoint::VertexShader ||
+			src == SyncPoint::FragmentShader ||
+			src == SyncPoint::ComputeShader)
+			srcAccess = vk::AccessFlagBits::eShaderRead;
+		else
+			srcAccess = vk::AccessFlagBits::eMemoryRead;
+
+		if (dst == SyncPoint::VertexShader ||
+			dst == SyncPoint::FragmentShader ||
+			dst == SyncPoint::ComputeShader)
+			dstAccess = vk::AccessFlagBits::eShaderWrite;
+		else
+			srcAccess = vk::AccessFlagBits::eMemoryWrite;
+
+		break;
+	}
+	}
+
+	if (splitBarriers)
+	{
+		for (uint32_t i = img.getBaseLevel(); i < img.getBaseLevel() + img.getLevelCount(); ++i)
+		{
+			for (uint32_t j = img.getBaseMip(); j < img.getBaseMip() + img.getMipsCount(); ++j)
+			{
+				vk::ImageMemoryBarrier barrier{};
+				barrier.setSrcAccessMask(srcAccess);
+				barrier.setDstAccessMask(dstAccess);
+				barrier.setOldLayout(getVulkanImageLayout(img.getImageLayout(i, j)));
+				barrier.setNewLayout(getVulkanImageLayout(newLayout));
+				if (newLayout == ImageLayout::DepthStencil ||
+					newLayout == ImageLayout::DepthStencilRO)
+				{
+					barrier.setSubresourceRange({ vk::ImageAspectFlagBits::eDepth, j, 1, i, 1 });
+				}
+				else
+				{
+					barrier.setSubresourceRange({ vk::ImageAspectFlagBits::eColor, j, 1, i, 1 });
+				}
+				barrier.setImage(img.getImage());
+
+				mImageMemoryBarriers.push_back({ img.getOwningQueueType(), barrier });
+			}
+		}
+	}
+	else
+	{
+		vk::ImageMemoryBarrier barrier{};
+		barrier.setSrcAccessMask(srcAccess);
+		barrier.setDstAccessMask(dstAccess);
+		barrier.setOldLayout(getVulkanImageLayout(layout));
+		barrier.setNewLayout(getVulkanImageLayout(newLayout));
+		if (newLayout == ImageLayout::DepthStencil ||
+			newLayout == ImageLayout::DepthStencilRO)
+		{
+			barrier.setSubresourceRange({ vk::ImageAspectFlagBits::eDepth, img.getBaseMip(), img.getMipsCount(), img.getBaseLevel(), img.getLevelCount() });
+		}
+		else
+		{
+			barrier.setSubresourceRange({ vk::ImageAspectFlagBits::eColor, img.getBaseMip(), img.getMipsCount(), img.getBaseLevel(), img.getLevelCount() });
+		}
+		barrier.setImage(img.getImage());
+
+		mImageMemoryBarriers.push_back({ img.getOwningQueueType(), barrier });
+	}
+}
+
+
+std::vector<vk::ImageMemoryBarrier> BarrierRecorder::getImageBarriers(const QueueType type) const
 {
 	std::vector<vk::ImageMemoryBarrier> barriers;
 
-	for (auto[queueType, barrier] : mImageMemoryBarriers)
+	for (auto [queueType, barrier] : mImageMemoryBarriers)
 	{
 		if (queueType == type)
 			barriers.push_back(barrier);
@@ -475,15 +615,36 @@ std::vector<vk::ImageMemoryBarrier> BarrierRecorder::getImageBarriers(QueueType 
 }
 
 
-std::vector<vk::BufferMemoryBarrier> BarrierRecorder::getBufferBarriers(QueueType type)
+std::vector<vk::BufferMemoryBarrier> BarrierRecorder::getBufferBarriers(const QueueType type) const
 {
 	std::vector<vk::BufferMemoryBarrier> barriers;
 
-	for (auto[queueType, barrier] : mBufferMemoryBarriers)
+	for (auto [queueType, barrier] : mBufferMemoryBarriers)
 	{
 		if (queueType == type)
 			barriers.push_back(barrier);
 	}
 
 	return barriers;
+}
+
+
+std::vector<vk::MemoryBarrier> BarrierRecorder::getMemoryBarriers(const QueueType type) const
+{
+	std::vector<vk::MemoryBarrier> barriers;
+
+	for (auto [queueType, barrier] : mMemoryBarriers)
+	{
+		if (queueType == type)
+			barriers.push_back(barrier);
+	}
+
+	return barriers;
+}
+
+
+void BarrierRecorder::updateSyncPoints(const SyncPoint src, const SyncPoint dst)
+{
+	mSrc = static_cast<SyncPoint>(std::max(static_cast<uint32_t>(mSrc), static_cast<uint32_t>(src)));
+	mDst = static_cast<SyncPoint>(std::min(static_cast<uint32_t>(mDst), static_cast<uint32_t>(dst)));
 }

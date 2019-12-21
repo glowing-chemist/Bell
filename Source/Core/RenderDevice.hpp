@@ -202,7 +202,7 @@ public:
     uint64_t						   getCurrentFrameIndex() const { return mCurrentFrameIndex; }
     uint64_t                           getFinishedSubmissionIndex() const { return mFinishedSubmission; }
 
-    void                               flushWait() const { mDevice.waitIdle(); }
+    void                               flushWait() const { mGraphicsQueue.waitIdle();  mDevice.waitIdle(); }
 
 	void							   execute(BarrierRecorder& recorder);
 

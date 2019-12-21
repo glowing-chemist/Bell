@@ -31,6 +31,19 @@ enum class QueueType
 	MaxQueues
 };
 
+enum class ImageLayout
+{
+    ColorAttachment,
+    Sampled,
+    DepthStencilRO,
+    DepthStencil,
+    TransferSrc,
+    TransferDst,
+    General,
+    Undefined,
+    Present
+};
+
 
 class RefCount
 {

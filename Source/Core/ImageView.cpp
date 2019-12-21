@@ -144,7 +144,7 @@ ImageView::ImageView(ImageView&& otherView) :
 }
 
 
-vk::ImageLayout ImageView::getImageLayout(const uint32_t level, const uint32_t LOD) const
+ImageLayout ImageView::getImageLayout(const uint32_t level, const uint32_t LOD) const
 {
 	return mSubResourceInfo[(level * mTotalMips) + LOD].mLayout;
 }

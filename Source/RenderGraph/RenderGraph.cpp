@@ -762,33 +762,67 @@ std::vector<BarrierRecorder> RenderGraph::generateBarriers(RenderDevice* dev)
 
 			if (entries.mBuffer)
 			{
-				// publish all buffer writes as soon as possible.
-				if (entry.mStateRequired == AttachmentType::DataBufferRW ||
-					entry.mStateRequired == AttachmentType::DataBufferRO)
+				Hazard hazard;
+				switch (entry.mStateRequired)
 				{
-					const auto& [type, _] = mTaskOrder[entry.mTaskIndex];
+				case AttachmentType::DataBufferRO:
+				case AttachmentType::DataBufferRW:
+				case AttachmentType::IndirectBuffer:
+					hazard = Hazard::ReadAfterWrite;
 
-					if (type == TaskType::Graphics)
-						barriers[previous.mTaskIndex + 1].makeContentsVisibleToGraphics(*entries.mBuffer);
-					else
-						barriers[previous.mTaskIndex + 1].makeContentsVisibleToCompute(*entries.mBuffer);
+				default:
+					hazard = Hazard::WriteAfterRead;
 				}
-				// This is better habdled with a memory barrier rather than a resource barrier.
-				else if (entry.mStateRequired == AttachmentType::IndirectBuffer)
+
+				SyncPoint src;
+				SyncPoint dst;
+
+				if (previous.mStateRequired != AttachmentType::PushConstants)
 				{
-					barriers[previous.mTaskIndex + 1].memoryBarrierComputeToCompute();
+					const auto& [prevType, prevIndex] = mTaskOrder[previous.mTaskIndex];
+
+					if (prevType == TaskType::Compute)
+						src = SyncPoint::ComputeShader;
+					else
+						src = SyncPoint::VertexShader;
 				}
+				else
+					src = SyncPoint::TopOfPipe;
+
+				const auto& [type, index] = mTaskOrder[entry.mTaskIndex];
+				if (type == TaskType::Compute)
+					dst = SyncPoint::ComputeShader;
+				else
+					dst = SyncPoint::VertexShader;
+
+				barriers[previous.mTaskIndex + 1].memoryBarrier(*entries.mBuffer, hazard, src, dst);
+				
 			}
 
 			if (entries.mImage)
 			{
 				if (entry.mStateRequired != previous.mStateRequired)
 				{
-					vk::ImageLayout layout = entries.mImage->getImageUsage() & ImageUsage::DepthStencil ?
-						entry.mStateRequired == AttachmentType::Depth ? vk::ImageLayout::eDepthStencilAttachmentOptimal :  vk::ImageLayout::eDepthStencilReadOnlyOptimal
-						: getVulkanImageLayout(entry.mStateRequired);
+					Hazard hazard;
+					switch (entry.mStateRequired)
+					{
+					case AttachmentType::Texture1D:
+					case AttachmentType::Texture2D:
+					case AttachmentType::Texture3D:
+						hazard = Hazard::ReadAfterWrite;
 
-					barriers[previous.mTaskIndex + 1].transitionImageLayout(*entries.mImage, layout);
+					default:
+						hazard = Hazard::WriteAfterRead;
+					}
+
+					const SyncPoint src = getSyncPoint(previous.mStateRequired);
+					const SyncPoint dst = getSyncPoint(entry.mStateRequired);
+
+					const ImageLayout layout = entries.mImage->getImageUsage() & ImageUsage::DepthStencil ?
+						entry.mStateRequired == AttachmentType::Depth ? ImageLayout::DepthStencil :  ImageLayout::DepthStencilRO
+						: getImageLayout(entry.mStateRequired);
+
+					barriers[previous.mTaskIndex + 1].transitionLayout(*entries.mImage, layout, hazard, src, dst);
 				}
 			}
 

@@ -873,7 +873,7 @@ void RenderDevice::execute(RenderGraph& graph)
 	// Transition the frameBuffer to a presentable format (hehe).
 	BarrierRecorder frameBufferTransition{this};
 	auto& frameBufferView = getSwapChainImageView();
-	frameBufferTransition.transitionImageLayout(frameBufferView, vk::ImageLayout::ePresentSrcKHR);
+	frameBufferTransition.transitionLayout(frameBufferView, ImageLayout::Present, Hazard::ReadAfterWrite, SyncPoint::FragmentShaderOutput, SyncPoint::BottomOfPipe);
 
 	execute(frameBufferTransition);
 
@@ -943,13 +943,14 @@ void RenderDevice::execute(BarrierRecorder& recorder)
 		{
 			const auto imageBarriers = recorder.getImageBarriers(currentQueue);
 			const auto bufferBarriers = recorder.getBufferBarriers(currentQueue);
+            const auto memoryBarriers = recorder.getMemoryBarriers(currentQueue);
 
             if(bufferBarriers.empty() && imageBarriers.empty())
                 continue;
 
-			getCurrentCommandPool()->getBufferForQueue(currentQueue).pipelineBarrier(recorder.getSource(), recorder.getDestination(),
+			getCurrentCommandPool()->getBufferForQueue(currentQueue).pipelineBarrier(getVulkanPipelineStage(recorder.getSource()), getVulkanPipelineStage(recorder.getDestination()),
 				vk::DependencyFlagBits::eByRegion,
-				0, nullptr,
+                static_cast<uint32_t>(memoryBarriers.size()), memoryBarriers.data(),
                 static_cast<uint32_t>(bufferBarriers.size()), bufferBarriers.data(),
                 static_cast<uint32_t>(imageBarriers.size()), imageBarriers.data());
 		}

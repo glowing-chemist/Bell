@@ -48,7 +48,7 @@ public:
 	Format getImageViewFormat() const
         { return mImageFormat; }
 
-	vk::ImageLayout getImageLayout(const uint32_t level = 0, const uint32_t LOD = 0) const;
+	ImageLayout getImageLayout(const uint32_t level = 0, const uint32_t LOD = 0) const;
 
 	vk::Extent3D getImageExtent(const uint32_t level = 0, const uint32_t LOD = 0) const;
 	ImageUsage getImageUsage() const

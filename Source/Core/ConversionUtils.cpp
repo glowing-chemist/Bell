@@ -27,8 +27,36 @@ vk::ImageLayout getVulkanImageLayout(const AttachmentType type)
 		default:
 			return vk::ImageLayout::eColorAttachmentOptimal;
 	}
-
 }
+
+
+ImageLayout getImageLayout(const AttachmentType type)
+{
+	switch (type)
+	{
+	case AttachmentType::RenderTarget1D:
+	case AttachmentType::RenderTarget2D:
+	case AttachmentType::RenderTarget3D:
+		return ImageLayout::ColorAttachment;
+
+	case AttachmentType::Image1D:
+	case AttachmentType::Image2D:
+	case AttachmentType::Image3D:
+		return ImageLayout::General;
+
+	case AttachmentType::Texture1D:
+	case AttachmentType::Texture2D:
+	case AttachmentType::Texture3D:
+		return  ImageLayout::Sampled;
+
+	case AttachmentType::Depth:
+		return ImageLayout::DepthStencil;
+
+	default:
+		return ImageLayout::ColorAttachment;
+	}
+}
+
 
 // This conversion looses dimensionality.
 AttachmentType getAttachmentType(const vk::ImageLayout layout)
@@ -45,6 +73,28 @@ AttachmentType getAttachmentType(const vk::ImageLayout layout)
 		return AttachmentType::Texture2D;
 
 	case vk::ImageLayout::eDepthStencilAttachmentOptimal:
+		return AttachmentType::Depth;
+
+	default:
+		return AttachmentType::PushConstants;// to indicate undefined layout.
+	}
+}
+
+
+AttachmentType getAttachmentType(const ImageLayout layout)
+{
+	switch (layout)
+	{
+	case ImageLayout::ColorAttachment:
+		return AttachmentType::RenderTarget2D;
+
+	case ImageLayout::General:
+		return AttachmentType::Image2D;
+
+	case ImageLayout::Sampled :
+		return AttachmentType::Texture2D;
+
+	case ImageLayout::DepthStencil:
 		return AttachmentType::Depth;
 
 	default:
@@ -227,3 +277,103 @@ Format getBellImageFormat(const vk::Format format)
 	}
 }
 
+vk::ImageLayout getVulkanImageLayout(const ImageLayout layout)
+{
+	switch (layout)
+	{
+	case ImageLayout::ColorAttachment:
+		return vk::ImageLayout::eColorAttachmentOptimal;
+
+	case ImageLayout::DepthStencil:
+		return vk::ImageLayout::eDepthStencilAttachmentOptimal;
+
+	case ImageLayout::DepthStencilRO:
+		return vk::ImageLayout::eDepthStencilReadOnlyOptimal;
+
+	case ImageLayout::General:
+		return vk::ImageLayout::eGeneral;
+
+	case ImageLayout::Present:
+		return vk::ImageLayout::ePresentSrcKHR;
+
+	case ImageLayout::Sampled:
+		return vk::ImageLayout::eShaderReadOnlyOptimal;
+
+	case ImageLayout::TransferDst:
+		return vk::ImageLayout::eTransferDstOptimal;
+
+	case ImageLayout::TransferSrc:
+		return vk::ImageLayout::eTransferSrcOptimal;
+
+	case ImageLayout::Undefined:
+		return vk::ImageLayout::eUndefined;
+	}
+}
+
+vk::PipelineStageFlags getVulkanPipelineStage(const SyncPoint syncPoint)
+{
+	switch (syncPoint)
+	{
+	case SyncPoint::TopOfPipe:
+		return vk::PipelineStageFlagBits::eTopOfPipe;
+
+	case SyncPoint::TransferSource:
+		return vk::PipelineStageFlagBits::eTransfer;
+
+	case SyncPoint::TransferDestination:
+		return vk::PipelineStageFlagBits::eTransfer;
+
+	case SyncPoint::VertexInput:
+		return vk::PipelineStageFlagBits::eVertexInput;
+
+	case SyncPoint::VertexShader:
+		return vk::PipelineStageFlagBits::eVertexShader;
+
+	case SyncPoint::FragmentShader:
+		return vk::PipelineStageFlagBits::eFragmentShader;
+
+	case SyncPoint::FragmentShaderOutput:
+		return vk::PipelineStageFlagBits::eColorAttachmentOutput;
+
+	case SyncPoint::ComputeShader:
+		return vk::PipelineStageFlagBits::eComputeShader;
+
+	case SyncPoint::BottomOfPipe:
+		return vk::PipelineStageFlagBits::eBottomOfPipe;
+	}
+
+	return vk::PipelineStageFlagBits::eTopOfPipe;
+}
+
+
+SyncPoint getSyncPoint(const AttachmentType type)
+{
+	switch (type)
+	{
+	case AttachmentType::RenderTarget1D:
+	case AttachmentType::RenderTarget2D:
+	case AttachmentType::RenderTarget3D:
+		return SyncPoint::FragmentShaderOutput;
+
+	case AttachmentType::Image1D:
+	case AttachmentType::Image2D:
+	case AttachmentType::Image3D:
+		return SyncPoint::FragmentShader;
+
+	case AttachmentType::Texture1D:
+	case AttachmentType::Texture2D:
+	case AttachmentType::Texture3D:
+		return  SyncPoint::VertexShader;
+
+	case AttachmentType::DataBufferRO:
+	case AttachmentType::DataBufferWO:
+	case AttachmentType::DataBufferRW:
+		return SyncPoint::TopOfPipe;
+
+	case AttachmentType::Depth:
+		return SyncPoint::FragmentShaderOutput;
+
+	default:
+		return SyncPoint::TopOfPipe;
+	}
+}
