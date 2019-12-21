@@ -317,6 +317,9 @@ vk::PipelineStageFlags getVulkanPipelineStage(const SyncPoint syncPoint)
 	case SyncPoint::TopOfPipe:
 		return vk::PipelineStageFlagBits::eTopOfPipe;
 
+	case SyncPoint::IndirectArgs:
+		return vk::PipelineStageFlagBits::eDrawIndirect;
+
 	case SyncPoint::TransferSource:
 		return vk::PipelineStageFlagBits::eTransfer;
 

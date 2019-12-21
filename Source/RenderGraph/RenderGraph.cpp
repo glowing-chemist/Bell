@@ -773,9 +773,11 @@ std::vector<BarrierRecorder> RenderGraph::generateBarriers(RenderDevice* dev)
 					case AttachmentType::DataBufferRW:
 					case AttachmentType::IndirectBuffer:
 						hazard = Hazard::ReadAfterWrite;
+						break;
 
 					default:
 						hazard = Hazard::WriteAfterRead;
+						break;
 					}
 
 					SyncPoint src;
@@ -794,7 +796,10 @@ std::vector<BarrierRecorder> RenderGraph::generateBarriers(RenderDevice* dev)
 						src = SyncPoint::TopOfPipe;
 
 					const auto& [type, index] = mTaskOrder[entry.mTaskIndex];
-					if (type == TaskType::Compute)
+
+					if (entry.mStateRequired == AttachmentType::IndirectBuffer)
+						dst = SyncPoint::IndirectArgs;
+					else if (type == TaskType::Compute)
 						dst = SyncPoint::ComputeShader;
 					else
 						dst = SyncPoint::VertexShader;
@@ -812,9 +817,11 @@ std::vector<BarrierRecorder> RenderGraph::generateBarriers(RenderDevice* dev)
 					case AttachmentType::Texture2D:
 					case AttachmentType::Texture3D:
 						hazard = Hazard::ReadAfterWrite;
+						break;
 
 					default:
 						hazard = Hazard::WriteAfterRead;
+						break;
 					}
 
 					const SyncPoint src = getSyncPoint(previous.mStateRequired);

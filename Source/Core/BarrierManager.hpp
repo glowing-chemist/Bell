@@ -18,14 +18,15 @@ class BufferView;
 enum class SyncPoint
 {
 	TopOfPipe = 0,
-	TransferSource = 1,
-	TransferDestination = 2,
-	VertexInput = 3,
-	VertexShader = 4,
-	FragmentShader = 5,
-	FragmentShaderOutput = 6,
-	ComputeShader = 7,
-	BottomOfPipe = 8
+	IndirectArgs = 1,
+	TransferSource = 2,
+	TransferDestination = 3,
+	VertexInput = 4,
+	VertexShader = 5,
+	FragmentShader = 6,
+	FragmentShaderOutput = 7,
+	ComputeShader = 8,
+	BottomOfPipe = 9
 };
 
 
