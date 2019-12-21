@@ -421,7 +421,7 @@ void BarrierRecorder::transitionLayout(Image& img, const ImageLayout newLayout, 
 			dst == SyncPoint::ComputeShader)
 			dstAccess = vk::AccessFlagBits::eShaderRead;
 		else
-			srcAccess = vk::AccessFlagBits::eMemoryRead;
+			dstAccess = vk::AccessFlagBits::eMemoryRead;
 
 		break;
 	}
