@@ -149,8 +149,8 @@ bool Shader::compile()
     const char* shaderSourceCString = mGLSLSource.c_str();
     shader.setStrings(&shaderSourceCString, 1);
 
-	glslang::EShTargetClientVersion VulkanClientVersion = glslang::EShTargetVulkan_1_0;
-    glslang::EShTargetLanguageVersion TargetVersion = glslang::EShTargetSpv_1_0;
+	glslang::EShTargetClientVersion VulkanClientVersion = glslang::EShTargetVulkan_1_1;
+    glslang::EShTargetLanguageVersion TargetVersion = glslang::EShTargetSpv_1_3;
     shader.setEnvClient(glslang::EShClientVulkan, VulkanClientVersion);
 	shader.setEnvTarget(glslang::EShTargetSpv, TargetVersion);
 
