@@ -749,59 +749,61 @@ std::vector<BarrierRecorder> RenderGraph::generateBarriers(RenderDevice* dev)
 
 	for (const auto& [index, entries] : resourceEntries)
 	{
+		// intended overflow.
 		ResourceUsageEntries::taskIndex previous{~0u, AttachmentType::PushConstants};
 
 		if (entries.mImage)
 		{
 			const auto layout = entries.mImage->getImageLayout(entries.mImage->getBaseLevel(), entries.mImage->getBaseMip());
-			previous.mStateRequired = getAttachmentType(layout); // intended overflow.
+			previous.mStateRequired = getAttachmentType(layout);
 		}
+		else
+			previous.mStateRequired = entries.mRequiredStates[0].mStateRequired;
 
 		for (const auto& entry : entries.mRequiredStates)
 		{
-
-			if (entries.mBuffer)
+			if (entry.mStateRequired != previous.mStateRequired)
 			{
-				Hazard hazard;
-				switch (entry.mStateRequired)
+				if (entries.mBuffer)
 				{
-				case AttachmentType::DataBufferRO:
-				case AttachmentType::DataBufferRW:
-				case AttachmentType::IndirectBuffer:
-					hazard = Hazard::ReadAfterWrite;
+					Hazard hazard;
+					switch (entry.mStateRequired)
+					{
+					case AttachmentType::DataBufferRO:
+					case AttachmentType::DataBufferRW:
+					case AttachmentType::IndirectBuffer:
+						hazard = Hazard::ReadAfterWrite;
 
-				default:
-					hazard = Hazard::WriteAfterRead;
-				}
+					default:
+						hazard = Hazard::WriteAfterRead;
+					}
 
-				SyncPoint src;
-				SyncPoint dst;
+					SyncPoint src;
+					SyncPoint dst;
 
-				if (previous.mStateRequired != AttachmentType::PushConstants)
-				{
-					const auto& [prevType, prevIndex] = mTaskOrder[previous.mTaskIndex];
+					if (previous.mTaskIndex != ~0u)
+					{
+						const auto& [prevType, prevIndex] = mTaskOrder[previous.mTaskIndex];
 
-					if (prevType == TaskType::Compute)
-						src = SyncPoint::ComputeShader;
+						if (prevType == TaskType::Compute)
+							src = SyncPoint::ComputeShader;
+						else
+							src = SyncPoint::VertexShader;
+					}
 					else
-						src = SyncPoint::VertexShader;
+						src = SyncPoint::TopOfPipe;
+
+					const auto& [type, index] = mTaskOrder[entry.mTaskIndex];
+					if (type == TaskType::Compute)
+						dst = SyncPoint::ComputeShader;
+					else
+						dst = SyncPoint::VertexShader;
+
+					barriers[previous.mTaskIndex + 1].memoryBarrier(*entries.mBuffer, hazard, src, dst);
+
 				}
-				else
-					src = SyncPoint::TopOfPipe;
 
-				const auto& [type, index] = mTaskOrder[entry.mTaskIndex];
-				if (type == TaskType::Compute)
-					dst = SyncPoint::ComputeShader;
-				else
-					dst = SyncPoint::VertexShader;
-
-				barriers[previous.mTaskIndex + 1].memoryBarrier(*entries.mBuffer, hazard, src, dst);
-				
-			}
-
-			if (entries.mImage)
-			{
-				if (entry.mStateRequired != previous.mStateRequired)
+				if (entries.mImage)
 				{
 					Hazard hazard;
 					switch (entry.mStateRequired)
@@ -819,7 +821,7 @@ std::vector<BarrierRecorder> RenderGraph::generateBarriers(RenderDevice* dev)
 					const SyncPoint dst = getSyncPoint(entry.mStateRequired);
 
 					const ImageLayout layout = entries.mImage->getImageUsage() & ImageUsage::DepthStencil ?
-						entry.mStateRequired == AttachmentType::Depth ? ImageLayout::DepthStencil :  ImageLayout::DepthStencilRO
+						entry.mStateRequired == AttachmentType::Depth ? ImageLayout::DepthStencil : ImageLayout::DepthStencilRO
 						: getImageLayout(entry.mStateRequired);
 
 					barriers[previous.mTaskIndex + 1].transitionLayout(*entries.mImage, layout, hazard, src, dst);
