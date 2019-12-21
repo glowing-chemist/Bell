@@ -201,6 +201,7 @@ void Buffer::setContents(const int data,
     }
     else
     {
+        BELL_ASSERT(size <= 1 << 16, "Need to implement s staging buffer method for this if we trap here")
         BELL_ASSERT((mUsage & BufferUsage::TransferDest) != 0, "Buffer needs usage transfer dest")
         BELL_ASSERT((size & 3) == 0, "Size must be aligned to 4 bytes")
 

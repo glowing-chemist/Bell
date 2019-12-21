@@ -1002,7 +1002,7 @@ void RenderDevice::clearDeferredResources()
 
     for(uint32_t i = 0; i < mBuffersPendingDestruction.size(); ++i)
     {
-        auto& [submission, buffer, memory] = mBuffersPendingDestruction.front();
+        const auto& [submission, buffer, memory] = mBuffersPendingDestruction.front();
 
         if(submission <= mFinishedSubmission)
         {

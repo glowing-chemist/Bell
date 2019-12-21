@@ -398,6 +398,7 @@ void BarrierRecorder::transitionLayout(Image& img, const ImageLayout newLayout, 
 		for (uint32_t j = 0; j < img.numberOfMips(); ++j)
 		{
 			splitBarriers = splitBarriers && img.getLayout(i, j) != layout;
+			(*img.mSubResourceInfo)[(i * img.numberOfMips()) + j].mLayout = newLayout;
 		}
 	}
 
@@ -505,6 +506,7 @@ void BarrierRecorder::transitionLayout(ImageView& img, const ImageLayout newLayo
 		for (uint32_t j = img.getBaseMip(); j < img.getBaseMip() + img.getMipsCount(); ++j)
 		{
 			splitBarriers = splitBarriers && img.getImageLayout(i, j) != layout;
+			img.mSubResourceInfo[(i * img.mTotalMips) + j].mLayout = newLayout;
 		}
 	}
 
