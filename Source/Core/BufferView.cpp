@@ -1,13 +1,22 @@
 #include "Core/BufferView.hpp"
 #include "Core/RenderDevice.hpp"
 
+#ifdef VULKAN
+#include "Core/Vulkan/VulkanBufferView.hpp"
+#endif
 
-BufferView::BufferView(Buffer& parentBuffer, const uint64_t offset, const uint64_t size) :
-	DeviceChild{parentBuffer.getDevice()},
+BufferViewBase::BufferViewBase(Buffer& parentBuffer, const uint64_t offset, const uint64_t size) :
+	DeviceChild{parentBuffer->getDevice()},
 	mOffset{offset},
 	mSize{size},
-	mBufferHandle{parentBuffer.getBuffer()},
-	mBufferMemory{parentBuffer.getMemory()},
-	mUsage{parentBuffer.getUsage()}
+	mUsage{parentBuffer->getUsage()}
 {
+}
+
+
+BufferView::BufferView(Buffer& buffer, const uint64_t offset, const uint64_t size)
+{
+#ifdef VULKAN
+	mBase = std::make_shared<VulkanBufferView>(buffer, offset, size);
+#endif
 }

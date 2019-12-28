@@ -38,7 +38,7 @@ void loadSkyBox(Image& skyBox, const std::vector<const char*> fileNames)
 	for(const char* file : fileNames)
 	{
 		TextureInfo info = loadTexture(file);
-		skyBox.setContents(info.mData.data(), 512, 512, 1, i);
+		skyBox->setContents(info.mData.data(), 512, 512, 1, i);
 		++i;
 	}
 }
@@ -96,22 +96,22 @@ int main()
 	TextureInfo albedoTextureInfo = loadTexture("./oil_barrels_pbr/textures/drum3_base_color.png");
 	Image albedoTexture = engine.createImage(albedoTextureInfo.height, albedoTextureInfo.height, 1, 1, 1, 1, Format::RGBA8UNorm, ImageUsage::Sampled | ImageUsage::TransferDest, "Drum albedo");
 	ImageView albedoTextureView{albedoTexture, ImageViewType::Colour};
-	albedoTexture.setContents(albedoTextureInfo.mData.data(), albedoTextureInfo.height, albedoTextureInfo.height, 1);
+	albedoTexture->setContents(albedoTextureInfo.mData.data(), albedoTextureInfo.height, albedoTextureInfo.height, 1);
 
 	TextureInfo normalTextureInfo = loadTexture("./oil_barrels_pbr/textures/drum3_normal.png" );
 	Image normalMappingTexture = engine.createImage(normalTextureInfo.height, normalTextureInfo.height, 1, 1, 1, 1, Format::RGBA8UNorm, ImageUsage::Sampled | ImageUsage::TransferDest, "Drum Normals");
 	ImageView normalMappingTextureView{normalMappingTexture, ImageViewType::Colour};
-	normalMappingTexture.setContents(normalTextureInfo.mData.data(), normalTextureInfo.height, normalTextureInfo.height, 1);
+	normalMappingTexture->setContents(normalTextureInfo.mData.data(), normalTextureInfo.height, normalTextureInfo.height, 1);
 
 	TextureInfo roughnessTextureInfo = loadTexture("./oil_barrels_pbr/textures/drum3_roughness.png");
 	Image roughnessTexture = engine.createImage(roughnessTextureInfo.height, roughnessTextureInfo.height, 1, 1, 1, 1, Format::RGBA8UNorm, ImageUsage::Sampled | ImageUsage::TransferDest, "Drum roughness");
 	ImageView roughnessTextureView{roughnessTexture, ImageViewType::Colour};
-	roughnessTexture.setContents(roughnessTextureInfo.mData.data(), roughnessTextureInfo.height, roughnessTextureInfo.height, 1);
+	roughnessTexture->setContents(roughnessTextureInfo.mData.data(), roughnessTextureInfo.height, roughnessTextureInfo.height, 1);
 
 	TextureInfo metalicTextureInfo = loadTexture("./oil_barrels_pbr/textures/drum3_metallic.png");
 	Image metalicTexture = engine.createImage(metalicTextureInfo.height, metalicTextureInfo.height, 1, 1, 1, 1, Format::RGBA8UNorm, ImageUsage::Sampled | ImageUsage::TransferDest, "Drum metalness");
 	ImageView metalicTextureView{metalicTexture, ImageViewType::Colour};
-	metalicTexture.setContents(metalicTextureInfo.mData.data(), metalicTextureInfo.height, metalicTextureInfo.height, 1);
+	metalicTexture->setContents(metalicTextureInfo.mData.data(), metalicTextureInfo.height, metalicTextureInfo.height, 1);
 
 	Image skyBox = engine.createImage(512, 512, 1, 1, 6, 1, Format::RGBA8UNorm, ImageUsage::CubeMap | ImageUsage::Sampled | ImageUsage::TransferDest, "Sky Box");
 	ImageView skyBoxView{skyBox, ImageViewType::Colour, 0, 6};
@@ -201,11 +201,11 @@ int main()
 	ssaoMapInfo.mSize = sizeof(SSAOBuffer);
 	ssaoMapInfo.mOffset = 0;
 
-	void* ssaoBufPtr = ssaoBuffer.map(ssaoMapInfo);
+	void* ssaoBufPtr = ssaoBuffer->map(ssaoMapInfo);
 
 		std::memcpy(ssaoBufPtr, &ssaoBuf, sizeof(SSAOBuffer));
 
-	ssaoBuffer.unmap();
+	ssaoBuffer->unmap();
 
 	Light light{};
 	light.albedo = glm::vec4(1.0f);
@@ -215,11 +215,11 @@ int main()
 	lightMapInfo.mSize = sizeof(Light);
 	lightMapInfo.mOffset = 0;
 
-	void* lightBufferPtr = lightBuffer.map(lightMapInfo);
+	void* lightBufferPtr = lightBuffer->map(lightMapInfo);
 
 		std::memcpy(lightBufferPtr, &light, sizeof(Light));
 
-	lightBuffer.unmap();
+	lightBuffer->unmap();
 
 	while(!glfwWindowShouldClose(window))
 	{
@@ -254,11 +254,11 @@ int main()
 		MapInfo info{};
 		info.mOffset = 0;
 		info.mSize = sizeof (CameraBuffer);
-		void* cameraBufferPtr = cameraBuffer.map(info);
+		void* cameraBufferPtr = cameraBuffer->map(info);
 
 			std::memcpy(cameraBufferPtr, &buf, sizeof(CameraBuffer));
 
-		cameraBuffer.unmap();
+		cameraBuffer->unmap();
 
 
 		if(!firstFrame)

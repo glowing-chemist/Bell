@@ -3,29 +3,29 @@
 
 #include "DeviceChild.hpp"
 #include "Core/Image.hpp"
+#include "Core/ImageView.hpp"
 
-#include <vulkan/vulkan.hpp>
 #include <GLFW/glfw3.h>
 
-struct VKRenderPasses;
-
-// swapChain setup functions
-struct SwapChainSupportDetails { // represent swapchain capabilities
-    vk::SurfaceCapabilitiesKHR capabilities;
-    std::vector<vk::SurfaceFormatKHR> formats;
-    std::vector<vk::PresentModeKHR> presentModes;
-};
+class RenderDevice;
+class GLFWwindow;
 
 
-class SwapChain : public DeviceChild
+class SwapChainBase : public DeviceChild
 {
 public:
-    SwapChain(RenderDevice* Device, vk::SurfaceKHR windowSurface, GLFWwindow* window);
-    ~SwapChain();
+	SwapChainBase(RenderDevice* Device, GLFWwindow* window);
+    virtual ~SwapChainBase() = default;
 
-    void destroy();
+	virtual void destroy() {};
 
-    vk::Format getSwapChainImageFormat() const;
+	virtual uint32_t getNextImageIndex() = 0;
+	virtual void present(const QueueType queueIndex) = 0;
+
+	Format getSwapChainImageFormat() const
+	{
+		return mSwapChainFormat;
+	}
 
 	uint32_t getSwapChainImageWidth() const;
 	uint32_t getSwapChainImageHeight() const;
@@ -44,28 +44,18 @@ public:
     const Image& getImage(const size_t index) const
         { return mSwapChainImages[index]; }
 
-    uint32_t getNextImageIndex(vk::Semaphore&);
 	uint32_t getCurrentImageIndex() const { return mCurrentImageIndex; }
 
-	void present(VkQueue, VkSemaphore);
+	ImageExtent chooseSwapExtent(GLFWwindow* window);
 
-private:
-    SwapChainSupportDetails querySwapchainSupport(vk::PhysicalDevice, vk::SurfaceKHR);
-    vk::Extent2D chooseSwapExtent(const vk::SurfaceCapabilitiesKHR&, GLFWwindow*);
-
-	void initialize();
-	void recreateSwapchain();
-
-    void createSwapChainImageViews();
+protected:
 
 	uint32_t mCurrentImageIndex;
-    vk::SwapchainKHR mSwapChain;
-	vk::SurfaceKHR mSurface;
 	GLFWwindow* mWindow;
     std::vector<Image> mSwapChainImages;
     std::vector<ImageView> mImageViews;
-    vk::Extent2D mSwapChainExtent;
-    vk::Format mSwapChainFormat;
+    ImageExtent mSwapChainExtent;
+    Format mSwapChainFormat;
 };
 
 #endif

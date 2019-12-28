@@ -11,8 +11,8 @@ CompositeTechnique::CompositeTechnique(Engine* eng) :
 
 void CompositeTechnique::render(RenderGraph& graph, Engine* eng, const std::vector<const Scene::MeshInstance*>&)
 {
-	const auto viewPortX = eng->getSwapChainImage().getExtent(0, 0).width;
-	const auto viewPortY = eng->getSwapChainImage().getExtent(0, 0).height;
+	const auto viewPortX = eng->getSwapChainImage()->getExtent(0, 0).width;
+	const auto viewPortY = eng->getSwapChainImage()->getExtent(0, 0).height;
 
 	if ((eng->isPassRegistered(PassType::DeferredTextureAnalyticalPBRIBL) || eng->isPassRegistered(PassType::DeferredTexturePBRIBL) ||
         eng->isPassRegistered(PassType::DeferredTextureBlinnPhongLighting) || eng->isPassRegistered(PassType::ForwardIBL) || eng->isPassRegistered(PassType::DeferredPBRIBL))
@@ -31,7 +31,7 @@ void CompositeTechnique::render(RenderGraph& graph, Engine* eng, const std::vect
 		compositeTask.addInput(kOverlay, AttachmentType::Texture2D);
 		compositeTask.addInput(kDefaultSampler, AttachmentType::Sampler);
 
-		compositeTask.addOutput(kFrameBufer, AttachmentType::RenderTarget2D, eng->getSwapChainImage().getFormat(), SizeClass::Custom, LoadOp::Clear_Black);
+		compositeTask.addOutput(kFrameBufer, AttachmentType::RenderTarget2D, eng->getSwapChainImage()->getFormat(), SizeClass::Custom, LoadOp::Clear_Black);
 
 		compositeTask.addDrawCall(0, 3);
 
@@ -51,7 +51,7 @@ void CompositeTechnique::render(RenderGraph& graph, Engine* eng, const std::vect
 		compositeTask.addInput(kOverlay, AttachmentType::Texture2D);
 		compositeTask.addInput(kDefaultSampler, AttachmentType::Sampler);
 
-		compositeTask.addOutput(kFrameBufer, AttachmentType::RenderTarget2D, eng->getSwapChainImage().getFormat(), SizeClass::Custom, LoadOp::Clear_Black);
+		compositeTask.addOutput(kFrameBufer, AttachmentType::RenderTarget2D, eng->getSwapChainImage()->getFormat(), SizeClass::Custom, LoadOp::Clear_Black);
 
 		compositeTask.addDrawCall(0, 3);
 

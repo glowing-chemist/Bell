@@ -4,11 +4,10 @@
 #include "Core/DeviceChild.hpp"
 #include "Core/GPUResource.hpp"
 
+#include <memory>
 #include <string>
 #include <vector>
 #include <filesystem>
-
-#include <vulkan/vulkan.hpp>
 
 #include "glslang/Public/ShaderLang.h"
 
@@ -18,32 +17,29 @@ namespace fs = std::filesystem;
 class RenderDevice;
 
 
-class Shader : DeviceChild, RefCount
+class ShaderBase : public DeviceChild
 {
 public:
 
-    Shader(RenderDevice*, const std::string&);
-    ~Shader();
+	ShaderBase(RenderDevice*, const std::string&);
+    virtual ~ShaderBase() = default;
 
-    bool compile();
-    bool reload();
+    virtual bool compile();
+    virtual bool reload() = 0;
 	inline bool hasBeenCompiled() const
 	{
 		return mCompiled;
 	}
 
-    const vk::ShaderModule&           getShaderModule() const;
-
 	std::string getFilePath() const
         { return mFilePath.string(); }
 
-private:
+protected:
 
     EShLanguage getShaderStage(const std::string&) const;
 
     std::string mGLSLSource;
     std::vector<unsigned int> mSPIRV;
-    vk::ShaderModule mShaderModule;
 
 	fs::path mFilePath;
     EShLanguage mShaderStage;
@@ -53,5 +49,38 @@ private:
 	fs::file_time_type mLastFileAccessTime;
 };
 
+
+class Shader : private RefCount
+{
+public:
+
+	Shader(RenderDevice*, const std::string&);
+	~Shader() = default;
+
+	ShaderBase* getBase()
+	{
+		return mBase.get();
+	}
+
+	const ShaderBase* getBase() const
+	{
+		return mBase.get();
+	}
+
+	ShaderBase* operator->()
+	{
+		return getBase();
+	}
+
+	const ShaderBase* operator->() const
+	{
+		return getBase();
+	}
+
+private:
+
+	std::shared_ptr<ShaderBase> mBase;
+
+};
 
 #endif

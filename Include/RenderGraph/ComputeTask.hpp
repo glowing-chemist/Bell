@@ -3,7 +3,6 @@
 
 #include "RenderTask.hpp"
 #include "Core/Shader.hpp"
-#include "Core/Pipeline.hpp"
 
 #include <string>
 #include <vector>
@@ -13,6 +12,11 @@ enum class DispatchType
 {
 	Standard,
 	Indirect
+};
+
+struct ComputePipelineDescription
+{
+	Shader mComputeShader;
 };
 
 // needed in order to use unordered_map
@@ -48,7 +52,7 @@ public:
 	void mergeWith(const RenderTask&) override final;
 
     // Needs to take the graph to be able to lookup indirect buffers tha are bound to the graph.
-    void recordCommands(vk::CommandBuffer, const RenderGraph&, const vulkanResources&) const override final;
+    void recordCommands(Executor&, const RenderGraph&) const override final;
 
 	void clearCalls() override final { mComputeCalls.clear(); }
 

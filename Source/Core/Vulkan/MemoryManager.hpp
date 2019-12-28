@@ -1,13 +1,16 @@
 #ifndef MemoryManager_HPP
 #define MemoryManager_HPP
 
-#include "DeviceChild.hpp"
+#include "Core/DeviceChild.hpp"
+
 #include <vulkan/vulkan.hpp>
 
 #include <vector>
 #include <list>
 
 #define MEMORY_LOGGING 0
+
+struct MapInfo;
 
 struct PoolFragment
 {
@@ -33,13 +36,6 @@ private:
     bool hostMappable;
 };
 
-struct MapInfo
-{
-	Allocation mMemory;
-	size_t mOffset;
-	size_t mSize;
-};
-
 
 // This class will be used for keeping track of GPU allocations for buffers and
 // images. this will be done by maintaing 2 pools of gpu memory, one device local
@@ -53,11 +49,11 @@ public:
     Allocation Allocate(uint64_t size, unsigned long allignment, bool hostMappable);
     void       Free(Allocation alloc);
 
-    void       BindImage(vk::Image& image, Allocation alloc);
-    void       BindBuffer(vk::Buffer& buffer, Allocation alloc);
+    void       BindImage(vk::Image& image, const Allocation& alloc);
+    void       BindBuffer(vk::Buffer& buffer, const Allocation& alloc);
 
-	void*	   MapAllocation(const MapInfo& info);
-	void	   UnMapAllocation(const MapInfo& info);
+	void*	   MapAllocation(const MapInfo& info, const Allocation& alloc);
+	void	   UnMapAllocation(const MapInfo& info, const Allocation& alloc);
 
     void       Destroy();
 

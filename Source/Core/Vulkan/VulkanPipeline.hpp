@@ -2,7 +2,8 @@
 #define PIPELINE_HPP
 
 #include "Core/DeviceChild.hpp"
-#include "Shader.hpp"
+#include "Core/Shader.hpp"
+#include "Core/RenderDevice.hpp"
 #include "RenderGraph/RenderTask.hpp"
 #include "RenderGraph/GraphicsTask.hpp"
 #include "Engine/GeomUtils.h"
@@ -10,11 +11,6 @@
 #include <vulkan/vulkan.hpp>
 
 #include <optional>
-
-struct ComputePipelineDescription
-{
-	Shader mComputeShader;
-};
 
 
 class RenderDevice;

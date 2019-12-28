@@ -1,14 +1,16 @@
 #ifndef IMAGEVIEW_HPP
 #define IMAGEVIEW_HPP
 
-#include "Core/MemoryManager.hpp"
+#include <memory>
+
 #include "Core/GPUResource.hpp"
+#include "Core/DeviceChild.hpp"
+#include "Core/Image.hpp"
 #include "Engine/PassTypes.hpp"
 
 
-class Image;
 class SubResourceInfo;
-class BarrierRecorder;
+class VulkanBarrierRecorder;
 
 
 enum class ImageViewType
@@ -18,44 +20,28 @@ enum class ImageViewType
 };
 
 
-class ImageView : public GPUResource, public DeviceChild
+class ImageViewBase : public GPUResource, public DeviceChild
 {
-    friend BarrierRecorder;
+    friend VulkanBarrierRecorder;
 public:
 
-    ImageView(Image&,
+	ImageViewBase(Image&,
 			  const ImageViewType,
               const uint32_t level = 0,
 			  const uint32_t levelCount = 1,
               const uint32_t lod = 0,
               const uint32_t lodCount = 1);
 
-    ~ImageView();
-
-    // ImageViews are copy only.
-    ImageView& operator=(const ImageView&);
-    ImageView(const ImageView&) = default;
-
-    ImageView& operator=(ImageView&&) = delete;
-    ImageView(ImageView&&);
-
-    vk::Image getImage() const
-        { return mImageHandle; }
-
-    vk::ImageView getImageView() const
-        { return mImageViewHandle; }
+	virtual ~ImageViewBase() = default;
 
 	Format getImageViewFormat() const
         { return mImageFormat; }
 
 	ImageLayout getImageLayout(const uint32_t level = 0, const uint32_t LOD = 0) const;
 
-	vk::Extent3D getImageExtent(const uint32_t level = 0, const uint32_t LOD = 0) const;
+	ImageExtent getImageExtent(const uint32_t level = 0, const uint32_t LOD = 0) const;
 	ImageUsage getImageUsage() const
         { return mUsage; }
-
-    Allocation getImageMemory() const
-        { return mImageMemory; }
 
 	uint32_t getBaseMip() const
 	{ return mMipStart; }
@@ -77,11 +63,8 @@ public:
 
     void updateLastAccessed();
 
-private:
+protected:
 
-    vk::Image mImageHandle;
-    vk::ImageView mImageViewHandle;
-    Allocation mImageMemory;
     ImageViewType mType;
 
     Format mImageFormat;
@@ -101,5 +84,45 @@ private:
 
 // Alias array of images (will split this in to a separate class if we need any  more functionality).
 using ImageViewArray = std::vector<ImageView>;
+
+
+class ImageView : private RefCount
+{
+public:
+
+	ImageView(Image&,
+		const ImageViewType,
+		const uint32_t level = 0,
+		const uint32_t levelCount = 1,
+		const uint32_t lod = 0,
+		const uint32_t lodCount = 1);
+	~ImageView() = default;
+
+
+	ImageViewBase* getBase()
+	{
+		return mBase.get();
+	}
+
+	const ImageViewBase* getBase() const
+	{
+		return mBase.get();
+	}
+
+	ImageViewBase* operator->()
+	{
+		return getBase();
+	}
+
+	const ImageViewBase* operator->() const
+	{
+		return getBase();
+	}
+
+private:
+
+	std::shared_ptr<ImageViewBase> mBase;
+
+};
 
 #endif

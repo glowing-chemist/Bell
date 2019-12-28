@@ -20,8 +20,8 @@ public:
 
 	virtual void render(RenderGraph& graph, Engine*, const std::vector<const Scene::MeshInstance*>&) override final
 	{
-		mAnalyticalLighting->updateLastAccessed();
-		mAnalyticalLightingView->updateLastAccessed();
+		mAnalyticalLighting.get()->updateLastAccessed();
+		mAnalyticalLightingView.get()->updateLastAccessed();
 
 		graph.addTask(mTask);
 	}

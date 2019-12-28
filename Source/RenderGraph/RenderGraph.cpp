@@ -754,7 +754,7 @@ std::vector<BarrierRecorder> RenderGraph::generateBarriers(RenderDevice* dev)
 
 		if (entries.mImage)
 		{
-			const auto layout = entries.mImage->getImageLayout(entries.mImage->getBaseLevel(), entries.mImage->getBaseMip());
+			const auto layout = (*entries.mImage)->getImageLayout((*entries.mImage)->getBaseLevel(), (*entries.mImage)->getBaseMip());
 			previous.mStateRequired = getAttachmentType(layout);
 		}
 		else
@@ -804,7 +804,7 @@ std::vector<BarrierRecorder> RenderGraph::generateBarriers(RenderDevice* dev)
 					else
 						dst = SyncPoint::VertexShader;
 
-					barriers[previous.mTaskIndex + 1].memoryBarrier(*entries.mBuffer, hazard, src, dst);
+					barriers[previous.mTaskIndex + 1]->memoryBarrier(*entries.mBuffer, hazard, src, dst);
 
 				}
 
@@ -827,11 +827,11 @@ std::vector<BarrierRecorder> RenderGraph::generateBarriers(RenderDevice* dev)
 					const SyncPoint src = getSyncPoint(previous.mStateRequired);
 					const SyncPoint dst = getSyncPoint(entry.mStateRequired);
 
-					const ImageLayout layout = entries.mImage->getImageUsage() & ImageUsage::DepthStencil ?
+					const ImageLayout layout = (*entries.mImage)->getImageUsage() & ImageUsage::DepthStencil ?
 						entry.mStateRequired == AttachmentType::Depth ? ImageLayout::DepthStencil : ImageLayout::DepthStencilRO
 						: getImageLayout(entry.mStateRequired);
 
-					barriers[previous.mTaskIndex + 1].transitionLayout(*entries.mImage, layout, hazard, src, dst);
+					barriers[previous.mTaskIndex + 1]->transitionLayout(*entries.mImage, layout, hazard, src, dst);
 				}
 			}
 

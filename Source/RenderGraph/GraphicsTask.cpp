@@ -1,20 +1,10 @@
 #include "RenderGraph/GraphicsTask.hpp"
 #include "RenderGraph/RenderGraph.hpp"
 
-void GraphicsTask::recordCommands(vk::CommandBuffer CmdBuffer, const RenderGraph& graph, const vulkanResources& resources) const
+void GraphicsTask::recordCommands(Executor& exec, const RenderGraph& graph) const
 {
-	bool instancedPipelineBound = false;
-	auto bindInstancedPipeline = [&instancedPipelineBound, &CmdBuffer, &resources]()
-	{
-		if (!instancedPipelineBound)
-		{
-			CmdBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, std::static_pointer_cast<GraphicsPipeline>(resources.mPipeline)->getInstancedVariant());
-			instancedPipelineBound = true;
-		}
-	};
-
 	if(graph.getVertexBuffer())
-		CmdBuffer.bindVertexBuffers(0, { graph.getVertexBuffer()->getBuffer() }, {mVertexBufferOffset});
+		exec.bindVertexBuffer(*graph.getVertexBuffer(), mVertexBufferOffset);
 
     for(const auto& thunk : mDrawCalls)
     {
@@ -22,70 +12,42 @@ void GraphicsTask::recordCommands(vk::CommandBuffer CmdBuffer, const RenderGraph
         {
             case DrawType::Standard:
 			{
-				CmdBuffer.draw(thunk.mNumberOfVerticies,
-					1,
-					thunk.mVertexOffset,
-					0);
+				exec.draw(thunk.mVertexOffset, thunk.mNumberOfVerticies);
 				break;
 			}
 
             case DrawType::Indexed:
 			{
-				CmdBuffer.drawIndexed(thunk.mNumberOfIndicies,
-					1,
-					thunk.mIndexOffset,
-					static_cast<int32_t>(thunk.mVertexOffset),
-					0);
+				exec.indexedDraw(thunk.mVertexOffset, thunk.mIndexOffset, thunk.mNumberOfIndicies);
 				break;
 			}
 
             case DrawType::Instanced:
 			{
-				bindInstancedPipeline();
-
-				CmdBuffer.draw(thunk.mNumberOfVerticies,
-					thunk.mNumberOfInstances,
-					thunk.mVertexOffset,
-					0);
+				exec.instancedDraw(thunk.mVertexOffset, thunk.mNumberOfVerticies, thunk.mNumberOfInstances);
 				break;
 			}
 
             case DrawType::Indirect:
 			{
-				CmdBuffer.drawIndirect(graph.getBoundBuffer(thunk.mIndirectBufferName).getBuffer(),
-					0,
-					thunk.mNumberOfInstances,
-					sizeof(vk::DrawIndirectCommand));
+				exec.indirectDraw(thunk.mNumberOfInstances, graph.getBoundBuffer(thunk.mIndirectBufferName));
 				break;
 			}
 
             case DrawType::IndexedInstanced:
 			{
-				bindInstancedPipeline();
-
-				CmdBuffer.drawIndexed(thunk.mNumberOfIndicies,
-					thunk.mNumberOfInstances,
-					thunk.mIndexOffset,
-					static_cast<int32_t>(thunk.mVertexOffset),
-					0);
+				exec.indexedInstancedDraw(thunk.mVertexOffset, thunk.mIndexOffset, thunk.mNumberOfInstances, thunk.mNumberOfIndicies);
 				break;
 			}
 
             case DrawType::IndexedIndirect:
 			{
-				CmdBuffer.drawIndexedIndirect(graph.getBoundBuffer(thunk.mIndirectBufferName).getBuffer(),
-					0,
-					thunk.mNumberOfInstances,
-					sizeof(vk::DrawIndexedIndirectCommand));
+				exec.indexedIndirectDraw(thunk.mNumberOfInstances, graph.getBoundBuffer(thunk.mIndirectBufferName));
 				break;
 			}
 
 			case DrawType::SetPushConstant:
-				CmdBuffer.pushConstants(resources.mPipeline->getLayoutHandle(),
-										vk::ShaderStageFlagBits::eAll,
-										0,
-										sizeof(glm::mat4),
-										&thunk.mPushConstantValue);
+				exec.insertPushConsatnt(thunk.mPushConstantValue);
 
 			break;
         }
@@ -139,18 +101,18 @@ namespace std
         std::hash<std::string> stringHasher{};
 
         size_t hash = 0;
-		hash += stringHasher(desc.mVertexShader.getFilePath());
+		hash += stringHasher(desc.mVertexShader->getFilePath());
 
         if(desc.mGeometryShader)
-			hash += stringHasher((desc.mGeometryShader->getFilePath()));
+			hash += stringHasher((*desc.mGeometryShader)->getFilePath());
 
         if(desc.mHullShader)
-			hash += stringHasher((desc.mHullShader->getFilePath()));
+			hash += stringHasher((*desc.mHullShader)->getFilePath());
 
         if(desc.mTesselationControlShader)
-			hash += stringHasher((desc.mTesselationControlShader->getFilePath()));
+			hash += stringHasher((*desc.mTesselationControlShader)->getFilePath());
 
-		hash += stringHasher(desc.mFragmentShader.getFilePath());
+		hash += stringHasher(desc.mFragmentShader->getFilePath());
 
 		if (desc.mDepthWrite)
 			hash = ~hash;

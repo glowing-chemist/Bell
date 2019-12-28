@@ -1,6 +1,10 @@
 #include "Core/ConversionUtils.hpp"
 #include "Core/BellLogging.hpp"
 
+#ifdef VULKAN
+#include "Core/Vulkan/VulkanRenderInstance.hpp" 
+#endif
+
 #include "Engine/Engine.hpp"
 #include "Engine/PreDepthTechnique.hpp"
 #include "Engine/GBufferTechnique.hpp"
@@ -22,8 +26,10 @@
 
 
 Engine::Engine(GLFWwindow* windowPtr) :
-    mRenderInstance(windowPtr),
-    mRenderDevice(mRenderInstance.createRenderDevice(DeviceFeaturesFlags::Compute | DeviceFeaturesFlags::Discrete | DeviceFeaturesFlags::Subgroup)),
+#ifdef VULKAN
+    mRenderInstance( new VulkanRenderInstance(windowPtr)),
+#endif
+    mRenderDevice(mRenderInstance->createRenderDevice(DeviceFeaturesFlags::Compute | DeviceFeaturesFlags::Discrete | DeviceFeaturesFlags::Subgroup)),
     mCurrentScene("Initial current scene"),
     mLoadingScene("Initial loading scene"),
     mVertexBuilder(),
@@ -48,8 +54,8 @@ Engine::Engine(GLFWwindow* windowPtr) :
 {
     for(uint32_t i = 0; i < getDevice()->getSwapChainImageCount(); ++i)
     {
-        mLightsSRS.get(i).addDataBufferRW(mLightBufferView.get(i));
-        mLightsSRS.get(i).finalise();
+        mLightsSRS.get(i)->addDataBufferRW(mLightBufferView.get(i));
+        mLightsSRS.get(i)->finalise();
     }
 
 }
@@ -62,8 +68,8 @@ void Engine::loadScene(const std::string& path)
 
 	// Set up the SRS for the materials.
 	const auto& materials = mCurrentScene.getMaterials();
-	mMaterials.addSampledImageArray(materials);
-	mMaterials.finalise();
+	mMaterials->addSampledImageArray(materials);
+	mMaterials->finalise();
 }
 
 void Engine::transitionScene()
@@ -79,8 +85,8 @@ void Engine::setScene(const std::string& path)
 
 	// Set up the SRS for the materials.
 	const auto& materials = mCurrentScene.getMaterials();
-	mMaterials.addSampledImageArray(materials);
-	mMaterials.finalise();
+	mMaterials->addSampledImageArray(materials);
+	mMaterials->finalise();
 }
 
 
@@ -90,8 +96,8 @@ void Engine::setScene(Scene& scene)
 
 	// Set up the SRS for the materials.
 	const auto& materials = mCurrentScene.getMaterials();
-	mMaterials.addSampledImageArray(materials);
-	mMaterials.finalise();
+	mMaterials->addSampledImageArray(materials);
+	mMaterials->finalise();
 }
 
 
@@ -111,7 +117,7 @@ Image Engine::createImage(const uint32_t x,
 				  ImageUsage usage,
 				  const std::string& name)
 {
-    return Image{&mRenderDevice, format, usage, x, y, z, mips, levels, samples, name};
+    return Image{mRenderDevice, format, usage, x, y, z, mips, levels, samples, name};
 }
 
 Buffer Engine::createBuffer(const uint32_t size,
@@ -119,7 +125,7 @@ Buffer Engine::createBuffer(const uint32_t size,
 					BufferUsage usage,
 					const std::string& name)
 {
-	return Buffer{&mRenderDevice, usage, size, stride, name};
+	return Buffer{mRenderDevice, usage, size, stride, name};
 }
 
 
@@ -128,9 +134,9 @@ Shader Engine::getShader(const std::string& path)
 	if(mShaderCache.find(path) != mShaderCache.end())
 		return (*mShaderCache.find(path)).second;
 
-	Shader newShader{&mRenderDevice, path};
+	Shader newShader{mRenderDevice, path};
 
-	const bool compiled = newShader.compile();
+	const bool compiled = newShader->compile();
 
 	BELL_ASSERT(compiled, "Shader failed to compile")
 
@@ -316,11 +322,11 @@ void Engine::render()
 
     if(!vertexData.empty() && !indexData.empty())
     {
-        mVertexBuffer->resize(static_cast<uint32_t>(vertexData.size()), false);
-        mIndexBuffer->resize(static_cast<uint32_t>(indexData.size()), false);
+        mVertexBuffer.get()->resize(static_cast<uint32_t>(vertexData.size()), false);
+        mIndexBuffer.get()->resize(static_cast<uint32_t>(indexData.size()), false);
 
-        mVertexBuffer->setContents(vertexData.data(), static_cast<uint32_t>(vertexData.size()));
-        mIndexBuffer->setContents(indexData.data(), static_cast<uint32_t>(indexData.size()));
+        mVertexBuffer.get()->setContents(vertexData.data(), static_cast<uint32_t>(vertexData.size()));
+        mIndexBuffer.get()->setContents(indexData.data(), static_cast<uint32_t>(indexData.size()));
 
         mVertexBuilder.reset();
         mIndexBuilder.reset();
@@ -331,7 +337,7 @@ void Engine::render()
 
 	mCurrentRenderGraph.compileDependancies();
 
-    mRenderDevice.execute(mCurrentRenderGraph);
+    mRenderDevice->execute(mCurrentRenderGraph);
 }
 
 
@@ -343,11 +349,11 @@ void Engine::submitCommandRecorder(CommandContext &ccx)
 
     auto& indexData = mIndexBuilder.finishRecording();
 
-    mVertexBuffer->resize(static_cast<uint32_t>(vertexData.size()), false);
-    mIndexBuffer->resize(static_cast<uint32_t>(indexData.size()), false);
+    mVertexBuffer.get()->resize(static_cast<uint32_t>(vertexData.size()), false);
+    mIndexBuffer.get()->resize(static_cast<uint32_t>(indexData.size()), false);
 
-    mVertexBuffer->setContents(vertexData.data(), static_cast<uint32_t>(vertexData.size()));
-    mIndexBuffer->setContents(indexData.data(), static_cast<uint32_t>(indexData.size()));
+    mVertexBuffer.get()->setContents(vertexData.data(), static_cast<uint32_t>(vertexData.size()));
+    mIndexBuffer.get()->setContents(indexData.data(), static_cast<uint32_t>(indexData.size()));
 
     mVertexBuilder.reset();
     mIndexBuilder.reset();
@@ -355,7 +361,7 @@ void Engine::submitCommandRecorder(CommandContext &ccx)
     renderGraph.bindVertexBuffer(*mVertexBuffer);
     renderGraph.bindIndexBuffer(*mIndexBuffer);
 
-    mRenderDevice.execute(renderGraph);
+    mRenderDevice->execute(renderGraph);
 }
 
 
@@ -367,7 +373,7 @@ void Engine::updateGlobalBuffers()
 	mCameraBuffer.mPerspectiveMatrix = currentCamera.getPerspectiveMatrix();
 	mCameraBuffer.mInvertedCameraMatrix = glm::inverse(mCameraBuffer.mPerspectiveMatrix * mCameraBuffer.mViewMatrix);
 	mCameraBuffer.mInvertedPerspective = glm::inverse(mCameraBuffer.mPerspectiveMatrix);
-	mCameraBuffer.mFrameBufferSize = glm::vec2{getSwapChainImage().getExtent(0, 0).width, getSwapChainImage().getExtent(0, 0).height};
+	mCameraBuffer.mFrameBufferSize = glm::vec2{getSwapChainImage()->getExtent(0, 0).width, getSwapChainImage()->getExtent(0, 0).height};
 	mCameraBuffer.mPosition = currentCamera.getPosition();
 	mCameraBuffer.mNeaPlane = currentCamera.getNearPlane();
 	mCameraBuffer.mFarPlane = currentCamera.getFarPlane();
@@ -377,11 +383,11 @@ void Engine::updateGlobalBuffers()
 	mapInfo.mSize = sizeof(CameraBuffer);
 	mapInfo.mOffset = 0;
 
-    void* cameraBufferPtr = mDeviceCameraBuffer->map(mapInfo);
+    void* cameraBufferPtr = mDeviceCameraBuffer.get()->map(mapInfo);
 
 		std::memcpy(cameraBufferPtr, &mCameraBuffer, sizeof(CameraBuffer));
 
-    mDeviceCameraBuffer->unmap();
+    mDeviceCameraBuffer.get()->unmap();
 
 	// The SSAO buffer only needs tp be updated once.
 	// Or if the number of samples needs to be changed.
@@ -408,17 +414,17 @@ void Engine::updateGlobalBuffers()
 
 		mapInfo.mSize = sizeof(SSAOBuffer);
 
-		void* SSAOBufferPtr = mDeviceSSAOBuffer.map(mapInfo);
+		void* SSAOBufferPtr = mDeviceSSAOBuffer->map(mapInfo);
 
 			std::memcpy(SSAOBufferPtr, &mSSAOBUffer, sizeof(SSAOBuffer));
 
-		mDeviceSSAOBuffer.unmap();
+		mDeviceSSAOBuffer->unmap();
 	}
 
-    mLightBuffer->setContents(static_cast<int>(mCurrentScene.getLights().size()), sizeof(uint32_t));
+    mLightBuffer.get()->setContents(static_cast<int>(mCurrentScene.getLights().size()), sizeof(uint32_t));
 
     if(!mCurrentScene.getLights().empty())
-        mLightBuffer->setContents(mCurrentScene.getLights().data(), static_cast<uint32_t>(mCurrentScene.getLights().size() * sizeof(Scene::Light)), sizeof(uint32_t));
+        mLightBuffer.get()->setContents(mCurrentScene.getLights().data(), static_cast<uint32_t>(mCurrentScene.getLights().size() * sizeof(Scene::Light)), sizeof(uint32_t));
 }
 
 

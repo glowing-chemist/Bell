@@ -84,14 +84,14 @@ protected:
 };
 
 
-class GPUResource : public RefCount
+class GPUResource
 {
 public:
     GPUResource(const uint64_t lastAccessed) :  mNeedsUpdating{false},
                                                 mLastAccessed{lastAccessed},
                                                 mCurrentQueue{QueueType::Graphics} {}
 
-    GPUResource(const GPUResource& other) : RefCount{other}
+    GPUResource(const GPUResource& other)
     {
         mNeedsUpdating = other.mNeedsUpdating;
         mLastAccessed = other.mLastAccessed;
@@ -100,12 +100,10 @@ public:
 
     GPUResource& operator=(const GPUResource& other)
     {
-		RefCount::operator=(other);
 
         mNeedsUpdating = other.mNeedsUpdating;
         mLastAccessed = other.mLastAccessed;
         mCurrentQueue = other.mCurrentQueue;
-        mRefCount = other.mRefCount;
 
         return *this;
     }

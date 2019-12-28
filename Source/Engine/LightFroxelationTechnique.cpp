@@ -20,13 +20,13 @@ LightFroxelationTechnique::LightFroxelationTechnique(Engine* eng) :
     mLightAsignmentDesc{eng->getShader("./Shaders/FroxelationGenerateLightLists.comp")},
     mLightListAsignment("LightAsignment", mLightAsignmentDesc),
 
-	mActiveFroxelsImage(eng->getDevice(), Format::R32Uint, ImageUsage::Storage | ImageUsage::Sampled, eng->getDevice()->getSwapChainImageView().getImageExtent().width,
-		eng->getDevice()->getSwapChainImageView().getImageExtent().height, 1, 1, 1, 1, "ActiveFroxels"),
+	mActiveFroxelsImage(eng->getDevice(), Format::R32Uint, ImageUsage::Storage | ImageUsage::Sampled, eng->getDevice()->getSwapChainImageView()->getImageExtent().width,
+		eng->getDevice()->getSwapChainImageView()->getImageExtent().height, 1, 1, 1, 1, "ActiveFroxels"),
 	mActiveFroxelsImageView(mActiveFroxelsImage, ImageViewType::Colour),
 
     // Assumes an avergae max of 10 active froxels per screen space tile.
     mActiveFroxlesBuffer(eng->getDevice(), BufferUsage::DataBuffer | BufferUsage::Uniform, sizeof(uint32_t) * 3 * (30 * 50 * 10), sizeof(uint32_t) * 3 * (30 * 50 * 10), "ActiveFroxelBuffer"),
-	mActiveFroxlesBufferView(mActiveFroxlesBuffer, std::max(eng->getDevice()->getLimits().minStorageBufferOffsetAlignment, sizeof(uint32_t))),
+	mActiveFroxlesBufferView(mActiveFroxlesBuffer, std::max(eng->getDevice()->getMinStorageBufferAlignment(), sizeof(uint32_t))),
     mActiveFroxelsCounter(mActiveFroxlesBuffer, 0u, static_cast<uint32_t>(sizeof(uint32_t))),
 
     mIndirectArgsBuffer(eng->getDevice(), BufferUsage::DataBuffer | BufferUsage::IndirectArgs, sizeof(vk::DispatchIndirectCommand), sizeof(vk::DispatchIndirectCommand), "FroxelIndirectArgs"),
@@ -36,7 +36,7 @@ LightFroxelationTechnique::LightFroxelationTechnique(Engine* eng) :
     mSparseFroxelBufferView(mSparseFroxelBuffer),
 
     mLightIndexBuffer(eng->getDevice(), BufferUsage::DataBuffer, sizeof(uint32_t) * (30 * 50 * 10 * 16), sizeof(uint32_t) * (30 * 50 * 10 * 16), kLightIndicies),
-    mLightIndexBufferView(mLightIndexBuffer, std::max(eng->getDevice()->getLimits().minStorageBufferOffsetAlignment, sizeof(uint32_t))),
+    mLightIndexBufferView(mLightIndexBuffer, std::max(eng->getDevice()->getMinStorageBufferAlignment(), sizeof(uint32_t))),
     mLightIndexCounterView(mLightIndexBuffer, 0, static_cast<uint32_t>(sizeof(uint32_t)))
 {
     mClearCounters.addInput(kActiveFroxelsCounter, AttachmentType::DataBufferWO);
@@ -70,7 +70,7 @@ void LightFroxelationTechnique::render(RenderGraph& graph, Engine* eng, const st
 {
 	mActiveFroxels.clearCalls();
 
-	const auto extent = eng->getDevice()->getSwapChainImageView().getImageExtent();
+	const auto extent = eng->getDevice()->getSwapChainImageView()->getImageExtent();
 
     mActiveFroxels.addDispatch(static_cast<uint32_t>(std::ceil(extent.width / 32.0f)), static_cast<uint32_t>(std::ceil(extent.height / 32.0f)), 1);
 
@@ -79,12 +79,12 @@ void LightFroxelationTechnique::render(RenderGraph& graph, Engine* eng, const st
 	graph.addTask(mIndirectArgs);
     graph.addTask(mLightListAsignment);
 
-    mActiveFroxelsImageView->updateLastAccessed();
-    mActiveFroxelsImage->updateLastAccessed();
-    mActiveFroxlesBuffer->updateLastAccessed();
-    mSparseFroxelBuffer->updateLastAccessed();
-    mLightIndexBuffer->updateLastAccessed();
-    mIndirectArgsBuffer->updateLastAccessed();
+    mActiveFroxelsImageView.get()->updateLastAccessed();
+    mActiveFroxelsImage.get()->updateLastAccessed();
+    mActiveFroxlesBuffer.get()->updateLastAccessed();
+    mSparseFroxelBuffer.get()->updateLastAccessed();
+    mLightIndexBuffer.get()->updateLastAccessed();
+    mIndirectArgsBuffer.get()->updateLastAccessed();
 }
 
 

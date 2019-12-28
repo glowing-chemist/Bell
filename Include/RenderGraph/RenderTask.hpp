@@ -8,8 +8,8 @@
 #include <tuple>
 
 #include "Engine/PassTypes.hpp"
+#include "Core/Executor.hpp"
 
-#include <vulkan/vulkan.hpp>
 
 class RenderGraph;
 class vulkanResources;
@@ -45,6 +45,8 @@ public:
     RenderTask(const std::string& name) : mName{name} {}
 	virtual ~RenderTask() = default;
 
+	virtual void recordCommands(Executor& exec, const RenderGraph&) const = 0;
+
     virtual void addInput(const std::string& name, const AttachmentType attachmentType)
     {
        mInputAttachments.push_back({name, attachmentType});
@@ -55,9 +57,6 @@ public:
     {
 	   mOutputAttachments.push_back({name, attachmentType, format, size, op});
     }
-
-
-	virtual void recordCommands(vk::CommandBuffer, const RenderGraph&, const vulkanResources&) const = 0;
 
     struct OutputAttachmentInfo
     {

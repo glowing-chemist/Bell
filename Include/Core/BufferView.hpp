@@ -4,22 +4,20 @@
 #include "Buffer.hpp"
 
 #include <limits>
+#include <memory>
 
 #include <vulkan/vulkan.hpp>
 
 class BarrierRecorder;
 
-class BufferView : public DeviceChild
+class BufferViewBase : public DeviceChild
 {
     friend BarrierRecorder;
 public:
 
-    BufferView(Buffer&, const uint64_t offset = 0, const uint64_t size = VK_WHOLE_SIZE);
+	BufferViewBase(Buffer&, const uint64_t offset = 0, const uint64_t size = VK_WHOLE_SIZE);
     // buffer views don't manage any resources so can have a trivial destructor.
-    ~BufferView() = default;
-
-    vk::Buffer getBuffer() const
-    { return mBufferHandle; }
+    ~BufferViewBase() = default;
 
     uint64_t getOffset() const
     { return mOffset; }
@@ -36,9 +34,41 @@ private:
     uint64_t mOffset;
     uint64_t mSize;
 
-    vk::Buffer mBufferHandle;
-    Allocation mBufferMemory;
     BufferUsage mUsage;
+};
+
+
+class BufferView
+{
+public:
+
+	BufferView(Buffer&, const uint64_t offset = 0, const uint64_t size = VK_WHOLE_SIZE);
+	~BufferView() = default;
+
+
+	BufferViewBase* getBase()
+	{
+		return mBase.get();
+	}
+
+	const BufferViewBase* getBase() const
+	{
+		return mBase.get();
+	}
+
+	BufferViewBase* operator->()
+	{
+		return getBase();
+	}
+
+	const BufferViewBase* operator->() const
+	{
+		return getBase();
+	}
+
+private:
+
+	std::shared_ptr<BufferViewBase> mBase;
 
 };
 

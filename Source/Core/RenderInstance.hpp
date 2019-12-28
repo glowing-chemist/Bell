@@ -1,5 +1,5 @@
-#ifndef VKCONTEXT_HPP
-#define VKCONTEXT_HPP
+#ifndef INSTANCE_HPP
+#define INSTANCE_HPP
 
 #include <vulkan/vulkan.h>
 #include <vulkan/vulkan.hpp> // use vulkan hpp for erganomics
@@ -21,31 +21,18 @@ int operator|(DeviceFeaturesFlags, DeviceFeaturesFlags);
 int operator|(int, DeviceFeaturesFlags);
 bool operator&(int, DeviceFeaturesFlags);
 
-
-const QueueIndicies getAvailableQueues(vk::SurfaceKHR windowSurface, vk::PhysicalDevice& dev);
-
 class RenderInstance 
 {
 public:
     RenderInstance(GLFWwindow*);
-    ~RenderInstance();
+    virtual ~RenderInstance() = default;
 
-    RenderDevice createRenderDevice(const int DeviceFeatureFlags = 0);
-
-    void addDebugCallback();
-    void removeDebugCallback();
+    virtual RenderDevice* createRenderDevice(const int DeviceFeatureFlags = 0) = 0;
 
     GLFWwindow* getWindow() const;
-    vk::SurfaceKHR getSurface() const;
 
-private:
-    std::pair<vk::PhysicalDevice, vk::Device> findSuitableDevices(const int DeviceFeatureFlags = 0);
-	bool									  hasSubgroupSupport(vk::PhysicalDevice);
+protected:
 
-    vk::Instance mInstance;
-    vk::Device mDevice;
-    vk::DebugUtilsMessengerEXT mDebugMessenger;
-    vk::SurfaceKHR mWindowSurface;
     GLFWwindow* mWindow;
 };
 

@@ -9,6 +9,10 @@
 #include "SPIRV/GlslangToSpv.h"
 #include "StandAlone/DirStackFileIncluder.h"
 
+#ifdef VULKAN
+#include "Core/Vulkan/VulkanShader.hpp"
+#endif
+
 namespace
 {
 	// Taken from the glslang standalone tool.
@@ -120,7 +124,7 @@ namespace
 }
 
 
-Shader::Shader(RenderDevice* device, const std::string& path) :
+ShaderBase::ShaderBase(RenderDevice* device, const std::string& path) :
     DeviceChild{device},
     mFilePath{path},
     mShaderStage{getShaderStage(mFilePath.string())}
@@ -134,16 +138,7 @@ Shader::Shader(RenderDevice* device, const std::string& path) :
 }
 
 
-Shader::~Shader()
-{
-    if(mCompiled && release())
-	{
-        getDevice()->destroyShaderModule(mShaderModule);
-	}
-}
-
-
-bool Shader::compile()
+bool ShaderBase::compile()
 {
     glslang::TShader shader{mShaderStage};
     const char* shaderSourceCString = mGLSLSource.c_str();
@@ -190,15 +185,7 @@ bool Shader::compile()
     glslang::SpvOptions spvOptions;
     glslang::GlslangToSpv(*program.getIntermediate(mShaderStage), mSPIRV, &logger, &spvOptions);
 
-    vk::ShaderModuleCreateInfo shaderModuleInfo{};
-    shaderModuleInfo.setPCode(mSPIRV.data());
-    shaderModuleInfo.setCodeSize(mSPIRV.size() * 4);
-    mShaderModule = getDevice()->createShaderModule(shaderModuleInfo);
-
-    getDevice()->setDebugName(mFilePath.string(), *reinterpret_cast<uint64_t*>(&mShaderModule), VK_OBJECT_TYPE_SHADER_MODULE);
-
     mCompiled = true;
-	mSPIRV.clear();
 
 #ifndef NDEBUG // get rid of the source when not in debug builds to save memory.
 	mGLSLSource.clear();
@@ -208,33 +195,7 @@ bool Shader::compile()
 }
 
 
-bool Shader::reload()
-{
-    if(std::filesystem::last_write_time(mFilePath) > mLastFileAccessTime)
-	{
-		if(mCompiled && release())
-			getDevice()->destroyShaderModule(mShaderModule);
-
-        // Reload the modified source
-        std::ifstream sourceFile{mFilePath};
-        std::string source{std::istreambuf_iterator<char>(sourceFile), std::istreambuf_iterator<char>()};
-        mGLSLSource = std::move(source);
-
-        compile();
-        return true;
-    }
-
-    return false;
-}
-
-
-const vk::ShaderModule&           Shader::getShaderModule() const
-{
-    return mShaderModule;
-}
-
-
-EShLanguage Shader::getShaderStage(const std::string& path) const
+EShLanguage ShaderBase::getShaderStage(const std::string& path) const
 {
     if(path.find(".vert") != std::string::npos)
         return EShLanguage::EShLangVertex;
@@ -253,3 +214,9 @@ EShLanguage Shader::getShaderStage(const std::string& path) const
 }
 
 
+Shader::Shader(RenderDevice* dev, const std::string& path)
+{
+#ifdef VULKAN
+	mBase = std::make_shared<VulkanShader>(dev, path);
+#endif
+}

@@ -1,12 +1,11 @@
 #ifndef SHADER_RESOURCE_SET_HPP
 #define SHADER_RESOURCE_SET_HPP
 
-#include <vulkan/vulkan.hpp>
-
 #include "Core/DeviceChild.hpp"
 #include "Core/GPUResource.hpp"
 #include "Engine/PassTypes.hpp"
 
+#include <memory>
 #include <vector>
 
 class ImageView;
@@ -15,17 +14,11 @@ class Sampler;
 using ImageViewArray = std::vector<ImageView>;
 
 
-class ShaderResourceSet : public DeviceChild, public GPUResource
+class ShaderResourceSetBase : public DeviceChild, public GPUResource
 {
 public:
-	ShaderResourceSet(RenderDevice* dev);
-	~ShaderResourceSet();
-
-	ShaderResourceSet(const ShaderResourceSet&) = default;
-	ShaderResourceSet& operator=(const ShaderResourceSet&);
-
-	ShaderResourceSet(ShaderResourceSet&&);
-	ShaderResourceSet& operator=(ShaderResourceSet&&);
+	ShaderResourceSetBase(RenderDevice* dev);
+	virtual ~ShaderResourceSetBase() = default;
 
 	void addSampledImage(const ImageView&);
 	void addStorageImage(const ImageView&);
@@ -35,22 +28,7 @@ public:
     void addDataBufferRO(const BufferView&);
     void addDataBufferRW(const BufferView&);
     void addDataBufferWO(const BufferView&);
-	void finalise();
-
-	vk::DescriptorSetLayout getLayout() const
-	{
-		return mLayout;
-	}
-
-	vk::DescriptorSet getDescriptorSet() const
-	{
-		return mDescSet;
-	}
-
-	vk::DescriptorPool getPool() const 
-	{
-		return mPool;
-	}
+	virtual void finalise() = 0;
 
 	struct ResourceInfo
 	{
@@ -58,7 +36,7 @@ public:
 		AttachmentType mType;
 	};
 
-private:
+protected:
 
 	std::vector<ImageView> mImageViews;
 	std::vector<BufferView> mBufferViews;
@@ -66,10 +44,42 @@ private:
 	std::vector<ImageViewArray> mImageArrays;
 
 	std::vector<ResourceInfo> mResources;
-
-	vk::DescriptorSetLayout mLayout;
-	vk::DescriptorSet mDescSet;
-	vk::DescriptorPool mPool;
 };
+
+
+class ShaderResourceSet
+{
+public:
+
+	ShaderResourceSet(RenderDevice* dev);
+	~ShaderResourceSet() = default;
+
+
+	ShaderResourceSetBase* getBase()
+	{
+		return mBase.get();
+	}
+
+	const ShaderResourceSetBase* getBase() const
+	{
+		return mBase.get();
+	}
+
+	ShaderResourceSetBase* operator->()
+	{
+		return getBase();
+	}
+
+	const ShaderResourceSetBase* operator->() const
+	{
+		return getBase();
+	}
+
+private:
+
+	std::shared_ptr<ShaderResourceSetBase> mBase;
+
+};
+
 
 #endif

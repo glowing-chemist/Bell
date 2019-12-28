@@ -14,7 +14,7 @@ class PerFrameResource : public DeviceChild
 {
 public:
 
-    template<typename ...Args, typename D = std::enable_if_t<std::is_base_of<DeviceChild, T>::value, RenderDevice>>
+    template<typename ...Args>
     PerFrameResource(RenderDevice* dev, Args&& ... args) :
         DeviceChild{dev},
         mData{}
@@ -79,6 +79,16 @@ public:
     {
         return mData[index];
     }
+
+	T& get()
+	{
+		return mData[getDevice()->getCurrentFrameIndex()];
+	}
+
+	const T& get() const
+	{
+		return mData[getDevice()->getCurrentFrameIndex()];
+	}
 
 private:
 

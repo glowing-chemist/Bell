@@ -13,6 +13,8 @@ endif(WIN32)
 find_package(Vulkan REQUIRED)
 # glfw doesn't have a good way to find itself on windows so include the source as a dependancy
 
+set(VULKAN 1) # vulkan default backend
+
 include_directories(
     "${CMAKE_CURRENT_LIST_DIR}/Include/"
 			"${CMAKE_CURRENT_LIST_DIR}/Source/"
@@ -45,6 +47,31 @@ if(USE_ASAN)
     set (CMAKE_LINKER_FLAGS "${CMAKE_LINKER_FLAGS} -fno-omit-frame-pointer -fsanitize=address")
 endif()
 
+if(VULKAN)
+
+	set(BACKEND_SOURCE 
+		Source/Core/Vulkan/VulkanImage.cpp
+		Source/Core/Vulkan/VulkanImageView.cpp
+		Source/Core/Vulkan/VulkanBuffer.cpp
+		Source/Core/Vulkan/VulkanBufferView.cpp
+		Source/Core/Vulkan/MemoryManager.cpp
+		Source/Core/Vulkan/DescriptorManager.cpp
+		Source/Core/Vulkan/CommandPool.cpp
+		Source/Core/Vulkan/VulkanPipeline.cpp
+		Source/Core/Vulkan/VulkanShaderResourceSet.cpp
+		Source/Core/Vulkan/VulkanExecutor.cpp
+		Source/Core/Vulkan/VulkanRenderDevice.cpp
+		Source/Core/Vulkan/VulkanRenderInstance.cpp
+		Source/Core/Vulkan/VulkanShader.cpp
+		Source/Core/Vulkan/VulkanSwapChain.cpp
+		Source/Core/Vulkan/VulkanBarrierManager.cpp)
+
+elseif(OPENGL)
+
+else()
+	message(FATAL_ERROR "SELECT A BACKEND VULKAN/OPENGL")
+endif()
+
 set(BELL_BASE_SOURCE
 	# Core files (dependant on vulkan) 
 	Source/Core/RenderInstance.cpp
@@ -52,18 +79,15 @@ set(BELL_BASE_SOURCE
 	Source/Core/ImageView.cpp
 	Source/Core/Buffer.cpp
 	Source/Core/BufferView.cpp
-	Source/Core/MemoryManager.cpp
 	Source/Core/BarrierManager.cpp
 	Source/Core/SwapChain.cpp
-	Source/Core/CommandPool.cpp
 	Source/Core/Shader.cpp
-	Source/Core/DescriptorManager.cpp
 	Source/Core/Sampler.cpp
-	Source/Core/Pipeline.cpp
 	Source/Core/PipelineCache.cpp
 	Source/Core/ShaderResourceSet.cpp
-	Source/Core/RenderDevice.cpp
 	
+	${BACKEND_SOURCE}
+
 	# RenderGraph files (backend independant)
 	Source/RenderGraph/GraphicsTask.cpp
 	Source/RenderGraph/ComputeTask.cpp

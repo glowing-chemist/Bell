@@ -1,5 +1,6 @@
-#include "Core/Pipeline.hpp"
-#include "Core/RenderDevice.hpp"
+#include "VulkanPipeline.hpp"
+#include "VulkanShader.hpp"
+#include "VulkanRenderDevice.hpp"
 #include "Core/BellLogging.hpp"
 
 Pipeline::Pipeline(RenderDevice* dev) :
@@ -8,14 +9,15 @@ Pipeline::Pipeline(RenderDevice* dev) :
 
 bool ComputePipeline::compile(const RenderTask&)
 {
-	if (!mPipelineDescription.mComputeShader.hasBeenCompiled())
+	if (!mPipelineDescription.mComputeShader->hasBeenCompiled())
 	{
-		mPipelineDescription.mComputeShader.compile();
+		mPipelineDescription.mComputeShader->compile();
 		BELL_LOG("Compiling shaders at pipeline compile time, possible stall")
 	}
 
+	const VulkanShader& VkShader = static_cast<const VulkanShader&>(*mPipelineDescription.mComputeShader.getBase());
 	vk::PipelineShaderStageCreateInfo computeShaderInfo{};
-	computeShaderInfo.setModule(mPipelineDescription.mComputeShader.getShaderModule());
+	computeShaderInfo.setModule(VkShader.getShaderModule());
 	computeShaderInfo.setPName("main");
 	computeShaderInfo.setStage(vk::ShaderStageFlagBits::eCompute);
 
@@ -23,7 +25,7 @@ bool ComputePipeline::compile(const RenderTask&)
 	pipelineInfo.setStage(computeShaderInfo);
 	pipelineInfo.setLayout(mPipelineLayout);
 
-	mPipeline = getDevice()->createPipeline(pipelineInfo);
+	mPipeline = static_cast<VulkanRenderDevice*>(getDevice())->createPipeline(pipelineInfo);
 
 	return true;
 }
@@ -31,12 +33,14 @@ bool ComputePipeline::compile(const RenderTask&)
 
 bool GraphicsPipeline::compile(const RenderTask&)
 {
-	std::vector<vk::PipelineShaderStageCreateInfo> shaderInfo = getDevice()->generateShaderStagesInfo(mPipelineDescription);
+	VulkanRenderDevice* device = static_cast<VulkanRenderDevice*>(getDevice());
+
+	std::vector<vk::PipelineShaderStageCreateInfo> shaderInfo = device->generateShaderStagesInfo(mPipelineDescription);
 
 	std::vector<vk::PipelineShaderStageCreateInfo> indexedShaderInfo;
 	if (mPipelineDescription.mInstancedVertexShader)
 	{
-		indexedShaderInfo = getDevice()->generateIndexedShaderStagesInfo(mPipelineDescription);
+		indexedShaderInfo = device->generateIndexedShaderStagesInfo(mPipelineDescription);
 	}
 
 	const vk::PrimitiveTopology topology = [primitiveType = mPipelineDescription.mPrimitiveType]()
@@ -146,14 +150,14 @@ bool GraphicsPipeline::compile(const RenderTask&)
 	pipelineCreateInfo.setLayout(mPipelineLayout);
 	pipelineCreateInfo.setRenderPass(mRenderPass);
 
-	mPipeline = getDevice()->createPipeline(pipelineCreateInfo);
+	mPipeline = device->createPipeline(pipelineCreateInfo);
 
 	if (mPipelineDescription.mInstancedVertexShader)
 	{
 		// Now resuse most of the state to create the index variant
 		pipelineCreateInfo.setStageCount(static_cast<uint32_t>(indexedShaderInfo.size()));
 		pipelineCreateInfo.setPStages(indexedShaderInfo.data());
-		mInstancedVariant = getDevice()->createPipeline(pipelineCreateInfo);
+		mInstancedVariant = device->createPipeline(pipelineCreateInfo);
 	}
 	return true;
 }

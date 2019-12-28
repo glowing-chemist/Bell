@@ -1,5 +1,6 @@
 #include "DescriptorManager.hpp"
-#include "RenderDevice.hpp"
+#include "VulkanRenderDevice.hpp"
+#include "VulkanBufferView.hpp"
 #include "Core/ConversionUtils.hpp"
 #include "Core/BellLogging.hpp"
 
@@ -25,17 +26,19 @@ DescriptorManager::DescriptorManager(RenderDevice* dev) :
 
 DescriptorManager::~DescriptorManager()
 {
+	VulkanRenderDevice* device = static_cast<VulkanRenderDevice*>(getDevice());
+
     for(auto& pools : mPerFramePools)
     {
 		for (auto& pool : pools)
 		{
-			getDevice()->destroyDescriptorPool(pool.mPool);
+			device->destroyDescriptorPool(pool.mPool);
 		}
 	}
 
 	for (auto& pool : mPersistentPools)
 	{
-		getDevice()->destroyDescriptorPool(pool.mPool);
+		device->destroyDescriptorPool(pool.mPool);
 	}
 }
 
@@ -59,7 +62,7 @@ void DescriptorManager::getDescriptors(RenderGraph& graph, std::vector<vulkanRes
 		{
 			if (type == AttachmentType::ShaderResourceSet)
 			{
-				resource->mDescSet.push_back(graph.getBoundShaderResourceSet(slot).getDescriptorSet());
+				resource->mDescSet.push_back(static_cast<const VulkanShaderResourceSet&>(*graph.getBoundShaderResourceSet(slot).getBase()).getDescriptorSet());
 			}
 		}
 
@@ -130,7 +133,7 @@ void DescriptorManager::writeDescriptors(RenderGraph& graph, std::vector<vulkanR
 
 					auto& imageView = graph.getImageView(bindingInfo.mResourceIndex);
 
-					vk::ImageLayout adjustedLayout = imageView.getType() == ImageViewType::Depth ? vk::ImageLayout::eDepthStencilReadOnlyOptimal : getVulkanImageLayout(attachmentType);
+					vk::ImageLayout adjustedLayout = imageView->getType() == ImageViewType::Depth ? vk::ImageLayout::eDepthStencilReadOnlyOptimal : getVulkanImageLayout(attachmentType);
 
 					vk::DescriptorImageInfo info = generateDescriptorImageInfo(imageView, adjustedLayout);
 
@@ -161,7 +164,7 @@ void DescriptorManager::writeDescriptors(RenderGraph& graph, std::vector<vulkanR
                 case RenderGraph::ResourceType::Sampler:
                 {
                     vk::DescriptorImageInfo info{};
-                    info.setSampler(getDevice()->getImmutableSampler(graph.getSampler(bindingInfo.mResourceIndex)));
+                    info.setSampler(static_cast<VulkanRenderDevice*>(getDevice())->getImmutableSampler(graph.getSampler(bindingInfo.mResourceIndex)));
 
                     imageInfos.push_back(info);
 
@@ -201,7 +204,7 @@ void DescriptorManager::writeDescriptors(RenderGraph& graph, std::vector<vulkanR
 		++descIndex;
     }
 
-	getDevice()->writeDescriptorSets(descSetWrites);
+	static_cast<VulkanRenderDevice*>(getDevice())->writeDescriptorSets(descSetWrites);
 }
 
 
@@ -239,7 +242,7 @@ vk::DescriptorSet DescriptorManager::writeShaderResourceSet(const vk::Descriptor
             BELL_ASSERT(writes[i].mImage, "Attachment type set incorrectly")
 			const auto& imageView = *writes[i].mImage;
 
-			vk::ImageLayout adjustedLayout = imageView.getType() == ImageViewType::Depth ? vk::ImageLayout::eDepthStencilReadOnlyOptimal : getVulkanImageLayout(attachmentType);
+			vk::ImageLayout adjustedLayout = imageView->getType() == ImageViewType::Depth ? vk::ImageLayout::eDepthStencilReadOnlyOptimal : getVulkanImageLayout(attachmentType);
 
 			vk::DescriptorImageInfo info = generateDescriptorImageInfo(imageView, adjustedLayout);
 
@@ -258,7 +261,7 @@ vk::DescriptorSet DescriptorManager::writeShaderResourceSet(const vk::Descriptor
             BELL_ASSERT(writes[i].mImage, "Attachment type set incorrectly")
 			const auto& imageView = *writes[i].mImage;
 
-			vk::ImageLayout adjustedLayout = imageView.getType() == ImageViewType::Depth ? vk::ImageLayout::eDepthStencilReadOnlyOptimal : getVulkanImageLayout(attachmentType);
+			vk::ImageLayout adjustedLayout = imageView->getType() == ImageViewType::Depth ? vk::ImageLayout::eDepthStencilReadOnlyOptimal : getVulkanImageLayout(attachmentType);
 
 			vk::DescriptorImageInfo info = generateDescriptorImageInfo(imageView, adjustedLayout);
 
@@ -291,7 +294,7 @@ vk::DescriptorSet DescriptorManager::writeShaderResourceSet(const vk::Descriptor
 		{
             BELL_ASSERT(writes[i].mSampler, "Attachment type set incorrectly")
 			vk::DescriptorImageInfo info{};
-			info.setSampler(getDevice()->getImmutableSampler(*writes[i].mSampler));
+			info.setSampler(static_cast<VulkanRenderDevice*>(getDevice())->getImmutableSampler(*writes[i].mSampler));
 
 			imageInfos.push_back(info);
 
@@ -341,7 +344,7 @@ vk::DescriptorSet DescriptorManager::writeShaderResourceSet(const vk::Descriptor
 		descSetWrites.push_back(descWrite);
 	}
 
-	getDevice()->writeDescriptorSets(descSetWrites);
+	static_cast<VulkanRenderDevice*>(getDevice())->writeDescriptorSets(descSetWrites);
 
 	return descSet;
 }
@@ -356,7 +359,7 @@ vk::DescriptorSet DescriptorManager::allocatePersistentDescriptorSet(const vk::D
 	allocInfo.setDescriptorSetCount(1);
 	allocInfo.setPSetLayouts(&layout);
 
-	vk::DescriptorSet descSet = getDevice()->allocateDescriptorSet(allocInfo)[0];
+	vk::DescriptorSet descSet = static_cast<VulkanRenderDevice*>(getDevice())->allocateDescriptorSet(allocInfo)[0];
 
 	return descSet;
 }
@@ -375,7 +378,7 @@ vk::DescriptorSet DescriptorManager::allocateDescriptorSet(const RenderTask& tas
     allocInfo.setDescriptorSetCount(1);
     allocInfo.setPSetLayouts(&resources.mDescSetLayout[0]);
 
-    vk::DescriptorSet descSet = getDevice()->allocateDescriptorSet(allocInfo)[0];
+    vk::DescriptorSet descSet = static_cast<VulkanRenderDevice*>(getDevice())->allocateDescriptorSet(allocInfo)[0];
 
     return descSet;
 
@@ -424,7 +427,7 @@ DescriptorManager::DescriptorPool DescriptorManager::createDescriptorPool(const 
 		100,
 		100,
 		100,
-		getDevice()->createDescriptorPool(DescPoolInfo)
+		static_cast<VulkanRenderDevice*>(getDevice())->createDescriptorPool(DescPoolInfo)
 	};
 
 	return newPool;
@@ -434,7 +437,7 @@ DescriptorManager::DescriptorPool DescriptorManager::createDescriptorPool(const 
 vk::DescriptorImageInfo DescriptorManager::generateDescriptorImageInfo(const ImageView& imageView, const vk::ImageLayout layout) const
 {
     vk::DescriptorImageInfo imageInfo{};
-    imageInfo.setImageView(imageView.getImageView());
+    imageInfo.setImageView(static_cast<const VulkanImageView&>(*imageView.getBase()).getImageView());
 	imageInfo.setImageLayout(layout);
 
     return imageInfo;
@@ -444,9 +447,9 @@ vk::DescriptorImageInfo DescriptorManager::generateDescriptorImageInfo(const Ima
 vk::DescriptorBufferInfo DescriptorManager::generateDescriptorBufferInfo(const BufferView& buffer) const
 {
     vk::DescriptorBufferInfo bufferInfo{};
-    bufferInfo.setBuffer(buffer.getBuffer());
-	bufferInfo.setOffset(buffer.getOffset());
-	bufferInfo.setRange(buffer.getSize());
+    bufferInfo.setBuffer(static_cast<const VulkanBufferView&>(*buffer.getBase()).getBuffer());
+	bufferInfo.setOffset(buffer->getOffset());
+	bufferInfo.setRange(buffer->getSize());
 
     return bufferInfo;
 }
@@ -460,7 +463,7 @@ void DescriptorManager::reset()
 
 	for (auto& pool : pools)
 	{
-		getDevice()->resetDescriptorPool(pool.mPool);
+		static_cast<VulkanRenderDevice*>(getDevice())->resetDescriptorPool(pool.mPool);
 		pool.mSampledImageCount = 100;
 		pool.mSamplerCount = 100;
 		pool.mStorageBufferCount = 100;

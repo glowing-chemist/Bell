@@ -218,6 +218,18 @@ public:
 	const GraphicsPipelineDescription& getPipelineDescription() const { return mPipelineDescription; }
 	GraphicsPipelineDescription& getPipelineDescription() { return mPipelineDescription; }
 
+	struct thunkedDraw {
+		DrawType mDrawType;
+
+		uint32_t mVertexOffset;
+		uint32_t mNumberOfVerticies;
+		uint32_t mIndexOffset;
+		uint32_t mNumberOfIndicies;
+		uint32_t mNumberOfInstances;
+		std::string mIndirectBufferName;
+		glm::mat4 mPushConstantValue;
+	};
+
 	void setVertexAttributes(int vertexAttributes)
 		{ mVertexAttributes = vertexAttributes; }
 
@@ -258,7 +270,7 @@ public:
 		mDrawCalls.push_back({DrawType::SetPushConstant, 0, 0, 0, 0, 0, "", val});
 	}
 
-	void recordCommands(vk::CommandBuffer, const RenderGraph&, const vulkanResources&) const override final;
+	void recordCommands(Executor&, const RenderGraph&) const override final;
 
     std::vector<vk::ClearValue> getClearValues() const;
 
@@ -279,19 +291,6 @@ public:
     friend bool operator==(const GraphicsTask& lhs, const GraphicsTask& rhs);
 
 private:
-
-
-	struct thunkedDraw {
-		DrawType mDrawType;
-
-		uint32_t mVertexOffset;
-		uint32_t mNumberOfVerticies;
-		uint32_t mIndexOffset;
-		uint32_t mNumberOfIndicies;
-		uint32_t mNumberOfInstances;
-		std::string mIndirectBufferName;
-		glm::mat4 mPushConstantValue;
-	};
 
 	std::vector<thunkedDraw> mDrawCalls;
 

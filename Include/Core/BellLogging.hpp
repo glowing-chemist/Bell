@@ -3,6 +3,8 @@
 
 #include <stdio.h>
 
+#define VULKAN
+
 #ifndef NDEBUG
 #define ENABLE_LOGGING 1
 #else

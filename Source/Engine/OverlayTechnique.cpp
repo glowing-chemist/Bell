@@ -29,15 +29,15 @@ OverlayTechnique::OverlayTechnique(Engine* eng) :
 	int width, height;
 	io.Fonts->GetTexDataAsRGBA32(&pixels, &width, &height);
 
-	mFontTexture.setContents(pixels, static_cast<uint32_t>(width), static_cast<uint32_t>(height), 1);
+	mFontTexture->setContents(pixels, static_cast<uint32_t>(width), static_cast<uint32_t>(height), 1);
 }
 
 
 void OverlayTechnique::render(RenderGraph& graph, Engine* engine, const std::vector<const Scene::MeshInstance *>&)
 {
-	mOverlayUniformBuffer->updateLastAccessed();
-	mFontTexture.updateLastAccessed();
-	mFontImageView.updateLastAccessed();
+	(*mOverlayUniformBuffer)->updateLastAccessed();
+	mFontTexture->updateLastAccessed();
+	mFontImageView->updateLastAccessed();
 
 	ImDrawData* drawData = ImGui::GetDrawData();
 
@@ -46,7 +46,7 @@ void OverlayTechnique::render(RenderGraph& graph, Engine* engine, const std::vec
 	task.addInput("OverlayUBO", AttachmentType::UniformBuffer);
 	task.addInput(kDefaultFontTexture, AttachmentType::Texture2D);
 	task.addInput(kDefaultSampler, AttachmentType::Sampler);
-	task.addOutput(kOverlay, AttachmentType::RenderTarget2D, engine->getSwapChainImage().getFormat(), SizeClass::Swapchain, LoadOp::Clear_Black);
+	task.addOutput(kOverlay, AttachmentType::RenderTarget2D, engine->getSwapChainImage()->getFormat(), SizeClass::Swapchain, LoadOp::Clear_Black);
 
 	if (drawData)
 	{
@@ -59,12 +59,12 @@ void OverlayTechnique::render(RenderGraph& graph, Engine* engine, const std::vec
 
 		MapInfo mapInfo{};
 		mapInfo.mOffset = 0;
-		mapInfo.mSize = mOverlayUniformBuffer->getSize();
-		void* uboPtr = mOverlayUniformBuffer->map(mapInfo);
+		mapInfo.mSize = mOverlayUniformBuffer.get()->getSize();
+		void* uboPtr = mOverlayUniformBuffer.get()->map(mapInfo);
 
 		memcpy(uboPtr, &transformations[0], 16);
 
-		mOverlayUniformBuffer->unmap();
+		mOverlayUniformBuffer.get()->unmap();
 
 		const size_t vertexSize = static_cast<size_t>(drawData->TotalVtxCount);
 

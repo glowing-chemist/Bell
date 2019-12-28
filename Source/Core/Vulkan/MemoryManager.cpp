@@ -1,5 +1,6 @@
 #include "MemoryManager.hpp"
-#include "RenderDevice.hpp"
+#include "VulkanRenderDevice.hpp"
+#include "Core/Buffer.hpp"
 #include "Core/BellLogging.hpp"
 
 #include <vulkan/vulkan.hpp>
@@ -71,7 +72,7 @@ void MemoryManager::Destroy()
 
 void MemoryManager::findPoolIndicies()
 {
-    vk::PhysicalDeviceMemoryProperties memProps = getDevice()->getMemoryProperties();
+    vk::PhysicalDeviceMemoryProperties memProps = static_cast<VulkanRenderDevice*>(getDevice())->getMemoryProperties();
 
     bool poolFound = false;
 	for(uint32_t i = 0; i < memProps.memoryTypeCount; ++i)
@@ -126,7 +127,7 @@ void MemoryManager::AllocateDevicePool()
     constexpr vk::DeviceSize poolSize =  256 * 1024 * 1024;
     vk::MemoryAllocateInfo allocInfo{ poolSize, static_cast<uint32_t>(mDeviceLocalPoolIndex)};
 
-	mDeviceMemoryBackers.push_back({nullptr, getDevice()->allocateMemory(allocInfo)});
+	mDeviceMemoryBackers.push_back({nullptr, static_cast<VulkanRenderDevice*>(getDevice())->allocateMemory(allocInfo)});
 
     std::list<PoolFragment> fragmentList(4);
     uint64_t offset = 0;
@@ -151,9 +152,11 @@ void MemoryManager::AllocateHostMappablePool()
 	constexpr vk::DeviceSize poolSize = 256 * 1024 * 1024;
 	vk::MemoryAllocateInfo allocInfo{poolSize, static_cast<uint32_t>(mHostMappablePoolIndex)};
 
+	VulkanRenderDevice* device = static_cast<VulkanRenderDevice*>(getDevice());
+
 	// Map the entire allocation on creation for persistent mapping.
-	const vk::DeviceMemory backingMemory = getDevice()->allocateMemory(allocInfo);
-	void* baseAddress = getDevice()->mapMemory(backingMemory, poolSize, 0);
+	const vk::DeviceMemory backingMemory = device->allocateMemory(allocInfo);
+	void* baseAddress = device->mapMemory(backingMemory, poolSize, 0);
 
 	mHostMappableMemoryBackers.push_back({baseAddress, backingMemory});
 
@@ -179,7 +182,7 @@ void MemoryManager::FreeDevicePools()
 {
 	for(auto& frags : mDeviceMemoryBackers)
 	{
-		getDevice()->freeMemory(frags.mBackingMemory);
+		static_cast<VulkanRenderDevice*>(getDevice())->freeMemory(frags.mBackingMemory);
     }
 }
 
@@ -188,7 +191,7 @@ void MemoryManager::FreeHostMappablePools()
 {
 	for(auto& frags : mHostMappableMemoryBackers)
 	{ // we assume that all has been unmapped
-		getDevice()->freeMemory(frags.mBackingMemory);
+		static_cast<VulkanRenderDevice*>(getDevice())->freeMemory(frags.mBackingMemory);
     }
 }
 
@@ -349,26 +352,24 @@ void MemoryManager::Free(Allocation alloc)
 }
 
 
-void MemoryManager::BindBuffer(vk::Buffer &buffer, Allocation alloc)
+void MemoryManager::BindBuffer(vk::Buffer &buffer, const Allocation& alloc)
 {
 	const std::vector<MappableMemoryInfo>& pools = alloc.hostMappable ? mHostMappableMemoryBackers : mDeviceMemoryBackers ;
 
-	getDevice()->bindBufferMemory(buffer, pools[alloc.pool].mBackingMemory, alloc.offset);
+	static_cast<VulkanRenderDevice*>(getDevice())->bindBufferMemory(buffer, pools[alloc.pool].mBackingMemory, alloc.offset);
 }
 
 
-void MemoryManager::BindImage(vk::Image &image, Allocation alloc)
+void MemoryManager::BindImage(vk::Image &image, const Allocation& alloc)
 {
 	const std::vector<MappableMemoryInfo>& pools = alloc.hostMappable ? mHostMappableMemoryBackers : mDeviceMemoryBackers ;
 
-	getDevice()->bindImageMemory(image, pools[alloc.pool].mBackingMemory, alloc.offset);
+	static_cast<VulkanRenderDevice*>(getDevice())->bindImageMemory(image, pools[alloc.pool].mBackingMemory, alloc.offset);
 }
 
 
-void* MemoryManager::MapAllocation(const MapInfo& info)
+void* MemoryManager::MapAllocation(const MapInfo& info, const Allocation& alloc)
 {	
-	const Allocation& alloc = info.mMemory;
-
 	BELL_ASSERT(alloc.hostMappable, "Attempting to map non mappable memory")
 
 	const std::vector<MappableMemoryInfo>& pools = alloc.hostMappable ? mHostMappableMemoryBackers : mDeviceMemoryBackers;
@@ -377,9 +378,8 @@ void* MemoryManager::MapAllocation(const MapInfo& info)
 }
 
 
-void MemoryManager::UnMapAllocation(const MapInfo &info)
+void MemoryManager::UnMapAllocation(const MapInfo &info, const Allocation& alloc)
 {
-	const Allocation& alloc = info.mMemory;
 	const std::vector<MappableMemoryInfo>& pools = alloc.hostMappable ? mHostMappableMemoryBackers : mDeviceMemoryBackers;
 
 	if(writeMapsNeedFlushing())
@@ -389,6 +389,6 @@ void MemoryManager::UnMapAllocation(const MapInfo &info)
 		range.setSize(info.mSize);
 		range.setOffset(alloc.offset + info.mOffset);
 
-		getDevice()->flushMemoryRange(range);
+		static_cast<VulkanRenderDevice*>(getDevice())->flushMemoryRange(range);
 	}
 }

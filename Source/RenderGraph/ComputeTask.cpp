@@ -1,21 +1,20 @@
 #include "RenderGraph/ComputeTask.hpp"
 #include "RenderGraph/RenderGraph.hpp"
 
-void ComputeTask::recordCommands(vk::CommandBuffer CmdBuffer, const RenderGraph& graph, const vulkanResources &) const
+void ComputeTask::recordCommands(Executor& exec, const RenderGraph& graph) const
 {
     for(const auto& thunk : mComputeCalls)
     {
         switch(thunk.mDispatchType)
         {
             case DispatchType::Standard:
-                CmdBuffer.dispatch(thunk.x,
+                exec.dispatch(thunk.x,
                                    thunk.y,
                                    thunk.z);
                 break;
 
             case DispatchType::Indirect:
-                CmdBuffer.dispatchIndirect(graph.getBoundBuffer(thunk.mIndirectBuffer).getBuffer(),
-                                           0);
+                exec.dispatchIndirect(graph.getBoundBuffer(thunk.mIndirectBuffer));
                 break;
         }
     }
@@ -44,7 +43,7 @@ namespace std
         std::hash<std::string> stringHasher{};
 
         size_t hash = 0;
-		hash += stringHasher(desc.mComputeShader.getFilePath());
+		hash += stringHasher(desc.mComputeShader->getFilePath());
 
 
         return hash;

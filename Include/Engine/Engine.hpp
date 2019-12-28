@@ -52,10 +52,10 @@ public:
     { return mIndexBuilder; }
 
 	Image&  getSwapChainImage()
-		{ return mRenderDevice.getSwapChainImage(); }
+		{ return mRenderDevice->getSwapChainImage(); }
 
 	ImageView& getSwapChainImageView()
-        { return mRenderDevice.getSwapChainImageView(); }
+        { return mRenderDevice->getSwapChainImageView(); }
 
 	Image createImage(const uint32_t x,
 					  const uint32_t y,
@@ -113,37 +113,37 @@ public:
 
 	void startFrame()
 	{
-		mRenderDevice.startFrame();
+		mRenderDevice->startFrame();
 		mCurrentRenderGraph.reset();
 	}
 
 	void endFrame()
 	{
 		mVertexCache.clear();
-		mRenderDevice.endFrame(); 
+		mRenderDevice->endFrame(); 
 	}
 
     void render();
 	void swap()
-		{ mRenderDevice.swap(); }
+		{ mRenderDevice->swap(); }
 
     void submitCommandRecorder(CommandContext& ccx);
 
 	void flushWait()
-	{ mRenderDevice.flushWait(); }
+	{ mRenderDevice->flushWait(); }
 
     GLFWwindow* getWindow()
         { return mWindow; }
 
 	RenderDevice* getDevice()
-		{ return &mRenderDevice; }
+		{ return mRenderDevice; }
 
 private:
 
 	std::unique_ptr<Technique>                   getSingleTechnique(const PassType);
 
-    RenderInstance mRenderInstance;
-    RenderDevice mRenderDevice;
+    RenderInstance* mRenderInstance;
+    RenderDevice* mRenderDevice;
 
     Scene mCurrentScene;
     Scene mLoadingScene;

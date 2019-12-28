@@ -1,82 +1,69 @@
 #ifndef BUFFER_HPP
 #define BUFFER_HPP
 
-#include <vulkan/vulkan.hpp>
+#include <memory>
 #include <string>
 
 #include "Core/GPUResource.hpp"
 #include "Core/DeviceChild.hpp"
-#include "Core/MemoryManager.hpp"
 
 #include "Engine/PassTypes.hpp"
 
 class RenderDevice;
 
 
-class Buffer final : public GPUResource, public DeviceChild
+struct MapInfo
+{
+	size_t mOffset;
+	size_t mSize;
+};
+
+
+class BufferBase : public DeviceChild, public GPUResource
 {
 public:
-    Buffer(RenderDevice* dev,
+    BufferBase(RenderDevice* dev,
            BufferUsage usage,
            const uint32_t size,
            const uint32_t stride,
 		   const std::string& = "");
 
-    ~Buffer();
+    virtual ~BufferBase() = default;
 
-	Buffer& operator=(const Buffer&);
-    Buffer(const Buffer&) = default;
-
-	Buffer& operator=(Buffer&&);
-	Buffer(Buffer&&);
-
-	void swap(Buffer&);
+	virtual void swap(BufferBase&);
 
     // will only resize to a larger buffer.
     // returns whether or not the buffer was resized (and views need to be recreated)
-    bool resize(const uint32_t newSize, const bool preserContents);
-
-	vk::Buffer getBuffer() const
-		{ return mBuffer; }
+    virtual bool resize(const uint32_t newSize, const bool preserContents) = 0;
 
     BufferUsage getUsage() const
         { return mUsage; }
 
-	Allocation getMemory() const
-        { return mBufferMemory; }
-
 	uint32_t getSize() const
 		{ return mSize;}
 
-    void setContents(const void* data,
+    virtual void setContents(const void* data,
                      const uint32_t size,
-                     const uint32_t offset = 0);
+                     const uint32_t offset = 0) = 0;
 
     // Repeat the data in the range (start + offset, start + offset + size]
-    void setContents(const int data,
+    virtual void setContents(const int data,
                      const uint32_t size,
-                     const uint32_t offset = 0);
+                     const uint32_t offset = 0) = 0;
 
 
-	void*   map(MapInfo &mapInfo);
-    void    unmap();
+	virtual void*   map(MapInfo &mapInfo) = 0;
+    virtual void    unmap() = 0;
 
-    void    updateLastAccessed();
+	virtual void updateLastAccessed();
 
-private:
-
-    void resizePreserveContents(const uint32_t);
-    void resizeDiscardContents(const uint32_t);
+protected:
 
     inline bool isMappable() const
     {
         return static_cast<bool>(mUsage & BufferUsage::TransferSrc ||
         mUsage & BufferUsage::Uniform);
     }
-
-    vk::Buffer mBuffer;
-    Allocation mBufferMemory;
-	MapInfo mCurrentMap;
 
     BufferUsage mUsage;
     uint32_t mSize;
@@ -85,6 +72,43 @@ private:
     std::string mName;
 };
 
+
+class Buffer
+{
+public:
+
+	Buffer(RenderDevice* dev,
+		BufferUsage usage,
+		const uint32_t size,
+		const uint32_t stride,
+		const std::string & = "");
+	~Buffer() = default;
+
+	BufferBase* getBase()
+	{
+		return mBase.get();
+	}
+
+	const BufferBase* getBase() const 
+	{
+		return mBase.get();
+	}
+
+	BufferBase* operator->()
+	{
+		return getBase();
+	}
+
+	const BufferBase* operator->() const
+	{
+		return getBase();
+	}
+
+private:
+
+	std::shared_ptr<BufferBase> mBase;
+
+};
 
 
 #endif

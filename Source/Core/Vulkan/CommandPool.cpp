@@ -1,5 +1,5 @@
 #include "CommandPool.h"
-#include "RenderDevice.hpp"
+#include "VulkanRenderDevice.hpp"
 
 #include <array>
 #include <functional>
@@ -11,19 +11,21 @@ CommandPool::CommandPool(RenderDevice* renderDevice) :
     mComputeBuffers{},
     mTransferBuffers{}
 {
+	VulkanRenderDevice* device = static_cast<VulkanRenderDevice*>(getDevice());
+
     std::array<vk::CommandPoolCreateInfo, 3> poolCreateInfos{};
 	uint8_t queueFamiltTypeIndex = 0;
 	for (auto& createInfo : poolCreateInfos)
 	{
-		createInfo.setQueueFamilyIndex(getDevice()->getQueueFamilyIndex(static_cast<QueueType>(queueFamiltTypeIndex)));
+		createInfo.setQueueFamilyIndex(device->getQueueFamilyIndex(static_cast<QueueType>(queueFamiltTypeIndex)));
 		// we reset the pools every 3 frames so set these as transient.
         createInfo.setFlags(SUBMISSION_PER_TASK ? vk::CommandPoolCreateFlagBits::eResetCommandBuffer : vk::CommandPoolCreateFlagBits::eTransient);
 		++queueFamiltTypeIndex;
 	}
 
-	mGraphicsPool = getDevice()->createCommandPool(poolCreateInfos[0]);
-	mComputePool  = getDevice()->createCommandPool(poolCreateInfos[1]);
-	mTransferPool = getDevice()->createCommandPool(poolCreateInfos[2]);
+	mGraphicsPool = device->createCommandPool(poolCreateInfos[0]);
+	mComputePool  = device->createCommandPool(poolCreateInfos[1]);
+	mTransferPool = device->createCommandPool(poolCreateInfos[2]);
 
     reset();
 }
@@ -33,9 +35,11 @@ CommandPool::~CommandPool()
 {
     reset();
 
-	getDevice()->destroyCommandPool(mGraphicsPool);
-    getDevice()->destroyCommandPool(mComputePool);
-    getDevice()->destroyCommandPool(mTransferPool);
+	VulkanRenderDevice* device = static_cast<VulkanRenderDevice*>(getDevice());
+
+	device->destroyCommandPool(mGraphicsPool);
+    device->destroyCommandPool(mComputePool);
+    device->destroyCommandPool(mTransferPool);
 }
 
 
@@ -93,9 +97,11 @@ void CommandPool::reserve(const uint32_t number, const QueueType queueType)
 
 void CommandPool::reset()
 {
-	getDevice()->resetCommandPool(mGraphicsPool);
-	getDevice()->resetCommandPool(mComputePool);
-	getDevice()->resetCommandPool(mTransferPool);
+	VulkanRenderDevice* device = static_cast<VulkanRenderDevice*>(getDevice());
+
+	device->resetCommandPool(mGraphicsPool);
+	device->resetCommandPool(mComputePool);
+	device->resetCommandPool(mTransferPool);
 
 	mGraphicsBuffers.clear();
 	mComputeBuffers.clear();
@@ -110,7 +116,7 @@ std::vector<vk::CommandBuffer> CommandPool::allocateCommandBuffers(const uint32_
     info.setCommandBufferCount(number);
     info.setLevel(primaryNeeded ? vk::CommandBufferLevel::ePrimary : vk::CommandBufferLevel::eSecondary);
 
-    return getDevice()->allocateCommandBuffers(info);
+    return static_cast<VulkanRenderDevice*>(getDevice())->allocateCommandBuffers(info);
 }
 
 

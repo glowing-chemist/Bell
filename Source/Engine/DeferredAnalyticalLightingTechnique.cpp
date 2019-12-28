@@ -6,8 +6,8 @@ DeferredAnalyticalLightingTechnique::DeferredAnalyticalLightingTechnique(Engine*
 	Technique("deferred analytical lighting", eng->getDevice()),
 	mPipelineDesc{ eng->getShader("./Shaders/DeferredAnalyticalLighting.comp") },
 	mTask("deferred analytical lighting", mPipelineDesc),
-	mAnalyticalLighting(eng->getDevice(), Format::RGBA8UNorm, ImageUsage::Sampled | ImageUsage::Storage, eng->getSwapChainImageView().getImageExtent().width, 
-		eng->getSwapChainImageView().getImageExtent().height, 1, 1, 1, 1, kAnalyticLighting),
+	mAnalyticalLighting(eng->getDevice(), Format::RGBA8UNorm, ImageUsage::Sampled | ImageUsage::Storage, eng->getSwapChainImageView()->getImageExtent().width, 
+		eng->getSwapChainImageView()->getImageExtent().height, 1, 1, 1, 1, kAnalyticLighting),
 	mAnalyticalLightingView(mAnalyticalLighting, ImageViewType::Colour),
 	mPointSampler(SamplerType::Point)
 {
@@ -24,8 +24,8 @@ DeferredAnalyticalLightingTechnique::DeferredAnalyticalLightingTechnique(Engine*
 	mTask.addInput(kAnalyticLighting, AttachmentType::Image2D);
 	mTask.addInput(kLightBuffer, AttachmentType::ShaderResourceSet);
 
-	const float threadGroupWidth = eng->getSwapChainImageView().getImageExtent().width;
-	const float threadGroupHeight = eng->getSwapChainImageView().getImageExtent().height;
+	const float threadGroupWidth = eng->getSwapChainImageView()->getImageExtent().width;
+	const float threadGroupHeight = eng->getSwapChainImageView()->getImageExtent().height;
 
 	mTask.addDispatch(	static_cast<uint32_t>(std::ceil(threadGroupWidth / 8.0f)),
 						static_cast<uint32_t>(std::ceil(threadGroupHeight / 8.0f)),

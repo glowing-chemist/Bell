@@ -20,6 +20,7 @@
 
 class DescriptorManager;
 class TaskIterator;
+class VulkanRenderDevice;
 
 enum class BindingIteratorType
 {
@@ -32,7 +33,7 @@ class BindingIterator;
 
 class RenderGraph
 {
-	friend RenderDevice;
+	friend VulkanRenderDevice;
 	friend TaskIterator;
 	friend BindingIterator<BindingIteratorType::Input>;
 	friend BindingIterator<BindingIteratorType::Output>;

@@ -1,8 +1,8 @@
 #ifndef COMMANDPOOL_HPP
 #define COMMANDPOOL_HPP
 
-#include "DeviceChild.hpp"
-#include "GPUResource.hpp"
+#include "Core/DeviceChild.hpp"
+#include "Core/GPUResource.hpp"
 
 #include <vulkan/vulkan.hpp>
 #include <vector>

@@ -104,7 +104,7 @@ void Scene::loadSkybox(const std::array<std::string, 6>& paths, Engine* eng)
 	for(const std::string& file : paths)
 	{
         TextureInfo info = loadTexture(file.c_str(), STBI_rgb_alpha);
-		mSkybox->setContents(info.mData.data(), 512, 512, 1, i);
+		(*mSkybox)->setContents(info.mData.data(), 512, 512, 1, i);
 		++i;
 	}
 }
@@ -268,25 +268,25 @@ Scene::MaterialMappings Scene::loadMaterials(Engine* eng)
 			TextureInfo diffuseInfo = loadTexture((sceneDirectory / albedoFile).string().c_str(), STBI_rgb_alpha);
             Image diffuseTexture(eng->getDevice(), Format::RGBA8UNorm, ImageUsage::Sampled | ImageUsage::TransferDest,
 								 static_cast<uint32_t>(diffuseInfo.width), static_cast<uint32_t>(diffuseInfo.height), 1);
-			diffuseTexture.setContents(diffuseInfo.mData.data(), static_cast<uint32_t>(diffuseInfo.width), static_cast<uint32_t>(diffuseInfo.height), 1);
+			diffuseTexture->setContents(diffuseInfo.mData.data(), static_cast<uint32_t>(diffuseInfo.width), static_cast<uint32_t>(diffuseInfo.height), 1);
 
 
 			TextureInfo normalsInfo = loadTexture((sceneDirectory / normalsFile).string().c_str(), STBI_rgb_alpha);
             Image normalsTexture(eng->getDevice(), Format::RGBA8UNorm, ImageUsage::Sampled | ImageUsage::TransferDest,
 								 static_cast<uint32_t>(normalsInfo.width), static_cast<uint32_t>(normalsInfo.height), 1);
-			normalsTexture.setContents(normalsInfo.mData.data(), static_cast<uint32_t>(normalsInfo.width), static_cast<uint32_t>(normalsInfo.height), 1);
+			normalsTexture->setContents(normalsInfo.mData.data(), static_cast<uint32_t>(normalsInfo.width), static_cast<uint32_t>(normalsInfo.height), 1);
 
 
             TextureInfo roughnessInfo = loadTexture((sceneDirectory / roughnessFile).string().c_str(), STBI_grey);
             Image roughnessTexture(eng->getDevice(), Format::R8UNorm, ImageUsage::Sampled | ImageUsage::TransferDest,
 								 static_cast<uint32_t>(roughnessInfo.width), static_cast<uint32_t>(roughnessInfo.height), 1);
-			roughnessTexture.setContents(roughnessInfo.mData.data(), static_cast<uint32_t>(roughnessInfo.width), static_cast<uint32_t>(roughnessInfo.height), 1);
+			roughnessTexture->setContents(roughnessInfo.mData.data(), static_cast<uint32_t>(roughnessInfo.width), static_cast<uint32_t>(roughnessInfo.height), 1);
 
 
             TextureInfo metalnessInfo = loadTexture((sceneDirectory / metalnessFile).string().c_str(), STBI_grey);
             Image metalnessTexture(eng->getDevice(), Format::R8UNorm, ImageUsage::Sampled | ImageUsage::TransferDest,
 								 static_cast<uint32_t>(metalnessInfo.width), static_cast<uint32_t>(metalnessInfo.height), 1);
-			metalnessTexture.setContents(metalnessInfo.mData.data(), static_cast<uint32_t>(metalnessInfo.width), static_cast<uint32_t>(metalnessInfo.height), 1);
+			metalnessTexture->setContents(metalnessInfo.mData.data(), static_cast<uint32_t>(metalnessInfo.width), static_cast<uint32_t>(metalnessInfo.height), 1);
 
 			mMaterials.push_back({diffuseTexture, normalsTexture, roughnessTexture, metalnessTexture});
 

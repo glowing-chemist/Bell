@@ -1,8 +1,11 @@
-#include "RenderDevice.hpp"
-#include "RenderInstance.hpp"
+#include "VulkanRenderDevice.hpp"
 #include "Core/BellLogging.hpp"
 #include "Core/ConversionUtils.hpp"
-#include "Core/Pipeline.hpp"
+#include "VulkanBarrierManager.hpp"
+#include "VulkanShader.hpp"
+#include "VulkanSwapChain.hpp"
+#include "VulkanPipeline.hpp"
+#include "VulkanExecutor.hpp"
 
 #include "RenderGraph/RenderGraph.hpp"
 
@@ -17,23 +20,22 @@
 constexpr uint32_t BINDLESS_ARRAY_SIZE = 16; // set to a super low limit for now.
 
 
-RenderDevice::RenderDevice(vk::Instance instance,
+VulkanRenderDevice::VulkanRenderDevice(vk::Instance instance,
 						   vk::PhysicalDevice physDev,
 						   vk::Device dev,
 						   vk::SurfaceKHR surface,
 						   GLFWwindow* window) :
-    mFinishedSubmission{0},
-    mCurrentFrameIndex{0},
+	RenderDevice(),
     mDevice{dev},
     mPhysicalDevice{physDev},
 	mInstance(instance),
-    mSwapChain{this, surface, window},
+	mSwapChainInitializer(this, surface, window, &mSwapChain),
     mMemoryManager{this},
 	mDescriptorManager{this}
 {
     // This is a bit of a hack to work around not being able to tell for the first few frames that
     // the fences we waited on hadn't been submitted (as no work has been done).
-    mCurrentSubmission = mSwapChain.getNumberOfSwapChainImages();
+    mCurrentSubmission = mSwapChain->getNumberOfSwapChainImages();
 
     mQueueFamilyIndicies = getAvailableQueues(surface, mPhysicalDevice);
     mGraphicsQueue = mDevice.getQueue(static_cast<uint32_t>(mQueueFamilyIndicies.GraphicsQueueIndex), 0);
@@ -43,19 +45,16 @@ RenderDevice::RenderDevice(vk::Instance instance,
     mLimits = mPhysicalDevice.getProperties().limits;
 
 	// Create a command pool for each frame.
-    mCommandPools.reserve(mSwapChain.getNumberOfSwapChainImages());
-	for (uint32_t i = 0; i < mSwapChain.getNumberOfSwapChainImages(); ++i)
+    mCommandPools.reserve(mSwapChain->getNumberOfSwapChainImages());
+	for (uint32_t i = 0; i < mSwapChain->getNumberOfSwapChainImages(); ++i)
 	{
         mCommandPools.emplace_back(this);
 	}
 
-    mFrameFinished.reserve(mSwapChain.getNumberOfSwapChainImages());
-    for (uint32_t i = 0; i < mSwapChain.getNumberOfSwapChainImages(); ++i)
+    mFrameFinished.reserve(mSwapChain->getNumberOfSwapChainImages());
+    for (uint32_t i = 0; i < mSwapChain->getNumberOfSwapChainImages(); ++i)
     {
         mFrameFinished.push_back(createFence(true));
-        vk::SemaphoreCreateInfo semInfo{};
-        mImageAquired.push_back(mDevice.createSemaphore(semInfo));
-        mImageRendered.push_back(mDevice.createSemaphore(semInfo));
     }
 
     // Initialise the glsl compiler here rather than in the first compiled shader to avoid
@@ -70,12 +69,13 @@ RenderDevice::RenderDevice(vk::Instance instance,
 }
 
 
-RenderDevice::~RenderDevice()
+VulkanRenderDevice::~VulkanRenderDevice()
 {
 	flushWait();
 
     // destroy the swapchain first so that is can add it's image views to the deferred destruction queue.
-    mSwapChain.destroy();
+    mSwapChain->destroy();
+	delete mSwapChain;
 
     // We can ignore lastUsed as we have just waited till all work has finished.
     for(auto& [lastUsed, handle, memory] : mImagesPendingDestruction)
@@ -136,16 +136,6 @@ RenderDevice::~RenderDevice()
         mDevice.destroyFence(fence);
     }
 
-    for(auto& semaphore : mImageAquired)
-    {
-        mDevice.destroySemaphore(semaphore);
-    }
-
-    for(auto& semaphore : mImageRendered)
-    {
-        mDevice.destroySemaphore(semaphore);
-    }
-
     for(auto& [samplerType, sampler] : mImmutableSamplerCache)
     {
         mDevice.destroySampler(sampler);
@@ -157,7 +147,7 @@ RenderDevice::~RenderDevice()
 }
 
 
-vk::Buffer  RenderDevice::createBuffer(const uint32_t size, const vk::BufferUsageFlags usage)
+vk::Buffer  VulkanRenderDevice::createBuffer(const uint32_t size, const vk::BufferUsageFlags usage)
 {
     vk::BufferCreateInfo createInfo{};
     createInfo.setSize(size);
@@ -167,7 +157,7 @@ vk::Buffer  RenderDevice::createBuffer(const uint32_t size, const vk::BufferUsag
 }
 
 
-vk::Queue&  RenderDevice::getQueue(const QueueType type)
+vk::Queue&  VulkanRenderDevice::getQueue(const QueueType type)
 {
     switch(type)
     {
@@ -183,7 +173,7 @@ vk::Queue&  RenderDevice::getQueue(const QueueType type)
 }
 
 
-uint32_t RenderDevice::getQueueFamilyIndex(const QueueType type) const
+uint32_t VulkanRenderDevice::getQueueFamilyIndex(const QueueType type) const
 {
 	switch(type)
 	{
@@ -199,7 +189,7 @@ uint32_t RenderDevice::getQueueFamilyIndex(const QueueType type) const
 }
 
 
-GraphicsPipelineHandles RenderDevice::createPipelineHandles(const GraphicsTask& task, const RenderGraph& graph)
+GraphicsPipelineHandles VulkanRenderDevice::createPipelineHandles(const GraphicsTask& task, const RenderGraph& graph)
 {
     if(mGraphicsPipelineCache[task.getPipelineDescription()].mGraphicsPipeline)
         return mGraphicsPipelineCache[task.getPipelineDescription()];
@@ -219,7 +209,7 @@ GraphicsPipelineHandles RenderDevice::createPipelineHandles(const GraphicsTask& 
 }
 
 
-ComputePipelineHandles RenderDevice::createPipelineHandles(const ComputeTask& task, const RenderGraph& graph)
+ComputePipelineHandles VulkanRenderDevice::createPipelineHandles(const ComputeTask& task, const RenderGraph& graph)
 {
 	if(mComputePipelineCache[task.getPipelineDescription()].mComputePipeline)
         return mComputePipelineCache[task.getPipelineDescription()];
@@ -235,7 +225,7 @@ ComputePipelineHandles RenderDevice::createPipelineHandles(const ComputeTask& ta
 }
 
 
-std::shared_ptr<GraphicsPipeline> RenderDevice::generatePipeline(const GraphicsTask& task,
+std::shared_ptr<GraphicsPipeline> VulkanRenderDevice::generatePipeline(const GraphicsTask& task,
 																 const std::vector< vk::DescriptorSetLayout>& descSetLayout,
 																 const vk::RenderPass &renderPass)
 {
@@ -255,7 +245,7 @@ std::shared_ptr<GraphicsPipeline> RenderDevice::generatePipeline(const GraphicsT
 }
 
 
-std::shared_ptr<ComputePipeline> RenderDevice::generatePipeline(const ComputeTask& task,
+std::shared_ptr<ComputePipeline> VulkanRenderDevice::generatePipeline(const ComputeTask& task,
 																const std::vector< vk::DescriptorSetLayout>& descriptorSetLayout)
 {
     const ComputePipelineDescription pipelineDesc = task.getPipelineDescription();
@@ -269,7 +259,7 @@ std::shared_ptr<ComputePipeline> RenderDevice::generatePipeline(const ComputeTas
 }
 
 
-vk::RenderPass	RenderDevice::generateRenderPass(const GraphicsTask& task)
+vk::RenderPass	VulkanRenderDevice::generateRenderPass(const GraphicsTask& task)
 {
     const auto& outputAttachments = task.getOuputAttachments();
 
@@ -356,13 +346,13 @@ vk::RenderPass	RenderDevice::generateRenderPass(const GraphicsTask& task)
 }
 
 
-std::vector<vk::PipelineShaderStageCreateInfo> RenderDevice::generateShaderStagesInfo(GraphicsPipelineDescription& pipelineDesc)
+std::vector<vk::PipelineShaderStageCreateInfo> VulkanRenderDevice::generateShaderStagesInfo(GraphicsPipelineDescription& pipelineDesc)
 {
 	// Make sure that all shaders have been compiled by this point.
-	if (!pipelineDesc.mVertexShader.hasBeenCompiled())
+	if (!pipelineDesc.mVertexShader->hasBeenCompiled())
 	{
-		pipelineDesc.mVertexShader.compile();
-		pipelineDesc.mFragmentShader.compile();
+		pipelineDesc.mVertexShader->compile();
+		pipelineDesc.mFragmentShader->compile();
 	}
 
     std::vector<vk::PipelineShaderStageCreateInfo> shaderStages;
@@ -370,96 +360,105 @@ std::vector<vk::PipelineShaderStageCreateInfo> RenderDevice::generateShaderStage
     vk::PipelineShaderStageCreateInfo vertexStage{};
     vertexStage.setStage(vk::ShaderStageFlagBits::eVertex);
     vertexStage.setPName("main"); //entry point of the shader
-    vertexStage.setModule(pipelineDesc.mVertexShader.getShaderModule());
+    vertexStage.setModule(static_cast<const VulkanShader&>(*pipelineDesc.mVertexShader.getBase()).getShaderModule());
     shaderStages.push_back(vertexStage);
 
     if(pipelineDesc.mGeometryShader)
     {
-		if (!pipelineDesc.mGeometryShader.value().hasBeenCompiled())
-			pipelineDesc.mGeometryShader.value().compile();
+		if (!pipelineDesc.mGeometryShader.value()->hasBeenCompiled())
+			pipelineDesc.mGeometryShader.value()->compile();
 
         vk::PipelineShaderStageCreateInfo geometryStage{};
         geometryStage.setStage(vk::ShaderStageFlagBits::eGeometry);
         geometryStage.setPName("main"); //entry point of the shader
-        geometryStage.setModule(pipelineDesc.mGeometryShader.value().getShaderModule());
+        geometryStage.setModule(static_cast<const VulkanShader&>(*pipelineDesc.mGeometryShader.value().getBase()).getShaderModule());
         shaderStages.push_back(geometryStage);
     }
 
     if(pipelineDesc.mHullShader)
     {
-		if (!pipelineDesc.mHullShader.value().hasBeenCompiled())
-			pipelineDesc.mHullShader.value().compile();
+		if (!pipelineDesc.mHullShader.value()->hasBeenCompiled())
+			pipelineDesc.mHullShader.value()->compile();
 
         vk::PipelineShaderStageCreateInfo hullStage{};
         hullStage.setStage(vk::ShaderStageFlagBits::eTessellationControl);
         hullStage.setPName("main"); //entry point of the shader
-        hullStage.setModule(pipelineDesc.mHullShader.value().getShaderModule());
+        hullStage.setModule(static_cast<const VulkanShader&>(*pipelineDesc.mHullShader.value().getBase()).getShaderModule());
         shaderStages.push_back(hullStage);
     }
 
     if(pipelineDesc.mTesselationControlShader)
     {
-		if (!pipelineDesc.mTesselationControlShader.value().hasBeenCompiled())
-			pipelineDesc.mTesselationControlShader.value().compile();
+		if (!pipelineDesc.mTesselationControlShader.value()->hasBeenCompiled())
+			pipelineDesc.mTesselationControlShader.value()->compile();
 
         vk::PipelineShaderStageCreateInfo tesseStage{};
         tesseStage.setStage(vk::ShaderStageFlagBits::eTessellationEvaluation);
         tesseStage.setPName("main"); //entry point of the shader
-        tesseStage.setModule(pipelineDesc.mTesselationControlShader.value().getShaderModule());
+        tesseStage.setModule(static_cast<const VulkanShader&>(*pipelineDesc.mTesselationControlShader.value().getBase()).getShaderModule());
         shaderStages.push_back(tesseStage);
     }
 
     vk::PipelineShaderStageCreateInfo fragmentStage{};
     fragmentStage.setStage(vk::ShaderStageFlagBits::eFragment);
     fragmentStage.setPName("main"); //entry point of the shader
-    fragmentStage.setModule(pipelineDesc.mFragmentShader.getShaderModule());
+    fragmentStage.setModule(static_cast<const VulkanShader&>(*pipelineDesc.mFragmentShader.getBase()).getShaderModule());
     shaderStages.push_back(fragmentStage);
 
     return shaderStages;
 }
 
 
-std::vector<vk::PipelineShaderStageCreateInfo> RenderDevice::generateIndexedShaderStagesInfo(GraphicsPipelineDescription& pipelineDesc)
+std::vector<vk::PipelineShaderStageCreateInfo> VulkanRenderDevice::generateIndexedShaderStagesInfo(GraphicsPipelineDescription& pipelineDesc)
 {
 	std::vector<vk::PipelineShaderStageCreateInfo> shaderStages;
 
 	vk::PipelineShaderStageCreateInfo vertexStage{};
 	vertexStage.setStage(vk::ShaderStageFlagBits::eVertex);
 	vertexStage.setPName("main"); //entry point of the shader
-	vertexStage.setModule(pipelineDesc.mInstancedVertexShader.value().getShaderModule());
+	vertexStage.setModule(static_cast<const VulkanShader&>(*pipelineDesc.mInstancedVertexShader.value().getBase()).getShaderModule());
 	shaderStages.push_back(vertexStage);
 
 	if (pipelineDesc.mGeometryShader)
 	{
+		if (!pipelineDesc.mGeometryShader.value()->hasBeenCompiled())
+			pipelineDesc.mGeometryShader.value()->compile();
+
 		vk::PipelineShaderStageCreateInfo geometryStage{};
 		geometryStage.setStage(vk::ShaderStageFlagBits::eGeometry);
 		geometryStage.setPName("main"); //entry point of the shader
-		geometryStage.setModule(pipelineDesc.mGeometryShader.value().getShaderModule());
+		geometryStage.setModule(static_cast<const VulkanShader&>(*pipelineDesc.mGeometryShader.value().getBase()).getShaderModule());
 		shaderStages.push_back(geometryStage);
 	}
 
 	if (pipelineDesc.mHullShader)
 	{
+		if (!pipelineDesc.mHullShader.value()->hasBeenCompiled())
+			pipelineDesc.mHullShader.value()->compile();
+
 		vk::PipelineShaderStageCreateInfo hullStage{};
 		hullStage.setStage(vk::ShaderStageFlagBits::eTessellationControl);
 		hullStage.setPName("main"); //entry point of the shader
-		hullStage.setModule(pipelineDesc.mHullShader.value().getShaderModule());
+		hullStage.setModule(static_cast<const VulkanShader&>(*pipelineDesc.mHullShader.value().getBase()).getShaderModule());
 		shaderStages.push_back(hullStage);
 	}
 
-	if (pipelineDesc.mHullShader)
+	if (pipelineDesc.mTesselationControlShader)
 	{
+		if (!pipelineDesc.mTesselationControlShader.value()->hasBeenCompiled())
+			pipelineDesc.mTesselationControlShader.value()->compile();
+
 		vk::PipelineShaderStageCreateInfo tesseStage{};
 		tesseStage.setStage(vk::ShaderStageFlagBits::eTessellationEvaluation);
 		tesseStage.setPName("main"); //entry point of the shader
-		tesseStage.setModule(pipelineDesc.mTesselationControlShader.value().getShaderModule());
+		tesseStage.setModule(static_cast<const VulkanShader&>(*pipelineDesc.mTesselationControlShader.value().getBase()).getShaderModule());
 		shaderStages.push_back(tesseStage);
 	}
 
 	vk::PipelineShaderStageCreateInfo fragmentStage{};
 	fragmentStage.setStage(vk::ShaderStageFlagBits::eFragment);
 	fragmentStage.setPName("main"); //entry point of the shader
-	fragmentStage.setModule(pipelineDesc.mFragmentShader.getShaderModule());
+	fragmentStage.setModule(static_cast<const VulkanShader&>(*pipelineDesc.mFragmentShader.getBase()).getShaderModule());
 	shaderStages.push_back(fragmentStage);
 
 	return shaderStages;
@@ -467,7 +466,7 @@ std::vector<vk::PipelineShaderStageCreateInfo> RenderDevice::generateIndexedShad
 
 
 template<typename B>
-vk::DescriptorSetLayout RenderDevice::generateDescriptorSetLayoutBindings(const std::vector<B>& bindings)
+vk::DescriptorSetLayout VulkanRenderDevice::generateDescriptorSetLayoutBindings(const std::vector<B>& bindings)
 {
 	std::vector<vk::DescriptorSetLayoutBinding> layoutBindings{};
 	layoutBindings.reserve(bindings.size());
@@ -531,7 +530,7 @@ vk::DescriptorSetLayout RenderDevice::generateDescriptorSetLayoutBindings(const 
 }
 
 
-vk::DescriptorSetLayout RenderDevice::generateDescriptorSetLayout(const RenderTask& task)
+vk::DescriptorSetLayout VulkanRenderDevice::generateDescriptorSetLayout(const RenderTask& task)
 {
     const auto& inputAttachments = task.getInputAttachments();
 
@@ -539,7 +538,7 @@ vk::DescriptorSetLayout RenderDevice::generateDescriptorSetLayout(const RenderTa
 }
 
 
-vk::PipelineLayout RenderDevice::generatePipelineLayout(const std::vector< vk::DescriptorSetLayout>& descLayout, const RenderTask& task)
+vk::PipelineLayout VulkanRenderDevice::generatePipelineLayout(const std::vector< vk::DescriptorSetLayout>& descLayout, const RenderTask& task)
 {
     vk::PipelineLayoutCreateInfo info{};
     info.setSetLayoutCount(descLayout.size());
@@ -567,7 +566,7 @@ vk::PipelineLayout RenderDevice::generatePipelineLayout(const std::vector< vk::D
 }
 
 
-void RenderDevice::generateVulkanResources(RenderGraph& graph)
+void VulkanRenderDevice::generateVulkanResources(RenderGraph& graph)
 {
 	auto task = graph.taskBegin();
 	clearVulkanResources();
@@ -606,7 +605,7 @@ void RenderDevice::generateVulkanResources(RenderGraph& graph)
 }
 
 
-void RenderDevice::generateFrameBuffers(RenderGraph& graph)
+void VulkanRenderDevice::generateFrameBuffers(RenderGraph& graph)
 {
 	auto outputBindings = graph.outputBindingBegin();
 	auto resource = mVulkanResources.begin();
@@ -624,7 +623,7 @@ void RenderDevice::generateFrameBuffers(RenderGraph& graph)
 		}
 
         std::vector<vk::ImageView> imageViews{};
-        vk::Extent3D imageExtent;
+        ImageExtent imageExtent;
 
 		// Sort the bindings by location within the frameBuffer.
 		// Resources aren't always bound in order so make sure that they are in order when we iterate over them.
@@ -636,8 +635,8 @@ void RenderDevice::generateFrameBuffers(RenderGraph& graph)
         for(const auto& bindingInfo : *outputBindings)
         {
                 const auto& imageView = graph.getImageView(bindingInfo.mResourceIndex);
-                imageExtent = imageView.getImageExtent();
-                imageViews.push_back(imageView.getImageView());
+                imageExtent = imageView->getImageExtent();
+                imageViews.push_back(static_cast<const VulkanImageView&>(*imageView.getBase()).getImageView());
         }
 
         vk::FramebufferCreateInfo info{};
@@ -663,7 +662,7 @@ void RenderDevice::generateFrameBuffers(RenderGraph& graph)
 }
 
 
-std::vector<vk::DescriptorSetLayout> RenderDevice::generateShaderResourceSetLayouts(const RenderTask& task, const RenderGraph& graph)
+std::vector<vk::DescriptorSetLayout> VulkanRenderDevice::generateShaderResourceSetLayouts(const RenderTask& task, const RenderGraph& graph)
 {
 	std::vector<vk::DescriptorSetLayout> layouts{};
 	layouts.push_back(generateDescriptorSetLayout(task));
@@ -673,7 +672,7 @@ std::vector<vk::DescriptorSetLayout> RenderDevice::generateShaderResourceSetLayo
 	{
 		if (type == AttachmentType::ShaderResourceSet)
 		{
-			layouts.push_back(graph.getBoundShaderResourceSet(slot).getLayout());
+			layouts.push_back(static_cast<const VulkanShaderResourceSet&>(*graph.getBoundShaderResourceSet(slot).getBase()).getLayout());
 		}
 	}
 
@@ -681,14 +680,14 @@ std::vector<vk::DescriptorSetLayout> RenderDevice::generateShaderResourceSetLayo
 }
 
 
-void RenderDevice::generateDescriptorSets(RenderGraph & graph)
+void VulkanRenderDevice::generateDescriptorSets(RenderGraph & graph)
 {
 	mDescriptorManager.getDescriptors(graph, mVulkanResources);
 	mDescriptorManager.writeDescriptors(graph, mVulkanResources);
 }
 
 
-vk::Fence RenderDevice::createFence(const bool signaled)
+vk::Fence VulkanRenderDevice::createFence(const bool signaled)
 {
     vk::FenceCreateInfo info{};
     info.setFlags(signaled ? vk::FenceCreateFlagBits::eSignaled : static_cast<vk::FenceCreateFlags>(0));
@@ -697,7 +696,7 @@ vk::Fence RenderDevice::createFence(const bool signaled)
 }
 
 
-vk::Sampler RenderDevice::getImmutableSampler(const Sampler& samplerDesc)
+vk::Sampler VulkanRenderDevice::getImmutableSampler(const Sampler& samplerDesc)
 {
     vk::Sampler sampler = mImmutableSamplerCache[samplerDesc];
 
@@ -761,7 +760,7 @@ vk::Sampler RenderDevice::getImmutableSampler(const Sampler& samplerDesc)
 
 
 
-void RenderDevice::execute(RenderGraph& graph)
+void VulkanRenderDevice::execute(RenderGraph& graph)
 {
 	graph.generateNonPersistentImages(this);
 	graph.reorderTasks();
@@ -844,11 +843,14 @@ void RenderDevice::execute(RenderGraph& graph)
         secondaryCmdBuffer.bindPipeline(bindPoint, resources.mPipeline->getHandle());
 
         if(graph.getIndexBuffer())
-            secondaryCmdBuffer.bindIndexBuffer(graph.getIndexBuffer()->getBuffer(), 0, vk::IndexType::eUint32);
+            secondaryCmdBuffer.bindIndexBuffer(static_cast<const VulkanBuffer&>(*graph.getIndexBuffer().value().getBase()).getBuffer(), 0, vk::IndexType::eUint32);
 
 		secondaryCmdBuffer.bindDescriptorSets(bindPoint, resources.mPipeline->getLayoutHandle(), 0, resources.mDescSet.size(), resources.mDescSet.data(), 0, nullptr);
 
-		(*task).recordCommands(secondaryCmdBuffer, graph, resources);
+		{
+			VulkanExecutor executor(secondaryCmdBuffer, resources);
+			(*task).recordCommands(executor, graph);
+		}
 
         secondaryCmdBuffer.end();
         primaryCmdBuffer.executeCommands(secondaryCmdBuffer);
@@ -873,7 +875,7 @@ void RenderDevice::execute(RenderGraph& graph)
 	// Transition the frameBuffer to a presentable format (hehe).
 	BarrierRecorder frameBufferTransition{this};
 	auto& frameBufferView = getSwapChainImageView();
-	frameBufferTransition.transitionLayout(frameBufferView, ImageLayout::Present, Hazard::ReadAfterWrite, SyncPoint::FragmentShaderOutput, SyncPoint::BottomOfPipe);
+	frameBufferTransition->transitionLayout(frameBufferView, ImageLayout::Present, Hazard::ReadAfterWrite, SyncPoint::FragmentShaderOutput, SyncPoint::BottomOfPipe);
 
 	execute(frameBufferTransition);
 
@@ -883,7 +885,7 @@ void RenderDevice::execute(RenderGraph& graph)
 }
 
 
-void RenderDevice::startFrame()
+void VulkanRenderDevice::startFrame()
 {
     frameSyncSetup();
     getCurrentCommandPool()->reset();
@@ -894,20 +896,22 @@ void RenderDevice::startFrame()
 }
 
 
-void RenderDevice::endFrame()
+void VulkanRenderDevice::endFrame()
 {
     mCurrentFrameIndex = (mCurrentFrameIndex + 1) %  getSwapChain()->getNumberOfSwapChainImages();
 }
 
 
-void RenderDevice::submitFrame()
+void VulkanRenderDevice::submitFrame()
 {
+	const VulkanSwapChain* swapChain = static_cast<VulkanSwapChain*>(mSwapChain);
+
     vk::SubmitInfo submitInfo{};
     submitInfo.setCommandBufferCount(1);
     submitInfo.setPCommandBuffers(&getCurrentCommandPool()->getBufferForQueue(QueueType::Graphics));
     submitInfo.setWaitSemaphoreCount(1);
-    submitInfo.setPWaitSemaphores(&mImageAquired[getCurrentFrameIndex()]);
-    submitInfo.setPSignalSemaphores(&mImageRendered[getCurrentFrameIndex()]);
+    submitInfo.setPWaitSemaphores(&swapChain->getImageAquired());
+    submitInfo.setPSignalSemaphores(&swapChain->getImageRendered());
     submitInfo.setSignalSemaphoreCount(1);
     auto const waitStage = vk::PipelineStageFlags(vk::PipelineStageFlagBits::eColorAttachmentOutput);
     submitInfo.setPWaitDstStageMask(&waitStage);
@@ -916,15 +920,15 @@ void RenderDevice::submitFrame()
 }
 
 
-void RenderDevice::swap()
+void VulkanRenderDevice::swap()
 {
-    mSwapChain.present(mGraphicsQueue, mImageRendered[getCurrentFrameIndex()]);
+    mSwapChain->present(QueueType::Graphics);
 }
 
 
-void RenderDevice::frameSyncSetup()
+void VulkanRenderDevice::frameSyncSetup()
 {
-    mSwapChain.getNextImageIndex(mImageAquired[getCurrentFrameIndex()]);
+	mSwapChain->getNextImageIndex();
 
     // wait for the previous frame using this swapchain image to be finished.
     auto& fence = mFrameFinished[getCurrentFrameIndex()];
@@ -933,22 +937,24 @@ void RenderDevice::frameSyncSetup()
 }
 
 
-void RenderDevice::execute(BarrierRecorder& recorder)
+void VulkanRenderDevice::execute(BarrierRecorder& recorder)
 {
 	for (uint8_t i = 0; i < static_cast<uint8_t>(QueueType::MaxQueues); ++i)
 	{
 		QueueType currentQueue = static_cast<QueueType>(i);
 
-		if (!recorder.empty())
+		VulkanBarrierRecorder& VKRecorder = static_cast<VulkanBarrierRecorder&>(*recorder.getBase());
+
+		if (!VKRecorder.empty())
 		{
-			const auto imageBarriers = recorder.getImageBarriers(currentQueue);
-			const auto bufferBarriers = recorder.getBufferBarriers(currentQueue);
-            const auto memoryBarriers = recorder.getMemoryBarriers(currentQueue);
+			const auto imageBarriers = VKRecorder.getImageBarriers(currentQueue);
+			const auto bufferBarriers = VKRecorder.getBufferBarriers(currentQueue);
+            const auto memoryBarriers = VKRecorder.getMemoryBarriers(currentQueue);
 
             if(bufferBarriers.empty() && imageBarriers.empty())
                 continue;
 
-			getCurrentCommandPool()->getBufferForQueue(currentQueue).pipelineBarrier(getVulkanPipelineStage(recorder.getSource()), getVulkanPipelineStage(recorder.getDestination()),
+			getCurrentCommandPool()->getBufferForQueue(currentQueue).pipelineBarrier(getVulkanPipelineStage(VKRecorder.getSource()), getVulkanPipelineStage(VKRecorder.getDestination()),
 				vk::DependencyFlagBits::eByRegion,
                 static_cast<uint32_t>(memoryBarriers.size()), memoryBarriers.data(),
                 static_cast<uint32_t>(bufferBarriers.size()), bufferBarriers.data(),
@@ -958,7 +964,7 @@ void RenderDevice::execute(BarrierRecorder& recorder)
 }
 
 
-void RenderDevice::clearDeferredResources()
+void VulkanRenderDevice::clearDeferredResources()
 {
     for(uint32_t i = 0; i < mFramebuffersPendingDestruction.size(); ++i)
     {
@@ -1029,7 +1035,7 @@ void RenderDevice::clearDeferredResources()
 }
 
 
-void RenderDevice::clearVulkanResources()
+void VulkanRenderDevice::clearVulkanResources()
 {
 	for(auto& resources : mVulkanResources)
 	{
@@ -1044,11 +1050,11 @@ void RenderDevice::clearVulkanResources()
 }
 
 
-void RenderDevice::setDebugName(const std::string& name, const uint64_t handle, const VkObjectType objectType)
+void VulkanRenderDevice::setDebugName(const std::string& name, const uint64_t handle, const uint64_t objectType)
 {
     VkDebugUtilsObjectNameInfoEXT lableInfo{};
     lableInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
-    lableInfo.objectType = objectType;
+    lableInfo.objectType = static_cast<VkObjectType>(objectType);
     lableInfo.objectHandle = handle;
     lableInfo.pObjectName = name.c_str();
 
@@ -1064,47 +1070,47 @@ void RenderDevice::setDebugName(const std::string& name, const uint64_t handle, 
 
 
 // Memory management functions
-vk::PhysicalDeviceMemoryProperties RenderDevice::getMemoryProperties() const
+vk::PhysicalDeviceMemoryProperties VulkanRenderDevice::getMemoryProperties() const
 {
     return mPhysicalDevice.getMemoryProperties();
 }
 
 
-vk::DeviceMemory    RenderDevice::allocateMemory(vk::MemoryAllocateInfo allocInfo)
+vk::DeviceMemory    VulkanRenderDevice::allocateMemory(vk::MemoryAllocateInfo allocInfo)
 {
     return mDevice.allocateMemory(allocInfo);
 }
 
 
-void    RenderDevice::freeMemory(const vk::DeviceMemory memory)
+void    VulkanRenderDevice::freeMemory(const vk::DeviceMemory memory)
 {
     mDevice.freeMemory(memory);
 }
 
 
-void*   RenderDevice::mapMemory(vk::DeviceMemory memory, vk::DeviceSize size, vk::DeviceSize offset)
+void*   VulkanRenderDevice::mapMemory(vk::DeviceMemory memory, vk::DeviceSize size, vk::DeviceSize offset)
 {
     return mDevice.mapMemory(memory, offset, size);
 }
 
 
-void    RenderDevice::unmapMemory(vk::DeviceMemory memory)
+void    VulkanRenderDevice::unmapMemory(vk::DeviceMemory memory)
 {
     mDevice.unmapMemory(memory);
 }
 
 
-void    RenderDevice::bindBufferMemory(vk::Buffer& buffer, vk::DeviceMemory memory, uint64_t offset)
+void    VulkanRenderDevice::bindBufferMemory(vk::Buffer& buffer, vk::DeviceMemory memory, uint64_t offset)
 {
     mDevice.bindBufferMemory(buffer, memory, offset);
 }
 
 
-void    RenderDevice::bindImageMemory(vk::Image& image, vk::DeviceMemory memory, const uint64_t offset)
+void    VulkanRenderDevice::bindImageMemory(vk::Image& image, vk::DeviceMemory memory, const uint64_t offset)
 {
     mDevice.bindImageMemory(image, memory, offset);
 }
 
 
 template
-vk::DescriptorSetLayout RenderDevice::generateDescriptorSetLayoutBindings(const std::vector<ShaderResourceSet::ResourceInfo>&);
+vk::DescriptorSetLayout VulkanRenderDevice::generateDescriptorSetLayoutBindings(const std::vector<ShaderResourceSetBase::ResourceInfo>&);

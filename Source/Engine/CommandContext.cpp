@@ -70,7 +70,7 @@ CommandContext& CommandContext::bindImageViews(const ImageView* view, const char
 
         // convert from extent to AttachmentType
         AttachmentType type = AttachmentType::Texture1D;
-        vk::Extent3D extent = view[i].getImageExtent();
+        ImageExtent extent = view[i]->getImageExtent();
         if(extent.height > 0)
             type = AttachmentType::Texture2D;
 		if(extent.depth > 1)
@@ -128,7 +128,7 @@ CommandContext& CommandContext::bindStorageTextureViews(const ImageView* view, c
 
         // convert from extent to AttachmentType
         AttachmentType type = AttachmentType::Image1D;
-        vk::Extent3D extent = view[i].getImageExtent();
+        ImageExtent extent = view[i]->getImageExtent();
         if(extent.height > 0)
             type = AttachmentType::Image2D;
 		if(extent.depth > 1)
@@ -235,13 +235,13 @@ CommandContext& CommandContext::bindRenderTargets(const ImageView* view, const c
         RenderTargetInfo binding{};
         binding.mName = slots[i];
         binding.mBound = true;
-        binding.mFormat = view[i].getImageViewFormat();
+        binding.mFormat = view[i]->getImageViewFormat();
 		binding.mSize = SizeClass::Custom;
         binding.mLoadOp = ops[i];
 
 		// convert from extent to AttachmentType
 		AttachmentType type = AttachmentType::RenderTarget1D;
-		vk::Extent3D extent = view[i].getImageExtent();
+		ImageExtent extent = view[i]->getImageExtent();
 		if(extent.height > 0)
 			type = AttachmentType::RenderTarget2D;
 		if(extent.depth > 1)
@@ -395,7 +395,7 @@ CommandContext& CommandContext::bindDepthStencilView(const ImageView* view, cons
 		RenderTargetInfo binding{};
 		binding.mName = slots[i];
 		binding.mBound = true;
-		binding.mFormat = view[i].getImageViewFormat();
+		binding.mFormat = view[i]->getImageViewFormat();
 		binding.mSize = SizeClass::Custom;
 		binding.mLoadOp = ops[i];
 		binding.mType = AttachmentType::Depth;
@@ -564,7 +564,7 @@ void CommandContext::addTaskToGraph()
     {
         BELL_ASSERT(mCurrentGraphicsPipelineState, "No graphics pipeline bound")
 
-        GraphicsTask task{mCurrentGraphicsPipelineState.value().mFragmentShader.getFilePath(),
+        GraphicsTask task{mCurrentGraphicsPipelineState.value().mFragmentShader->getFilePath(),
                           mCurrentGraphicsPipelineState.value()};
 
         task.setVertexAttributes(mCurrentVertexAttributes);
@@ -635,7 +635,7 @@ void CommandContext::addTaskToGraph()
     {
         BELL_ASSERT(mCurrentComputePipelineState, "No Compute pipeline bound")
 
-        ComputeTask task{mCurrentComputePipelineState.value().mComputeShader.getFilePath(),
+        ComputeTask task{mCurrentComputePipelineState.value().mComputeShader->getFilePath(),
                           mCurrentComputePipelineState.value()};
 
         for(uint32_t i = 0; i < 16; ++i)

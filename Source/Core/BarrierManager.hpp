@@ -7,7 +7,6 @@
 #include <vector>
 #include <tuple>
 
-#include <vulkan/vulkan.hpp>
 
 class Image;
 class ImageView;
@@ -37,29 +36,22 @@ enum class Hazard
 };
 
 
-class BarrierRecorder : DeviceChild
+class BarrierRecorderBase : public DeviceChild
 {
 public:
-	BarrierRecorder(RenderDevice* device);
+	BarrierRecorderBase(RenderDevice* device);
 
-	void transferResourceToQueue(Image&, const QueueType, const Hazard, const SyncPoint src, const SyncPoint dst);
-	void transferResourceToQueue(Buffer&, const QueueType, const Hazard, const SyncPoint src, const SyncPoint dst);
+	virtual void transferResourceToQueue(Image&, const QueueType, const Hazard, const SyncPoint src, const SyncPoint dst) = 0;
+	virtual void transferResourceToQueue(Buffer&, const QueueType, const Hazard, const SyncPoint src, const SyncPoint dst) = 0;
 
-	void memoryBarrier(Image& img, const Hazard, const SyncPoint src, const SyncPoint dst);
-	void memoryBarrier(ImageView& img, const Hazard, const SyncPoint src, const SyncPoint dst);
-	void memoryBarrier(Buffer& img, const Hazard, const SyncPoint src, const SyncPoint dst);
-	void memoryBarrier(BufferView& img, const Hazard, const SyncPoint src, const SyncPoint dst);
-	void memoryBarrier(const Hazard, const SyncPoint src, const SyncPoint dst);
+	virtual void memoryBarrier(Image& img, const Hazard, const SyncPoint src, const SyncPoint dst) = 0;
+	virtual void memoryBarrier(ImageView& img, const Hazard, const SyncPoint src, const SyncPoint dst) = 0;
+	virtual void memoryBarrier(Buffer& img, const Hazard, const SyncPoint src, const SyncPoint dst) = 0;
+	virtual void memoryBarrier(BufferView& img, const Hazard, const SyncPoint src, const SyncPoint dst) = 0;
+	virtual void memoryBarrier(const Hazard, const SyncPoint src, const SyncPoint dst) = 0;
 
-	void transitionLayout(Image& img, const ImageLayout, const Hazard, const SyncPoint src, const SyncPoint dst);
-	void transitionLayout(ImageView& img, const ImageLayout, const Hazard, const SyncPoint src, const SyncPoint dst);
-
-	std::vector<vk::ImageMemoryBarrier> getImageBarriers(const QueueType) const;
-	std::vector<vk::BufferMemoryBarrier> getBufferBarriers(const QueueType) const;
-	std::vector<vk::MemoryBarrier> getMemoryBarriers(const QueueType) const;
-
-	bool empty() const 
-	{ return mImageMemoryBarriers.empty() && mBufferMemoryBarriers.empty() && mMemoryBarriers.empty(); }
+	virtual void transitionLayout(Image& img, const ImageLayout, const Hazard, const SyncPoint src, const SyncPoint dst) = 0;
+	virtual void transitionLayout(ImageView& img, const ImageLayout, const Hazard, const SyncPoint src, const SyncPoint dst) = 0;
 
 	SyncPoint getSource() const
 	{ return mSrc; }
@@ -67,16 +59,47 @@ public:
 	SyncPoint getDestination() const
 	{ return mDst; }
 
-private:
+protected:
 
 	void updateSyncPoints(const SyncPoint src, const SyncPoint dst);
 
-	std::vector<std::pair<QueueType, vk::ImageMemoryBarrier>> mImageMemoryBarriers;
-	std::vector<std::pair<QueueType, vk::BufferMemoryBarrier>> mBufferMemoryBarriers;
-	std::vector<std::pair<QueueType, vk::MemoryBarrier>> mMemoryBarriers;
-
 	SyncPoint mSrc;
 	SyncPoint mDst;
+};
+
+
+class BarrierRecorder
+{
+public:
+
+	BarrierRecorder(RenderDevice*);
+	~BarrierRecorder() = default;
+
+
+	BarrierRecorderBase* getBase()
+	{
+		return mBase.get();
+	}
+
+	const BarrierRecorderBase* getBase() const
+	{
+		return mBase.get();
+	}
+
+	BarrierRecorderBase* operator->()
+	{
+		return getBase();
+	}
+
+	const BarrierRecorderBase* operator->() const
+	{
+		return getBase();
+	}
+
+private:
+
+	std::shared_ptr<BarrierRecorderBase> mBase;
+
 };
 
 #endif

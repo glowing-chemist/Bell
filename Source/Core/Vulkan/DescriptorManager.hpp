@@ -1,8 +1,8 @@
 #ifndef DESCRIPTOR_MANAGER_HPP
 #define DESCRIPTOR_MANAGER_HPP
 
-#include "DeviceChild.hpp"
-#include "GPUResource.hpp"
+#include "Core/DeviceChild.hpp"
+#include "Core/GPUResource.hpp"
 #include "RenderGraph/RenderGraph.hpp"
 
 #include <vulkan/vulkan.hpp>

@@ -1,34 +1,42 @@
 #ifndef IMAGE_HPP
 #define IMAGE_HPP
 
-#include <vulkan/vulkan.hpp>
+#include <memory>
 #include <string>
 #include <optional>
 
 #include "Core/GPUResource.hpp"
 #include "Core/DeviceChild.hpp"
-#include "Core/MemoryManager.hpp"
 #include "Core/BarrierManager.hpp"
 
 #include "Engine/PassTypes.hpp"
 
 
 class RenderDevice;
+class ImageViewBase;
+class VulkanBarrierRecorder;
+
+struct ImageExtent
+{
+	uint32_t width;
+	uint32_t height;
+	uint32_t depth;
+};
 
 struct SubResourceInfo
 {
 	ImageLayout mLayout;
-	vk::Extent3D mExtent;
+	ImageExtent mExtent;
 };
 
 
-class Image final : public GPUResource, public DeviceChild
+class ImageBase : public GPUResource, public DeviceChild 
 {
-	friend BarrierRecorder;
-	friend ImageView;
+	friend VulkanBarrierRecorder;
+	friend ImageViewBase;
 public:
 
-    Image(RenderDevice*,
+	ImageBase(RenderDevice*,
 		  const Format,
 		  const ImageUsage,
           const uint32_t x,
@@ -39,32 +47,11 @@ public:
           const uint32_t samples = 1,
 		  const std::string& = "");
 
-    Image(RenderDevice*,
-		  vk::Image&,
-		  const Format,
-		  const ImageUsage,
-          const uint32_t x,
-          const uint32_t y,
-          const uint32_t z,
-          const uint32_t mips = 1,
-          const uint32_t levels = 1,
-          const uint32_t samples = 1,
-		  const std::string& = ""
-          );
+    virtual ~ImageBase();
 
-    ~Image();
+	virtual void swap(ImageBase&); // used instead of a move constructor.
 
-	Image& operator=(const Image&) = delete;
-	Image(const Image&) = default;
-
-	Image& operator=(Image&&);
-	Image(Image&&);
-
-	void swap(Image&); // used instead of a move constructor.
-
-    vk::Image       getImage() { return mImage; }
-
-    void setContents(const void* data,
+    virtual void setContents(const void* data,
                      const uint32_t xsize,
                     const uint32_t ysize,
                     const uint32_t zsize,
@@ -72,8 +59,9 @@ public:
                     const uint32_t lod = 0,
                     const int32_t offsetx = 0,
                     const int32_t offsety = 0,
-                    const int32_t offsetz = 0);
+                    const int32_t offsetz = 0) = 0;
 
+	virtual void updateLastAccessed();
 
     uint32_t        numberOfMips() const { return mNumberOfMips; }
     uint32_t        numberOfLevels() const { return mNumberOfLevels; }
@@ -87,20 +75,14 @@ public:
     ImageLayout getLayout(const uint32_t level, const uint32_t LOD) const
 						{ return (*mSubResourceInfo)[(level * mNumberOfMips) + LOD].mLayout; }
 
-    vk::Extent3D    getExtent(const uint32_t level, const uint32_t LOD) const
+	ImageExtent    getExtent(const uint32_t level, const uint32_t LOD) const
 						{ return (*mSubResourceInfo)[(level * mNumberOfMips) + LOD].mExtent; }
 
-    Allocation      getMemory() const
-                        { return mImageMemory; }
 
 	bool			isSwapchainImage() const
 	{ return !mIsOwned; }
 
-    void updateLastAccessed();
-
-private:
-    Allocation mImageMemory;
-    vk::Image mImage;
+protected:
 
 	std::vector<SubResourceInfo>* mSubResourceInfo;
     uint32_t mNumberOfMips;
@@ -110,10 +92,55 @@ private:
     bool mIsOwned;
 	Format mFormat;
 	ImageUsage mUsage;
-    vk::ImageType mType;
     uint32_t mSamples;
 
     std::string mDebugName;
+};
+
+class Image : private RefCount
+{
+public:
+
+	Image(RenderDevice*,
+		const Format,
+		const ImageUsage,
+		const uint32_t x,
+		const uint32_t y,
+		const uint32_t z,
+		const uint32_t mips = 1,
+		const uint32_t levels = 1,
+		const uint32_t samples = 1,
+		const std::string & = "");
+
+	Image(ImageBase* base) :
+		mBase{ base } {}
+
+	~Image() = default;
+
+
+	ImageBase* getBase()
+	{
+		return mBase.get();
+	}
+
+	const ImageBase* getBase() const
+	{
+		return mBase.get();
+	}
+
+	ImageBase* operator->()
+	{
+		return getBase();
+	}
+
+	const ImageBase* operator->() const
+	{
+		return getBase();
+	}
+
+private:
+
+	std::shared_ptr<ImageBase> mBase;
 };
 
 #endif
