@@ -15,6 +15,12 @@ find_package(Vulkan REQUIRED)
 
 set(VULKAN 1) # vulkan default backend
 
+if(VULKAN)
+add_definitions(-DVULKAN)
+elseif(OPENGL)
+add_definitions(-DOPENGL)
+endif()
+
 include_directories(
     "${CMAKE_CURRENT_LIST_DIR}/Include/"
 			"${CMAKE_CURRENT_LIST_DIR}/Source/"
