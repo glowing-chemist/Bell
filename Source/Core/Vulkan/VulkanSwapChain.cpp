@@ -79,11 +79,13 @@ void VulkanSwapChain::destroy()
 	{
 		device->destroySemaphore(semaphore);
 	}
+	mImageAquired.clear();
 
 	for (auto& semaphore : mImageRendered)
 	{
 		device->destroySemaphore(semaphore);
 	}
+	mImageRendered.clear();
 
     if(mSwapChain != vk::SwapchainKHR{nullptr})
     {
