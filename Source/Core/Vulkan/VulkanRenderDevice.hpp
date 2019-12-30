@@ -54,7 +54,12 @@ public:
 	VulkanRenderDevice(vk::Instance, vk::PhysicalDevice, vk::Device, vk::SurfaceKHR, GLFWwindow*);
     ~VulkanRenderDevice();
 
-    virtual void                       execute(RenderGraph&) override;
+	virtual void					   generateFrameResources(RenderGraph&) override;
+
+	virtual void                       startPass(const RenderTask&) override;
+	virtual Executor*				   getPassExecutor() override;
+	virtual void					   freePassExecutor(Executor*) override;
+	virtual void					   endPass() override;
 
     virtual void                       startFrame() override;
     virtual void                       endFrame() override;
@@ -244,7 +249,7 @@ private:
 
     void                                                        generateDescriptorSets(RenderGraph&);
 
-    virtual void                                                generateFrameBuffers(RenderGraph&) override;
+    virtual void                                                generateFrameBuffers(RenderGraph&);
 
 	std::vector<vk::DescriptorSetLayout>						generateShaderResourceSetLayouts(const RenderTask&, const RenderGraph&);
 

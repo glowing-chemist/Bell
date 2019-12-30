@@ -1,13 +1,9 @@
 #ifndef INSTANCE_HPP
 #define INSTANCE_HPP
 
-#include <vulkan/vulkan.h>
-#include <vulkan/vulkan.hpp> // use vulkan hpp for erganomics
-#include <GLFW/glfw3.h>
-
-#include <tuple>
-
 #include "RenderDevice.hpp"
+
+struct GLFWwindow;
 
 enum class DeviceFeaturesFlags {
     Geometry = 1,
@@ -29,7 +25,10 @@ public:
 
     virtual RenderDevice* createRenderDevice(const int DeviceFeatureFlags = 0) = 0;
 
-    GLFWwindow* getWindow() const;
+	GLFWwindow* getWindow() const
+	{
+		return mWindow;
+	}
 
 protected:
 

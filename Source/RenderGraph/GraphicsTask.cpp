@@ -6,6 +6,9 @@ void GraphicsTask::recordCommands(Executor& exec, const RenderGraph& graph) cons
 	if(graph.getVertexBuffer())
 		exec.bindVertexBuffer(*graph.getVertexBuffer(), mVertexBufferOffset);
 
+	if (graph.getIndexBuffer())
+		exec.bindIndexBuffer(*graph.getIndexBuffer(), 0);
+
     for(const auto& thunk : mDrawCalls)
     {
         switch (thunk.mDrawType)

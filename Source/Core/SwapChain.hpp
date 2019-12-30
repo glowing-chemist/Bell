@@ -5,10 +5,8 @@
 #include "Core/Image.hpp"
 #include "Core/ImageView.hpp"
 
-#include <GLFW/glfw3.h>
-
 class RenderDevice;
-class GLFWwindow;
+struct GLFWwindow;
 
 
 class SwapChainBase : public DeviceChild

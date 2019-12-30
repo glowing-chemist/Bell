@@ -285,6 +285,42 @@ std::pair<uint64_t, uint64_t> Engine::addMeshToBuffer(const StaticMesh* mesh)
 }
 
 
+void Engine::execute(RenderGraph& graph)
+{
+	// Finalize graph internal state.
+	graph.compileDependancies();
+	graph.generateNonPersistentImages(mRenderDevice);
+	graph.reorderTasks();
+	graph.mergeTasks();
+
+	mRenderDevice->generateFrameResources(graph);
+
+	// process scene.
+	for (auto task = graph.taskBegin(); task != graph.taskEnd(); ++task)
+	{
+		mRenderDevice->startPass(*task);
+
+		Executor* exec = mRenderDevice->getPassExecutor();
+		BELL_ASSERT(exec, "Failed to create executor")
+
+		(*task).recordCommands(*exec, graph);
+
+
+
+		mRenderDevice->endPass();
+	}
+
+	// Transition the swapchain image to a presentable format.
+	BarrierRecorder frameBufferTransition{ mRenderDevice };
+	auto& frameBufferView = getSwapChainImageView();
+	frameBufferTransition->transitionLayout(frameBufferView, ImageLayout::Present, Hazard::ReadAfterWrite, SyncPoint::FragmentShaderOutput, SyncPoint::BottomOfPipe);
+
+	mRenderDevice->execute(frameBufferTransition);
+
+	mRenderDevice->submitFrame();
+}
+
+
 void Engine::recordScene()
 {
 	const std::vector<const Scene::MeshInstance*> meshes = mCurrentScene.getViewableMeshes();
@@ -335,9 +371,7 @@ void Engine::render()
         mCurrentRenderGraph.bindIndexBuffer(*mIndexBuffer);
     }
 
-	mCurrentRenderGraph.compileDependancies();
-
-    mRenderDevice->execute(mCurrentRenderGraph);
+	execute(mCurrentRenderGraph);
 }
 
 
@@ -361,7 +395,7 @@ void Engine::submitCommandRecorder(CommandContext &ccx)
     renderGraph.bindVertexBuffer(*mVertexBuffer);
     renderGraph.bindIndexBuffer(*mIndexBuffer);
 
-    mRenderDevice->execute(renderGraph);
+    execute(renderGraph);
 }
 
 

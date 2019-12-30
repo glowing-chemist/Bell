@@ -123,13 +123,14 @@ public:
 
 	void generateNonPersistentImages(RenderDevice*);
 
+	void reorderTasks();
+	void mergeTasks();
+
 private:
 
-    void reorderTasks();
 	// Selecets the best task to execuet next based on some heuristics.
 	uint32_t selectNextTask(const std::vector<uint8_t>& dependancies, const TaskType) const;
 
-    void mergeTasks();
     bool areSupersets(const RenderTask&, const RenderTask&);
     void mergeTasks(RenderTask&, RenderTask&);
 

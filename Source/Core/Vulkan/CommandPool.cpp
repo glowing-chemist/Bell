@@ -67,8 +67,8 @@ uint32_t CommandPool::getNumberOfBuffersForQueue(const QueueType queueType)
 
 void CommandPool::reserve(const uint32_t number, const QueueType queueType)
 {
-    const uint32_t existingBuffers = getNumberOfBuffersForQueue(queueType);
-    uint32_t needed = number - existingBuffers;
+    const int32_t existingBuffers = getNumberOfBuffersForQueue(queueType);
+    int32_t needed = int32_t(number) - existingBuffers;
 
     if(needed <= 0)
         return;

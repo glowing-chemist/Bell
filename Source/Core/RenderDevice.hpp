@@ -3,18 +3,11 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <deque>
-#include <unordered_map>
-#include <unordered_map>
-#include <vector>
 
 #include "BarrierManager.hpp"
 #include "SwapChain.hpp"
 #include "Core/ImageView.hpp"
-#include "Core/Sampler.hpp"
 #include "Core/ShaderResourceSet.hpp"
-#include "RenderGraph/GraphicsTask.hpp"
-#include "RenderGraph/ComputeTask.hpp"
 #include "RenderGraph/RenderGraph.hpp"
 
 
@@ -29,11 +22,19 @@ public:
 		mCurrentSubmission{0},
 		mFinishedSubmission{0},
 		mCurrentFrameIndex{0},
+		mCurrentPassIndex{0},
 		mSwapChain{nullptr} {}
 
     virtual ~RenderDevice() = default;
 
-    virtual void                       execute(RenderGraph&) = 0;
+	virtual void					   generateFrameResources(RenderGraph&) = 0;
+
+	virtual void                       startPass(const RenderTask&) = 0;
+	virtual Executor*				   getPassExecutor() = 0;
+	virtual void					   freePassExecutor(Executor*) = 0;
+	virtual void					   endPass() = 0;
+
+	virtual void					   execute(BarrierRecorder& recorder) = 0;
 
 	virtual void                       startFrame() = 0;
 	virtual void                       endFrame() = 0;
@@ -48,8 +49,6 @@ public:
     virtual void					   setDebugName(const std::string&, const uint64_t, const uint64_t objectType) = 0;
 
 	virtual void                       flushWait() const = 0;
-
-	virtual void					   execute(BarrierRecorder& recorder) = 0;
 
     virtual void					   submitFrame() = 0;
     virtual void					   swap() = 0;
@@ -91,14 +90,12 @@ public:
 
 protected:
 
-    virtual void                       generateFrameBuffers(RenderGraph&) = 0;
-
-    virtual void					   frameSyncSetup() = 0;
-
     // Keep track of when resources can be freed
     uint64_t mCurrentSubmission;
     uint64_t mFinishedSubmission;
     uint32_t mCurrentFrameIndex;
+
+	uint64_t mCurrentPassIndex;
 
     SwapChainBase* mSwapChain;
 };

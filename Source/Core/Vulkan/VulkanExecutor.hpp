@@ -31,6 +31,8 @@ public:
 
 	virtual void bindVertexBuffer(const Buffer&, const size_t offset) override;
 
+	virtual void bindIndexBuffer(const Buffer&, const size_t offset) override;
+
 private:
 
 	vk::CommandBuffer mCommandBuffer;

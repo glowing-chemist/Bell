@@ -73,3 +73,10 @@ void VulkanExecutor::bindVertexBuffer(const Buffer& buffer, const size_t offset)
 	const VulkanBuffer& VKBuffer = static_cast<const VulkanBuffer&>(*buffer.getBase());
 	mCommandBuffer.bindVertexBuffers(0, VKBuffer.getBuffer(), offset);
 }
+
+
+void VulkanExecutor::bindIndexBuffer(const Buffer& buffer, const size_t offset)
+{
+	const VulkanBuffer& VKBuffer = static_cast<const VulkanBuffer&>(*buffer.getBase());
+	mCommandBuffer.bindIndexBuffer(VKBuffer.getBuffer(), offset, vk::IndexType::eUint32);
+}

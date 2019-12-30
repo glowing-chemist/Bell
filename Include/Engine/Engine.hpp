@@ -111,6 +111,8 @@ public:
 
     void recordScene();
 
+	void execute(RenderGraph&);
+
 	void startFrame()
 	{
 		mRenderDevice->startFrame();

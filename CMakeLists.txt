@@ -15,14 +15,9 @@ find_package(Vulkan REQUIRED)
 
 set(VULKAN 1) # vulkan default backend
 
-if(VULKAN)
-add_definitions(-DVULKAN)
-elseif(OPENGL)
-add_definitions(-DOPENGL)
-endif()
-
 include_directories(
-    "${CMAKE_CURRENT_LIST_DIR}/Include/"
+			"${CMAKE_CURRENT_LIST_DIR}/"
+			"${CMAKE_CURRENT_LIST_DIR}/Include/"
 			"${CMAKE_CURRENT_LIST_DIR}/Source/"
 
 			# ThirdParty header search paths
@@ -32,8 +27,9 @@ include_directories(
 			"${CMAKE_CURRENT_LIST_DIR}/ThirdParty/imgui-master"
 			"${CMAKE_CURRENT_LIST_DIR}/ThirdParty/glslang"
 			"${CMAKE_CURRENT_LIST_DIR}/ThirdParty/imgui-node-editor/NodeEditor/Include"
-		        "${CMAKE_CURRENT_LIST_DIR}/ThirdParty/glm"	
+		    "${CMAKE_CURRENT_LIST_DIR}/ThirdParty/glm"	
 			"${CMAKE_CURRENT_LIST_DIR}/ThirdParty/stb_image"
+			"${CMAKE_CURRENT_LIST_DIR}/ThirdParty/glad/include"
 			${glslangIncludeDirs}
 			${glmIncludeDirs}
 		    )
@@ -72,8 +68,16 @@ if(VULKAN)
 		Source/Core/Vulkan/VulkanSwapChain.cpp
 		Source/Core/Vulkan/VulkanBarrierManager.cpp)
 
-elseif(OPENGL)
+		add_definitions(-DVULKAN)
 
+elseif(OPENGL)
+	set(BACKEND_SOURCE
+		ThirdParty/glad/src/glad.c
+		Source/Core/OpenGL/OpenGLRenderInstance.cpp
+		Source/Core/OpenGL/OpenGLImage.cpp
+		Source/Core/OpenGL/OpenGLBuffer.cpp)
+
+	add_definitions(-DOPENGL)
 else()
 	message(FATAL_ERROR "SELECT A BACKEND VULKAN/OPENGL")
 endif()
