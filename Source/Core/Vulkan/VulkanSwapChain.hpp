@@ -22,12 +22,22 @@ public:
 	virtual uint32_t getNextImageIndex() override;
 	virtual void present(const QueueType queueIndex) override;
 
-	vk::Semaphore getImageAquired() const
+	const vk::Semaphore& getImageAquired() const
 	{
 		return mImageAquired[getCurrentImageIndex()];
 	}
 
-	vk::Semaphore getImageRendered() const
+	const vk::Semaphore& getImageRendered() const
+	{
+		return mImageRendered[getCurrentImageIndex()];
+	}
+
+	vk::Semaphore& getImageAquired()
+	{
+		return mImageAquired[getCurrentImageIndex()];
+	}
+
+	vk::Semaphore& getImageRendered()
 	{
 		return mImageRendered[getCurrentImageIndex()];
 	}
