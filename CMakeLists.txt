@@ -74,6 +74,7 @@ elseif(OPENGL)
 	set(BACKEND_SOURCE
 		ThirdParty/glad/src/glad.c
 		Source/Core/OpenGL/OpenGLRenderInstance.cpp
+		Source/Core/OpenGL/OpenGLRenderDevice.cpp
 		Source/Core/OpenGL/OpenGLImage.cpp
 		Source/Core/OpenGL/OpenGLBuffer.cpp)
 
