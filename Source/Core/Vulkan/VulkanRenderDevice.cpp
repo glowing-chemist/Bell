@@ -880,8 +880,8 @@ void VulkanRenderDevice::submitFrame()
     submitInfo.setCommandBufferCount(1);
     submitInfo.setPCommandBuffers(&getCurrentCommandPool()->getBufferForQueue(QueueType::Graphics));
     submitInfo.setWaitSemaphoreCount(1);
-    submitInfo.setPWaitSemaphores(&swapChain->getImageAquired());
-    submitInfo.setPSignalSemaphores(&swapChain->getImageRendered());
+    submitInfo.setPWaitSemaphores(swapChain->getImageAquired());
+    submitInfo.setPSignalSemaphores(swapChain->getImageRendered());
     submitInfo.setSignalSemaphoreCount(1);
     auto const waitStage = vk::PipelineStageFlags(vk::PipelineStageFlagBits::eColorAttachmentOutput);
     submitInfo.setPWaitDstStageMask(&waitStage);
