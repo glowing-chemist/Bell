@@ -4,16 +4,21 @@
 #include "Core/RenderDevice.hpp"
 
 
-struct GLFWWindow;
+struct GLFWwindow;
 
 
 class OpenGLRenderDevice : public RenderDevice
 {
 public:
-	OpenGLRenderDevice(GLFWWindow*);
+	OpenGLRenderDevice(GLFWwindow*);
 	~OpenGLRenderDevice();
 
-	virtual void                       execute(RenderGraph&) override;
+	virtual void					   generateFrameResources(RenderGraph&) override;
+
+	virtual void                       startPass(const RenderTask&) override;
+	virtual Executor*				   getPassExecutor() override;
+	virtual void					   freePassExecutor(Executor*) override;
+	virtual void					   endPass() override;
 
 	virtual void                       startFrame() override;
 	virtual void                       endFrame() override;
