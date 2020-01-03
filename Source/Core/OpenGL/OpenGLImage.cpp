@@ -82,6 +82,8 @@ void OpenGLImage::setContents(const void* data,
 	const int32_t offsety,
 	const int32_t offsetz)
 {
+	glBindTexture(mSlot, mImage);
+
 	if (mSlot == GL_TEXTURE_2D)
 	{
 		glTexSubImage2D(mSlot, arrayLevel, offsetx, offsety, (*mSubResourceInfo)[(arrayLevel * mNumberOfLevels) + mipsLevel].mExtent.width,
