@@ -43,9 +43,6 @@ public:
 
 private:
 
-	virtual void                       generateFrameBuffers(RenderGraph&) override;
-
-	virtual void					   frameSyncSetup() override {} // no explicit sync needed.
 
 };
 
