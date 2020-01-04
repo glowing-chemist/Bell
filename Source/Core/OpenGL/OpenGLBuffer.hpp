@@ -31,6 +31,11 @@ public:
 	virtual void* map(MapInfo& mapInfo) override;
 	virtual void unmap() override;
 
+	uint32_t getBuffer() const
+	{
+		return mBuffer;
+	}
+
 private:
 
 	MapInfo mCurrentMap;
