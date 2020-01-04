@@ -27,20 +27,6 @@ enum class DrawType
 	SetPushConstant
 };
 
-enum class VertexAssemblyType
-{
-	vec1 = 1,
-	vec2 = 2,
-	vec3 = 3,
-	vec4 = 4,
-	ivec1 = 1,
-	ivec2 = 2,
-	ivec3 = 3,
-	ivec4 = 4,
-	f = 1,
-	i = 1
-};
-
 enum VertexAttributes
 {
 	Position2 = 1 << 1,
@@ -51,6 +37,7 @@ enum VertexAttributes
     Albedo = 1 << 6,
 	Material = 1 << 7
 };
+
 enum class BlendMode
 {
 	None,
