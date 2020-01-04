@@ -6,8 +6,6 @@
 #include <limits>
 #include <memory>
 
-#include <vulkan/vulkan.hpp>
-
 class BarrierRecorder;
 
 class BufferViewBase : public DeviceChild
@@ -15,9 +13,9 @@ class BufferViewBase : public DeviceChild
     friend BarrierRecorder;
 public:
 
-	BufferViewBase(Buffer&, const uint64_t offset = 0, const uint64_t size = VK_WHOLE_SIZE);
+	BufferViewBase(Buffer&, const uint64_t offset = 0, const uint64_t size = ~0ull);
     // buffer views don't manage any resources so can have a trivial destructor.
-    ~BufferViewBase() = default;
+    virtual ~BufferViewBase() = default;
 
     uint64_t getOffset() const
     { return mOffset; }

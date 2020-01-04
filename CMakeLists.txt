@@ -76,7 +76,9 @@ elseif(OPENGL)
 		Source/Core/OpenGL/OpenGLRenderInstance.cpp
 		Source/Core/OpenGL/OpenGLRenderDevice.cpp
 		Source/Core/OpenGL/OpenGLImage.cpp
+		Source/Core/OpenGL/OpenGLImageView.cpp
 		Source/Core/OpenGL/OpenGLBuffer.cpp
+		Source/Core/OpenGL/OpenGLBufferView.cpp
 		Source/Core/OpenGL/OpenGLShader.cpp)
 
 	add_definitions(-DOPENGL)
