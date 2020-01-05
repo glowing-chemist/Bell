@@ -15,6 +15,7 @@
 class RenderDevice;
 class ImageView;
 class BufferView;
+struct vulkanResources;
 
 
 struct WriteShaderResourceSet

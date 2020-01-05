@@ -6,6 +6,10 @@
 
 #include <vulkan/vulkan.hpp>
 
+
+struct vulkanResources;
+
+
 class VulkanExecutor : public Executor
 {
 public:

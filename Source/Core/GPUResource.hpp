@@ -2,7 +2,6 @@
 #define GPURESOURCE_HPP
 
 #include <atomic>
-#include <vulkan/vulkan.hpp>
 #include <cstdint>
 
 enum class ImageType

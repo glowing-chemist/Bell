@@ -72,23 +72,23 @@ void GraphicsTask::mergeWith(const RenderTask& task)
 }
 
 
-std::vector<vk::ClearValue> GraphicsTask::getClearValues() const
+std::vector<ClearValues> GraphicsTask::getClearValues() const
 {
-    std::vector<vk::ClearValue> clearValues;
+    std::vector<ClearValues> clearValues;
 
     for(const auto& attatchment : mOutputAttachments)
     {
             if(attatchment.mLoadOp == LoadOp::Clear_Black)
             {
-                clearValues.emplace_back(std::array<float, 4>{0.0f, 0.0f, 0.0f, 0.0f});
+                clearValues.emplace_back(0.0f, 0.0f, 0.0f, 0.0f);
             }
 			else if(attatchment.mLoadOp == LoadOp::Clear_White)
             {
-                clearValues.emplace_back(std::array<float, 4>{1.0f, 1.0f, 1.0f, 1.0f});
+                clearValues.emplace_back(1.0f, 1.0f, 1.0f, 1.0f);
             }
 			else // coprresponds to Preserve so this value will be ignored.
 			{
-				clearValues.emplace_back(std::array<float, 4>{0.0f, 0.0f, 0.0f, 1.0f});
+                clearValues.emplace_back(0.0f, 0.0f, 0.0f, 1.0f);
 			}
     }
 

@@ -67,6 +67,16 @@ enum class Primitive
 	Point
 };
 
+
+struct ClearValues
+{
+    ClearValues(const float red, const float green, const float blue, const float alpha) :
+        r{red}, g{green}, b{blue}, a{alpha} {}
+
+    float r, g, b, a;
+};
+
+
 struct GraphicsPipelineDescription
 {
 	Shader mVertexShader;
@@ -259,7 +269,7 @@ public:
 
 	void recordCommands(Executor&, const RenderGraph&) const override final;
 
-    std::vector<vk::ClearValue> getClearValues() const;
+    std::vector<ClearValues> getClearValues() const;
 
 	void mergeWith(const RenderTask&) override final;
 

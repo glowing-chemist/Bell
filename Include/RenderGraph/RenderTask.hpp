@@ -12,7 +12,6 @@
 
 
 class RenderGraph;
-class vulkanResources;
 
 enum class LoadOp
 {

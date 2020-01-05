@@ -40,7 +40,7 @@ class BufferView
 {
 public:
 
-	BufferView(Buffer&, const uint64_t offset = 0, const uint64_t size = VK_WHOLE_SIZE);
+    BufferView(Buffer&, const uint64_t offset = 0, const uint64_t size = ~0ull);
 	~BufferView() = default;
 
 

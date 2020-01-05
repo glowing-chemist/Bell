@@ -785,7 +785,7 @@ void VulkanRenderDevice::startPass(const RenderTask& task)
 		const auto& pipelineDesc = graphicsTask.getPipelineDescription();
 		vk::Rect2D renderArea{ {0, 0}, {pipelineDesc.mViewport.x, pipelineDesc.mViewport.y} };
 
-		const std::vector<vk::ClearValue> clearValues = graphicsTask.getClearValues();
+        const std::vector<ClearValues> clearValues = graphicsTask.getClearValues();
 
 		commadBufferUsage |= vk::CommandBufferUsageFlagBits::eRenderPassContinue;
 
@@ -796,7 +796,7 @@ void VulkanRenderDevice::startPass(const RenderTask& task)
 		if (!clearValues.empty())
 		{
 			passBegin.setClearValueCount(static_cast<uint32_t>(clearValues.size()));
-			passBegin.setPClearValues(clearValues.data());
+            passBegin.setPClearValues(reinterpret_cast<const vk::ClearValue*>(clearValues.data()));
 		}
 
 		primaryCmdBuffer.beginRenderPass(passBegin, vk::SubpassContents::eSecondaryCommandBuffers);
