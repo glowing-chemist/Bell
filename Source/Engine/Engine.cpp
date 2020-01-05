@@ -295,9 +295,15 @@ void Engine::execute(RenderGraph& graph)
 
 	mRenderDevice->generateFrameResources(graph);
 
+    auto barriers = graph.generateBarriers(mRenderDevice);
+
 	// process scene.
-	for (auto task = graph.taskBegin(); task != graph.taskEnd(); ++task)
+    auto barrier = barriers.begin();
+    for (auto task = graph.taskBegin(); task != graph.taskEnd(); ++task, ++barrier)
 	{
+
+        mRenderDevice->execute(*barrier);
+
 		mRenderDevice->startPass(*task);
 
 		Executor* exec = mRenderDevice->getPassExecutor();
