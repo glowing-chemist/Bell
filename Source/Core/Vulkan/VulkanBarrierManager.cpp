@@ -511,7 +511,7 @@ void VulkanBarrierRecorder::transitionLayout(ImageView& img, const ImageLayout n
 {
 	updateSyncPoints(src, dst);
 
-	ImageLayout layout = img->getImageLayout(0, 0);
+    ImageLayout layout = img->getImageLayout(img->getBaseLevel(), img->getBaseMip());
 	bool splitBarriers = true;
 	for (uint32_t i = img->getBaseLevel(); i < img->getBaseLevel() + img->getLevelCount(); ++i)
 	{
