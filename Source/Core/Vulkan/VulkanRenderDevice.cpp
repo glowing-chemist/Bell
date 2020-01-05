@@ -873,6 +873,9 @@ void VulkanRenderDevice::endFrame()
 
 void VulkanRenderDevice::submitFrame()
 {
+    vk::CommandBuffer primaryCmdBuffer = getCurrentCommandPool()->getBufferForQueue(QueueType::Graphics);
+    primaryCmdBuffer.end();
+
 	mCurrentPassIndex = 0;
 	const VulkanSwapChain* swapChain = static_cast<VulkanSwapChain*>(mSwapChain);
 
