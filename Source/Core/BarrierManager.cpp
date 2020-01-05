@@ -6,7 +6,7 @@
 #include "RenderDevice.hpp"
 
 #ifdef VULKAN
-#include "Core/Vulkan/VulkanBarriermanager.hpp"
+#include "Core/Vulkan/VulkanBarrierManager.hpp"
 #endif
 
 #include <algorithm>

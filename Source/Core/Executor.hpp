@@ -21,7 +21,7 @@ public:
 
 	virtual void indexedInstancedDraw(const uint32_t vertexOffset, const uint32_t indexOffset, const uint32_t numberOfInstances, const uint32_t numberOfIndicies) = 0;
 
-	virtual void indirectDraw(const uint32_t drawCalls, const const BufferView&) = 0;
+    virtual void indirectDraw(const uint32_t drawCalls, const BufferView&) = 0;
 
 	virtual void indexedIndirectDraw(const uint32_t drawCalls, const BufferView&) = 0;
 

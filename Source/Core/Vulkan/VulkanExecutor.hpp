@@ -19,7 +19,7 @@ public:
 
 	virtual void indexedInstancedDraw(const uint32_t vertexOffset, const uint32_t indexOffset, const uint32_t numberOfInstances, const uint32_t numberOfIndicies) override;
 
-	virtual void indirectDraw(const uint32_t drawCalls, const const BufferView&) override;
+    virtual void indirectDraw(const uint32_t drawCalls, const BufferView&) override;
 
 	virtual void indexedIndirectDraw(const uint32_t drawCalls, const BufferView&) override;
 

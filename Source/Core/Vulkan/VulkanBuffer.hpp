@@ -1,7 +1,7 @@
 #ifndef VK_BUFFER_HPP
 #define VK_BUFFER_HPP
 
-#include <Vulkan/vulkan.hpp>
+#include <vulkan/vulkan.hpp>
 #include "Core/Buffer.hpp"
 #include "MemoryManager.hpp"
 

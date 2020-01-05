@@ -35,7 +35,7 @@ void VulkanExecutor::indexedInstancedDraw(const uint32_t vertexOffset, const uin
 }
 
 
-void VulkanExecutor::indirectDraw(const uint32_t drawCalls, const const BufferView& view)
+void VulkanExecutor::indirectDraw(const uint32_t drawCalls, const BufferView& view)
 {
 	const VulkanBufferView& VKBuffer = static_cast<const VulkanBufferView&>(*view.getBase());
 	mCommandBuffer.drawIndirect(VKBuffer.getBuffer(), view->getOffset(), drawCalls, sizeof(vk::DrawIndirectCommand));

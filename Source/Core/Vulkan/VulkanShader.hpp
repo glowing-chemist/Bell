@@ -3,7 +3,7 @@
 
 #include "Core/Shader.hpp"
 
-#include <Vulkan/vulkan.hpp>
+#include <vulkan/vulkan.hpp>
 
 
 class VulkanShader : public ShaderBase
