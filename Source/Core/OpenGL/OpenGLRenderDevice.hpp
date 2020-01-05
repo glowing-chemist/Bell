@@ -23,14 +23,14 @@ public:
 	virtual void                       startFrame() override;
 	virtual void                       endFrame() override;
 
-	virtual void                       destroyImage(ImageBase& image) override;
-	virtual void                       destroyImageView(ImageViewBase& view) override;
+	virtual void                       destroyImage(ImageBase&) override;
+	virtual void                       destroyImageView(ImageViewBase&) override {}
 
-	virtual void                       destroyBuffer(BufferBase& buffer) override;
+	virtual void                       destroyBuffer(BufferBase&) override;
 
-	virtual void					   destroyShaderResourceSet(const ShaderResourceSetBase& set) override;
+	virtual void					   destroyShaderResourceSet(const ShaderResourceSetBase&) override {}
 
-	virtual void					   setDebugName(const std::string&, const uint64_t, const uint64_t objectType) override;
+	virtual void					   setDebugName(const std::string&, const uint64_t handle, const uint64_t objectType) override;
 
 	virtual void                       flushWait() const override;
 
@@ -43,6 +43,7 @@ public:
 
 private:
 
+	GLFWwindow* mWindow;
 
 };
 
