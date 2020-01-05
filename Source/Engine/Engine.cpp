@@ -311,6 +311,8 @@ void Engine::execute(RenderGraph& graph)
 
 		(*task).recordCommands(*exec, graph);
 
+        mRenderDevice->freePassExecutor(exec);
+
 		mRenderDevice->endPass();
 	}
 
