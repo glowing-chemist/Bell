@@ -133,6 +133,8 @@ void VulkanSwapChain::present(const QueueType queue)
 
 	VkResult result = vkQueuePresentKHR(presentQueue, &info);
 
+    mCurrentImageIndex = (mCurrentImageIndex + 1) % mSwapChainImages.size();
+
 	if (result == VK_ERROR_OUT_OF_DATE_KHR)
 		recreateSwapchain();
 }
