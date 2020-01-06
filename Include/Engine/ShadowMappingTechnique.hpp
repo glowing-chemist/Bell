@@ -9,7 +9,7 @@ class ShadowMappingTechnique : public Technique
 {
 public:
     ShadowMappingTechnique(Engine*);
-    ~ShadowMappingTechnique();
+    ~ShadowMappingTechnique() = default;
 
     virtual PassType getPassType() const override
     {

@@ -97,6 +97,9 @@ inline const char* passToString(const PassType passType)
 
 		case PassType::DeferredAnalyticalLighting:
 			return "Deferred analytical lighting";
+
+        case PassType::Shadow:
+            return "Shadow Map";
     }
 
     return "UNKNOWN PASS TYPE";

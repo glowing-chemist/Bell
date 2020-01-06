@@ -5,8 +5,8 @@
 
 ShadowMappingTechnique::ShadowMappingTechnique(Engine* eng) :
     Technique("ShadowMapping", eng->getDevice()),
-    mDesc(eng->getShader("ShadowMapVert.glsl"),
-          eng->getShader("VarianceShadowMap.glsl"),
+    mDesc(eng->getShader("ShadowMap.vert"),
+          eng->getShader("VarianceShadowMap.frag"),
           Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
                 getDevice()->getSwapChain()->getSwapChainImageHeight()},
           Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),

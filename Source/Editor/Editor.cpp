@@ -195,6 +195,13 @@ namespace
 				newNode->mOutputs.push_back(Pin{ 0, newNode, kAnalyticLighting, PinType::Texture, PinKind::Output });
 				return newNode;
 			}
+
+            case NodeTypes::Shadow:
+            {
+                std::shared_ptr<EditorNode> newNode = std::make_shared<PassNode>("Shadow mapping", passType);
+                newNode->mOutputs.push_back(Pin{ 0, newNode, kShadowMap, PinType::Texture, PinKind::Output });
+                return newNode;
+            }
         }
     }
 
@@ -425,6 +432,7 @@ void Editor::drawAssistantWindow()
 		   drawPassContextMenu(PassType::DFGGeneration);
 		   drawPassContextMenu(PassType::LightFroxelation);
 		   drawPassContextMenu(PassType::DeferredAnalyticalLighting);
+           drawPassContextMenu(PassType::Shadow);
 
            ImGui::EndMenu();
        }
