@@ -5,6 +5,10 @@
 #include "Core/Vulkan/VulkanRenderInstance.hpp" 
 #endif
 
+#ifdef OPENGL
+#include "Core/OpenGL/OpenGLRenderInstance.hpp"
+#endif
+
 #include "Engine/Engine.hpp"
 #include "Engine/PreDepthTechnique.hpp"
 #include "Engine/GBufferTechnique.hpp"
@@ -28,6 +32,9 @@
 Engine::Engine(GLFWwindow* windowPtr) :
 #ifdef VULKAN
     mRenderInstance( new VulkanRenderInstance(windowPtr)),
+#endif
+#ifdef OPENGL
+    mRenderInstance( new OpenGLRenderInstance(windowPtr)),
 #endif
     mRenderDevice(mRenderInstance->createRenderDevice(DeviceFeaturesFlags::Compute | DeviceFeaturesFlags::Discrete | DeviceFeaturesFlags::Subgroup)),
     mCurrentScene("Initial current scene"),
