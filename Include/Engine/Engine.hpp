@@ -43,6 +43,12 @@ public:
     // Set the current Scene, mostly for use by the editor.
     void setScene(Scene&);
 
+    Scene& getScene()
+    { return mCurrentScene; }
+
+    const Scene& getScene() const
+    { return mCurrentScene; }
+
     Camera& getCurrentSceneCamera();
 
     BufferBuilder& getVertexBufferBuilder()
@@ -73,6 +79,11 @@ public:
 						const std::string& = "");
 
 	Shader getShader(const std::string& path);
+
+    const Buffer& getShadowBuffer() const
+    {
+        return mShadowCastingLight.get();
+    }
 
     bool isGraphicsTask(const PassType) const;
     bool isComputeTask(const PassType) const;
@@ -172,11 +183,11 @@ private:
 
 	// Global uniform buffers
 
-	// Name: CameraBuffer
 	CameraBuffer mCameraBuffer;
     PerFrameResource<Buffer> mDeviceCameraBuffer;
 
-	// Name: SSAOBuffer
+    PerFrameResource<Buffer> mShadowCastingLight;
+
 	SSAOBuffer mSSAOBUffer;
 	Buffer mDeviceSSAOBuffer;
 	bool mGeneratedSSAOBuffer;

@@ -154,6 +154,7 @@ set(BELL_SOURCE
     Source/Engine/ForwardIBLTechnique.cpp
     Source/Engine/LightFroxelationTechnique.cpp
     Source/Engine/DeferredAnalyticalLightingTechnique.cpp
+    Source/Engine/ShadowMappingTechnique.cpp
 
     Source/Engine/CommandContext.cpp
 

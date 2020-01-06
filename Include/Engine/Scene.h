@@ -40,6 +40,7 @@ class Scene
 public:
 
     struct MeshInstance;
+    struct ShadowingLight;
 
 	Scene(const std::string& name);
     Scene(Scene&&);
@@ -76,6 +77,16 @@ public:
         return mSceneCamera;
     }
 
+    void setShadowingLight(const ShadowingLight& light)
+    {
+        mShadowingLight = light;
+    }
+
+    const ShadowingLight& getShadowingLight() const
+    {
+        return mShadowingLight;
+    }
+
 	const std::vector<ImageView>& getMaterials() const
 	{
 		return mMaterialImageViews;
@@ -103,6 +114,13 @@ public:
         float mInfluence;
 		LightType mType;
 	};
+
+    struct ShadowingLight
+    {
+        glm::mat4 mViewMatrix;
+        glm::mat4 mInverseView;
+        glm::mat4 mViewProj;
+    };
 
     const std::vector<Light>& getLights() const
     { return mLights; }
@@ -152,6 +170,7 @@ private:
 	std::vector<ImageView> mMaterialImageViews;
 
     std::vector<Light> mLights;
+    ShadowingLight mShadowingLight;
 
 	std::unique_ptr<Image> mSkybox;
 	std::unique_ptr<ImageView> mSkyboxView;

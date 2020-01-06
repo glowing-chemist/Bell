@@ -16,12 +16,20 @@ struct CameraBuffer
         vec3 position;
         float fov;
 };    
-    
+
     
 struct SSAOBuffer    
 {    
         vec4 offsets[16];
         float scale;
         int offsetsCount;      
+};
+
+
+struct ShadowingLight
+{
+        mat4 view;
+        mat4 inverseView;
+        mat4 viewProj;
 };
 

@@ -44,7 +44,8 @@ Engine::Engine(GLFWwindow* windowPtr) :
     mDefaultSampler(SamplerType::Linear),
     mCameraBuffer{},
 	mDeviceCameraBuffer{getDevice(), BufferUsage::Uniform, sizeof(CameraBuffer), sizeof(CameraBuffer), "Camera Buffer"},
-	mSSAOBUffer{},
+    mShadowCastingLight(getDevice(), BufferUsage::Uniform, sizeof(Scene::ShadowingLight), sizeof(Scene::ShadowingLight), "ShadowingLight"),
+    mSSAOBUffer{},
 	mDeviceSSAOBuffer{getDevice(), BufferUsage::Uniform, sizeof(SSAOBuffer), sizeof(SSAOBuffer), "SSAO Buffer"},
 	mGeneratedSSAOBuffer{false},
     mLightBuffer(getDevice(), BufferUsage::DataBuffer | BufferUsage::TransferDest, (sizeof(Scene::Light) * 1000) + sizeof(uint32_t), (sizeof(Scene::Light) * 1000) + sizeof(uint32_t), "LightBuffer"),
@@ -461,10 +462,23 @@ void Engine::updateGlobalBuffers()
 		mDeviceSSAOBuffer->unmap();
 	}
 
-    mLightBuffer.get()->setContents(static_cast<int>(mCurrentScene.getLights().size()), sizeof(uint32_t));
+    {
+        mLightBuffer.get()->setContents(static_cast<int>(mCurrentScene.getLights().size()), sizeof(uint32_t));
 
-    if(!mCurrentScene.getLights().empty())
-        mLightBuffer.get()->setContents(mCurrentScene.getLights().data(), static_cast<uint32_t>(mCurrentScene.getLights().size() * sizeof(Scene::Light)), sizeof(uint32_t));
+        if(!mCurrentScene.getLights().empty())
+            mLightBuffer.get()->setContents(mCurrentScene.getLights().data(), static_cast<uint32_t>(mCurrentScene.getLights().size() * sizeof(Scene::Light)), sizeof(uint32_t));
+    }
+
+    {
+        const Scene::ShadowingLight& shadowingLight = mCurrentScene.getShadowingLight();
+        mapInfo.mSize = sizeof(Scene::ShadowingLight);
+
+        void* dst = mShadowCastingLight.get()->map(mapInfo);
+
+            std::memcpy(dst, &shadowingLight, sizeof(Scene::ShadowingLight));
+
+        mShadowCastingLight.get()->unmap();
+    }
 }
 
 

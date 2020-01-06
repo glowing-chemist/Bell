@@ -18,6 +18,8 @@ constexpr const char* kSkyBox			 = "SkyBox";
 constexpr const char* kConvolvedSkyBox   = "ConvolvedSB";
 constexpr const char* kActiveFroxels	 = "ActiveFroxels";
 constexpr const char* kActiveFroxelBuffer = "ActiveFroxelBuffer";
+constexpr const char* kShadowMap          = "ShadowMap";
+constexpr const char* kShadowingLights    = "ShadowingLights";
 
 constexpr const char* kCameraBuffer	    = "CameraBuffer";
 constexpr const char* kLightBuffer	    = "LightBuffer";
