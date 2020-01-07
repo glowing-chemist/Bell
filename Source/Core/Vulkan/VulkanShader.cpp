@@ -24,7 +24,7 @@ VulkanShader::~VulkanShader()
 
 bool VulkanShader::compile()
 {
-	ShaderBase::compile();
+    const bool compiled = ShaderBase::compile();
 
 	VulkanRenderDevice* device = static_cast<VulkanRenderDevice*>(getDevice());
 
@@ -37,7 +37,7 @@ bool VulkanShader::compile()
 
 	mSPIRV.clear();
 
-    return true;
+    return compiled;
 }
 
 
