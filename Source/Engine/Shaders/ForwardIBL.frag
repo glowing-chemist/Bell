@@ -69,8 +69,8 @@ void main()
 	const float NoV = dot(normal, viewDir);
     const vec2 f_ab = texture(sampler2D(DFG, linearSampler), vec2(NoV, roughness)).xy;
 
-    const vec3 diffuse = calculateDiffuseGlobalIBL(baseAlbedo.xyz, metalness, irradiance);
-    const vec3 specular = calculateSpecularGlobalIBL(roughness * roughness, normal, viewDir, metalness, baseAlbedo.xyz, radiance, f_ab);
+    const vec3 diffuse = calculateDiffuse(baseAlbedo.xyz, metalness, irradiance);
+    const vec3 specular = calculateSpecular(roughness * roughness, normal, viewDir, metalness, baseAlbedo.xyz, radiance, f_ab);
 
     frameBuffer = vec4(specular + diffuse, 1.0);
 }
