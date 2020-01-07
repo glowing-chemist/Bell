@@ -17,7 +17,7 @@
 #include <vector>
 
 // Constants
-constexpr uint32_t BINDLESS_ARRAY_SIZE = 16; // set to a super low limit for now.
+constexpr uint32_t BINDLESS_ARRAY_SIZE = 23; // set to a super low limit for now.
 
 
 VulkanRenderDevice::VulkanRenderDevice(vk::Instance instance,

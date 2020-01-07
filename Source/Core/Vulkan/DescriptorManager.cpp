@@ -9,7 +9,7 @@
 #include <cstdint>
 
 // TODO unify in RenderDevice.cpp
-#define BINDLESS_ARRAY_SIZE 16ull
+#define BINDLESS_ARRAY_SIZE 23ull
 
 
 DescriptorManager::DescriptorManager(RenderDevice* dev) :
