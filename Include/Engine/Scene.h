@@ -77,10 +77,7 @@ public:
         return mSceneCamera;
     }
 
-    void setShadowingLight(const ShadowingLight& light)
-    {
-        mShadowingLight = light;
-    }
+    void setShadowingLight(const glm::vec3& position, const glm::vec3& direction);
 
     const ShadowingLight& getShadowingLight() const
     {
