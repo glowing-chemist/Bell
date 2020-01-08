@@ -32,14 +32,14 @@ void main()
 {
 	const vec3 baseAlbedo = texture(sampler2D(materials[nonuniformEXT(materialID * 4)], linearSampler), uv).xyz;
 
-    vec3 normal = texture(sampler2D(materials[nonuniformEXT(materialID * 4) + 1], linearSampler), uv).xyz;
+    vec3 normal = texture(sampler2D(materials[nonuniformEXT(materialID * 4 + 1)], linearSampler), uv).xyz;
 
     // remap normal
     normal = remapNormals(normal);
     normal = normalize(normal);
 
-    const float roughness = texture(sampler2D(materials[nonuniformEXT(materialID * 4) + 2], linearSampler), uv).x;
-    const float metalness = texture(sampler2D(materials[nonuniformEXT(materialID * 4) + 3], linearSampler), uv).x;
+    const float roughness = texture(sampler2D(materials[nonuniformEXT(materialID * 4 + 2)], linearSampler), uv).x;
+    const float metalness = texture(sampler2D(materials[nonuniformEXT(materialID * 4 + 3)], linearSampler), uv).x;
 
     const vec2 xDerivities = dFdxFine(uv);
     const vec2 yDerivities = dFdxFine(uv);
