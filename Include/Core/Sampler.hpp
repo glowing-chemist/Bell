@@ -28,9 +28,9 @@ public:
     Sampler(const SamplerType type) :
         mType{type},
         mSamples{1},
-        mU{AddressMode::Clamp},
-        mV{AddressMode::Clamp},
-        mW{AddressMode::Clamp} {}
+        mU{AddressMode::Repeat},
+        mV{AddressMode::Repeat},
+        mW{AddressMode::Repeat} {}
 
     void setNumberOfSamples(const uint8_t samples)
         { mSamples = samples; }
