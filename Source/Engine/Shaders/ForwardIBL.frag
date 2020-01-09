@@ -29,8 +29,8 @@ layout(set = 1, binding = 0) uniform texture2D materials[];
 
 void main()
 {
-	const vec3 baseAlbedo = texture(sampler2D(materials[nonuniformEXT(materialID * 4)], linearSampler),
-                                		uv).xyz;
+	const vec4 baseAlbedo = texture(sampler2D(materials[nonuniformEXT(materialID * 4)], linearSampler),
+                                		uv);
 
     vec3 normal = texture(sampler2D(materials[nonuniformEXT((materialID * 4) + 1)], linearSampler),
                                 uv).xyz;
@@ -68,6 +68,9 @@ void main()
 
 	const float NoV = dot(normal, viewDir);
     const vec2 f_ab = texture(sampler2D(DFG, linearSampler), vec2(NoV, roughness)).xy;
+
+    if(baseAlbedo.w == 0.0f)
+        discard;
 
     const vec3 diffuse = calculateDiffuse(baseAlbedo.xyz, metalness, irradiance);
     const vec3 specular = calculateSpecular(roughness * roughness, normal, viewDir, metalness, baseAlbedo.xyz, radiance, f_ab);

@@ -57,10 +57,10 @@ void main()
 
     const vec3 viewDir = normalize(camera.position - worldSpaceFragmentPos.xyz);
 
-    const vec3 baseAlbedo = textureGrad(sampler2D(materials[nonuniformEXT(materialID * 4)], linearSampler),
+    const vec4 baseAlbedo = textureGrad(sampler2D(materials[nonuniformEXT(materialID * 4)], linearSampler),
                                 fragUVwithDifferentials.xy,
                                 xDerivities,
-                                yDerivities).xyz;
+                                yDerivities);
 
     vec3 normal = texture(sampler2D(materials[nonuniformEXT(materialID * 4) + 1], linearSampler),
                                 fragUVwithDifferentials.xy).xyz;
@@ -93,6 +93,9 @@ void main()
     const vec3 irradiance = texture(samplerCube(skyBox, linearSampler), normal).xyz;
 
     const vec2 f_ab = texture(sampler2D(DFG, linearSampler), vec2(NoV, roughness)).xy;
+
+    if(baseAlbedo.w == 0.0f)
+        discard;
 
     const vec3 diffuse = calculateDiffuse(baseAlbedo.xyz, metalness, irradiance);
     const vec3 specular = calculateSpecular(roughness * roughness, normal, viewDir, metalness, baseAlbedo.xyz, radiance, f_ab);

@@ -54,10 +54,10 @@ void main()
 
     const vec3 viewDir = normalize(camera.position - worldSpaceFragmentPos.xyz);
 
-    const vec3 baseAlbedo = textureGrad(sampler2D(materials[nonuniformEXT(materialID * 4)], linearSampler),
+    const vec4 baseAlbedo = textureGrad(sampler2D(materials[nonuniformEXT(materialID * 4)], linearSampler),
                                 fragUVwithDifferentials.xy,
                                 xDerivities,
-                                yDerivities).xyz;
+                                yDerivities);
 
     vec3 normal = texture(sampler2D(materials[nonuniformEXT((materialID * 4) + 1)], linearSampler),
                                 fragUVwithDifferentials.xy).xyz;
@@ -90,7 +90,7 @@ void main()
 
     const float cosTheta = dot(normal, viewDir);
 
-    const vec3 F = fresnelSchlickRoughness(max(cosTheta, 0.0), mix(vec3(DIELECTRIC_SPECULAR), baseAlbedo, metalness), roughness);
+    const vec3 F = fresnelSchlickRoughness(max(cosTheta, 0.0), mix(vec3(DIELECTRIC_SPECULAR), baseAlbedo.xyz, metalness), roughness);
 
     const float remappedRoughness = pow(1.0f - roughness, 4.0f);
     const vec3 FssEss = analyticalDFG(F, remappedRoughness, cosTheta);

@@ -13,7 +13,7 @@ layout(location = 2) in vec4 vertexNormal;
 layout(location = 3) in flat uint materialID;
 
 
-layout(location = 0) out vec3 outAlbedo;
+layout(location = 0) out vec4 outAlbedo;
 layout(location = 1) out vec3 outNormals;
 layout(location = 2) out vec2 outMetalnessRoughness;
 
@@ -30,7 +30,7 @@ layout(set = 1, binding = 0) uniform texture2D materials[];
 
 void main()
 {
-	const vec3 baseAlbedo = texture(sampler2D(materials[nonuniformEXT(materialID * 4)], linearSampler), uv).xyz;
+	const vec4 baseAlbedo = texture(sampler2D(materials[nonuniformEXT(materialID * 4)], linearSampler), uv);
 
     vec3 normal = texture(sampler2D(materials[nonuniformEXT(materialID * 4 + 1)], linearSampler), uv).xyz;
 
@@ -43,6 +43,9 @@ void main()
 
     const vec2 xDerivities = dFdxFine(uv);
     const vec2 yDerivities = dFdxFine(uv);
+
+    if(baseAlbedo.w == 0.0f)
+        discard;
 
     const vec3 viewDir = normalize(camera.position - position.xyz);
 
