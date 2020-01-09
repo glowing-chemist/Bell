@@ -19,7 +19,7 @@ OpenGLRenderDevice::~OpenGLRenderDevice()
 }
 
 
-void OpenGLRenderDevice::generateFrameResources(RenderGraph& graph)
+void OpenGLRenderDevice::generateFrameResources(RenderGraph&)
 {
 
 }
@@ -33,7 +33,7 @@ void OpenGLRenderDevice::startPass(const RenderTask&)
 
 Executor* OpenGLRenderDevice::getPassExecutor()
 {
-
+    return nullptr;
 }
 
 
