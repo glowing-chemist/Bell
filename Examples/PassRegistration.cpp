@@ -128,7 +128,7 @@ int main(int argc, char** argv)
 		if(unregisterpasses)
 			engine.clearRegisteredPasses();
 
-#if 1
+#if 0
 		engine.registerPass(PassType::GBuffer);
 		engine.registerPass(PassType::DFGGeneration);
 		engine.registerPass(PassType::LightFroxelation);
@@ -139,13 +139,16 @@ int main(int argc, char** argv)
 		
 		if (graphicsOptions.useLUT)
 		{
+            engine.registerPass(PassType::GBuffer);
 			engine.registerPass(PassType::DFGGeneration);
-			engine.registerPass(PassType::DeferredTexturePBRIBL);
+            engine.registerPass(PassType::DeferredPBRIBL);
 		}
 		else
+        {
+            engine.registerPass(PassType::GBufferMaterial);
 			engine.registerPass(PassType::DeferredTextureAnalyticalPBRIBL);
 
-		engine.registerPass(PassType::GBufferMaterial);
+        }
         engine.registerPass(PassType::Skybox);
 
 #endif
