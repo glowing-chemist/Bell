@@ -16,9 +16,6 @@
 #include <memory>
 #include <vector>
 
-// Constants
-constexpr uint32_t BINDLESS_ARRAY_SIZE = 23; // set to a super low limit for now.
-
 
 VulkanRenderDevice::VulkanRenderDevice(vk::Instance instance,
 						   vk::PhysicalDevice physDev,
@@ -473,7 +470,7 @@ vk::DescriptorSetLayout VulkanRenderDevice::generateDescriptorSetLayoutBindings(
 
 	uint32_t currentBinding = 0;
 
-	for (const auto& [unused, type] : bindings)
+    for (const auto& [_, type, arraySize] : bindings)
 	{
 		// Translate between Bell enums to the vulkan equivelent.
 		vk::DescriptorType descriptorType = [type]()
@@ -516,7 +513,7 @@ vk::DescriptorSetLayout VulkanRenderDevice::generateDescriptorSetLayoutBindings(
 		vk::DescriptorSetLayoutBinding layoutBinding{};
 		layoutBinding.setBinding(currentBinding++);
 		layoutBinding.setDescriptorType(descriptorType);
-		layoutBinding.setDescriptorCount(type == AttachmentType::TextureArray ? BINDLESS_ARRAY_SIZE : 1);
+        layoutBinding.setDescriptorCount(type == AttachmentType::TextureArray ? arraySize : 1);
 		layoutBinding.setStageFlags(vk::ShaderStageFlagBits::eAll);
 
 		layoutBindings.push_back(layoutBinding);
@@ -668,7 +665,7 @@ std::vector<vk::DescriptorSetLayout> VulkanRenderDevice::generateShaderResourceS
 	layouts.push_back(generateDescriptorSetLayout(task));
 
 	const auto& inputs = task.getInputAttachments();
-	for (const auto& [slot, type] : inputs)
+    for (const auto& [slot, type, _] : inputs)
 	{
 		if (type == AttachmentType::ShaderResourceSet)
 		{

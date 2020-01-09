@@ -8,9 +8,6 @@
 #include <numeric>
 #include <cstdint>
 
-// TODO unify in RenderDevice.cpp
-#define BINDLESS_ARRAY_SIZE 23ull
-
 
 DescriptorManager::DescriptorManager(RenderDevice* dev) :
 	DeviceChild{ dev }
@@ -58,7 +55,7 @@ void DescriptorManager::getDescriptors(RenderGraph& graph, std::vector<vulkanRes
 
 		// Now add all the ShaderResourceSet descriptors.
 		const auto& inputs = (*task).getInputAttachments();
-		for (const auto& [slot, type] : inputs)
+        for (const auto& [slot, type, _] : inputs)
 		{
 			if (type == AttachmentType::ShaderResourceSet)
 			{
@@ -80,10 +77,10 @@ void DescriptorManager::writeDescriptors(RenderGraph& graph, std::vector<vulkanR
     std::vector<vk::DescriptorBufferInfo> bufferInfos;
 
 	const uint64_t maxDescWrites = std::accumulate(graph.inputBindingBegin(), graph.inputBindingEnd(), 0ull,
-					[](uint64_t accu, const auto& vec) {return accu + std::accumulate(vec.begin(), vec.end(), 0ull, []
+                    [&](uint64_t accu, const auto& vec) {return accu + std::accumulate(vec.begin(), vec.end(), 0ull, [&]
 																					  (uint64_t accu, const RenderGraph::ResourceBindingInfo& info)
 		{
-			return accu + (info.mResourcetype == RenderGraph::ResourceType::ImageArray ? BINDLESS_ARRAY_SIZE : 1ull);
+            return accu + (info.mResourcetype == RenderGraph::ResourceType::ImageArray ? graph.getImageArrayViews(info.mResourceIndex).size() : 1ull);
 		});
 	});
 
@@ -217,7 +214,7 @@ vk::DescriptorSet DescriptorManager::writeShaderResourceSet(const vk::Descriptor
 	const auto maxImages = std::accumulate(writes.begin(), writes.end(), 0ull, []
 	(uint64_t accu, const WriteShaderResourceSet& info)
 		{
-			return accu + (info.mType == AttachmentType::TextureArray ? BINDLESS_ARRAY_SIZE : 1ull);
+            return accu + (info.mType == AttachmentType::TextureArray ? info.mArraySize : 1ull);
 		});
 
 	imageInfos.reserve(maxImages);
@@ -474,8 +471,7 @@ void DescriptorManager::reset()
 }
 
 
-template<typename T>
-DescriptorManager::DescriptorPool& DescriptorManager::findSuitablePool(const std::vector<T>& attachments, std::vector<DescriptorPool>& pools)
+DescriptorManager::DescriptorPool& DescriptorManager::findSuitablePool(const std::vector<WriteShaderResourceSet>& attachments, std::vector<DescriptorPool>& pools)
 {
 	size_t requiredStorageImageDescriptors = 0;
 	size_t requiredSampledImageDescriptors = 0;
@@ -511,7 +507,7 @@ DescriptorManager::DescriptorPool& DescriptorManager::findSuitablePool(const std
 			break;
 
 		case AttachmentType::TextureArray:
-			requiredSampledImageDescriptors += BINDLESS_ARRAY_SIZE;
+            requiredSampledImageDescriptors += attachment.mArraySize;
 			break;
 
 		case AttachmentType::Sampler:
@@ -558,5 +554,93 @@ DescriptorManager::DescriptorPool& DescriptorManager::findSuitablePool(const std
 
 		return pool;
 	}
+}
+
+
+DescriptorManager::DescriptorPool& DescriptorManager::findSuitablePool(const std::vector<RenderTask::InputAttachmentInfo>& attachments, std::vector<DescriptorPool>& pools)
+{
+    size_t requiredStorageImageDescriptors = 0;
+    size_t requiredSampledImageDescriptors = 0;
+    size_t requiredSamplerDescriptors = 0;
+    size_t requiredUniformBufferDescriptors = 0;
+    size_t requiredStorageBufferDescriptors = 0;
+
+    for (const auto& attachment : attachments)
+    {
+        switch (attachment.mType)
+        {
+
+        case AttachmentType::DataBufferRO:
+        case AttachmentType::DataBufferRW:
+        case AttachmentType::DataBufferWO:
+            requiredStorageBufferDescriptors++;
+            break;
+
+        case AttachmentType::UniformBuffer:
+            requiredUniformBufferDescriptors++;
+            break;
+
+        case AttachmentType::Texture1D:
+        case AttachmentType::Texture2D:
+        case AttachmentType::Texture3D:
+            requiredSampledImageDescriptors++;
+            break;
+
+        case AttachmentType::Image1D:
+        case AttachmentType::Image2D:
+        case AttachmentType::Image3D:
+            requiredStorageImageDescriptors++;
+            break;
+
+        case AttachmentType::TextureArray:
+            BELL_TRAP; // If you hit here you should probably consider using a shader resource set instead.
+            // Removed bacuase was unused and inconvient.
+            //requiredSampledImageDescriptors += BINDLESS_ARRAY_SIZE;
+            break;
+
+        case AttachmentType::Sampler:
+            requiredSamplerDescriptors++;
+            break;
+
+        default:
+            break;
+        }
+    }
+
+    auto it = std::find_if(pools.begin(), pools.end(), [=](const DescriptorPool& p)
+        {
+            return	requiredStorageImageDescriptors <= p.mStorageImageCount &&
+                    requiredSampledImageDescriptors <= p.mSampledImageCount &&
+                    requiredSamplerDescriptors <= p.mSamplerCount &&
+                    requiredUniformBufferDescriptors <= p.mUniformBufferCount &&
+                    requiredStorageBufferDescriptors <= p.mStorageBufferCount;
+        });
+
+    if (it != pools.end())
+    {
+        DescriptorPool& pool = *it;
+
+        pool.mStorageImageCount -= requiredStorageImageDescriptors;
+        pool.mSampledImageCount -= requiredSampledImageDescriptors;
+        pool.mSamplerCount		-= requiredSamplerDescriptors;
+        pool.mUniformBufferCount -= requiredUniformBufferDescriptors;
+        pool.mStorageBufferCount -= requiredStorageBufferDescriptors;
+
+        return pool;
+    }
+    else
+    {
+        pools.push_back(createDescriptorPool());
+
+        DescriptorPool& pool = pools.back();
+
+        pool.mStorageImageCount -= requiredStorageImageDescriptors;
+        pool.mSampledImageCount -= requiredSampledImageDescriptors;
+        pool.mSamplerCount -= requiredSamplerDescriptors;
+        pool.mUniformBufferCount -= requiredUniformBufferDescriptors;
+        pool.mStorageBufferCount -= requiredStorageBufferDescriptors;
+
+        return pool;
+    }
 }
 

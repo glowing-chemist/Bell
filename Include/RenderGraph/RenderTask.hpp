@@ -46,9 +46,9 @@ public:
 
 	virtual void recordCommands(Executor& exec, const RenderGraph&) const = 0;
 
-    virtual void addInput(const std::string& name, const AttachmentType attachmentType)
+    virtual void addInput(const std::string& name, const AttachmentType attachmentType, const size_t arraySize = 0)
     {
-       mInputAttachments.push_back({name, attachmentType});
+       mInputAttachments.push_back({name, attachmentType, arraySize});
     }
 
     // Loadop has no effect on ComputeTasks
@@ -70,6 +70,7 @@ public:
 	{
 		std::string mName;
 		AttachmentType mType;
+        size_t mArraySize;
 	};
 
     const std::vector<InputAttachmentInfo>& getInputAttachments() const

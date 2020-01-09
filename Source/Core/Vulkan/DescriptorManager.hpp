@@ -70,8 +70,8 @@ private:
 		vk::DescriptorPool mPool;
 	};
 
-	template<typename T>
-	DescriptorPool& findSuitablePool(const std::vector<T>&, std::vector<DescriptorPool>&);
+    DescriptorPool& findSuitablePool(const std::vector<WriteShaderResourceSet>&, std::vector<DescriptorPool>&);
+    DescriptorPool& findSuitablePool(const std::vector<RenderTask::InputAttachmentInfo>&, std::vector<DescriptorPool>&);
 
 	DescriptorPool	createDescriptorPool(const bool allowIndividualReset = false);
 

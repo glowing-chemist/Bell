@@ -34,6 +34,7 @@ public:
 	{
 		size_t mIndex;
 		AttachmentType mType;
+        size_t mArraySize;
 	};
 
 protected:
