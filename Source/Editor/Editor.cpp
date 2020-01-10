@@ -521,12 +521,12 @@ void Editor::drawPassContextMenu(const PassType passType)
 void Editor::loadScene(const std::string& scene)
 {
 	// Default Editor skybox.
-	std::array<std::string, 6> skybox{	"./skybox/peaks_ft.tga",
-										"./skybox/peaks_bk.tga", 
-										"./skybox/peaks_up.tga", 
-										"./skybox/peaks_dn.tga", 
-										"./skybox/peaks_rt.tga", 
-										"./skybox/peaks_lf.tga" };
+    std::array<std::string, 6> skybox{	"./Assets/Skybox.png",
+                                        "./Assets/Skybox.png",
+                                        "./Assets/Skybox.png",
+                                        "./Assets/Skybox.png",
+                                        "./Assets/Skybox.png",
+                                        "./Assets/Skybox.png" };
 
 	Scene testScene(scene);
 	testScene.loadFromFile(VertexAttributes::Position4 | VertexAttributes::Normals | VertexAttributes::TextureCoordinates | VertexAttributes::Material, &mEngine);

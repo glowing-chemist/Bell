@@ -86,7 +86,8 @@ int main(int argc, char** argv)
 
     BELL_ASSERT(argc > 1, "Scene file input needed")
 
-    std::array<std::string, 6> skybox{"./skybox/peaks_ft.tga", "./skybox/peaks_bk.tga", "./skybox/peaks_up.tga", "./skybox/peaks_dn.tga", "./skybox/peaks_rt.tga", "./skybox/peaks_lf.tga"};
+    std::array<std::string, 6> skybox{"./Assets/Skybox.png", "./Assets/Skybox.png", "./Assets/Skybox.png", "./Assets/Skybox.png", "./Assets/Skybox.png", "./Assets/Skybox.png"};
+
 
     Scene testScene(argv[1]);
     testScene.loadFromFile(VertexAttributes::Position4 | VertexAttributes::Normals | VertexAttributes::TextureCoordinates | VertexAttributes::Material, &engine);
