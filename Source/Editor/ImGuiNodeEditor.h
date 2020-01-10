@@ -148,6 +148,8 @@ public:
 
 	void addPasses(Engine&);
 
+    std::vector<std::string> getAvailableDebugTextures() const;
+
 private:
 
     const Pin& findPin(const ax::NodeEditor::PinId);

@@ -231,6 +231,23 @@ void ImGuiNodeEditor::generateLinks(const std::shared_ptr<EditorNode>& newNode)
 	}
 }
 
+
+std::vector<std::string> ImGuiNodeEditor::getAvailableDebugTextures() const
+{
+    std::vector<std::string> textures;
+
+    for(const auto& node : mNodes)
+    {
+        for(const auto& output : node->mOutputs)
+        {
+            textures.push_back(output.mName);
+        }
+    }
+
+    return textures;
+}
+
+
 void PassNode::draw()
 {
     ax::NodeEditor::BeginNode(mID);

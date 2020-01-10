@@ -14,7 +14,28 @@ void CompositeTechnique::render(RenderGraph& graph, Engine* eng, const std::vect
 	const auto viewPortX = eng->getSwapChainImage()->getExtent(0, 0).width;
 	const auto viewPortY = eng->getSwapChainImage()->getExtent(0, 0).height;
 
-	if ((eng->isPassRegistered(PassType::DeferredTextureAnalyticalPBRIBL) || eng->isPassRegistered(PassType::DeferredTexturePBRIBL) ||
+    if(eng->debugTextureEnabled())
+    {
+        GraphicsPipelineDescription desc
+        (
+            eng->getShader("./Shaders/FullScreenTriangle.vert"),
+            eng->getShader("./Shaders/CompositeOverlay.frag"),
+            Rect{ viewPortX, viewPortY },
+            Rect{ viewPortX, viewPortY }
+        );
+
+        GraphicsTask compositeTask("Composite", desc);
+        compositeTask.addInput(eng->getDebugTextureSlot(), AttachmentType::Texture2D);
+        compositeTask.addInput(kOverlay, AttachmentType::Texture2D);
+        compositeTask.addInput(kDefaultSampler, AttachmentType::Sampler);
+
+        compositeTask.addOutput(kFrameBufer, AttachmentType::RenderTarget2D, eng->getSwapChainImage()->getFormat(), SizeClass::Custom, LoadOp::Clear_Black);
+
+        compositeTask.addDrawCall(0, 3);
+
+        graph.addTask(compositeTask);
+    }
+    else if ((eng->isPassRegistered(PassType::DeferredTextureAnalyticalPBRIBL) || eng->isPassRegistered(PassType::DeferredTexturePBRIBL) ||
         eng->isPassRegistered(PassType::DeferredTextureBlinnPhongLighting) || eng->isPassRegistered(PassType::ForwardIBL) || eng->isPassRegistered(PassType::DeferredPBRIBL))
             && eng->isPassRegistered(PassType::Overlay))
 	{

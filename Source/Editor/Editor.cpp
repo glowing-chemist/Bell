@@ -213,6 +213,8 @@ Editor::Editor(GLFWwindow* window) :
     mCurrentCursorPos{0.0, 0.0},
     mMode{1},
     mShowHelpMenu{false},
+    mShowDebugTexturePicker{false},
+    mDebugTextureName(""),
     mShowFileBrowser{false},
     mFileBrowser{"/"},
     mShowNodeEditor{false},
@@ -458,6 +460,49 @@ void Editor::drawAssistantWindow()
            ImGui::EndMenu();
        }
 
+       ImGui::Checkbox("Debug texture picker", &mShowDebugTexturePicker);
+
+       ImGui::End();
+    }
+
+    std::vector<std::string> textures = mNodeEditor.getAvailableDebugTextures();
+    if(mShowDebugTexturePicker)
+    {
+        drawDebugTexturePicker(textures);
+
+        if(mCurrentDebugTexture != -1)
+        {
+            mDebugTextureName = textures[mCurrentDebugTexture];
+        }
+    }
+    else
+        mCurrentDebugTexture = -1;
+
+    if(mCurrentDebugTexture != -1)
+    {
+        mEngine.enableDebugTexture(textures[mCurrentDebugTexture]);
+    }
+    else
+    {
+        mEngine.disableDebugTexture();
+    }
+}
+
+
+void Editor::drawDebugTexturePicker(const std::vector<std::string>& textures)
+{
+    if(ImGui::Begin("Debug texture picker"))
+    {
+
+        ImGui::BeginGroup();
+
+        for(int i = 0; i < textures.size(); ++i)
+        {
+            ImGui::RadioButton(textures[i].c_str(), &mCurrentDebugTexture, i);
+        }
+
+
+        ImGui::EndGroup();
 
         ImGui::End();
     }

@@ -38,6 +38,7 @@ private:
 
     void drawMenuBar();
     void drawAssistantWindow();
+    void drawDebugTexturePicker(const std::vector<std::string>& textures);
 
     void drawPassContextMenu(const PassType);
 
@@ -53,6 +54,10 @@ private:
     CursorPosition mCurrentCursorPos;
     int mMode;
     bool mShowHelpMenu;
+
+    bool mShowDebugTexturePicker;
+    int mCurrentDebugTexture;
+    std::string mDebugTextureName;
 
     bool mShowFileBrowser;
     ImGuiFileBrowser mFileBrowser;

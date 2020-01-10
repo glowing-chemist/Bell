@@ -96,6 +96,28 @@ public:
 		mCurrentPasstypes = 0;
 	}
 
+    void enableDebugTexture(const std::string& slot)
+    {
+        mShowDebugTexture = true;
+        mDebugTextureName = slot;
+    }
+
+    void disableDebugTexture()
+    {
+        mShowDebugTexture = false;
+        mDebugTextureName = "";
+    }
+
+    const std::string& getDebugTextureSlot() const
+    {
+        return mDebugTextureName;
+    }
+
+    bool debugTextureEnabled() const
+    {
+        return mShowDebugTexture;
+    }
+
     // returns an vertex and index buffer offset.
     std::pair<uint64_t, uint64_t> addMeshToBuffer(const StaticMesh*);
 
@@ -180,6 +202,10 @@ private:
     PerFrameResource<Buffer> mIndexBuffer;
 
     Sampler mDefaultSampler;
+
+    // Debug helpers
+    bool mShowDebugTexture;
+    std::string mDebugTextureName;
 
 	// Global uniform buffers
 
