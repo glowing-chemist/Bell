@@ -16,6 +16,7 @@ void CompositeTechnique::render(RenderGraph& graph, Engine* eng, const std::vect
 
 	const bool usingGlobalLighting = eng->isPassRegistered(PassType::DeferredTextureAnalyticalPBRIBL) || eng->isPassRegistered(PassType::DeferredTexturePBRIBL) ||
 		eng->isPassRegistered(PassType::DeferredTextureBlinnPhongLighting) || eng->isPassRegistered(PassType::ForwardIBL) || eng->isPassRegistered(PassType::DeferredPBRIBL);
+	const bool usingAnalyticalLighting = eng->isPassRegistered(PassType::DeferredAnalyticalLighting);
 	const bool usingSSAO = eng->isPassRegistered(PassType::SSAO) || eng->isPassRegistered(PassType::SSAOImproved);
 	const bool usingOverlay = eng->isPassRegistered(PassType::Overlay);
 
@@ -40,7 +41,7 @@ void CompositeTechnique::render(RenderGraph& graph, Engine* eng, const std::vect
 
         graph.addTask(compositeTask);
     }
-	else if (usingGlobalLighting && usingSSAO && usingOverlay)
+	else if ((usingGlobalLighting != usingAnalyticalLighting) && usingSSAO && usingOverlay)
 	{
 		GraphicsPipelineDescription desc
 		(
@@ -51,7 +52,7 @@ void CompositeTechnique::render(RenderGraph& graph, Engine* eng, const std::vect
 		);
 
 		GraphicsTask compositeTask("Composite", desc);
-		compositeTask.addInput(kGlobalLighting, AttachmentType::Texture2D);
+		compositeTask.addInput(usingGlobalLighting ? kGlobalLighting : kAnalyticLighting, AttachmentType::Texture2D);
 		compositeTask.addInput(kSSAO, AttachmentType::Texture2D);
 		compositeTask.addInput(kOverlay, AttachmentType::Texture2D);
 		compositeTask.addInput(kDefaultSampler, AttachmentType::Sampler);
@@ -62,7 +63,7 @@ void CompositeTechnique::render(RenderGraph& graph, Engine* eng, const std::vect
 
 		graph.addTask(compositeTask);
 	}
-    else if (usingGlobalLighting && usingOverlay)
+    else if ((usingGlobalLighting != usingAnalyticalLighting) && usingOverlay)
 	{
 		GraphicsPipelineDescription desc
 		(
@@ -73,7 +74,7 @@ void CompositeTechnique::render(RenderGraph& graph, Engine* eng, const std::vect
 		);
 
 		GraphicsTask compositeTask("Composite", desc);
-		compositeTask.addInput(kGlobalLighting, AttachmentType::Texture2D);
+		compositeTask.addInput(usingGlobalLighting ? kGlobalLighting : kAnalyticLighting, AttachmentType::Texture2D);
 		compositeTask.addInput(kOverlay, AttachmentType::Texture2D);
 		compositeTask.addInput(kDefaultSampler, AttachmentType::Sampler);
 
