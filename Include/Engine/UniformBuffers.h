@@ -28,7 +28,7 @@ struct CameraBuffer
 
 struct SSAOBuffer
 {
-	glm::vec4 mOffsets[16];
+	glm::vec4 mOffsets[64];
     float mScale;
     int mOffsetsCount;
 };

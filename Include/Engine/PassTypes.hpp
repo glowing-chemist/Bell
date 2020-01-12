@@ -30,7 +30,8 @@
 					DeferredAnalyticalLighting = 1 << 23, \
 					ForwardAnalyticalLighting = 1 << 24, \
 					DeferredCombinedLighting = 1 << 25, \
-					ForwardCombinedLighting = 1 << 26 \
+					ForwardCombinedLighting = 1 << 26, \
+					SSAOImproved = 1 << 27 \
 
 // An enum to keep track of which 
 enum class PassType : uint64_t
@@ -55,6 +56,9 @@ inline const char* passToString(const PassType passType)
 
         case PassType::SSAO:
             return "SSAO";
+
+		case PassType::SSAOImproved:
+			return "SSAO Improved";
 
         case PassType::GBufferPreDepth:
             return "GBuffer Pre-Depth";

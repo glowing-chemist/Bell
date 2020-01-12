@@ -2,6 +2,9 @@
 #define SSAOTECHNIQUE_HPP
 
 #include "Core/Image.hpp"
+#include "Core/Buffer.hpp"
+#include "Core/BufferView.hpp"
+#include "Core/PerFrameResource.hpp"
 #include "Engine/Technique.hpp"
 #include "Engine/Engine.hpp"
 #include "Engine/DefaultResourceSlots.hpp"
@@ -18,29 +21,52 @@ public:
 	virtual PassType getPassType() const final override
 		{ return PassType::SSAO; }
 
-	void setDepthName(const std::string& depthSlot)
-	{ mDepthNameSlot = depthSlot; }
+	virtual void bindResources(RenderGraph& graph) const override final 
+	{
+		graph.bindBuffer(kSSAOBuffer, *mSSAOBufferView);
+	}
 
-	std::string getSSAOImageName() const
-        { return kSSAO; }
-
-	Sampler& getSampler()
-		{ return mLinearSampler; }
-
-	std::string getSSAOSamplerName() const
-        { return kDefaultSampler; }
-
-    virtual void bindResources(RenderGraph&) const override final;
-	virtual void render(RenderGraph&, Engine*, const std::vector<const Scene::MeshInstance *> &) override final;
+	virtual void render(RenderGraph& graph, Engine*, const std::vector<const Scene::MeshInstance*>&) override final;
 
 private:
 
 	std::string mDepthNameSlot;
 
-	Sampler mLinearSampler;
+	GraphicsPipelineDescription mPipelineDesc;
+	GraphicsTask mTask;
+
+	PerFrameResource<Buffer> mSSAOBuffer;
+	PerFrameResource<BufferView> mSSAOBufferView;
+};
+
+
+class SSAOImprovedTechnique : public Technique
+{
+public:
+	SSAOImprovedTechnique(Engine* dev);
+	virtual ~SSAOImprovedTechnique() = default;
+
+	virtual PassType getPassType() const final override
+	{
+		return PassType::SSAOImproved;
+	}
+
+	virtual void bindResources(RenderGraph& graph) const override final 
+	{
+		graph.bindBuffer(kSSAOBuffer, *mSSAOBufferView);
+	}
+
+	virtual void render(RenderGraph& graph, Engine*, const std::vector<const Scene::MeshInstance*>&) override final;
+
+private:
+
+	std::string mDepthNameSlot;
 
 	GraphicsPipelineDescription mPipelineDesc;
 	GraphicsTask mTask;
+
+	PerFrameResource<Buffer> mSSAOBuffer;
+	PerFrameResource<BufferView> mSSAOBufferView;
 };
 
 

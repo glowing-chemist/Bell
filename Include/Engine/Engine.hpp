@@ -214,10 +214,6 @@ private:
 
     PerFrameResource<Buffer> mShadowCastingLight;
 
-	SSAOBuffer mSSAOBUffer;
-	Buffer mDeviceSSAOBuffer;
-	bool mGeneratedSSAOBuffer;
-
     PerFrameResource<Buffer> mLightBuffer;
     PerFrameResource<BufferView> mLightBufferView;
     PerFrameResource<ShaderResourceSet> mLightsSRS;

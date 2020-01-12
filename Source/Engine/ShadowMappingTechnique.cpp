@@ -5,8 +5,8 @@
 
 ShadowMappingTechnique::ShadowMappingTechnique(Engine* eng) :
     Technique("ShadowMapping", eng->getDevice()),
-    mDesc(eng->getShader("ShadowMap.vert"),
-          eng->getShader("VarianceShadowMap.frag"),
+    mDesc(eng->getShader("./Shaders/ShadowMap.vert"),
+          eng->getShader("./Shaders/VarianceShadowMap.frag"),
           Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
                 getDevice()->getSwapChain()->getSwapChainImageHeight()},
           Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
@@ -17,6 +17,7 @@ ShadowMappingTechnique::ShadowMappingTechnique(Engine* eng) :
                               VertexAttributes::Normals | VertexAttributes::TextureCoordinates);
 
     mTask.addInput(kShadowingLights, AttachmentType::UniformBuffer);
+    mTask.addInput("lightMatrix", AttachmentType::PushConstants);
     mTask.addOutput(kShadowMap, AttachmentType::RenderTarget2D, Format::RG32Float, SizeClass::Swapchain, LoadOp::Clear_White);
 }
 

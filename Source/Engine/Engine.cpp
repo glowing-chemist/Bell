@@ -55,9 +55,6 @@ Engine::Engine(GLFWwindow* windowPtr) :
     mCameraBuffer{},
 	mDeviceCameraBuffer{getDevice(), BufferUsage::Uniform, sizeof(CameraBuffer), sizeof(CameraBuffer), "Camera Buffer"},
     mShadowCastingLight(getDevice(), BufferUsage::Uniform, sizeof(Scene::ShadowingLight), sizeof(Scene::ShadowingLight), "ShadowingLight"),
-    mSSAOBUffer{},
-	mDeviceSSAOBuffer{getDevice(), BufferUsage::Uniform, sizeof(SSAOBuffer), sizeof(SSAOBuffer), "SSAO Buffer"},
-	mGeneratedSSAOBuffer{false},
     mLightBuffer(getDevice(), BufferUsage::DataBuffer | BufferUsage::TransferDest, (sizeof(Scene::Light) * 1000) + sizeof(uint32_t), (sizeof(Scene::Light) * 1000) + sizeof(uint32_t), "LightBuffer"),
     mLightBufferView(mLightBuffer),
     mLightsSRS(getDevice()),
@@ -172,6 +169,9 @@ std::unique_ptr<Technique> Engine::getSingleTechnique(const PassType passType)
 
         case PassType::SSAO:
             return std::make_unique<SSAOTechnique>(this);
+
+		case PassType::SSAOImproved:
+			return std::make_unique<SSAOImprovedTechnique>(this);
 
         case PassType::GBufferPreDepth:
             return std::make_unique<GBufferPreDepthTechnique>(this);
@@ -361,8 +361,8 @@ void Engine::recordScene()
 
 	mCurrentRenderGraph.bindShaderResourceSet(kMaterials, mMaterials);
     mCurrentRenderGraph.bindBuffer(kCameraBuffer, *mDeviceCameraBuffer);
+	mCurrentRenderGraph.bindBuffer(kShadowingLights, *mShadowCastingLight);
     mCurrentRenderGraph.bindShaderResourceSet(kLightBuffer, *mLightsSRS);
-    mCurrentRenderGraph.bindBuffer(kSSAOBuffer, mDeviceSSAOBuffer);
     mCurrentRenderGraph.bindSampler(kDefaultSampler, mDefaultSampler);
 
 	if(mCurrentScene.getSkybox())
@@ -421,58 +421,28 @@ void Engine::submitCommandRecorder(CommandContext &ccx)
 
 void Engine::updateGlobalBuffers()
 {
-	auto& currentCamera = getCurrentSceneCamera();
+	{
+		auto& currentCamera = getCurrentSceneCamera();
 
-	mCameraBuffer.mViewMatrix = currentCamera.getViewMatrix();
-	mCameraBuffer.mPerspectiveMatrix = currentCamera.getPerspectiveMatrix();
-	mCameraBuffer.mInvertedCameraMatrix = glm::inverse(mCameraBuffer.mPerspectiveMatrix * mCameraBuffer.mViewMatrix);
-	mCameraBuffer.mInvertedPerspective = glm::inverse(mCameraBuffer.mPerspectiveMatrix);
-	mCameraBuffer.mFrameBufferSize = glm::vec2{getSwapChainImage()->getExtent(0, 0).width, getSwapChainImage()->getExtent(0, 0).height};
-	mCameraBuffer.mPosition = currentCamera.getPosition();
-	mCameraBuffer.mNeaPlane = currentCamera.getNearPlane();
-	mCameraBuffer.mFarPlane = currentCamera.getFarPlane();
-    mCameraBuffer.mFOV = currentCamera.getFOV();
+		mCameraBuffer.mViewMatrix = currentCamera.getViewMatrix();
+		mCameraBuffer.mPerspectiveMatrix = currentCamera.getPerspectiveMatrix();
+		mCameraBuffer.mInvertedCameraMatrix = glm::inverse(mCameraBuffer.mPerspectiveMatrix * mCameraBuffer.mViewMatrix);
+		mCameraBuffer.mInvertedPerspective = glm::inverse(mCameraBuffer.mPerspectiveMatrix);
+		mCameraBuffer.mFrameBufferSize = glm::vec2{ getSwapChainImage()->getExtent(0, 0).width, getSwapChainImage()->getExtent(0, 0).height };
+		mCameraBuffer.mPosition = currentCamera.getPosition();
+		mCameraBuffer.mNeaPlane = currentCamera.getNearPlane();
+		mCameraBuffer.mFarPlane = currentCamera.getFarPlane();
+		mCameraBuffer.mFOV = currentCamera.getFOV();
 
-	MapInfo mapInfo{};
-	mapInfo.mSize = sizeof(CameraBuffer);
-	mapInfo.mOffset = 0;
+		MapInfo mapInfo{};
+		mapInfo.mSize = sizeof(CameraBuffer);
+		mapInfo.mOffset = 0;
 
-    void* cameraBufferPtr = mDeviceCameraBuffer.get()->map(mapInfo);
+		void* cameraBufferPtr = mDeviceCameraBuffer.get()->map(mapInfo);
 
 		std::memcpy(cameraBufferPtr, &mCameraBuffer, sizeof(CameraBuffer));
 
-    mDeviceCameraBuffer.get()->unmap();
-
-	// The SSAO buffer only needs tp be updated once.
-	// Or if the number of samples needs to be changed.
-	if(!mGeneratedSSAOBuffer)
-	{
-		std::array<float3, 16> offsets;
-
-		for(uint32_t i = 0; i < 16; ++i)
-		{
-			const float r1 = (static_cast <float> (rand()) / static_cast <float> (RAND_MAX / 2)) - 1.0f;
-			const float r2 = (static_cast <float> (rand()) / static_cast <float> (RAND_MAX / 2)); // generate vectors on a hemisphere.
-			const float r3 = (static_cast <float> (rand()) / static_cast <float> (RAND_MAX / 2)) - 1.0f;
-
-			const float3 vec = glm::normalize(float3{r1, r2, r3});
-
-			offsets[i] = float4{vec, 0.0f};
-		}
-
-		mGeneratedSSAOBuffer = true;
-
-        std::memcpy(&mSSAOBUffer.mOffsets[0], offsets.data(), offsets.size() * sizeof(float3));
-		mSSAOBUffer.mScale = 0.001f;
-		mSSAOBUffer.mOffsetsCount = offsets.size();
-
-		mapInfo.mSize = sizeof(SSAOBuffer);
-
-		void* SSAOBufferPtr = mDeviceSSAOBuffer->map(mapInfo);
-
-			std::memcpy(SSAOBufferPtr, &mSSAOBUffer, sizeof(SSAOBuffer));
-
-		mDeviceSSAOBuffer->unmap();
+		mDeviceCameraBuffer.get()->unmap();
 	}
 
     {
@@ -484,7 +454,10 @@ void Engine::updateGlobalBuffers()
 
     {
         const Scene::ShadowingLight& shadowingLight = mCurrentScene.getShadowingLight();
-        mapInfo.mSize = sizeof(Scene::ShadowingLight);
+
+		MapInfo mapInfo{};
+		mapInfo.mSize = sizeof(Scene::ShadowingLight);
+		mapInfo.mOffset = 0;
 
         void* dst = mShadowCastingLight.get()->map(mapInfo);
 
