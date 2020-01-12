@@ -153,6 +153,8 @@ int main(int argc, char** argv)
         engine.registerPass(PassType::Skybox);
 
 #endif
+        engine.registerPass(PassType::Shadow);
+        engine.registerPass(PassType::SSAOImproved);
 		engine.registerPass(PassType::Overlay);
 		engine.registerPass(PassType::Composite);
 
@@ -160,7 +162,6 @@ int main(int argc, char** argv)
         engine.render();
         engine.swap();
         engine.endFrame();
-        engine.flushWait();
 
         firstFrame = false;
     }
