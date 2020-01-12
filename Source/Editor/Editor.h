@@ -52,6 +52,7 @@ private:
         double y;
     };
     CursorPosition mCurrentCursorPos;
+    CursorPosition mCursorPosDelta;
     int mMode;
     bool mShowHelpMenu;
 

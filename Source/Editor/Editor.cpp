@@ -325,7 +325,12 @@ void Editor::pumpInputQueue()
 {
     glfwPollEvents();
 
+    const double previousCursorX = mCurrentCursorPos.x;
+    const double previousCursorY = mCurrentCursorPos.y;
+
     glfwGetCursorPos(mWindow, &mCurrentCursorPos.x, &mCurrentCursorPos.y);
+    mCursorPosDelta.x = mCurrentCursorPos.x - previousCursorX;
+    mCursorPosDelta.y = mCurrentCursorPos.y - previousCursorY;
 
 	ImGuiIO& io = ImGui::GetIO();
 	io.MousePos = ImVec2(static_cast<float>(mCurrentCursorPos.x),
@@ -360,14 +365,12 @@ void Editor::pumpInputQueue()
 			camera.moveLeft(0.5f);
 		if (glfwGetKey(mWindow, GLFW_KEY_D) == GLFW_PRESS)
 			camera.moveRight(0.5f);
-		if (glfwGetKey(mWindow, GLFW_KEY_Q) == GLFW_PRESS)
-			camera.rotateYaw(1.0f);
-		if (glfwGetKey(mWindow, GLFW_KEY_E) == GLFW_PRESS)
-			camera.rotateYaw(-1.0f);
-		if (glfwGetKey(mWindow, GLFW_KEY_SPACE) == GLFW_PRESS)
-			camera.moveUp((0.5f));
-		if (glfwGetKey(mWindow, GLFW_KEY_C) == GLFW_PRESS)
-			camera.moveDown(0.5f);
+
+        if (!ImGui::IsAnyWindowFocused())
+        {
+            camera.rotatePitch(mCursorPosDelta.y);
+            camera.rotateYaw(mCursorPosDelta.x);
+        }
 	}
 }
 
