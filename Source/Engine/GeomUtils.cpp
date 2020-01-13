@@ -18,10 +18,14 @@ bool Plane::isInFrontOf(const AABB& aabb, const EstimationMode estimationMode) c
     }
     else
     {
+        inFrontOf = false;
         for(const auto& vertex : aabbVerticies)
         {
-            if(isInFrontOf(vertex))
+            if (isInFrontOf(vertex))
+            {
+                inFrontOf = true;
                 break;
+            }
         }
     }
 

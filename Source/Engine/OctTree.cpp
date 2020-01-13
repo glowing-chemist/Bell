@@ -49,7 +49,21 @@ std::vector<T> OctTree<T>::containedWithin(const Frustum& frustum, const Estimat
 	if (!mRoot)
 		return {};
 
+#if 1
+	std::vector<T> meshes{};
+
+	for (const auto& mesh : mRoot->mValues)
+	{
+		if (frustum.isContainedWithin(mesh->mMesh->getAABB() * mesh->mTransformation, estimationMode))
+		{
+			meshes.push_back(mesh);
+		}
+	}
+
+	return meshes;
+#else
 	return containedWithin(frustum, mRoot, estimationMode);
+#endif
 }
 
 
@@ -80,7 +94,7 @@ std::unique_ptr<typename OctTree<T>::Node> OctTreeFactory<T>::createSpacialSubdi
 	{
 		const auto subSpaces = splitAABB(parentBox);
 
-		for (uint32_t i = 0; i < 8; ++i)
+		for (uint32_t i = 0; i < subSpaces.size(); ++i)
 		{
 			newNode->mChildren[i] = createSpacialSubdivisions(subdivisions - 1, subSpaces[i], nodes);
 		}

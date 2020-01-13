@@ -75,7 +75,7 @@ bool AABB::contains(const AABB& aabb, const EstimationMode estimationMode) const
 		const bool isInside = contains(vertex);
 		inside = inside && isInside;
 
-		if (estimationMode == EstimationMode::Under && isInside)
+		if (estimationMode == EstimationMode::Over && isInside)
 			return isInside;
 	}
 

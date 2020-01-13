@@ -448,8 +448,8 @@ void Scene::generateSceneAABB(const bool includeStatic)
 
 void Scene::setShadowingLight(const glm::vec3& position, const glm::vec3& direction)
 {
-    const glm::mat4 view = glm::lookAt(position, direction, glm::vec3(0.0f, 1.0f, 0.0f));
-    const glm::mat4 proj = glm::perspective(glm::radians(90.0f), 1920.f / 1080.f, 0.1f, 100.0f);
+    const glm::mat4 view = glm::lookAt(position, position + direction, glm::vec3(0.0f, -1.0f, 0.0f));
+    const glm::mat4 proj = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 2000.0f);
 
     ShadowingLight light{view, glm::inverse(view), proj * view};
     mShadowingLight = light;

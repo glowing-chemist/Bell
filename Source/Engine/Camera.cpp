@@ -22,22 +22,22 @@ Frustum::Frustum(const float3& position,
 	glm::mat3 rightPlaneRotation = glm::rotate(glm::mat4(1.0f), (angle / 2.0f), up);
     float3 rightVector = glm::normalize(glm::cross(direction, up));
 
-    mLeftPlane = {leftPlaneRotation * (position + (direction * (lenght / 2.0f))),
-                   leftPlaneRotation * rightVector};
+    mLeftPlane = {(leftPlaneRotation * direction) * (lenght / 2.0f) + position,
+                   -(leftPlaneRotation * rightVector)};
 
-    mRightPLane = {rightPlaneRotation * (position + (direction * (lenght / 2.0f))),
-                   rightPlaneRotation * -rightVector};
+    mRightPLane = {(rightPlaneRotation * direction) * (lenght / 2.0f) + position,
+                   rightPlaneRotation * rightVector};
 
 
 	glm::mat3 bottomPlaneRotation = glm::rotate(glm::mat4(1.0f), (angle / 2.0f), rightVector);
 	glm::mat3 topPlaneRotation = glm::rotate(glm::mat4(1.0f), -(angle / 2.0f), rightVector);
     float3 normalisedUp = glm::normalize(up);
 
-    mBottomPlane = {bottomPlaneRotation * (position + (direction * (lenght / 2.0f))),
-                    rightPlaneRotation * normalisedUp};
+    mBottomPlane = { (bottomPlaneRotation * direction) * (lenght / 2.0f) + position,
+                    -(bottomPlaneRotation * normalisedUp)};
 
-    mTopPlane = {topPlaneRotation * (position + (direction * (lenght / 2.0f))),
-                   leftPlaneRotation * -normalisedUp};
+    mTopPlane = { (topPlaneRotation * direction) * (lenght / 2.0f) + position,
+                   topPlaneRotation * normalisedUp};
 }
 
 
@@ -124,7 +124,7 @@ void Camera::rotatePitch(const float angle)
 
 void Camera::rotateYaw(const float angle)
 {
-	const glm::mat3 rotation = glm::rotate(glm::mat4(1.0f), glm::radians(angle), float3(0.0f, 1.0f, 0.0f));
+	const glm::mat3 rotation = glm::rotate(glm::mat4(1.0f), glm::radians(angle), mUp);
     mDirection = glm::normalize(rotation * mDirection);
 }
 
