@@ -48,10 +48,12 @@ Scene::Scene(const std::string& name) :
     mStaticMeshBoundingVolume(),
     mDynamicMeshBoundingVolume(),
 	mSceneAABB(float3(std::numeric_limits<float>::max()), float3(std::numeric_limits<float>::min())),
-	mSceneCamera(float3(), float3(0.0f, 0.0f, 1.0f), 0.1f, 500.0f),
+	mSceneCamera(float3(), float3(0.0f, 0.0f, 1.0f), 0.1f, 2000.0f),
 	mFinalised(false),
 	mMaterials{},
 	mMaterialImageViews{},
+    mLights{},
+    mShadowingLight{},
 	mSkybox{nullptr}
 {
 }
@@ -69,6 +71,8 @@ Scene::Scene(Scene&& scene) :
 	mFinalised{scene.mFinalised.load(std::memory_order::memory_order_relaxed)},
     mMaterials{std::move(scene.mMaterials)},
     mMaterialImageViews{std::move(scene.mMaterialImageViews)},
+    mLights{std::move(scene.mLights)},
+    mShadowingLight{std::move(scene.mShadowingLight)},
     mSkybox{std::move(scene.mSkybox)},
     mSkyboxView(std::move(scene.mSkyboxView))
 {
@@ -88,6 +92,8 @@ Scene& Scene::operator=(Scene&& scene)
     mFinalised = scene.mFinalised.load(std::memory_order::memory_order_relaxed);
 	mMaterials = std::move(scene.mMaterials);
 	mMaterialImageViews = std::move(scene.mMaterialImageViews);
+    mLights = std::move(scene.mLights);
+    mShadowingLight = std::move(scene.mShadowingLight);
 	mSkybox = std::move(scene.mSkybox);
     mSkyboxView = std::move(scene.mSkyboxView);
 

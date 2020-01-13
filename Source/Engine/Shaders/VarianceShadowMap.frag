@@ -8,6 +8,6 @@ layout(location = 0) out vec2 shadowMap;
 
 void main()
 {
-	shadowMap.x = positionVS.z;
+	shadowMap.x = -positionVS.z;
 	shadowMap.y = positionVS.z * positionVS.z;
 }

@@ -17,9 +17,14 @@ layout(set = 0, binding = 0) uniform UniformBufferObject
     ShadowingLight light;
 };
 
+layout(push_constant) uniform pushModelMatrix
+{
+	mat4 model;
+} push_constants;
+
 
 void main()
 {
-	gl_Position = light.viewProj * position;
-	positionVS = light.view * position;
+	gl_Position = light.viewProj * push_constants.model * position;
+	positionVS = light.view * push_constants.model * position;
 }
