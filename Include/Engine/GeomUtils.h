@@ -42,7 +42,7 @@ class Plane
 	
     Plane(const float3& position, const float3& normal) : mCenterPosition{position},
         mNormal{normal}
-        { BELL_ASSERT(glm::length(mNormal) < 1.1f, "Direction vecotr of plane is not normalised") }
+        { BELL_ASSERT(glm::length(mNormal) < 1.1f && glm::length(mNormal) > 0.9f, "Direction vecotr of plane is not normalised") }
 
     Plane() = default;
 
