@@ -7,38 +7,45 @@
 #include "Engine/GeomUtils.h"
 
 
+// Can be enabled for small scenes where the cost of octree traversal traversal is greater
+// than just looping over all meshes.
+#define SMALL_SCENE_OPTIMISATION 1
+
 static constexpr float NO_INTERSECTION = std::numeric_limits<float>::max();
 
 
 template<typename T>
-std::vector<T> OctTree<T>::containedWithin(const Frustum& frustum, const std::unique_ptr<typename OctTree<T>::Node>& node, const EstimationMode estimationMode) const
+void OctTree<T>::containedWithin(std::vector<T>& meshes, const Frustum& frustum, const std::unique_ptr<typename OctTree<T>::Node>& node, const EstimationMode estimationMode) const
 {
 	if (frustum.isContainedWithin(node->mBoundingBox, EstimationMode::Under))
-		return node->mValues;
-
-	std::set<T> values{};
+	{
+		meshes.insert(meshes.end(), node->mValues.begin(), node->mValues.end());
+		return;
+	}
 
 	for (const auto& childNode : node->mChildren)
 	{
 		if (!childNode)
 		{
-			values.insert(node->mValues.begin(), node->mValues.end());
-		}
-		else if (frustum.isContainedWithin(childNode->mBoundingBox, estimationMode))
-		{
-			values.insert(node->mValues.begin(), node->mValues.end());
+			if (frustum.isContainedWithin(node->mBoundingBox, estimationMode))
+			{
+				for (const auto& mesh : node->mValues)
+				{
+					if (frustum.isContainedWithin(mesh->mMesh->getAABB() * mesh->mTransformation, estimationMode))
+						meshes.push_back(mesh);
+				}
+			}
+			return;
 		}
 		else
 		{
 			for (const auto& subNode : node->mChildren)
 			{
-				const auto v = containedWithin(frustum, subNode, estimationMode);
-				values.insert(v.begin(), v.end());
+				if (frustum.isContainedWithin(subNode->mBoundingBox, estimationMode))
+					containedWithin(meshes, frustum, subNode, estimationMode);
 			} 
 		}
 	}
-
-	return std::vector<T>{values.begin(), values.end()};
 }
 
 
@@ -49,8 +56,9 @@ std::vector<T> OctTree<T>::containedWithin(const Frustum& frustum, const Estimat
 	if (!mRoot)
 		return {};
 
-#if 1
 	std::vector<T> meshes{};
+
+#if SMALL_SCENE_OPTIMISATION
 
 	for (const auto& mesh : mRoot->mValues)
 	{
@@ -60,10 +68,15 @@ std::vector<T> OctTree<T>::containedWithin(const Frustum& frustum, const Estimat
 		}
 	}
 
-	return meshes;
 #else
-	return containedWithin(frustum, mRoot, estimationMode);
+	meshes.reserve(mRoot->mValues.size());
+	containedWithin(meshes, frustum, mRoot, estimationMode);
+
+	std::sort(meshes.begin(), meshes.end());
+	meshes.erase(std::unique(meshes.begin(), meshes.end()), meshes.end());
 #endif
+
+	return meshes;
 }
 
 
@@ -124,7 +137,7 @@ std::array<AABB, 8> OctTreeFactory<T>::splitAABB(const AABB& aabb) const
 	const AABB fith(cube.mUpper1 + float3(0.0f, diagonal.y / 2.0f, 0.0f), centre + float3(0.0f, diagonal.y / 2.0f, 0.0f));
 	const AABB sixth(cube.mUpper1 + float3(0.0f, diagonal.y / 2.0f, diagonal.z / 2.0f), centre + float3(0.0f, diagonal.y / 2.0f, diagonal.z / 2.0f));
 	const AABB seventh(cube.mUpper1 + float3(diagonal.x / 2.0f, diagonal.y / 2.0f, 0.0f), centre + float3(diagonal.x / 2.0f, diagonal.y / 2.0f, 0.0f));
-	const AABB eighth(cube.mUpper1 + float3(diagonal.x / 2.0f, diagonal.y / 2.0f, diagonal.z / 2.0f), cube.mUpper1 + diagonal);
+	const AABB eighth(centre, cube.mLower3);
 
 	return { first, second, third, fourth,
 			fith, sixth, seventh, eighth };
