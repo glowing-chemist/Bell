@@ -95,6 +95,9 @@ std::unique_ptr<typename OctTree<T>::Node> OctTreeFactory<T>::createSpacialSubdi
 	auto newNode = std::make_unique<typename OctTree<T>::Node>();
 	newNode->mBoundingBox = parentBox;
 
+	if (nodes.empty())
+		return newNode;
+
 	for (const auto& node : nodes)
 	{
 		if (parentBox.contains(node.mBoundingBox, EstimationMode::Over))
