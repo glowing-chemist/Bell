@@ -10,7 +10,8 @@ ShadowMappingTechnique::ShadowMappingTechnique(Engine* eng) :
           Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
                 getDevice()->getSwapChain()->getSwapChainImageHeight()},
           Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
-          getDevice()->getSwapChain()->getSwapChainImageHeight()}),
+          getDevice()->getSwapChain()->getSwapChainImageHeight()},
+        true, BlendMode::None, BlendMode::None, true, DepthTest::LessEqual, Primitive::TriangleList),
     mTask("ShadowMapping", mDesc)
 {
     mTask.setVertexAttributes(VertexAttributes::Position4 | VertexAttributes::Material |
@@ -19,6 +20,7 @@ ShadowMappingTechnique::ShadowMappingTechnique(Engine* eng) :
     mTask.addInput(kShadowingLights, AttachmentType::UniformBuffer);
     mTask.addInput("lightMatrix", AttachmentType::PushConstants);
     mTask.addOutput(kShadowMap, AttachmentType::RenderTarget2D, Format::RG32Float, SizeClass::Swapchain, LoadOp::Clear_Black);
+    mTask.addOutput("ShadowMapDepth", AttachmentType::Depth, Format::D32Float, SizeClass::Swapchain, LoadOp::Clear_White);
 }
 
 
