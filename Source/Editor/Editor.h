@@ -60,6 +60,8 @@ private:
     int mCurrentDebugTexture;
     std::string mDebugTextureName;
 
+    bool mInFreeFlyMode;
+
     bool mShowFileBrowser;
     ImGuiFileBrowser mFileBrowser;
     bool mShowNodeEditor;

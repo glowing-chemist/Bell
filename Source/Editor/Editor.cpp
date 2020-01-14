@@ -223,7 +223,9 @@ Editor::Editor(GLFWwindow* window) :
     mMode{1},
     mShowHelpMenu{false},
     mShowDebugTexturePicker{false},
+    mCurrentDebugTexture(-1),
     mDebugTextureName(""),
+    mInFreeFlyMode(false),
     mShowFileBrowser{false},
     mFileBrowser{"/"},
     mShowNodeEditor{false},
@@ -358,18 +360,25 @@ void Editor::pumpInputQueue()
 		Camera& camera = mEngine.getCurrentSceneCamera();
 
 		if (glfwGetKey(mWindow, GLFW_KEY_W) == GLFW_PRESS)
-			camera.moveForward(0.5f);
+			camera.moveForward(4.5f);
 		if (glfwGetKey(mWindow, GLFW_KEY_S) == GLFW_PRESS)
-			camera.moveBackward(0.5f);
+			camera.moveBackward(4.5f);
 		if (glfwGetKey(mWindow, GLFW_KEY_A) == GLFW_PRESS)
-			camera.moveLeft(0.5f);
+			camera.moveLeft(4.5f);
 		if (glfwGetKey(mWindow, GLFW_KEY_D) == GLFW_PRESS)
-			camera.moveRight(0.5f);
+			camera.moveRight(4.5f);
 
-        if (!ImGui::IsAnyWindowFocused())
+        bool pressedEscape = glfwGetKey(mWindow, GLFW_KEY_ESCAPE) == GLFW_PRESS;
+        if (pressedEscape)
+            mInFreeFlyMode = false;
+        else if (!ImGui::IsAnyWindowFocused() && mousePressed[0])
+            mInFreeFlyMode = true;
+
+
+        if (mInFreeFlyMode)
         {
             camera.rotatePitch(mCursorPosDelta.y);
-            camera.rotateYaw(mCursorPosDelta.x);
+            camera.rotateYaw(-mCursorPosDelta.x);
         }
 	}
 }
