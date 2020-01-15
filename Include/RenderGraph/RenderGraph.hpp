@@ -121,7 +121,7 @@ public:
 		uint32_t mResourceBinding;
 	};
 
-	void generateNonPersistentImages(RenderDevice*);
+	void generateTransientImages(RenderDevice*);
 
 	void reorderTasks();
 	void mergeTasks();

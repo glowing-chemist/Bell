@@ -168,7 +168,8 @@ enum class ImageUsage : uint32_t
 	Storage = 1 << 3,
 	TransferDest = 1 << 4,
 	TransferSrc = 1 << 5,
-	CubeMap = 1 << 6
+	CubeMap = 1 << 6,
+	Transient = 1 << 7
 };
 
 inline ImageUsage operator|(const ImageUsage& lhs, const ImageUsage& rhs)

@@ -34,6 +34,7 @@ private:
     uint32_t pool; // for if we end up allocating more than one pool
     bool deviceLocal;
     bool hostMappable;
+    bool transient;
 };
 
 
@@ -46,8 +47,11 @@ class MemoryManager : public DeviceChild
 public:
 	explicit MemoryManager(RenderDevice*);
 
-    Allocation Allocate(uint64_t size, unsigned long allignment, bool hostMappable);
+    Allocation Allocate(const uint64_t size, const unsigned long allignment, const bool hostMappable);
     void       Free(Allocation alloc);
+
+    Allocation allocateTransient(const uint64_t size, const unsigned long allignment, const bool hostMappable);
+    void       resetTransientAllocations();
 
     void       BindImage(vk::Image& image, const Allocation& alloc);
     void       BindBuffer(vk::Buffer& buffer, const Allocation& alloc);
@@ -68,7 +72,7 @@ private:
     void MergeFreePools();
     void MergePool(std::vector<std::list<PoolFragment>>& pools);
 
-    Allocation AttemptToAllocate(uint64_t size, unsigned long allignment, bool deviceLocal);
+    Allocation AttemptToAllocate(const uint64_t size, const unsigned long allignment, const bool deviceLocal);
 
     void AllocateDevicePool();
     void AllocateHostMappablePool();
@@ -91,6 +95,18 @@ private:
 	std::vector<MappableMemoryInfo> mHostMappableMemoryBackers;
 	std::vector<std::list<PoolFragment>>   mDeviceLocalPools;
 	std::vector<std::list<PoolFragment>>   mHostMappablePools;
+
+    // Transient per frame memory (using a simple bump allocator).
+    struct transientMemoryInfo
+    {
+        void* mBaseAddress;
+        vk::DeviceMemory mBackingMemory;
+        uint64_t mSize;
+        uint64_t mCurrentPosition;
+    };
+    transientMemoryInfo allocateTransientPool();
+    void                destroyTransientPools();
+    std::vector<std::vector<transientMemoryInfo>> mTransientDeviceLocalPools;
 };
 
 #endif

@@ -29,7 +29,7 @@ VulkanImage::VulkanImage(RenderDevice* dev,
                                   vk::Extent3D{x, y, z},
                                   mNumberOfMips,
                                   mNumberOfLevels,
-                                   static_cast<vk::SampleCountFlagBits>(mSamples),
+                                  static_cast<vk::SampleCountFlagBits>(mSamples),
                                   vk::ImageTiling::eOptimal,
 								  getVulkanImageUsage(mUsage),
                                   vk::SharingMode::eExclusive,
@@ -43,7 +43,11 @@ VulkanImage::VulkanImage(RenderDevice* dev,
 
     vk::MemoryRequirements ImageRequirements = device->getMemoryRequirements(mImage);
 
-    mImageMemory = device->getMemoryManager()->Allocate(ImageRequirements.size, ImageRequirements.alignment, false);
+	if(usage & ImageUsage::Transient)
+		mImageMemory = device->getMemoryManager()->allocateTransient(ImageRequirements.size, ImageRequirements.alignment, false);
+	else
+		mImageMemory = device->getMemoryManager()->Allocate(ImageRequirements.size, ImageRequirements.alignment, false);
+
 	device->getMemoryManager()->BindImage(mImage, mImageMemory);
 
 

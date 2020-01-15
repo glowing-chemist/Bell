@@ -314,7 +314,7 @@ void RenderGraph::bindIndexBuffer(const Buffer& buffer)
 }
 
 
-void RenderGraph::generateNonPersistentImages(RenderDevice* dev)
+void RenderGraph::generateTransientImages(RenderDevice* dev)
 {
 	// Currently (and probably will only ever) support creating non persistent resources for graphics tasks.
 	for(const auto& task : mGraphicsTasks)
@@ -350,7 +350,7 @@ void RenderGraph::generateNonPersistentImages(RenderDevice* dev)
 			}();
 
 			Image generatedImage(dev, output.mFormat, (output.mType == AttachmentType::Depth ?
-									 ImageUsage::DepthStencil :  ImageUsage::ColourAttachment) | ImageUsage::Sampled,
+									 ImageUsage::DepthStencil :  ImageUsage::ColourAttachment) | ImageUsage::Sampled | ImageUsage::Transient,
 								 width, height, 1, 1, 1, 1, output.mName);
 
 			ImageView view{generatedImage, output.mType == AttachmentType::Depth ?

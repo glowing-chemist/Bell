@@ -303,7 +303,7 @@ void Engine::execute(RenderGraph& graph)
 {
 	// Finalize graph internal state.
 	graph.compileDependancies();
-	graph.generateNonPersistentImages(mRenderDevice);
+	graph.generateTransientImages(mRenderDevice);
 	graph.reorderTasks();
 	graph.mergeTasks();
 

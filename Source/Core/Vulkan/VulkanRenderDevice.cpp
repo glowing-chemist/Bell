@@ -857,6 +857,7 @@ void VulkanRenderDevice::startFrame()
     getCurrentCommandPool()->reset();
     clearDeferredResources();
 	mDescriptorManager.reset();
+    mMemoryManager.resetTransientAllocations();
     ++mCurrentSubmission;
     ++mFinishedSubmission;
 }
