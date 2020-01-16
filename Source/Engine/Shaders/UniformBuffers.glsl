@@ -31,5 +31,7 @@ struct ShadowingLight
         mat4 view;
         mat4 inverseView;
         mat4 viewProj;
+        vec4 position;
+        vec4 direction;
 };
 

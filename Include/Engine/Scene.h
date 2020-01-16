@@ -54,7 +54,9 @@ public:
 
     void          finalise();
 
-	std::vector<const MeshInstance*> getViewableMeshes() const;
+    std::vector<const MeshInstance*> getViewableMeshes(const Frustum&) const;
+
+    Frustum getShadowingLightFrustum() const;
 
     MeshInstance* getMeshInstance(const InstanceID);
 	const std::unique_ptr<ImageView>& getSkybox() const
@@ -117,6 +119,8 @@ public:
         glm::mat4 mViewMatrix;
         glm::mat4 mInverseView;
         glm::mat4 mViewProj;
+        glm::vec4 mPosition;
+        glm::vec4 mDirection;
     };
 
     const std::vector<Light>& getLights() const

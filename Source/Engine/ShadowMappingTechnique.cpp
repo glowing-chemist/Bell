@@ -24,11 +24,14 @@ ShadowMappingTechnique::ShadowMappingTechnique(Engine* eng) :
 }
 
 
-void ShadowMappingTechnique::render(RenderGraph& graph, Engine* eng, const std::vector<const Scene::MeshInstance*>& meshes)
+void ShadowMappingTechnique::render(RenderGraph& graph, Engine* eng, const std::vector<const Scene::MeshInstance*>&)
 {
     mTask.clearCalls();
 
     uint64_t minVertexOffset = ~0ul;
+
+    const Frustum lightFrustum = eng->getScene().getShadowingLightFrustum();
+    const std::vector<const Scene::MeshInstance*> meshes = eng->getScene().getViewableMeshes(lightFrustum);
 
     uint32_t vertexBufferOffset = 0;
     for (const auto& mesh : meshes)

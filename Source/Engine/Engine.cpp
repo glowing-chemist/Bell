@@ -343,7 +343,7 @@ void Engine::execute(RenderGraph& graph)
 
 void Engine::recordScene()
 {
-	const std::vector<const Scene::MeshInstance*> meshes = mCurrentScene.getViewableMeshes();
+    const std::vector<const Scene::MeshInstance*> meshes = mCurrentScene.getViewableMeshes(mCurrentScene.getCamera().getFrustum());
 
 	BELL_ASSERT(!mTechniques.empty(), "Need at least one technique registered with the engine")
 

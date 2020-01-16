@@ -388,19 +388,23 @@ void Scene::finalise()
 }
 
 
-std::vector<const Scene::MeshInstance *> Scene::getViewableMeshes() const
+std::vector<const Scene::MeshInstance *> Scene::getViewableMeshes(const Frustum& frustum) const
 {
     std::vector<const MeshInstance*> instances;
 
-    Frustum currentFrustum = mSceneCamera.getFrustum();
-
-	std::vector<MeshInstance*> staticMeshes = mStaticMeshBoundingVolume.containedWithin(currentFrustum, EstimationMode::Over);
-    std::vector<MeshInstance*> dynamicMeshes = mDynamicMeshBoundingVolume.containedWithin(currentFrustum, EstimationMode::Over);
+    std::vector<MeshInstance*> staticMeshes = mStaticMeshBoundingVolume.containedWithin(frustum, EstimationMode::Over);
+    std::vector<MeshInstance*> dynamicMeshes = mDynamicMeshBoundingVolume.containedWithin(frustum, EstimationMode::Over);
 
     instances.insert(instances.end(), staticMeshes.begin(), staticMeshes.end());
     instances.insert(instances.end(), dynamicMeshes.begin(), dynamicMeshes.end());
 
     return instances;
+}
+
+
+Frustum Scene::getShadowingLightFrustum() const
+{
+    return Frustum(mShadowingLight.mPosition, mShadowingLight.mDirection, float3(0.0f, -1.0f, 0.0f), 2000.0f, 0.1f, 120.0f);
 }
 
 
@@ -449,9 +453,9 @@ void Scene::generateSceneAABB(const bool includeStatic)
 void Scene::setShadowingLight(const glm::vec3& position, const glm::vec3& direction)
 {
     const glm::mat4 view = glm::lookAt(position, position + direction, glm::vec3(0.0f, -1.0f, 0.0f));
-    const glm::mat4 proj = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 2000.0f);
+    const glm::mat4 proj = glm::perspective(glm::radians(120.0f), 1.0f, 0.1f, 2000.0f);
 
-    ShadowingLight light{view, glm::inverse(view), proj * view};
+    ShadowingLight light{view, glm::inverse(view), proj * view, glm::vec4(position, 1.0f), glm::vec4(direction, 0.0f)};
     mShadowingLight = light;
 }
 
