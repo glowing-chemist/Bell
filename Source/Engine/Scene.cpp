@@ -161,9 +161,10 @@ void Scene::parseNode(const aiScene* scene,
         const auto nameIt = materialIndexMappings.find(currentMesh->mName);
         BELL_ASSERT(nameIt != materialIndexMappings.end(), "Unabel to find mesh material index")
 
-        const uint32_t materialIndex = nameIt->second;
+        const uint32_t materialIndex = nameIt->second.index;
 
 		StaticMesh mesh{currentMesh, vertAttributes, materialIndex};
+        mesh.setAttributes(nameIt->second.attributes);
 
         const SceneID meshID = addMesh(mesh, MeshType::Static);
 
@@ -243,7 +244,19 @@ Scene::MaterialMappings Scene::loadMaterials(Engine* eng)
 		materialFile >> token;
 		materialFile >> materialIndex;
 
-		materialMappings.insert({aiString(token), materialIndex});
+        uint32_t attributes = 0;
+        std::string attributeName;
+        while(materialFile >> attributeName)
+        {
+            if(attributeName == ";")
+                break;
+            else if(attributeName == "AlphaTested")
+                attributes |= MeshAttributes::AlphaTested;
+            else if(attributeName == "Transparent")
+                attributes |= MeshAttributes::Transparent;
+        }
+
+        materialMappings.insert({aiString(token), {materialIndex, attributes}});
 	}
 
 	std::string albedoFile;

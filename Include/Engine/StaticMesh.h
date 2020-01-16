@@ -13,6 +13,12 @@
 #include <string>
 #include <vector>
 
+enum MeshAttributes
+{
+    AlphaTested = 1,
+    Transparent = 1 << 1
+};
+
 
 class StaticMesh
 {
@@ -69,6 +75,16 @@ public:
 		return mVertexCount;
 	}
 
+    void setAttributes(const uint32_t attr)
+    {
+        mAttributes = attr;
+    }
+
+    uint32_t getAttributes() const
+    {
+        return mAttributes;
+    }
+
 private:
 
     void configure(const aiMesh* mesh, const int vertexAttributes, const uint32_t materialID);
@@ -81,7 +97,6 @@ private:
 
     uint32_t getPrimitiveSize(const aiPrimitiveType) const;
 
-
     std::vector<unsigned char> mVertexData;
     std::vector<uint32_t> mIndexData;
     AABB mAABB;
@@ -90,6 +105,8 @@ private:
 	uint64_t mVertexCount;
     int mVertexAttributes;
 	uint32_t mVertexStride;
+
+    uint32_t mAttributes;
 };
 
 #endif

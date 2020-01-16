@@ -138,7 +138,13 @@ private:
 		}
 	};
 
-    using MaterialMappings = std::map<aiString, uint32_t, AiStringComparitor>;
+    struct MeshInfo
+    {
+        uint32_t index;
+        uint32_t attributes;
+    };
+
+    using MaterialMappings = std::map<aiString, MeshInfo, AiStringComparitor>;
 
 	// return a mapping between mesh name and material index
 	MaterialMappings loadMaterials(Engine*);
