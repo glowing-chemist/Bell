@@ -8,7 +8,7 @@
 
 struct ImGuiOptions
 {
-	bool useLUT = true;
+    bool mDefered = true;
 };
 
 static ImGuiOptions graphicsOptions;
@@ -47,7 +47,7 @@ bool renderMenu(GLFWwindow* win)
 
 	ImGui::Begin("options");
 
-	ImGui::Checkbox("Enable DFGLUT", &graphicsOptions.useLUT);
+    ImGui::Checkbox("Deferred rendering", &graphicsOptions.mDefered);
 
 	ImGui::End();
 
@@ -138,24 +138,25 @@ int main(int argc, char** argv)
 
 #else
         engine.registerPass(PassType::ConvolveSkybox);
+        engine.registerPass(PassType::DFGGeneration);
 		
-		if (graphicsOptions.useLUT)
+        if (graphicsOptions.mDefered)
 		{
             engine.registerPass(PassType::GBuffer);
-			engine.registerPass(PassType::DFGGeneration);
             engine.registerPass(PassType::DeferredPBRIBL);
+            engine.registerPass(PassType::SSAOImproved);
 		}
 		else
         {
-            engine.registerPass(PassType::GBufferMaterial);
-			engine.registerPass(PassType::DeferredTextureAnalyticalPBRIBL);
+            engine.registerPass(PassType::DepthPre);
+            engine.registerPass(PassType::ForwardIBL);
+            engine.registerPass(PassType::SSAO);
 
         }
         engine.registerPass(PassType::Skybox);
 
 #endif
         engine.registerPass(PassType::Shadow);
-        engine.registerPass(PassType::SSAOImproved);
 		engine.registerPass(PassType::Overlay);
 		engine.registerPass(PassType::Composite);
 
