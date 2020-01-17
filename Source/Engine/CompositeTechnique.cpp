@@ -104,6 +104,26 @@ void CompositeTechnique::render(RenderGraph& graph, Engine* eng, const std::vect
 
 		graph.addTask(compositeTask);
 	}
+	else if ((usingGlobalLighting != usingAnalyticalLighting))
+	{
+		GraphicsPipelineDescription desc
+		(
+			eng->getShader("./Shaders/FullScreenTriangle.vert"),
+			eng->getShader("./Shaders/Blit.frag"),
+			Rect{ viewPortX, viewPortY },
+			Rect{ viewPortX, viewPortY }
+		);
+
+		GraphicsTask compositeTask("Composite", desc);
+		compositeTask.addInput(usingGlobalLighting ? kGlobalLighting : kAnalyticLighting, AttachmentType::Texture2D);
+		compositeTask.addInput(kDefaultSampler, AttachmentType::Sampler);
+
+		compositeTask.addOutput(kFrameBufer, AttachmentType::RenderTarget2D, eng->getSwapChainImage()->getFormat(), SizeClass::Custom, LoadOp::Clear_Black);
+
+		compositeTask.addDrawCall(0, 3);
+
+		graph.addTask(compositeTask);
+	}
 }
 
 

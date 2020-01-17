@@ -38,16 +38,13 @@ void ForwardIBLTechnique::render(RenderGraph& graph, Engine* eng, const std::vec
 
 	uint64_t minVertexOffset = ~0ul;
 
-	uint32_t vertexBufferOffset = 0;
 	for (const auto& mesh : meshes)
 	{
 		const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->mMesh);
 		minVertexOffset = std::min(minVertexOffset, vertexOffset);
 
 		mTask.addPushConsatntValue(mesh->mTransformation);
-		mTask.addIndexedDrawCall(vertexBufferOffset, indexOffset / sizeof(uint32_t), mesh->mMesh->getIndexData().size());
-
-		vertexBufferOffset += mesh->mMesh->getVertexCount();
+		mTask.addIndexedDrawCall(vertexOffset / mesh->mMesh->getVertexStride(), indexOffset / sizeof(uint32_t), mesh->mMesh->getIndexData().size());
 	}
 
 	mTask.setVertexBufferOffset(minVertexOffset);
