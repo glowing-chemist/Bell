@@ -138,6 +138,7 @@ int main(int argc, char** argv)
 
 #else
         engine.registerPass(PassType::ConvolveSkybox);
+        engine.registerPass(PassType::Skybox);
         engine.registerPass(PassType::DFGGeneration);
 		
         if (graphicsOptions.mDefered)
@@ -153,7 +154,6 @@ int main(int argc, char** argv)
             engine.registerPass(PassType::SSAO);
 
         }
-        engine.registerPass(PassType::Skybox);
 
 #endif
         engine.registerPass(PassType::Shadow);
