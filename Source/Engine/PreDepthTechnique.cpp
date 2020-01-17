@@ -35,6 +35,10 @@ void PreDepthTechnique::render(RenderGraph& graph, Engine* eng, const std::vecto
 	uint32_t vertexBufferOffset = 0;
 	for (const auto& mesh : meshes)
 	{
+        // Don't render transparent or alpha tested geometry.
+        if((mesh->mMesh->getAttributes() & (MeshAttributes::AlphaTested | MeshAttributes::Transparent)) > 0)
+           continue;
+
 		const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->mMesh);
 		minVertexOffset = std::min(minVertexOffset, vertexOffset);
 
