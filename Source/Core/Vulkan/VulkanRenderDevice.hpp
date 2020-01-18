@@ -237,8 +237,8 @@ public:
 
 	virtual void					   execute(BarrierRecorder& recorder) override;
 
-    void							   submitFrame();
-    void							   swap();
+    virtual void                       submitFrame() override;
+    virtual void					   swap() override;
 
 	// non const as can compile uncompiled shaders.
 	std::vector<vk::PipelineShaderStageCreateInfo>              generateShaderStagesInfo(GraphicsPipelineDescription&);
