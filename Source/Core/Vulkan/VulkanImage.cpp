@@ -107,6 +107,9 @@ void VulkanImage::swap(ImageBase& other)
 	mImage = VKOther.mImage;
 	VKOther.mImage = VulkanImage;
 
+    mType = VKOther.mType;
+    VKOther.mType = Type;
+
 	mIsOwned = VKOther.mIsOwned;
 	VKOther.mIsOwned = isOwned;
 }
