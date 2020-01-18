@@ -348,6 +348,11 @@ Allocation MemoryManager::Allocate(const uint64_t size, const unsigned long alli
 
 void MemoryManager::Free(Allocation alloc)
 {
+    // Don't attempt to free transient alloctions as we just reset the entire pool at the
+    // begginning of each frame.
+    if(alloc.transient)
+        return;
+
 	auto& pools = alloc.hostMappable ? mHostMappablePools : mDeviceLocalPools ;
     auto& pool  = pools[alloc.pool];
 
@@ -372,7 +377,7 @@ Allocation MemoryManager::allocateTransient(const uint64_t size, const unsigned 
     {
         const auto requiredPosition = nextAlignedAddress(pool.mCurrentPosition, allignment);
 
-        if ((pool.mSize - requiredPosition) >= size)
+        if ((pool.mSize - requiredPosition) > size)
         {
             Allocation alloc{};
             alloc.offset = requiredPosition;
