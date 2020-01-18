@@ -227,7 +227,7 @@ void RenderGraph::bindResource(const std::string& name, const uint32_t index, co
     uint32_t taskOrderIndex = 0;
 	for(const auto& [taskType, taskIndex] : mTaskOrder)
     {
-        RenderTask& task = getTask(taskType, taskIndex);
+        const RenderTask& task = getTask(taskType, taskIndex);
 
         uint32_t inputAttachmentIndex = 0;
         for(const auto& input : task.getInputAttachments())
@@ -238,7 +238,10 @@ void RenderGraph::bindResource(const std::string& name, const uint32_t index, co
                 mDescriptorsNeedUpdating[taskOrderIndex] = true;
                 break; // Assume a resource is only bound once per task.
             }
-            ++inputAttachmentIndex;
+
+            // These don't take up slots so don't increment the input index.
+            if(input.mType != AttachmentType::VertexBuffer && input.mType != AttachmentType::IndexBuffer)
+                ++inputAttachmentIndex;
         }
 
         uint32_t outputAttachmentIndex = 0;
@@ -285,6 +288,24 @@ void RenderGraph::bindBuffer(const std::string& name , const BufferView& buffer)
 }
 
 
+void RenderGraph::bindVertexBuffer(const std::string& name, const BufferView& buffer)
+{
+    const uint32_t currentBufferIndex = static_cast<uint32_t>(mBufferViews.size());
+    mBufferViews.emplace_back(name, buffer);
+
+    bindResource(name, currentBufferIndex, ResourceType::VertexBuffer);
+}
+
+
+void RenderGraph::bindIndexBuffer(const std::string& name, const BufferView& buffer)
+{
+    const uint32_t currentBufferIndex = static_cast<uint32_t>(mBufferViews.size());
+    mBufferViews.emplace_back(name, buffer);
+
+    bindResource(name, currentBufferIndex, ResourceType::IndexBuffer);
+}
+
+
 void RenderGraph::bindSampler(const std::string& name, const Sampler& type)
 {
     const uint32_t samplerIndex = static_cast<uint32_t>(mSamplers.size());
@@ -297,20 +318,6 @@ void RenderGraph::bindSampler(const std::string& name, const Sampler& type)
 void RenderGraph::bindShaderResourceSet(const std::string& name, const ShaderResourceSet& set)
 {
 	mSRS.emplace_back(name, set);
-}
-
-
-void RenderGraph::bindVertexBuffer(const Buffer& buffer)
-{
-	mVertexBuffer.reset();
-	mVertexBuffer = buffer;
-}
-
-
-void RenderGraph::bindIndexBuffer(const Buffer& buffer)
-{
-	mIndexBuffer.reset();
-    mIndexBuffer = buffer;
 }
 
 
@@ -867,6 +874,31 @@ void RenderGraph::reset()
 	mTaskDependancies.clear();
 }
 
+
+const BufferView& RenderGraph::getVertexBuffer(const uint32_t taskIndex) const
+{
+    const auto input = std::find_if(mInputResources[taskIndex].begin(), mInputResources[taskIndex].end(), [](const auto& inputAttachment)
+    {
+        return inputAttachment.mResourcetype == ResourceType::VertexBuffer;
+    });
+    BELL_ASSERT(input != mInputResources[taskIndex].end(), "Task doesn't bind a vertex buffer")
+
+    return mBufferViews[input->mResourceIndex].second;
+}
+
+
+const BufferView& RenderGraph::getIndexBuffer(const uint32_t taskIndex) const
+{
+    const auto input = std::find_if(mInputResources[taskIndex].begin(), mInputResources[taskIndex].end(), [](const auto& inputAttachment)
+    {
+        return inputAttachment.mResourcetype == ResourceType::IndexBuffer;
+    });
+    BELL_ASSERT(input != mInputResources[taskIndex].end(), "Task doesn't bind a index buffer")
+
+    return mBufferViews[input->mResourceIndex].second;
+}
+
+
 TaskIterator RenderGraph::taskBegin()
 {
 	return TaskIterator{*this};
@@ -900,14 +932,6 @@ BindingIterator< BindingIteratorType::Output> RenderGraph::outputBindingBegin()
 BindingIterator< BindingIteratorType::Output> RenderGraph::outputBindingEnd()
 {
     return BindingIterator<BindingIteratorType::Output>{mOutputResources, *this, mOutputResources.size()};
-}
-
-
-TaskIterator& TaskIterator::operator++()
-{
-	++mCurrentIndex;
-
-	return *this;
 }
 
 

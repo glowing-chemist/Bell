@@ -29,6 +29,8 @@ public:
     {
 		graph.bindImage(kDefaultFontTexture, mFontImageView);
 		graph.bindBuffer("OverlayUBO", *mOverlayerBufferView);
+        graph.bindVertexBuffer("OverlayVertex", mOverlayerVertexBufferView.get());
+        graph.bindIndexBuffer("OverlayIndex", mOverlayerIndexBufferView.get());
     }
 
 private:
@@ -37,6 +39,12 @@ private:
 
     PerFrameResource<Buffer> mOverlayUniformBuffer;
     PerFrameResource<BufferView> mOverlayerBufferView;
+
+    PerFrameResource<Buffer> mOverlayVertexBuffer;
+    PerFrameResource<BufferView> mOverlayerVertexBufferView;
+
+    PerFrameResource<Buffer> mOverlayIndexBuffer;
+    PerFrameResource<BufferView> mOverlayerIndexBufferView;
 
     GraphicsPipelineDescription mPipelineDescription;
 };

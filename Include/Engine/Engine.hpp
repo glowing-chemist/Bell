@@ -137,10 +137,10 @@ public:
 		{ mCurrentRenderGraph.bindSampler(name, sampler); }
 
 	void setVertexBufferforScene(const Buffer& vertBuf)
-		{ *mVertexBuffer = vertBuf; }
+        { mVertexBuffer = vertBuf; }
 
 	void setIndexBufferforScene(const Buffer& indexBuf)
-		{ *mIndexBuffer = indexBuf; }
+        { mIndexBuffer = indexBuf; }
 
     void recordScene();
 
@@ -154,7 +154,6 @@ public:
 
 	void endFrame()
 	{
-		mVertexCache.clear();
 		mRenderDevice->endFrame(); 
 	}
 
@@ -198,8 +197,8 @@ private:
 
 	std::unordered_map<std::string, Shader> mShaderCache;
 
-    PerFrameResource<Buffer> mVertexBuffer;
-    PerFrameResource<Buffer> mIndexBuffer;
+    Buffer mVertexBuffer;
+    Buffer mIndexBuffer;
 
     Sampler mDefaultSampler;
 

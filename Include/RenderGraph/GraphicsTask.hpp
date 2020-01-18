@@ -267,7 +267,7 @@ public:
 		mDrawCalls.push_back({DrawType::SetPushConstant, 0, 0, 0, 0, 0, "", val});
 	}
 
-	void recordCommands(Executor&, const RenderGraph&) const override final;
+    void recordCommands(Executor&, const RenderGraph&, const uint32_t taskIndex) const override final;
 
     std::vector<ClearValues> getClearValues() const;
 

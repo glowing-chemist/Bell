@@ -20,6 +20,8 @@ GBufferMaterialTechnique::GBufferMaterialTechnique(Engine* eng) :
 
     mTask.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
     mTask.addInput("ModelMatrix", AttachmentType::PushConstants);
+    mTask.addInput(kSceneVertexBuffer, AttachmentType::VertexBuffer);
+    mTask.addInput(kSceneIndexBuffer, AttachmentType::IndexBuffer);
 
     mTask.addOutput(kGBufferNormals,  AttachmentType::RenderTarget2D, Format::RGBA8UNorm, SizeClass::Swapchain, LoadOp::Clear_Black);
     mTask.addOutput(kGBufferUV,       AttachmentType::RenderTarget2D, Format::RGBA32Float, SizeClass::Swapchain, LoadOp::Clear_Black);
@@ -32,21 +34,13 @@ void GBufferMaterialTechnique::render(RenderGraph& graph, Engine* eng, const std
 {
 	mTask.clearCalls();
 
-	uint64_t minVertexOffset = ~0ul;
+    for (const auto& mesh : meshes)
+    {
+        const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->mMesh);
 
-	uint32_t vertexBufferOffset = 0;
-	for (const auto& mesh : meshes)
-	{
-		const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->mMesh);
-		minVertexOffset = std::min(minVertexOffset, vertexOffset);
-
-		mTask.addPushConsatntValue(mesh->mTransformation);
-		mTask.addIndexedDrawCall(vertexBufferOffset, indexOffset / sizeof(uint32_t), mesh->mMesh->getIndexData().size());
-
-		vertexBufferOffset += mesh->mMesh->getVertexCount();
-	}
-
-	mTask.setVertexBufferOffset(minVertexOffset);
+        mTask.addPushConsatntValue(mesh->mTransformation);
+        mTask.addIndexedDrawCall(vertexOffset / mesh->mMesh->getVertexStride(), indexOffset / sizeof(uint32_t), mesh->mMesh->getIndexData().size());
+    }
 
 	graph.addTask(mTask);
 }
@@ -69,6 +63,8 @@ GBufferMaterialPreDepthTechnique::GBufferMaterialPreDepthTechnique(Engine* eng) 
     mTask.setVertexAttributes(VertexAttributes::Position4 | VertexAttributes::Material |
                               VertexAttributes::Normals | VertexAttributes::TextureCoordinates);
 
+    mTask.addInput(kSceneVertexBuffer, AttachmentType::VertexBuffer);
+    mTask.addInput(kSceneIndexBuffer, AttachmentType::IndexBuffer);
     mTask.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
     mTask.addInput("ModelMatrix", AttachmentType::PushConstants);
 
@@ -84,21 +80,13 @@ void GBufferMaterialPreDepthTechnique::render(RenderGraph& graph, Engine* eng, c
 {
 	mTask.clearCalls();
 
-	uint64_t minVertexOffset = ~0ul;
+    for (const auto& mesh : meshes)
+    {
+        const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->mMesh);
 
-	uint32_t vertexBufferOffset = 0;
-	for (const auto& mesh : meshes)
-	{
-		const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->mMesh);
-		minVertexOffset = std::min(minVertexOffset, vertexOffset);
-
-		mTask.addPushConsatntValue(mesh->mTransformation);
-		mTask.addIndexedDrawCall(vertexBufferOffset, indexOffset / sizeof(uint32_t), mesh->mMesh->getIndexData().size());
-
-		vertexBufferOffset += mesh->mMesh->getVertexCount();
-	}
-
-	mTask.setVertexBufferOffset(minVertexOffset);
+        mTask.addPushConsatntValue(mesh->mTransformation);
+        mTask.addIndexedDrawCall(vertexOffset / mesh->mMesh->getVertexStride(), indexOffset / sizeof(uint32_t), mesh->mMesh->getIndexData().size());
+    }
 
 	graph.addTask(mTask);
 }

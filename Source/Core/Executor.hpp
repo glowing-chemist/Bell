@@ -31,9 +31,9 @@ public:
 
 	virtual void dispatchIndirect(const BufferView&) = 0;
 
-	virtual void bindVertexBuffer(const Buffer&, const size_t offset) = 0;
+    virtual void bindVertexBuffer(const BufferView&, const size_t offset) = 0;
 
-	virtual void bindIndexBuffer(const Buffer&, const size_t offset) = 0;
+    virtual void bindIndexBuffer(const BufferView&, const size_t offset) = 0;
 };
 
 #endif

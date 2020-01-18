@@ -69,15 +69,15 @@ void VulkanExecutor::dispatchIndirect(const BufferView& view)
 }
 
 
-void VulkanExecutor::bindVertexBuffer(const Buffer& buffer, const size_t offset)
+void VulkanExecutor::bindVertexBuffer(const BufferView& buffer, const size_t offset)
 {
-	const VulkanBuffer& VKBuffer = static_cast<const VulkanBuffer&>(*buffer.getBase());
+    const VulkanBufferView& VKBuffer = static_cast<const VulkanBufferView&>(*buffer.getBase());
 	mCommandBuffer.bindVertexBuffers(0, VKBuffer.getBuffer(), offset);
 }
 
 
-void VulkanExecutor::bindIndexBuffer(const Buffer& buffer, const size_t offset)
+void VulkanExecutor::bindIndexBuffer(const BufferView& buffer, const size_t offset)
 {
-	const VulkanBuffer& VKBuffer = static_cast<const VulkanBuffer&>(*buffer.getBase());
+    const VulkanBufferView& VKBuffer = static_cast<const VulkanBufferView&>(*buffer.getBase());
 	mCommandBuffer.bindIndexBuffer(VKBuffer.getBuffer(), offset, vk::IndexType::eUint32);
 }

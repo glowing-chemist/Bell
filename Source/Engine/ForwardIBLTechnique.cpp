@@ -25,6 +25,9 @@ ForwardIBLTechnique::ForwardIBLTechnique(Engine* eng) :
 	mTask.addInput(kDefaultSampler, AttachmentType::Sampler);
 	mTask.addInput(kMaterials, AttachmentType::ShaderResourceSet);
 	mTask.addInput("model", AttachmentType::PushConstants);
+    mTask.addInput(kSceneVertexBuffer, AttachmentType::VertexBuffer);
+    mTask.addInput(kSceneIndexBuffer, AttachmentType::IndexBuffer);
+
 
 	mTask.addOutput(kGlobalLighting, AttachmentType::RenderTarget2D, Format::RGBA8UNorm, SizeClass::Swapchain, LoadOp::Clear_Black);
 	mTask.addOutput(kGBufferDepth, AttachmentType::Depth, Format::D32Float, SizeClass::Custom, LoadOp::Preserve);
@@ -36,18 +39,13 @@ void ForwardIBLTechnique::render(RenderGraph& graph, Engine* eng, const std::vec
 {
 	mTask.clearCalls();
 
-	uint64_t minVertexOffset = ~0ul;
-
 	for (const auto& mesh : meshes)
 	{
 		const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->mMesh);
-		minVertexOffset = std::min(minVertexOffset, vertexOffset);
 
 		mTask.addPushConsatntValue(mesh->mTransformation);
 		mTask.addIndexedDrawCall(vertexOffset / mesh->mMesh->getVertexStride(), indexOffset / sizeof(uint32_t), mesh->mMesh->getIndexData().size());
 	}
-
-	mTask.setVertexBufferOffset(minVertexOffset);
 
 	graph.addTask(mTask);
 }

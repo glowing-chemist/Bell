@@ -86,7 +86,6 @@ void DescriptorManager::writeDescriptors(RenderGraph& graph, std::vector<vulkanR
 
     imageInfos.reserve(maxDescWrites);
     bufferInfos.reserve(maxDescWrites);
-	uint32_t descIndex = 0;
 
     auto inputBindings  = graph.inputBindingBegin();
     auto resource       = resources.begin();
@@ -94,14 +93,21 @@ void DescriptorManager::writeDescriptors(RenderGraph& graph, std::vector<vulkanR
 
     while(inputBindings != graph.inputBindingEnd())
     {
+        const auto& bindings = (*task).getInputAttachments();
+
         for(const auto& bindingInfo : *inputBindings)
         {
-            vk::WriteDescriptorSet descWrite{};
-			descWrite.setDstSet(resource->mDescSet[0]);
-            descWrite.setDstBinding(bindingInfo.mResourceBinding);
+            const AttachmentType attachmentType = bindings[bindingInfo.mResourceBinding].mType;
 
-            const auto& bindings = (*task).getInputAttachments();
-			const AttachmentType attachmentType = bindings[bindingInfo.mResourceBinding].mType;
+            if(attachmentType == AttachmentType::VertexBuffer ||
+               attachmentType == AttachmentType::IndexBuffer)
+            {
+                continue;
+            }
+
+            vk::WriteDescriptorSet descWrite{};
+            descWrite.setDstSet(resource->mDescSet[0]);
+            descWrite.setDstBinding(bindingInfo.mResourceBinding);
 
             switch(bindingInfo.mResourcetype)
             {
@@ -190,6 +196,12 @@ void DescriptorManager::writeDescriptors(RenderGraph& graph, std::vector<vulkanR
 					descWrite.setDescriptorCount(1);
                     break;
                 }
+
+                case RenderGraph::ResourceType::SRS:
+                case RenderGraph::ResourceType::VertexBuffer:
+                case RenderGraph::ResourceType::IndexBuffer:
+                    BELL_TRAP;
+                    break;
             }
 
             descSetWrites.push_back(descWrite);
@@ -198,7 +210,6 @@ void DescriptorManager::writeDescriptors(RenderGraph& graph, std::vector<vulkanR
 		++resource;
 		++inputBindings;
         ++task;
-		++descIndex;
     }
 
 	static_cast<VulkanRenderDevice*>(getDevice())->writeDescriptorSets(descSetWrites);

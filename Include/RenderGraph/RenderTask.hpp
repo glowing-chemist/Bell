@@ -44,7 +44,7 @@ public:
     RenderTask(const std::string& name) : mName{name} {}
 	virtual ~RenderTask() = default;
 
-	virtual void recordCommands(Executor& exec, const RenderGraph&) const = 0;
+    virtual void recordCommands(Executor& exec, const RenderGraph&, const uint32_t taskIndex) const = 0;
 
     virtual void addInput(const std::string& name, const AttachmentType attachmentType, const size_t arraySize = 0)
     {

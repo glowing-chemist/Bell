@@ -53,17 +53,10 @@ public:
     void bindImage(const std::string&, const ImageView &);
 	void bindImageArray(const std::string&, const ImageViewArray&);
 	void bindBuffer(const std::string&, const BufferView &);
+    void bindVertexBuffer(const std::string&, const BufferView &);
+    void bindIndexBuffer(const std::string&, const BufferView &);
     void bindSampler(const std::string&, const Sampler&);
 	void bindShaderResourceSet(const std::string&, const ShaderResourceSet&);
-
-    // These are special because they are used by every task that has vertex attributes
-    void bindVertexBuffer(const Buffer&);
-    void bindIndexBuffer(const Buffer&);
-
-    std::optional<Buffer>& getVertexBuffer() { return mVertexBuffer; }
-    std::optional<Buffer>& getIndexBuffer() { return mIndexBuffer; }
-	const std::optional<Buffer>& getVertexBuffer() const { return mVertexBuffer; }
-	const std::optional<Buffer>& getIndexBuffer() const { return mIndexBuffer; }
 
 	RenderTask& getTask(TaskType, uint32_t);
 	const RenderTask& getTask(TaskType, uint32_t) const;
@@ -77,6 +70,9 @@ public:
 	void reset();
 
 	uint64_t taskCount() const { return mTaskOrder.size(); }
+
+    const BufferView &getVertexBuffer(const uint32_t taskIndex) const;
+    const BufferView& getIndexBuffer(const uint32_t taskIndex) const;
 
 	TaskIterator taskBegin();
 	TaskIterator taskEnd();
@@ -105,6 +101,8 @@ public:
 		ImageArray,
         Sampler,
         Buffer,
+        VertexBuffer,
+        IndexBuffer,
 		SRS
     };
 	ImageView&		getImageView(const uint32_t index);
@@ -138,9 +136,6 @@ private:
 
     std::vector<GraphicsTask> mGraphicsTasks;
 	std::vector<ComputeTask>  mComputeTasks;
-
-    std::optional<Buffer> mVertexBuffer;
-    std::optional<Buffer> mIndexBuffer;
 
 	// The index in to the coresponding task array
     std::vector<std::pair<TaskType, uint32_t>> mTaskOrder;
@@ -186,7 +181,7 @@ public:
 	TaskIterator(RenderGraph& graph, uint64_t startingIndex = 0) : mCurrentIndex{ startingIndex }, mGraph{ graph } {}
 
 	const RenderTask& operator*() const;
-	TaskIterator& operator++();
+    TaskIterator& operator++() { ++mCurrentIndex; return *this; }
 	bool operator==(const TaskIterator& rhs) { return mCurrentIndex == rhs.mCurrentIndex; }
 	bool operator!=(const TaskIterator& rhs) { return !(*this == rhs); }
 };

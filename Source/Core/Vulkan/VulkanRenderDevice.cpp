@@ -318,6 +318,7 @@ vk::RenderPass	VulkanRenderDevice::generateRenderPass(const GraphicsTask& task)
         attachmentDesc.setStoreOp(vk::AttachmentStoreOp::eStore);
 		attachmentDesc.setStencilLoadOp(op);
         attachmentDesc.setStencilStoreOp(vk::AttachmentStoreOp::eStore);
+        attachmentDesc.setSamples(vk::SampleCountFlagBits::e1); // TODO respect multisample images.
 
         attachmentDescriptions.push_back((attachmentDesc));
 
@@ -499,10 +500,10 @@ vk::DescriptorSetLayout VulkanRenderDevice::generateDescriptorSetLayoutBindings(
 			case AttachmentType::Sampler:
 				return vk::DescriptorType::eSampler;
 
-				// Ignore push constants for now.
-			}
+            default:
+                return vk::DescriptorType::eCombinedImageSampler;// For now use this to indicate push_constants (terrible I know)
 
-			return vk::DescriptorType::eCombinedImageSampler; // For now use this to indicate push_constants (terrible I know)
+			}
 		}();
 
 		// This indicates it's a push constant (or indirect buffer) which we don't need to handle when allocating descriptor

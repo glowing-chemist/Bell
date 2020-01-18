@@ -10,6 +10,10 @@ OverlayTechnique::OverlayTechnique(Engine* eng) :
 	mFontImageView(mFontTexture, ImageViewType::Colour),
 	mOverlayUniformBuffer(getDevice(), BufferUsage::Uniform, 16, 16, "Transformations"),
 	mOverlayerBufferView(mOverlayUniformBuffer),
+    mOverlayVertexBuffer(getDevice(), BufferUsage::Vertex | BufferUsage::TransferDest, 1024 * 1024, 1024 * 1024, "Overlay Vertex Buffer"),
+    mOverlayerVertexBufferView((mOverlayVertexBuffer)),
+    mOverlayIndexBuffer(getDevice(), BufferUsage::Index | BufferUsage::TransferDest, 1024 * 1024, 1024 * 1024, "Overlay Index Buffer"),
+    mOverlayerIndexBufferView((mOverlayIndexBuffer)),
 	mPipelineDescription(eng->getShader("./Shaders/Overlay.vert"),
 						 eng->getShader("./Shaders/Overlay.frag"),
 						 Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
@@ -46,6 +50,8 @@ void OverlayTechnique::render(RenderGraph& graph, Engine* engine, const std::vec
 	task.addInput("OverlayUBO", AttachmentType::UniformBuffer);
 	task.addInput(kDefaultFontTexture, AttachmentType::Texture2D);
 	task.addInput(kDefaultSampler, AttachmentType::Sampler);
+    task.addInput("OverlayVertex", AttachmentType::VertexBuffer);
+    task.addInput("OverlayIndex", AttachmentType::IndexBuffer);
 	task.addOutput(kOverlay, AttachmentType::RenderTarget2D, engine->getSwapChainImage()->getFormat(), SizeClass::Swapchain, LoadOp::Clear_Black);
 
 	if (drawData)
@@ -87,10 +93,8 @@ void OverlayTechnique::render(RenderGraph& graph, Engine* engine, const std::vec
 			indexPtr += cmd_list->IdxBuffer.Size;
 		}
 
-		const auto overlayVertexByteOffset = engine->addVertexData(vertexData.data(), vertexData.size() * sizeof(ImDrawVert));
-		const auto indexBufferOffset = engine->addIndexData(indexData);
-
-		task.setVertexBufferOffset(static_cast<uint32_t>(overlayVertexByteOffset));
+        mOverlayVertexBuffer.get()->setContents(vertexData.data(), vertexData.size() * sizeof(ImDrawVert));
+        mOverlayIndexBuffer.get()->setContents(indexData.data(), indexData.size() * sizeof(uint32_t));
 
 		// Render command lists
 		uint32_t vertexOffset = 0;
@@ -102,7 +106,7 @@ void OverlayTechnique::render(RenderGraph& graph, Engine* engine, const std::vec
 			{
 				const ImDrawCmd* pcmd = &cmd_list->CmdBuffer[cmd_i];
 
-				task.addIndexedDrawCall(vertexOffset, (indexBufferOffset / sizeof(uint32_t)) + indexOffset, pcmd->ElemCount);
+                task.addIndexedDrawCall(vertexOffset, indexOffset, pcmd->ElemCount);
 
 				indexOffset += pcmd->ElemCount;
 			}

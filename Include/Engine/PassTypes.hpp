@@ -129,6 +129,8 @@ enum class AttachmentType
     DataBufferWO,
     DataBufferRW,
 	IndirectBuffer,
+    VertexBuffer,
+    IndexBuffer,
 	PushConstants,
 	ShaderResourceSet
 };

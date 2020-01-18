@@ -74,14 +74,15 @@ void Engine::loadScene(const std::string& path)
     mLoadingScene = Scene(path);
 	mLoadingScene.loadFromFile(VertexAttributes::Position4 | VertexAttributes::TextureCoordinates | VertexAttributes::Normals | VertexAttributes::Material, this);
 
-	// Set up the SRS for the materials.
-	const auto& materials = mCurrentScene.getMaterials();
-	mMaterials->addSampledImageArray(materials);
-	mMaterials->finalise();
+    mVertexCache.clear();
+    mLoadingScene.finalise(this);
+
+    setScene(mCurrentScene);
 }
 
 void Engine::transitionScene()
 {
+    mVertexCache.clear();
     mCurrentScene = std::move(mLoadingScene);
 }
 
@@ -91,16 +92,31 @@ void Engine::setScene(const std::string& path)
     mCurrentScene = Scene(path);
     mCurrentScene.loadFromFile(VertexAttributes::Position4 | VertexAttributes::TextureCoordinates | VertexAttributes::Normals | VertexAttributes::Material, this);
 
-	// Set up the SRS for the materials.
-	const auto& materials = mCurrentScene.getMaterials();
-	mMaterials->addSampledImageArray(materials);
-	mMaterials->finalise();
+    mVertexCache.clear();
+    mCurrentScene.finalise(this);
+
+    setScene(mCurrentScene);
 }
 
 
 void Engine::setScene(Scene& scene)
 {
     mCurrentScene = std::move(scene);
+
+    auto& vertexData = mVertexBuilder.finishRecording();
+    auto& indexData = mIndexBuilder.finishRecording();
+
+    if(!vertexData.empty() && !indexData.empty())
+    {
+        mVertexBuffer->resize(static_cast<uint32_t>(vertexData.size()), false);
+        mIndexBuffer->resize(static_cast<uint32_t>(indexData.size()), false);
+
+        mVertexBuffer->setContents(vertexData.data(), static_cast<uint32_t>(vertexData.size()));
+        mIndexBuffer->setContents(indexData.data(), static_cast<uint32_t>(indexData.size()));
+
+        mVertexBuilder.reset();
+        mIndexBuilder.reset();
+    }
 
 	// Set up the SRS for the materials.
 	const auto& materials = mCurrentScene.getMaterials();
@@ -313,7 +329,8 @@ void Engine::execute(RenderGraph& graph)
 
 	// process scene.
     auto barrier = barriers.begin();
-    for (auto task = graph.taskBegin(); task != graph.taskEnd(); ++task, ++barrier)
+    uint32_t taskIndex = 0;
+    for (auto task = graph.taskBegin(); task != graph.taskEnd(); ++task, ++barrier, ++taskIndex)
 	{
 
         mRenderDevice->execute(*barrier);
@@ -323,7 +340,7 @@ void Engine::execute(RenderGraph& graph)
 		Executor* exec = mRenderDevice->getPassExecutor();
 		BELL_ASSERT(exec, "Failed to create executor")
 
-		(*task).recordCommands(*exec, graph);
+        (*task).recordCommands(*exec, graph, taskIndex);
 
         mRenderDevice->freePassExecutor(exec);
 
@@ -364,6 +381,8 @@ void Engine::recordScene()
 	mCurrentRenderGraph.bindBuffer(kShadowingLights, *mShadowCastingLight);
     mCurrentRenderGraph.bindShaderResourceSet(kLightBuffer, *mLightsSRS);
     mCurrentRenderGraph.bindSampler(kDefaultSampler, mDefaultSampler);
+    mCurrentRenderGraph.bindVertexBuffer(kSceneVertexBuffer, mVertexBuffer);
+    mCurrentRenderGraph.bindIndexBuffer(kSceneIndexBuffer, mIndexBuffer);
 
 	if(mCurrentScene.getSkybox())
 		mCurrentRenderGraph.bindImage(kSkyBox, *mCurrentScene.getSkybox());
@@ -372,25 +391,6 @@ void Engine::recordScene()
 
 void Engine::render()
 {
-	auto& vertexData = mVertexBuilder.finishRecording();
-
-	auto& indexData = mIndexBuilder.finishRecording();
-
-    if(!vertexData.empty() && !indexData.empty())
-    {
-        mVertexBuffer.get()->resize(static_cast<uint32_t>(vertexData.size()), false);
-        mIndexBuffer.get()->resize(static_cast<uint32_t>(indexData.size()), false);
-
-        mVertexBuffer.get()->setContents(vertexData.data(), static_cast<uint32_t>(vertexData.size()));
-        mIndexBuffer.get()->setContents(indexData.data(), static_cast<uint32_t>(indexData.size()));
-
-        mVertexBuilder.reset();
-        mIndexBuilder.reset();
-
-        mCurrentRenderGraph.bindVertexBuffer(*mVertexBuffer);
-        mCurrentRenderGraph.bindIndexBuffer(*mIndexBuffer);
-    }
-
 	execute(mCurrentRenderGraph);
 }
 
@@ -399,21 +399,11 @@ void Engine::submitCommandRecorder(CommandContext &ccx)
 {
     RenderGraph& renderGraph = ccx.finialise();
 
-    auto& vertexData = mVertexBuilder.finishRecording();
-
-    auto& indexData = mIndexBuilder.finishRecording();
-
-    mVertexBuffer.get()->resize(static_cast<uint32_t>(vertexData.size()), false);
-    mIndexBuffer.get()->resize(static_cast<uint32_t>(indexData.size()), false);
-
-    mVertexBuffer.get()->setContents(vertexData.data(), static_cast<uint32_t>(vertexData.size()));
-    mIndexBuffer.get()->setContents(indexData.data(), static_cast<uint32_t>(indexData.size()));
-
     mVertexBuilder.reset();
     mIndexBuilder.reset();
 
-    renderGraph.bindVertexBuffer(*mVertexBuffer);
-    renderGraph.bindIndexBuffer(*mIndexBuffer);
+    renderGraph.bindBuffer(kSceneVertexBuffer, mVertexBuffer);
+    renderGraph.bindBuffer(kSceneIndexBuffer, mIndexBuffer);
 
     execute(renderGraph);
 }

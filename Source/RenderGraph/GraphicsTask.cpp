@@ -1,13 +1,14 @@
 #include "RenderGraph/GraphicsTask.hpp"
 #include "RenderGraph/RenderGraph.hpp"
 
-void GraphicsTask::recordCommands(Executor& exec, const RenderGraph& graph) const
-{
-	if(graph.getVertexBuffer())
-		exec.bindVertexBuffer(*graph.getVertexBuffer(), mVertexBufferOffset);
 
-	if (graph.getIndexBuffer())
-		exec.bindIndexBuffer(*graph.getIndexBuffer(), 0);
+void GraphicsTask::recordCommands(Executor& exec, const RenderGraph& graph, const uint32_t taskIndex) const
+{
+    if(getVertexAttributes() > 0)
+        exec.bindVertexBuffer(graph.getVertexBuffer(taskIndex), mVertexBufferOffset);
+
+    if (getVertexAttributes() > 0)
+        exec.bindIndexBuffer(graph.getIndexBuffer(taskIndex), 0);
 
     for(const auto& thunk : mDrawCalls)
     {

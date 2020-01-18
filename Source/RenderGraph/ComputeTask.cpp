@@ -1,7 +1,7 @@
 #include "RenderGraph/ComputeTask.hpp"
 #include "RenderGraph/RenderGraph.hpp"
 
-void ComputeTask::recordCommands(Executor& exec, const RenderGraph& graph) const
+void ComputeTask::recordCommands(Executor& exec, const RenderGraph& graph, const uint32_t taskIndex) const
 {
     for(const auto& thunk : mComputeCalls)
     {

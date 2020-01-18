@@ -38,7 +38,6 @@ class RenderDevice;
 class Pipeline;
 
 
-// Put this here for now to avoid cyclic header dependancies.
 struct vulkanResources
 {
     std::shared_ptr<Pipeline> mPipeline;

@@ -33,9 +33,9 @@ public:
 
 	virtual void dispatchIndirect(const BufferView&) override;
 
-	virtual void bindVertexBuffer(const Buffer&, const size_t offset) override;
+    virtual void bindVertexBuffer(const BufferView&, const size_t offset) override;
 
-	virtual void bindIndexBuffer(const Buffer&, const size_t offset) override;
+    virtual void bindIndexBuffer(const BufferView&, const size_t offset) override;
 
 private:
 

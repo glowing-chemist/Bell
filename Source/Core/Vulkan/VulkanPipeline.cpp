@@ -85,7 +85,7 @@ bool GraphicsPipeline::compile(const RenderTask&)
 	vk::PipelineVertexInputStateCreateInfo vertexInputInfo{};
 	vertexInputInfo.setVertexAttributeDescriptionCount(static_cast<uint32_t>(mVertexAttribs.size()));
 	vertexInputInfo.setPVertexAttributeDescriptions(mVertexAttribs.data());
-	vertexInputInfo.setVertexBindingDescriptionCount(1);
+    vertexInputInfo.setVertexBindingDescriptionCount(mVertexAttribs.empty() ? 0 : 1);
 	vertexInputInfo.setPVertexBindingDescriptions(&mVertexDescription);
 
 	// Viewport and scissor Rects

@@ -19,6 +19,9 @@ ShadowMappingTechnique::ShadowMappingTechnique(Engine* eng) :
 
     mTask.addInput(kShadowingLights, AttachmentType::UniformBuffer);
     mTask.addInput("lightMatrix", AttachmentType::PushConstants);
+    mTask.addInput(kSceneVertexBuffer, AttachmentType::VertexBuffer);
+    mTask.addInput(kSceneIndexBuffer, AttachmentType::IndexBuffer);
+
     mTask.addOutput(kShadowMap, AttachmentType::RenderTarget2D, Format::RG32Float, SizeClass::Swapchain, LoadOp::Clear_Black);
     mTask.addOutput("ShadowMapDepth", AttachmentType::Depth, Format::D32Float, SizeClass::Swapchain, LoadOp::Clear_White);
 }

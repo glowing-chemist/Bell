@@ -52,7 +52,7 @@ public:
     SceneID       addMesh(const StaticMesh&, MeshType);
     InstanceID    addMeshInstance(const SceneID, const glm::mat4&);
 
-    void          finalise();
+    void          finalise(Engine*);
 
     std::vector<const MeshInstance*> getViewableMeshes(const Frustum&) const;
 

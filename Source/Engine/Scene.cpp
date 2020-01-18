@@ -140,9 +140,6 @@ void Scene::loadFromFile(const int vertAttributes, Engine* eng)
 	parseNode(scene, rootNode, aiMatrix4x4{}, vertAttributes, meshMaterials);
 
     addLights(scene);
-
-    // generate the BVH.
-    finalise();
 }
 
 
@@ -362,13 +359,23 @@ InstanceID Scene::addMeshInstance(const SceneID meshID, const glm::mat4& transfo
 }
 
 
-void Scene::finalise()
+void Scene::finalise(Engine* eng)
 {
     const bool firstTime = !mFinalised.load(std::memory_order::memory_order_relaxed);
 
     mFinalised.store(true);
 
     generateSceneAABB(firstTime);
+
+    for(const auto& mesh : mStaticMeshInstances)
+    {
+        eng->addMeshToBuffer(mesh.mMesh);
+    }
+
+    for(const auto& mesh : mDynamicMeshInstances)
+    {
+        eng->addMeshToBuffer(mesh.mMesh);
+    }
 
     if(firstTime)
     {

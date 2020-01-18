@@ -46,13 +46,13 @@ public:
     {
         // All outputs needs to be part of the descriptor set for compute pipelies
         // as compuite shaders writes don't go to the framebuffer.
-        mInputAttachments.push_back({name, attachmentType});
+        mInputAttachments.push_back({name, attachmentType, 0});
     }
 
 	void mergeWith(const RenderTask&) override final;
 
     // Needs to take the graph to be able to lookup indirect buffers tha are bound to the graph.
-    void recordCommands(Executor&, const RenderGraph&) const override final;
+    void recordCommands(Executor&, const RenderGraph&, const uint32_t taskIndex) const override final;
 
 	void clearCalls() override final { mComputeCalls.clear(); }
 
