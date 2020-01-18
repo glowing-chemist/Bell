@@ -37,8 +37,8 @@ void main()
   
   const float radius = 0.002;
 
-  const uint maxSize = uint(camera.frameBufferSize.x * camera.frameBufferSize.y);
-  const uint flattenedPosition = (uint(camera.frameBufferSize.y * uv.y) * uint(camera.frameBufferSize.x)) + uint(camera.frameBufferSize.x * uv.x);
+  const uint maxSize = 4;// 2 x 2
+  const uint flattenedPosition = (uint(camera.frameBufferSize.y * uv.y) % 3) * (uint(camera.frameBufferSize.x * uv.x) % 3);
   const vec3 random = Hamersley_uniform(flattenedPosition, maxSize);
 
   const float depth = texture(sampler2D(depthTexture, linearSampler), uv).x;
