@@ -90,10 +90,10 @@ SSAOImprovedTechnique::SSAOImprovedTechnique(Engine* eng) :
     Technique{ "SSAO", eng->getDevice() },
     mPipelineDesc{ eng->getShader("Shaders/FullScreenTriangle.vert")
               ,eng->getShader("Shaders/SSAOImproved.frag"),
-              Rect{getDevice()->getSwapChain()->getSwapChainImageWidth() / 2,
-                    getDevice()->getSwapChain()->getSwapChainImageHeight() / 2},
-              Rect{getDevice()->getSwapChain()->getSwapChainImageWidth() / 2,
-              getDevice()->getSwapChain()->getSwapChainImageHeight() / 2} },
+              Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
+                    getDevice()->getSwapChain()->getSwapChainImageHeight()},
+              Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
+              getDevice()->getSwapChain()->getSwapChainImageHeight()} },
     mTask{ "SSAO", mPipelineDesc },
     mSSAOBuffer(getDevice(), BufferUsage::Uniform, sizeof(SSAOBuffer), sizeof(SSAOBuffer), "SSAO Offsets"),
     mSSAOBufferView(mSSAOBuffer)
@@ -107,7 +107,7 @@ SSAOImprovedTechnique::SSAOImprovedTechnique(Engine* eng) :
     mTask.addInput(kGBufferNormals, AttachmentType::Texture2D);
     mTask.addInput(kDefaultSampler, AttachmentType::Sampler);
 
-    mTask.addOutput(kSSAO, AttachmentType::RenderTarget2D, Format::R8UNorm, SizeClass::HalfSwapchain, LoadOp::Clear_Black);
+    mTask.addOutput(kSSAO, AttachmentType::RenderTarget2D, Format::R8UNorm, SizeClass::Swapchain, LoadOp::Clear_Black);
 
     mTask.addDrawCall(0, 3);
 }
