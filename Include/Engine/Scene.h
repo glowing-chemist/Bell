@@ -113,6 +113,25 @@ public:
         float mInfluence;
 		LightType mType;
 	};
+    size_t addLight(const Light& light)
+    {
+        const size_t lightID = mLights.size();
+        mLights.push_back(light);
+
+        return lightID;
+    }
+
+    Light& getLight(const size_t ID)
+    {
+        BELL_ASSERT(ID < mLights.size(), "Invalid light ID")
+        return mLights[ID];
+    }
+
+    void clearLights()
+    { mLights.clear(); }
+
+    const std::vector<Light>& getLights() const
+    { return mLights; }
 
     struct ShadowingLight
     {
@@ -122,9 +141,6 @@ public:
         glm::vec4 mPosition;
         glm::vec4 mDirection;
     };
-
-    const std::vector<Light>& getLights() const
-    { return mLights; }
 
 private:
 
