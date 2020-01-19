@@ -152,6 +152,7 @@ void RenderGraph::compileDependancies()
             {
                 const std::vector<RenderTask::OutputAttachmentInfo>& outResources = outerTask.getOuputAttachments();
                 const std::vector<RenderTask::InputAttachmentInfo>& inResources = innerTask.getInputAttachments();
+                bool dependancyFound = false;
 
                 for(size_t outerIndex = 0; outerIndex < outResources.size(); ++outerIndex)
                 {
@@ -162,8 +163,13 @@ void RenderGraph::compileDependancies()
                         {
                             // Innertask reads from a
 							dependancies.insert({i, j});
+
+                            dependancyFound = true;
+                            break;
                         }
                     }
+                    if(dependancyFound)
+                        break;
                 }
             }
 
@@ -172,6 +178,7 @@ void RenderGraph::compileDependancies()
                 const std::vector<RenderTask::InputAttachmentInfo>& outResources = outerTask.getInputAttachments();
 				const std::vector<RenderTask::InputAttachmentInfo>& innerResources = innerTask.getInputAttachments();
 
+                bool dependancyFound = false;
                 for(size_t outerIndex = 0; outerIndex < outResources.size(); ++outerIndex)
                 {
 					for(size_t innerIndex = 0; innerIndex < innerResources.size(); ++innerIndex)
@@ -186,14 +193,21 @@ void RenderGraph::compileDependancies()
                                  ((outResources[outerIndex].mType == AttachmentType::DataBufferWO ||
                                   outResources[outerIndex].mType == AttachmentType::DataBufferRW) &&
                                   (innerResources[innerIndex].mType == AttachmentType::DataBufferRO ||
-                                  innerResources[innerIndex].mType == AttachmentType::DataBufferRW)) ||
+                                  innerResources[innerIndex].mType == AttachmentType::DataBufferRW ||
+                                   innerResources[innerIndex].mType == AttachmentType::VertexBuffer ||
+                                   innerResources[innerIndex].mType == AttachmentType::IndexBuffer)) ||
                                  // Indirect buffers are readOnly (written as (WO) data buffers)
                                  innerResources[innerIndex].mType == AttachmentType::IndirectBuffer))
                         {
                             // Innertask reads from a
 							dependancies.insert({i, j});
+
+                            dependancyFound = true;
+                            break;
                         }
                     }
+                    if(dependancyFound)
+                        break;
                 }
             }
 
@@ -201,6 +215,7 @@ void RenderGraph::compileDependancies()
 			{
 				const std::vector<RenderTask::OutputAttachmentInfo>& outResources = outerTask.getOuputAttachments();
 				const std::vector<RenderTask::OutputAttachmentInfo>& inResources = innerTask.getOuputAttachments();
+                bool dependancyFound = false;
 
 				for(size_t outerIndex = 0; outerIndex < outResources.size(); ++outerIndex)
 				{
@@ -211,8 +226,14 @@ void RenderGraph::compileDependancies()
 								&& outerDepthWrite)
 						{
 							dependancies.insert({i, j});
+
+                            dependancyFound = true;
+                            break;
 						}
 					}
+
+                    if(dependancyFound)
+                        break;
 				}
 			}
         }
