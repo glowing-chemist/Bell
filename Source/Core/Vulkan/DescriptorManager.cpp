@@ -179,6 +179,8 @@ void DescriptorManager::writeDescriptors(RenderGraph& graph, std::vector<vulkanR
                 }
 
                 case RenderGraph::ResourceType::Buffer:
+                case RenderGraph::ResourceType::VertexBuffer:
+                case RenderGraph::ResourceType::IndexBuffer:
                 {
 					auto& bufferView = graph.getBuffer(bindingInfo.mResourceIndex);
 					vk::DescriptorBufferInfo info = generateDescriptorBufferInfo(bufferView);
@@ -198,8 +200,6 @@ void DescriptorManager::writeDescriptors(RenderGraph& graph, std::vector<vulkanR
                 }
 
                 case RenderGraph::ResourceType::SRS:
-                case RenderGraph::ResourceType::VertexBuffer:
-                case RenderGraph::ResourceType::IndexBuffer:
                     BELL_TRAP;
                     break;
             }
