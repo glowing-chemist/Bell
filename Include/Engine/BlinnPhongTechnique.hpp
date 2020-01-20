@@ -45,7 +45,7 @@ public:
 		return PassType::DeferredTextureBlinnPhongLighting;
 	}
 
-	virtual void bindResources(RenderGraph& graph) const override final
+    virtual void bindResources(RenderGraph& graph) override final
 	{}
 	virtual void render(RenderGraph&, Engine*, const std::vector<const Scene::MeshInstance *> &) override final;
 

@@ -21,7 +21,7 @@ public:
 	virtual PassType getPassType() const final override
 		{ return PassType::GBuffer; }
 
-	virtual void bindResources(RenderGraph&) const override final {};
+    virtual void bindResources(RenderGraph&) override final {};
 	virtual void render(RenderGraph&, Engine*, const std::vector<const Scene::MeshInstance *> &) override final;
 
 private:
@@ -41,7 +41,7 @@ public:
         { return PassType::GBufferPreDepth; }
 
 
-	virtual void bindResources(RenderGraph&) const override final {}
+    virtual void bindResources(RenderGraph&) override final {}
 	virtual void render(RenderGraph&, Engine*, const std::vector<const Scene::MeshInstance *> &) override final;
 
 private:

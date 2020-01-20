@@ -22,7 +22,7 @@ public:
     virtual void render(RenderGraph& graph, Engine*, const std::vector<const Scene::MeshInstance*>&) override final
     { graph.addTask(mTask); }
 
-    virtual void bindResources(RenderGraph&) const override final
+    virtual void bindResources(RenderGraph&) override final
     {}
 
 private:

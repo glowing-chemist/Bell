@@ -22,7 +22,7 @@ public:
 	// default empty implementations as most classes won't need to do anything for one of these.
 	virtual void render(RenderGraph&, Engine*, const std::vector<const Scene::MeshInstance*>&) override final;
 
-	virtual void bindResources(RenderGraph& graph) const override final
+    virtual void bindResources(RenderGraph& graph) override final
 	{
 		graph.bindImage(kConvolvedSkyBox, mConvolvedView);
 	}

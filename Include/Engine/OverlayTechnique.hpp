@@ -25,7 +25,7 @@ public:
 
     virtual void render(RenderGraph&, Engine*, const std::vector<const Scene::MeshInstance *>&) override;
 
-    virtual void bindResources(RenderGraph& graph) const override
+    virtual void bindResources(RenderGraph& graph) override
     {
 		graph.bindImage(kDefaultFontTexture, mFontImageView);
 		graph.bindBuffer("OverlayUBO", *mOverlayerBufferView);

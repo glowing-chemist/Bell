@@ -87,7 +87,7 @@ void LightFroxelationTechnique::render(RenderGraph& graph, Engine* eng, const st
 }
 
 
-void LightFroxelationTechnique::bindResources(RenderGraph& graph) const
+void LightFroxelationTechnique::bindResources(RenderGraph& graph)
 {
     graph.bindImage(kActiveFroxels, *mActiveFroxelsImageView);
     graph.bindBuffer(kActiveFroxelBuffer, *mActiveFroxlesBufferView);

@@ -26,7 +26,7 @@ public:
 		graph.addTask(mTask);
 	}
 
-	virtual void bindResources(RenderGraph& graph) const override final
+    virtual void bindResources(RenderGraph& graph) override final
 	{
 		graph.bindImage(kAnalyticLighting, *mAnalyticalLightingView);
 		graph.bindSampler("PointSampler", mPointSampler);

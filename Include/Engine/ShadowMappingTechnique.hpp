@@ -18,7 +18,7 @@ public:
 
     virtual void render(RenderGraph&, Engine*, const std::vector<const Scene::MeshInstance*>&) override;
 
-    virtual void bindResources(RenderGraph&) const override {}
+    virtual void bindResources(RenderGraph&) override {}
 
 private:
     GraphicsPipelineDescription mDesc;

@@ -14,14 +14,14 @@ public:
 	LightFroxelationTechnique(Engine*);
 	~LightFroxelationTechnique() = default;
 
-	virtual PassType getPassType() const
+    virtual PassType getPassType() const override final
 	{
 		return PassType::LightFroxelation;
 	}
 
-	virtual void render(RenderGraph&, Engine*, const std::vector<const Scene::MeshInstance*>&);
+    virtual void render(RenderGraph&, Engine*, const std::vector<const Scene::MeshInstance*>&) override final;
 
-	virtual void bindResources(RenderGraph&) const;
+    virtual void bindResources(RenderGraph&) override final;
 
 private:
 

@@ -26,7 +26,7 @@ public:
 
 	virtual void render(RenderGraph&, Engine*, const std::vector<const Scene::MeshInstance*>&) = 0;
 
-    virtual void bindResources(RenderGraph&) const = 0;
+    virtual void bindResources(RenderGraph&) = 0;
 
 private:
 

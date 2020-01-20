@@ -22,7 +22,7 @@ public:
 		graph.addTask(mTask);
 	}
 
-	virtual void bindResources(RenderGraph&) const override final {}
+    virtual void bindResources(RenderGraph&) override final {}
 
 private:
 
@@ -48,7 +48,7 @@ public:
         graph.addTask(mTask);
     }
 
-    virtual void bindResources(RenderGraph&) const override final {}
+    virtual void bindResources(RenderGraph&) override final {}
 
 private:
 

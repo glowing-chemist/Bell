@@ -3,6 +3,7 @@
 
 #define FIXED_SAMPLE_POINTS 1
 
+
 namespace
 {
     template<size_t N>
@@ -95,6 +96,10 @@ SSAOImprovedTechnique::SSAOImprovedTechnique(Engine* eng) :
               Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
               getDevice()->getSwapChain()->getSwapChainImageHeight()} },
     mTask{ "SSAO", mPipelineDesc },
+    mBlurXDesc{eng->getShader("Shaders/blurXR8.comp")},
+    mBlurXTask("SSAOBlurX", mBlurXDesc),
+    mBlurYDesc{eng->getShader("Shaders/blurYR8.comp")},
+    mBlurYTask("SSAOBlurY", mBlurYDesc),
     mSSAOBuffer(getDevice(), BufferUsage::Uniform, sizeof(SSAOBuffer), sizeof(SSAOBuffer), "SSAO Offsets"),
     mSSAOBufferView(mSSAOBuffer)
 {
@@ -107,9 +112,19 @@ SSAOImprovedTechnique::SSAOImprovedTechnique(Engine* eng) :
     mTask.addInput(kGBufferNormals, AttachmentType::Texture2D);
     mTask.addInput(kDefaultSampler, AttachmentType::Sampler);
 
-    mTask.addOutput(kSSAO, AttachmentType::RenderTarget2D, Format::R8UNorm, SizeClass::Swapchain, LoadOp::Clear_Black);
+    mTask.addOutput(kSSAORough, AttachmentType::RenderTarget2D, Format::R8UNorm, SizeClass::Swapchain, LoadOp::Clear_Black);
 
     mTask.addDrawCall(0, 3);
+
+    mBlurXTask.addInput(kSSAORough, AttachmentType::Texture2D);
+    mBlurXTask.addInput(kSSAOBlurIntermidiate, AttachmentType::Image2D);
+    mBlurXTask.addInput(kDefaultSampler, AttachmentType::Sampler);
+    mBlurXTask.addDispatch(std::ceil(getDevice()->getSwapChain()->getSwapChainImageWidth() / 256.0f), getDevice()->getSwapChain()->getSwapChainImageHeight(), 1.0f);
+
+    mBlurYTask.addInput(kSSAOBlurIntermidiate, AttachmentType::Texture2D);
+    mBlurYTask.addInput(kSSAO, AttachmentType::Image2D);
+    mBlurYTask.addInput(kDefaultSampler, AttachmentType::Sampler);
+    mBlurYTask.addDispatch(getDevice()->getSwapChain()->getSwapChainImageWidth(), std::ceil(getDevice()->getSwapChain()->getSwapChainImageHeight() / 256.0f), 1.0f);
 }
 
 
@@ -131,4 +146,6 @@ void SSAOImprovedTechnique::render(RenderGraph& graph, Engine*, const std::vecto
     mSSAOBuffer.get()->unmap();
 
     graph.addTask(mTask);
+    graph.addTask(mBlurXTask);
+    graph.addTask(mBlurYTask);
 }

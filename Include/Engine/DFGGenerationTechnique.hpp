@@ -22,7 +22,7 @@ public:
 
 	virtual void render(RenderGraph&, Engine*, const std::vector<const Scene::MeshInstance*>&) override final;
 
-	virtual void bindResources(RenderGraph& graph) const override final
+    virtual void bindResources(RenderGraph& graph) override final
 	{
 		graph.bindImage(kDFGLUT, mDFGLUTView);
 	}
