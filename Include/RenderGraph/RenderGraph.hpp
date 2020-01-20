@@ -50,6 +50,7 @@ public:
     // compiles the dependancy graph based on slots (assuming resources are finished writing to by their first read from)
     void compileDependancies();
 
+    // Bind persistent resourcers.
     void bindImage(const std::string&, const ImageView &);
 	void bindImageArray(const std::string&, const ImageViewArray&);
 	void bindBuffer(const std::string&, const BufferView &);
@@ -57,6 +58,9 @@ public:
     void bindIndexBuffer(const std::string&, const BufferView &);
     void bindSampler(const std::string&, const Sampler&);
 	void bindShaderResourceSet(const std::string&, const ShaderResourceSet&);
+
+    // Create and bind transient resources.
+    void createTransientImage(RenderDevice*, const std::string& name, const Format, const ImageUsage, const SizeClass);
 
 	RenderTask& getTask(TaskType, uint32_t);
 	const RenderTask& getTask(TaskType, uint32_t) const;

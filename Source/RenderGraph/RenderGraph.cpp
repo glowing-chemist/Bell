@@ -342,6 +342,42 @@ void RenderGraph::bindShaderResourceSet(const std::string& name, const ShaderRes
 }
 
 
+void RenderGraph::createTransientImage(RenderDevice* dev, const std::string& name, const Format format, const ImageUsage usage, const SizeClass size)
+{
+    const auto [width, height] = [=]() -> std::pair<uint32_t, uint32_t>
+    {
+        const uint32_t swapChainWidth = dev->getSwapChain()->getSwapChainImageWidth();
+        const uint32_t swapChainHeight = dev->getSwapChain()->getSwapChainImageHeight();
+
+        switch(size)
+        {
+            case SizeClass::Swapchain:
+                return {swapChainWidth, swapChainHeight};
+
+            case SizeClass::HalfSwapchain:
+                return {swapChainWidth / 2, swapChainHeight / 2 };
+
+            case SizeClass::QuarterSwapchain:
+                return {swapChainWidth / 4, swapChainHeight / 4 };
+
+            default:
+                BELL_TRAP;
+                return {swapChainWidth, swapChainHeight};
+        }
+    }();
+
+    Image generatedImage(dev, format, usage | ImageUsage::Transient,
+                         width, height, 1, 1, 1, 1, name);
+
+    ImageView view{generatedImage, usage & ImageUsage::DepthStencil ?
+                                        ImageViewType::Depth :  ImageViewType::Colour};
+
+    mNonPersistentImages.emplace_back(generatedImage, view);
+
+    bindImage(name, view);
+}
+
+
 void RenderGraph::generateTransientImages(RenderDevice* dev)
 {
 	// Currently (and probably will only ever) support creating non persistent resources for graphics tasks.
@@ -355,38 +391,11 @@ void RenderGraph::generateTransientImages(RenderDevice* dev)
 			if(output.mSize == SizeClass::Custom)
 				continue;
 
-			const auto [width, height] = [=]() -> std::pair<uint32_t, uint32_t>
-			{
-				const uint32_t swapChainWidth = dev->getSwapChain()->getSwapChainImageWidth();
-				const uint32_t swapChainHeight = dev->getSwapChain()->getSwapChainImageHeight();
-
-				switch(output.mSize)
-				{
-					case SizeClass::Swapchain:
-						return {swapChainWidth, swapChainHeight};
-
-					case SizeClass::HalfSwapchain:
-						return {swapChainWidth / 2, swapChainHeight / 2 };
-
-					case SizeClass::QuarterSwapchain:
-						return {swapChainWidth / 4, swapChainHeight / 4 };
-
-					default:
-						BELL_TRAP;
-						return {swapChainWidth, swapChainHeight};
-				}
-			}();
-
-			Image generatedImage(dev, output.mFormat, (output.mType == AttachmentType::Depth ?
-									 ImageUsage::DepthStencil :  ImageUsage::ColourAttachment) | ImageUsage::Sampled | ImageUsage::Transient,
-								 width, height, 1, 1, 1, 1, output.mName);
-
-			ImageView view{generatedImage, output.mType == AttachmentType::Depth ?
-												ImageViewType::Depth :  ImageViewType::Colour};
-
-			mNonPersistentImages.emplace_back(generatedImage, view);
-
-			bindImage(output.mName, view);
+            createTransientImage(dev,
+                                 output.mName,
+                                 output.mFormat,
+                                 (output.mType == AttachmentType::Depth ? ImageUsage::DepthStencil :  ImageUsage::ColourAttachment) | ImageUsage::Sampled,
+                                 output.mSize);
 		}
 	}
 }
