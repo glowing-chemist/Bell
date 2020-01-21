@@ -2,7 +2,7 @@
 #extension GL_ARB_separate_shader_objects : enable
 #extension GL_GOOGLE_include_directive : enable
 
-#include "GassianBlur.glsl"
+#include "GaussianBlur.glsl"
 
 layout(binding = 0) uniform texture2D inImage;
 layout(r8, binding = 1) uniform writeonly image2D outImage;
@@ -14,31 +14,5 @@ layout(local_size_x = 1, local_size_y = KERNAL_SIZE, local_size_z = 1) in;
 
 void main()
 {
-	const vec2 size = textureSize(sampler2D(inImage, linearSampler), 0);
-
-	const ivec3 dispatchLocation = ivec3(gl_GlobalInvocationID);
-
-	sharedLine[gl_LocalInvocationID.y + 3] = texture(sampler2D(inImage, linearSampler), vec2(dispatchLocation.xy) / size);
-
-	// Load the results either side as well.
-	if(gl_LocalInvocationID.y < 3)
-	{
-		sharedLine[gl_LocalInvocationID.y] = texture(sampler2D(inImage, linearSampler), vec2(dispatchLocation.x, max(0, dispatchLocation.y - (3 - gl_LocalInvocationID.y))) / size);
-	}
-
-	if(gl_LocalInvocationID.y > KERNAL_SIZE - 4)
-	{
-		sharedLine[KERNAL_SIZE + (KERNAL_SIZE - gl_LocalInvocationID.y) + 3] = texture(sampler2D(inImage, linearSampler), vec2(dispatchLocation.x, max(size.y, dispatchLocation.y + (gl_LocalInvocationID.y + 1))) / size);
-	}
-
-	// wait for the shared memory to be fully populated.
-	groupMemoryBarrier();
-	barrier();
-
-	if(dispatchLocation.y >= size.y)
-		return;
-
-	vec4 bluredPixel = blur(gl_LocalInvocationID.y);
-
-	imageStore(outImage, dispatchLocation.xy, bluredPixel);
+#include "BlurY_Base.glsl"
 }

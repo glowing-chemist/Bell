@@ -31,24 +31,20 @@ void ShadowMappingTechnique::render(RenderGraph& graph, Engine* eng, const std::
 {
     mTask.clearCalls();
 
-    uint64_t minVertexOffset = ~0ul;
-
     const Frustum lightFrustum = eng->getScene().getShadowingLightFrustum();
     const std::vector<const Scene::MeshInstance*> meshes = eng->getScene().getViewableMeshes(lightFrustum);
 
-    uint32_t vertexBufferOffset = 0;
     for (const auto& mesh : meshes)
     {
+        // Don't render transparent or alpha tested geometry.
+        if ((mesh->mMesh->getAttributes() & (MeshAttributes::AlphaTested | MeshAttributes::Transparent)) > 0)
+            continue;
+
         const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->mMesh);
-        minVertexOffset = std::min(minVertexOffset, vertexOffset);
 
         mTask.addPushConsatntValue(mesh->mTransformation);
-        mTask.addIndexedDrawCall(vertexBufferOffset, indexOffset / sizeof(uint32_t), mesh->mMesh->getIndexData().size());
-
-        vertexBufferOffset += mesh->mMesh->getVertexCount();
+        mTask.addIndexedDrawCall(vertexOffset / mesh->mMesh->getVertexStride(), indexOffset / sizeof(uint32_t), mesh->mMesh->getIndexData().size());
     }
-
-    mTask.setVertexBufferOffset(minVertexOffset);
 
     graph.addTask(mTask);
 }
