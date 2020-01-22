@@ -48,6 +48,10 @@ SSAOTechnique::SSAOTechnique(Engine* eng) :
 				  Rect{getDevice()->getSwapChain()->getSwapChainImageWidth() / 2,
 				  getDevice()->getSwapChain()->getSwapChainImageHeight() / 2}},
     mTask{"SSAO", mPipelineDesc},
+    mBlurXDesc{eng->getShader("Shaders/blurXR8.comp")},
+    mBlurXTask("SSAOBlurX", mBlurXDesc),
+    mBlurYDesc{eng->getShader("Shaders/blurYR8.comp")},
+    mBlurYTask("SSAOBlurY", mBlurYDesc),
     mSSAOBuffer(getDevice(), BufferUsage::Uniform, sizeof(SSAOBuffer), sizeof(SSAOBuffer), "SSAO Offsets"),
     mSSAOBufferView(mSSAOBuffer)
 {
@@ -60,9 +64,19 @@ SSAOTechnique::SSAOTechnique(Engine* eng) :
     mTask.addInput(kGBufferDepth, AttachmentType::Texture2D);
     mTask.addInput(kDefaultSampler, AttachmentType::Sampler);
 
-	mTask.addOutput(kSSAO, AttachmentType::RenderTarget2D, Format::R8UNorm, SizeClass::HalfSwapchain, LoadOp::Clear_Black);
+    mTask.addOutput(kSSAORough, AttachmentType::RenderTarget2D, Format::R8UNorm, SizeClass::HalfSwapchain, LoadOp::Clear_Black);
 
     mTask.addDrawCall(0, 3);
+
+    mBlurXTask.addInput(kSSAORough, AttachmentType::Texture2D);
+    mBlurXTask.addInput(kSSAOBlurIntermidiate, AttachmentType::Image2D);
+    mBlurXTask.addInput(kDefaultSampler, AttachmentType::Sampler);
+    mBlurXTask.addDispatch(std::ceil(getDevice()->getSwapChain()->getSwapChainImageWidth() / 512.0f), getDevice()->getSwapChain()->getSwapChainImageHeight() / 2, 1.0f);
+
+    mBlurYTask.addInput(kSSAOBlurIntermidiate, AttachmentType::Texture2D);
+    mBlurYTask.addInput(kSSAO, AttachmentType::Image2D);
+    mBlurYTask.addInput(kDefaultSampler, AttachmentType::Sampler);
+    mBlurYTask.addDispatch(getDevice()->getSwapChain()->getSwapChainImageWidth() / 2, std::ceil(getDevice()->getSwapChain()->getSwapChainImageHeight() / 512.0f), 1.0f);
 }
 
 
@@ -84,6 +98,8 @@ void SSAOTechnique::render(RenderGraph& graph, Engine*, const std::vector<const 
     mSSAOBuffer.get()->unmap();
 
     graph.addTask(mTask);
+    graph.addTask(mBlurXTask);
+    graph.addTask(mBlurYTask);
 }
 
 

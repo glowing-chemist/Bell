@@ -27,6 +27,11 @@ public:
     virtual void bindResources(RenderGraph& graph) override final
 	{
 		graph.bindBuffer(kSSAOBuffer, *mSSAOBufferView);
+
+        // request the needed resources.
+        graph.createTransientImage(getDevice(), kSSAO, Format::R8UNorm, ImageUsage::Sampled | ImageUsage::Storage, SizeClass::HalfSwapchain);
+        graph.createTransientImage(getDevice(), kSSAOBlurIntermidiate, Format::R8UNorm, ImageUsage::Sampled | ImageUsage::Storage, SizeClass::HalfSwapchain);
+
 	}
 
 	virtual void render(RenderGraph& graph, Engine*, const std::vector<const Scene::MeshInstance*>&) override final;
@@ -37,6 +42,12 @@ private:
 
 	GraphicsPipelineDescription mPipelineDesc;
 	GraphicsTask mTask;
+
+    ComputePipelineDescription mBlurXDesc;
+    ComputeTask mBlurXTask;
+
+    ComputePipelineDescription mBlurYDesc;
+    ComputeTask mBlurYTask;
 
 	PerFrameResource<Buffer> mSSAOBuffer;
 	PerFrameResource<BufferView> mSSAOBufferView;
