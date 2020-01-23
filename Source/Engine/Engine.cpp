@@ -439,7 +439,8 @@ void Engine::updateGlobalBuffers()
         mLightBuffer.get()->setContents(static_cast<int>(mCurrentScene.getLights().size()), sizeof(uint32_t));
 
         if(!mCurrentScene.getLights().empty())
-            mLightBuffer.get()->setContents(mCurrentScene.getLights().data(), static_cast<uint32_t>(mCurrentScene.getLights().size() * sizeof(Scene::Light)), sizeof(uint32_t));
+            mLightBuffer.get()->setContents(mCurrentScene.getLights().data(), static_cast<uint32_t>(mCurrentScene.getLights().size() * sizeof(Scene::Light)), 
+                sizeof(float4));
     }
 
     {

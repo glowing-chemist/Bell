@@ -29,13 +29,18 @@ layout(std430, set = 0, binding = 8) buffer readonly sparseFroxels
 	uvec2 sparseFroxelList[];
 };
 
-layout(set = 0, binding = 9) uniform utexture2D activeFroxels;
+layout(std430, set = 0,  binding = 9) buffer froxelIndicies
+{
+	uint indicies[];
+};
 
-layout(rgba8, set = 0, binding = 10) uniform writeonly image2D accumilatedLight;
+layout(set = 0, binding = 10) uniform utexture2D activeFroxels;
+
+layout(rgba8, set = 0, binding = 11) uniform writeonly image2D accumilatedLight;
 
 layout(std430, set = 1, binding = 0) buffer sceneLights
 {
-	uint  lightCount;
+	uvec4  lightCount;
 	Light lights[];
 };
 
@@ -70,7 +75,8 @@ void main()
 
     for(uint i = 0; i < lightListIndicies.y; ++i)
     {
-    	Light light = lights[lightListIndicies.x + i];
+    	uint indirectLightIndex = indicies[lightListIndicies.x + i];
+    	Light light = lights[indirectLightIndex];
 
     	switch(uint(light.type))
 		{
@@ -83,7 +89,7 @@ void main()
 
 				const float lodLevel = roughness * 10.0f;
 
-				vec3 radiance = light.albedo.xyz * (1.0f / (lightDistance * lightDistance));
+				vec3 radiance = light.albedo.xyz * (1.0f - ((lightDistance * lightDistance) / (light.influence * light.influence)));
 
     			const vec2 f_ab = texture(sampler2D(DFG, linearSampler), vec2(NoH, roughness)).xy;
 

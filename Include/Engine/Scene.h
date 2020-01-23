@@ -112,6 +112,7 @@ public:
         float4 mALbedo;
         float mInfluence;
 		LightType mType;
+        float2 mPadding;
 	};
     size_t addLight(const Light& light)
     {

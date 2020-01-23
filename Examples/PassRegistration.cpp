@@ -93,7 +93,7 @@ int main(int argc, char** argv)
     testScene.loadFromFile(VertexAttributes::Position4 | VertexAttributes::Normals | VertexAttributes::TextureCoordinates | VertexAttributes::Material, &engine);
     testScene.loadSkybox(skybox, &engine);
     testScene.setShadowingLight(float3(10.0f, -10.0f, 10.0f), float3(0.0f, 0.0f, 1.0f));
-    testScene.addLight({float4(30.0f, -30.0f, 30.0f, 1.0f), float4(0.0f), float4(0.5, 0.0f, 0.05, 1.0f), 1000.0f, LightType::Spot});
+    testScene.addLight({float4(30.0f, -30.0f, 30.0f, 1.0f), float4(0.0f), float4(0.5, 0.0f, 0.5, 1.0f), 100.0f, LightType::Point});
     testScene.finalise(&engine);
 
     engine.setScene(testScene);

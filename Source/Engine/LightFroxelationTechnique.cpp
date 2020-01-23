@@ -24,14 +24,14 @@ LightFroxelationTechnique::LightFroxelationTechnique(Engine* eng) :
 	mActiveFroxelsImageView(mActiveFroxelsImage, ImageViewType::Colour),
 
     // Assumes an avergae max of 10 active froxels per screen space tile.
-    mActiveFroxlesBuffer(eng->getDevice(), BufferUsage::DataBuffer | BufferUsage::Uniform, sizeof(uint32_t) * 3 * (30 * 50 * 10), sizeof(uint32_t) * 3 * (30 * 50 * 10), "ActiveFroxelBuffer"),
+    mActiveFroxlesBuffer(eng->getDevice(), BufferUsage::DataBuffer | BufferUsage::Uniform, sizeof(float4) * (30 * 50 * 10), sizeof(float4) * (30 * 50 * 10), "ActiveFroxelBuffer"),
 	mActiveFroxlesBufferView(mActiveFroxlesBuffer, std::max(eng->getDevice()->getMinStorageBufferAlignment(), sizeof(uint32_t))),
     mActiveFroxelsCounter(mActiveFroxlesBuffer, 0u, static_cast<uint32_t>(sizeof(uint32_t))),
 
     mIndirectArgsBuffer(eng->getDevice(), BufferUsage::DataBuffer | BufferUsage::IndirectArgs, sizeof(uint32_t) * 3, sizeof(uint32_t) * 3, "FroxelIndirectArgs"),
     mIndirectArgsView(mIndirectArgsBuffer, 0, sizeof(uint32_t) * 3),
 
-    mSparseFroxelBuffer(eng->getDevice(), BufferUsage::DataBuffer, sizeof(uint32_t) * 2 * (30 * 50 * 32), sizeof(uint32_t) * 2 * (30 * 50 * 32), kSparseFroxels),
+    mSparseFroxelBuffer(eng->getDevice(), BufferUsage::DataBuffer, sizeof(float2) * (30 * 50 * 32), sizeof(float2) * (30 * 50 * 32), kSparseFroxels),
     mSparseFroxelBufferView(mSparseFroxelBuffer),
 
     mLightIndexBuffer(eng->getDevice(), BufferUsage::DataBuffer, sizeof(uint32_t) * (30 * 50 * 10 * 16), sizeof(uint32_t) * (30 * 50 * 10 * 16), kLightIndicies),

@@ -20,6 +20,7 @@ DeferredAnalyticalLightingTechnique::DeferredAnalyticalLightingTechnique(Engine*
 	mTask.addInput(kDefaultSampler, AttachmentType::Sampler);
 	mTask.addInput("PointSampler", AttachmentType::Sampler);
 	mTask.addInput(kSparseFroxels, AttachmentType::DataBufferRO);
+	mTask.addInput(kLightIndicies, AttachmentType::DataBufferRO);
 	mTask.addInput(kActiveFroxels, AttachmentType::Texture2D);
 	mTask.addInput(kAnalyticLighting, AttachmentType::Image2D);
 	mTask.addInput(kLightBuffer, AttachmentType::ShaderResourceSet);

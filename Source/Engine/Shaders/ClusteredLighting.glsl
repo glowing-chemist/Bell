@@ -19,6 +19,7 @@ struct Light
 	vec4 albedo;
 	float influence;
 	uint type;
+	vec2 padding;
 };
 
 struct AABB

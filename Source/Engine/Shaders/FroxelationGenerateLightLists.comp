@@ -13,7 +13,7 @@ layout(std430, set = 0,  binding = 0) buffer visibleFroxlesCounter
 
 layout(std430, set = 0,  binding = 1) buffer visibleFroxles
 {
-	uvec3 froxel[];
+	uvec4 froxel[];
 };
 
 layout(std430, set = 0,  binding = 2) buffer froxelIndixCounter
@@ -38,25 +38,28 @@ layout(set =0, binding = 5) uniform cameraBuffer
 
 layout(std430, set = 1, binding = 0) buffer sceneLights
 {
-	uint  lightCount;
+	uvec4  lightCount;
 	Light lights[];
 };
 
-layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
+layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
 
 
 void main()
 {
-	const uint froxelIndex = uint(atomicAdd(visibleCounter, -1) - 1); // need the value after the opertation.
+	const int froxelIndex = atomicAdd(visibleCounter, -1) - 1; // need the value after the opertation.
 
-	const uvec3 froxelToProcess = froxel[froxelIndex];
+	if(froxelIndex < 0)
+		return;
+
+	const uvec3 froxelToProcess = froxel[froxelIndex].xyz;
 
 	const AABB aabb = getFroxelAABB(froxelToProcess, camera.fov, camera.frameBufferSize);
 
 	uint nextFreeSlot = 0;
 	uint lightIndicies[LIGHTS_PER_FROXEL];
 
-	for(uint i = 0; i < lightCount; ++i)
+	for(uint i = 0; i < lightCount.x; ++i)
 	{
 		const Light light = lights[i];
 		switch(uint(light.type))
@@ -91,5 +94,5 @@ void main()
 		indicies[startLightIndex + i] = lightIndicies[i];
 	}
 
-	sparseFroxelList[froxelIndex] = uvec2(startLightIndex, nextFreeSlot);
+	sparseFroxelList[getFroxelIndex(froxelToProcess, uvec2(camera.frameBufferSize))] = uvec2(startLightIndex, nextFreeSlot);
 }
