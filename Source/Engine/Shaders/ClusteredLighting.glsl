@@ -3,6 +3,7 @@
 #define LIGHTS_PER_FROXEL  16
 #define DEPTH_SUBDIVISIONS 32
 #define DEPTH_SUBDIVISION_FACTOR 1.2
+#define E 2.71828
 
 #include "Utilities.glsl"
 
@@ -31,21 +32,28 @@ struct AABB
 
 uint getFroxelIndex(const uvec3 position, const uvec2 size)
 {
-	return position.x + (position.y * (size.x / FROXEL_TILE_SIZE)) + (position.z * ((size.x * size.y) / (FROXEL_TILE_SIZE * FROXEL_TILE_SIZE)));
+	const uint rowSize = uint(ceil(float(size.x) / float(FROXEL_TILE_SIZE)));
+	const uint columnSize = uint(ceil(float(size.y) / float(FROXEL_TILE_SIZE)));
+	return position.x + (position.y * rowSize) + (position.z * rowSize * columnSize);
 }
 
 
 uvec3 getFroxelPosition(const vec2 uv, const float depth, const vec2 size, const float nearPlane, const float farPlane, const float FOV)
 {
-	const vec2 xyFroxel = floor((uv * size) / FROXEL_TILE_SIZE);
+	const vec2 xyFroxel = floor((uv * size) / vec2(FROXEL_TILE_SIZE));
 
     float depthVS = lineariseDepth(depth, nearPlane, farPlane);
-    depthVS *= farPlane;
+    depthVS *= (farPlane - nearPlane);
+    depthVS += nearPlane;
 
     // Formula from original paper ( Clustered Deferred and forward shading, Ola et al.)
     // produces to many depth subdivisions for my liking.
 	//const float Sy = size.y / FROXEL_TILE_SIZE; 
 	//const float kn = floor((log(depthVS / nearPlane)) / (log(1 + (2 * tan(radians(FOV / 2.0f)) / Sy))));
+
+	// Linear (used just for comparison).
+	//float k = farPlane / float(DEPTH_SUBDIVISIONS);
+	//float kn = floor(depthVS / k);
 
 	// Version with a fixed (DEPTH_SUBDIVISIONS) number of subdivisions.
 	const float k1 = (farPlane - nearPlane) / pow(DEPTH_SUBDIVISION_FACTOR, DEPTH_SUBDIVISIONS);
@@ -66,21 +74,23 @@ vec2 getWidthHeight(const float linearDepth, const float FOV, const vec2 framebu
 }
 
 
-AABB getFroxelAABB(const uvec3 froxelPosition, const float FOV, const vec2 framebufferSize)
+AABB getFroxelAABB(const uvec3 froxelPosition, const float FOV, const vec2 framebufferSize, const float nearPlane, const float farPlane)
 {
-	const float nearDepth = pow(DEPTH_SUBDIVISION_FACTOR, froxelPosition.z);
+	const float k1 = (farPlane - nearPlane) / pow(DEPTH_SUBDIVISION_FACTOR, DEPTH_SUBDIVISIONS);
+
+	const float nearDepth = k1 * pow(E, log(DEPTH_SUBDIVISION_FACTOR) * froxelPosition.z);
 	const vec2 nearWidthHeight = getWidthHeight(nearDepth, FOV, framebufferSize);
 	vec3 nearViewSpace;
-	nearViewSpace.xy = (froxelPosition.xy / (framebufferSize / FROXEL_TILE_SIZE)) * nearWidthHeight;
+	nearViewSpace.xy = (((froxelPosition.xy * FROXEL_TILE_SIZE) / framebufferSize) - 0.5f) * nearWidthHeight;
 	nearViewSpace.z = nearDepth;
 
-	const float farDepth = pow(DEPTH_SUBDIVISION_FACTOR, froxelPosition.z - 1u);
+	const float farDepth = k1 * pow(E, log(DEPTH_SUBDIVISION_FACTOR) * (froxelPosition.z + 1));
 	const vec2 farWidthHeight = getWidthHeight(farDepth, FOV, framebufferSize);
 	vec3 farViewSpace;
-	farViewSpace.xy = (froxelPosition.xy / (framebufferSize / FROXEL_TILE_SIZE)) * farWidthHeight;
+	farViewSpace.xy = ((((froxelPosition.xy + uvec2(1, 1)) * FROXEL_TILE_SIZE) / framebufferSize) - 0.5f) * farWidthHeight;
 	farViewSpace.z = farDepth;
 
-	return AABB(nearViewSpace, vec3(0));
+	return AABB(nearViewSpace, farViewSpace);
 }
 
 

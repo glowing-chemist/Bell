@@ -24,7 +24,7 @@ LightFroxelationTechnique::LightFroxelationTechnique(Engine* eng) :
 	mActiveFroxelsImageView(mActiveFroxelsImage, ImageViewType::Colour),
 
     // Assumes an avergae max of 10 active froxels per screen space tile.
-    mActiveFroxlesBuffer(eng->getDevice(), BufferUsage::DataBuffer | BufferUsage::Uniform, sizeof(float4) * (30 * 50 * 10), sizeof(float4) * (30 * 50 * 10), "ActiveFroxelBuffer"),
+    mActiveFroxlesBuffer(eng->getDevice(), BufferUsage::DataBuffer | BufferUsage::Uniform, sizeof(float4) * (30 * 50 * 16), sizeof(float4) * (30 * 50 * 16), "ActiveFroxelBuffer"),
 	mActiveFroxlesBufferView(mActiveFroxlesBuffer, std::max(eng->getDevice()->getMinStorageBufferAlignment(), sizeof(uint32_t))),
     mActiveFroxelsCounter(mActiveFroxlesBuffer, 0u, static_cast<uint32_t>(sizeof(uint32_t))),
 

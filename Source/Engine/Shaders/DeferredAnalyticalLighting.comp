@@ -7,7 +7,7 @@
 #include "NormalMapping.glsl"
 #include "ClusteredLighting.glsl"
 
-layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
+layout(local_size_x = 32, local_size_y = 32, local_size_z = 1) in;
 
 layout(set = 0, binding = 0) uniform cameraBuffer
 {
@@ -46,7 +46,7 @@ layout(std430, set = 1, binding = 0) buffer sceneLights
 
 void main()
 {
-	const vec2 gbufferSize = textureSize(sampler2D(depth, linearSampler), 0);
+	const vec2 gbufferSize = camera.frameBufferSize;
 	const vec2 uv = vec2(gl_GlobalInvocationID.xy) / gbufferSize;
 
 	if(gl_GlobalInvocationID.x >= gbufferSize.x || gl_GlobalInvocationID.y >= gbufferSize.y)
@@ -68,7 +68,10 @@ void main()
     const float roughness = texture(sampler2D(MetalnessRoughness, linearSampler), uv).y;
     float metalness = texture(sampler2D(MetalnessRoughness, linearSampler), uv).x;
 
-    const uint froxelIndex = texture(usampler2D(activeFroxels, pointSampler), uv).x;
+	uvec3 froxelPos = getFroxelPosition(uv, fragmentDepth, gbufferSize, camera.nearPlane, camera.farPlane, camera.fov);
+	uint froxelIndex = getFroxelIndex(froxelPos, uvec2(gbufferSize));
+
+    //const uint froxelIndex = texture(usampler2D(activeFroxels, pointSampler), uv).x;
     const uvec2 lightListIndicies = sparseFroxelList[froxelIndex];
 
     vec4 accum = vec4(0.0f);
@@ -87,9 +90,7 @@ void main()
 				const vec3 halfVector = normalize(lightDir.xyz + viewDir);
     			const float NoH = dot(halfVector, viewDir);
 
-				const float lodLevel = roughness * 10.0f;
-
-				vec3 radiance = light.albedo.xyz * (1.0f - ((lightDistance * lightDistance) / (light.influence * light.influence)));
+				vec3 radiance = light.albedo.xyz * clamp((1.0f - ((lightDistance * lightDistance) / (light.influence * light.influence))), 0.0f, 1.0f);
 
     			const vec2 f_ab = texture(sampler2D(DFG, linearSampler), vec2(NoH, roughness)).xy;
 

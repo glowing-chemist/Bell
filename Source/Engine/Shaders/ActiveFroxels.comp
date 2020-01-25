@@ -40,7 +40,7 @@ void main()
 		froxelBitSet = 0;
 	}
 
-	vec2 size = textureSize(sampler2D(depth, linearSampler), 0);
+	vec2 size = camera.frameBufferSize;
 
 	if(gl_GlobalInvocationID.x >= size.x || gl_GlobalInvocationID.y >= size.y)
 		return;
@@ -49,19 +49,19 @@ void main()
 
 	float depth = texture(sampler2D(depth, linearSampler), uv).x;
 
-	uvec3 froxelPos = getFroxelPosition(uv, depth, size, camera.nearPlane, camera.farPlane, 90.0f);
+	uvec3 froxelPos = getFroxelPosition(uv, depth, size, camera.nearPlane, camera.farPlane, camera.fov);
 	uint froxelIndex = getFroxelIndex(froxelPos, uvec2(size));
 
 	if(gl_GlobalInvocationID.x <= size.x && gl_GlobalInvocationID.y <= size.y)
 		imageStore(activeFroxels, ivec2(gl_GlobalInvocationID.xy), uvec4(froxelIndex, 0, 0, 0));
 
+	uint bitset = subgroupOr(1 << froxelPos.z);
+
 	// Shared memory must be zeroed by now.
+	subgroupBarrier();
 	groupMemoryBarrier();
 	barrier();
 
-	uint bitset = subgroupOr(1 << froxelPos.z);
-
-	subgroupBarrier();
 	if(subgroupElect())
 		atomicOr(froxelBitSet, bitset);
 

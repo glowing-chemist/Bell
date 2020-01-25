@@ -54,7 +54,7 @@ void main()
 
 	const uvec3 froxelToProcess = froxel[froxelIndex].xyz;
 
-	const AABB aabb = getFroxelAABB(froxelToProcess, camera.fov, camera.frameBufferSize);
+	const AABB aabb = getFroxelAABB(froxelToProcess, camera.fov, camera.frameBufferSize, camera.nearPlane, camera.farPlane);
 
 	uint nextFreeSlot = 0;
 	uint lightIndicies[LIGHTS_PER_FROXEL];
@@ -66,7 +66,7 @@ void main()
 		{
 			case 0:
 			{
-				const bool intersects = sphereAABBIntersection(light.position.xyz, light.influence, aabb);
+				const bool intersects = sphereAABBIntersection(light.position.xyz - camera.position, light.influence, aabb);
 				if(intersects)
 				{
 					lightIndicies[nextFreeSlot++] = i;

@@ -28,7 +28,7 @@ DeferredAnalyticalLightingTechnique::DeferredAnalyticalLightingTechnique(Engine*
 	const float threadGroupWidth = eng->getSwapChainImageView()->getImageExtent().width;
 	const float threadGroupHeight = eng->getSwapChainImageView()->getImageExtent().height;
 
-	mTask.addDispatch(	static_cast<uint32_t>(std::ceil(threadGroupWidth / 8.0f)),
-						static_cast<uint32_t>(std::ceil(threadGroupHeight / 8.0f)),
+	mTask.addDispatch(	static_cast<uint32_t>(std::ceil(threadGroupWidth / 32.0f)),
+						static_cast<uint32_t>(std::ceil(threadGroupHeight / 32.0f)),
 						1);
 }
