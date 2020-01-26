@@ -29,52 +29,53 @@ layout(std430, binding = 5) buffer visibleFroxles
 	uvec4 froxel[];
 };
 
+
 layout(local_size_x = 32, local_size_y = 32, local_size_z = 1) in;
 
 shared uint froxelBitSet;
 
 void main()
 {
-	if(gl_LocalInvocationID.x == 0 && gl_LocalInvocationID.y == 0 && gl_LocalInvocationID.z == 0)
+	if(gl_LocalInvocationIndex == 0)
 	{
 		froxelBitSet = 0;
 	}
 
 	vec2 size = camera.frameBufferSize;
 
-	if(gl_GlobalInvocationID.x >= size.x || gl_GlobalInvocationID.y >= size.y)
-		return;
-
 	vec2 uv = vec2(gl_GlobalInvocationID.xy) / size;
 
 	float depth = texture(sampler2D(depth, linearSampler), uv).x;
 
-	uvec3 froxelPos = getFroxelPosition(uv, depth, size, camera.nearPlane, camera.farPlane, camera.fov);
+	uvec3 froxelPos = getFroxelPosition(gl_GlobalInvocationID.xy, depth, size, camera.nearPlane, camera.farPlane, camera.fov);
 	uint froxelIndex = getFroxelIndex(froxelPos, uvec2(size));
 
 	if(gl_GlobalInvocationID.x <= size.x && gl_GlobalInvocationID.y <= size.y)
 		imageStore(activeFroxels, ivec2(gl_GlobalInvocationID.xy), uvec4(froxelIndex, 0, 0, 0));
 
-	uint bitset = subgroupOr(1 << froxelPos.z);
+	uint bitset = subgroupOr(1u << froxelPos.z);
 
 	// Shared memory must be zeroed by now.
 	subgroupBarrier();
-	groupMemoryBarrier();
+	memoryBarrierShared();
 	barrier();
 
 	if(subgroupElect())
 		atomicOr(froxelBitSet, bitset);
 
-	groupMemoryBarrier();
+	subgroupBarrier();
+	memoryBarrierShared();
 	barrier();
 
-	if(gl_LocalInvocationIndex < DEPTH_SUBDIVISIONS) // Max number of depth slices.
+	if(gl_LocalInvocationIndex < uint(DEPTH_SUBDIVISIONS)) // Max number of depth slices.
 	{
-		if((froxelBitSet & (1 << gl_LocalInvocationIndex)) > 0)
+		const uint isActive = froxelBitSet & (1u << gl_LocalInvocationIndex);
+
+		if(isActive > 0u)
 		{
 			uint offset = atomicAdd(counter, 1u);
 
-			froxel[offset] = uvec4(froxelPos.xy, gl_LocalInvocationIndex, 0);
+			froxel[offset] = uvec4(froxelPos.xy, gl_LocalInvocationIndex, 0u);
 		}
 	}
 }

@@ -38,9 +38,9 @@ uint getFroxelIndex(const uvec3 position, const uvec2 size)
 }
 
 
-uvec3 getFroxelPosition(const vec2 uv, const float depth, const vec2 size, const float nearPlane, const float farPlane, const float FOV)
+uvec3 getFroxelPosition(const uvec2 position, const float depth, const vec2 size, const float nearPlane, const float farPlane, const float FOV)
 {
-	const vec2 xyFroxel = floor((uv * size) / vec2(FROXEL_TILE_SIZE));
+	const uvec2 xyFroxel = position / FROXEL_TILE_SIZE;
 
     float depthVS = lineariseDepth(depth, nearPlane, farPlane);
     depthVS *= (farPlane - nearPlane);

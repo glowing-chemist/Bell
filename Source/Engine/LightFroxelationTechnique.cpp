@@ -34,7 +34,7 @@ LightFroxelationTechnique::LightFroxelationTechnique(Engine* eng) :
     mSparseFroxelBuffer(eng->getDevice(), BufferUsage::DataBuffer, sizeof(float2) * (30 * 50 * 32), sizeof(float2) * (30 * 50 * 32), kSparseFroxels),
     mSparseFroxelBufferView(mSparseFroxelBuffer),
 
-    mLightIndexBuffer(eng->getDevice(), BufferUsage::DataBuffer, sizeof(uint32_t) * (30 * 50 * 10 * 16), sizeof(uint32_t) * (30 * 50 * 10 * 16), kLightIndicies),
+    mLightIndexBuffer(eng->getDevice(), BufferUsage::DataBuffer, sizeof(uint32_t) * (30 * 50 * 16 * 16), sizeof(uint32_t) * (30 * 50 * 16 * 16), kLightIndicies),
     mLightIndexBufferView(mLightIndexBuffer, std::max(eng->getDevice()->getMinStorageBufferAlignment(), sizeof(uint32_t))),
     mLightIndexCounterView(mLightIndexBuffer, 0, static_cast<uint32_t>(sizeof(uint32_t)))
 {

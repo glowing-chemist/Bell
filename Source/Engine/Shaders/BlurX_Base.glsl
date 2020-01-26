@@ -19,7 +19,7 @@
 	}
 
 	// wait for the shared memory to be fully populated.
-	groupMemoryBarrier();
+	memoryBarrierShared();
 	barrier();
 
 	if(dispatchLocation.x >= size.x)

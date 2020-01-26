@@ -68,7 +68,7 @@ void main()
     const float roughness = texture(sampler2D(MetalnessRoughness, linearSampler), uv).y;
     float metalness = texture(sampler2D(MetalnessRoughness, linearSampler), uv).x;
 
-	uvec3 froxelPos = getFroxelPosition(uv, fragmentDepth, gbufferSize, camera.nearPlane, camera.farPlane, camera.fov);
+	uvec3 froxelPos = getFroxelPosition(gl_GlobalInvocationID.xy, fragmentDepth, gbufferSize, camera.nearPlane, camera.farPlane, camera.fov);
 	uint froxelIndex = getFroxelIndex(froxelPos, uvec2(gbufferSize));
 
     //const uint froxelIndex = texture(usampler2D(activeFroxels, pointSampler), uv).x;
