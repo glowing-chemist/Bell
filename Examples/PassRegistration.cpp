@@ -93,7 +93,7 @@ int main(int argc, char** argv)
     testScene.loadFromFile(VertexAttributes::Position4 | VertexAttributes::Normals | VertexAttributes::TextureCoordinates | VertexAttributes::Material, &engine);
     testScene.loadSkybox(skybox, &engine);
     testScene.setShadowingLight(float3(10.0f, -10.0f, 10.0f), float3(0.0f, 0.0f, 1.0f));
-    testScene.addLight({float4(30.0f, -30.0f, 30.0f, 1.0f), float4(0.0f), float4(0.5f, 0.5f, 0.5f, 1.0f), 500.0f, LightType::Point});
+    testScene.addLight({float4(0.0f, 30.0f, 0.0f, 1.0f), float4(0.0f), float4(1.0f, 0.0f, 0.0f, 1.0f), 500.0f, LightType::Point});
     testScene.finalise(&engine);
 
     engine.setScene(testScene);
@@ -132,20 +132,17 @@ int main(int argc, char** argv)
 		if(unregisterpasses)
 			engine.clearRegisteredPasses();
 
-#if 1
-		engine.registerPass(PassType::GBuffer);
-		engine.registerPass(PassType::DFGGeneration);
 		engine.registerPass(PassType::LightFroxelation);
 		engine.registerPass(PassType::DeferredAnalyticalLighting);
 
-#else
+
         engine.registerPass(PassType::ConvolveSkybox);
         engine.registerPass(PassType::Skybox);
 		
         if (graphicsOptions.mDefered)
 		{
             engine.registerPass(PassType::GBuffer);
-            engine.registerPass(PassType::DeferredPBRIBL);
+            //engine.registerPass(PassType::DeferredPBRIBL);
             engine.registerPass(PassType::SSAOImproved);
 		}
 		else
@@ -156,7 +153,6 @@ int main(int argc, char** argv)
 
         }
 
-#endif
         engine.registerPass(PassType::DFGGeneration);
         engine.registerPass(PassType::Shadow);
         engine.registerPass(PassType::Overlay);
