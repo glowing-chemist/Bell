@@ -137,7 +137,7 @@ glm::mat4 Camera::getViewMatrix() const
 
 glm::mat4 Camera::getPerspectiveMatrix() const
 {
-	return glm::perspective(glm::radians(mFieldOfView), 1.0f, mNearPlaneDistance, mFarPlaneDistance);
+	return glm::perspective(glm::radians(mFieldOfView), mAspect, mNearPlaneDistance, mFarPlaneDistance);
 }
 
 

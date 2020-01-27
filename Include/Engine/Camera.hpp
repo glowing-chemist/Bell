@@ -39,16 +39,18 @@ class Camera
 public:
 
     Camera(const float3& position,
-           const float3& direction,
-           float nearPlaneDistance = 0.1f,
-		   float farPlaneDistance = 10.0f,
-           float fieldOfView = 90.0f)
-        : mPosition{position},
-          mDirection{direction},
-		  mUp{0.0f, -1.0f, 0.0f},
-          mNearPlaneDistance{nearPlaneDistance},
-          mFarPlaneDistance{farPlaneDistance},
-          mFieldOfView{fieldOfView} {}
+        const float3& direction,
+        const float aspect,
+        float nearPlaneDistance = 0.1f,
+        float farPlaneDistance = 10.0f,
+        float fieldOfView = 90.0f)
+        :   mPosition{ position },
+            mDirection{ direction },
+            mUp{ 0.0f, -1.0f, 0.0f },
+            mAspect{ aspect },
+            mNearPlaneDistance{nearPlaneDistance},
+            mFarPlaneDistance{farPlaneDistance},
+            mFieldOfView{fieldOfView} {}
 
 
     void moveForward(const float distance);
@@ -90,6 +92,7 @@ private:
     float3 mPosition;
     float3 mDirection;
     float3 mUp;
+    float mAspect;
     float mNearPlaneDistance;
     float mFarPlaneDistance;
     float mFieldOfView;

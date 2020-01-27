@@ -62,11 +62,13 @@ void main()
 	for(uint i = 0; i < lightCount.x; ++i)
 	{
 		const Light light = lights[i];
+		vec4 viewSpacePosition = camera.view * light.position;
+		viewSpacePosition /= viewSpacePosition.w;
 		switch(uint(light.type))
 		{
 			case 0:
 			{
-				const bool intersects = sphereAABBIntersection(light.position.xyz - camera.position, light.influence, aabb);
+				const bool intersects = sphereAABBIntersection(viewSpacePosition.xyz, light.influence, aabb);
 				if(intersects)
 				{
 					lightIndicies[nextFreeSlot++] = i;
@@ -81,7 +83,7 @@ void main()
 				continue;
 		}
 
-		// Don't evaluate any more light if we have asigned all.
+		// Don't evaluate any more lights if we have asigned all available slots.
 		if(nextFreeSlot == LIGHTS_PER_FROXEL)
 			break;
 	}

@@ -65,7 +65,7 @@ uvec3 getFroxelPosition(const uvec2 position, const float depth, const vec2 size
 
 vec2 getWidthHeight(const float linearDepth, const float FOV, const vec2 framebufferSize)
 {
-	const float height = 2.0f * tan(radians(FOV) / 2.0f) * linearDepth;
+	const float height = 2.0f * linearDepth * tan(radians(FOV) * 0.5f);
 
 	const float aspect = framebufferSize.x / framebufferSize.y;
 	const float width = height * aspect;
@@ -79,13 +79,13 @@ AABB getFroxelAABB(const uvec3 froxelPosition, const float FOV, const vec2 frame
 	const float k1 = (farPlane - nearPlane) / pow(DEPTH_SUBDIVISION_FACTOR, DEPTH_SUBDIVISIONS);
 
 	const float nearDepth = k1 * pow(E, log(DEPTH_SUBDIVISION_FACTOR) * froxelPosition.z);
-	const vec2 nearWidthHeight = getWidthHeight(nearDepth, FOV, framebufferSize);
-	vec3 nearViewSpace;
-	nearViewSpace.xy = (((froxelPosition.xy * FROXEL_TILE_SIZE) / framebufferSize) - 0.5f) * nearWidthHeight;
-	nearViewSpace.z = nearDepth;
-
 	const float farDepth = k1 * pow(E, log(DEPTH_SUBDIVISION_FACTOR) * (froxelPosition.z + 1));
 	const vec2 farWidthHeight = getWidthHeight(farDepth, FOV, framebufferSize);
+
+	vec3 nearViewSpace;
+	nearViewSpace.xy = (((froxelPosition.xy * FROXEL_TILE_SIZE) / framebufferSize) - 0.5f) * farWidthHeight;
+	nearViewSpace.z = nearDepth;
+
 	vec3 farViewSpace;
 	farViewSpace.xy = ((((froxelPosition.xy + uvec2(1, 1)) * FROXEL_TILE_SIZE) / framebufferSize) - 0.5f) * farWidthHeight;
 	farViewSpace.z = farDepth;
@@ -101,7 +101,7 @@ bool sphereAABBIntersection(const vec3 centre, const float radius, const AABB aa
 	bvec3 lessThan = bvec3(centre.x < aabb.topLeft.x,
 							centre.y < aabb.topLeft.y,
 							centre.z < aabb.topLeft.z);
-	const vec3 lessDistance = centre - aabb.topLeft;
+	const vec3 lessDistance = aabb.topLeft - centre;
 	vec3 dmin = mix(vec3(0.0f), lessDistance * lessDistance, lessThan);
 
 	bvec3 greaterThan = bvec3(centre.x > aabb.bottomRight.x,
