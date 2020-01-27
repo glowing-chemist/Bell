@@ -59,8 +59,8 @@ bool renderMenu(GLFWwindow* win)
 
 int main(int argc, char** argv)
 {
-    const uint32_t windowWidth = 1200;
-    const uint32_t windowHeight = 1200;
+    const uint32_t windowWidth = 1440;
+    const uint32_t windowHeight = 810;
 
     bool firstFrame = true;
 
