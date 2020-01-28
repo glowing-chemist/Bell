@@ -93,8 +93,11 @@ void OverlayTechnique::render(RenderGraph& graph, Engine* engine, const std::vec
 			indexPtr += cmd_list->IdxBuffer.Size;
 		}
 
-        mOverlayVertexBuffer.get()->setContents(vertexData.data(), vertexData.size() * sizeof(ImDrawVert));
-        mOverlayIndexBuffer.get()->setContents(indexData.data(), indexData.size() * sizeof(uint32_t));
+		if (!vertexData.empty() && !indexData.empty())
+		{
+			mOverlayVertexBuffer.get()->setContents(vertexData.data(), vertexData.size() * sizeof(ImDrawVert));
+			mOverlayIndexBuffer.get()->setContents(indexData.data(), indexData.size() * sizeof(uint32_t));
+		}
 
 		// Render command lists
 		uint32_t vertexOffset = 0;
