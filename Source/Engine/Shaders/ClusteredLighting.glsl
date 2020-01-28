@@ -7,6 +7,7 @@
 
 #include "Utilities.glsl"
 
+#define LINEAR_SUBDIVISIONS 0
 
 // light Types:
 // 0 - point
@@ -50,14 +51,15 @@ uvec3 getFroxelPosition(const uvec2 position, const float depth, const vec2 size
     // produces to many depth subdivisions for my liking.
 	//const float Sy = size.y / FROXEL_TILE_SIZE; 
 	//const float kn = floor((log(depthVS / nearPlane)) / (log(1 + (2 * tan(radians(FOV / 2.0f)) / Sy))));
-
+#if LINEAR_SUBDIVISIONS
 	// Linear (used just for comparison).
-	//float k = farPlane / float(DEPTH_SUBDIVISIONS);
-	//float kn = floor(depthVS / k);
-
+	float k = farPlane / float(DEPTH_SUBDIVISIONS);
+	uint kn = uint(depthVS / k);
+#else
 	// Version with a fixed (DEPTH_SUBDIVISIONS) number of subdivisions.
 	const float k1 = (farPlane - nearPlane) / pow(DEPTH_SUBDIVISION_FACTOR, DEPTH_SUBDIVISIONS);
 	const float kn = floor(log(depthVS / k1) / log(DEPTH_SUBDIVISION_FACTOR));
+#endif
 
 	return uvec3(xyFroxel, kn);
 }
@@ -76,19 +78,44 @@ vec2 getWidthHeight(const float linearDepth, const float FOV, const vec2 framebu
 
 AABB getFroxelAABB(const uvec3 froxelPosition, const float FOV, const vec2 framebufferSize, const float nearPlane, const float farPlane)
 {
+#if LINEAR_SUBDIVISIONS
+	float k1 = farPlane / float(DEPTH_SUBDIVISIONS);
+
+	const float nearDepth = k1 * froxelPosition.z;
+	const float farDepth = k1 * (froxelPosition.z + 1);
+#else
 	const float k1 = (farPlane - nearPlane) / pow(DEPTH_SUBDIVISION_FACTOR, DEPTH_SUBDIVISIONS);
 
 	const float nearDepth = k1 * pow(E, log(DEPTH_SUBDIVISION_FACTOR) * froxelPosition.z);
 	const float farDepth = k1 * pow(E, log(DEPTH_SUBDIVISION_FACTOR) * (froxelPosition.z + 1));
+#endif
+
 	const vec2 farWidthHeight = getWidthHeight(farDepth, FOV, framebufferSize);
+	const vec2 nearWidthHeight = getWidthHeight(nearDepth, FOV, framebufferSize);
 
-	vec3 nearViewSpace;
-	nearViewSpace.xy = (((froxelPosition.xy * FROXEL_TILE_SIZE) / framebufferSize) - 0.5f) * farWidthHeight;
-	nearViewSpace.z = nearDepth;
+	vec3 nearVerticies[4];
+	nearVerticies[0] = vec3(((vec2((froxelPosition.xy + uvec2(0, 0)) * FROXEL_TILE_SIZE) / framebufferSize) - 0.5f) * nearWidthHeight, nearDepth);
+	nearVerticies[1] = vec3(((vec2((froxelPosition.xy + uvec2(1, 0)) * FROXEL_TILE_SIZE) / framebufferSize) - 0.5f) * nearWidthHeight, nearDepth);
+	nearVerticies[2] = vec3(((vec2((froxelPosition.xy + uvec2(0, 1)) * FROXEL_TILE_SIZE) / framebufferSize) - 0.5f) * nearWidthHeight, nearDepth);
+	nearVerticies[3] = vec3(((vec2((froxelPosition.xy + uvec2(1, 1)) * FROXEL_TILE_SIZE) / framebufferSize) - 0.5f) * nearWidthHeight, nearDepth);
 
-	vec3 farViewSpace;
-	farViewSpace.xy = ((((froxelPosition.xy + uvec2(1, 1)) * FROXEL_TILE_SIZE) / framebufferSize) - 0.5f) * farWidthHeight;
-	farViewSpace.z = farDepth;
+	vec3 farVerticies[4];
+	farVerticies[0] = vec3(((vec2((froxelPosition.xy + uvec2(0, 0)) * FROXEL_TILE_SIZE) / framebufferSize) - 0.5f) * farWidthHeight, farDepth);
+	farVerticies[1] = vec3(((vec2((froxelPosition.xy + uvec2(1, 0)) * FROXEL_TILE_SIZE) / framebufferSize) - 0.5f) * farWidthHeight, farDepth);
+	farVerticies[2] = vec3(((vec2((froxelPosition.xy + uvec2(0, 1)) * FROXEL_TILE_SIZE) / framebufferSize) - 0.5f) * farWidthHeight, farDepth);
+	farVerticies[3] = vec3(((vec2((froxelPosition.xy + uvec2(1, 1)) * FROXEL_TILE_SIZE) / framebufferSize) - 0.5f) * farWidthHeight, farDepth);
+
+	vec3 nearViewSpace = vec3(1000000.0f);
+	vec3 farViewSpace = vec3(-1000000.0f);
+
+	for(uint i = 0; i < 4; ++i)
+	{
+		nearViewSpace = min(nearViewSpace, nearVerticies[i]);
+		nearViewSpace = min(nearViewSpace, farVerticies[i]);
+
+		farViewSpace = max(farViewSpace, nearVerticies[i]);
+		farViewSpace = max(farViewSpace, farVerticies[i]);
+	}
 
 	return AABB(nearViewSpace, farViewSpace);
 }

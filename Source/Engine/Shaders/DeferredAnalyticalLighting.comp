@@ -62,16 +62,13 @@ void main()
     normal = remapNormals(normal);
     normal = normalize(normal);
 
-    const vec3 viewDir = normalize(camera.position - worldSpaceFragmentPos.xyz);
+    const vec3 viewDir = normalize(vec4(camera.position, 1.0f) - worldSpaceFragmentPos).xyz;
 
     vec4 baseAlbedo = texture(sampler2D(Albedo, linearSampler), uv);
     const float roughness = texture(sampler2D(MetalnessRoughness, linearSampler), uv).y;
     float metalness = texture(sampler2D(MetalnessRoughness, linearSampler), uv).x;
 
-	uvec3 froxelPos = getFroxelPosition(gl_GlobalInvocationID.xy, fragmentDepth, gbufferSize, camera.nearPlane, camera.farPlane, camera.fov);
-	uint froxelIndex = getFroxelIndex(froxelPos, uvec2(gbufferSize));
-
-    //const uint froxelIndex = texture(usampler2D(activeFroxels, pointSampler), uv).x;
+    const uint froxelIndex = texture(usampler2D(activeFroxels, pointSampler), uv).x;
     const uvec2 lightListIndicies = sparseFroxelList[froxelIndex];
 
     vec4 accum = vec4(0.0f);
