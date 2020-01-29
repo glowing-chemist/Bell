@@ -19,6 +19,7 @@ public:
         DeviceChild{dev},
         mData{}
     {
+        mData.reserve(getDevice()->getSwapChainImageCount());
         for(uint32_t i = 0; i < getDevice()->getSwapChainImageCount(); ++i)
         {
             mData.emplace_back(dev, std::forward<Args>(args)...);
@@ -30,6 +31,7 @@ public:
         DeviceChild{parent.getDevice()},
         mData{}
     {
+        mData.reserve(getDevice()->getSwapChainImageCount());
         for(uint32_t i = 0; i < getDevice()->getSwapChainImageCount(); ++i)
         {
             mData.emplace_back(parent.get(i), std::forward<Args>(args)...);
