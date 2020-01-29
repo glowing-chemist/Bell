@@ -97,7 +97,7 @@ protected:
     std::string mDebugName;
 };
 
-class Image : private RefCount
+class Image
 {
 public:
 
