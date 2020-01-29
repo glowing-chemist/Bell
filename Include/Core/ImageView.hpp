@@ -86,7 +86,7 @@ protected:
 using ImageViewArray = std::vector<ImageView>;
 
 
-class ImageView : private RefCount
+class ImageView
 {
 public:
 

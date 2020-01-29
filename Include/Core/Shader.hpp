@@ -50,7 +50,7 @@ protected:
 };
 
 
-class Shader : private RefCount
+class Shader
 {
 public:
 
