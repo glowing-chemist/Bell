@@ -80,7 +80,6 @@ void CommandPool::reserve(const uint32_t number, const QueueType queueType)
         auto commandBuffer = allocateCommandBuffers(1, queueType, true)[0];
 
         vk::CommandBufferBeginInfo primaryBegin{};
-        primaryBegin.setFlags(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
 
         commandBuffer.begin(primaryBegin);
 
@@ -103,9 +102,23 @@ void CommandPool::reset()
 	device->resetCommandPool(mComputePool);
 	device->resetCommandPool(mTransferPool);
 
-	mGraphicsBuffers.clear();
-	mComputeBuffers.clear();
-	mTransferBuffers.clear();
+    if(!mGraphicsBuffers.empty())
+    {
+        vk::CommandBufferBeginInfo primaryBegin{};
+        mGraphicsBuffers[0].begin(primaryBegin);
+    }
+
+    if(!mComputeBuffers.empty())
+    {
+        vk::CommandBufferBeginInfo primaryBegin{};
+        mComputeBuffers[0].begin(primaryBegin);
+    }
+
+    if(!mTransferBuffers.empty())
+    {
+        vk::CommandBufferBeginInfo primaryBegin{};
+        mTransferBuffers[0].begin(primaryBegin);
+    }
 }
 
 
