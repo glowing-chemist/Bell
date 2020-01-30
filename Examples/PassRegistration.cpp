@@ -11,6 +11,7 @@ struct ImGuiOptions
     bool mDefered = true;
     float lightRadius = 300.0f;
     float lightPosition[3] = { 0.0f };
+    float lightColor[3] = {1.0f, 0.0f, 0.0f};
 };
 
 static ImGuiOptions graphicsOptions;
@@ -52,6 +53,8 @@ bool renderMenu(GLFWwindow* win, const Camera& cam)
     ImGui::DragFloat3("Light position", graphicsOptions.lightPosition, 10.0f, -1000.0f, 1000.0f);
 
     ImGui::Text("Camera position: X: %f Y: %f Z: %f", cam.getPosition().x, cam.getPosition().y, cam.getPosition().z);
+
+    ImGui::ColorEdit3("Light Color", graphicsOptions.lightColor, ImGuiColorEditFlags_::ImGuiColorEditFlags_RGB);
 
 	ImGui::End();
 
@@ -134,7 +137,14 @@ int main(int argc, char** argv)
 
         auto& scene = engine.getScene();
         scene.clearLights();
-        scene.addLight({ float4(graphicsOptions.lightPosition[0], graphicsOptions.lightPosition[1], graphicsOptions.lightPosition[2], 1.0f) , float4(0.0f), float4(1.0f, 0.0f, 0.0f, 1.0f), graphicsOptions.lightRadius, LightType::Point });
+        scene.addLight({ float4(graphicsOptions.lightPosition[0],
+                                graphicsOptions.lightPosition[1],
+                                graphicsOptions.lightPosition[2], 1.0f) ,
+                         float4(0.0f),
+                         float4(graphicsOptions.lightColor[0],
+                                graphicsOptions.lightColor[1],
+                                graphicsOptions.lightColor[2], 1.0f),
+                         graphicsOptions.lightRadius, LightType::Point, float2{}});
 
 		if(unregisterpasses)
 			engine.clearRegisteredPasses();
