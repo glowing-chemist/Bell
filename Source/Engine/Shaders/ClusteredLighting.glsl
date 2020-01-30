@@ -26,8 +26,8 @@ struct Light
 
 struct AABB
 {
-	vec3 topLeft; // smallest
-	vec3 bottomRight; // largest
+	vec4 topLeft; // smallest
+	vec4 bottomRight; // largest
 };
 
 
@@ -117,7 +117,7 @@ AABB getFroxelAABB(const uvec3 froxelPosition, const float FOV, const vec2 frame
 		farViewSpace = max(farViewSpace, farVerticies[i]);
 	}
 
-	return AABB(nearViewSpace, farViewSpace);
+	return AABB(vec4(nearViewSpace, 1.0f), vec4(farViewSpace, 1.0f));
 }
 
 
@@ -128,13 +128,13 @@ bool sphereAABBIntersection(const vec3 centre, const float radius, const AABB aa
 	bvec3 lessThan = bvec3(centre.x < aabb.topLeft.x,
 							centre.y < aabb.topLeft.y,
 							centre.z < aabb.topLeft.z);
-	const vec3 lessDistance = aabb.topLeft - centre;
+	const vec3 lessDistance = aabb.topLeft.xyz - centre;
 	vec3 dmin = mix(vec3(0.0f), lessDistance * lessDistance, lessThan);
 
 	bvec3 greaterThan = bvec3(centre.x > aabb.bottomRight.x,
 								centre.y > aabb.bottomRight.y,
 								centre.z > aabb.bottomRight.z);
-	const vec3 greaterDistance = centre - aabb.bottomRight; 
+	const vec3 greaterDistance = centre - aabb.bottomRight.xyz;
 	dmin += mix(vec3(0.0f), greaterDistance * greaterDistance, greaterThan);
 
 	// Sum the results.
