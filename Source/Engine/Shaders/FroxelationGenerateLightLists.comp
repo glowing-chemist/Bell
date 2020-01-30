@@ -47,9 +47,9 @@ layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
 
 void main()
 {
-	const int froxelIndex = atomicAdd(visibleCounter, -1) - 1; // need the value after the opertation.
+	const uint froxelIndex = gl_GlobalInvocationID.x;
 
-	if(froxelIndex < 0)
+	if(froxelIndex >= visibleCounter)
 		return;
 
 	const uvec3 froxelToProcess = froxel[froxelIndex].xyz;
