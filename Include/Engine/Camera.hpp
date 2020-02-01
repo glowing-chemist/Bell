@@ -66,8 +66,14 @@ public:
     float3 getPosition() const
         { return mPosition; }
 
+	void setPosition(const float3& pos)
+		{ mPosition = pos; }
+
     float3 getDirection() const
         { return mDirection; }
+
+	void setDirection(const float3 dir)
+		{ mDirection = dir; }
 
     glm::mat4 getViewMatrix() const;
     glm::mat4 getPerspectiveMatrix() const;
