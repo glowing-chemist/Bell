@@ -143,28 +143,28 @@ public:
         glm::vec4 mDirection;
     };
 
-private:
-
-    void generateSceneAABB(const bool includeStatic);
-
 	struct AiStringComparitor
 	{
-        bool operator()(const aiString& l, const aiString& r) const noexcept
+		bool operator()(const aiString& l, const aiString& r) const noexcept
 		{
-            return memcmp(l.C_Str(), r.C_Str(), std::min(l.length, r.length)) < 0;
+			return memcmp(l.C_Str(), r.C_Str(), std::min(l.length, r.length)) < 0;
 		}
 	};
 
-    struct MeshInfo
-    {
-        uint32_t index;
-        uint32_t attributes;
-    };
+	struct MeshInfo
+	{
+		uint32_t index;
+		uint32_t attributes;
+	};
 
-    using MaterialMappings = std::map<aiString, MeshInfo, AiStringComparitor>;
+	using MaterialMappings = std::map<aiString, MeshInfo, AiStringComparitor>;
 
 	// return a mapping between mesh name and material index
 	MaterialMappings loadMaterials(Engine*);
+
+private:
+
+    void generateSceneAABB(const bool includeStatic);
 
 	void parseNode(const aiScene* scene,
 				   const aiNode* node,
