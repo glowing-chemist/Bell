@@ -37,7 +37,7 @@ Engine::Engine(GLFWwindow* windowPtr) :
 #ifdef OPENGL
     mRenderInstance( new OpenGLRenderInstance(windowPtr)),
 #endif
-    mRenderDevice(mRenderInstance->createRenderDevice(DeviceFeaturesFlags::Compute | DeviceFeaturesFlags::Discrete | DeviceFeaturesFlags::Subgroup)),
+    mRenderDevice(mRenderInstance->createRenderDevice(DeviceFeaturesFlags::Compute | DeviceFeaturesFlags::Subgroup)),
     mCurrentScene("Initial current scene"),
     mLoadingScene("Initial loading scene"),
     mVertexBuilder(),
