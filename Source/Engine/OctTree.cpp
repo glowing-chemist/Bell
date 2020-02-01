@@ -81,6 +81,51 @@ std::vector<T> OctTree<T>::containedWithin(const Frustum& frustum, const Estimat
 
 
 template<typename T>
+std::vector<T> OctTree<T>::getIntersections(const AABB& aabb) const
+{
+	std::vector<T> intersections;
+	getIntersections(aabb, mRoot, intersections);
+
+	return intersections;
+}
+
+
+template<typename T>
+void OctTree<T>::getIntersections(const AABB& aabb, const std::unique_ptr<typename OctTree<T>::Node>& node, std::vector<T>& intersections) const
+{
+	if (aabb.contains(node->mBoundingBox, EstimationMode::Under))
+	{
+		intersections.insert(intersections.end(), node->mValues.begin(), node->mValues.end());
+		return;
+	}
+
+	for (const auto& childNode : node->mChildren)
+	{
+		if (!childNode)
+		{
+			if (aabb.contains(node->mBoundingBox, EstimationMode::Over))
+			{
+				for (const auto& mesh : node->mValues)
+				{
+					if (aabb.contains(mesh->mMesh->getAABB() * mesh->mTransformation, EstimationMode::Over))
+						intersections.push_back(mesh);
+				}
+			}
+			return;
+		}
+		else
+		{
+			for (const auto& subNode : node->mChildren)
+			{
+				if (aabb.contains(subNode->mBoundingBox, EstimationMode::Over))
+					getIntersections(aabb, subNode, intersections);
+			}
+		}
+	}
+}
+
+
+template<typename T>
 OctTree<T> OctTreeFactory<T>::generateOctTree(const uint32_t subdivisions)
 {
 	auto root = createSpacialSubdivisions(subdivisions, mRootBoundingBox, mBoundingBoxes);

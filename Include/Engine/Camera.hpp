@@ -72,7 +72,7 @@ public:
     float3 getDirection() const
         { return mDirection; }
 
-	void setDirection(const float3 dir)
+	void setDirection(const float3& dir)
 		{ mDirection = dir; }
 
     glm::mat4 getViewMatrix() const;

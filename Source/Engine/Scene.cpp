@@ -373,18 +373,18 @@ void Scene::finalise(Engine* eng)
 
     generateSceneAABB(firstTime);
 
-    for(const auto& mesh : mStaticMeshInstances)
-    {
-        eng->addMeshToBuffer(mesh.mMesh);
-    }
+	if (firstTime)
+	{
+		for(const auto& mesh : mStaticMeshInstances)
+		{
+			eng->addMeshToBuffer(mesh.mMesh);
+		}
 
-    for(const auto& mesh : mDynamicMeshInstances)
-    {
-        eng->addMeshToBuffer(mesh.mMesh);
-    }
+		for(const auto& mesh : mDynamicMeshInstances)
+		{
+			eng->addMeshToBuffer(mesh.mMesh);
+		}
 
-    if(firstTime)
-    {
         //Build the static meshes BVH structure.
         std::vector<typename OctTreeFactory<MeshInstance*>::BuilderNode> staticBVHMeshes{};
 
@@ -485,3 +485,42 @@ void Scene::setShadowingLight(const glm::vec3& position, const glm::vec3& direct
     mShadowingLight = light;
 }
 
+
+std::vector<Scene::Intersection> Scene::getIntersections() const
+{
+	std::vector<Intersection> intersections;
+
+	for (auto& mesh : mStaticMeshInstances)
+	{
+		const std::vector<Scene::MeshInstance*> staticMeshes = mStaticMeshBoundingVolume.getIntersections(mesh.mMesh->getAABB() * mesh.mTransformation);
+		const std::vector<Scene::MeshInstance*> dynamicMeshes = mDynamicMeshBoundingVolume.getIntersections(mesh.mMesh->getAABB() * mesh.mTransformation);
+
+		for (auto& m : staticMeshes)
+		{
+			intersections.emplace_back(m, &mesh);
+		}
+
+		for (auto& m : dynamicMeshes)
+		{
+			intersections.emplace_back(m, &mesh);
+		}
+	}
+
+	for (auto& mesh : mDynamicMeshInstances)
+	{
+		const std::vector<Scene::MeshInstance*> staticMeshes = mStaticMeshBoundingVolume.getIntersections(mesh.mMesh->getAABB() * mesh.mTransformation);
+		const std::vector<Scene::MeshInstance*> dynamicMeshes = mDynamicMeshBoundingVolume.getIntersections(mesh.mMesh->getAABB() * mesh.mTransformation);
+
+		for (auto& m : staticMeshes)
+		{
+			intersections.emplace_back(m, &mesh);
+		}
+
+		for (auto& m : dynamicMeshes)
+		{
+			intersections.emplace_back(m, &mesh);
+		}
+	}
+
+	return intersections;
+}

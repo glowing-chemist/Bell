@@ -145,6 +145,17 @@ public:
 
 	void loadMaterials(Engine*);
 
+	struct Intersection
+	{
+		Intersection(const MeshInstance* m, const MeshInstance* m2) :
+			mEntry1{m},
+			mEntry2{m2} {}
+
+		const MeshInstance* mEntry1;
+		const MeshInstance* mEntry2;
+	};
+	std::vector<Intersection> getIntersections() const;
+
 private:
 
     void generateSceneAABB(const bool includeStatic);

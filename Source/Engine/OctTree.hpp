@@ -29,6 +29,8 @@ public:
     //std::vector<T>   allIntersections(const Ray&) const;
     std::vector<T>   containedWithin(const Frustum&, const EstimationMode) const;
 
+	std::vector<T>	getIntersections(const AABB& aabb) const;
+
     struct Node
     {
         Node() = default;
@@ -43,8 +45,10 @@ public:
 private:
     //std::vector<T>						getIntersections(const Ray&, const std::unique_ptr<Node>&) const;
     //std::vector<std::pair<T, float>>	getIntersectionsWithDistance(const Ray&, std::unique_ptr<Node>&, const float distance) const;
+		
+	void	containedWithin(std::vector<T>& meshes, const Frustum&, const std::unique_ptr<Node>&, const EstimationMode) const;
 
-	void						containedWithin(std::vector<T>& meshes, const Frustum&, const std::unique_ptr<Node>&, const EstimationMode) const;
+	void	getIntersections(const AABB& aabb, const std::unique_ptr<typename OctTree<T>::Node>& node, std::vector<T>& intersections) const;
 
     std::unique_ptr<Node> mRoot;
 };
