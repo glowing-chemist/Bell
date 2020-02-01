@@ -153,13 +153,13 @@ int main(int argc, char** argv)
 		engine.registerPass(PassType::DeferredAnalyticalLighting);
 
 
-        //engine.registerPass(PassType::ConvolveSkybox);
-        //engine.registerPass(PassType::Skybox);
+        engine.registerPass(PassType::ConvolveSkybox);
+        engine.registerPass(PassType::Skybox);
 		
         if (graphicsOptions.mDefered)
 		{
             engine.registerPass(PassType::GBuffer);
-            //engine.registerPass(PassType::DeferredPBRIBL);
+            engine.registerPass(PassType::DeferredPBRIBL);
             engine.registerPass(PassType::SSAOImproved);
 		}
 		else
