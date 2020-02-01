@@ -32,7 +32,8 @@ enum class SizeClass
 enum class TaskType
 {
 	Graphics,
-	Compute
+	Compute,
+	All
 };
 
 

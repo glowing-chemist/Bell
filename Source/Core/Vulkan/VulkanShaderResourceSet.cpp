@@ -23,7 +23,7 @@ void VulkanShaderResourceSet::finalise()
 {
 	VulkanRenderDevice* device = static_cast<VulkanRenderDevice*>(getDevice());
 
-	mLayout = device->generateDescriptorSetLayoutBindings(mResources);
+	mLayout = device->generateDescriptorSetLayoutBindings(mResources, TaskType::All);
 
 	std::vector<WriteShaderResourceSet> writes{};
 	uint32_t binding = 0;

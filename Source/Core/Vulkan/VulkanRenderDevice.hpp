@@ -246,7 +246,7 @@ public:
 	vk::PhysicalDeviceLimits									getLimits() const { return mLimits; }
 
 	template<typename B>
-	vk::DescriptorSetLayout										generateDescriptorSetLayoutBindings(const std::vector<B>&);
+	vk::DescriptorSetLayout										generateDescriptorSetLayoutBindings(const std::vector<B>&, const TaskType type);
 
 private:
 

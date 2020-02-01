@@ -464,7 +464,7 @@ std::vector<vk::PipelineShaderStageCreateInfo> VulkanRenderDevice::generateIndex
 
 
 template<typename B>
-vk::DescriptorSetLayout VulkanRenderDevice::generateDescriptorSetLayoutBindings(const std::vector<B>& bindings)
+vk::DescriptorSetLayout VulkanRenderDevice::generateDescriptorSetLayoutBindings(const std::vector<B>& bindings, const TaskType taskType)
 {
 	std::vector<vk::DescriptorSetLayoutBinding> layoutBindings{};
 	layoutBindings.reserve(bindings.size());
@@ -515,7 +515,22 @@ vk::DescriptorSetLayout VulkanRenderDevice::generateDescriptorSetLayoutBindings(
 		layoutBinding.setBinding(currentBinding++);
 		layoutBinding.setDescriptorType(descriptorType);
         layoutBinding.setDescriptorCount(type == AttachmentType::TextureArray ? arraySize : 1);
-		layoutBinding.setStageFlags(vk::ShaderStageFlagBits::eAll);
+		
+		const vk::ShaderStageFlags stages = [&]()
+		{
+			switch (taskType)
+			{
+			case TaskType::Graphics:
+				return vk::ShaderStageFlagBits::eAllGraphics;
+			
+			case TaskType::Compute:
+				return vk::ShaderStageFlagBits::eCompute;
+
+			case TaskType::All:
+				return vk::ShaderStageFlagBits::eAll;
+			}
+		}();
+		layoutBinding.setStageFlags(stages);
 
 		layoutBindings.push_back(layoutBinding);
 	}
@@ -532,7 +547,7 @@ vk::DescriptorSetLayout VulkanRenderDevice::generateDescriptorSetLayout(const Re
 {
     const auto& inputAttachments = task.getInputAttachments();
 
-	return  generateDescriptorSetLayoutBindings(inputAttachments);
+	return  generateDescriptorSetLayoutBindings(inputAttachments, task.taskType());
 }
 
 
@@ -1085,4 +1100,4 @@ void    VulkanRenderDevice::bindImageMemory(vk::Image& image, vk::DeviceMemory m
 
 
 template
-vk::DescriptorSetLayout VulkanRenderDevice::generateDescriptorSetLayoutBindings(const std::vector<ShaderResourceSetBase::ResourceInfo>&);
+vk::DescriptorSetLayout VulkanRenderDevice::generateDescriptorSetLayoutBindings(const std::vector<ShaderResourceSetBase::ResourceInfo>&, const TaskType);
