@@ -356,7 +356,7 @@ InstanceID Scene::addMeshInstance(const SceneID meshID, const glm::mat4& transfo
     }
     else
     {
-        id = -static_cast<InstanceID>(mDynamicMeshInstances.size() - 1);
+        id = -static_cast<InstanceID>(mDynamicMeshInstances.size());
 
         mDynamicMeshInstances.push_back({&mesh, transformation});
     }
@@ -436,9 +436,9 @@ Frustum Scene::getShadowingLightFrustum() const
 
 Scene::MeshInstance* Scene::getMeshInstance(const InstanceID id)
 {
-    BELL_ASSERT(id < 0, "Trying to fetch a static mesh, altering this after scene creation is undefined")
+    BELL_ASSERT(id <= 0, "Trying to fetch a static mesh, altering this after scene creation is undefined")
 
-    uint64_t meshIndex = -(id + 1);
+    uint64_t meshIndex = -id;
 
     return &mDynamicMeshInstances[meshIndex];
 }
