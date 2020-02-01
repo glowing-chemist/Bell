@@ -220,6 +220,7 @@ namespace
 Editor::Editor(GLFWwindow* window) :
     mWindow{window},
     mCurrentCursorPos{0.0, 0.0},
+	mCursorPosDelta{0.0, 0.0},
     mMode{1},
     mShowHelpMenu{false},
     mShowDebugTexturePicker{false},
