@@ -143,6 +143,12 @@ public:
         glm::vec4 mDirection;
     };
 
+	void loadMaterials(Engine*);
+
+private:
+
+    void generateSceneAABB(const bool includeStatic);
+
 	struct AiStringComparitor
 	{
 		bool operator()(const aiString& l, const aiString& r) const noexcept
@@ -160,11 +166,7 @@ public:
 	using MaterialMappings = std::map<aiString, MeshInfo, AiStringComparitor>;
 
 	// return a mapping between mesh name and material index
-	MaterialMappings loadMaterials(Engine*);
-
-private:
-
-    void generateSceneAABB(const bool includeStatic);
+	MaterialMappings loadMaterialsInternal(Engine*);
 
 	void parseNode(const aiScene* scene,
 				   const aiNode* node,

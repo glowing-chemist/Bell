@@ -134,7 +134,7 @@ void Scene::loadFromFile(const int vertAttributes, Engine* eng)
 	// so just reserve enough sie here.
 	mSceneMeshes.reserve(scene->mNumMeshes);
 
-	const auto meshMaterials = loadMaterials(eng);
+	const auto meshMaterials = loadMaterialsInternal(eng);
 
 	// parse node is recursive so will add all meshes to the scene.
 	parseNode(scene, rootNode, aiMatrix4x4{}, vertAttributes, meshMaterials);
@@ -220,7 +220,13 @@ void Scene::addLights(const aiScene* scene)
 }
 
 
-Scene::MaterialMappings Scene::loadMaterials(Engine* eng)
+void Scene::loadMaterials(Engine* eng)
+{
+	const MaterialMappings mappings = loadMaterialsInternal(eng);
+}
+
+
+Scene::MaterialMappings Scene::loadMaterialsInternal(Engine* eng)
 {
 	// TODO replace this with a lower level file interface to avoid horrible iostream performance.
 	std::ifstream materialFile{};
