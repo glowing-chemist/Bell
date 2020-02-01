@@ -436,11 +436,18 @@ Frustum Scene::getShadowingLightFrustum() const
 
 Scene::MeshInstance* Scene::getMeshInstance(const InstanceID id)
 {
-    BELL_ASSERT(id <= 0, "Trying to fetch a static mesh, altering this after scene creation is undefined")
+	if (id <= 0)
+	{
+		uint64_t meshIndex = -id;
 
-    uint64_t meshIndex = -id;
+		return &mDynamicMeshInstances[meshIndex];
+	}
+	else
+	{
+		uint64_t meshIndex = id - 1;
 
-    return &mDynamicMeshInstances[meshIndex];
+		return &mStaticMeshInstances[meshIndex];
+	}
 }
 
 
