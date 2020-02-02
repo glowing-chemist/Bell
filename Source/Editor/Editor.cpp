@@ -554,7 +554,9 @@ void Editor::loadScene(const std::string& scene)
 	Scene testScene(scene);
 	testScene.loadFromFile(VertexAttributes::Position4 | VertexAttributes::Normals | VertexAttributes::TextureCoordinates | VertexAttributes::Material, &mEngine);
 	testScene.loadSkybox(skybox, &mEngine);
-    testScene.finalise(&mEngine);
+	testScene.uploadData(&mEngine);
+	testScene.computeBounds(MeshType::Static);
+	testScene.computeBounds(MeshType::Dynamic);
 
 	mEngine.setScene(testScene);
 }
