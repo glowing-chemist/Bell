@@ -46,13 +46,13 @@ public:
 	bool contains(const float3&) const;
     bool contains(const AABB&, const EstimationMode) const;
 
-    AABB& operator*=(const glm::mat3&);
+    AABB& operator*=(const glm::mat4&);
 
     AABB& operator*=(const float3&);
     AABB& operator+=(const float3&);
     AABB& operator-=(const float3&);
 
-	AABB operator*(const glm::mat3&);
+	AABB operator*(const glm::mat4&);
 
 	AABB operator*(const float3&);
 	AABB operator+(const float3&);

@@ -83,14 +83,14 @@ bool AABB::contains(const AABB& aabb, const EstimationMode estimationMode) const
 }
 
 
-AABB& AABB::operator*=(const glm::mat3& mat)
+AABB& AABB::operator*=(const glm::mat4& mat)
 {
     // Keep track of the max/min values seen on each axis
     // so tha we still have an AABB not an OOBB.
     const auto cubeVerticies= getCubeAsVertexArray();
     for(const auto& vertex : cubeVerticies)
     {
-		float3 transformedPoint = mat * vertex;
+		float3 transformedPoint = mat * float4(vertex, 1.0f);
 		mTopFrontLeft = componentWiseMin(mTopFrontLeft, transformedPoint);
 		mTopFrontLeft = componentWiseMin(mBottomBackRight, transformedPoint);
 
@@ -129,7 +129,7 @@ AABB& AABB::operator-=(const float3& vec)
 }
 
 
-AABB AABB::operator*(const glm::mat3& mat)
+AABB AABB::operator*(const glm::mat4& mat)
 {
 	// Keep track of the max/min values seen on each axis
 	// so tha we still have an AABB not an OOBB.
@@ -138,7 +138,7 @@ AABB AABB::operator*(const glm::mat3& mat)
 	float3 largest = mBottomBackRight;
 	for (const auto& vertex : cubeVerticies)
 	{
-		float3 transformedPoint = mat * vertex;
+		float3 transformedPoint = mat * float4(vertex, 1.0f);
 		smallest = componentWiseMin(smallest, transformedPoint);
 		smallest = componentWiseMin(largest, transformedPoint);
 
