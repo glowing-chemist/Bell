@@ -84,10 +84,20 @@ template<typename T>
 std::vector<T> OctTree<T>::getIntersections(const AABB& aabb) const
 {
 	std::vector<T> intersections{};
+#if SMALL_SCENE_OPTIMISATION
 
+	for (const auto& mesh : mRoot->mValues)
+	{
+		if (aabb.contains(mesh->mMesh->getAABB() * mesh->mTransformation, EstimationMode::Over))
+		{
+			intersections.push_back(mesh);
+		}
+	}
+
+#else
 	if(mRoot != nullptr)
 		getIntersections(aabb, mRoot, intersections);
-
+#endif
 	return intersections;
 }
 
@@ -105,7 +115,7 @@ void OctTree<T>::getIntersections(const AABB& aabb, const std::unique_ptr<typena
 	{
 		if (!childNode)
 		{
-			if (aabb.contains(node->mBoundingBox, EstimationMode::Over))
+			if (node->mBoundingBox.contains(aabb, EstimationMode::Over))
 			{
 				for (const auto& mesh : node->mValues)
 				{
@@ -119,7 +129,7 @@ void OctTree<T>::getIntersections(const AABB& aabb, const std::unique_ptr<typena
 		{
 			for (const auto& subNode : node->mChildren)
 			{
-				if (aabb.contains(subNode->mBoundingBox, EstimationMode::Over))
+				if (subNode->mBoundingBox.contains(aabb, EstimationMode::Over))
 					getIntersections(aabb, subNode, intersections);
 			}
 		}
