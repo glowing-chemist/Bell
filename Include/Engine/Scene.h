@@ -156,6 +156,7 @@ public:
 		const MeshInstance* mEntry2;
 	};
 	std::vector<Intersection> getIntersections() const;
+	std::vector<Intersection> getIntersections(const InstanceID);
 
 private:
 
