@@ -92,10 +92,8 @@ AABB& AABB::operator*=(const glm::mat4& mat)
     {
 		float3 transformedPoint = mat * float4(vertex, 1.0f);
 		mTopFrontLeft = componentWiseMin(mTopFrontLeft, transformedPoint);
-		mTopFrontLeft = componentWiseMin(mBottomBackRight, transformedPoint);
 
 		mBottomBackRight = componentWiseMax(mBottomBackRight, transformedPoint);
-		mBottomBackRight = componentWiseMax(mTopFrontLeft, transformedPoint);
     }
 
     return *this;
@@ -140,10 +138,8 @@ AABB AABB::operator*(const glm::mat4& mat)
 	{
 		float3 transformedPoint = mat * float4(vertex, 1.0f);
 		smallest = componentWiseMin(smallest, transformedPoint);
-		smallest = componentWiseMin(largest, transformedPoint);
 
 		largest = componentWiseMax(largest, transformedPoint);
-		largest = componentWiseMax(smallest, transformedPoint);
 	}
 
 	return AABB{ smallest, largest };
