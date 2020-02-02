@@ -157,6 +157,7 @@ public:
 	};
 	std::vector<Intersection> getIntersections() const;
 	std::vector<Intersection> getIntersections(const InstanceID);
+	std::vector<Intersection> getIntersections(const InstanceID IgnoreID, const AABB& aabbToTest);
 
 private:
 

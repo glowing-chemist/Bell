@@ -556,3 +556,33 @@ std::vector<Scene::Intersection> Scene::getIntersections(const InstanceID id)
 
 	return intersections;
 }
+
+
+std::vector<Scene::Intersection> Scene::getIntersections(const InstanceID IgnoreID, const AABB& aabbToTest)
+{
+	const MeshInstance* instanceToIgnore = getMeshInstance(IgnoreID);
+
+	const std::vector<Scene::MeshInstance*> staticMeshes = mStaticMeshBoundingVolume.getIntersections(aabbToTest);
+	const std::vector<Scene::MeshInstance*> dynamicMeshes = mDynamicMeshBoundingVolume.getIntersections(aabbToTest);
+
+	std::vector<Intersection> intersections{};
+	intersections.reserve(staticMeshes.size() + dynamicMeshes.size());
+
+	for (auto& m : staticMeshes)
+	{
+		if (m != instanceToIgnore)
+		{
+			intersections.emplace_back(instanceToIgnore, m);
+		}
+	}
+
+	for (auto& m : dynamicMeshes)
+	{
+		if (m != instanceToIgnore)
+		{
+			intersections.emplace_back(instanceToIgnore, m);
+		}
+	}
+
+	return intersections;
+}
