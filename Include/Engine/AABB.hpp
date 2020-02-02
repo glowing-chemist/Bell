@@ -52,11 +52,11 @@ public:
     AABB& operator+=(const float3&);
     AABB& operator-=(const float3&);
 
-	AABB operator*(const glm::mat4&);
+	AABB operator*(const glm::mat4&) const;
 
-	AABB operator*(const float3&);
-	AABB operator+(const float3&);
-	AABB operator-(const float3&);
+	AABB operator*(const float3&) const;
+	AABB operator+(const float3&) const;
+	AABB operator-(const float3&) const;
 
     const float3& getTop() const
     { return mMaximum; }
