@@ -27,12 +27,12 @@ class AABB
 {
 public:
     AABB(const float3& diagonalTop, const float3& diagonalBottom) :
-        mTopFrontLeft{diagonalTop},
-        mBottomBackRight{diagonalBottom} {}
+        mMinimum{diagonalTop},
+        mMaximum{diagonalBottom} {}
 
     AABB(const Cube& cube) :
-        mTopFrontLeft{cube.mUpper1},
-        mBottomBackRight{cube.mLower3} {}
+        mMinimum{cube.mUpper1},
+        mMaximum{cube.mLower3} {}
 
 	// Allow a zero sized AABB to be constructed
 	AABB() = default;
@@ -59,15 +59,15 @@ public:
 	AABB operator-(const float3&);
 
     const float3& getTop() const
-    { return mTopFrontLeft; }
+    { return mMaximum; }
 
     const float3& getBottom() const
-    { return mBottomBackRight; }
+    { return mMinimum; }
 
 private:
 
-    float3 mTopFrontLeft;
-    float3 mBottomBackRight;
+    float3 mMinimum;
+    float3 mMaximum;
 
 };
 
