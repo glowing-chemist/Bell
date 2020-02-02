@@ -52,7 +52,8 @@ public:
     SceneID       addMesh(const StaticMesh&, MeshType);
     InstanceID    addMeshInstance(const SceneID, const glm::mat4&);
 
-    void          finalise(Engine*);
+    void          uploadData(Engine*);
+    void          computeBounds(const MeshType);
 
     std::vector<const MeshInstance*> getViewableMeshes(const Frustum&) const;
 
@@ -200,8 +201,6 @@ private:
     AABB mSceneAABB;
 
 	Camera mSceneCamera;
-
-    std::atomic_bool mFinalised;
 
 	std::vector<Material> mMaterials;
 	std::vector<ImageView> mMaterialImageViews;

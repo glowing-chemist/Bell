@@ -127,6 +127,11 @@ public:
 	uint64_t					  addIndexData(const std::vector<uint32_t>& idx)
 		{ return mIndexBuilder.addData(idx); }
 
+    void clearVertexCache() // To be used before uploading new vertex data.
+    {
+        mVertexCache.clear();
+    }
+
     void   setImageInScene(const std::string& name, const ImageView& image)
 		{ mCurrentRenderGraph.bindImage(name, image); }
 

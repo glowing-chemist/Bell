@@ -100,7 +100,9 @@ int main(int argc, char** argv)
     testScene.loadFromFile(VertexAttributes::Position4 | VertexAttributes::Normals | VertexAttributes::TextureCoordinates | VertexAttributes::Material, &engine);
     testScene.loadSkybox(skybox, &engine);
     testScene.setShadowingLight(float3(10.0f, -10.0f, 10.0f), float3(0.0f, 0.0f, 1.0f));
-    testScene.finalise(&engine);
+    testScene.uploadData(&engine);
+    testScene.computeBounds(MeshType::Static);
+    testScene.computeBounds(MeshType::Dynamic);
 
     engine.setScene(testScene);
 

@@ -42,6 +42,7 @@ namespace
 	}
 }
 
+
 Scene::Scene(const std::string& name) :
     mName{name},
     mSceneMeshes(),
@@ -49,7 +50,6 @@ Scene::Scene(const std::string& name) :
     mDynamicMeshBoundingVolume(),
 	mSceneAABB(float3(std::numeric_limits<float>::max()), float3(std::numeric_limits<float>::min())),
 	mSceneCamera(float3(), float3(0.0f, 0.0f, 1.0f), 1920.0f /1080.0f ,0.1f, 2000.0f),
-	mFinalised(false),
 	mMaterials{},
 	mMaterialImageViews{},
     mLights{},
@@ -68,7 +68,6 @@ Scene::Scene(Scene&& scene) :
     mDynamicMeshBoundingVolume{std::move(scene.mDynamicMeshBoundingVolume)},
     mSceneAABB{std::move(scene.mSceneAABB)},
     mSceneCamera{std::move(scene.mSceneCamera)},
-	mFinalised{scene.mFinalised.load(std::memory_order::memory_order_relaxed)},
     mMaterials{std::move(scene.mMaterials)},
     mMaterialImageViews{std::move(scene.mMaterialImageViews)},
     mLights{std::move(scene.mLights)},
@@ -89,7 +88,6 @@ Scene& Scene::operator=(Scene&& scene)
     mDynamicMeshBoundingVolume = std::move(scene.mDynamicMeshBoundingVolume);
     mSceneAABB = std::move(scene.mSceneAABB);
     mSceneCamera = std::move(scene.mSceneCamera);
-    mFinalised = scene.mFinalised.load(std::memory_order::memory_order_relaxed);
 	mMaterials = std::move(scene.mMaterials);
 	mMaterialImageViews = std::move(scene.mMaterialImageViews);
     mLights = std::move(scene.mLights);
@@ -365,26 +363,24 @@ InstanceID Scene::addMeshInstance(const SceneID meshID, const glm::mat4& transfo
 }
 
 
-void Scene::finalise(Engine* eng)
+void Scene::uploadData(Engine* eng)
 {
-    const bool firstTime = !mFinalised.load(std::memory_order::memory_order_relaxed);
+    eng->flushWait();
+    eng->clearVertexCache();
 
-    mFinalised.store(true);
+    for(const auto& [mesh, meshType] : mSceneMeshes)
+    {
+        eng->addMeshToBuffer(&mesh);
+    }
+}
 
-    generateSceneAABB(firstTime);
 
-	if (firstTime)
-	{
-		for(const auto& mesh : mStaticMeshInstances)
-		{
-			eng->addMeshToBuffer(mesh.mMesh);
-		}
+void Scene::computeBounds(const MeshType type)
+{
+    generateSceneAABB(type == MeshType::Static);
 
-		for(const auto& mesh : mDynamicMeshInstances)
-		{
-			eng->addMeshToBuffer(mesh.mMesh);
-		}
-
+    if(type == MeshType::Static)
+    {
         //Build the static meshes BVH structure.
         std::vector<typename OctTreeFactory<MeshInstance*>::BuilderNode> staticBVHMeshes{};
 
@@ -396,20 +392,19 @@ void Scene::finalise(Engine* eng)
 
         mStaticMeshBoundingVolume = staticBVHFactory.generateOctTree(3);
     }
-
-    //Build the dynamic meshes BVH structure.
-    std::vector<typename OctTreeFactory<MeshInstance*>::BuilderNode> dynamicBVHMeshes{};
-
-    std::transform(mDynamicMeshInstances.begin(), mDynamicMeshInstances.end(), std::back_inserter(dynamicBVHMeshes),
-                   [](MeshInstance& instance)
-                    { return OctTreeFactory<MeshInstance*>::BuilderNode{instance.mMesh->getAABB() * instance.mTransformation, &instance}; } );
-
-    // Not all scenes contain dynamic meshes.
-    if(!dynamicBVHMeshes.empty())
+    else
     {
-        OctTreeFactory<MeshInstance*> dynamicBVHFactory(mSceneAABB, dynamicBVHMeshes);
+        //Build the dynamic meshes BVH structure.
+        std::vector<typename OctTreeFactory<MeshInstance*>::BuilderNode> dynamicBVHMeshes{};
 
-        mStaticMeshBoundingVolume = dynamicBVHFactory.generateOctTree(3);
+        std::transform(mDynamicMeshInstances.begin(), mDynamicMeshInstances.end(), std::back_inserter(dynamicBVHMeshes),
+                       [](MeshInstance& instance)
+                        { return OctTreeFactory<MeshInstance*>::BuilderNode{instance.mMesh->getAABB() * instance.mTransformation, &instance}; } );
+
+
+         OctTreeFactory<MeshInstance*> dynamicBVHFactory(mSceneAABB, dynamicBVHMeshes);
+
+         mDynamicMeshBoundingVolume = dynamicBVHFactory.generateOctTree(3);
     }
 }
 

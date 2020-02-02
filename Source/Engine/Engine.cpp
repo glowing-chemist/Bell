@@ -47,8 +47,8 @@ Engine::Engine(GLFWwindow* windowPtr) :
 	mTechniques{},
 	mCurrentPasstypes{0},
 	mCommandContext(),
-    mVertexBuffer{getDevice(), BufferUsage::Vertex | BufferUsage::TransferDest, 1000000, 1000000, "Vertex Buffer"},
-    mIndexBuffer{getDevice(), BufferUsage::Index | BufferUsage::TransferDest, 1000000, 1000000, "Index Buffer"},
+    mVertexBuffer{getDevice(), BufferUsage::Vertex | BufferUsage::TransferDest, 10000000, 10000000, "Vertex Buffer"},
+    mIndexBuffer{getDevice(), BufferUsage::Index | BufferUsage::TransferDest, 10000000, 10000000, "Index Buffer"},
     mDefaultSampler(SamplerType::Linear),
     mShowDebugTexture(false),
     mDebugTextureName(""),
@@ -74,15 +74,15 @@ void Engine::loadScene(const std::string& path)
     mLoadingScene = Scene(path);
 	mLoadingScene.loadFromFile(VertexAttributes::Position4 | VertexAttributes::TextureCoordinates | VertexAttributes::Normals | VertexAttributes::Material, this);
 
-    mVertexCache.clear();
-    mLoadingScene.finalise(this);
+    mLoadingScene.uploadData(this);
+    mLoadingScene.computeBounds(MeshType::Static);
+    mLoadingScene.computeBounds(MeshType::Dynamic);
 
     setScene(mCurrentScene);
 }
 
 void Engine::transitionScene()
 {
-    mVertexCache.clear();
     mCurrentScene = std::move(mLoadingScene);
 }
 
@@ -92,8 +92,9 @@ void Engine::setScene(const std::string& path)
     mCurrentScene = Scene(path);
     mCurrentScene.loadFromFile(VertexAttributes::Position4 | VertexAttributes::TextureCoordinates | VertexAttributes::Normals | VertexAttributes::Material, this);
 
-    mVertexCache.clear();
-    mCurrentScene.finalise(this);
+    mLoadingScene.uploadData(this);
+    mLoadingScene.computeBounds(MeshType::Static);
+    mLoadingScene.computeBounds(MeshType::Dynamic);
 
     setScene(mCurrentScene);
 }
@@ -102,21 +103,6 @@ void Engine::setScene(const std::string& path)
 void Engine::setScene(Scene& scene)
 {
     mCurrentScene = std::move(scene);
-
-    auto& vertexData = mVertexBuilder.finishRecording();
-    auto& indexData = mIndexBuilder.finishRecording();
-
-    if(!vertexData.empty() && !indexData.empty())
-    {
-        mVertexBuffer->resize(static_cast<uint32_t>(vertexData.size()), false);
-        mIndexBuffer->resize(static_cast<uint32_t>(indexData.size()), false);
-
-        mVertexBuffer->setContents(vertexData.data(), static_cast<uint32_t>(vertexData.size()));
-        mIndexBuffer->setContents(indexData.data(), static_cast<uint32_t>(indexData.size()));
-
-        mVertexBuilder.reset();
-        mIndexBuilder.reset();
-    }
 
 	// Set up the SRS for the materials.
 	const auto& materials = mCurrentScene.getMaterials();
@@ -317,6 +303,22 @@ std::pair<uint64_t, uint64_t> Engine::addMeshToBuffer(const StaticMesh* mesh)
 
 void Engine::execute(RenderGraph& graph)
 {
+    // Upload vertex/index data if required.
+    auto& vertexData = mVertexBuilder.finishRecording();
+    auto& indexData = mIndexBuilder.finishRecording();
+
+    if(!vertexData.empty() && !indexData.empty())
+    {
+        mVertexBuffer->resize(static_cast<uint32_t>(vertexData.size()), false);
+        mIndexBuffer->resize(static_cast<uint32_t>(indexData.size()), false);
+
+        mVertexBuffer->setContents(vertexData.data(), static_cast<uint32_t>(vertexData.size()));
+        mIndexBuffer->setContents(indexData.data(), static_cast<uint32_t>(indexData.size()));
+
+        mVertexBuilder.reset();
+        mIndexBuilder.reset();
+    }
+
 	// Finalize graph internal state.
 	graph.compileDependancies();
 	graph.generateTransientImages(mRenderDevice);
