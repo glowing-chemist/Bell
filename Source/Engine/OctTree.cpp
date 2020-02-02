@@ -83,8 +83,10 @@ std::vector<T> OctTree<T>::containedWithin(const Frustum& frustum, const Estimat
 template<typename T>
 std::vector<T> OctTree<T>::getIntersections(const AABB& aabb) const
 {
-	std::vector<T> intersections;
-	getIntersections(aabb, mRoot, intersections);
+	std::vector<T> intersections{};
+
+	if(mRoot != nullptr)
+		getIntersections(aabb, mRoot, intersections);
 
 	return intersections;
 }
