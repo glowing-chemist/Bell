@@ -83,22 +83,26 @@ bool AABB::contains(const AABB& aabb, const EstimationMode estimationMode) const
 }
 
 
-AABB& AABB::operator*(const glm::mat3& mat)
+AABB& AABB::operator*=(const glm::mat3& mat)
 {
     // Keep track of the max/min values seen on each axis
     // so tha we still have an AABB not an OOBB.
     const auto cubeVerticies= getCubeAsVertexArray();
     for(const auto& vertex : cubeVerticies)
     {
-        mTopFrontLeft = componentWiseMin(mTopFrontLeft, mat * vertex);
-        mBottomBackRight = componentWiseMax(mBottomBackRight, mat * vertex);
+		float3 transformedPoint = mat * vertex;
+		mTopFrontLeft = componentWiseMin(mTopFrontLeft, transformedPoint);
+		mTopFrontLeft = componentWiseMin(mBottomBackRight, transformedPoint);
+
+		mBottomBackRight = componentWiseMax(mBottomBackRight, transformedPoint);
+		mBottomBackRight = componentWiseMax(mTopFrontLeft, transformedPoint);
     }
 
     return *this;
 }
 
 
-AABB& AABB::operator*(const float3& vec)
+AABB& AABB::operator*=(const float3& vec)
 {
     mTopFrontLeft *= vec;
     mBottomBackRight *= vec;
@@ -107,7 +111,7 @@ AABB& AABB::operator*(const float3& vec)
 }
 
 
-AABB& AABB::operator+(const float3& vec)
+AABB& AABB::operator+=(const float3& vec)
 {
     mTopFrontLeft += vec;
     mBottomBackRight += vec;
@@ -116,10 +120,49 @@ AABB& AABB::operator+(const float3& vec)
 }
 
 
-AABB& AABB::operator-(const float3& vec)
+AABB& AABB::operator-=(const float3& vec)
 {
     mTopFrontLeft -= vec;
     mBottomBackRight -= vec;
 
     return *this;
+}
+
+
+AABB AABB::operator*(const glm::mat3& mat)
+{
+	// Keep track of the max/min values seen on each axis
+	// so tha we still have an AABB not an OOBB.
+	const auto cubeVerticies = getCubeAsVertexArray();
+	float3 smallest = mTopFrontLeft;
+	float3 largest = mBottomBackRight;
+	for (const auto& vertex : cubeVerticies)
+	{
+		float3 transformedPoint = mat * vertex;
+		smallest = componentWiseMin(smallest, transformedPoint);
+		smallest = componentWiseMin(largest, transformedPoint);
+
+		largest = componentWiseMax(largest, transformedPoint);
+		largest = componentWiseMax(smallest, transformedPoint);
+	}
+
+	return AABB{ smallest, largest };
+}
+
+
+AABB AABB::operator*(const float3& vec)
+{
+	return AABB{ mTopFrontLeft * vec, mBottomBackRight * vec };
+}
+
+
+AABB AABB::operator+(const float3& vec)
+{
+	return AABB{ mTopFrontLeft + vec, mBottomBackRight + vec };
+}
+
+
+AABB AABB::operator-(const float3& vec)
+{
+	return AABB{ mTopFrontLeft - vec, mBottomBackRight - vec };
 }
