@@ -54,7 +54,7 @@ void main()
 
 	const float fragmentDepth = texture(sampler2D(depth, linearSampler), uv).x;
 
-	vec4 worldSpaceFragmentPos = camera.invertedCamera * vec4(uv, fragmentDepth, 1.0f);
+	vec4 worldSpaceFragmentPos = camera.invertedCamera * camera.invertedPerspective * vec4(uv, fragmentDepth, 1.0f);
 	worldSpaceFragmentPos /= worldSpaceFragmentPos.w;
 
 	vec3 normal;
