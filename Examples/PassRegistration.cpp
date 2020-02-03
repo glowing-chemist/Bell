@@ -9,7 +9,8 @@
 struct ImGuiOptions
 {
     bool mDefered = true;
-    float lightRadius = 5000.0f;
+    float lightRadius = 300.0f;
+    float lightIntensity = 1000.0f;
     float lightPosition[3] = { 0.0f };
     float lightColor[3] = {1.0f, 0.0f, 0.0f};
 };
@@ -50,6 +51,7 @@ bool renderMenu(GLFWwindow* win, const Camera& cam)
 
     ImGui::Checkbox("Deferred rendering", &graphicsOptions.mDefered);
     ImGui::DragFloat("Light radius", &graphicsOptions.lightRadius, 10.0f, 0.0f, 1000.0f);
+    ImGui::DragFloat("Light intensity", &graphicsOptions.lightIntensity, 10.0f, 0.0f, 1000.0f);
     ImGui::DragFloat3("Light position", graphicsOptions.lightPosition, 10.0f, -1000.0f, 1000.0f);
 
     ImGui::Text("Camera position: X: %f Y: %f Z: %f", cam.getPosition().x, cam.getPosition().y, cam.getPosition().z);
@@ -146,13 +148,10 @@ int main(int argc, char** argv)
                          float4(graphicsOptions.lightColor[0],
                                 graphicsOptions.lightColor[1],
                                 graphicsOptions.lightColor[2], 1.0f),
-                         graphicsOptions.lightRadius, graphicsOptions.lightRadius, LightType::Point, float{}});
+                         graphicsOptions.lightIntensity, graphicsOptions.lightRadius, LightType::Point, float{}});
 
 		if(unregisterpasses)
 			engine.clearRegisteredPasses();
-
-		engine.registerPass(PassType::LightFroxelation);
-		engine.registerPass(PassType::DeferredAnalyticalLighting);
 
 
         engine.registerPass(PassType::ConvolveSkybox);
@@ -160,8 +159,11 @@ int main(int argc, char** argv)
 		
         if (graphicsOptions.mDefered)
 		{
+            engine.registerPass(PassType::LightFroxelation);
+            engine.registerPass(PassType::DeferredAnalyticalLighting);
+
             engine.registerPass(PassType::GBuffer);
-            engine.registerPass(PassType::DeferredPBRIBL);
+            //engine.registerPass(PassType::DeferredPBRIBL);
             engine.registerPass(PassType::SSAOImproved);
 		}
 		else
