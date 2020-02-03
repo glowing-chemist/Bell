@@ -10,7 +10,7 @@ struct ImGuiOptions
 {
     bool mDefered = true;
     float lightRadius = 300.0f;
-    float lightIntensity = 1000.0f;
+    float lightIntensity = 10000.0f;
     float lightPosition[3] = { 0.0f };
     float lightColor[3] = {1.0f, 0.0f, 0.0f};
 };
@@ -51,7 +51,7 @@ bool renderMenu(GLFWwindow* win, const Camera& cam)
 
     ImGui::Checkbox("Deferred rendering", &graphicsOptions.mDefered);
     ImGui::DragFloat("Light radius", &graphicsOptions.lightRadius, 10.0f, 0.0f, 1000.0f);
-    ImGui::DragFloat("Light intensity", &graphicsOptions.lightIntensity, 10.0f, 0.0f, 1000.0f);
+    ImGui::DragFloat("Light intensity", &graphicsOptions.lightIntensity, 10.0f, 0.0f, 100000.0f);
     ImGui::DragFloat3("Light position", graphicsOptions.lightPosition, 10.0f, -1000.0f, 1000.0f);
 
     ImGui::Text("Camera position: X: %f Y: %f Z: %f", cam.getPosition().x, cam.getPosition().y, cam.getPosition().z);
@@ -163,7 +163,7 @@ int main(int argc, char** argv)
             engine.registerPass(PassType::DeferredAnalyticalLighting);
 
             engine.registerPass(PassType::GBuffer);
-            //engine.registerPass(PassType::DeferredPBRIBL);
+            engine.registerPass(PassType::DeferredPBRIBL);
             engine.registerPass(PassType::SSAOImproved);
 		}
 		else
