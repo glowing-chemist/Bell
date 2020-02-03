@@ -9,7 +9,7 @@
 struct ImGuiOptions
 {
     bool mDefered = true;
-    float lightRadius = 300.0f;
+    float lightRadius = 5000.0f;
     float lightPosition[3] = { 0.0f };
     float lightColor[3] = {1.0f, 0.0f, 0.0f};
 };

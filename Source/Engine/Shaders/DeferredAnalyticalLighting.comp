@@ -87,7 +87,7 @@ void main()
 				const vec3 halfVector = normalize(lightDir.xyz + viewDir);
     			const float NoH = dot(halfVector, viewDir);
 
-				vec3 radiance = light.albedo.xyz * clamp((1.0f - ((lightDistance * lightDistance) / (light.influence * light.influence))), 0.0f, 1.0f);
+				vec3 radiance = light.albedo.xyz * light.influence * (1.0f / (lightDistance * lightDistance));
 
     			const vec2 f_ab = texture(sampler2D(DFG, linearSampler), vec2(NoH, roughness)).xy;
 
