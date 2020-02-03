@@ -88,7 +88,7 @@ void main()
     			const float NoH = dot(halfVector, viewDir);
 
     			const float falloff = pow(clamp(1 - pow(lightDistance / light.radius, 4.0f), 0.0f, 1.0f), 2.0f) / ((lightDistance * lightDistance) + 1); 
-				vec3 radiance = light.albedo.xyz * light.intensity * (1.0f / (falloff * falloff));
+				vec3 radiance = light.albedo.xyz * light.intensity * falloff;
 
     			const vec2 f_ab = texture(sampler2D(DFG, linearSampler), vec2(NoH, roughness)).xy;
 
