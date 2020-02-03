@@ -212,7 +212,8 @@ void Scene::addLights(const aiScene* scene)
             }
         }();
 
-        sceneLight.mInfluence = light->mAttenuationLinear;
+        sceneLight.mRadius = light->mAttenuationLinear;
+		sceneLight.mIntensity= light->mAttenuationLinear;
         sceneLight.mPosition = float4(light->mPosition.x, light->mPosition.y, light->mPosition.z, 1.0f);
         sceneLight.mDirection = float4(light->mDirection.x, light->mDirection.y, light->mDirection.z, 1.0f);
         sceneLight.mALbedo = float4(light->mColorDiffuse.r, light->mColorDiffuse.g, light->mColorDiffuse.b, 1.0f);

@@ -111,9 +111,10 @@ public:
         float4 mPosition;
         float4 mDirection;
         float4 mALbedo;
-        float mInfluence;
+        float mIntensity;
+		float mRadius;
 		LightType mType;
-        float2 mPadding;
+        float mPadding;
 	};
     size_t addLight(const Light& light)
     {

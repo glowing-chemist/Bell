@@ -146,7 +146,7 @@ int main(int argc, char** argv)
                          float4(graphicsOptions.lightColor[0],
                                 graphicsOptions.lightColor[1],
                                 graphicsOptions.lightColor[2], 1.0f),
-                         graphicsOptions.lightRadius, LightType::Point, float2{}});
+                         graphicsOptions.lightRadius, graphicsOptions.lightRadius, LightType::Point, float{}});
 
 		if(unregisterpasses)
 			engine.clearRegisteredPasses();

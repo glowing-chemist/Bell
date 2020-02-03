@@ -19,9 +19,10 @@ struct Light
 	vec4 position;
 	vec4 direction; // direction for spotlight.
 	vec4 albedo;
-	float influence;
+	float intensity;
+	float radius;
 	uint type;
-	vec2 padding;
+	float padding;
 };
 
 struct AABB

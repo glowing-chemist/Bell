@@ -68,7 +68,7 @@ void main()
 		{
 			case 0:
 			{
-				const bool intersects = sphereAABBIntersection(viewSpacePosition.xyz, light.influence, aabb);
+				const bool intersects = sphereAABBIntersection(viewSpacePosition.xyz, light.radius, aabb);
 				if(intersects)
 				{
 					lightIndicies[nextFreeSlot++] = i;
