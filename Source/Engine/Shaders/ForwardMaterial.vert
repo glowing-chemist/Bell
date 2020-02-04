@@ -43,7 +43,7 @@ void main()
 
 	gl_Position = transFormation * position;
 	outPosition = push_constants.model * position;
-	outNormals = mat3(push_constants.model) * vec(normals.xyz);
+	outNormals = mat3(push_constants.model) * normals.xyz;
 	outMaterialID = material;
 	outUv = uv;
 }

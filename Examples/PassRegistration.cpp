@@ -8,8 +8,9 @@
 
 struct ImGuiOptions
 {
-    bool mDefered = false;
-    bool mShowLights = true;
+    bool mDeferedIBL = false;
+    bool forwardIBL = false;
+    bool mShowLightsDeferred = true;
 };
 
 static ImGuiOptions graphicsOptions;
@@ -46,8 +47,9 @@ bool renderMenu(GLFWwindow* win, const Camera& cam)
 
 	ImGui::Begin("options");
 
-    ImGui::Checkbox("Deferred rendering", &graphicsOptions.mDefered);
-    ImGui::Checkbox("Show lights", &graphicsOptions.mShowLights);
+    ImGui::Checkbox("Deferred IBL", &graphicsOptions.mDeferedIBL);
+    ImGui::Checkbox("Forward IBL", &graphicsOptions.forwardIBL);
+    ImGui::Checkbox("Show lights", &graphicsOptions.mShowLightsDeferred);
 
     ImGui::Text("Camera position: X: %f Y: %f Z: %f", cam.getPosition().x, cam.getPosition().y, cam.getPosition().z);
 
@@ -159,35 +161,34 @@ int main(int argc, char** argv)
 		if(unregisterpasses)
 			engine.clearRegisteredPasses();
 
-        if (graphicsOptions.mShowLights)
+        if (graphicsOptions.mShowLightsDeferred)
         {
             engine.registerPass(PassType::LightFroxelation);
             engine.registerPass(PassType::DeferredAnalyticalLighting);
         }
 		
-        if (graphicsOptions.mDefered)
+        if (graphicsOptions.mDeferedIBL)
 		{
             engine.registerPass(PassType::ConvolveSkybox);
             engine.registerPass(PassType::Skybox);
 
-            engine.registerPass(PassType::GBuffer);
             engine.registerPass(PassType::DeferredPBRIBL);
-            engine.registerPass(PassType::SSAOImproved);
 		}
-		else
+		else if(graphicsOptions.forwardIBL)
         {
             engine.registerPass(PassType::ConvolveSkybox);
             engine.registerPass(PassType::Skybox);
 
             engine.registerPass(PassType::DepthPre);
             engine.registerPass(PassType::ForwardIBL);
-
+            engine.registerPass(PassType::SSAO);
         }
 
-        if(graphicsOptions.mDefered || graphicsOptions.mShowLights)
+        if (graphicsOptions.mDeferedIBL || graphicsOptions.mShowLightsDeferred)
+        {
+            engine.registerPass(PassType::GBuffer);
             engine.registerPass(PassType::SSAOImproved);
-        else
-            engine.registerPass(PassType::SSAO);
+        }
 
         engine.registerPass(PassType::DFGGeneration);
         engine.registerPass(PassType::Shadow);

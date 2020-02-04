@@ -50,7 +50,7 @@ void main()
 
 
 	const vec3 lightDir = reflect(-viewDir, normal);
-    float NoV = dot(normal, viewDir);
+    const float NoV = dot(normal, viewDir);
 
 	const float lodLevel = roughness * 10.0f;
 

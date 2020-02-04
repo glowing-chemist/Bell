@@ -57,13 +57,13 @@ vec3 ImportanceSampleGGX(const vec2 Xi, const float roughness, const vec3 N)
 }
 
 
-vec3 fresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness)
+vec3 fresnelSchlickRoughness(const float cosTheta, const vec3 F0, const float roughness)
 {
     return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(1.0 - cosTheta, 5.0);
 }
 
 
-vec3 calculateDiffuse(vec3 dA, float M, vec3 irradiance)
+vec3 calculateDiffuse(const vec3 dA, const float M, const vec3 irradiance)
 {
     const vec3 diffuseColor = dA * (1.0 - DIELECTRIC_SPECULAR) * (1.0 - M);
 
@@ -71,7 +71,7 @@ vec3 calculateDiffuse(vec3 dA, float M, vec3 irradiance)
 }
 
 
-vec3 calculateDiffuseLambert(vec3 dA, float M, vec3 irradiance)
+vec3 calculateDiffuseLambert(const vec3 dA, const float M, const vec3 irradiance)
 {
     const vec3 diffuseColor = dA * (1.0 - DIELECTRIC_SPECULAR) * (1.0 - M);
 

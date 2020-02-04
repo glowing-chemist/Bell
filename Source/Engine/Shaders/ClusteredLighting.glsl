@@ -6,6 +6,7 @@
 #define E 2.71828
 
 #include "Utilities.glsl"
+#include "PBR.glsl"
 
 #define LINEAR_SUBDIVISIONS 0
 
@@ -122,17 +123,43 @@ AABB getFroxelAABB(const uvec3 froxelPosition, const float FOV, const vec2 frame
 }
 
 
+vec4 pointLightContribution(const Light light, 
+							const vec4 positionWS, 
+							const vec3 view, 
+							const float metalness, 
+							const float roughness, 
+							const vec3 baseAlbedo, 
+							texture2D DFG, 
+							sampler linearSampler)
+{
+	const vec4 lightDir = light.position - positionWS;
+	const float lightDistance = length(lightDir);
+
+	const vec3 halfVector = normalize(lightDir.xyz + view);
+    const float NoH = dot(halfVector, view);
+    const vec2 f_ab = texture(sampler2D(DFG, linearSampler), vec2(NoH, roughness)).xy;
+
+    const float falloff = pow(clamp(1 - pow(lightDistance / light.radius, 4.0f), 0.0f, 1.0f), 2.0f) / ((lightDistance * lightDistance) + 1); 
+	const vec3 radiance = light.albedo.xyz * light.intensity * falloff;
+
+    const vec3 diffuse = calculateDiffuseLambert(baseAlbedo.xyz, metalness, radiance);
+    const vec3 specular = calculateSpecular(roughness * roughness, halfVector, view, metalness, baseAlbedo.xyz, radiance, f_ab);
+
+    return vec4(diffuse + specular, 1.0f);
+}
+
+
 // Interscetion helpers
 bool sphereAABBIntersection(const vec3 centre, const float radius, const AABB aabb)
 {
 	const float r2 = radius * radius;
-	bvec3 lessThan = bvec3(centre.x < aabb.topLeft.x,
+	const bvec3 lessThan = bvec3(centre.x < aabb.topLeft.x,
 							centre.y < aabb.topLeft.y,
 							centre.z < aabb.topLeft.z);
 	const vec3 lessDistance = aabb.topLeft.xyz - centre;
 	vec3 dmin = mix(vec3(0.0f), lessDistance * lessDistance, lessThan);
 
-	bvec3 greaterThan = bvec3(centre.x > aabb.bottomRight.x,
+	const bvec3 greaterThan = bvec3(centre.x > aabb.bottomRight.x,
 								centre.y > aabb.bottomRight.y,
 								centre.z > aabb.bottomRight.z);
 	const vec3 greaterDistance = centre - aabb.bottomRight.xyz;
