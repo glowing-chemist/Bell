@@ -8,11 +8,8 @@
 
 struct ImGuiOptions
 {
-    bool mDefered = true;
-    float lightRadius = 300.0f;
-    float lightIntensity = 10000.0f;
-    float lightPosition[3] = { 0.0f };
-    float lightColor[3] = {1.0f, 0.0f, 0.0f};
+    bool mDefered = false;
+    bool mShowLights = true;
 };
 
 static ImGuiOptions graphicsOptions;
@@ -50,13 +47,10 @@ bool renderMenu(GLFWwindow* win, const Camera& cam)
 	ImGui::Begin("options");
 
     ImGui::Checkbox("Deferred rendering", &graphicsOptions.mDefered);
-    ImGui::DragFloat("Light radius", &graphicsOptions.lightRadius, 10.0f, 0.0f, 1000.0f);
-    ImGui::DragFloat("Light intensity", &graphicsOptions.lightIntensity, 10.0f, 0.0f, 100000.0f);
-    ImGui::DragFloat3("Light position", graphicsOptions.lightPosition, 10.0f, -1000.0f, 1000.0f);
+    ImGui::Checkbox("Show lights", &graphicsOptions.mShowLights);
 
     ImGui::Text("Camera position: X: %f Y: %f Z: %f", cam.getPosition().x, cam.getPosition().y, cam.getPosition().z);
 
-    ImGui::ColorEdit3("Light Color", graphicsOptions.lightColor, ImGuiColorEditFlags_::ImGuiColorEditFlags_RGB);
 
 	ImGui::End();
 
@@ -68,6 +62,8 @@ bool renderMenu(GLFWwindow* win, const Camera& cam)
 
 int main(int argc, char** argv)
 {
+    srand((uint32_t)time(nullptr));
+
     const uint32_t windowWidth = 1440;
     const uint32_t windowHeight = 810;
 
@@ -101,10 +97,29 @@ int main(int argc, char** argv)
     Scene testScene(argv[1]);
     testScene.loadFromFile(VertexAttributes::Position4 | VertexAttributes::Normals | VertexAttributes::TextureCoordinates | VertexAttributes::Material, &engine);
     testScene.loadSkybox(skybox, &engine);
-    testScene.setShadowingLight(float3(10.0f, -10.0f, 10.0f), float3(0.0f, 0.0f, 1.0f));
+    testScene.setShadowingLight(float3(10.0f, 10.0f, 10.0f), float3(0.0f, 0.0f, 1.0f));
     testScene.uploadData(&engine);
     testScene.computeBounds(MeshType::Static);
     testScene.computeBounds(MeshType::Dynamic);
+    
+    {
+        const AABB sceneBounds = testScene.getBounds();
+
+        for (float x = sceneBounds.getBottom().x; x < sceneBounds.getTop().x; x += 300.0f)
+        {
+            for (float y = sceneBounds.getBottom().y; y < sceneBounds.getTop().y; y += 300.0f)
+            {
+                for (float z = sceneBounds.getBottom().z; z < sceneBounds.getTop().z; z += 300.0f)
+                {
+                    const float r = float(rand()) / float((RAND_MAX));
+                    const float g = float(rand()) / float((RAND_MAX));
+                    const float b = float(rand()) / float((RAND_MAX));
+
+                    testScene.addLight({float4(x, y, z, 1.0f), float4(), float4(r, g, b, 1.0f), 20000.0f, 300.0f, LightType::Point, 0.0f});
+                }
+            }
+        }
+    }
 
     engine.setScene(testScene);
 
@@ -140,27 +155,20 @@ int main(int argc, char** argv)
 		}
 
         auto& scene = engine.getScene();
-        scene.clearLights();
-        scene.addLight({ float4(graphicsOptions.lightPosition[0],
-                                graphicsOptions.lightPosition[1],
-                                graphicsOptions.lightPosition[2], 1.0f) ,
-                         float4(0.0f),
-                         float4(graphicsOptions.lightColor[0],
-                                graphicsOptions.lightColor[1],
-                                graphicsOptions.lightColor[2], 1.0f),
-                         graphicsOptions.lightIntensity, graphicsOptions.lightRadius, LightType::Point, float{}});
 
 		if(unregisterpasses)
 			engine.clearRegisteredPasses();
 
-
-        engine.registerPass(PassType::ConvolveSkybox);
-        engine.registerPass(PassType::Skybox);
+        if (graphicsOptions.mShowLights)
+        {
+            engine.registerPass(PassType::LightFroxelation);
+            engine.registerPass(PassType::DeferredAnalyticalLighting);
+        }
 		
         if (graphicsOptions.mDefered)
 		{
-            engine.registerPass(PassType::LightFroxelation);
-            engine.registerPass(PassType::DeferredAnalyticalLighting);
+            engine.registerPass(PassType::ConvolveSkybox);
+            engine.registerPass(PassType::Skybox);
 
             engine.registerPass(PassType::GBuffer);
             engine.registerPass(PassType::DeferredPBRIBL);
@@ -168,11 +176,18 @@ int main(int argc, char** argv)
 		}
 		else
         {
+            engine.registerPass(PassType::ConvolveSkybox);
+            engine.registerPass(PassType::Skybox);
+
             engine.registerPass(PassType::DepthPre);
             engine.registerPass(PassType::ForwardIBL);
-            engine.registerPass(PassType::SSAO);
 
         }
+
+        if(graphicsOptions.mDefered || graphicsOptions.mShowLights)
+            engine.registerPass(PassType::SSAOImproved);
+        else
+            engine.registerPass(PassType::SSAO);
 
         engine.registerPass(PassType::DFGGeneration);
         engine.registerPass(PassType::Shadow);

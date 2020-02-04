@@ -160,6 +160,11 @@ public:
 	std::vector<Intersection> getIntersections(const InstanceID);
 	std::vector<Intersection> getIntersections(const InstanceID IgnoreID, const AABB& aabbToTest);
 
+	const AABB& getBounds() const
+	{
+		return mSceneAABB;
+	}
+
 private:
 
     void generateSceneAABB(const bool includeStatic);
