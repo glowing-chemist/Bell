@@ -9,7 +9,7 @@
 
 layout(location = 0) in vec4 position;
 layout(location = 1) in vec2 uv;
-layout(location = 2) in vec4 vertexNormal;
+layout(location = 2) in vec3 vertexNormal;
 layout(location = 3) in flat uint materialID;
 
 
@@ -50,7 +50,7 @@ void main()
     const vec3 viewDir = normalize(camera.position - position.xyz);
 
 	{
-    	mat3 tbv = tangentSpaceMatrix(vertexNormal.xyz, viewDir, vec4(xDerivities, yDerivities));
+    	mat3 tbv = tangentSpaceMatrix(vertexNormal, viewDir, vec4(xDerivities, yDerivities));
 
     	normal = tbv * normal;
 

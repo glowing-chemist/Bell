@@ -12,7 +12,7 @@ layout(location = 3) in uint material;
 
 layout(location = 0) out vec4 outPosition;
 layout(location = 1) out vec2 outUV;
-layout(location = 2) out vec4 outNormals;
+layout(location = 2) out vec3 outNormals;
 layout(location = 3) out uint outMaterialID;
 
 out gl_PerVertex {
@@ -44,6 +44,6 @@ void main()
 	gl_Position = transFormation * position;
 	outPosition = instanceTransformations[gl_InstanceID].transformation * position;
 	outUV = uv;
-	outNormals = instanceTransformations[gl_InstanceID].transformation * normals;
+	outNormals = mat3(instanceTransformations[gl_InstanceID].transformation) * vec3(normals.xyz);
 	outMaterialID =  material;
 }

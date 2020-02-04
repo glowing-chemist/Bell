@@ -2,7 +2,7 @@
 #extension GL_ARB_separate_shader_objects : enable
 
 
-layout(location = 0) in vec4 normals;
+layout(location = 0) in vec3 normals;
 layout(location = 1) in flat uint materialID;
 layout(location = 2) in vec2 uv;
 

@@ -37,7 +37,7 @@ void main()
 	const mat4 transFormation = camera.perspective * camera.view * push_constants.model;
 
 	gl_Position = transFormation * position;
-	outNormals = push_constants.model * normals;
+	outNormals = mat3(push_constants.model) * vec3(normals.xyz);
 	outMaterialID = material;
 	outUv = uv;
 }
