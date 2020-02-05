@@ -15,7 +15,8 @@ void CompositeTechnique::render(RenderGraph& graph, Engine* eng, const std::vect
 	const auto viewPortY = eng->getSwapChainImage()->getExtent(0, 0).height;
 
 	const bool usingGlobalLighting = eng->isPassRegistered(PassType::DeferredTextureAnalyticalPBRIBL) || eng->isPassRegistered(PassType::DeferredTexturePBRIBL) ||
-		eng->isPassRegistered(PassType::DeferredTextureBlinnPhongLighting) || eng->isPassRegistered(PassType::ForwardIBL) || eng->isPassRegistered(PassType::DeferredPBRIBL);
+		eng->isPassRegistered(PassType::DeferredTextureBlinnPhongLighting) || eng->isPassRegistered(PassType::ForwardIBL) || eng->isPassRegistered(PassType::DeferredPBRIBL)
+		|| eng->isPassRegistered(PassType::ForwardCombinedLighting);
 	const bool usingAnalyticalLighting = eng->isPassRegistered(PassType::DeferredAnalyticalLighting);
 	const bool usingSSAO = eng->isPassRegistered(PassType::SSAO) || eng->isPassRegistered(PassType::SSAOImproved);
 	const bool usingOverlay = eng->isPassRegistered(PassType::Overlay);

@@ -87,6 +87,9 @@ inline const char* passToString(const PassType passType)
 		case PassType::ForwardIBL:
 			return "ForwardIBL";
 
+		case PassType::ForwardCombinedLighting:
+			return "ForwardCombinedLighting";
+
 		case PassType::Skybox:
 			return "skybox";
 

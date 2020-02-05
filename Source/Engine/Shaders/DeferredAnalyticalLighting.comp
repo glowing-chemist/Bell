@@ -38,7 +38,7 @@ layout(set = 0, binding = 10) uniform utexture2D activeFroxels;
 
 layout(rgba8, set = 0, binding = 11) uniform writeonly image2D accumilatedLight;
 
-layout(std430, set = 1, binding = 0) buffer sceneLights
+layout(std430, set = 1, binding = 0) buffer readonly sceneLights
 {
 	uvec4  lightCount;
 	Light lights[];

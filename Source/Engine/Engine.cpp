@@ -25,6 +25,7 @@
 #include "Engine/SkyboxTechnique.hpp"
 #include "Engine/CompositeTechnique.hpp"
 #include "Engine/ForwardIBLTechnique.hpp"
+#include "Engine/ForwardLightingCombinedTechnique.hpp"
 #include "Engine/LightFroxelationTechnique.hpp"
 #include "Engine/DeferredAnalyticalLightingTechnique.hpp"
 #include "Engine/ShadowMappingTechnique.hpp"
@@ -210,6 +211,9 @@ std::unique_ptr<Technique> Engine::getSingleTechnique(const PassType passType)
 
 		case PassType::ForwardIBL:
 			return std::make_unique<ForwardIBLTechnique>(this);
+
+        case PassType::ForwardCombinedLighting:
+            return std::make_unique<ForwardCombinedLightingTechnique>(this);
 
 		case PassType::LightFroxelation:
 			return std::make_unique<LightFroxelationTechnique>(this);

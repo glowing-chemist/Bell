@@ -184,6 +184,18 @@ namespace
 				return newNode;
 			}
 
+            case NodeTypes::ForwardCombinedLighting:
+            {
+                std::shared_ptr<EditorNode> newNode = std::make_shared<PassNode>("ForwardCombinedLighting", passType);
+                newNode->mInputs.push_back(Pin{ 0, newNode, kDFGLUT, PinType::Texture, PinKind::Input });
+                newNode->mInputs.push_back(Pin{ 0, newNode, kGBufferDepth, PinType::Texture, PinKind::Input });
+                newNode->mInputs.push_back(Pin{ 0, newNode, kSkyBox, PinType::Texture, PinKind::Input });
+                newNode->mInputs.push_back(Pin{ 0, newNode, kConvolvedSkyBox, PinType::Texture, PinKind::Input });
+                newNode->mInputs.push_back(Pin{ 0, newNode, kActiveFroxels, PinType::Texture, PinKind::Input });
+                newNode->mOutputs.push_back(Pin{ 0, newNode, kGlobalLighting, PinType::Texture, PinKind::Output });
+                return newNode;
+            }
+
 			case NodeTypes::LightFroxelation:
 			{
 				std::shared_ptr<EditorNode> newNode = std::make_shared<PassNode>("LightFroxelation", passType);
@@ -452,6 +464,7 @@ void Editor::drawAssistantWindow()
 		   drawPassContextMenu(PassType::DeferredTextureAnalyticalPBRIBL);
            drawPassContextMenu(PassType::DeferredPBRIBL);
 		   drawPassContextMenu(PassType::ForwardIBL);
+           drawPassContextMenu(PassType::ForwardCombinedLighting);
 		   drawPassContextMenu(PassType::Skybox);
 		   drawPassContextMenu(PassType::ConvolveSkybox);
 		   drawPassContextMenu(PassType::DFGGeneration);
