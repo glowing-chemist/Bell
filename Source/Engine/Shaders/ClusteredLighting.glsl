@@ -125,7 +125,8 @@ AABB getFroxelAABB(const uvec3 froxelPosition, const float FOV, const vec2 frame
 
 vec4 pointLightContribution(const Light light, 
 							const vec4 positionWS, 
-							const vec3 view, 
+							const vec3 view,
+							const vec3 N,
 							const float metalness, 
 							const float roughness, 
 							const vec3 baseAlbedo, 
@@ -135,15 +136,14 @@ vec4 pointLightContribution(const Light light,
 	const vec4 lightDir = light.position - positionWS;
 	const float lightDistance = length(lightDir);
 
-	const vec3 halfVector = normalize(lightDir.xyz + view);
-    const float NoH = dot(halfVector, view);
+    const float NoH = dot(N, view);
     const vec2 f_ab = texture(sampler2D(DFG, linearSampler), vec2(NoH, roughness)).xy;
 
     const float falloff = pow(clamp(1 - pow(lightDistance / light.radius, 4.0f), 0.0f, 1.0f), 2.0f) / ((lightDistance * lightDistance) + 1); 
 	const vec3 radiance = light.albedo.xyz * light.intensity * falloff;
 
     const vec3 diffuse = calculateDiffuseLambert(baseAlbedo.xyz, metalness, radiance);
-    const vec3 specular = calculateSpecular(roughness * roughness, halfVector, view, metalness, baseAlbedo.xyz, radiance, f_ab);
+    const vec3 specular = calculateSpecular(roughness * roughness, N, view, metalness, baseAlbedo.xyz, radiance, f_ab);
 
     return vec4(diffuse + specular, 1.0f);
 }

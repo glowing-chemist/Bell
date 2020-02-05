@@ -84,7 +84,7 @@ void main()
 			case 0:
 			{
 
-    			vec4 lighting =  pointLightContribution(light, worldSpaceFragmentPos, viewDir, metalness, roughness, baseAlbedo, DFG, linearSampler);
+    			vec4 lighting =  pointLightContribution(light, worldSpaceFragmentPos, viewDir, normal, metalness, roughness, baseAlbedo, DFG, linearSampler);
     			accum += lighting;
 				break;
 			}

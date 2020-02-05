@@ -31,7 +31,8 @@ enum class LightType : uint32_t
 {
 	Point = 0,
 	Spot = 1,
-	Area = 2
+	Area = 2,
+	Strip = 3
 };
 
 
@@ -114,7 +115,7 @@ public:
         float mIntensity;
 		float mRadius;
 		LightType mType;
-        float mPadding;
+        float mAngleSize; // Cone angle for spot, side lenght for area and length for strip.
 	};
     size_t addLight(const Light& light)
     {
