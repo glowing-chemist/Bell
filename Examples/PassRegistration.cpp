@@ -8,9 +8,10 @@
 
 struct ImGuiOptions
 {
-    bool mDeferedIBL = false;
-    bool forwardIBL = false;
-    bool mShowLightsDeferred = true;
+    int mToggleIndex = 0;
+    bool mDefered = false;
+    bool mForward = true;
+    bool mShowLights = true;
 };
 
 static ImGuiOptions graphicsOptions;
@@ -47,9 +48,25 @@ bool renderMenu(GLFWwindow* win, const Camera& cam)
 
 	ImGui::Begin("options");
 
-    ImGui::Checkbox("Deferred IBL", &graphicsOptions.mDeferedIBL);
-    ImGui::Checkbox("Forward IBL", &graphicsOptions.forwardIBL);
-    ImGui::Checkbox("Show lights", &graphicsOptions.mShowLightsDeferred);
+    ImGui::BeginGroup();
+
+        ImGui::RadioButton("Deferred", &graphicsOptions.mToggleIndex, 0);
+        ImGui::RadioButton("Forward", &graphicsOptions.mToggleIndex, 1);
+
+    ImGui::EndGroup();
+
+    if (graphicsOptions.mToggleIndex == 0)
+    {
+        graphicsOptions.mDefered = true;
+        graphicsOptions.mForward = false;
+    }
+    else
+    {
+        graphicsOptions.mDefered = false;
+        graphicsOptions.mForward = true;
+    }
+
+    ImGui::Checkbox("Show lights", &graphicsOptions.mShowLights);
 
     ImGui::Text("Camera position: X: %f Y: %f Z: %f", cam.getPosition().x, cam.getPosition().y, cam.getPosition().z);
 
@@ -161,35 +178,34 @@ int main(int argc, char** argv)
 		if(unregisterpasses)
 			engine.clearRegisteredPasses();
 
-        if (graphicsOptions.mShowLightsDeferred)
-        {
+
+        if (graphicsOptions.mShowLights)
             engine.registerPass(PassType::LightFroxelation);
-            engine.registerPass(PassType::DeferredAnalyticalLighting);
-        }
 		
-        if (graphicsOptions.mDeferedIBL)
+        if (graphicsOptions.mDefered)
 		{
-            engine.registerPass(PassType::ConvolveSkybox);
-            engine.registerPass(PassType::Skybox);
-
+            engine.registerPass(PassType::GBuffer);
             engine.registerPass(PassType::DeferredPBRIBL);
-		}
-		else if(graphicsOptions.forwardIBL)
-        {
-            engine.registerPass(PassType::ConvolveSkybox);
-            engine.registerPass(PassType::Skybox);
 
+            if (graphicsOptions.mShowLights)
+                engine.registerPass(PassType::DeferredAnalyticalLighting);
+
+            engine.registerPass(PassType::SSAOImproved);
+		}
+		else if(graphicsOptions.mForward)
+        {
             engine.registerPass(PassType::DepthPre);
-            engine.registerPass(PassType::ForwardIBL);
+        
+            if (graphicsOptions.mShowLights)
+                engine.registerPass(PassType::ForwardCombinedLighting);
+            else
+                engine.registerPass(PassType::ForwardIBL);
+
             engine.registerPass(PassType::SSAO);
         }
 
-        if (graphicsOptions.mDeferedIBL || graphicsOptions.mShowLightsDeferred)
-        {
-            engine.registerPass(PassType::GBuffer);
-            engine.registerPass(PassType::SSAOImproved);
-        }
-
+        engine.registerPass(PassType::ConvolveSkybox);
+        engine.registerPass(PassType::Skybox);
         engine.registerPass(PassType::DFGGeneration);
         engine.registerPass(PassType::Shadow);
         engine.registerPass(PassType::Overlay);
