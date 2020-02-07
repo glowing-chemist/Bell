@@ -108,12 +108,9 @@ int main(int argc, char** argv)
 
     engine.startFrame();
 
-    BELL_ASSERT(argc > 1, "Scene file input needed")
-
     std::array<std::string, 6> skybox{"./Assets/Skybox.png", "./Assets/Skybox.png", "./Assets/Skybox.png", "./Assets/Skybox.png", "./Assets/Skybox.png", "./Assets/Skybox.png"};
 
-
-    Scene testScene(argv[1]);
+    Scene testScene("./Assets/Sponza/sponzaPBR.obj");
     testScene.loadFromFile(VertexAttributes::Position4 | VertexAttributes::Normals | VertexAttributes::TextureCoordinates | VertexAttributes::Material, &engine);
     testScene.loadSkybox(skybox, &engine);
     testScene.setShadowingLight(float3(10.0f, 10.0f, 10.0f), float3(0.0f, 0.0f, 1.0f));

@@ -1,0 +1,514 @@
+393
+sponza_00_sponza_00_leaf 0 AlphaTested ;
+sponza_01_sponza_01_Material__57 2 AlphaTested ;
+sponza_01_sponza_01_vase_round 1 ;
+sponza_03_sponza_03_Material__298 3 ;
+sponza_05_sponza_05_bricks 4 ;
+sponza_06_sponza_06_bricks 4 ;
+sponza_07_sponza_07_arch 5 ;
+sponza_08_sponza_08_ceiling 6 ;
+sponza_09_sponza_09_column_a 7 ;
+sponza_100_sponza_100_column_c 9 ;
+sponza_101_sponza_101_column_c 9 ;
+sponza_102_sponza_102_column_c 9 ;
+sponza_103_sponza_103_column_c 9 ;
+sponza_104_sponza_104_column_c 9 ;
+sponza_105_sponza_105_column_c 9 ;
+sponza_106_sponza_106_column_c 9 ;
+sponza_107_sponza_107_column_c 9 ;
+sponza_108_sponza_108_column_c 9 ;
+sponza_109_sponza_109_column_c 9 ;
+sponza_10_sponza_10_column_a 7 ;
+sponza_110_sponza_110_column_c 9 ;
+sponza_111_sponza_111_column_c 9 ;
+sponza_112_sponza_112_column_c 9 ;
+sponza_113_sponza_113_column_c 9 ;
+sponza_114_sponza_114_column_c 9 ;
+sponza_115_sponza_115_column_c 9 ;
+sponza_116_sponza_116_bricks 4 ;
+sponza_117_sponza_117_floor 8 ;
+sponza_118_sponza_118_column_a 7 ;
+sponza_119_sponza_119_column_a 7 ;
+sponza_11_sponza_11_column_a 7 ;
+sponza_120_sponza_120_column_a 7 ;
+sponza_121_sponza_121_column_a 7 ;
+sponza_122_sponza_122_arch 5 ;
+sponza_123_sponza_123_arch 5 ;
+sponza_124_sponza_124_arch 5 ;
+sponza_125_sponza_125_column_b 11 ;
+sponza_126_sponza_126_column_b 11 ;
+sponza_127_sponza_127_column_b 11 ;
+sponza_128_sponza_128_column_b 11 ;
+sponza_129_sponza_129_column_b 11 ;
+sponza_12_sponza_12_column_a 7 ;
+sponza_130_sponza_130_column_b 11 ;
+sponza_131_sponza_131_column_b 11 ;
+sponza_132_sponza_132_column_b 11 ;
+sponza_133_sponza_133_column_b 11 ;
+sponza_134_sponza_134_column_b 11 ;
+sponza_135_sponza_135_column_b 11 ;
+sponza_136_sponza_136_column_b 11 ;
+sponza_137_sponza_137_column_b 11 ;
+sponza_138_sponza_138_column_b 11 ;
+sponza_139_sponza_139_column_b 11 ;
+sponza_13_sponza_13_column_a 7 ;
+sponza_140_sponza_140_column_b 11 ;
+sponza_141_sponza_141_column_b 11 ;
+sponza_142_sponza_142_column_b 11 ;
+sponza_143_sponza_143_column_b 11 ;
+sponza_144_sponza_144_column_b 11 ;
+sponza_145_sponza_145_column_b 11 ;
+sponza_146_sponza_146_column_b 11 ;
+sponza_147_sponza_147_column_b 11 ;
+sponza_148_sponza_148_column_b 11 ;
+sponza_149_sponza_149_column_b 11 ;
+sponza_14_sponza_14_column_a 7 ;
+sponza_150_sponza_150_column_b 11 ;
+sponza_151_sponza_151_column_b 11 ;
+sponza_152_sponza_152_column_b 11 ;
+sponza_153_sponza_153_column_b 11 ;
+sponza_154_sponza_154_column_b 11 ;
+sponza_155_sponza_155_column_b 11 ;
+sponza_156_sponza_156_column_b 11 ;
+sponza_157_sponza_157_column_b 11 ;
+sponza_158_sponza_158_column_b 11 ;
+sponza_159_sponza_159_column_b 11 ;
+sponza_15_sponza_15_column_a 7 ;
+sponza_160_sponza_160_column_b 11 ;
+sponza_161_sponza_161_column_b 11 ;
+sponza_162_sponza_162_column_b 11 ;
+sponza_163_sponza_163_column_b 11 ;
+sponza_164_sponza_164_column_b 11 ;
+sponza_165_sponza_165_column_b 11 ;
+sponza_166_sponza_166_column_b 11 ;
+sponza_167_sponza_167_column_b 11 ;
+sponza_168_sponza_168_column_b 11 ;
+sponza_169_sponza_169_column_b 11 ;
+sponza_16_sponza_16_column_a 7 ;
+sponza_170_sponza_170_column_b 11 ;
+sponza_171_sponza_171_column_b 11 ;
+sponza_172_sponza_172_column_b 11 ;
+sponza_173_sponza_173_column_b 11 ;
+sponza_174_sponza_174_column_b 11 ;
+sponza_175_sponza_175_column_b 11 ;
+sponza_176_sponza_176_column_b 11 ;
+sponza_177_sponza_177_column_b 11 ;
+sponza_178_sponza_178_column_b 11 ;
+sponza_179_sponza_179_column_b 11 ;
+sponza_17_sponza_17_arch 5 ;
+sponza_180_sponza_180_column_b 11 ;
+sponza_181_sponza_181_column_b 11 ;
+sponza_182_sponza_182_column_b 11 ;
+sponza_183_sponza_183_column_b 11 ;
+sponza_184_sponza_184_column_b 11 ;
+sponza_185_sponza_185_column_b 11 ;
+sponza_186_sponza_186_column_b 11 ;
+sponza_187_sponza_187_column_b 11 ;
+sponza_188_sponza_188_column_b 11 ;
+sponza_189_sponza_189_column_b 11 ;
+sponza_18_sponza_18_floor 8 ;
+sponza_190_sponza_190_column_b 11 ;
+sponza_191_sponza_191_column_b 11 ;
+sponza_192_sponza_192_column_b 11 ;
+sponza_193_sponza_193_column_b 11 ;
+sponza_194_sponza_194_column_b 11 ;
+sponza_195_sponza_195_column_b 11 ;
+sponza_196_sponza_196_column_b 11 ;
+sponza_197_sponza_197_column_b 11 ;
+sponza_198_sponza_198_column_b 11 ;
+sponza_199_sponza_199_column_b 11 ;
+sponza_19_sponza_19_ceiling 6 ;
+sponza_200_sponza_200_column_b 11 ;
+sponza_201_sponza_201_column_b 11 ;
+sponza_202_sponza_202_column_b 11 ;
+sponza_203_sponza_203_column_b 11 ;
+sponza_204_sponza_204_column_b 11 ;
+sponza_205_sponza_205_column_b 11 ;
+sponza_206_sponza_206_column_b 11 ;
+sponza_207_sponza_207_column_b 11 ;
+sponza_208_sponza_208_column_b 11 ;
+sponza_209_sponza_209_column_b 11 ;
+sponza_20_sponza_20_arch 5 ;
+sponza_210_sponza_210_column_b 11 ;
+sponza_211_sponza_211_column_b 11 ;
+sponza_212_sponza_212_column_b 11 ;
+sponza_213_sponza_213_column_b 11 ;
+sponza_214_sponza_214_column_b 11 ;
+sponza_215_sponza_215_column_b 11 ;
+sponza_216_sponza_216_column_b 11 ;
+sponza_217_sponza_217_column_b 11 ;
+sponza_218_sponza_218_column_b 11 ;
+sponza_219_sponza_219_column_b 11 ;
+sponza_21_sponza_21_arch 5 ;
+sponza_220_sponza_220_column_b 11 ;
+sponza_221_sponza_221_column_b 11 ;
+sponza_222_sponza_222_column_b 11 ;
+sponza_223_sponza_223_column_b 11 ;
+sponza_224_sponza_224_column_b 11 ;
+sponza_225_sponza_225_column_b 11 ;
+sponza_226_sponza_226_column_b 11 ;
+sponza_227_sponza_227_column_b 11 ;
+sponza_228_sponza_228_column_b 11 ;
+sponza_229_sponza_229_column_b 11 ;
+sponza_22_sponza_22_column_c 9 ;
+sponza_230_sponza_230_column_b 11 ;
+sponza_231_sponza_231_column_b 11 ;
+sponza_232_sponza_232_column_b 11 ;
+sponza_233_sponza_233_column_b 11 ;
+sponza_234_sponza_234_column_b 11 ;
+sponza_235_sponza_235_column_b 11 ;
+sponza_236_sponza_236_column_b 11 ;
+sponza_237_sponza_237_column_b 11 ;
+sponza_238_sponza_238_column_b 11 ;
+sponza_239_sponza_239_column_b 11 ;
+sponza_23_sponza_23_column_c 9 ;
+sponza_240_sponza_240_column_b 11 ;
+sponza_241_sponza_241_column_b 11 ;
+sponza_242_sponza_242_column_b 11 ;
+sponza_243_sponza_243_column_b 11 ;
+sponza_244_sponza_244_column_b 11 ;
+sponza_245_sponza_245_column_b 11 ;
+sponza_246_sponza_246_column_b 11 ;
+sponza_247_sponza_247_column_b 11 ;
+sponza_248_sponza_248_column_b 11 ;
+sponza_249_sponza_249_column_b 11 ;
+sponza_24_sponza_24_column_c 9 ;
+sponza_250_sponza_250_column_b 11 ;
+sponza_251_sponza_251_column_b 11 ;
+sponza_252_sponza_252_column_b 11 ;
+sponza_253_sponza_253_column_b 11 ;
+sponza_254_sponza_254_column_b 11 ;
+sponza_255_sponza_255_column_b 11 ;
+sponza_256_sponza_256_column_b 11 ;
+sponza_257_sponza_257_Material__57 2 AlphaTested ;
+sponza_258_sponza_258_bricks 4 ;
+sponza_259_sponza_259_flagpole 12 ;
+sponza_25_sponza_25_column_c 9 ;
+sponza_260_sponza_260_flagpole 12 ;
+sponza_261_sponza_261_flagpole 12 ;
+sponza_262_sponza_262_flagpole 12 ;
+sponza_263_sponza_263_flagpole 12 ;
+sponza_264_sponza_264_flagpole 12 ;
+sponza_265_sponza_265_flagpole 12 ;
+sponza_266_sponza_266_flagpole 12 ;
+sponza_267_sponza_267_flagpole 12 ;
+sponza_268_sponza_268_flagpole 12 ;
+sponza_269_sponza_269_flagpole 12 ;
+sponza_26_sponza_26_column_c 9 ;
+sponza_270_sponza_270_flagpole 12 ;
+sponza_271_sponza_271_flagpole 12 ;
+sponza_272_sponza_272_flagpole 12 ;
+sponza_273_sponza_273_flagpole 12 ;
+sponza_274_sponza_274_flagpole 12 ;
+sponza_275_sponza_275_leaf 0 AlphaTested ;
+sponza_276_sponza_276_leaf 0 AlphaTested ;
+sponza_277_sponza_277_leaf 0 AlphaTested ;
+sponza_278_sponza_278_leaf 0 AlphaTested ;
+sponza_279_sponza_279_leaf 0 AlphaTested ;
+sponza_27_sponza_27_column_c 9 ;
+sponza_280_sponza_280_leaf 0 AlphaTested ;
+sponza_281_sponza_281_leaf 0 AlphaTested ;
+sponza_282_sponza_282_fabric_e 13 ;
+sponza_283_sponza_283_fabric_d 14 ;
+sponza_284_sponza_284_fabric_a 15 ;
+sponza_285_sponza_285_fabric_e 13 ;
+sponza_286_sponza_286_fabric_d 14 ;
+sponza_287_sponza_287_fabric_e 13 ;
+sponza_288_sponza_288_fabric_a 15 ;
+sponza_289_sponza_289_fabric_d 14 ;
+sponza_28_sponza_28_column_c 9 ;
+sponza_290_sponza_290_flagpole 12 ;
+sponza_291_sponza_291_flagpole 12 ;
+sponza_292_sponza_292_flagpole 12 ;
+sponza_293_sponza_293_flagpole 12 ;
+sponza_294_sponza_294_flagpole 12 ;
+sponza_295_sponza_295_flagpole 12 ;
+sponza_296_sponza_296_flagpole 12 ;
+sponza_297_sponza_297_flagpole 12 ;
+sponza_298_sponza_298_flagpole 12 ;
+sponza_299_sponza_299_flagpole 12 ;
+sponza_29_sponza_29_column_c 9 ;
+sponza_300_sponza_300_flagpole 12 ;
+sponza_301_sponza_301_flagpole 12 ;
+sponza_302_sponza_302_flagpole 12 ;
+sponza_303_sponza_303_flagpole 12 ;
+sponza_304_sponza_304_flagpole 12 ;
+sponza_305_sponza_305_flagpole 12 ;
+sponza_306_sponza_306_flagpole 12 ;
+sponza_307_sponza_307_flagpole 12 ;
+sponza_308_sponza_308_flagpole 12 ;
+sponza_309_sponza_309_flagpole 12 ;
+sponza_30_sponza_30_column_c 9 ;
+sponza_310_sponza_310_flagpole 12 ;
+sponza_311_sponza_311_flagpole 12 ;
+sponza_312_sponza_312_flagpole 12 ;
+sponza_313_sponza_313_flagpole 12 ;
+sponza_314_sponza_314_flagpole 12 ;
+sponza_315_sponza_315_flagpole 12 ;
+sponza_316_sponza_316_flagpole 12 ;
+sponza_317_sponza_317_flagpole 12 ;
+sponza_318_sponza_318_flagpole 12 ;
+sponza_319_sponza_319_flagpole 12 ;
+sponza_31_sponza_31_column_c 9 ;
+sponza_320_sponza_320_fabric_g 16 ;
+sponza_321_sponza_321_fabric_c 17 ;
+sponza_322_sponza_322_fabric_f 18 ;
+sponza_323_sponza_323_fabric_c 17 ;
+sponza_324_sponza_324_fabric_f 18 ;
+sponza_325_sponza_325_fabric_c 17 ;
+sponza_326_sponza_326_fabric_g 16 ;
+sponza_327_sponza_327_fabric_f 18 ;
+sponza_328_sponza_328_fabric_c 17 ;
+sponza_329_sponza_329_fabric_g 16 ;
+sponza_32_sponza_32_column_c 9 ;
+sponza_330_sponza_330_chain 19 ;
+sponza_331_sponza_331_chain 19 ;
+sponza_332_sponza_332_chain 19 ;
+sponza_333_sponza_333_chain 19 ;
+sponza_334_sponza_334_vase_hanging 20 ;
+sponza_335_sponza_335_vase_hanging 20 ;
+sponza_336_sponza_336_vase_hanging 20 ;
+sponza_337_sponza_337_vase_hanging 20 ;
+sponza_338_sponza_338_vase_hanging 20 ;
+sponza_339_sponza_339_chain 19 ;
+sponza_33_sponza_33_column_c 9 ;
+sponza_340_sponza_340_chain 19 ;
+sponza_341_sponza_341_chain 19 ;
+sponza_342_sponza_342_chain 19 ;
+sponza_343_sponza_343_vase_hanging 20 ;
+sponza_344_sponza_344_vase_hanging 20 ;
+sponza_345_sponza_345_vase_hanging 20 ;
+sponza_346_sponza_346_vase_hanging 20 ;
+sponza_347_sponza_347_vase_hanging 20 ;
+sponza_348_sponza_348_chain 19 ;
+sponza_349_sponza_349_chain 19 ;
+sponza_34_sponza_34_bricks 4 ;
+sponza_350_sponza_350_chain 19 ;
+sponza_351_sponza_351_chain 19 ;
+sponza_352_sponza_352_vase_hanging 20 ;
+sponza_353_sponza_353_vase_hanging 20 ;
+sponza_354_sponza_354_vase_hanging 20 ;
+sponza_355_sponza_355_vase_hanging 20 ;
+sponza_356_sponza_356_vase_hanging 20 ;
+sponza_357_sponza_357_chain 19 ;
+sponza_358_sponza_358_chain 19 ;
+sponza_359_sponza_359_chain 19 ;
+sponza_35_sponza_35_ceiling 6 ;
+sponza_360_sponza_360_chain 19 ;
+sponza_361_sponza_361_vase_hanging 20 ;
+sponza_362_sponza_362_vase_hanging 20 ;
+sponza_363_sponza_363_vase_hanging 20 ;
+sponza_364_sponza_364_vase_hanging 20 ;
+sponza_365_sponza_365_vase_hanging 20 ;
+sponza_366_sponza_366_Material__57 2 AlphaTested ;
+sponza_366_sponza_366_vase_round 1 ;
+sponza_367_sponza_367_Material__57 2 AlphaTested ;
+sponza_367_sponza_367_vase_round 1 ;
+sponza_368_sponza_368_Material__57 2 AlphaTested ;
+sponza_368_sponza_368_vase_round 1 ;
+sponza_369_sponza_369_Material__57 2 AlphaTested ;
+sponza_369_sponza_369_vase_round 1 ;
+sponza_36_sponza_36_bricks 4 ;
+sponza_370_sponza_370_Material__57 2 AlphaTested ;
+sponza_370_sponza_370_vase_round 1 ;
+sponza_371_sponza_371_Material__57 2 AlphaTested ;
+sponza_371_sponza_371_vase_round 1 ;
+sponza_372_sponza_372_Material__57 2 AlphaTested ;
+sponza_372_sponza_372_vase_round 1 ;
+sponza_373_sponza_373_vase 21 ;
+sponza_374_sponza_374_vase 21 ;
+sponza_375_sponza_375_vase 21 ;
+sponza_376_sponza_376_vase 21 ;
+sponza_377_sponza_377_Material__25 22 ;
+sponza_377_sponza_377_Material__298 3 ;
+sponza_378_sponza_378_Material__25 22 ;
+sponza_378_sponza_378_Material__298 3 ;
+sponza_379_sponza_379_bricks 4 ;
+sponza_37_sponza_37_arch 5 ;
+sponza_380_sponza_380_roof 23 ;
+sponza_381_sponza_381_roof 23 ;
+sponza_382_sponza_382_bricks 4 ;
+sponza_38_sponza_38_ceiling 6 ;
+sponza_39_sponza_39_arch 5 ;
+sponza_40_sponza_40_ceiling 6 ;
+sponza_41_sponza_41_arch 5 ;
+sponza_42_sponza_42_ceiling 6 ;
+sponza_43_sponza_43_arch 5 ;
+sponza_44_sponza_44_ceiling 6 ;
+sponza_45_sponza_45_arch 5 ;
+sponza_46_sponza_46_ceiling 6 ;
+sponza_47_sponza_47_arch 5 ;
+sponza_48_sponza_48_ceiling 6 ;
+sponza_49_sponza_49_arch 5 ;
+sponza_50_sponza_50_ceiling 6 ;
+sponza_51_sponza_51_arch 5 ;
+sponza_52_sponza_52_ceiling 6 ;
+sponza_53_sponza_53_arch 5 ;
+sponza_54_sponza_54_ceiling 6 ;
+sponza_55_sponza_55_arch 5 ;
+sponza_56_sponza_56_arch 5 ;
+sponza_57_sponza_57_arch 5 ;
+sponza_58_sponza_58_arch 5 ;
+sponza_59_sponza_59_arch 5 ;
+sponza_60_sponza_60_arch 5 ;
+sponza_61_sponza_61_arch 5 ;
+sponza_62_sponza_62_arch 5 ;
+sponza_63_sponza_63_arch 5 ;
+sponza_64_sponza_64_arch 5 ;
+sponza_65_sponza_65_arch 5 ;
+sponza_66_sponza_66_bricks 4 ;
+sponza_67_sponza_67_arch 5 ;
+sponza_68_sponza_68_bricks 4 ;
+sponza_69_sponza_69_bricks 4 ;
+sponza_70_sponza_70_details 10 ;
+sponza_71_sponza_71_bricks 4 ;
+sponza_71_sponza_71_details 10 ;
+sponza_72_sponza_72_bricks 4 ;
+sponza_72_sponza_72_details 10 ;
+sponza_73_sponza_73_details 10 ;
+sponza_74_sponza_74_details 10 ;
+sponza_75_sponza_75_bricks 4 ;
+sponza_76_sponza_76_column_c 9 ;
+sponza_77_sponza_77_column_c 9 ;
+sponza_78_sponza_78_column_c 9 ;
+sponza_79_sponza_79_column_c 9 ;
+sponza_80_sponza_80_column_c 9 ;
+sponza_81_sponza_81_column_c 9 ;
+sponza_82_sponza_82_column_c 9 ;
+sponza_83_sponza_83_column_c 9 ;
+sponza_84_sponza_84_column_c 9 ;
+sponza_85_sponza_85_column_c 9 ;
+sponza_86_sponza_86_column_c 9 ;
+sponza_87_sponza_87_column_c 9 ;
+sponza_88_sponza_88_column_c 9 ;
+sponza_89_sponza_89_column_c 9 ;
+sponza_90_sponza_90_column_c 9 ;
+sponza_91_sponza_91_column_c 9 ;
+sponza_92_sponza_92_column_c 9 ;
+sponza_93_sponza_93_column_c 9 ;
+sponza_94_sponza_94_column_c 9 ;
+sponza_95_sponza_95_column_c 9 ;
+sponza_96_sponza_96_column_c 9 ;
+sponza_97_sponza_97_column_c 9 ;
+sponza_98_sponza_98_column_c 9 ;
+sponza_99_sponza_99_column_c 9 ;
+Material 0
+Albedo textures_pbr/Sponza_Thorn_diffuse.tga
+Normal textures_pbr/Sponza_Thorn_normal.tga
+Roughness textures_pbr/Sponza_Thorn_roughness.tga
+Metalness textures_pbr/Dielectric_metallic.tga
+Material 1
+Albedo textures_pbr/VaseRound_diffuse.tga
+Normal textures_pbr/VaseRound_normal.tga
+Roughness textures_pbr/VaseRound_roughness.tga
+Metalness textures_pbr/Dielectric_metallic.tga
+Material 2
+Albedo textures_pbr/VasePlant_diffuse.tga
+Normal textures_pbr/VasePlant_normal.tga
+Roughness textures_pbr/VasePlant_roughness.tga
+Metalness textures_pbr/Dielectric_metallic.tga
+Material 3
+Albedo textures_pbr/Background_Albedo.tga
+Normal textures_pbr/Background_Normal.tga
+Roughness textures_pbr/Background_Roughness.tga
+Metalness textures_pbr/Dielectric_metallic.tga
+Material 4
+Albedo textures_pbr/Sponza_Bricks_a_Albedo.tga
+Normal textures_pbr/Sponza_Bricks_a_Normal.tga
+Roughness textures_pbr/Sponza_Bricks_a_Roughness.tga
+Metalness textures_pbr/Dielectric_metallic.tga
+Material 5
+Albedo textures_pbr/Sponza_Arch_diffuse.tga
+Normal textures_pbr/Sponza_Arch_normal.tga
+Roughness textures_pbr/Sponza_Arch_roughness.tga
+Metalness textures_pbr/Dielectric_metallic.tga
+Material 6
+Albedo textures_pbr/Sponza_Ceiling_diffuse.tga
+Normal textures_pbr/Sponza_Ceiling_normal.tga
+Roughness textures_pbr/Sponza_Ceiling_roughness.tga
+Metalness textures_pbr/Dielectric_metallic.tga
+Material 7
+Albedo textures_pbr/Sponza_Column_a_diffuse.tga
+Normal textures_pbr/Sponza_Column_a_normal.tga
+Roughness textures_pbr/Sponza_Column_a_roughness.tga
+Metalness textures_pbr/Dielectric_metallic.tga
+Material 8
+Albedo textures_pbr/Sponza_Floor_diffuse.tga
+Normal textures_pbr/Sponza_Floor_normal.tga
+Roughness textures_pbr/Sponza_Floor_roughness.tga
+Metalness textures_pbr/Dielectric_metallic.tga
+Material 9
+Albedo textures_pbr/Sponza_Column_c_diffuse.tga
+Normal textures_pbr/Sponza_Column_c_normal.tga
+Roughness textures_pbr/Sponza_Column_c_roughness.tga
+Metalness textures_pbr/Dielectric_metallic.tga
+Material 10
+Albedo textures_pbr/Sponza_Details_diffuse.tga
+Normal textures_pbr/Sponza_Details_normal.tga
+Roughness textures_pbr/Sponza_Details_roughness.tga
+Metalness textures_pbr/Dielectric_metallic.tga
+Material 11
+Albedo textures_pbr/Sponza_Column_b_diffuse.tga
+Normal textures_pbr/Sponza_Column_b_normal.tga
+Roughness textures_pbr/Sponza_Column_b_roughness.tga
+Metalness textures_pbr/Dielectric_metallic.tga
+Material 12
+Albedo textures_pbr/Sponza_FlagPole_diffuse.tga
+Normal textures_pbr/Sponza_FlagPole_normal.tga
+Roughness textures_pbr/Sponza_FlagPole_roughness.tga
+Metalness textures_pbr/Metallic_metallic.tga
+Material 13
+Albedo textures_pbr/Sponza_Fabric_Green_diffuse.tga
+Normal textures_pbr/Sponza_Fabric_Green_normal.tga
+Roughness textures_pbr/Sponza_Fabric_roughness.tga
+Metalness textures_pbr/Sponza_Fabric_metallic.tga
+Material 14
+Albedo textures_pbr/Sponza_Fabric_Blue_diffuse.tga
+Normal textures_pbr/Sponza_Fabric_Blue_normal.tga
+Roughness textures_pbr/Sponza_Fabric_roughness.tga
+Metalness textures_pbr/Sponza_Fabric_metallic.tga
+Material 15
+Albedo textures_pbr/Sponza_Fabric_Red_diffuse.tga
+Normal textures_pbr/Sponza_Fabric_Red_normal.tga
+Roughness textures_pbr/Sponza_Fabric_roughness.tga
+Metalness textures_pbr/Sponza_Fabric_metallic.tga
+Material 16
+Albedo textures_pbr/Sponza_Curtain_Blue_diffuse.tga
+Normal textures_pbr/Sponza_Curtain_Blue_normal.tga
+Roughness textures_pbr/Sponza_Curtain_roughness.tga
+Metalness textures_pbr/Sponza_Curtain_metallic.tga
+Material 17
+Albedo textures_pbr/Sponza_Curtain_Red_diffuse.tga
+Normal textures_pbr/Sponza_Curtain_Red_normal.tga
+Roughness textures_pbr/Sponza_Curtain_roughness.tga
+Metalness textures_pbr/Sponza_Curtain_metallic.tga
+Material 18
+Albedo textures_pbr/Sponza_Curtain_Green_diffuse.tga
+Normal textures_pbr/Sponza_Curtain_Green_normal.tga
+Roughness textures_pbr/Sponza_Curtain_roughness.tga
+Metalness textures_pbr/Sponza_Curtain_metallic.tga
+Material 19
+Albedo textures_pbr/ChainTexture_Albedo.tga
+Normal textures_pbr/ChainTexture_Normal.tga
+Roughness textures_pbr/ChainTexture_Roughness.tga
+Metalness textures_pbr/ChainTexture_Metallic.tga
+Material 20
+Albedo textures_pbr/VaseHanging_diffuse.tga
+Normal textures_pbr/VaseHanging_normal.tga
+Roughness textures_pbr/VaseHanging_roughness.tga
+Metalness textures_pbr/Metallic_metallic.tga
+Material 21
+Albedo textures_pbr/Vase_diffuse.tga
+Normal textures_pbr/Vase_normal.tga
+Roughness textures_pbr/Vase_roughness.tga
+Metalness textures_pbr/Dielectric_metallic.tga
+Material 22
+Albedo textures_pbr/Lion_Albedo.tga
+Normal textures_pbr/Lion_Normal.tga
+Roughness textures_pbr/Lion_Roughness.tga
+Metalness textures_pbr/Dielectric_metallic.tga
+Material 23
+Albedo textures_pbr/Sponza_Roof_diffuse.tga
+Normal textures_pbr/Sponza_Roof_normal.tga
+Roughness textures_pbr/Sponza_Roof_roughness.tga
+Metalness textures_pbr/Dielectric_metallic.tga
