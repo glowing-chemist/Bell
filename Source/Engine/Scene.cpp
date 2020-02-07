@@ -108,7 +108,7 @@ void Scene::loadSkybox(const std::array<std::string, 6>& paths, Engine* eng)
 
 		if (i == 0)
 		{
-			mSkybox = std::make_unique<Image>(eng->getDevice(), Format::RGBA8SRGB, ImageUsage::CubeMap | ImageUsage::Sampled | ImageUsage::TransferDest,
+			mSkybox = std::make_unique<Image>(eng->getDevice(), Format::RGBA8UNorm, ImageUsage::CubeMap | ImageUsage::Sampled | ImageUsage::TransferDest,
 				info.width, info.height, 1, 1, 6, 1, "Skybox");
 
 			mSkyboxView = std::make_unique<ImageView>(*mSkybox, ImageViewType::Colour, 0, 6);
