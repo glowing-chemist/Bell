@@ -81,7 +81,7 @@ bool renderMenu(GLFWwindow* win, const Camera& cam)
 }
 
 
-int main(int argc, char** argv)
+int main()
 {
     srand((uint32_t)time(nullptr));
 
@@ -171,8 +171,6 @@ int main(int argc, char** argv)
 			engine.startFrame();
             unregisterpasses = renderMenu(window, camera);
 		}
-
-        auto& scene = engine.getScene();
 
 		if(unregisterpasses)
 			engine.clearRegisteredPasses();
