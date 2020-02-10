@@ -245,7 +245,7 @@ int main()
 
 		buf.mViewMatrix = camera.getViewMatrix();
 		buf.mPerspectiveMatrix = camera.getPerspectiveMatrix();
-		buf.mInvertedCameraMatrix = glm::inverse(buf.mPerspectiveMatrix * buf.mViewMatrix);
+		buf.mInvertedViewProjMatrix = glm::inverse(buf.mPerspectiveMatrix * buf.mViewMatrix);
 		buf.mInvertedPerspective = glm::inverse(buf.mPerspectiveMatrix);
 		buf.mNeaPlane = camera.getNearPlane();
 		buf.mFarPlane = camera.getFarPlane();

@@ -34,7 +34,7 @@ layout(binding = 0) uniform UniformBufferObject {
 
 void main()
 {
-	const mat4 transFormation = camera.perspective * camera.view * push_constants.model;
+	const mat4 transFormation = camera.viewProj * push_constants.model;
 
 	gl_Position = transFormation * position;
 	outNormals = mat3(push_constants.model) * vec3(normals.xyz);

@@ -422,7 +422,9 @@ void Engine::updateGlobalBuffers()
 
 		mCameraBuffer.mViewMatrix = currentCamera.getViewMatrix();
 		mCameraBuffer.mPerspectiveMatrix = currentCamera.getPerspectiveMatrix();
-		mCameraBuffer.mInvertedCameraMatrix = glm::inverse(mCameraBuffer.mPerspectiveMatrix * mCameraBuffer.mViewMatrix);
+        mCameraBuffer.mPreviousFrameViewProjMatrix = mCameraBuffer.mViewProjMatrix;
+        mCameraBuffer.mViewProjMatrix = mCameraBuffer.mPerspectiveMatrix * mCameraBuffer.mViewMatrix;
+		mCameraBuffer.mInvertedViewProjMatrix = glm::inverse(mCameraBuffer.mPerspectiveMatrix * mCameraBuffer.mViewMatrix);
 		mCameraBuffer.mInvertedPerspective = glm::inverse(mCameraBuffer.mPerspectiveMatrix);
 		mCameraBuffer.mFrameBufferSize = glm::vec2{ getSwapChainImage()->getExtent(0, 0).width, getSwapChainImage()->getExtent(0, 0).height };
 		mCameraBuffer.mPosition = currentCamera.getPosition();

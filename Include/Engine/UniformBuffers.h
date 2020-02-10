@@ -11,9 +11,12 @@ struct CameraBuffer
 {
     glm::mat4 mViewMatrix;
     glm::mat4 mPerspectiveMatrix;
-	
-    glm::mat4 mInvertedCameraMatrix;
+    glm::mat4 mViewProjMatrix;
+
+    glm::mat4 mInvertedViewProjMatrix;
 	glm::mat4 mInvertedPerspective;
+
+    glm::mat4 mPreviousFrameViewProjMatrix;
 
     float mNeaPlane;
     float mFarPlane;

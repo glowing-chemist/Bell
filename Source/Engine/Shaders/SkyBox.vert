@@ -24,7 +24,7 @@ void main()
 	vec4 screenSpacePosition = vec4(triangleUVs * 2.0f + -1.0f, 1.0f, 1.0f);
 
 	// calculate the cubemap texture coords
-	vec4 worldSPacePerspective = camera.invertedCamera * screenSpacePosition;
+	vec4 worldSPacePerspective = camera.invertedViewProj * screenSpacePosition;
 	worldSPacePerspective /= worldSPacePerspective.w;
 	UV = normalize((worldSPacePerspective.xyz) - camera.position);
 	gl_Position = screenSpacePosition;

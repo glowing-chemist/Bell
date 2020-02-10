@@ -3,10 +3,13 @@
 struct CameraBuffer    
 {     
         mat4 view;    
-        mat4 perspective;    
+        mat4 perspective;
+        mat4 viewProj;
             
-        mat4 invertedCamera;
+        mat4 invertedViewProj;
         mat4 invertedPerspective;
+
+        mat4 previousFrameViewProj;
 
         float nearPlane;
         float farPlane;

@@ -33,7 +33,7 @@ layout(binding = 1) uniform Uniformtransformation
 
 void main()
 {
-	const mat4 transFormation = camera.perspective * camera.view * instanceTransformations[gl_InstanceID].transformation;
+	const mat4 transFormation = camera.viewProj * instanceTransformations[gl_InstanceID].transformation;
 
 	gl_Position = transFormation * position;
 	outNormals = mat3(instanceTransformations[gl_InstanceID].transformation) * vec3(normals.xyz);
