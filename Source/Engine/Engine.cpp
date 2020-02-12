@@ -471,7 +471,7 @@ void Engine::updateGlobalBuffers()
             const uint32_t index = mRenderDevice->getCurrentSubmissionIndex() % 16;
             const float2& jitter = mTAAJitter[index];
 
-            mCameraBuffer.mViewProjMatrix = glm::translate(float3(jitter / mCameraBuffer.mFrameBufferSize, 0.0f)) * mCameraBuffer.mViewProjMatrix;
+            mCameraBuffer.mViewProjMatrix *= glm::translate(float3(jitter / mCameraBuffer.mFrameBufferSize, 0.0f));// *mCameraBuffer.mViewProjMatrix;
             mCameraBuffer.mPreviousJitter = mCameraBuffer.mJitter;
             mCameraBuffer.mJitter = jitter;
         }
