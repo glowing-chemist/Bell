@@ -223,6 +223,15 @@ namespace
                 newNode->mOutputs.push_back(Pin{ 0, newNode, kShadowMap, PinType::Texture, PinKind::Output });
                 return newNode;
             }
+
+            case NodeTypes::TAA:
+            {
+                std::shared_ptr<EditorNode> newNode = std::make_shared<PassNode>("TAA", passType);
+                newNode->mInputs.push_back(Pin{ 0, newNode, kGBufferDepth, PinType::Texture, PinKind::Input });
+                newNode->mInputs.push_back(Pin{ 0, newNode, kAnalyticLighting, PinType::Texture, PinKind::Input });
+                newNode->mInputs.push_back(Pin{ 0, newNode, kGlobalLighting, PinType::Texture, PinKind::Input });
+                return newNode;
+            }
         }
     }
 
@@ -471,6 +480,7 @@ void Editor::drawAssistantWindow()
 		   drawPassContextMenu(PassType::LightFroxelation);
 		   drawPassContextMenu(PassType::DeferredAnalyticalLighting);
            drawPassContextMenu(PassType::Shadow);
+           drawPassContextMenu(PassType::TAA);
 
            ImGui::EndMenu();
        }
