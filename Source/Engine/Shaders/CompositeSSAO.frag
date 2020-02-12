@@ -9,7 +9,7 @@ layout(location = 0) out vec4 frameBuffer;
 
 layout(binding = 0) uniform texture2D globalLighting;
 layout(binding = 1) uniform texture2D ssao;
-layout(binding = 3) uniform sampler defaultSampler;
+layout(binding = 2) uniform sampler defaultSampler;
 
 void main()
 {
