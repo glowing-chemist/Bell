@@ -61,6 +61,9 @@ public:
                     const int32_t offsety = 0,
                     const int32_t offsetz = 0) = 0;
 
+	// Must be called outside of a renderpass (will execuet at the beginning of the frame).
+	virtual void clear() = 0;
+
 	virtual void updateLastAccessed();
 
     uint32_t        numberOfMips() const { return mNumberOfMips; }

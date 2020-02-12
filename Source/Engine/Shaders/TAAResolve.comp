@@ -1,0 +1,65 @@
+#version 450
+#extension GL_ARB_separate_shader_objects : enable
+#extension GL_GOOGLE_include_directive : enable
+
+#include "UniformBuffers.glsl"
+#include "Utilities.glsl"
+
+#define DEPTH_EPSILON 0.005f
+
+layout(local_size_x = 32, local_size_y = 32, local_size_z = 1) in;
+
+layout(set = 0, binding = 0) uniform cameraBuffer
+{
+	CameraBuffer camera;
+};
+
+layout(set = 0, binding = 1) uniform texture2D depth;
+
+layout(set = 0, binding = 2) uniform texture2D colour;
+
+layout(set = 0, binding = 3) uniform texture2D history;
+
+layout(rgba8, set = 0, binding = 4) uniform image2D newHistory;
+
+layout(set = 0, binding = 5) uniform sampler linearSampler;
+
+
+void main()
+{
+	const vec2 gbufferSize = camera.frameBufferSize;
+	const vec2 uv = vec2(gl_GlobalInvocationID.xy) / gbufferSize;
+
+	const float fragDepth = texture(sampler2D(depth, linearSampler), uv).x;
+	const float linearDepth = lineariseDepth(fragDepth, camera.nearPlane, camera.farPlane);
+
+	vec4 positionWS = camera.invertedViewProj * vec4((uv - 0.5f) * 2.0f, fragDepth, 1.0f);
+	positionWS /= positionWS.w;
+
+	vec4 previousPosition = camera.previousFrameViewProj * positionWS;
+	previousPosition /= previousPosition.w;
+
+	const vec2 previousUV = (previousPosition.xy * 0.5f) + 0.5f;
+	const float previousDepth = texture(sampler2D(depth, linearSampler), previousUV).x;
+	const float previousLinearDepth = lineariseDepth(previousDepth, camera.nearPlane, camera.farPlane);
+
+	const vec4 currentColour = texture(sampler2D(colour, linearSampler), uv);
+
+	// Only include history if the depth is with in 1%
+	const float depthDif = abs(previousLinearDepth - linearDepth);
+	if(depthDif <= DEPTH_EPSILON)
+	{
+		const float confidence = (1.0f - (depthDif / DEPTH_EPSILON)) * 0.5f;
+		const vec4 previousColour = texture(sampler2D(history, linearSampler), uv);
+
+		const vec4 newColour =  ((1.0f - confidence) * currentColour) + (confidence * previousColour);
+
+		if(gl_GlobalInvocationID.x <= gbufferSize.x && gl_GlobalInvocationID.y <= gbufferSize.y)
+			imageStore(newHistory, ivec2(gl_GlobalInvocationID.xy), newColour);
+	}
+	else
+	{
+		if(gl_GlobalInvocationID.x <= gbufferSize.x && gl_GlobalInvocationID.y <= gbufferSize.y)
+			imageStore(newHistory, ivec2(gl_GlobalInvocationID.xy), currentColour);
+	}
+}

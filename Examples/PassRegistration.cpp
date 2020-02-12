@@ -9,8 +9,8 @@
 struct ImGuiOptions
 {
     int mToggleIndex = 0;
-    bool mDefered = false;
-    bool mForward = true;
+    bool mDefered = true;
+    bool mForward = false;
     bool mShowLights = true;
 };
 
@@ -205,6 +205,7 @@ int main(int argc, char** argv)
         engine.registerPass(PassType::Skybox);
         engine.registerPass(PassType::DFGGeneration);
         engine.registerPass(PassType::Shadow);
+        engine.registerPass(PassType::TAA);
         engine.registerPass(PassType::Overlay);
 		engine.registerPass(PassType::Composite);
 

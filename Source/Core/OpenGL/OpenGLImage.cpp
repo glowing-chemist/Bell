@@ -105,6 +105,12 @@ void OpenGLImage::setContents(const void* data,
 }
 
 
+void OpenGLImage::clear()
+{
+	BELL_TRAP; // unimplemeted.
+}
+
+
 void OpenGLImage::texImage(const uint32_t arrayLevel, const uint32_t mipsLevel, const void* data)
 {
 	if (mSlot == GL_TEXTURE_2D)

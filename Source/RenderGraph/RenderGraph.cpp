@@ -784,6 +784,19 @@ std::vector<BarrierRecorder> RenderGraph::generateBarriers(RenderDevice* dev)
 		}
 	}
 
+// Enable for barrier summary
+#if 0
+	for (const auto& [name, index] : resourceIndicies)
+	{
+		BELL_LOG_ARGS("Resource %s", name.c_str());
+
+		for (const auto& entry : resourceEntries[index].mRequiredStates)
+		{
+			BELL_LOG_ARGS("Needed as %s in task %d", getAttachmentName(entry.mStateRequired), entry.mTaskIndex);
+		}
+	}
+#endif
+
 	for (const auto& [index, entries] : resourceEntries)
 	{
 		// intended overflow.

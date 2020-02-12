@@ -222,6 +222,8 @@ private:
     PerFrameResource<BufferView> mLightBufferView;
     PerFrameResource<ShaderResourceSet> mLightsSRS;
 
+    float2 mTAAJitter[16];
+
     void updateGlobalBuffers();
 
     std::mutex mSubmissionLock;

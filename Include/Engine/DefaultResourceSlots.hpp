@@ -20,6 +20,10 @@ constexpr const char* kActiveFroxels	 = "ActiveFroxels";
 constexpr const char* kActiveFroxelBuffer = "ActiveFroxelBuffer";
 constexpr const char* kShadowMap          = "ShadowMap";
 constexpr const char* kShadowingLights    = "ShadowingLights";
+constexpr const char* kCompositeOutput = "CompositeOutput";
+constexpr const char* kTAAHistory		= "TAAHistory";
+constexpr const char* kNewTAAHistory		= "NewTAAHistory";
+
 
 constexpr const char* kCameraBuffer	    = "CameraBuffer";
 constexpr const char* kLightBuffer	    = "LightBuffer";

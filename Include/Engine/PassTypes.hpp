@@ -31,7 +31,8 @@
 					ForwardAnalyticalLighting = 1 << 24, \
 					DeferredCombinedLighting = 1 << 25, \
 					ForwardCombinedLighting = 1 << 26, \
-					SSAOImproved = 1 << 27 \
+					SSAOImproved = 1 << 27, \
+					TAA = 1 << 28 \
 
 // An enum to keep track of which 
 enum class PassType : uint64_t

@@ -45,4 +45,8 @@ uint32_t getPixelSize(const Format);
 
 SyncPoint getSyncPoint(const AttachmentType);
 
+const char* getLayoutName(const ImageLayout);
+
+const char* getAttachmentName(const AttachmentType);
+
 #endif

@@ -29,6 +29,9 @@
 #include "Engine/LightFroxelationTechnique.hpp"
 #include "Engine/DeferredAnalyticalLightingTechnique.hpp"
 #include "Engine/ShadowMappingTechnique.hpp"
+#include "Engine/TAATechnique.hpp"
+
+#include "glm/gtx/transform.hpp"
 
 
 Engine::Engine(GLFWwindow* windowPtr) :
@@ -67,6 +70,30 @@ Engine::Engine(GLFWwindow* windowPtr) :
         mLightsSRS.get(i)->finalise();
     }
 
+    // calculate the TAA jitter.
+    auto halton_2_3 = [](const uint32_t index) -> float2
+    {
+        auto halton = [](uint32_t i, const uint32_t base) -> float
+        {
+            float f = 1.0f;
+            float r = 0.0f;
+
+            while (i > 0.0f)
+            {
+                f = f / float(base);
+                r = r + f * (i % base);
+                i = float(i) / float(base);
+            }
+
+            return r;
+        };
+
+        return float2(halton(index, 2), halton(index, 3));
+    };
+    for (uint32_t i = 0; i < 16; ++i)
+    {
+        mTAAJitter[i] = (halton_2_3(i) - 0.5f) * 2.0f;
+    }
 }
 
 
@@ -223,6 +250,9 @@ std::unique_ptr<Technique> Engine::getSingleTechnique(const PassType passType)
 
         case PassType::Shadow:
             return std::make_unique<ShadowMappingTechnique>(this);
+
+        case PassType::TAA:
+            return std::make_unique<TAATechnique>(this);
 
         default:
         {
@@ -420,17 +450,31 @@ void Engine::updateGlobalBuffers()
 	{
 		auto& currentCamera = getCurrentSceneCamera();
 
+        const float swapchainX = getSwapChainImage()->getExtent(0, 0).width;
+        const float swapChainY = getSwapChainImage()->getExtent(0, 0).height;
+
 		mCameraBuffer.mViewMatrix = currentCamera.getViewMatrix();
 		mCameraBuffer.mPerspectiveMatrix = currentCamera.getPerspectiveMatrix();
         mCameraBuffer.mPreviousFrameViewProjMatrix = mCameraBuffer.mViewProjMatrix;
         mCameraBuffer.mViewProjMatrix = mCameraBuffer.mPerspectiveMatrix * mCameraBuffer.mViewMatrix;
 		mCameraBuffer.mInvertedViewProjMatrix = glm::inverse(mCameraBuffer.mPerspectiveMatrix * mCameraBuffer.mViewMatrix);
 		mCameraBuffer.mInvertedPerspective = glm::inverse(mCameraBuffer.mPerspectiveMatrix);
-		mCameraBuffer.mFrameBufferSize = glm::vec2{ getSwapChainImage()->getExtent(0, 0).width, getSwapChainImage()->getExtent(0, 0).height };
+		mCameraBuffer.mFrameBufferSize = glm::vec2{ swapchainX, swapChainY };
 		mCameraBuffer.mPosition = currentCamera.getPosition();
 		mCameraBuffer.mNeaPlane = currentCamera.getNearPlane();
 		mCameraBuffer.mFarPlane = currentCamera.getFarPlane();
 		mCameraBuffer.mFOV = currentCamera.getFOV();
+
+        // need to add jitter for TAA
+        if(isPassRegistered(PassType::TAA))
+        {
+            const uint32_t index = mRenderDevice->getCurrentSubmissionIndex() % 16;
+            const float2& jitter = mTAAJitter[index];
+
+            mCameraBuffer.mViewProjMatrix = glm::translate(float3(jitter / mCameraBuffer.mFrameBufferSize, 0.0f)) * mCameraBuffer.mViewProjMatrix;
+            mCameraBuffer.mPreviousJitter = mCameraBuffer.mJitter;
+            mCameraBuffer.mJitter = jitter;
+        }
 
 		MapInfo mapInfo{};
 		mapInfo.mSize = sizeof(CameraBuffer);

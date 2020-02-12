@@ -18,6 +18,9 @@ struct CameraBuffer
 
         vec3 position;
         float fov;
+
+        vec2 jitter;
+        vec2 previousJitter;
 };    
 
     

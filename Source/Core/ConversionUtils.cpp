@@ -452,3 +452,72 @@ SyncPoint getSyncPoint(const AttachmentType type)
 		return SyncPoint::TopOfPipe;
 	}
 }
+
+const char* getLayoutName(const ImageLayout layout)
+{
+	switch (layout)
+	{
+	case ImageLayout::ColorAttachment:
+		return "Colour attachment";
+
+	case ImageLayout::DepthStencil:
+		return "Depth Stencil";
+
+	case ImageLayout::DepthStencilRO:
+		return "Depth Stencil RO";
+
+	case ImageLayout::General:
+		return "General";
+
+	case ImageLayout::Present:
+		return "Present";
+
+	case ImageLayout::Sampled:
+		return "Sampled";
+
+	case ImageLayout::TransferDst:
+		return "Transfer Dest";
+
+	case ImageLayout::TransferSrc:
+		return "Transfer Source";
+
+	case ImageLayout::Undefined:
+		return "Undefined";
+	}
+}
+
+
+const char* getAttachmentName(const AttachmentType type)
+{
+	switch (type)
+	{
+	case AttachmentType::RenderTarget1D:
+	case AttachmentType::RenderTarget2D:
+	case AttachmentType::RenderTarget3D:
+		return "Render Target";
+
+	case AttachmentType::Image1D:
+	case AttachmentType::Image2D:
+	case AttachmentType::Image3D:
+		return "Storage Image";
+
+	case AttachmentType::Texture1D:
+	case AttachmentType::Texture2D:
+	case AttachmentType::Texture3D:
+		return  "Sampled Image";
+
+	case AttachmentType::Depth:
+		return "Depth Stencil";
+
+	case AttachmentType::DataBufferRO:
+	case AttachmentType::DataBufferWO:
+	case AttachmentType::DataBufferRW:
+		return "Data Buffer";
+
+	case AttachmentType::UniformBuffer:
+		return "Uniform Buffer";
+
+	default:
+		return "Add new conversion!!!!";
+	}
+}

@@ -26,6 +26,9 @@ struct CameraBuffer
     glm::vec3 mPosition;
 
     float mFOV;
+
+    glm::vec2 mJitter;
+    glm::vec2 mPreviousJitter;
 };
 
 

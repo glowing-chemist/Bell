@@ -33,6 +33,8 @@ public:
 		const int32_t offsety = 0,
 		const int32_t offsetz = 0) override;
 
+	virtual void clear() override;
+
 	uint32_t getImage() const
 	{
 		return mImage;

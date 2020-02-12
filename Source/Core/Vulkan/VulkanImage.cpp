@@ -185,9 +185,56 @@ void VulkanImage::setContents(const void* data,
 			vk::DependencyFlagBits::eByRegion, {}, {}, { barrier });
 	}
 
+	(*mSubResourceInfo)[(level * mNumberOfMips) + lod].mLayout = ImageLayout::Sampled;
+
     // Maybe try to implement a staging buffer cache so that we don't have to create one
     // each time.
     stagingBuffer.updateLastAccessed();
     updateLastAccessed();
+}
+
+
+void VulkanImage::clear()
+{
+	VulkanRenderDevice* device = static_cast<VulkanRenderDevice*>(getDevice());
+
+	auto CmdBuffer = device->getCurrentCommandPool()
+		->getBufferForQueue(QueueType::Graphics);
+
+	vk::ImageLayout layout = getVulkanImageLayout((*mSubResourceInfo)[0].mLayout);
+
+	// transition to read only optimal
+	if (layout != vk::ImageLayout::eTransferDstOptimal)
+	{
+		vk::ImageMemoryBarrier barrier{};
+		barrier.setSrcAccessMask(vk::AccessFlagBits::eMemoryRead);
+		barrier.setDstAccessMask(vk::AccessFlagBits::eTransferWrite);
+		barrier.setOldLayout(layout);
+		barrier.setNewLayout(vk::ImageLayout::eTransferDstOptimal);
+		barrier.setSubresourceRange({ vk::ImageAspectFlagBits::eColor, 0, mNumberOfMips, 0, mNumberOfLevels });
+		barrier.setImage(mImage);
+
+		CmdBuffer.pipelineBarrier(vk::PipelineStageFlagBits::eTopOfPipe, vk::PipelineStageFlagBits::eTransfer,
+			vk::DependencyFlagBits::eByRegion, {}, {}, { barrier });
+
+		layout = vk::ImageLayout::eTransferDstOptimal;
+
+		for (auto& resource : *mSubResourceInfo)
+		{
+			resource.mLayout = ImageLayout::TransferDst;
+		}
+	}
+
+	vk::ClearColorValue clear{ std::array<float, 4>{0.0f, 0.0f, 0.0f, 0.0f} };
+	vk::ImageSubresourceRange subResource{};
+	subResource.aspectMask = vk::ImageAspectFlagBits::eColor;
+	subResource.baseMipLevel = 0;
+	subResource.levelCount = mNumberOfMips;
+	subResource.baseArrayLayer = 0;
+	subResource.layerCount = mNumberOfLevels;
+
+	CmdBuffer.clearColorImage(mImage, layout, &clear, 1, &subResource);
+
+	updateLastAccessed();
 }
 
