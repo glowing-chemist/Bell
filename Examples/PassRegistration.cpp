@@ -12,6 +12,7 @@ struct ImGuiOptions
     bool mDefered = true;
     bool mForward = false;
     bool mShowLights = true;
+    bool mTAA = true;
 };
 
 static ImGuiOptions graphicsOptions;
@@ -67,6 +68,7 @@ bool renderMenu(GLFWwindow* win, const Camera& cam)
     }
 
     ImGui::Checkbox("Show lights", &graphicsOptions.mShowLights);
+    ImGui::Checkbox("Enable TAA", &graphicsOptions.mTAA);
 
     ImGui::Text("Camera position: X: %f Y: %f Z: %f", cam.getPosition().x, cam.getPosition().y, cam.getPosition().z);
 
@@ -201,11 +203,13 @@ int main(int argc, char** argv)
             engine.registerPass(PassType::SSAO);
         }
 
+        if (graphicsOptions.mTAA)
+            engine.registerPass(PassType::TAA);
+
         engine.registerPass(PassType::ConvolveSkybox);
         engine.registerPass(PassType::Skybox);
         engine.registerPass(PassType::DFGGeneration);
         engine.registerPass(PassType::Shadow);
-        engine.registerPass(PassType::TAA);
         engine.registerPass(PassType::Overlay);
 		engine.registerPass(PassType::Composite);
 

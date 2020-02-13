@@ -50,7 +50,7 @@ void main()
 	if(depthDif <= DEPTH_EPSILON)
 	{
 		const float confidence = (1.0f - (depthDif / DEPTH_EPSILON)) * 0.5f;
-		const vec4 previousColour = texture(sampler2D(history, linearSampler), uv);
+		const vec4 previousColour = texture(sampler2D(history, linearSampler), previousUV);
 
 		const vec4 newColour =  ((1.0f - confidence) * currentColour) + (confidence * previousColour);
 
