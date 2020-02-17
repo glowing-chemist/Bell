@@ -164,13 +164,79 @@ set(BELL_SOURCE
     ThirdParty/stb_image/stb_image.cpp
     )
 
+
 set(DearImGUI_SOURCE
     ThirdParty/imgui-master/imgui.cpp
     ThirdParty/imgui-master/imgui_draw.cpp
     ThirdParty/imgui-master/imgui_widgets.cpp
     )
 
-file(COPY "${CMAKE_CURRENT_LIST_DIR}/Source/Engine/Shaders" DESTINATION "${CMAKE_BINARY_DIR}/")
+
+set(SHADERS
+    Source/Engine/Shaders/Overlay.frag
+    Source/Engine/Shaders/FullScreenTriangle.vert
+    Source/Engine/Shaders/InPlaceCombineSRGB.comp
+    Source/Engine/Shaders/CubemapParallax.glsl
+    Source/Engine/Shaders/DFGLutGenerate.comp
+    Source/Engine/Shaders/InPlaceCombine.comp
+    Source/Engine/Shaders/SkyBox.frag
+    Source/Engine/Shaders/SkyBoxConvolve.comp
+    Source/Engine/Shaders/BlinnPhongDeferredTexture.frag
+    Source/Engine/Shaders/Blit.frag
+    Source/Engine/Shaders/CompositeOverlay.frag
+    Source/Engine/Shaders/DepthOnly.vert
+    Source/Engine/Shaders/Empty.frag
+    Source/Engine/Shaders/ForwardIBL.frag
+    Source/Engine/Shaders/NormalMapping.glsl
+    Source/Engine/Shaders/Overlay.vert
+    Source/Engine/Shaders/Utilities.glsl
+    Source/Engine/Shaders/LightFroxelationClearCounters.comp
+    Source/Engine/Shaders/DFGIBLDeferredTexturing.frag
+    Source/Engine/Shaders/SSAO.frag
+    Source/Engine/Shaders/SSAOImproved.frag
+    Source/Engine/Shaders/ShadowMap.vert
+    Source/Engine/Shaders/VarianceShadowMap.frag
+    Source/Engine/Shaders/Hammersley.glsl
+    Source/Engine/Shaders/CompositeOverlaySSAO.frag
+    Source/Engine/Shaders/GaussianBlur.glsl
+    Source/Engine/Shaders/blurX.comp
+    Source/Engine/Shaders/blurXR8.comp
+    Source/Engine/Shaders/blurX_SRGB.comp
+    Source/Engine/Shaders/blurY.comp
+    Source/Engine/Shaders/blurYR8.comp
+    Source/Engine/Shaders/blurY_SRGB.comp
+    Source/Engine/Shaders/ActiveFroxels.comp
+    Source/Engine/Shaders/BlurX_Base.glsl
+    Source/Engine/Shaders/BlurY_Base.glsl
+    Source/Engine/Shaders/IndirectFroxelArgs.comp
+    Source/Engine/Shaders/CompositeOverlayCombinedLightingSSAO.frag
+    Source/Engine/Shaders/FroxelationGenerateLightLists.comp
+    Source/Engine/Shaders/ClusteredLighting.glsl
+    Source/Engine/Shaders/ForwardCombinedLighting.frag
+    Source/Engine/Shaders/ForwardMaterialCombined.vert
+    Source/Engine/Shaders/GBuffer.frag
+    Source/Engine/Shaders/GBufferDeferredTexturing.frag
+    Source/Engine/Shaders/PBR.glsl
+    Source/Engine/Shaders/AnalyticalIBLDeferredTexture.frag
+    Source/Engine/Shaders/CompositeSSAO.frag
+    Source/Engine/Shaders/DeferredAnalyticalLighting.comp
+    Source/Engine/Shaders/DeferredDFGIBL.frag
+    Source/Engine/Shaders/ForwardMaterial.vert
+    Source/Engine/Shaders/GBufferPassThrough.vert
+    Source/Engine/Shaders/GBufferPassThroughInstanced.vert
+    Source/Engine/Shaders/GBufferPassThroughMaterial.vert
+    Source/Engine/Shaders/GBufferPassThroughMaterialInstanced.vert
+    Source/Engine/Shaders/LightingCompositeSSAO.frag
+    Source/Engine/Shaders/SkyBox.vert
+    Source/Engine/Shaders/TAAResolve.comp
+    Source/Engine/Shaders/UniformBuffers.glsl
+    )
+
+add_custom_command(
+    OUTPUT ${SHADERS}
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_SOURCE_DIR}/${SHADERS}" "${CMAKE_CURRENT_BINARY_DIR}/${SHADERS}"
+    MAIN_DEPENDENCY "${CMAKE_CURRENT_SOURCE_DIR}/${SHADERS}")
+
 file(COPY "${CMAKE_CURRENT_LIST_DIR}/Assets" DESTINATION "${CMAKE_BINARY_DIR}/")
 
 
