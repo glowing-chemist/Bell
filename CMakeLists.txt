@@ -173,75 +173,83 @@ set(DearImGUI_SOURCE
 
 
 set(SHADERS
-    Source/Engine/Shaders/Overlay.frag
-    Source/Engine/Shaders/FullScreenTriangle.vert
-    Source/Engine/Shaders/InPlaceCombineSRGB.comp
-    Source/Engine/Shaders/CubemapParallax.glsl
-    Source/Engine/Shaders/DFGLutGenerate.comp
-    Source/Engine/Shaders/InPlaceCombine.comp
-    Source/Engine/Shaders/SkyBox.frag
-    Source/Engine/Shaders/SkyBoxConvolve.comp
-    Source/Engine/Shaders/BlinnPhongDeferredTexture.frag
-    Source/Engine/Shaders/Blit.frag
-    Source/Engine/Shaders/CompositeOverlay.frag
-    Source/Engine/Shaders/DepthOnly.vert
-    Source/Engine/Shaders/Empty.frag
-    Source/Engine/Shaders/ForwardIBL.frag
-    Source/Engine/Shaders/NormalMapping.glsl
-    Source/Engine/Shaders/Overlay.vert
-    Source/Engine/Shaders/Utilities.glsl
-    Source/Engine/Shaders/LightFroxelationClearCounters.comp
-    Source/Engine/Shaders/DFGIBLDeferredTexturing.frag
-    Source/Engine/Shaders/SSAO.frag
-    Source/Engine/Shaders/SSAOImproved.frag
-    Source/Engine/Shaders/ShadowMap.vert
-    Source/Engine/Shaders/VarianceShadowMap.frag
-    Source/Engine/Shaders/Hammersley.glsl
-    Source/Engine/Shaders/CompositeOverlaySSAO.frag
-    Source/Engine/Shaders/GaussianBlur.glsl
-    Source/Engine/Shaders/blurX.comp
-    Source/Engine/Shaders/blurXR8.comp
-    Source/Engine/Shaders/blurX_SRGB.comp
-    Source/Engine/Shaders/blurY.comp
-    Source/Engine/Shaders/blurYR8.comp
-    Source/Engine/Shaders/blurY_SRGB.comp
-    Source/Engine/Shaders/ActiveFroxels.comp
-    Source/Engine/Shaders/BlurX_Base.glsl
-    Source/Engine/Shaders/BlurY_Base.glsl
-    Source/Engine/Shaders/IndirectFroxelArgs.comp
-    Source/Engine/Shaders/CompositeOverlayCombinedLightingSSAO.frag
-    Source/Engine/Shaders/FroxelationGenerateLightLists.comp
-    Source/Engine/Shaders/ClusteredLighting.glsl
-    Source/Engine/Shaders/ForwardCombinedLighting.frag
-    Source/Engine/Shaders/ForwardMaterialCombined.vert
-    Source/Engine/Shaders/GBuffer.frag
-    Source/Engine/Shaders/GBufferDeferredTexturing.frag
-    Source/Engine/Shaders/PBR.glsl
-    Source/Engine/Shaders/AnalyticalIBLDeferredTexture.frag
-    Source/Engine/Shaders/CompositeSSAO.frag
-    Source/Engine/Shaders/DeferredAnalyticalLighting.comp
-    Source/Engine/Shaders/DeferredDFGIBL.frag
-    Source/Engine/Shaders/ForwardMaterial.vert
-    Source/Engine/Shaders/GBufferPassThrough.vert
-    Source/Engine/Shaders/GBufferPassThroughInstanced.vert
-    Source/Engine/Shaders/GBufferPassThroughMaterial.vert
-    Source/Engine/Shaders/GBufferPassThroughMaterialInstanced.vert
-    Source/Engine/Shaders/LightingCompositeSSAO.frag
-    Source/Engine/Shaders/SkyBox.vert
-    Source/Engine/Shaders/TAAResolve.comp
-    Source/Engine/Shaders/UniformBuffers.glsl
+    ActiveFroxels.comp                         
+	CompositeOverlaySSAO.frag           
+	FullScreenTriangle.vert                   
+	Overlay.vert
+	AnalyticalIBLDeferredTexture.frag          
+	CompositeSSAO.frag                  
+	GaussianBlur.glsl                        
+	PBR.glsl
+	BlinnPhongDeferredTexture.frag             
+	CubemapParallax.glsl                
+	GBuffer.frag                              
+	ShadowMap.vert
+	Blit.frag                                  
+	DebugActiveFroxel.comp               
+	GBufferDeferredTexturing.frag             
+	SkyBox.frag
+	blurX.comp                                 
+	DeferredAnalyticalLighting.comp     
+	GBufferPassThrough.vert                   
+	SkyBox.vert
+	BlurX_Base.glsl                            
+	DeferredDFGIBL.frag                 
+	GBufferPassThroughInstanced.vert          
+	SkyBoxConvolve.comp
+	blurX_SRGB.comp                            
+	DepthOnly.vert                      
+	GBufferPassThroughMaterial.vert           
+	SSAO.frag
+	blurXR8.comp                               
+	DFGIBLDeferredTexturing.frag        
+	GBufferPassThroughMaterialInstanced.vert  
+	SSAOImproved.frag
+	blurY.comp                                 
+	DFGLutGenerate.comp                 
+	Hammersley.glsl                           
+	TAAResolve.comp
+	BlurY_Base.glsl                            
+	Empty.frag                          
+	IndirectFroxelArgs.comp                   
+	UniformBuffers.glsl
+	blurY_SRGB.comp                            
+	ForwardCombinedLighting.frag        
+	InPlaceCombine.comp                       
+	Utilities.glsl
+	blurYR8.comp                               
+	ForwardIBL.frag                     
+	InPlaceCombineSRGB.comp                   
+	VarianceShadowMap.frag
+	ClusteredLighting.glsl                     
+	ForwardMaterial.vert                
+	LightFroxelationClearCounters.comp        
+	ForwardMaterialCombined.vert        
+	LightingCompositeSSAO.frag
+	CompositeOverlay.frag
+	NormalMapping.glsl
+	CompositeOverlayCombinedLightingSSAO.frag  
+	FroxelationGenerateLightLists.comp  
+	Overlay.frag
     )
 
-add_custom_command(
-    OUTPUT ${SHADERS}
-    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_SOURCE_DIR}/${SHADERS}" "${CMAKE_CURRENT_BINARY_DIR}/${SHADERS}"
-    MAIN_DEPENDENCY "${CMAKE_CURRENT_SOURCE_DIR}/${SHADERS}")
+foreach(shader ${SHADERS})
+  ADD_CUSTOM_COMMAND(OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/Shaders/${shader}"
+    COMMAND cmake -E copy_if_different "${CMAKE_CURRENT_SOURCE_DIR}/Source/Engine/Shaders/${shader}" "${CMAKE_CURRENT_BINARY_DIR}/Shaders/${shader}"
+    DEPENDS   "${CMAKE_CURRENT_SOURCE_DIR}/Source/Engine/Shaders/${shader}"
+    )
+   list(APPEND shader_dest "${CMAKE_CURRENT_BINARY_DIR}/Shaders/${shader}")
+ 
+endforeach(shader)
+add_custom_target(COPY_SHADERS DEPENDS ${shader_dest})
 
 file(COPY "${CMAKE_CURRENT_LIST_DIR}/Assets" DESTINATION "${CMAKE_BINARY_DIR}/")
 
 
 add_library(${PROJECT_NAME} ${BELL_SOURCE} ${DearImGUI_SOURCE})
 target_link_libraries(${PROJECT_NAME} BELL_BASE assimp)
+add_dependencies(${PROJECT_NAME} COPY_SHADERS)
+
 
 
 set(BELL_EDITOR_SOURCE
@@ -252,6 +260,7 @@ set(BELL_EDITOR_SOURCE
 	Source/Editor/imguifilebrowser.cpp
 	Source/Editor/ImGuiNodeEditor.cpp
 	)
+
 
 add_executable(BELL_EDITOR ${BELL_EDITOR_SOURCE})
 target_link_libraries(BELL_EDITOR BELL imgui_node_editor)
