@@ -464,6 +464,8 @@ void Engine::updateGlobalBuffers()
 		mCameraBuffer.mNeaPlane = currentCamera.getNearPlane();
 		mCameraBuffer.mFarPlane = currentCamera.getFarPlane();
 		mCameraBuffer.mFOV = currentCamera.getFOV();
+        mCameraBuffer.mPreviousJitter = mCameraBuffer.mJitter;
+        mCameraBuffer.mJitter = float2(0.0f, 0.0f);
 
         // need to add jitter for TAA
         if(isPassRegistered(PassType::TAA))
@@ -471,9 +473,8 @@ void Engine::updateGlobalBuffers()
             const uint32_t index = mRenderDevice->getCurrentSubmissionIndex() % 16;
             const float2& jitter = mTAAJitter[index];
 
-            mCameraBuffer.mViewProjMatrix *= glm::translate(float3(jitter / mCameraBuffer.mFrameBufferSize, 0.0f));// *mCameraBuffer.mViewProjMatrix;
-            mCameraBuffer.mPreviousJitter = mCameraBuffer.mJitter;
-            mCameraBuffer.mJitter = jitter;
+            mCameraBuffer.mViewProjMatrix = glm::translate(float3(jitter / mCameraBuffer.mFrameBufferSize, 0.0f)) * mCameraBuffer.mViewProjMatrix;
+            mCameraBuffer.mJitter = jitter / mCameraBuffer.mFrameBufferSize;
         }
 
 		MapInfo mapInfo{};

@@ -28,7 +28,7 @@ layout(set = 0, binding = 5) uniform sampler linearSampler;
 void main()
 {
 	const vec2 gbufferSize = camera.frameBufferSize;
-	const vec2 uv = vec2(gl_GlobalInvocationID.xy) / gbufferSize;
+	const vec2 uv = (vec2(gl_GlobalInvocationID.xy) / gbufferSize) - camera.jitter;
 
 	const float fragDepth = texture(sampler2D(depth, linearSampler), uv).x;
 	const float linearDepth = lineariseDepth(fragDepth, camera.nearPlane, camera.farPlane);
@@ -39,27 +39,60 @@ void main()
 	vec4 previousPosition = camera.previousFrameViewProj * positionWS;
 	previousPosition /= previousPosition.w;
 
-	const vec2 previousUV = (previousPosition.xy * 0.5f) + 0.5f;
+	const vec2 previousUV = ((previousPosition.xy * 0.5f) + 0.5f) - camera.previousJitter;
 	const float previousDepth = texture(sampler2D(depth, linearSampler), previousUV).x;
 	const float previousLinearDepth = lineariseDepth(previousDepth, camera.nearPlane, camera.farPlane);
 
 	const vec4 currentColour = texture(sampler2D(colour, linearSampler), uv);
-
+	vec4 newColour = currentColour;
 	// Only include history if the depth is within the threshold.
 	const float depthDif = abs(previousLinearDepth - linearDepth);
 	if(depthDif <= DEPTH_EPSILON)
 	{
-		const float confidence = (1.0f - (depthDif / DEPTH_EPSILON)) * 0.5f;
-		const vec4 previousColour = texture(sampler2D(history, linearSampler), previousUV);
+		// Check how close (in depth) the two fragments are.
+		float confidence = (1.0f - (depthDif / DEPTH_EPSILON)) * 0.5f;
+		vec4 previousColour = texture(sampler2D(history, linearSampler), previousUV);
 
-		const vec4 newColour =  ((1.0f - confidence) * currentColour) + (confidence * previousColour);
+		const float xDiff = 1.0f / camera.frameBufferSize.x;
+		const float yDiff = 1.0f / camera.frameBufferSize.y;
 
-		if(gl_GlobalInvocationID.x <= gbufferSize.x && gl_GlobalInvocationID.y <= gbufferSize.y)
-			imageStore(newHistory, ivec2(gl_GlobalInvocationID.xy), newColour);
+		// Calcaulte a AABB in YCoCg colour space for neibourghhood clipping.
+		vec3 upColour = texture(sampler2D(colour, linearSampler), uv + vec2(xDiff, 0.0f)).xyz;
+		vec3 downColour = texture(sampler2D(colour, linearSampler), uv + vec2(-xDiff, 0.0f)).xyz;
+		vec3 leftColour = texture(sampler2D(colour, linearSampler), uv + vec2(0.0f, -yDiff)).xyz;
+		vec3 rightColour = texture(sampler2D(colour, linearSampler), uv + vec2(0.0f, yDiff)).xyz;
+		upColour = calculateYCoCg(upColour);
+		downColour = calculateYCoCg(downColour);
+		leftColour = calculateYCoCg(leftColour);
+		rightColour = calculateYCoCg(rightColour);
+		vec3 currentColourYCocg = calculateYCoCg(currentColour.xyz);
+
+		vec3 aabbMin = vec3(100000.0f);
+		vec3 aabbMax = vec3(-100000.0f);
+		// Min
+		aabbMin = min(aabbMin, upColour);
+		aabbMin = min(aabbMin, downColour);
+		aabbMin = min(aabbMin, leftColour);
+		aabbMin = min(aabbMin, rightColour);
+		aabbMin = min(aabbMin, currentColourYCocg);
+
+		// Max
+		aabbMax = max(aabbMax, upColour);
+		aabbMax = max(aabbMax, downColour);
+		aabbMax = max(aabbMax, leftColour);
+		aabbMax = max(aabbMax, rightColour);
+		aabbMax = max(aabbMax, currentColourYCocg);
+
+		// Clamp previous colour
+		vec3 previousColourYCoCg = calculateYCoCg(previousColour.xyz);
+		previousColourYCoCg = min(aabbMax, previousColourYCoCg);
+		previousColourYCoCg = max(aabbMin, previousColourYCoCg);
+
+		previousColour.xyz = calculateRGB(previousColourYCoCg);
+
+		newColour =  ((1.0f - confidence) * currentColour) + (confidence * previousColour);
 	}
-	else
-	{
-		if(gl_GlobalInvocationID.x <= gbufferSize.x && gl_GlobalInvocationID.y <= gbufferSize.y)
-			imageStore(newHistory, ivec2(gl_GlobalInvocationID.xy), currentColour);
-	}
+
+	if(gl_GlobalInvocationID.x <= gbufferSize.x && gl_GlobalInvocationID.y <= gbufferSize.y)
+			imageStore(newHistory, ivec2(gl_GlobalInvocationID.xy), newColour); 
 }
