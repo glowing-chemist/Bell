@@ -186,7 +186,6 @@ set(SHADERS
 	GBuffer.frag                              
 	ShadowMap.vert
 	Blit.frag                                  
-	DebugActiveFroxel.comp               
 	GBufferDeferredTexturing.frag             
 	SkyBox.frag
 	blurX.comp                                 
