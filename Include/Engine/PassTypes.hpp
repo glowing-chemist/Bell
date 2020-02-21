@@ -108,6 +108,9 @@ inline const char* passToString(const PassType passType)
 
         case PassType::Shadow:
             return "Shadow Map";
+
+		case PassType::TAA:
+			return "TAA";
     }
 
     return "UNKNOWN PASS TYPE";
