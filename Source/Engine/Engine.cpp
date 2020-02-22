@@ -50,6 +50,7 @@ Engine::Engine(GLFWwindow* windowPtr) :
     mCurrentRenderGraph(),
 	mTechniques{},
 	mCurrentPasstypes{0},
+    mShaderPrefix(""),
 	mCommandContext(),
     mVertexBuffer{getDevice(), BufferUsage::Vertex | BufferUsage::TransferDest, 10000000, 10000000, "Vertex Buffer"},
     mIndexBuffer{getDevice(), BufferUsage::Index | BufferUsage::TransferDest, 10000000, 10000000, "Index Buffer"},
@@ -174,7 +175,7 @@ Shader Engine::getShader(const std::string& path)
 
 	Shader newShader{mRenderDevice, path};
 
-	const bool compiled = newShader->compile();
+	const bool compiled = newShader->compile(mShaderPrefix);
 
 	BELL_ASSERT(compiled, "Shader failed to compile")
 
@@ -516,9 +517,11 @@ void Engine::registerPass(const PassType pass)
 {
 	if((static_cast<uint64_t>(pass) & mCurrentPasstypes) == 0)
 	{
-		mTechniques.push_back(getSingleTechnique(pass));
+        mShaderPrefix += "#define " + std::string(passToString(pass)) + "\n";
 
-		mCurrentPasstypes |= static_cast<uint64_t>(pass);
+        mCurrentPasstypes |= static_cast<uint64_t>(pass);
+
+		mTechniques.push_back(getSingleTechnique(pass));
 	}
 }
 

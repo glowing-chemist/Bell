@@ -93,6 +93,7 @@ public:
 	void clearRegisteredPasses()
 	{
 		mTechniques.clear();
+        mShaderPrefix.clear();
 		mCurrentPasstypes = 0;
 	}
 
@@ -197,6 +198,7 @@ private:
     RenderGraph mCurrentRenderGraph;
 	std::vector<std::unique_ptr<Technique>> mTechniques;
 	uint64_t mCurrentPasstypes;
+    std::string mShaderPrefix; // Containes defines for currently registered passes.
 
 	CommandContext mCommandContext;
 

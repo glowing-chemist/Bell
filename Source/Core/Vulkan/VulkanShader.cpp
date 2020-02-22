@@ -22,9 +22,9 @@ VulkanShader::~VulkanShader()
 }
 
 
-bool VulkanShader::compile()
+bool VulkanShader::compile(const std::string& prefix)
 {
-    const bool compiled = ShaderBase::compile();
+    const bool compiled = ShaderBase::compile(prefix);
 
 	VulkanRenderDevice* device = static_cast<VulkanRenderDevice*>(getDevice());
 

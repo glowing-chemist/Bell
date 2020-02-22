@@ -138,12 +138,12 @@ ShaderBase::ShaderBase(RenderDevice* device, const std::string& path) :
 }
 
 
-bool ShaderBase::compile()
+bool ShaderBase::compile(const std::string& prefix)
 {
     glslang::TShader shader{mShaderStage};
-    const char* shaderSourceCString = mGLSLSource.c_str();
-    shader.setStrings(&shaderSourceCString, 1);
-
+	const char* shaderSources[] = { mGLSLSource.c_str() };
+	shader.setPreamble(prefix.c_str());
+	shader.setStrings(shaderSources, 1);
 #ifdef VULKAN
 	glslang::EShTargetClientVersion clientVersion = glslang::EShTargetVulkan_1_1;
 #elif defined(OPENGL)

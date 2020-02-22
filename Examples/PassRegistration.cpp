@@ -176,6 +176,10 @@ int main()
 			engine.clearRegisteredPasses();
 
 
+        engine.registerPass(PassType::ConvolveSkybox);
+        engine.registerPass(PassType::Skybox);
+        engine.registerPass(PassType::Shadow);
+
         if (graphicsOptions.mShowLights)
             engine.registerPass(PassType::LightFroxelation);
 		
@@ -204,10 +208,7 @@ int main()
         if (graphicsOptions.mTAA)
             engine.registerPass(PassType::TAA);
 
-        engine.registerPass(PassType::ConvolveSkybox);
-        engine.registerPass(PassType::Skybox);
         engine.registerPass(PassType::DFGGeneration);
-        engine.registerPass(PassType::Shadow);
         engine.registerPass(PassType::Overlay);
 		engine.registerPass(PassType::Composite);
 

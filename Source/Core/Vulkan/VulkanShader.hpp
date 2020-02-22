@@ -13,7 +13,7 @@ public:
 	VulkanShader(RenderDevice*, const std::string&);
 	~VulkanShader();
 
-	virtual bool compile() override;
+	virtual bool compile(const std::string& prefix = "") override;
 	virtual bool reload() override;
 
 	vk::ShaderModule getShaderModule() const

@@ -47,25 +47,25 @@ inline const char* passToString(const PassType passType)
     switch(passType)
     {
         case PassType::DepthPre:
-            return "Depth Pre pass";
+            return "Depth_Pre_pass";
 
         case PassType::GBuffer:
-            return "GBuffer pass";
+            return "GBuffer_pass";
 
         case PassType::GBufferMaterial:
-            return "GBuffer Material pass";
+            return "GBuffer_Material_pass";
 
         case PassType::SSAO:
             return "SSAO";
 
 		case PassType::SSAOImproved:
-			return "SSAO Improved";
+			return "SSAO_Improved";
 
         case PassType::GBufferPreDepth:
-            return "GBuffer Pre-Depth";
+            return "GBuffer_Pre_Depth";
 
         case PassType::GBUfferMaterialPreDepth:
-            return "GBuffer Material Pre-Depth";
+            return "GBuffer_Material_Pre_Depth";
 
 		case PassType::InplaceCombine:
 			return "InplaceCombine";
@@ -77,13 +77,13 @@ inline const char* passToString(const PassType passType)
 			return "DeferredTextureBlinnPhong";
 
 		case PassType::DeferredTexturePBRIBL:
-            return "Deferred texturing IBL";
+            return "Deferred_Texturing_IBL";
 
         case PassType::DeferredPBRIBL:
-            return "Deferred PBR IBL";
+            return "Deferred_PBR_IBL";
 
 		case PassType::DeferredTextureAnalyticalPBRIBL:
-            return "Analytical deferred texturing IBL";
+            return "Analytical_deferred_texturing_IBL";
 
 		case PassType::ForwardIBL:
 			return "ForwardIBL";
@@ -104,10 +104,10 @@ inline const char* passToString(const PassType passType)
 			return "LightFroxelation";
 
 		case PassType::DeferredAnalyticalLighting:
-			return "Deferred analytical lighting";
+			return "Deferred_analytical_lighting";
 
         case PassType::Shadow:
-            return "Shadow Map";
+            return "Shadow_Map";
 
 		case PassType::TAA:
 			return "TAA";

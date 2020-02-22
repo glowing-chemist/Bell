@@ -18,9 +18,9 @@ OpenGLShader::~OpenGLShader()
 }
 
 
-bool OpenGLShader::compile()
+bool OpenGLShader::compile(const std::string& prefix)
 {
-	const bool compiled = ShaderBase::compile();
+	const bool compiled = ShaderBase::compile(prefix);
 
 	// create the GL shader object now we know what stage it is.
 	const uint32_t stage = [this]()

@@ -11,7 +11,7 @@ public:
 	OpenGLShader(RenderDevice*, const std::string&);
 	~OpenGLShader();
 
-	virtual bool compile() override;
+	virtual bool compile(const std::string& prefix = "") override;
 	virtual bool reload() override;
 
 	uint32_t getShader() const
