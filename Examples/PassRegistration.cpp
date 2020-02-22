@@ -71,6 +71,7 @@ bool renderMenu(GLFWwindow* win, const Camera& cam)
     ImGui::Checkbox("Enable TAA", &graphicsOptions.mTAA);
 
     ImGui::Text("Camera position: X: %f Y: %f Z: %f", cam.getPosition().x, cam.getPosition().y, cam.getPosition().z);
+    ImGui::Text("Camera direction: X: %f Y: %f Z: %f", cam.getDirection().x, cam.getDirection().y, cam.getDirection().z);
 
 
 	ImGui::End();

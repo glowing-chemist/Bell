@@ -1,0 +1,51 @@
+#version 450
+#extension GL_ARB_separate_shader_objects : enable
+#extension GL_GOOGLE_include_directive : enable
+
+#include "UniformBuffers.glsl"
+#include "Utilities.glsl"
+#include "ShadowMapping.glsl" 
+
+
+layout(local_size_x = 32, local_size_y = 32, local_size_z = 1) in;
+
+layout(set = 0, binding = 0) uniform texture2D depth;
+layout(set = 0, binding = 1) uniform texture2D shadowMapRaw;
+layout(r8, set = 0, binding = 2) uniform image2D shadowMap;
+layout(set = 0, binding = 3) uniform UniformBufferObject 
+{    
+    ShadowingLight light;
+};
+layout(set = 0, binding = 4) uniform cameraBuffer
+{
+	CameraBuffer camera;
+};
+layout(set = 0, binding = 5) uniform sampler linearSampler;
+
+void main()
+{
+	const vec2 gbufferSize = camera.frameBufferSize;
+	const vec2 uv = (vec2(gl_GlobalInvocationID.xy) / gbufferSize) + camera.jitter;
+
+	const float fragmentDepth = texture(sampler2D(depth, linearSampler), uv).x;
+
+	vec4 worldSpaceFragmentPos = camera.invertedViewProj * vec4((uv - 0.5f) * 2.0f, fragmentDepth, 1.0f);
+    worldSpaceFragmentPos /= worldSpaceFragmentPos.w;
+
+	vec4 fragPositionVS = light.view * worldSpaceFragmentPos;
+    fragPositionVS /= fragPositionVS.w;
+
+    vec4 fragPositionNDC = light.viewProj * worldSpaceFragmentPos;
+    fragPositionNDC /= fragPositionNDC.w;
+
+    const vec2 lightSpaceUV = (fragPositionNDC.xy * 0.5f) + 0.5f;
+    float variance = 0.15f;
+    if(lightSpaceUV.x >= 0.0f && lightSpaceUV.x <= 1.0f && lightSpaceUV.y >= 0.0f && lightSpaceUV.y <= 1.0f && fragPositionVS.z <= 0.0f)
+    {
+        const vec2 moments = texture(sampler2D(shadowMapRaw, linearSampler), lightSpaceUV).xy;
+        variance = varianceOcclusionFactor(-fragPositionVS.z, moments);
+    }
+
+    if(gl_GlobalInvocationID.x <= gbufferSize.x && gl_GlobalInvocationID.y <= gbufferSize.y)
+			imageStore(shadowMap, ivec2(gl_GlobalInvocationID.xy), vec4(variance, 0.0f, 0.0f, 0.0f)); 
+}

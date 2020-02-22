@@ -16,7 +16,8 @@ public:
             const float3& up,
             const float lenght,
             const float startOffset,
-            const float angle);
+            const float angle,
+            const float aspect);
 
     bool isContainedWithin(const float4& point) const;
     bool isContainedWithin(const float3& point) const;

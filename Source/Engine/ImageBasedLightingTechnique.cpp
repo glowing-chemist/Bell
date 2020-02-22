@@ -21,7 +21,11 @@ ImageBasedLightingDeferredTexturingTechnique::ImageBasedLightingDeferredTexturin
 	mTask.addInput(kGBufferUV, AttachmentType::Texture2D);
 	mTask.addInput(kSkyBox, AttachmentType::Texture2D);
 	mTask.addInput(kConvolvedSkyBox, AttachmentType::Texture2D);
-	mTask.addInput(kDefaultSampler, AttachmentType::Sampler);
+    mTask.addInput(kDefaultSampler, AttachmentType::Sampler);
+
+    if (eng->isPassRegistered(PassType::Shadow))
+        mTask.addInput(kShadowMap, AttachmentType::Texture2D);
+
 	mTask.addInput(kMaterials, AttachmentType::ShaderResourceSet);
 
 	mTask.addOutput(kGlobalLighting, AttachmentType::RenderTarget2D, Format::RGBA8UNorm,
@@ -50,6 +54,9 @@ DeferredImageBasedLightingTechnique::DeferredImageBasedLightingTechnique(Engine*
     mTask.addInput(kSkyBox, AttachmentType::Texture2D);
     mTask.addInput(kConvolvedSkyBox, AttachmentType::Texture2D);
     mTask.addInput(kDefaultSampler, AttachmentType::Sampler);
+
+    if (eng->isPassRegistered(PassType::Shadow))
+        mTask.addInput(kShadowMap, AttachmentType::Texture2D);
 
     mTask.addOutput(kGlobalLighting, AttachmentType::RenderTarget2D, Format::RGBA8UNorm,
         SizeClass::Swapchain, LoadOp::Clear_Black);

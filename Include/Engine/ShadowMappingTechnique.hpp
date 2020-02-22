@@ -3,6 +3,7 @@
 
 #include "Engine/Technique.hpp"
 #include "RenderGraph/GraphicsTask.hpp"
+#include "Engine/DefaultResourceSlots.hpp"
 
 
 class ShadowMappingTechnique : public Technique
@@ -18,11 +19,17 @@ public:
 
     virtual void render(RenderGraph&, Engine*, const std::vector<const Scene::MeshInstance*>&) override;
 
-    virtual void bindResources(RenderGraph&) override {}
+    virtual void bindResources(RenderGraph& graph) override 
+    {
+        graph.createTransientImage(getDevice(), kShadowMap, Format::R8UNorm, ImageUsage::Storage | ImageUsage::Sampled, SizeClass::Swapchain);
+    }
 
 private:
     GraphicsPipelineDescription mDesc;
     GraphicsTask                mTask;
+
+    ComputePipelineDescription mResolveDesc;
+    ComputeTask                mResolveTask;
 };
 
 #endif

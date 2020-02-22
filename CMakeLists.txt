@@ -230,6 +230,8 @@ set(SHADERS
 	CompositeOverlayCombinedLightingSSAO.frag  
 	FroxelationGenerateLightLists.comp  
 	Overlay.frag
+	ShadowMapping.glsl
+	ResolveVarianceShadowMap.comp
     )
 
 foreach(shader ${SHADERS})

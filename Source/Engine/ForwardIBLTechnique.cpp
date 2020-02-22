@@ -23,6 +23,10 @@ ForwardIBLTechnique::ForwardIBLTechnique(Engine* eng) :
 	mTask.addInput(kSkyBox, AttachmentType::Texture2D);
 	mTask.addInput(kConvolvedSkyBox, AttachmentType::Texture2D);
 	mTask.addInput(kDefaultSampler, AttachmentType::Sampler);
+
+	if (eng->isPassRegistered(PassType::Shadow))
+		mTask.addInput(kShadowMap, AttachmentType::Texture2D);
+
 	mTask.addInput(kMaterials, AttachmentType::ShaderResourceSet);
 	mTask.addInput("model", AttachmentType::PushConstants);
     mTask.addInput(kSceneVertexBuffer, AttachmentType::VertexBuffer);

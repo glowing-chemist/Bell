@@ -8,7 +8,8 @@ Frustum::Frustum(const float3& position,
                  const float3& up,
                  const float lenght,
                  const float startOffset,
-                 const float angle)
+                 const float angle,
+                 const float aspect)
 {
     // calculating the near and far planes is relivitly simple as they have the same normal(or oposite) of
     // the cameras direction.
@@ -18,15 +19,15 @@ Frustum::Frustum(const float3& position,
     // We construct the other four planes by taking a pont and a vector in the center of the frustum
     // and rotating it in the apropriate direction by half the field of view angle.
     // I'm sure theres probably a trick to do this more effiently but this will do for now.
-	glm::mat3 leftPlaneRotation = glm::rotate(glm::mat4(1.0f), -(angle / 2.0f), up);
-	glm::mat3 rightPlaneRotation = glm::rotate(glm::mat4(1.0f), (angle / 2.0f), up);
+	glm::mat3 leftPlaneRotation = glm::rotate(glm::mat4(1.0f), -(angle / 2.0f) * aspect, up);
+	glm::mat3 rightPlaneRotation = glm::rotate(glm::mat4(1.0f), (angle / 2.0f) * aspect, up);
     float3 rightVector = glm::normalize(glm::cross(direction, up));
 
     mLeftPlane = {(leftPlaneRotation * direction) * (lenght / 2.0f) + position,
-                   -(leftPlaneRotation * rightVector)};
+                   (leftPlaneRotation * rightVector)};
 
     mRightPLane = {(rightPlaneRotation * direction) * (lenght / 2.0f) + position,
-                   rightPlaneRotation * rightVector};
+                   -rightPlaneRotation * rightVector};
 
 
 	glm::mat3 bottomPlaneRotation = glm::rotate(glm::mat4(1.0f), (angle / 2.0f), rightVector);
@@ -148,5 +149,6 @@ Frustum Camera::getFrustum() const
                     mUp,
                     mFarPlaneDistance,
                     mNearPlaneDistance,
-                    mFieldOfView };
+                    mFieldOfView,
+                    mAspect };
 }

@@ -23,6 +23,10 @@ layout(set = 0, binding = 2) uniform textureCube skyBox;
 layout(set = 0, binding = 3) uniform textureCube ConvolvedSkybox;
 layout(set = 0, binding = 4) uniform sampler linearSampler;
 
+#ifdef Shadow_Map
+layout(set = 0, binding = 5) uniform texture2D shadowMap;
+#endif
+
 // an unbound array of matyerial parameter textures
 // In order albedo, normals, rougness, metalness
 layout(set = 1, binding = 0) uniform texture2D materials[];
@@ -62,9 +66,15 @@ void main()
 
 	const float lodLevel = roughness * 10.0f;
 
-	const vec3 radiance = textureLod(samplerCube(ConvolvedSkybox, linearSampler), lightDir, lodLevel).xyz;
+	vec3 radiance = textureLod(samplerCube(ConvolvedSkybox, linearSampler), lightDir, lodLevel).xyz;
 
-    const vec3 irradiance = texture(samplerCube(skyBox, linearSampler), normal).xyz;
+    vec3 irradiance = texture(samplerCube(skyBox, linearSampler), normal).xyz;
+
+#ifdef Shadow_Map
+    const float occlusion = texture(sampler2D(shadowMap, linearSampler), gl_FragCoord.xy / camera.frameBufferSize).x;
+    radiance *= occlusion;
+    irradiance *= occlusion;
+#endif
 
 	const float NoV = dot(normal, viewDir);
     const vec2 f_ab = texture(sampler2D(DFG, linearSampler), vec2(NoV, roughness)).xy;

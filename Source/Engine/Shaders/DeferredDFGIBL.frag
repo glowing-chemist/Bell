@@ -5,7 +5,7 @@
 #include "PBR.glsl"
 #include "NormalMapping.glsl"
 #include "UniformBuffers.glsl"
-
+#include "ShadowMapping.glsl"
 
 #define MAX_MATERIALS 256
 
@@ -28,6 +28,10 @@ layout(set = 0, binding = 5) uniform texture2D MetalnessRoughness;
 layout(set = 0, binding = 6) uniform textureCube skyBox;
 layout(set = 0, binding = 7) uniform textureCube ConvolvedSkybox;
 layout(set = 0, binding = 8) uniform sampler linearSampler;
+
+#ifdef Shadow_Map
+layout(set = 0, binding = 9) uniform texture2D shadowMap;
+#endif
 
 
 void main()
@@ -54,9 +58,15 @@ void main()
 
 	const float lodLevel = roughness * 10.0f;
 
-	const vec3 radiance = texture(samplerCube(ConvolvedSkybox, linearSampler), lightDir, lodLevel).xyz;
+	vec3 radiance = texture(samplerCube(ConvolvedSkybox, linearSampler), lightDir, lodLevel).xyz;
 
-    const vec3 irradiance = texture(samplerCube(skyBox, linearSampler), normal).xyz;
+    vec3 irradiance = texture(samplerCube(skyBox, linearSampler), normal).xyz;
+
+#ifdef Shadow_Map
+    const float occlusion = texture(sampler2D(shadowMap, linearSampler), uv).x;
+    radiance *= occlusion;
+    irradiance *= occlusion;
+#endif
 
     const vec2 f_ab = texture(sampler2D(DFG, linearSampler), vec2(NoV, roughness)).xy;
 

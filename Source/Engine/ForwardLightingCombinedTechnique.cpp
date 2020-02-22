@@ -28,6 +28,10 @@ ForwardCombinedLightingTechnique::ForwardCombinedLightingTechnique(Engine* eng) 
 	mTask.addInput("ForwardPointSampler", AttachmentType::Sampler);
 	mTask.addInput(kSparseFroxels, AttachmentType::DataBufferRO);
 	mTask.addInput(kLightIndicies, AttachmentType::DataBufferRO);
+
+	if (eng->isPassRegistered(PassType::Shadow))
+		mTask.addInput(kShadowMap, AttachmentType::Texture2D);
+
 	mTask.addInput(kMaterials, AttachmentType::ShaderResourceSet);
 	mTask.addInput(kLightBuffer, AttachmentType::ShaderResourceSet);
 	mTask.addInput("model", AttachmentType::PushConstants);

@@ -399,6 +399,8 @@ void Engine::recordScene()
 {
     const std::vector<const Scene::MeshInstance*> meshes = mCurrentScene.getViewableMeshes(mCurrentScene.getCamera().getFrustum());
 
+    //BELL_LOG_ARGS("Meshes %d", meshes.size());
+
 	BELL_ASSERT(!mTechniques.empty(), "Need at least one technique registered with the engine")
 
 	for(auto& tech : mTechniques)
