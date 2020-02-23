@@ -116,7 +116,7 @@ int main()
     Scene testScene("./Assets/Sponza/sponzaPBR.obj");
     testScene.loadFromFile(VertexAttributes::Position4 | VertexAttributes::Normals | VertexAttributes::TextureCoordinates | VertexAttributes::Material, &engine);
     testScene.loadSkybox(skybox, &engine);
-    testScene.setShadowingLight(float3(10.0f, 10.0f, 10.0f), float3(0.0f, 0.0f, 1.0f));
+    testScene.setShadowingLight(float3(10.0f, 850.0f, 10.0f), glm::normalize(float3(0.0f, -0.8f, 0.3f)));
     testScene.uploadData(&engine);
     testScene.computeBounds(MeshType::Static);
     testScene.computeBounds(MeshType::Dynamic);
@@ -179,7 +179,7 @@ int main()
 
         engine.registerPass(PassType::ConvolveSkybox);
         engine.registerPass(PassType::Skybox);
-        engine.registerPass(PassType::Shadow);
+        //engine.registerPass(PassType::Shadow);
 
         if (graphicsOptions.mShowLights)
             engine.registerPass(PassType::LightFroxelation);
