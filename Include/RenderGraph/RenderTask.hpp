@@ -23,6 +23,8 @@ enum class LoadOp
 
 enum class SizeClass
 {
+    QuadrupleSwapChain,
+    DoubleSwapchain,
 	Swapchain,
 	HalfSwapchain,
 	QuarterSwapchain,

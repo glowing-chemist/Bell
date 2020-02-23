@@ -360,6 +360,12 @@ void RenderGraph::createTransientImage(RenderDevice* dev, const std::string& nam
             case SizeClass::QuarterSwapchain:
                 return {swapChainWidth / 4, swapChainHeight / 4 };
 
+			case SizeClass::DoubleSwapchain:
+				return { swapChainWidth * 2, swapChainHeight * 2 };
+
+			case SizeClass::QuadrupleSwapChain:
+				return { swapChainWidth * 4, swapChainHeight * 4 };
+
             default:
                 BELL_TRAP;
                 return {swapChainWidth, swapChainHeight};
