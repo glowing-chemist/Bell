@@ -799,6 +799,17 @@ void VulkanRenderDevice::startPass(const RenderTask& task)
 		vk::Rect2D renderArea{ {0, 0}, {pipelineDesc.mViewport.x, pipelineDesc.mViewport.y} };
 
         const std::vector<ClearValues> clearValues = graphicsTask.getClearValues();
+        std::vector<vk::ClearValue> vkClearValues{};
+        for (const auto& value : clearValues)
+        {
+            vk::ClearValue val{};
+            if (value.mType == AttachmentType::Depth)
+                val.setDepthStencil({ value.r, static_cast<uint32_t>(value.r) });
+            else
+                val.setColor({ std::array<float, 4>{value.r, value.g, value.b, value.a} });
+
+            vkClearValues.push_back(val);
+        }
 
 		commadBufferUsage |= vk::CommandBufferUsageFlagBits::eRenderPassContinue;
 
@@ -808,8 +819,8 @@ void VulkanRenderDevice::startPass(const RenderTask& task)
 		passBegin.setRenderArea(renderArea);
 		if (!clearValues.empty())
 		{
-			passBegin.setClearValueCount(static_cast<uint32_t>(clearValues.size()));
-            passBegin.setPClearValues(reinterpret_cast<const vk::ClearValue*>(clearValues.data()));
+			passBegin.setClearValueCount(static_cast<uint32_t>(vkClearValues.size()));
+            passBegin.setPClearValues(vkClearValues.data());
 		}
 
 		primaryCmdBuffer.beginRenderPass(passBegin, vk::SubpassContents::eSecondaryCommandBuffers);

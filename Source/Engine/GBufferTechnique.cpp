@@ -9,7 +9,7 @@ GBufferTechnique::GBufferTechnique(Engine* eng) :
                                getDevice()->getSwapChain()->getSwapChainImageHeight()},
                          Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
                          getDevice()->getSwapChain()->getSwapChainImageHeight()},
-                         true, BlendMode::None, BlendMode::None, true, DepthTest::LessEqual, Primitive::TriangleList},
+                         true, BlendMode::None, BlendMode::None, true, DepthTest::GreaterEqual, Primitive::TriangleList},
 
     mTask{"GBuffer", mPipelineDescription}
 {
@@ -25,7 +25,7 @@ GBufferTechnique::GBufferTechnique(Engine* eng) :
     mTask.addOutput(kGBufferAlbedo,    AttachmentType::RenderTarget2D, Format::RGBA8UNorm, SizeClass::Swapchain, LoadOp::Clear_Black);
     mTask.addOutput(kGBufferNormals,     AttachmentType::RenderTarget2D, Format::RGBA8UNorm, SizeClass::Swapchain, LoadOp::Clear_Black);
     mTask.addOutput(kGBufferMetalnessRoughness,   AttachmentType::RenderTarget2D, Format::RG8UNorm, SizeClass::Swapchain, LoadOp::Clear_Black);
-    mTask.addOutput(kGBufferDepth,      AttachmentType::Depth, Format::D32Float, SizeClass::Swapchain, LoadOp::Clear_White);
+    mTask.addOutput(kGBufferDepth,      AttachmentType::Depth, Format::D32Float, SizeClass::Swapchain, LoadOp::Clear_Black);
 }
 
 
@@ -53,7 +53,7 @@ GBufferPreDepthTechnique::GBufferPreDepthTechnique(Engine* eng) :
                                getDevice()->getSwapChain()->getSwapChainImageHeight()},
                          Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
                          getDevice()->getSwapChain()->getSwapChainImageHeight()},
-                         true, BlendMode::None, BlendMode::None, false, DepthTest::LessEqual, Primitive::TriangleList},
+                         true, BlendMode::None, BlendMode::None, false, DepthTest::GreaterEqual, Primitive::TriangleList},
 
     mTask{"GBufferPreDepth", mPipelineDescription}
 {

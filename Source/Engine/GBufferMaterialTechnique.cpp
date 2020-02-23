@@ -11,7 +11,7 @@ GBufferMaterialTechnique::GBufferMaterialTechnique(Engine* eng) :
                                getDevice()->getSwapChain()->getSwapChainImageHeight()},
                          Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
                          getDevice()->getSwapChain()->getSwapChainImageHeight()},
-                         true, BlendMode::None, BlendMode::None, true, DepthTest::LessEqual, Primitive::TriangleList},
+                         true, BlendMode::None, BlendMode::None, true, DepthTest::GreaterEqual, Primitive::TriangleList},
 
     mTask{"GBufferMaterial", mPipelineDescription}
 {
@@ -26,7 +26,7 @@ GBufferMaterialTechnique::GBufferMaterialTechnique(Engine* eng) :
     mTask.addOutput(kGBufferNormals,  AttachmentType::RenderTarget2D, Format::RGBA8UNorm, SizeClass::Swapchain, LoadOp::Clear_Black);
     mTask.addOutput(kGBufferUV,       AttachmentType::RenderTarget2D, Format::RGBA32Float, SizeClass::Swapchain, LoadOp::Clear_Black);
     mTask.addOutput(kGBufferMaterialID, AttachmentType::RenderTarget2D, Format::R32Uint, SizeClass::Swapchain, LoadOp::Clear_Black);
-    mTask.addOutput(kGBufferDepth,    AttachmentType::Depth, Format::D32Float, SizeClass::Swapchain, LoadOp::Clear_White);
+    mTask.addOutput(kGBufferDepth,    AttachmentType::Depth, Format::D32Float, SizeClass::Swapchain, LoadOp::Clear_Black);
 }
 
 
@@ -56,7 +56,7 @@ GBufferMaterialPreDepthTechnique::GBufferMaterialPreDepthTechnique(Engine* eng) 
                                getDevice()->getSwapChain()->getSwapChainImageHeight()},
                          Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
                          getDevice()->getSwapChain()->getSwapChainImageHeight()},
-                         true, BlendMode::None, BlendMode::None, false, DepthTest::LessEqual, Primitive::TriangleList},
+                         true, BlendMode::None, BlendMode::None, false, DepthTest::GreaterEqual, Primitive::TriangleList},
 
     mTask{"GBufferMaterialPreDepth", mPipelineDescription}
 {

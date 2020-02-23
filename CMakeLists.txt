@@ -68,7 +68,7 @@ if(VULKAN)
 		Source/Core/Vulkan/VulkanSwapChain.cpp
 		Source/Core/Vulkan/VulkanBarrierManager.cpp)
 
-		add_definitions(-DVULKAN)
+		add_definitions(-DVULKAN -DGLM_DEPTH_ZERO_TO_ONE)
 
 elseif(OPENGL)
 	set(BACKEND_SOURCE

@@ -12,7 +12,7 @@ ForwardCombinedLightingTechnique::ForwardCombinedLightingTechnique(Engine* eng) 
 			   getDevice()->getSwapChain()->getSwapChainImageHeight()},
 		  Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
 			   getDevice()->getSwapChain()->getSwapChainImageHeight()},
-			   true, BlendMode::None, BlendMode::None, false, DepthTest::LessEqual, Primitive::TriangleList },
+			   true, BlendMode::None, BlendMode::None, false, DepthTest::GreaterEqual, Primitive::TriangleList },
 	mTask("ForwardCombinedLighting", mDesc),
 	mPointSampler(SamplerType::Point)
 {

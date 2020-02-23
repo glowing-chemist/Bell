@@ -60,7 +60,7 @@ void main()
   int yoffset = int(uv.y * camera.frameBufferSize.y) % 2;
   const vec3 random = normalize( random_offsets[xoffset + yoffset] );
   
-  const float depth = texture(sampler2D(depthTexture, linearSampler), uv).x;
+  const float depth = 1.0f - texture(sampler2D(depthTexture, linearSampler), uv).x;
  
   const vec3 position = vec3(uv, depth);
   const vec3 normal = normalsFromDepth(depth, uv);
@@ -72,7 +72,7 @@ void main()
     vec3 ray = radius_depth * reflect(/*sample_points[i]*/ ssaoOffsets.offsets[i].xyz, random);
     vec3 hemi_ray = position + sign(dot(ray,normal)) * ray;
     
-    float occ_depth = texture(sampler2D(depthTexture, linearSampler), clamp(hemi_ray.xy, 0.0f, 1.0f)).x;
+    float occ_depth = 1.0f - texture(sampler2D(depthTexture, linearSampler), clamp(hemi_ray.xy, 0.0f, 1.0f)).x;
     float difference = depth - occ_depth;
     
     occlusion += step(falloff, difference) * (1.0-smoothstep(falloff, area, difference));

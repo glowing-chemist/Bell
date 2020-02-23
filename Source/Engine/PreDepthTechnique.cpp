@@ -9,7 +9,7 @@ PreDepthTechnique::PreDepthTechnique(Engine* eng) :
                                getDevice()->getSwapChain()->getSwapChainImageHeight()},
                          Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
                          getDevice()->getSwapChain()->getSwapChainImageHeight()},
-                         true, BlendMode::None, BlendMode::None, true, DepthTest::LessEqual, Primitive::TriangleList},
+                         true, BlendMode::None, BlendMode::None, true, DepthTest::GreaterEqual, Primitive::TriangleList},
 
     mTask{"PreDepth", mPipelineDescription}
 {
@@ -19,7 +19,7 @@ PreDepthTechnique::PreDepthTechnique(Engine* eng) :
     mTask.addInput(kSceneIndexBuffer, AttachmentType::IndexBuffer);
 	mTask.addInput("Matrix", AttachmentType::PushConstants);
 
-	mTask.addOutput(kGBufferDepth, AttachmentType::Depth, Format::D32Float, SizeClass::Swapchain, LoadOp::Clear_White);
+	mTask.addOutput(kGBufferDepth, AttachmentType::Depth, Format::D32Float, SizeClass::Swapchain, LoadOp::Clear_Black);
 }
 
 
@@ -31,7 +31,6 @@ void PreDepthTechnique::render(RenderGraph& graph, Engine* eng, const std::vecto
 	glm::mat4 perspective = eng->getCurrentSceneCamera().getPerspectiveMatrix();
 
 	glm::mat4 camera = perspective * view;
-
 
 
     for (const auto& mesh : meshes)

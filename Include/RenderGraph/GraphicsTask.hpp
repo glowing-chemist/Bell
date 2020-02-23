@@ -70,10 +70,11 @@ enum class Primitive
 
 struct ClearValues
 {
-    ClearValues(const float red, const float green, const float blue, const float alpha) :
-        r{red}, g{green}, b{blue}, a{alpha} {}
+    ClearValues(const AttachmentType type, const float red, const float green, const float blue, const float alpha) :
+		r{ red }, g{ green }, b{ blue }, a{ alpha }, mType{type} {}
 
     float r, g, b, a;
+	AttachmentType mType;
 };
 
 

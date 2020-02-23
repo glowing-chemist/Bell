@@ -169,7 +169,7 @@ int main()
 											Rect{windowWidth, windowHeight});
 	deferredDesc.mUseBackFaceCulling = true;
 	deferredDesc.mDepthWrite = true;
-	deferredDesc.mDepthTest = DepthTest::LessEqual;
+	deferredDesc.mDepthTest = DepthTest::GreaterEqual;
 
 	GraphicsPipelineDescription SSAODesc(fullScreentriangleVertexShader, SSAOFragmentShader,
 										Rect{windowWidth, windowHeight},
@@ -301,7 +301,7 @@ int main()
 			const OutputAttachmentDesc deferredattachments[] = {{kGBufferNormals , Format::RGBA8UNorm, SizeClass::Swapchain, LoadOp::Clear_Black},
 																{kGBufferUV , Format::RGBA32SFloat, SizeClass::Swapchain, LoadOp::Clear_Black},
 															   {kGBufferMaterialID , Format::R32Uint, SizeClass::Swapchain, LoadOp::Clear_Black}};
-			const OutputAttachmentDesc depthAttachment{kGBufferDepth, Format::D32Float, SizeClass::Swapchain, LoadOp::Clear_White};
+			const OutputAttachmentDesc depthAttachment{kGBufferDepth, Format::D32Float, SizeClass::Swapchain, LoadOp::Clear_Black};
 			ctx.setActiveContextType(ContextType::Graphics);
 			ctx.setGraphicsPipelineState(deferredDesc);
 			ctx.setVertexAttributes(VertexAttributes::Position4 | VertexAttributes::Normals | VertexAttributes::TextureCoordinates | VertexAttributes::Material);

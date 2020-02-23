@@ -138,7 +138,11 @@ glm::mat4 Camera::getViewMatrix() const
 
 glm::mat4 Camera::getPerspectiveMatrix() const
 {
-	return glm::perspective(glm::radians(mFieldOfView), mAspect, mNearPlaneDistance, mFarPlaneDistance);
+    const glm::mat4 reverseZ = glm::mat4{   float4{1.0f, 0.0f, 0.0f, 0.0f}, 
+                                            float4{0.0, 1.0f, 0.0f, 0.0f}, 
+                                            float4{0.0f, 0.0f, -1.0f, 1.0f}, 
+                                            float4{0.0f, 0.0f, 1.0f, 0.0f} };
+	return reverseZ * glm::perspective(glm::radians(mFieldOfView), mAspect, mNearPlaneDistance, mFarPlaneDistance);
 }
 
 
