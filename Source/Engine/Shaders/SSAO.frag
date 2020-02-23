@@ -69,7 +69,7 @@ void main()
   float occlusion = 0.0;
   for(int i=0; i < 16; i++) {
   
-    vec3 ray = radius_depth * reflect(/*sample_points[i]*/ ssaoOffsets.offsets[i].xyz, random);
+    vec3 ray = radius_depth * reflect(ssaoOffsets.offsets[i].xyz, random);
     vec3 hemi_ray = position + sign(dot(ray,normal)) * ray;
     
     float occ_depth = 1.0f - texture(sampler2D(depthTexture, linearSampler), clamp(hemi_ray.xy, 0.0f, 1.0f)).x;
