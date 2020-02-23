@@ -8,10 +8,10 @@ ShadowMappingTechnique::ShadowMappingTechnique(Engine* eng) :
     Technique("ShadowMapping", eng->getDevice()),
     mDesc(eng->getShader("./Shaders/ShadowMap.vert"),
           eng->getShader("./Shaders/VarianceShadowMap.frag"),
-          Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
-                getDevice()->getSwapChain()->getSwapChainImageHeight()},
-          Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
-          getDevice()->getSwapChain()->getSwapChainImageHeight()},
+          Rect{getDevice()->getSwapChain()->getSwapChainImageWidth() * 2,
+                getDevice()->getSwapChain()->getSwapChainImageHeight() * 2},
+          Rect{getDevice()->getSwapChain()->getSwapChainImageWidth() * 2,
+          getDevice()->getSwapChain()->getSwapChainImageHeight() * 2},
         true, BlendMode::None, BlendMode::None, true, DepthTest::LessEqual, Primitive::TriangleList),
     mTask("ShadowMapping", mDesc),
     mResolveDesc{eng->getShader("./Shaders/ResolveVarianceShadowMap.comp")},
@@ -25,8 +25,8 @@ ShadowMappingTechnique::ShadowMappingTechnique(Engine* eng) :
     mTask.addInput(kSceneVertexBuffer, AttachmentType::VertexBuffer);
     mTask.addInput(kSceneIndexBuffer, AttachmentType::IndexBuffer);
 
-    mTask.addOutput(kShadowMapRaw, AttachmentType::RenderTarget2D, Format::RG32Float, SizeClass::Swapchain, LoadOp::Clear_Black);
-    mTask.addOutput("ShadowMapDepth", AttachmentType::Depth, Format::D32Float, SizeClass::Swapchain, LoadOp::Clear_White);
+    mTask.addOutput(kShadowMapRaw, AttachmentType::RenderTarget2D, Format::RG32Float, SizeClass::DoubleSwapchain, LoadOp::Clear_Black);
+    mTask.addOutput("ShadowMapDepth", AttachmentType::Depth, Format::D32Float, SizeClass::DoubleSwapchain, LoadOp::Clear_White);
 
     mResolveTask.addInput(kGBufferDepth, AttachmentType::Texture2D);
     mResolveTask.addInput(kShadowMapRaw, AttachmentType::Texture2D);
