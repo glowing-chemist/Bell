@@ -45,7 +45,7 @@ uvec3 getFroxelPosition(const uvec2 position, const float depth, const vec2 size
 {
 	const uvec2 xyFroxel = position / FROXEL_TILE_SIZE;
 
-    float depthVS = lineariseDepth(1.0f - depth, nearPlane, farPlane);
+    float depthVS = lineariseReverseDepth(depth, nearPlane, farPlane);
     depthVS *= (farPlane - nearPlane);
     depthVS += nearPlane;
 

@@ -5,6 +5,13 @@ float lineariseDepth(const float depth, const float near, const float far)
 }
 
 
+float lineariseReverseDepth(const float depth, const float near, const float far)
+{
+	const float reverseDepth = 1.0f - depth;
+	return  (2.0f * near) / (far + near - reverseDepth * (far - near));
+}
+
+
 float calculateLuminosityRGB(const vec3 colour)
 {
 	return 0.2126f * colour.x + 0.7152f * colour.y + 0.0722f * colour.z;

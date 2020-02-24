@@ -50,7 +50,7 @@ void main()
 	const vec2 uv = (vec2(gl_GlobalInvocationID.xy) / gbufferSize) + camera.jitter;
 
 	const float fragDepth = texture(sampler2D(depth, linearSampler), uv).x;
-	const float linearDepth = lineariseDepth(fragDepth, camera.nearPlane, camera.farPlane);
+	const float linearDepth = lineariseReverseDepth(fragDepth, camera.nearPlane, camera.farPlane);
 
 	vec4 positionWS = camera.invertedViewProj * vec4((uv - 0.5f) * 2.0f, fragDepth, 1.0f);
 	positionWS /= positionWS.w;
@@ -60,7 +60,7 @@ void main()
 
 	const vec2 previousUV = ((previousPosition.xy * 0.5f) + 0.5f) - camera.previousJitter;
 	const float previousDepth = texture(sampler2D(depth, linearSampler), previousUV).x;
-	const float previousLinearDepth = lineariseDepth(previousDepth, camera.nearPlane, camera.farPlane);
+	const float previousLinearDepth = lineariseReverseDepth(previousDepth, camera.nearPlane, camera.farPlane);
 
 	const vec4 currentColour = texture(sampler2D(colour, linearSampler), uv);
 	vec4 newColour = currentColour;

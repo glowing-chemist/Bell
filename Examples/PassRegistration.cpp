@@ -86,9 +86,6 @@ int main()
 {
     srand((uint32_t)time(nullptr));
 
-    const uint32_t windowWidth = 1440;
-    const uint32_t windowHeight = 810;
-
     bool firstFrame = true;
 
     // initialse glfw
@@ -96,9 +93,15 @@ int main()
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
 
+    GLFWmonitor* monitor = glfwGetPrimaryMonitor();
+    const GLFWvidmode* mode = glfwGetVideoMode(monitor);
+
+    const uint32_t windowWidth = mode->width;
+    const uint32_t windowHeight = mode->height;
+
 	ImGui::CreateContext();
 	auto& io = ImGui::GetIO();
-	io.DisplaySize = ImVec2{ windowHeight, windowWidth };
+	io.DisplaySize = ImVec2{ static_cast<float>(windowHeight), static_cast<float>(windowWidth) };
 
     GLFWwindow* window = glfwCreateWindow(windowWidth, windowHeight, "Pass registration example", nullptr, nullptr);
     if(window == nullptr)

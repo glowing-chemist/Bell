@@ -12,8 +12,14 @@ int main()
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_API);
 #endif
 
+    GLFWmonitor* monitor = glfwGetPrimaryMonitor();
+    const GLFWvidmode* mode = glfwGetVideoMode(monitor);
+
+    const uint32_t windowWidth = mode->width;
+    const uint32_t windowHeight = mode->height;
+
     glfwWindowHint(GLFW_RESIZABLE, GL_FALSE); // only resize explicitly
-    auto* window = glfwCreateWindow(1600, 900, "Bell Editor", nullptr, nullptr);
+    auto* window = glfwCreateWindow(windowWidth, windowHeight, "Bell Editor", nullptr, nullptr);
 
     Editor editor{window};
 
