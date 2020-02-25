@@ -19,22 +19,25 @@ LightFroxelationTechnique::LightFroxelationTechnique(Engine* eng) :
     mLightAsignmentDesc{eng->getShader("./Shaders/FroxelationGenerateLightLists.comp")},
     mLightListAsignment("LightAsignment", mLightAsignmentDesc),
 
+    mXTiles(eng->getDevice()->getSwapChainImageView()->getImageExtent().width / 32),
+    mYTiles(eng->getDevice()->getSwapChainImageView()->getImageExtent().height / 32),
+
 	mActiveFroxelsImage(eng->getDevice(), Format::R32Uint, ImageUsage::Storage | ImageUsage::Sampled, eng->getDevice()->getSwapChainImageView()->getImageExtent().width,
 		eng->getDevice()->getSwapChainImageView()->getImageExtent().height, 1, 1, 1, 1, "ActiveFroxels"),
 	mActiveFroxelsImageView(mActiveFroxelsImage, ImageViewType::Colour),
 
     // Assumes an avergae max of 10 active froxels per screen space tile.
-    mActiveFroxlesBuffer(eng->getDevice(), BufferUsage::DataBuffer | BufferUsage::Uniform, sizeof(float4) * (30 * 65 * 16), sizeof(float4) * (30 * 65 * 16), "ActiveFroxelBuffer"),
+    mActiveFroxlesBuffer(eng->getDevice(), BufferUsage::DataBuffer | BufferUsage::Uniform, sizeof(float4) * (mXTiles * mYTiles * 10), sizeof(float4) * (mXTiles* mYTiles * 10), "ActiveFroxelBuffer"),
 	mActiveFroxlesBufferView(mActiveFroxlesBuffer, std::max(eng->getDevice()->getMinStorageBufferAlignment(), sizeof(uint32_t))),
     mActiveFroxelsCounter(mActiveFroxlesBuffer, 0u, static_cast<uint32_t>(sizeof(uint32_t))),
 
     mIndirectArgsBuffer(eng->getDevice(), BufferUsage::DataBuffer | BufferUsage::IndirectArgs, sizeof(uint32_t) * 3, sizeof(uint32_t) * 3, "FroxelIndirectArgs"),
     mIndirectArgsView(mIndirectArgsBuffer, 0, sizeof(uint32_t) * 3),
 
-    mSparseFroxelBuffer(eng->getDevice(), BufferUsage::DataBuffer, sizeof(float2) * (30 * 65 * 32), sizeof(float2) * (30 * 65 * 32), kSparseFroxels),
+    mSparseFroxelBuffer(eng->getDevice(), BufferUsage::DataBuffer, sizeof(float2) * (mXTiles * mYTiles * 32), sizeof(float2) * (mXTiles * mYTiles * 32), kSparseFroxels),
     mSparseFroxelBufferView(mSparseFroxelBuffer),
 
-    mLightIndexBuffer(eng->getDevice(), BufferUsage::DataBuffer, sizeof(uint32_t) * (30 * 65 * 16 * 16), sizeof(uint32_t) * (30 * 65 * 16 * 16), kLightIndicies),
+    mLightIndexBuffer(eng->getDevice(), BufferUsage::DataBuffer, sizeof(uint32_t) * (mXTiles * mYTiles * 16 * 16), sizeof(uint32_t) * (mXTiles * mYTiles * 16 * 16), kLightIndicies),
     mLightIndexBufferView(mLightIndexBuffer, std::max(eng->getDevice()->getMinStorageBufferAlignment(), sizeof(uint32_t))),
     mLightIndexCounterView(mLightIndexBuffer, 0, static_cast<uint32_t>(sizeof(uint32_t)))
 {

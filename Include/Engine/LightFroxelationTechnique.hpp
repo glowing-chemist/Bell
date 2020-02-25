@@ -37,6 +37,9 @@ private:
     ComputePipelineDescription      mLightAsignmentDesc;
     ComputeTask                     mLightListAsignment;
 
+    uint32_t mXTiles;
+    uint32_t mYTiles;
+
     PerFrameResource<Image>         mActiveFroxelsImage;
     PerFrameResource<ImageView>     mActiveFroxelsImageView;
 
