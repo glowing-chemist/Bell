@@ -232,6 +232,8 @@ set(SHADERS
 	Overlay.frag
 	ShadowMapping.glsl
 	ResolveVarianceShadowMap.comp
+	blurXrg32f.comp
+	blurYrg32f.comp
     )
 
 foreach(shader ${SHADERS})

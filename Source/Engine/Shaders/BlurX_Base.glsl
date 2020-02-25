@@ -11,11 +11,11 @@
 		sharedLine[gl_LocalInvocationID.x] = texture(sampler2D(inImage, linearSampler), vec2(dispatchLocation.xy - ivec2(3 - gl_LocalInvocationID.x, 0)) / size);
 	}
 
-	if(gl_LocalInvocationID.x == (KERNAL_SIZE - 1))
+	if(gl_LocalInvocationID.x == (KERNEL_SIZE - 1))
 	{
-		sharedLine[KERNAL_SIZE + 3] = texture(sampler2D(inImage, linearSampler), vec2(dispatchLocation.xy + ivec2(1,0)) / size);
-		sharedLine[KERNAL_SIZE + 4] = texture(sampler2D(inImage, linearSampler), vec2(dispatchLocation.xy + ivec2(2,0)) / size);
-		sharedLine[KERNAL_SIZE + 5] = texture(sampler2D(inImage, linearSampler), vec2(dispatchLocation.xy + ivec2(3,0)) / size);
+		sharedLine[KERNEL_SIZE + 3] = texture(sampler2D(inImage, linearSampler), vec2(dispatchLocation.xy + ivec2(1,0)) / size);
+		sharedLine[KERNEL_SIZE + 4] = texture(sampler2D(inImage, linearSampler), vec2(dispatchLocation.xy + ivec2(2,0)) / size);
+		sharedLine[KERNEL_SIZE + 5] = texture(sampler2D(inImage, linearSampler), vec2(dispatchLocation.xy + ivec2(3,0)) / size);
 	}
 
 	// wait for the shared memory to be fully populated.

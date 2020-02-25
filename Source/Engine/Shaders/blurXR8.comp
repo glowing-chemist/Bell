@@ -9,7 +9,7 @@ layout(r8, binding = 1) uniform writeonly image2D outImage;
 layout(binding = 2) uniform sampler linearSampler;
 
 
-layout(local_size_x = KERNAL_SIZE, local_size_y = 1, local_size_z = 1) in;
+layout(local_size_x = KERNEL_SIZE, local_size_y = 1, local_size_z = 1) in;
 
 
 void main()

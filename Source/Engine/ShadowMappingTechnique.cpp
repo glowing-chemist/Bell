@@ -2,7 +2,6 @@
 #include "Engine/Engine.hpp"
 #include "Engine/DefaultResourceSlots.hpp"
 
-static constexpr char kShadowMapRaw[] = "ShadowMapRaw";
 
 ShadowMappingTechnique::ShadowMappingTechnique(Engine* eng) :
     Technique("ShadowMapping", eng->getDevice()),
@@ -14,6 +13,10 @@ ShadowMappingTechnique::ShadowMappingTechnique(Engine* eng) :
           getDevice()->getSwapChain()->getSwapChainImageHeight() * 2},
         true, BlendMode::None, BlendMode::None, true, DepthTest::LessEqual, Primitive::TriangleList),
     mTask("ShadowMapping", mDesc),
+    mBlurXDesc{ eng->getShader("Shaders/blurXrg32f.comp") },
+    mBlurXTask("ShadowMapBlurX", mBlurXDesc),
+    mBlurYDesc{ eng->getShader("Shaders/blurYrg32f.comp") },
+    mBlurYTask("ShadowMapBlurY", mBlurYDesc),
     mResolveDesc{eng->getShader("./Shaders/ResolveVarianceShadowMap.comp")},
     mResolveTask("Resolve shadow mapping", mResolveDesc)
 {
@@ -28,8 +31,16 @@ ShadowMappingTechnique::ShadowMappingTechnique(Engine* eng) :
     mTask.addOutput(kShadowMapRaw, AttachmentType::RenderTarget2D, Format::RG32Float, SizeClass::DoubleSwapchain, LoadOp::Clear_Black);
     mTask.addOutput("ShadowMapDepth", AttachmentType::Depth, Format::D32Float, SizeClass::DoubleSwapchain, LoadOp::Clear_White);
 
+    mBlurXTask.addInput(kShadowMapRaw, AttachmentType::Texture2D);
+    mBlurXTask.addInput(kShadowMapBlurIntermediate, AttachmentType::Image2D);
+    mBlurXTask.addInput(kDefaultSampler, AttachmentType::Sampler);
+
+    mBlurYTask.addInput(kShadowMapBlurIntermediate, AttachmentType::Texture2D);
+    mBlurYTask.addInput(kShadowMapBlured, AttachmentType::Image2D);
+    mBlurYTask.addInput(kDefaultSampler, AttachmentType::Sampler);
+
     mResolveTask.addInput(kGBufferDepth, AttachmentType::Texture2D);
-    mResolveTask.addInput(kShadowMapRaw, AttachmentType::Texture2D);
+    mResolveTask.addInput(kShadowMapBlured, AttachmentType::Texture2D);
     mResolveTask.addInput(kShadowMap, AttachmentType::Image2D);
     mResolveTask.addInput(kShadowingLights, AttachmentType::UniformBuffer);
     mResolveTask.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
@@ -40,6 +51,8 @@ ShadowMappingTechnique::ShadowMappingTechnique(Engine* eng) :
 void ShadowMappingTechnique::render(RenderGraph& graph, Engine* eng, const std::vector<const Scene::MeshInstance*>&)
 {
     mTask.clearCalls();
+    mBlurXTask.clearCalls();
+    mBlurYTask.clearCalls();
     mResolveTask.clearCalls();
 
     const Frustum lightFrustum = eng->getScene().getShadowingLightFrustum();
@@ -59,10 +72,16 @@ void ShadowMappingTechnique::render(RenderGraph& graph, Engine* eng, const std::
 
     const float threadGroupWidth = eng->getSwapChainImageView()->getImageExtent().width;
     const float threadGroupHeight = eng->getSwapChainImageView()->getImageExtent().height;
+
+    mBlurXTask.addDispatch(std::ceil(threadGroupWidth / 128.0f), threadGroupHeight * 2, 1.0f);
+    mBlurYTask.addDispatch(threadGroupWidth * 2, std::ceil(threadGroupHeight / 128.0f), 1.0f);
+
     mResolveTask.addDispatch(static_cast<uint32_t>(std::ceil(threadGroupWidth / 32.0f)),
         static_cast<uint32_t>(std::ceil(threadGroupHeight / 32.0f)),
         1);
 
     graph.addTask(mTask);
+    graph.addTask(mBlurXTask);
+    graph.addTask(mBlurYTask);
     graph.addTask(mResolveTask);
 }

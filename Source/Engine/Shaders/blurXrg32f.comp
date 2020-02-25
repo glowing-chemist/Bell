@@ -5,7 +5,7 @@
 #include "GaussianBlur.glsl"
 
 layout(binding = 0) uniform texture2D inImage;
-layout(rgba8_snorm, binding = 1) uniform writeonly image2D outImage;
+layout(rg32f, binding = 1) uniform writeonly image2D outImage;
 layout(binding = 2) uniform sampler linearSampler;
 
 
