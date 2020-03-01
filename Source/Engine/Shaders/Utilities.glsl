@@ -1,14 +1,13 @@
 
 float lineariseDepth(const float depth, const float near, const float far)
 {
-	return  (2.0f * near) / (far + near - depth * (far - near));
+	return  (2.0f * near) / (far + near + depth * (far - near));
 }
 
 
 float lineariseReverseDepth(const float depth, const float near, const float far)
 {
-	const float reverseDepth = 1.0f - depth;
-	return  (2.0f * near) / (far + near - reverseDepth * (far - near));
+	return (near / depth) / (far - near);
 }
 
 
