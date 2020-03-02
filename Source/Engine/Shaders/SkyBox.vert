@@ -21,7 +21,7 @@ layout(binding = 0) uniform UniformBufferObject {
 void main()
 {
 	vec2 triangleUVs = vec2((gl_VertexIndex << 1) & 2, gl_VertexIndex & 2);
-	vec4 screenSpacePosition = vec4(triangleUVs * 2.0f + -1.0f, 1.0f, 0.0f);
+	vec4 screenSpacePosition = vec4(triangleUVs * 2.0f + -1.0f, 0.0f, 0.0f);
 
 	// calculate the cubemap texture coords
 	vec4 worldSPacePerspective = camera.invertedViewProj * screenSpacePosition;
