@@ -13,6 +13,7 @@ struct ImGuiOptions
     bool mForward = false;
     bool mShowLights = true;
     bool mTAA = true;
+    bool mSSAO = true;
 };
 
 static ImGuiOptions graphicsOptions;
@@ -69,6 +70,7 @@ bool renderMenu(GLFWwindow* win, const Camera& cam)
 
     ImGui::Checkbox("Show lights", &graphicsOptions.mShowLights);
     ImGui::Checkbox("Enable TAA", &graphicsOptions.mTAA);
+    ImGui::Checkbox("Enable SSAO", &graphicsOptions.mSSAO);
 
     ImGui::Text("Camera position: X: %f Y: %f Z: %f", cam.getPosition().x, cam.getPosition().y, cam.getPosition().z);
     ImGui::Text("Camera direction: X: %f Y: %f Z: %f", cam.getDirection().x, cam.getDirection().y, cam.getDirection().z);
@@ -119,7 +121,7 @@ int main()
     Scene testScene("./Assets/Sponza/sponzaPBR.obj");
     testScene.loadFromFile(VertexAttributes::Position4 | VertexAttributes::Normals | VertexAttributes::TextureCoordinates | VertexAttributes::Material, &engine);
     testScene.loadSkybox(skybox, &engine);
-    testScene.setShadowingLight(float3(10.0f, 850.0f, 10.0f), glm::normalize(float3(0.0f, -0.8f, 0.3f)));
+    testScene.setShadowingLight(float3(10.0f, 0.0f, 10.0f), glm::normalize(float3(1.0f, 0.0f, 0.0f)));
     testScene.uploadData(&engine);
     testScene.computeBounds(MeshType::Static);
     testScene.computeBounds(MeshType::Dynamic);
@@ -182,7 +184,7 @@ int main()
 
         engine.registerPass(PassType::ConvolveSkybox);
         engine.registerPass(PassType::Skybox);
-        //engine.registerPass(PassType::Shadow);
+        engine.registerPass(PassType::Shadow);
 
         if (graphicsOptions.mShowLights)
             engine.registerPass(PassType::LightFroxelation);
@@ -195,7 +197,8 @@ int main()
             if (graphicsOptions.mShowLights)
                 engine.registerPass(PassType::DeferredAnalyticalLighting);
 
-            engine.registerPass(PassType::SSAOImproved);
+            if(graphicsOptions.mSSAO)
+                engine.registerPass(PassType::SSAOImproved);
 		}
 		else if(graphicsOptions.mForward)
         {
@@ -206,7 +209,8 @@ int main()
             else
                 engine.registerPass(PassType::ForwardIBL);
 
-            engine.registerPass(PassType::SSAO);
+            if(graphicsOptions.mSSAO)
+                engine.registerPass(PassType::SSAO);
         }
 
         if (graphicsOptions.mTAA)
