@@ -17,7 +17,7 @@ struct TextureInfo
 	    int height;
     };
 
-inline TextureInfo loadTexture(const char* filePath, int chanels)
+inline TextureInfo load32BitTexture(const char* filePath, int chanels)
     {
 	int texWidth, texHeight, texChannels;
 	stbi_uc* pixels = stbi_load(filePath, &texWidth, &texHeight, &texChannels, chanels);
@@ -34,6 +34,25 @@ inline TextureInfo loadTexture(const char* filePath, int chanels)
 	stbi_image_free(pixels);
 
 	return {imageData, texWidth, texHeight};
+    }
+
+inline TextureInfo load128BitTexture(const char* filePath, int chanels)
+    {
+    int texWidth, texHeight, texChannels;
+    float* pixels = stbi_loadf(filePath, &texWidth, &texHeight, &texChannels, chanels);
+    BELL_ASSERT(pixels, "Failed to load image");
+
+    BELL_LOG_ARGS("loading texture file: %s", filePath)
+        //BELL_ASSERT(texChannels == chanels, "Texture file has a different ammount of channels than requested")
+
+    std::vector<unsigned char> imageData{};
+    imageData.resize(texWidth * texHeight * 4 * sizeof(float));
+
+    std::memcpy(imageData.data(), pixels, texWidth * texHeight * chanels);
+
+    stbi_image_free(pixels);
+
+    return {imageData, texWidth, texHeight};
     }
 
 }
