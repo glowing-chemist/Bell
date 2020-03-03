@@ -14,7 +14,7 @@ VulkanExecutor::VulkanExecutor(vk::CommandBuffer cmdBuffer, const vulkanResource
 
 void VulkanExecutor::draw(const uint32_t vertexOffset, const uint32_t vertexCount)
 {
-	mCommandBuffer.draw(vertexCount, 1, 0, 0);
+    mCommandBuffer.draw(vertexCount, 1, vertexOffset, 0);
 }
 
 
