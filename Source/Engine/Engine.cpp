@@ -10,6 +10,7 @@
 #endif
 
 #include "Engine/Engine.hpp"
+#include "Engine/TextureUtil.hpp"
 #include "Engine/PreDepthTechnique.hpp"
 #include "Engine/GBufferTechnique.hpp"
 #include "Engine/GBufferMaterialTechnique.hpp"
@@ -47,6 +48,10 @@ Engine::Engine(GLFWwindow* windowPtr) :
     mVertexBuilder(),
     mIndexBuilder(),
     mMaterials{getDevice()},
+    mLTCMat(getDevice(), Format::RGBA32Float, ImageUsage::Sampled | ImageUsage::TransferDest, 64, 64, 1),
+    mLTCMatView(mLTCMat, ImageViewType::Colour),
+    mLTCAmp(getDevice(), Format::RG32Float, ImageUsage::Sampled | ImageUsage::TransferDest, 64, 64, 1),
+    mLTCAmpView(mLTCMat, ImageViewType::Colour),
     mCurrentRenderGraph(),
 	mTechniques{},
 	mCurrentPasstypes{0},
@@ -95,6 +100,13 @@ Engine::Engine(GLFWwindow* windowPtr) :
     {
         mTAAJitter[i] = (halton_2_3(i) - 0.5f);// *2.0f;
     }
+
+    // Load textures for LTC.
+    /*TextureUtil::TextureInfo matInfo = TextureUtil::loadTexture("./Assets/ltc_mat.dds", 4);
+    mLTCMat->setContents(matInfo.mData.data(), matInfo.width, matInfo.height, 1);
+
+    TextureUtil::TextureInfo ampInfo = TextureUtil::loadTexture("./Assets/ltc_amp.dds", 2);
+    mLTCAmp->setContents(matInfo.mData.data(), matInfo.width, matInfo.height, 1);*/
 }
 
 

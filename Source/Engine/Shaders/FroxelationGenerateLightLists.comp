@@ -66,9 +66,29 @@ void main()
 		viewSpacePosition /= viewSpacePosition.w;
 		switch(uint(light.type))
 		{
-			case 0:
+			case 0: // Point light
 			{
 				const bool intersects = sphereAABBIntersection(viewSpacePosition.xyz, light.radius, aabb);
+				if(intersects)
+				{
+					lightIndicies[nextFreeSlot++] = i;
+				}
+				break;
+			}
+
+			case 1: // spot light
+			{
+				const bool intersects = spotLightAABBIntersection(viewSpacePosition.xyz, light.direction.xyz, light.misc, light.radius, aabb);
+				if(intersects)
+				{
+					lightIndicies[nextFreeSlot++] = i;
+				}
+				break;
+			}
+
+			case 2: // area.
+			{
+				const bool intersects = areaLightAABBIntersection(viewSpacePosition.xyz, light.direction.xyz, light.radius, aabb);
 				if(intersects)
 				{
 					lightIndicies[nextFreeSlot++] = i;

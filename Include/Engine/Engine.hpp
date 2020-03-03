@@ -193,6 +193,11 @@ private:
 
 	ShaderResourceSet mMaterials;
 
+    Image mLTCMat;
+    ImageView mLTCMatView;
+    Image mLTCAmp;
+    ImageView mLTCAmpView;
+
 	std::unordered_map < const StaticMesh*, std::pair<uint64_t, uint64_t>> mVertexCache;
 
     RenderGraph mCurrentRenderGraph;

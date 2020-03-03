@@ -23,7 +23,7 @@ struct Light
 	float intensity;
 	float radius;
 	uint type;
-	float padding;
+	float misc; // angle for spotlight and side lenght fo area.
 };
 
 struct AABB
@@ -182,4 +182,32 @@ bool sphereAABBIntersection(const vec3 centre, const float radius, const AABB aa
 	dmin.x = dot(dmin, vec3(1.0f));
 
 	return dmin.x <= r2;
+}
+
+
+bool spotLightAABBIntersection(const vec3 centre, const vec3 direction, const float angle, const float radius, const AABB aabb)
+{
+	const vec3 toNear = aabb.topLeft.xyz - centre;
+	const vec3 toFar = aabb.bottomRight.xyz - centre;
+
+	return ((acos(dot(toNear, direction)) < angle) || (acos(dot(toFar, direction)) < angle)) && sphereAABBIntersection(centre, radius, aabb);
+}
+
+
+bool areaLightAABBIntersection(const vec3 centre, const vec3 normal, const float radius, const AABB aabb)
+{
+	const vec3 toNear = aabb.topLeft.xyz - centre;
+	const vec3 toFar = aabb.bottomRight.xyz - centre;
+
+	return (dot(toNear, normal) > 0 || dot(toFar, normal) > 0) && sphereAABBIntersection(centre, radius, aabb);
+}
+
+
+float IntegrateEdge(vec3 v1, vec3 v2)
+{
+    float cosTheta = dot(v1, v2);
+    float theta = acos(cosTheta);    
+    float res = cross(v1, v2).z * ((theta > 0.001) ? theta/sin(theta) : 1.0);
+
+    return res;
 }
