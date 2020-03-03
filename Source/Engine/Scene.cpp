@@ -1,11 +1,10 @@
 #include "Engine/Scene.h"
 #include "Engine/Engine.hpp"
+#include "Engine/TextureUtil.hpp"
 #include "Core/BellLogging.hpp"
 
 #include "assimp/Importer.hpp"
 #include "assimp/postprocess.h"
-
-#include "stb_image.h"
 
 #include "glm/gtc/matrix_transform.hpp"
 
@@ -13,34 +12,6 @@
 #include <fstream>
 #include <iterator>
 #include <limits>
-
-namespace
-{
-	struct TextureInfo
-	{
-		std::vector<unsigned char> mData;
-		int width;
-		int height;
-	};
-
-	TextureInfo loadTexture(const char* filePath, int chanels)
-	{
-		int texWidth, texHeight, texChannels;
-		stbi_uc* pixels = stbi_load(filePath, &texWidth, &texHeight, &texChannels, chanels);
-
-        BELL_LOG_ARGS("loading texture file: %s", filePath)
-        //BELL_ASSERT(texChannels == chanels, "Texture file has a different ammount of channels than requested")
-
-		std::vector<unsigned char> imageData{};
-        imageData.resize(texWidth * texHeight * 4);
-
-        std::memcpy(imageData.data(), pixels, texWidth * texHeight * chanels);
-
-		stbi_image_free(pixels);
-
-		return {imageData, texWidth, texHeight};
-	}
-}
 
 
 Scene::Scene(const std::string& name) :
@@ -104,7 +75,7 @@ void Scene::loadSkybox(const std::array<std::string, 6>& paths, Engine* eng)
 	uint32_t i = 0;
 	for(const std::string& file : paths)
 	{
-		TextureInfo info = loadTexture(file.c_str(), STBI_rgb_alpha);
+        TextureUtil::TextureInfo info = TextureUtil::loadTexture(file.c_str(), STBI_rgb_alpha);
 
 		if (i == 0)
 		{
@@ -292,25 +263,25 @@ Scene::MaterialMappings Scene::loadMaterialsInternal(Engine* eng)
 		{
 			materialFile >> metalnessFile;
 
-			TextureInfo diffuseInfo = loadTexture((sceneDirectory / albedoFile).string().c_str(), STBI_rgb_alpha);
+            TextureUtil::TextureInfo diffuseInfo = TextureUtil::loadTexture((sceneDirectory / albedoFile).string().c_str(), STBI_rgb_alpha);
             Image diffuseTexture(eng->getDevice(), Format::RGBA8UNorm, ImageUsage::Sampled | ImageUsage::TransferDest,
 								 static_cast<uint32_t>(diffuseInfo.width), static_cast<uint32_t>(diffuseInfo.height), 1, 1, 1, 1, albedoFile);
 			diffuseTexture->setContents(diffuseInfo.mData.data(), static_cast<uint32_t>(diffuseInfo.width), static_cast<uint32_t>(diffuseInfo.height), 1);
 
 
-			TextureInfo normalsInfo = loadTexture((sceneDirectory / normalsFile).string().c_str(), STBI_rgb_alpha);
+            TextureUtil::TextureInfo normalsInfo = TextureUtil::loadTexture((sceneDirectory / normalsFile).string().c_str(), STBI_rgb_alpha);
             Image normalsTexture(eng->getDevice(), Format::RGBA8UNorm, ImageUsage::Sampled | ImageUsage::TransferDest,
 								 static_cast<uint32_t>(normalsInfo.width), static_cast<uint32_t>(normalsInfo.height), 1, 1, 1, 1, normalsFile);
 			normalsTexture->setContents(normalsInfo.mData.data(), static_cast<uint32_t>(normalsInfo.width), static_cast<uint32_t>(normalsInfo.height), 1);
 
 
-            TextureInfo roughnessInfo = loadTexture((sceneDirectory / roughnessFile).string().c_str(), STBI_grey);
+            TextureUtil::TextureInfo roughnessInfo = TextureUtil::loadTexture((sceneDirectory / roughnessFile).string().c_str(), STBI_grey);
             Image roughnessTexture(eng->getDevice(), Format::R8UNorm, ImageUsage::Sampled | ImageUsage::TransferDest,
 								 static_cast<uint32_t>(roughnessInfo.width), static_cast<uint32_t>(roughnessInfo.height), 1, 1, 1, 1, roughnessFile);
 			roughnessTexture->setContents(roughnessInfo.mData.data(), static_cast<uint32_t>(roughnessInfo.width), static_cast<uint32_t>(roughnessInfo.height), 1);
 
 
-            TextureInfo metalnessInfo = loadTexture((sceneDirectory / metalnessFile).string().c_str(), STBI_grey);
+            TextureUtil::TextureInfo metalnessInfo = TextureUtil::loadTexture((sceneDirectory / metalnessFile).string().c_str(), STBI_grey);
             Image metalnessTexture(eng->getDevice(), Format::R8UNorm, ImageUsage::Sampled | ImageUsage::TransferDest,
 								 static_cast<uint32_t>(metalnessInfo.width), static_cast<uint32_t>(metalnessInfo.height), 1, 1, 1, 1, metalnessFile);
 			metalnessTexture->setContents(metalnessInfo.mData.data(), static_cast<uint32_t>(metalnessInfo.width), static_cast<uint32_t>(metalnessInfo.height), 1);

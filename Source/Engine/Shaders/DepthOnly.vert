@@ -1,5 +1,8 @@
 #version 450
 #extension GL_ARB_separate_shader_objects : enable
+#extension GL_GOOGLE_include_directive : enable
+
+#include "UniformBuffers.glsl"
 
 layout(location = 0) in vec4 position;
 layout(location = 1) in vec2 uv;
@@ -11,6 +14,10 @@ out gl_PerVertex {
 };
 
 
+layout(binding = 0) uniform UniformBufferObject {    
+    CameraBuffer camera;    
+}; 
+
 layout(push_constant) uniform pushModelMatrix
 {
 	mat4 model;
@@ -19,5 +26,5 @@ layout(push_constant) uniform pushModelMatrix
 
 void main()
 {
-	gl_Position = push_constants.model * position;
+	gl_Position = camera.viewProj * push_constants.model * position;
 }

@@ -450,6 +450,7 @@ void Engine::submitCommandRecorder(CommandContext &ccx)
 
 void Engine::updateGlobalBuffers()
 {
+    // Update camera UB.
 	{
 		auto& currentCamera = getCurrentSceneCamera();
 
@@ -457,28 +458,31 @@ void Engine::updateGlobalBuffers()
         const float swapChainY = getSwapChainImage()->getExtent(0, 0).height;
 
 		mCameraBuffer.mViewMatrix = currentCamera.getViewMatrix();
-		mCameraBuffer.mPerspectiveMatrix = currentCamera.getPerspectiveMatrix();
         mCameraBuffer.mPreviousFrameViewProjMatrix = mCameraBuffer.mViewProjMatrix;
-        mCameraBuffer.mViewProjMatrix = mCameraBuffer.mPerspectiveMatrix * mCameraBuffer.mViewMatrix;
-		mCameraBuffer.mInvertedViewProjMatrix = glm::inverse(mCameraBuffer.mPerspectiveMatrix * mCameraBuffer.mViewMatrix);
-		mCameraBuffer.mInvertedPerspective = glm::inverse(mCameraBuffer.mPerspectiveMatrix);
-		mCameraBuffer.mFrameBufferSize = glm::vec2{ swapchainX, swapChainY };
-		mCameraBuffer.mPosition = currentCamera.getPosition();
-		mCameraBuffer.mNeaPlane = currentCamera.getNearPlane();
-		mCameraBuffer.mFarPlane = currentCamera.getFarPlane();
-		mCameraBuffer.mFOV = currentCamera.getFOV();
-        mCameraBuffer.mPreviousJitter = mCameraBuffer.mJitter;
-        mCameraBuffer.mJitter = float2(0.0f, 0.0f);
-
         // need to add jitter for TAA
         if(isPassRegistered(PassType::TAA))
         {
             const uint32_t index = mRenderDevice->getCurrentSubmissionIndex() % 16;
             const float2& jitter = mTAAJitter[index];
 
-            mCameraBuffer.mViewProjMatrix = glm::translate(float3(jitter / mCameraBuffer.mFrameBufferSize, 0.0f)) * mCameraBuffer.mViewProjMatrix;
+            mCameraBuffer.mPerspectiveMatrix = glm::translate(float3(jitter / mCameraBuffer.mFrameBufferSize, 0.0f)) * currentCamera.getPerspectiveMatrix();
+            mCameraBuffer.mPreviousJitter = mCameraBuffer.mJitter;
             mCameraBuffer.mJitter = jitter / mCameraBuffer.mFrameBufferSize;
         }
+        else
+        {
+            mCameraBuffer.mPerspectiveMatrix = currentCamera.getPerspectiveMatrix();
+            mCameraBuffer.mPreviousJitter = mCameraBuffer.mJitter;
+            mCameraBuffer.mJitter = float2(0.0f, 0.0f);
+        }
+        mCameraBuffer.mViewProjMatrix = mCameraBuffer.mPerspectiveMatrix * mCameraBuffer.mViewMatrix;
+        mCameraBuffer.mInvertedViewProjMatrix = glm::inverse(mCameraBuffer.mViewProjMatrix);
+        mCameraBuffer.mInvertedPerspective = glm::inverse(mCameraBuffer.mPerspectiveMatrix);
+        mCameraBuffer.mFrameBufferSize = glm::vec2{ swapchainX, swapChainY };
+        mCameraBuffer.mPosition = currentCamera.getPosition();
+        mCameraBuffer.mNeaPlane = currentCamera.getNearPlane();
+        mCameraBuffer.mFarPlane = currentCamera.getFarPlane();
+        mCameraBuffer.mFOV = currentCamera.getFOV();
 
 		MapInfo mapInfo{};
 		mapInfo.mSize = sizeof(CameraBuffer);

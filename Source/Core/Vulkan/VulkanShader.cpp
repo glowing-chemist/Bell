@@ -25,6 +25,7 @@ VulkanShader::~VulkanShader()
 bool VulkanShader::compile(const std::string& prefix)
 {
     const bool compiled = ShaderBase::compile(prefix);
+    BELL_ASSERT(compiled, "Failed to compile shader to SPIRV");
 
 	VulkanRenderDevice* device = static_cast<VulkanRenderDevice*>(getDevice());
 

@@ -15,9 +15,10 @@ PreDepthTechnique::PreDepthTechnique(Engine* eng) :
 {
     mTask.setVertexAttributes(VertexAttributes::Position4 | VertexAttributes::Normals | VertexAttributes::TextureCoordinates | VertexAttributes::Material);
 
+    mTask.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
+	mTask.addInput("Matrix", AttachmentType::PushConstants);
     mTask.addInput(kSceneVertexBuffer, AttachmentType::VertexBuffer);
     mTask.addInput(kSceneIndexBuffer, AttachmentType::IndexBuffer);
-	mTask.addInput("Matrix", AttachmentType::PushConstants);
 
 	mTask.addOutput(kGBufferDepth, AttachmentType::Depth, Format::D32Float, SizeClass::Swapchain, LoadOp::Clear_Black);
 }
@@ -27,12 +28,6 @@ void PreDepthTechnique::render(RenderGraph& graph, Engine* eng, const std::vecto
 {
 	mTask.clearCalls();
 
-	glm::mat4 view = eng->getCurrentSceneCamera().getViewMatrix();
-	glm::mat4 perspective = eng->getCurrentSceneCamera().getPerspectiveMatrix();
-
-	glm::mat4 camera = perspective * view;
-
-
     for (const auto& mesh : meshes)
     {
         // Don't render transparent or alpha tested geometry.
@@ -41,7 +36,7 @@ void PreDepthTechnique::render(RenderGraph& graph, Engine* eng, const std::vecto
 
         const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->mMesh);
 
-        mTask.addPushConsatntValue(camera * mesh->mTransformation);
+        mTask.addPushConsatntValue(mesh->mTransformation);
         mTask.addIndexedDrawCall(vertexOffset / mesh->mMesh->getVertexStride(), indexOffset / sizeof(uint32_t), mesh->mMesh->getIndexData().size());
     }
 
