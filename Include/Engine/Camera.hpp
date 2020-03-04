@@ -64,17 +64,20 @@ public:
     void rotatePitch(const float);
     void rotateYaw(const float);
 
-    float3 getPosition() const
+    const float3& getPosition() const
         { return mPosition; }
 
 	void setPosition(const float3& pos)
 		{ mPosition = pos; }
 
-    float3 getDirection() const
+    const float3& getDirection() const
         { return mDirection; }
 
 	void setDirection(const float3& dir)
 		{ mDirection = dir; }
+
+    const float3 getUp() const
+        { return mUp; }
 
     glm::mat4 getViewMatrix() const;
     glm::mat4 getPerspectiveMatrix() const;

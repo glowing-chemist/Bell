@@ -39,5 +39,6 @@ struct ShadowingLight
         mat4 viewProj;
         vec4 position;
         vec4 direction;
+        vec4 up;
 };
 

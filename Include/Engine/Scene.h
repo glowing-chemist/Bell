@@ -81,7 +81,7 @@ public:
         return mSceneCamera;
     }
 
-    void setShadowingLight(const glm::vec3& position, const glm::vec3& direction);
+    void setShadowingLight(const float3& position, const float3& direction, const float3& up);
 
     const ShadowingLight& getShadowingLight() const
     {
@@ -142,8 +142,9 @@ public:
         glm::mat4 mViewMatrix;
         glm::mat4 mInverseView;
         glm::mat4 mViewProj;
-        glm::vec4 mPosition;
-        glm::vec4 mDirection;
+        float4    mPosition;
+        float4    mDirection;
+        float4    mUp;
     };
 
 	void loadMaterials(Engine*);

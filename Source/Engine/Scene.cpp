@@ -401,7 +401,7 @@ std::vector<const Scene::MeshInstance *> Scene::getViewableMeshes(const Frustum&
 
 Frustum Scene::getShadowingLightFrustum() const
 {
-    return Frustum(mShadowingLight.mPosition, mShadowingLight.mDirection, float3(0.0f, -1.0f, 0.0f), 2000.0f, 0.1f, 90.0f, 1920.0f / 1080.0f);
+    return Frustum(mShadowingLight.mPosition, mShadowingLight.mDirection, mShadowingLight.mUp, 2000.0f, 0.1f, 90.0f, 1920.0f / 1080.0f);
 }
 
 
@@ -454,12 +454,12 @@ void Scene::generateSceneAABB(const bool includeStatic)
 }
 
 
-void Scene::setShadowingLight(const glm::vec3& position, const glm::vec3& direction)
+void Scene::setShadowingLight(const float3 &position, const float3 &direction, const float3 &up)
 {
-    const glm::mat4 view = glm::lookAt(position, position + direction, glm::vec3(0.0f, -1.0f, 0.0f));
-    const glm::mat4 proj = glm::perspective(glm::radians(120.0f), 1.0f, 0.1f, 2000.0f);
+    const glm::mat4 view = glm::lookAt(position, position + direction, up);
+    const glm::mat4 proj = glm::perspective(glm::radians(90.0f), 1920.0f / 1080.0f, 0.1f, 2000.0f);
 
-    ShadowingLight light{view, glm::inverse(view), proj * view, glm::vec4(position, 1.0f), glm::vec4(direction, 0.0f)};
+    ShadowingLight light{view, glm::inverse(view), proj * view, float4(position, 1.0f), float4(direction, 0.0f), float4(up, 1.0f)};
     mShadowingLight = light;
 }
 

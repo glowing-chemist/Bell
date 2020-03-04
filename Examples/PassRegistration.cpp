@@ -74,7 +74,7 @@ bool renderMenu(GLFWwindow* win, const Camera& cam)
 
     ImGui::Text("Camera position: X: %f Y: %f Z: %f", cam.getPosition().x, cam.getPosition().y, cam.getPosition().z);
     ImGui::Text("Camera direction: X: %f Y: %f Z: %f", cam.getDirection().x, cam.getDirection().y, cam.getDirection().z);
-
+    ImGui::Text("Camera up: X: %f Y: %f Z: %f", cam.getUp().x, cam.getUp().y, cam.getUp().z);
 
 	ImGui::End();
 
@@ -121,10 +121,13 @@ int main()
     Scene testScene("./Assets/Sponza/sponzaPBR.obj");
     testScene.loadFromFile(VertexAttributes::Position4 | VertexAttributes::Normals | VertexAttributes::TextureCoordinates | VertexAttributes::Material, &engine);
     testScene.loadSkybox(skybox, &engine);
-    testScene.setShadowingLight(float3(10.0f, 0.0f, 10.0f), glm::normalize(float3(1.0f, 0.0f, 0.0f)));
     testScene.uploadData(&engine);
     testScene.computeBounds(MeshType::Static);
     testScene.computeBounds(MeshType::Dynamic);
+
+    const float3 lightDirection = glm::normalize(float3(0.22f, -0.68f, -0.69f));
+    testScene.setShadowingLight(float3(-395.0f, 1475.0f, 120.0f), lightDirection, float3(-0.83f, -0.5f, 0.22f));
+
     
     {
         const AABB sceneBounds = testScene.getBounds();
@@ -165,6 +168,10 @@ int main()
             camera.rotateYaw(1.0f);
         if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
             camera.rotateYaw(-1.0f);
+        if (glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS)
+            camera.rotatePitch(1.0f);
+        if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS)
+            camera.rotatePitch(-1.0f);
         if(glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
             camera.moveUp((1.5f));
         if(glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS)
