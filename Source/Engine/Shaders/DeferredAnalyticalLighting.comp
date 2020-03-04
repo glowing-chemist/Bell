@@ -89,6 +89,13 @@ void main()
 				break;
 			}
 
+			case 1:
+			{
+				vec4 lighting =  pointLightContribution(light, worldSpaceFragmentPos, viewDir, normal, metalness, roughness, baseAlbedo, DFG, linearSampler);
+    			accum += lighting;	
+				break;
+			}
+
 			// TODO add more light types as and when supported.
 
 			// Should never hit here.

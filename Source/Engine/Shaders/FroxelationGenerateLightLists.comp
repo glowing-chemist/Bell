@@ -64,7 +64,7 @@ void main()
 		const Light light = lights[i];
 		vec4 viewSpacePosition = camera.view * light.position;
 		viewSpacePosition /= viewSpacePosition.w;
-		switch(uint(light.type))
+		switch(light.type)
 		{
 			case 0: // Point light
 			{

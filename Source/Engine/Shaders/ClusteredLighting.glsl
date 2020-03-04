@@ -187,17 +187,17 @@ bool sphereAABBIntersection(const vec3 centre, const float radius, const AABB aa
 
 bool spotLightAABBIntersection(const vec3 centre, const vec3 direction, const float angle, const float radius, const AABB aabb)
 {
-	const vec3 toNear = aabb.topLeft.xyz - centre;
-	const vec3 toFar = aabb.bottomRight.xyz - centre;
+	const vec3 toNear = normalize(aabb.topLeft.xyz - centre);
+	const vec3 toFar = normalize(aabb.bottomRight.xyz - centre);
 
-	return ((acos(dot(toNear, direction)) < angle) || (acos(dot(toFar, direction)) < angle)) && sphereAABBIntersection(centre, radius, aabb);
+	return ((acos(dot(toNear, direction)) < radians(angle)) || (acos(dot(toFar, direction)) < radians(angle))) && sphereAABBIntersection(centre, radius, aabb);
 }
 
 
 bool areaLightAABBIntersection(const vec3 centre, const vec3 normal, const float radius, const AABB aabb)
 {
-	const vec3 toNear = aabb.topLeft.xyz - centre;
-	const vec3 toFar = aabb.bottomRight.xyz - centre;
+	const vec3 toNear = normalize(aabb.topLeft.xyz - centre);
+	const vec3 toFar = normalize(aabb.bottomRight.xyz - centre);
 
 	return (dot(toNear, normal) > 0 || dot(toFar, normal) > 0) && sphereAABBIntersection(centre, radius, aabb);
 }
