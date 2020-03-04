@@ -6,6 +6,7 @@
 #include "Utilities.glsl"
 
 #define DEPTH_EPSILON 0.01f
+#define STATIC_BLEND_FACTOR 1
 
 layout(local_size_x = 32, local_size_y = 32, local_size_z = 1) in;
 
@@ -68,8 +69,12 @@ void main()
 	const float depthDif = abs(previousLinearDepth - linearDepth);
 	if(depthDif <= DEPTH_EPSILON)
 	{
+#if STATIC_BLEND_FACTOR
+		const float confidence = 0.9f;
+#else
 		// Check how close (in depth) the two fragments are.
-		float confidence = (1.0f - (depthDif / DEPTH_EPSILON)) * 0.5f;
+		const float confidence = (1.0f - (depthDif / DEPTH_EPSILON)) * 0.5f;
+#endif
 		vec4 previousColour = texture(sampler2D(history, linearSampler), previousUV);
 
 		const float xDiff = 1.0f / camera.frameBufferSize.x;
