@@ -234,6 +234,7 @@ set(SHADERS
 	ResolveVarianceShadowMap.comp
 	blurXrg32f.comp
 	blurYrg32f.comp
+	AlphaTestDepthOnly.frag
     )
 
 foreach(shader ${SHADERS})

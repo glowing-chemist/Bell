@@ -9,6 +9,9 @@ layout(location = 1) in vec2 uv;
 layout(location = 2) in vec4 normals;
 layout(location = 3) in uint material;
 
+layout(location = 0) out vec2 outUV;
+layout(location = 1) out uint outMatreialID;
+
 out gl_PerVertex {
     vec4 gl_Position;
 };
@@ -27,4 +30,6 @@ layout(push_constant) uniform pushModelMatrix
 void main()
 {
 	gl_Position = camera.viewProj * push_constants.model * position;
+	outUV = uv;
+	outMatreialID = material;
 }

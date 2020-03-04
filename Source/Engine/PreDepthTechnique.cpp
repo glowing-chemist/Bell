@@ -4,7 +4,7 @@
 PreDepthTechnique::PreDepthTechnique(Engine* eng) :
     Technique{"PreDepth", eng->getDevice()},
     mPipelineDescription{eng->getShader("./Shaders/DepthOnly.vert"),
-                         eng->getShader("./Shaders/Empty.frag"),
+                         eng->getShader("./Shaders/AlphaTestDepthOnly.frag"),
                          Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
                                getDevice()->getSwapChain()->getSwapChainImageHeight()},
                          Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
@@ -16,6 +16,8 @@ PreDepthTechnique::PreDepthTechnique(Engine* eng) :
     mTask.setVertexAttributes(VertexAttributes::Position4 | VertexAttributes::Normals | VertexAttributes::TextureCoordinates | VertexAttributes::Material);
 
     mTask.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
+    mTask.addInput(kDefaultSampler, AttachmentType::Sampler);
+    mTask.addInput(kMaterials, AttachmentType::ShaderResourceSet);
 	mTask.addInput("Matrix", AttachmentType::PushConstants);
     mTask.addInput(kSceneVertexBuffer, AttachmentType::VertexBuffer);
     mTask.addInput(kSceneIndexBuffer, AttachmentType::IndexBuffer);
@@ -31,7 +33,7 @@ void PreDepthTechnique::render(RenderGraph& graph, Engine* eng, const std::vecto
     for (const auto& mesh : meshes)
     {
         // Don't render transparent or alpha tested geometry.
-        if((mesh->mMesh->getAttributes() & (MeshAttributes::AlphaTested | MeshAttributes::Transparent)) > 0)
+        if((mesh->mMesh->getAttributes() & MeshAttributes::Transparent) > 0)
             continue;
 
         const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->mMesh);
