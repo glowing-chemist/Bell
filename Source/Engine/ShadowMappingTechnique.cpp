@@ -24,6 +24,8 @@ ShadowMappingTechnique::ShadowMappingTechnique(Engine* eng) :
                               VertexAttributes::Normals | VertexAttributes::TextureCoordinates);
 
     mTask.addInput(kShadowingLights, AttachmentType::UniformBuffer);
+    mTask.addInput(kDefaultSampler, AttachmentType::Sampler);
+    mTask.addInput(kMaterials, AttachmentType::ShaderResourceSet);
     mTask.addInput("lightMatrix", AttachmentType::PushConstants);
     mTask.addInput(kSceneVertexBuffer, AttachmentType::VertexBuffer);
     mTask.addInput(kSceneIndexBuffer, AttachmentType::IndexBuffer);
@@ -61,7 +63,7 @@ void ShadowMappingTechnique::render(RenderGraph& graph, Engine* eng, const std::
     for (const auto& mesh : meshes)
     {
         // Don't render transparent or alpha tested geometry.
-        if ((mesh->mMesh->getAttributes() & (MeshAttributes::AlphaTested | MeshAttributes::Transparent)) > 0)
+        if ((mesh->mMesh->getAttributes() & MeshAttributes::Transparent) > 0)
            continue;
 
         const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->mMesh);
