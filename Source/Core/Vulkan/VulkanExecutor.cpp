@@ -50,9 +50,9 @@ void VulkanExecutor::indexedIndirectDraw(const uint32_t drawCalls, const BufferV
 }
 
 
-void VulkanExecutor::insertPushConsatnt(const glm::mat4& val)
+void VulkanExecutor::insertPushConsatnt(const void *val, const size_t size)
 {
-	mCommandBuffer.pushConstants(mResources.mPipeline->getLayoutHandle(), vk::ShaderStageFlagBits::eAll, 0, sizeof(glm::mat4), (void*)&val);
+    mCommandBuffer.pushConstants(mResources.mPipeline->getLayoutHandle(), vk::ShaderStageFlagBits::eAll, 0, size, val);
 }
 
 

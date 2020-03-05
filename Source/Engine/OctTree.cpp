@@ -31,7 +31,7 @@ void OctTree<T>::containedWithin(std::vector<T>& meshes, const Frustum& frustum,
 			{
 				for (const auto& mesh : node->mValues)
 				{
-					if (frustum.isContainedWithin(mesh->mMesh->getAABB() * mesh->mTransformation, estimationMode))
+                    if (frustum.isContainedWithin(mesh->mMesh->getAABB() * mesh->getTransMatrix(), estimationMode))
 						meshes.push_back(mesh);
 				}
 			}
@@ -62,7 +62,7 @@ std::vector<T> OctTree<T>::containedWithin(const Frustum& frustum, const Estimat
 
 	for (const auto& mesh : mRoot->mValues)
 	{
-		if (frustum.isContainedWithin(mesh->mMesh->getAABB() * mesh->mTransformation, estimationMode))
+        if (frustum.isContainedWithin(mesh->mMesh->getAABB() * mesh->getTransMatrix(), estimationMode))
 		{
 			meshes.push_back(mesh);
 		}
@@ -88,7 +88,7 @@ std::vector<T> OctTree<T>::getIntersections(const AABB& aabb) const
 
 	for (const auto& mesh : mRoot->mValues)
 	{
-		if (aabb.contains(mesh->mMesh->getAABB() * mesh->mTransformation, EstimationMode::Over))
+        if (aabb.contains(mesh->mMesh->getAABB() * mesh->getTransMatrix(), EstimationMode::Over))
 		{
 			intersections.push_back(mesh);
 		}
@@ -119,7 +119,7 @@ void OctTree<T>::getIntersections(const AABB& aabb, const std::unique_ptr<typena
 			{
 				for (const auto& mesh : node->mValues)
 				{
-					if (aabb.contains(mesh->mMesh->getAABB() * mesh->mTransformation, EstimationMode::Over))
+                    if (aabb.contains(mesh->mMesh->getAABB() * mesh->getTransMatrix(), EstimationMode::Over))
 						intersections.push_back(mesh);
 				}
 			}

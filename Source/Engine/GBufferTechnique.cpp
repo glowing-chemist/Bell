@@ -25,6 +25,7 @@ GBufferTechnique::GBufferTechnique(Engine* eng) :
     mTask.addOutput(kGBufferAlbedo,    AttachmentType::RenderTarget2D, Format::RGBA8UNorm, SizeClass::Swapchain, LoadOp::Clear_Black);
     mTask.addOutput(kGBufferNormals,     AttachmentType::RenderTarget2D, Format::RGBA8UNorm, SizeClass::Swapchain, LoadOp::Clear_Black);
     mTask.addOutput(kGBufferMetalnessRoughness,   AttachmentType::RenderTarget2D, Format::RG8UNorm, SizeClass::Swapchain, LoadOp::Clear_Black);
+    mTask.addOutput(kGBufferVelocity,   AttachmentType::RenderTarget2D, Format::RG16UNorm, SizeClass::Swapchain, LoadOp::Clear_Black);
     mTask.addOutput(kGBufferDepth,      AttachmentType::Depth, Format::D32Float, SizeClass::Swapchain, LoadOp::Clear_Black);
 }
 
@@ -37,7 +38,9 @@ void GBufferTechnique::render(RenderGraph& graph, Engine* eng, const std::vector
 	{
 		const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->mMesh);
 
-		mTask.addPushConsatntValue(mesh->mTransformation);
+        const MeshEntry entry = mesh->getMeshShaderEntry();
+
+        mTask.addPushConsatntValue(&entry, sizeof(MeshEntry));
         mTask.addIndexedDrawCall(vertexOffset / mesh->mMesh->getVertexStride(), indexOffset / sizeof(uint32_t), mesh->mMesh->getIndexData().size());
     }
 
@@ -81,7 +84,9 @@ void GBufferPreDepthTechnique::render(RenderGraph& graph, Engine* eng, const std
     {
         const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->mMesh);
 
-        mTask.addPushConsatntValue(mesh->mTransformation);
+        const MeshEntry entry = mesh->getMeshShaderEntry();
+
+        mTask.addPushConsatntValue(&entry, sizeof(MeshEntry));
         mTask.addIndexedDrawCall(vertexOffset / mesh->mMesh->getVertexStride(), indexOffset / sizeof(uint32_t), mesh->mMesh->getIndexData().size());
     }
 

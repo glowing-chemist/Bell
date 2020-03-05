@@ -1,4 +1,5 @@
 #include "Engine/CommandContext.hpp"
+#include "Engine/StaticMesh.h"
 #include "Core/BellLogging.hpp"
 
 #include <utility>
@@ -624,7 +625,7 @@ void CommandContext::addTaskToGraph()
                     break;
 
                 case DrawType::SetPushConstant:
-                    task.addPushConsatntValue(call.mPushConstantValue);
+                    task.addPushConsatntValue(&call.mPushConstantValue, sizeof(glm::mat4));
                     break;
             }
         }

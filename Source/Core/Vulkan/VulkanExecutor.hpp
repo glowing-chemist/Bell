@@ -27,7 +27,7 @@ public:
 
 	virtual void indexedIndirectDraw(const uint32_t drawCalls, const BufferView&) override;
 
-	virtual void insertPushConsatnt(const glm::mat4& val) override;
+    virtual void insertPushConsatnt(const void* val, const size_t size) override;
 
 	virtual void dispatch(const uint32_t x, const uint32_t y, const uint32_t z) override;
 

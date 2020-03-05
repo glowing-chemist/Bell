@@ -5,11 +5,12 @@
 layout(location = 0) in vec3 normals;
 layout(location = 1) in flat uint materialID;
 layout(location = 2) in vec2 uv;
-
+layout(location = 3) in vec2 velocity;
 
 layout(location = 0) out vec3 outNormals;
 layout(location = 1) out vec4 outUV;
 layout(location = 2) out uint outMaterial;
+layout(location = 3) out vec2 outVelocity;
 
 
 void main()
@@ -30,4 +31,5 @@ void main()
 
 	outUV = uvWithDerivitives;
 	outMaterial = materialID;
+	outVelocity = (velocity * 0.5f) + 0.5f;
 }

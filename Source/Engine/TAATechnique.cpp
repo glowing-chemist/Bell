@@ -36,6 +36,7 @@ void TAATechnique::render(RenderGraph& graph, Engine* eng, const std::vector<con
 	ComputeTask ResolveTAA{"Resolve TAA", mPipeline };
 	ResolveTAA.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
 	ResolveTAA.addInput(kGBufferDepth, AttachmentType::Texture2D);
+    ResolveTAA.addInput(kGBufferVelocity, AttachmentType::Texture2D);
 	ResolveTAA.addInput(kCompositeOutput, AttachmentType::Texture2D);
 	ResolveTAA.addInput(kTAAHistory, AttachmentType::Texture2D);
 	ResolveTAA.addInput(kNewTAAHistory, AttachmentType::Image2D);

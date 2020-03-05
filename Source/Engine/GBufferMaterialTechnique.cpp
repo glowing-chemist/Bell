@@ -26,6 +26,7 @@ GBufferMaterialTechnique::GBufferMaterialTechnique(Engine* eng) :
     mTask.addOutput(kGBufferNormals,  AttachmentType::RenderTarget2D, Format::RGBA8UNorm, SizeClass::Swapchain, LoadOp::Clear_Black);
     mTask.addOutput(kGBufferUV,       AttachmentType::RenderTarget2D, Format::RGBA32Float, SizeClass::Swapchain, LoadOp::Clear_Black);
     mTask.addOutput(kGBufferMaterialID, AttachmentType::RenderTarget2D, Format::R32Uint, SizeClass::Swapchain, LoadOp::Clear_Black);
+    mTask.addOutput(kGBufferVelocity,   AttachmentType::RenderTarget2D, Format::RG16UNorm, SizeClass::Swapchain, LoadOp::Clear_Black);
     mTask.addOutput(kGBufferDepth,    AttachmentType::Depth, Format::D32Float, SizeClass::Swapchain, LoadOp::Clear_Black);
 }
 
@@ -38,7 +39,9 @@ void GBufferMaterialTechnique::render(RenderGraph& graph, Engine* eng, const std
     {
         const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->mMesh);
 
-        mTask.addPushConsatntValue(mesh->mTransformation);
+        const MeshEntry entry = mesh->getMeshShaderEntry();
+
+        mTask.addPushConsatntValue(&entry, sizeof(MeshEntry));
         mTask.addIndexedDrawCall(vertexOffset / mesh->mMesh->getVertexStride(), indexOffset / sizeof(uint32_t), mesh->mMesh->getIndexData().size());
     }
 
@@ -84,7 +87,7 @@ void GBufferMaterialPreDepthTechnique::render(RenderGraph& graph, Engine* eng, c
     {
         const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->mMesh);
 
-        mTask.addPushConsatntValue(mesh->mTransformation);
+        mTask.addPushConsatntValue(&mesh->getTransMatrix(), sizeof(glm::mat4));
         mTask.addIndexedDrawCall(vertexOffset / mesh->mMesh->getVertexStride(), indexOffset / sizeof(uint32_t), mesh->mMesh->getIndexData().size());
     }
 

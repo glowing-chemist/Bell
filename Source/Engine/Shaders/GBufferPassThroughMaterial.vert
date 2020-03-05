@@ -14,11 +14,15 @@ layout(location = 3) in uint material;
 layout(location = 0) out vec4 outNormals;
 layout(location = 1) out uint outMaterialID;
 layout(location = 2) out vec2 outUv;
+layout(location = 3) out vec2 outVelocity;
+layout(location = 4) out uint outFlags;
 
 
 layout(push_constant) uniform pushModelMatrix
 {
-	mat4 model;
+	mat4 mesh;
+	mat4 previousMesh;
+	uint meshFlags;
 } push_constants;
 
 
@@ -34,10 +38,17 @@ layout(binding = 0) uniform UniformBufferObject {
 
 void main()
 {
-	const mat4 transFormation = camera.viewProj * push_constants.model;
+	const mat4 transFormation = camera.viewProj * push_constants.mesh;
+	vec4 transformedPosition = transFormation * position;
 
-	gl_Position = transFormation * position;
-	outNormals = mat3(push_constants.model) * vec3(normals.xyz);
+	gl_Position = transformedPosition;
+	outNormals = mat3(push_constants.mesh) * vec3(normals.xyz);
 	outMaterialID = material;
 	outUv = uv;
+
+	// Calculate screen space velocity.
+	transformedPosition /= transformedPosition.w;
+	vec4 previousPosition = camera.previousFrameViewProj * push_constants.previousMesh * position;
+	previousPosition /= previousPosition.w;
+	outVelocity = previousPosition.xy - transformedPosition.xy;
 }

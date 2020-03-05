@@ -16,42 +16,42 @@ void GraphicsTask::recordCommands(Executor& exec, const RenderGraph& graph, cons
         {
             case DrawType::Standard:
 			{
-				exec.draw(thunk.mVertexOffset, thunk.mNumberOfVerticies);
+                exec.draw(thunk.mData.mDrawData.mVertexOffset, thunk.mData.mDrawData.mNumberOfVerticies);
 				break;
 			}
 
             case DrawType::Indexed:
 			{
-				exec.indexedDraw(thunk.mVertexOffset, thunk.mIndexOffset, thunk.mNumberOfIndicies);
+                exec.indexedDraw(thunk.mData.mDrawData.mVertexOffset, thunk.mData.mDrawData.mIndexOffset, thunk.mData.mDrawData.mNumberOfIndicies);
 				break;
 			}
 
             case DrawType::Instanced:
 			{
-				exec.instancedDraw(thunk.mVertexOffset, thunk.mNumberOfVerticies, thunk.mNumberOfInstances);
+                exec.instancedDraw(thunk.mData.mDrawData.mVertexOffset, thunk.mData.mDrawData.mNumberOfVerticies, thunk.mData.mDrawData.mNumberOfInstances);
 				break;
 			}
 
             case DrawType::Indirect:
 			{
-				exec.indirectDraw(thunk.mNumberOfInstances, graph.getBoundBuffer(thunk.mIndirectBufferName));
+                exec.indirectDraw(thunk.mData.mDrawData.mNumberOfInstances, graph.getBoundBuffer(thunk.mData.mDrawData.mIndirectBufferName));
 				break;
 			}
 
             case DrawType::IndexedInstanced:
 			{
-				exec.indexedInstancedDraw(thunk.mVertexOffset, thunk.mIndexOffset, thunk.mNumberOfInstances, thunk.mNumberOfIndicies);
+                exec.indexedInstancedDraw(thunk.mData.mDrawData.mVertexOffset, thunk.mData.mDrawData.mIndexOffset, thunk.mData.mDrawData.mNumberOfInstances, thunk.mData.mDrawData.mNumberOfIndicies);
 				break;
 			}
 
             case DrawType::IndexedIndirect:
 			{
-				exec.indexedIndirectDraw(thunk.mNumberOfInstances, graph.getBoundBuffer(thunk.mIndirectBufferName));
+                exec.indexedIndirectDraw(thunk.mData.mDrawData.mNumberOfInstances, graph.getBoundBuffer(thunk.mData.mDrawData.mIndirectBufferName));
 				break;
 			}
 
 			case DrawType::SetPushConstant:
-				exec.insertPushConsatnt(thunk.mPushConstantValue);
+                exec.insertPushConsatnt(thunk.mData.mPushConstants, sizeof(glm::mat4) * 2 + sizeof(uint32_t));
 
 			break;
         }

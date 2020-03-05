@@ -14,6 +14,7 @@ layout(location = 3) in uint material;
 layout(location = 0) out vec3 outNormals;
 layout(location = 1) out uint outMaterialID;
 layout(location = 2) out vec2 outUv;
+layout(location = 3) out vec2 outVelocity;
 
 
 out gl_PerVertex {
@@ -28,15 +29,22 @@ layout(binding = 0) uniform UniformBufferObject {
 
 layout(binding = 1) uniform Uniformtransformation
 {    
-    mat4 transformation;
+    MeshEntry meshEntry;
 } instanceTransformations[];
 
 void main()
 {
 	const mat4 transFormation = camera.viewProj * instanceTransformations[gl_InstanceID].transformation;
+	vec4 transformedPosition = transFormation * position;
 
-	gl_Position = transFormation * position;
+	gl_Position = transformedPosition;
 	outNormals = mat3(instanceTransformations[gl_InstanceID].transformation) * vec3(normals.xyz);
 	outMaterialID = material;
 	outUv = uv;
+
+	// Calculate screen space velocity.
+	transformedPosition /= transformedPosition.w;
+	vec4 previousPosition = camera.previousFrameViewProj * instanceTransformations[gl_InstanceID].meshEntry.mPreviousTransformation * position;
+	previousPosition /= previousPosition.w;
+	outVelocity = previousPosition.xy - transformedPosition.xy;
 }

@@ -223,7 +223,6 @@ set(SHADERS
 	ClusteredLighting.glsl                     
 	ForwardMaterial.vert                
 	LightFroxelationClearCounters.comp        
-	ForwardMaterialCombined.vert        
 	LightingCompositeSSAO.frag
 	CompositeOverlay.frag
 	NormalMapping.glsl
@@ -235,6 +234,7 @@ set(SHADERS
 	blurXrg32f.comp
 	blurYrg32f.comp
 	AlphaTestDepthOnly.frag
+	MeshAttributes.glsl
     )
 
 foreach(shader ${SHADERS})

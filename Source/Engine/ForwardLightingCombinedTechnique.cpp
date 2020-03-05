@@ -6,7 +6,7 @@
 
 ForwardCombinedLightingTechnique::ForwardCombinedLightingTechnique(Engine* eng) :
 	Technique("ForwardCombinedLighting", eng->getDevice()),
-	mDesc{ eng->getShader("./Shaders/ForwardMaterialCombined.vert"),
+    mDesc{ eng->getShader("./Shaders/ForwardMaterial.vert"),
 		  eng->getShader("./Shaders/ForwardCombinedLighting.frag"),
 		  Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
 			   getDevice()->getSwapChain()->getSwapChainImageHeight()},
@@ -40,6 +40,7 @@ ForwardCombinedLightingTechnique::ForwardCombinedLightingTechnique(Engine* eng) 
 
 
 	mTask.addOutput(kGlobalLighting, AttachmentType::RenderTarget2D, Format::RGBA8UNorm, SizeClass::Swapchain, LoadOp::Clear_Black);
+    mTask.addOutput(kGBufferVelocity, AttachmentType::RenderTarget2D, Format::RG16UNorm, SizeClass::Swapchain, LoadOp::Clear_Black);
 	mTask.addOutput(kGBufferDepth, AttachmentType::Depth, Format::D32Float, SizeClass::Custom, LoadOp::Preserve);
 }
 
@@ -53,7 +54,9 @@ void ForwardCombinedLightingTechnique::render(RenderGraph& graph, Engine* eng, c
 	{
 		const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->mMesh);
 
-		mTask.addPushConsatntValue(mesh->mTransformation);
+        const MeshEntry entry = mesh->getMeshShaderEntry();
+
+        mTask.addPushConsatntValue(&entry, sizeof(MeshEntry));
 		mTask.addIndexedDrawCall(vertexOffset / mesh->mMesh->getVertexStride(), indexOffset / sizeof(uint32_t), mesh->mMesh->getIndexData().size());
 	}
 

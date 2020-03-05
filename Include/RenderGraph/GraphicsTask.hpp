@@ -216,16 +216,24 @@ public:
 	const GraphicsPipelineDescription& getPipelineDescription() const { return mPipelineDescription; }
 	GraphicsPipelineDescription& getPipelineDescription() { return mPipelineDescription; }
 
-	struct thunkedDraw {
+    struct ThunkedDraw {
 		DrawType mDrawType;
 
-		uint32_t mVertexOffset;
-		uint32_t mNumberOfVerticies;
-		uint32_t mIndexOffset;
-		uint32_t mNumberOfIndicies;
-		uint32_t mNumberOfInstances;
-		std::string mIndirectBufferName;
-		glm::mat4 mPushConstantValue;
+        struct DrawData
+        {
+            uint32_t mVertexOffset;
+            uint32_t mNumberOfVerticies;
+            uint32_t mIndexOffset;
+            uint32_t mNumberOfIndicies;
+            uint32_t mNumberOfInstances;
+            char mIndirectBufferName[16];
+        };
+
+        union
+        {
+            DrawData mDrawData;
+            char mPushConstants[sizeof(glm::mat4) * 2 + sizeof(uint32_t)];
+        } mData;
 	};
 
 	void setVertexAttributes(int vertexAttributes)
@@ -235,37 +243,52 @@ public:
 
     void addDrawCall(const uint32_t vertexOffset, const uint32_t vertexCount)
 	{ 
-            mDrawCalls.push_back({DrawType::Standard, vertexOffset, vertexCount, 0, 0, 1, "", glm::mat4(1.0f)});
+            mDrawCalls.push_back({DrawType::Standard, {ThunkedDraw::DrawData{vertexOffset, vertexCount, 0, 0, 1, ""}}});
 	}
 
     void addInstancedDraw(const uint32_t vertexOffset, const uint32_t vertexCount, const uint32_t instanceCount)
     {
-        mDrawCalls.push_back({DrawType::Instanced, vertexOffset, vertexCount, 0, 0, instanceCount, "", glm::mat4(1.0f)});
+        mDrawCalls.push_back({DrawType::Instanced, {ThunkedDraw::DrawData{vertexOffset, vertexCount, 0, 0, instanceCount, ""}}});
     }
 
 	void addIndexedDrawCall(const uint32_t vertexOffset, const uint32_t indexOffset, const uint32_t numberOfIndicies) 
 	{ 
-			mDrawCalls.push_back({ DrawType::Indexed, vertexOffset, 0, indexOffset, numberOfIndicies, 1, "", glm::mat4(1.0f) });
+        mDrawCalls.push_back({ DrawType::Indexed, {ThunkedDraw::DrawData{vertexOffset, 0, indexOffset, numberOfIndicies, 1, ""}}});
 	}
 
-    void addIndirectDrawCall(const uint32_t drawCalls, const std::string&& indirectBuffer)
+    void addIndirectDrawCall(const uint32_t drawCalls, const std::string& indirectBuffer)
     {
-		mDrawCalls.push_back({DrawType::Indirect, 0, 0, 0, 0, drawCalls, indirectBuffer, glm::mat4(1.0f)});
+        ThunkedDraw::DrawData data
+        {
+            0, 0, 0, 0, drawCalls, ""
+        };
+        strcpy(data.mIndirectBufferName, indirectBuffer.c_str());
+
+        mDrawCalls.push_back({DrawType::Indirect, {data}});
     }
 
 	void addIndexedInstancedDrawCall(const uint32_t vertexOffset, const uint32_t indexOffset, const uint32_t numberOfInstances, const uint32_t numberOfIndicies)
 	{
-		mDrawCalls.push_back({ DrawType::IndexedInstanced, vertexOffset, 0, indexOffset, numberOfIndicies, numberOfInstances, "", glm::mat4(1.0f)});
+        mDrawCalls.push_back({ DrawType::IndexedInstanced, {ThunkedDraw::DrawData{vertexOffset, 0, indexOffset, numberOfIndicies, numberOfInstances, ""}}});
 	}
 
-    void addIndexedIndirectDrawCall(const uint32_t drawCalls, const uint32_t indexOffset, const uint32_t numberOfIndicies, const std::string&& indirectName)
+    void addIndexedIndirectDrawCall(const uint32_t drawCalls, const uint32_t indexOffset, const uint32_t numberOfIndicies, const std::string& indirectName)
 	{
-		mDrawCalls.push_back({ DrawType::IndexedIndirect, 0, 0, indexOffset, numberOfIndicies, drawCalls, indirectName, glm::mat4(1.0f)});
+        ThunkedDraw::DrawData data
+        {
+            0, 0, indexOffset, numberOfIndicies, drawCalls, ""
+        };
+        strcpy(data.mIndirectBufferName, indirectName.c_str());
+
+        mDrawCalls.push_back({ DrawType::IndexedIndirect, {data}});
 	}
 
-	void addPushConsatntValue(const glm::mat4& val)
+    void addPushConsatntValue(const void* val, const size_t size)
 	{
-		mDrawCalls.push_back({DrawType::SetPushConstant, 0, 0, 0, 0, 0, "", val});
+        ThunkedDraw drawData{DrawType::SetPushConstant, {{}}};
+        memcpy(drawData.mData.mPushConstants, val, size);
+
+        mDrawCalls.push_back(drawData);
 	}
 
     void recordCommands(Executor&, const RenderGraph&, const uint32_t taskIndex) const override final;
@@ -290,7 +313,7 @@ public:
 
 private:
 
-	std::vector<thunkedDraw> mDrawCalls;
+    std::vector<ThunkedDraw> mDrawCalls;
 
 	GraphicsPipelineDescription mPipelineDescription;
 	

@@ -34,6 +34,7 @@ ForwardIBLTechnique::ForwardIBLTechnique(Engine* eng) :
 
 
 	mTask.addOutput(kGlobalLighting, AttachmentType::RenderTarget2D, Format::RGBA8UNorm, SizeClass::Swapchain, LoadOp::Clear_Black);
+    mTask.addOutput(kGBufferVelocity, AttachmentType::RenderTarget2D, Format::RG16UNorm, SizeClass::Swapchain, LoadOp::Clear_Black);
 	mTask.addOutput(kGBufferDepth, AttachmentType::Depth, Format::D32Float, SizeClass::Custom, LoadOp::Preserve);
 }
 
@@ -47,8 +48,10 @@ void ForwardIBLTechnique::render(RenderGraph& graph, Engine* eng, const std::vec
 	{
 		const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->mMesh);
 
-		mTask.addPushConsatntValue(mesh->mTransformation);
-		mTask.addIndexedDrawCall(vertexOffset / mesh->mMesh->getVertexStride(), indexOffset / sizeof(uint32_t), mesh->mMesh->getIndexData().size());
+        const MeshEntry entry = mesh->getMeshShaderEntry();
+
+        mTask.addPushConsatntValue(&entry, sizeof(MeshEntry));
+        mTask.addIndexedDrawCall(vertexOffset / mesh->mMesh->getVertexStride(), indexOffset / sizeof(uint32_t), mesh->mMesh->getIndexData().size());
 	}
 
 	graph.addTask(mTask);

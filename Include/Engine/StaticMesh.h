@@ -19,6 +19,13 @@ enum MeshAttributes
     Transparent = 1 << 1
 };
 
+struct MeshEntry
+{
+    glm::mat4 mTransformation;
+    glm::mat4 mPreviousTransformation;
+    uint32_t mFlags;
+};
+
 
 class StaticMesh
 {

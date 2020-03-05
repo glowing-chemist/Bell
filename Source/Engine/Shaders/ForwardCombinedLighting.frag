@@ -3,6 +3,7 @@
 #extension GL_GOOGLE_include_directive : enable
 #extension GL_EXT_nonuniform_qualifier : enable
 
+#include "MeshAttributes.glsl"
 #include "NormalMapping.glsl"
 #include "UniformBuffers.glsl"
 #include "ClusteredLighting.glsl"
@@ -12,9 +13,11 @@ layout(location = 0) in vec4 positionWS;
 layout(location = 1) in vec3 vertexNormal;
 layout(location = 2) in flat uint materialID;
 layout(location = 3) in vec2 uv;
-
+layout(location = 4) in vec2 inVelocity;
+layout(location = 5) in flat uint meshFlags;
 
 layout(location = 0) out vec4 frameBuffer;
+layout(location = 1) out vec2 velocity;
 
 layout(set = 0, binding = 0) uniform UniformBufferObject {    
     CameraBuffer camera;    
@@ -131,8 +134,9 @@ void main()
         }
     }
 
-    if(baseAlbedo.w == 0.0f)
+    if((kAlphaTested & meshFlags) > 0 && baseAlbedo.w == 0.0f)
         discard;
 
     frameBuffer = lighting;
+    velocity = (inVelocity * 0.5f) + 0.5f;
 }

@@ -17,13 +17,15 @@ layout(set = 0, binding = 0) uniform cameraBuffer
 
 layout(set = 0, binding = 1) uniform texture2D depth;
 
-layout(set = 0, binding = 2) uniform texture2D colour;
+layout(set = 0, binding = 2) uniform texture2D velocity;
 
-layout(set = 0, binding = 3) uniform texture2D history;
+layout(set = 0, binding = 3) uniform texture2D colour;
 
-layout(rgba8, set = 0, binding = 4) uniform image2D newHistory;
+layout(set = 0, binding = 4) uniform texture2D history;
 
-layout(set = 0, binding = 5) uniform sampler linearSampler;
+layout(rgba8, set = 0, binding = 5) uniform image2D newHistory;
+
+layout(set = 0, binding = 6) uniform sampler linearSampler;
 
 // Rather than clamp within the colour space AABB, clip it.
 vec3 clip_aabb(	vec3 aabb_min, 
@@ -53,13 +55,10 @@ void main()
 	const float fragDepth = texture(sampler2D(depth, linearSampler), uv).x;
 	const float linearDepth = lineariseReverseDepth(fragDepth, camera.nearPlane, camera.farPlane);
 
-	vec4 positionWS = camera.invertedViewProj * vec4((uv - 0.5f) * 2.0f, fragDepth, 1.0f);
-	positionWS /= positionWS.w;
+	vec2 currentVelocity = texture(sampler2D(velocity, linearSampler), uv).xy;
+	currentVelocity = (currentVelocity - 0.5f) * 2.0f;
 
-	vec4 previousPosition = camera.previousFrameViewProj * positionWS;
-	previousPosition /= previousPosition.w;
-
-	const vec2 previousUV = ((previousPosition.xy * 0.5f) + 0.5f) - camera.previousJitter;
+	const vec2 previousUV = uv - currentVelocity;
 	const float previousDepth = texture(sampler2D(depth, linearSampler), previousUV).x;
 	const float previousLinearDepth = lineariseReverseDepth(previousDepth, camera.nearPlane, camera.farPlane);
 

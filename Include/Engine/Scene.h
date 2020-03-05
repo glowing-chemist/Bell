@@ -95,8 +95,35 @@ public:
 
     struct MeshInstance
     {
+        MeshInstance(StaticMesh* mesh, const glm::mat4& trans) :
+            mMesh(mesh),
+            mTransformation(trans),
+            mPreviousTransformation(trans) {}
+
         StaticMesh* mMesh;
+
+        const glm::mat4& getTransMatrix() const
+        { return mTransformation; }
+
+        void setTransMatrix(const glm::mat4& newTrans)
+        {
+            mPreviousTransformation = mTransformation;
+            mTransformation = newTrans;
+        }
+
+        MeshEntry getMeshShaderEntry() const
+        {
+            MeshEntry entry{};
+            entry.mTransformation = mTransformation;
+            entry.mPreviousTransformation = mPreviousTransformation;
+            entry.mFlags = mMesh->getAttributes();
+
+            return entry;
+        }
+
+    private:
 		glm::mat4 mTransformation;
+        glm::mat4 mPreviousTransformation;
     };
 
 	struct Material

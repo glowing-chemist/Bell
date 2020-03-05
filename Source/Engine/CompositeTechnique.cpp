@@ -22,7 +22,7 @@ void CompositeTechnique::render(RenderGraph& graph, Engine* eng, const std::vect
 	const bool usingOverlay = eng->isPassRegistered(PassType::Overlay);
 	const bool usingTAA = eng->isPassRegistered(PassType::TAA);
 
-	if (eng->debugTextureEnabled())
+    if (eng->debugTextureEnabled())
 	{
 		GraphicsPipelineDescription desc
 		(
@@ -33,7 +33,7 @@ void CompositeTechnique::render(RenderGraph& graph, Engine* eng, const std::vect
 		);
 
 		GraphicsTask compositeTask("Composite", desc);
-		compositeTask.addInput(eng->getDebugTextureSlot(), AttachmentType::Texture2D);
+        compositeTask.addInput(eng->getDebugTextureSlot(), AttachmentType::Texture2D);
 		compositeTask.addInput(kOverlay, AttachmentType::Texture2D);
 		compositeTask.addInput(kDefaultSampler, AttachmentType::Sampler);
 

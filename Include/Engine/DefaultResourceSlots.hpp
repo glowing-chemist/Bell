@@ -9,6 +9,7 @@ constexpr const char* kGBufferSpecular   = "GBufferSpecular";
 constexpr const char* kGBufferMaterialID = "GBUfferMaterialID";
 constexpr const char* kGBufferUV	    = "GBUfferUV";
 constexpr const char* kGBufferMetalnessRoughness = "GBufferMetalnessRoughness";
+constexpr const char* kGBufferVelocity = "GBufferVelocity";
 constexpr const char* kSSAO		    = "SSAO";
 constexpr const char* kSSAOBuffer		= "SSAOBuf";
 constexpr const char* kDefaultSampler    = "defaultSampler";
