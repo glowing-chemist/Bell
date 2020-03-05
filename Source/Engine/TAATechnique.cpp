@@ -15,9 +15,13 @@ TAATechnique::TAATechnique(Engine* eng) :
 		eng->getSwapChainImage()->getExtent(0, 0).height,
 		1, 1, 1, 1, "next TAA history"),
 	mNextHistoryImageView(mNextHistoryImage, ImageViewType::Colour),
+    mTAASAmpler(SamplerType::Linear),
 	mPipeline{eng->getShader("./Shaders/TAAResolve.comp")},
 	mFirstFrame{true}
 {
+    mTAASAmpler.setAddressModeU(AddressMode::Clamp);
+    mTAASAmpler.setAddressModeV(AddressMode::Clamp);
+    mTAASAmpler.setAddressModeW(AddressMode::Clamp);
 }
 
 
@@ -35,7 +39,7 @@ void TAATechnique::render(RenderGraph& graph, Engine* eng, const std::vector<con
 	ResolveTAA.addInput(kCompositeOutput, AttachmentType::Texture2D);
 	ResolveTAA.addInput(kTAAHistory, AttachmentType::Texture2D);
 	ResolveTAA.addInput(kNewTAAHistory, AttachmentType::Image2D);
-	ResolveTAA.addInput(kDefaultSampler, AttachmentType::Sampler);
+    ResolveTAA.addInput("TAASampler", AttachmentType::Sampler);
 
 	const float threadGroupWidth = eng->getSwapChainImageView()->getImageExtent().width;
 	const float threadGroupHeight = eng->getSwapChainImageView()->getImageExtent().height;
@@ -62,4 +66,6 @@ void TAATechnique::bindResources(RenderGraph& graph)
 		graph.bindImage(kTAAHistory, mNextHistoryImageView);
 		graph.bindImage(kNewTAAHistory, mHistoryImageView);
 	}
+
+    graph.bindSampler("TAASampler", mTAASAmpler);
 }

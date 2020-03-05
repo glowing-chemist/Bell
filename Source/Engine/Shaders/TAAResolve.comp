@@ -64,19 +64,12 @@ void main()
 	const float previousLinearDepth = lineariseReverseDepth(previousDepth, camera.nearPlane, camera.farPlane);
 
 	const vec4 currentColour = texture(sampler2D(colour, linearSampler), uv);
+
 	vec4 newColour = currentColour;
 	// Only include history if the depth is within the threshold.
 	const float depthDif = abs(previousLinearDepth - linearDepth);
 	if(depthDif <= DEPTH_EPSILON)
 	{
-#if STATIC_BLEND_FACTOR
-		const float confidence = 0.9f;
-#else
-		// Check how close (in depth) the two fragments are.
-		const float confidence = (1.0f - (depthDif / DEPTH_EPSILON)) * 0.5f;
-#endif
-		vec4 previousColour = texture(sampler2D(history, linearSampler), previousUV);
-
 		const float xDiff = 1.0f / camera.frameBufferSize.x;
 		const float yDiff = 1.0f / camera.frameBufferSize.y;
 
@@ -107,11 +100,22 @@ void main()
 		aabbMax = max(aabbMax, rightColour);
 		aabbMax = max(aabbMax, currentColourYCocg);
 
+		vec4 previousColour = texture(sampler2D(history, linearSampler), previousUV);
+
 		// Clamp previous colour
 		vec3 previousColourYCoCg = calculateYCoCg(previousColour.xyz);
 		previousColourYCoCg = clip_aabb(aabbMin, aabbMax, currentColourYCocg, previousColourYCoCg);
 
 		previousColour.xyz = calculateRGB(previousColourYCoCg);
+
+#if STATIC_BLEND_FACTOR
+		const float confidence = 0.9f;
+#else
+		// Check how close (in depth) the two fragments are.
+		float confidence = (1.0f - (depthDif / DEPTH_EPSILON)) * 0.5f;
+		confidence *= 1.0f - (dot(abs(previousColourYCoCg.xy - currentColourYCocg.xy), vec2(1.0f)) / 2.0f);
+		confidence *= confidence;
+#endif
 
 		newColour =  ((1.0f - confidence) * currentColour) + (confidence * previousColour);
 	}

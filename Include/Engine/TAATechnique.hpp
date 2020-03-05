@@ -30,6 +30,9 @@ private:
 	ImageView mHistoryImageView;
 	Image mNextHistoryImage;
 	ImageView mNextHistoryImageView;
+
+    Sampler mTAASAmpler;
+
 	ComputePipelineDescription mPipeline;
 
 	bool mFirstFrame;// need to perform some setup;
