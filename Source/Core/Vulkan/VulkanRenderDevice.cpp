@@ -565,7 +565,7 @@ vk::PipelineLayout VulkanRenderDevice::generatePipelineLayout(const std::vector<
 
 	// at least for now just use a mat4 for push constants.
 	vk::PushConstantRange range{};
-    range.setSize(sizeof(glm::mat4) * 2 + sizeof(uint32_t));
+    range.setSize(128);
 	range.setOffset(0);
 	range.setStageFlags(vk::ShaderStageFlagBits::eAll);
 

@@ -15,14 +15,12 @@ layout(location = 0) out vec4 outNormals;
 layout(location = 1) out uint outMaterialID;
 layout(location = 2) out vec2 outUv;
 layout(location = 3) out vec2 outVelocity;
-layout(location = 4) out uint outFlags;
 
 
 layout(push_constant) uniform pushModelMatrix
 {
 	mat4 mesh;
 	mat4 previousMesh;
-	uint meshFlags;
 } push_constants;
 
 

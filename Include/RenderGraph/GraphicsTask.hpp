@@ -232,7 +232,7 @@ public:
         union
         {
             DrawData mDrawData;
-            char mPushConstants[sizeof(glm::mat4) * 2 + sizeof(uint32_t)];
+            char mPushConstants[128]; // Min garanteed push constant size.
         } mData;
 	};
 

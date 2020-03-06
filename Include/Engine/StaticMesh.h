@@ -23,7 +23,6 @@ struct MeshEntry
 {
     glm::mat4 mTransformation;
     glm::mat4 mPreviousTransformation;
-    uint32_t mFlags;
 };
 
 

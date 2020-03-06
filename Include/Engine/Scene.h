@@ -116,7 +116,6 @@ public:
             MeshEntry entry{};
             entry.mTransformation = mTransformation;
             entry.mPreviousTransformation = mPreviousTransformation;
-            entry.mFlags = mMesh->getAttributes();
 
             return entry;
         }

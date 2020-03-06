@@ -51,7 +51,7 @@ void GraphicsTask::recordCommands(Executor& exec, const RenderGraph& graph, cons
 			}
 
 			case DrawType::SetPushConstant:
-                exec.insertPushConsatnt(thunk.mData.mPushConstants, sizeof(glm::mat4) * 2 + sizeof(uint32_t));
+                exec.insertPushConsatnt(thunk.mData.mPushConstants, 128);
 
 			break;
         }

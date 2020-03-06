@@ -16,14 +16,12 @@ layout(location = 1) out vec3 outNormals;
 layout(location = 2) out uint outMaterialID;
 layout(location = 3) out vec2 outUv;
 layout(location = 4) out vec2 outVelocity;
-layout(location = 5) out uint outFlags;
 
 
 layout(push_constant) uniform pushModelMatrix
 {
 	mat4 mesh;
 	mat4 previousMesh;
-	uint meshFlags;
 } push_constants;
 
 
@@ -47,7 +45,6 @@ void main()
 	outNormals = mat3(push_constants.mesh) * normals.xyz;
 	outMaterialID = material;
 	outUv = uv;
-	outFlags = push_constants.meshFlags;
 
 	// Calculate screen space velocity.
 	transformedPosition /= transformedPosition.w;

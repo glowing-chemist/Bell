@@ -14,7 +14,6 @@ layout(location = 1) in vec3 vertexNormal;
 layout(location = 2) in flat uint materialID;
 layout(location = 3) in vec2 uv;
 layout(location = 4) in vec2 inVelocity;
-layout(location = 5) in flat uint meshFlags;
 
 layout(location = 0) out vec4 frameBuffer;
 layout(location = 1) out vec2 velocity;
@@ -134,7 +133,7 @@ void main()
         }
     }
 
-    if((kAlphaTested & meshFlags) > 0 && baseAlbedo.w == 0.0f)
+    if(baseAlbedo.w == 0.0f)
         discard;
 
     frameBuffer = lighting;

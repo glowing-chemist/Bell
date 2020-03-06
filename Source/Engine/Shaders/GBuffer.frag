@@ -13,8 +13,6 @@ layout(location = 1) in vec2 uv;
 layout(location = 2) in vec3 vertexNormal;
 layout(location = 3) in flat uint materialID;
 layout(location = 4) in vec2 velocity;
-layout(location = 5) in flat uint meshFlags;
-
 
 layout(location = 0) out vec4 outAlbedo;
 layout(location = 1) out vec3 outNormals;
@@ -48,7 +46,7 @@ void main()
     const vec2 xDerivities = dFdxFine(uv);
     const vec2 yDerivities = dFdxFine(uv);
 
-    if((kAlphaTested & meshFlags) > 0 && baseAlbedo.w == 0.0f)
+    if(baseAlbedo.w == 0.0f)
         discard;
 
     const vec3 viewDir = normalize(camera.position - position.xyz);

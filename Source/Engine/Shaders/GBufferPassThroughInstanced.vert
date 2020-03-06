@@ -18,18 +18,11 @@ layout(location = 1) out vec2 outUV;
 layout(location = 2) out vec3 outNormals;
 layout(location = 3) out uint outMaterialID;
 layout(location = 4) out vec2 outVelocity;
-layout(location = 5) out uint outFlags;
 
 
 out gl_PerVertex {
     vec4 gl_Position;
 };
-
-
-layout(push_constant) uniform pushModelMatrix
-{
-	mat4 model;
-} push_constants;
 
 
 layout(set = 0, binding = 0) uniform UniformBufferObject 
@@ -53,7 +46,6 @@ void main()
 	outUV = uv;
 	outNormals = mat3(instanceTransformations[gl_InstanceID].meshEntry.mTransformation) * vec3(normals.xyz);
 	outMaterialID =  material;
-	outFlags = instanceTransformations[gl_InstanceID].meshEntry.mFlags;
 
 	// Calculate screen space velocity.
 	transformedPosition /= transformedPosition.w;
