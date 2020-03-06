@@ -50,7 +50,7 @@ vec3 clip_aabb(	vec3 aabb_min,
 void main()
 {
 	const vec2 gbufferSize = camera.frameBufferSize;
-	const vec2 uv = (vec2(gl_GlobalInvocationID.xy) / gbufferSize) + camera.jitter;
+	const vec2 uv = (vec2(gl_GlobalInvocationID.xy) / gbufferSize);
 
 	const float fragDepth = texture(sampler2D(depth, linearSampler), uv).x;
 	const float linearDepth = lineariseReverseDepth(fragDepth, camera.nearPlane, camera.farPlane);
@@ -103,7 +103,7 @@ void main()
 
 		// Clamp previous colour
 		vec3 previousColourYCoCg = calculateYCoCg(previousColour.xyz);
-		previousColourYCoCg = clip_aabb(aabbMin, aabbMax, currentColourYCocg, previousColourYCoCg);
+		previousColourYCoCg = clip_aabb(aabbMin, aabbMax, previousColourYCoCg, currentColourYCocg);
 
 		previousColour.xyz = calculateRGB(previousColourYCoCg);
 
