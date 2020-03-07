@@ -8,6 +8,17 @@
 
 #include "GLFW/glfw3.h"
 
+
+struct EditorLight
+{
+    size_t mId;
+    LightType mType;
+    float3 mPosition;
+    float3 mDirectiojn;
+    float mColour[3];
+    size_t mInfluence;
+};
+
 enum EditorMode
 {
 	SceneView = 0,
@@ -39,6 +50,7 @@ private:
     void drawMenuBar();
     void drawAssistantWindow();
     void drawDebugTexturePicker(const std::vector<std::string>& textures);
+    void drawLightMenu();
 
     void drawPassContextMenu(const PassType);
 
@@ -66,12 +78,16 @@ private:
     ImGuiFileBrowser mFileBrowser;
     bool mShowNodeEditor;
     ImGuiNodeEditor mNodeEditor;
+    uint64_t mRegisteredNodes;
 
 	bool mSetupNeeded;
 
     Engine mEngine;
 
     Scene mInProgressScene;
+
+    std::vector<EditorLight> mLights;
+    EditorLight mShadowingLight;
 };
 
 #endif

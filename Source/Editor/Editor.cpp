@@ -258,6 +258,7 @@ Editor::Editor(GLFWwindow* window) :
     mFileBrowser{"/"},
     mShowNodeEditor{false},
     mNodeEditor{"render graph editor", createPassNode},
+    mRegisteredNodes{0},
 	mSetupNeeded(true),
     mEngine{mWindow},
     mInProgressScene{"In construction"}
@@ -454,14 +455,13 @@ void Editor::drawAssistantWindow()
 {
     const ImGuiIO& io = ImGui::GetIO();
 
-    // TODO Using magic numbers for now, but will replace with proper scaling code later
     ImGui::SetNextWindowSize(ImVec2{io.DisplaySize.x / 4, io.DisplaySize.y - 20});
     ImGui::SetNextWindowPos(ImVec2{0, 20});
 
     if(ImGui::Begin("Assistant Editor"))
     {
 
-       if(ImGui::BeginMenu("Add new task"))
+       if(ImGui::TreeNode("Tasks"))
        {
            ImGui::Indent(10.0f);
 
@@ -488,28 +488,7 @@ void Editor::drawAssistantWindow()
            drawPassContextMenu(PassType::Shadow);
            drawPassContextMenu(PassType::TAA);
 
-           ImGui::EndMenu();
-       }
-
-       if(ImGui::BeginMenu("Add new resource"))
-       {
-           if(ImGui::MenuItem("Texture"))
-           {
-               std::shared_ptr<EditorNode> newNode = std::make_shared<ResourceNode>("Texture", std::numeric_limits<uint64_t>::max());
-               newNode->mOutputs.push_back(Pin{0, newNode, "Sample", PinType::Texture, PinKind::Output});
-
-               mNodeEditor.addNode(newNode);
-           }
-
-           if(ImGui::MenuItem("Buffer"))
-           {
-               std::shared_ptr<EditorNode> newNode = std::make_shared<ResourceNode>("Buffer", std::numeric_limits<uint64_t>::max() - 1);
-               newNode->mOutputs.push_back(Pin{0, newNode, "Load", PinType::Buffer, PinKind::Output});
-
-               mNodeEditor.addNode(newNode);
-           }
-
-           ImGui::EndMenu();
+           ImGui::TreePop();
        }
 
        ImGui::Checkbox("Debug texture picker", &mShowDebugTexturePicker);
@@ -538,6 +517,8 @@ void Editor::drawAssistantWindow()
     {
         mEngine.disableDebugTexture();
     }
+
+    drawLightMenu();
 }
 
 
@@ -561,11 +542,30 @@ void Editor::drawDebugTexturePicker(const std::vector<std::string>& textures)
 }
 
 
+void Editor::drawLightMenu()
+{
+
+}
+
+
 void Editor::drawPassContextMenu(const PassType passType)
 {
-    if(ImGui::MenuItem(passToString(passType)))
+    bool enabled = (static_cast<uint64_t>(passType) & mRegisteredNodes) > 0;
+    const bool wasEnabled = enabled;
+    ImGui::Checkbox(passToString(passType), &enabled);
+
+    if (enabled != wasEnabled)
     {
-        mNodeEditor.addNode(static_cast<uint64_t>(passType));
+        if (enabled)
+        {
+            mNodeEditor.addNode(static_cast<uint64_t>(passType));
+            mRegisteredNodes |= static_cast<uint64_t>(passType);
+        }
+        else
+        {
+            mNodeEditor.removeNode(static_cast<uint64_t>(passType));
+            mRegisteredNodes &= ~static_cast<uint64_t>(passType);
+        }
     }
 }
 

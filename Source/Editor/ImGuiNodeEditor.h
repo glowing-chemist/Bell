@@ -143,6 +143,7 @@ public:
 
     void addNode(const uint64_t);
     void addNode(std::shared_ptr<EditorNode>&);
+    void removeNode(const uint64_t);
 
     void draw();
 

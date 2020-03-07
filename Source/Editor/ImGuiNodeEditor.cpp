@@ -60,6 +60,15 @@ void ImGuiNodeEditor::addNode(std::shared_ptr<EditorNode>& newNode)
 }
 
 
+void ImGuiNodeEditor::removeNode(const uint64_t nodeType)
+{
+    mNodes.erase(std::remove_if(mNodes.begin(), mNodes.end(), [=](const std::shared_ptr<EditorNode>& node)
+    {
+        return node->mType == nodeType;
+    }));
+}
+
+
 void ImGuiNodeEditor::draw()
 {
     ax::NodeEditor::SetCurrentEditor(mContext);
