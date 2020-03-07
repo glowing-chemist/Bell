@@ -134,19 +134,6 @@ void ImGuiNodeEditor::draw()
 
 		if (ax::NodeEditor::BeginDelete())
 		{
-
-			ax::NodeEditor::NodeId deleteNodeId;
-			while (ax::NodeEditor::QueryDeletedNode(&deleteNodeId))
-			{
-				if (ax::NodeEditor::AcceptDeletedItem())
-				{
-					mNodes.erase(std::remove_if(mNodes.begin(), mNodes.end(), [deleteNodeId](const auto& node)
-					{
-						return node->mID == deleteNodeId;
-					}), mNodes.end());
-				}
-			}
-
 			// There may be many links marked for deletion, let's loop over them.
 			ax::NodeEditor::LinkId deletedLinkId;
 			while (ax::NodeEditor::QueryDeletedLink(&deletedLinkId))
