@@ -98,7 +98,7 @@ Engine::Engine(GLFWwindow* windowPtr) :
     };
     for (uint32_t i = 0; i < 16; ++i)
     {
-        mTAAJitter[i] = (halton_2_3(i) - 0.5f);// *2.0f;
+        mTAAJitter[i] = (halton_2_3(i) - 0.5f) * 2.0f;
     }
 
     // Load textures for LTC.
