@@ -13,20 +13,18 @@ class ImGuiFileBrowser
 {
 public:
     ImGuiFileBrowser(const fs::path& path) :
-    mCurrentDirectory{path}
-    {
-	populateChildren();
-    }
+        mRootDir{path}
+    {}
 
     std::optional<fs::path> render();
 
 
 private:
 
-    void populateChildren();
+    std::vector<fs::path> getChildren(const fs::path);
+    std::optional<fs::path> renderChildren(const fs::path);
 
-    fs::path mCurrentDirectory;
-    std::vector<fs::path> mChildren;
+    fs::path mRootDir;
 };
 
 #endif // IMGUIFILEBROWSER_H

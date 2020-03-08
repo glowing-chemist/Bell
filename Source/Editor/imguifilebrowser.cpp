@@ -6,50 +6,67 @@
 std::optional<fs::path> ImGuiFileBrowser::render()
 {
     int selectedFile = -1;
+    std::optional<fs::path> path{};
 
     if(ImGui::Begin("FileBrowser"))
     {
-        ImGui::BeginGroup();
-        for(uint32_t i = 0; i < mChildren.size(); ++i)
+        if (ImGui::TreeNode(mRootDir.string().c_str()))
         {
-            const auto file = mChildren[i];
+            ImGui::Indent(10.0f);
 
-            ImGui::RadioButton(file.filename().string().c_str(), &selectedFile, static_cast<int>(i));
+            path = renderChildren(mRootDir);
+
+            ImGui::TreePop();
         }
-
-        if(selectedFile != -1)
-        {
-            const auto& file = mChildren[selectedFile];
-
-            if(fs::is_directory(file))
-            {
-                mCurrentDirectory = file;
-                populateChildren();
-                // Don't return a path if a directory was selected.
-                selectedFile = -1;
-            }
-        }
-
-        ImGui::EndGroup();
     }
 
 	ImGui::End();
 
-    if(selectedFile != -1)
-        return mChildren[selectedFile];
-
-    return {};
+    return path;
 }
 
 
-void ImGuiFileBrowser::populateChildren()
+std::vector<fs::path> ImGuiFileBrowser::getChildren(const fs::path path)
 {
-    mChildren.clear();
+    std::vector<fs::path> children{};
 
-    for(const auto& child : fs::directory_iterator(mCurrentDirectory))
+    for(const auto& child : fs::directory_iterator(path))
     {
-        mChildren.emplace_back(child);
+        children.emplace_back(child);
     }
 
-	mChildren.emplace_back(mCurrentDirectory / "..");
+    return children;
 }
+
+
+std::optional<fs::path> ImGuiFileBrowser::renderChildren(const fs::path path)
+{
+    const std::vector<fs::path> children = getChildren(path);
+    std::optional<fs::path> foundPath{};
+
+    ImGui::Indent(10.0f);
+
+    for (const auto& child : children)
+    {
+        if (ImGui::TreeNode(child.filename().string().c_str()))
+        {
+            if (fs::is_regular_file(child))
+            {
+                foundPath = child;
+                ImGui::TreePop();
+                break;
+            }
+
+            ImGui::TreePop();
+
+            foundPath = renderChildren(child);
+            if (foundPath)
+                break;
+        }
+    }
+
+    ImGui::Unindent(10.0f);
+
+    return foundPath;
+}
+
