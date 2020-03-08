@@ -25,6 +25,7 @@ include_directories(
 			"${CMAKE_CURRENT_LIST_DIR}/ThirdParty/GLFW3/glfw-3.2.1/include"
 			"${CMAKE_CURRENT_LIST_DIR}/ThirdParty/assimp-4.1.0/include"
 			"${CMAKE_CURRENT_LIST_DIR}/ThirdParty/imgui-master"
+			"${CMAKE_CURRENT_LIST_DIR}/ThirdParty/imgui-guizmo"
 			"${CMAKE_CURRENT_LIST_DIR}/ThirdParty/glslang"
 			"${CMAKE_CURRENT_LIST_DIR}/ThirdParty/imgui-node-editor/NodeEditor/Include"
 		    "${CMAKE_CURRENT_LIST_DIR}/ThirdParty/glm"	
@@ -169,6 +170,7 @@ set(DearImGUI_SOURCE
     ThirdParty/imgui-master/imgui.cpp
     ThirdParty/imgui-master/imgui_draw.cpp
     ThirdParty/imgui-master/imgui_widgets.cpp
+	ThirdParty/imgui-guizmo/imGuizmo.cpp
     )
 
 
