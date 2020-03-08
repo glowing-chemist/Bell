@@ -1,4 +1,3 @@
-
 #include "Editor/Editor.h"
 #include "Engine/DefaultResourceSlots.hpp"
 
@@ -7,6 +6,8 @@
 
 #include "imgui.h"
 #include "ImGuizmo.h"
+
+#include <atomic>
 
 
 namespace
@@ -146,7 +147,7 @@ namespace
 
             case NodeTypes::DeferredPBRIBL:
             {
-                std::shared_ptr<EditorNode> newNode = std::make_shared<PassNode>("Analytical deferred texuring IBL", passType);
+                std::shared_ptr<EditorNode> newNode = std::make_shared<PassNode>("deferred IBL", passType);
                 newNode->mInputs.push_back(Pin{ 0, newNode, kDFGLUT, PinType::Texture, PinKind::Input });
                 newNode->mInputs.push_back(Pin{ 0, newNode, kGBufferNormals, PinType::Texture, PinKind::Input });
                 newNode->mInputs.push_back(Pin{ 0, newNode, kGBufferAlbedo, PinType::Texture, PinKind::Input });
@@ -269,6 +270,17 @@ Editor::Editor(GLFWwindow* window) :
     mInProgressScene{"In construction"}
 {
     ImGui::CreateContext();
+
+
+    // Set up cursor scrolling.
+    glfwSetWindowUserPointer(mWindow, this);
+    auto curor_callback = [](GLFWwindow* window, double, double y)
+    {
+        Editor* editor = static_cast<Editor*>(glfwGetWindowUserPointer(window));
+        editor->mouseScroll_callback(window, 0.0, y);
+    };
+
+    glfwSetScrollCallback(mWindow, curor_callback);
 }
 
 
@@ -381,6 +393,8 @@ void Editor::pumpInputQueue()
 		mousePressed[i] = pressed == GLFW_PRESS;
 	}
 	memcpy(&io.MouseDown[0], &mousePressed[0], sizeof(bool) * 5);
+    const double mouseDiff = mMouseScrollAmount.exchange(0.0);
+    io.MouseWheel = static_cast<float>(mouseDiff);
 
 	int w, h;
 	int display_w, display_h;
@@ -417,6 +431,12 @@ void Editor::pumpInputQueue()
             camera.rotateYaw(-mCursorPosDelta.x);
         }
 	}
+}
+
+
+void Editor::mouseScroll_callback(GLFWwindow* window, double xoffset, double yoffset)
+{
+    mMouseScrollAmount.store(yoffset);
 }
 
 

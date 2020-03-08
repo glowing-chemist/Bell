@@ -33,6 +33,8 @@ public:
 
     void run();
 
+    void mouseScroll_callback(GLFWwindow* window, double xoffset, double yoffset);
+
 private:
 
 	void startFrame()
@@ -66,6 +68,7 @@ private:
     };
     CursorPosition mCurrentCursorPos;
     CursorPosition mCursorPosDelta;
+    std::atomic<double> mMouseScrollAmount;
     int mMode;
     bool mShowHelpMenu;
 
