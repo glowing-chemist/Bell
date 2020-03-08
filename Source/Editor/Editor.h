@@ -13,8 +13,8 @@ struct EditorLight
 {
     size_t mId;
     LightType mType;
-    float3 mPosition;
-    float3 mDirectiojn;
+    float4 mPosition;
+    float4 mDirection;
     float mColour[3];
     size_t mInfluence;
 };
@@ -51,6 +51,7 @@ private:
     void drawAssistantWindow();
     void drawDebugTexturePicker(const std::vector<std::string>& textures);
     void drawLightMenu();
+    void drawGuizmo(const Camera&, EditorLight&);
 
     void drawPassContextMenu(const PassType);
 

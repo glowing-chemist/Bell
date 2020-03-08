@@ -2,7 +2,12 @@
 #include "Editor/Editor.h"
 #include "Engine/DefaultResourceSlots.hpp"
 
+#include "glm/gtc/matrix_transform.hpp"
+#include "glm/gtc/type_ptr.hpp"
+
 #include "imgui.h"
+#include "ImGuizmo.h"
+
 
 namespace
 {
@@ -317,6 +322,7 @@ void Editor::renderOverlay()
 		io.Fonts->GetTexDataAsRGBA32(&pixels, &width, &height);
 	}
     ImGui::NewFrame();
+    ImGuizmo::BeginFrame();
 
     drawMenuBar();
     drawAssistantWindow();
@@ -381,8 +387,12 @@ void Editor::pumpInputQueue()
 	glfwGetWindowSize(mWindow, &w, &h);
 	glfwGetFramebufferSize(mWindow, &display_w, &display_h);
 	io.DisplaySize = ImVec2(static_cast<float>(w), static_cast<float>(h));
-	if (w > 0 && h > 0)
-		io.DisplayFramebufferScale = ImVec2(static_cast<float>(display_w) / w, static_cast<float>(display_h) / h);
+    if (w > 0 && h > 0)
+    {
+        io.DisplayFramebufferScale = ImVec2(static_cast<float>(display_w) / w, static_cast<float>(display_h) / h);
+        ImGuizmo::SetRect(0, 0, io.DisplaySize.x, io.DisplaySize.y);
+        ImGuizmo::SetOrthographic(false);
+    }
 
 	if (mMode == EditorMode::SceneView) 
 	{
@@ -400,9 +410,6 @@ void Editor::pumpInputQueue()
         bool pressedEscape = glfwGetKey(mWindow, GLFW_KEY_ESCAPE) == GLFW_PRESS;
         if (pressedEscape)
             mInFreeFlyMode = false;
-        else if (!ImGui::IsAnyWindowFocused() && mousePressed[0])
-            mInFreeFlyMode = true;
-
 
         if (mInFreeFlyMode)
         {
@@ -492,9 +499,11 @@ void Editor::drawAssistantWindow()
        }
 
        ImGui::Checkbox("Debug texture picker", &mShowDebugTexturePicker);
+       ImGui::Checkbox("Camera free fly", &mInFreeFlyMode);
 
-       ImGui::End();
+       drawLightMenu();
     }
+    ImGui::End();
 
     std::vector<std::string> textures = mNodeEditor.getAvailableDebugTextures();
     if(mShowDebugTexturePicker)
@@ -517,8 +526,6 @@ void Editor::drawAssistantWindow()
     {
         mEngine.disableDebugTexture();
     }
-
-    drawLightMenu();
 }
 
 
@@ -533,18 +540,81 @@ void Editor::drawDebugTexturePicker(const std::vector<std::string>& textures)
         {
             ImGui::RadioButton(textures[i].c_str(), &mCurrentDebugTexture, i);
         }
-
-
         ImGui::EndGroup();
-
-        ImGui::End();
     }
+    ImGui::End();
 }
 
 
 void Editor::drawLightMenu()
 {
+    if (ImGui::TreeNode("Lights"))
+    {
 
+        for (uint32_t i = 0; i < mLights.size(); ++i)
+        {
+            char lightName[15];
+            sprintf(lightName, "Light #%d", i);
+            if (ImGui::TreeNode(lightName))
+            {
+                EditorLight& light = mLights[i];
+                Scene::Light& sceneLight = mEngine.getScene().getLight(light.mId);
+
+                ImGui::Text("Position: X %f Y %f Z %f", light.mPosition.x, light.mPosition.y, light.mPosition.z);
+                ImGui::Text("Direction: X %f Y %f Z %f", light.mDirection.x, light.mDirection.y, light.mDirection.z);
+                ImGui::ColorEdit3("Colour", light.mColour, ImGuiColorEditFlags_InputRGB);
+
+                drawGuizmo(mEngine.getScene().getCamera(), light);
+
+                // Write back light updates to the scenes light buffer.
+                sceneLight.mPosition = light.mPosition;
+                sceneLight.mDirection = light.mDirection;
+                sceneLight.mAlbedo = float4(light.mColour[0], light.mColour[1], light.mColour[2], 1.0f);
+
+                ImGui::TreePop();
+            }
+        }
+
+        if (ImGui::Button("Add Light"))
+        {
+            EditorLight newLight{};
+            const size_t id = mEngine.getScene().addLight({ float4(0.0f, 0.0f, 0.0f, 1.0f),
+                                                            float4(1.0f, 0.0f, 0.0f, 0.0f),
+                                                            float4(1.0f, 1.0f, 1.0f, 1.0f),
+                                                            2000.0f,
+                                                            300.0f,
+                                                            LightType::Point,
+                                                            45.0f });
+            newLight.mId = id;
+            newLight.mType = LightType::Point;
+            newLight.mPosition = float4(0.0f, 0.0f, 0.0f, 1.0f);
+            newLight.mDirection = float4(1.0f, 0.0f, 0.0f, 1.0f);
+            newLight.mColour[0] = 1.0f;
+            newLight.mColour[1] = 1.0f;
+            newLight.mColour[2] = 1.0f;
+            newLight.mInfluence = 2000;
+
+            mLights.push_back(newLight);
+        }
+        ImGui::TreePop();
+    }
+}
+
+
+void Editor::drawGuizmo(const Camera& camera, EditorLight& light)
+{
+    const glm::mat4 view = camera.getViewMatrix();
+    const glm::mat4 proj = camera.getPerspectiveMatrix();
+    glm::mat4 lightTransformation = glm::translate(glm::mat4(1.0f), float3(light.mPosition));
+
+    ImGuizmo::Enable(true);
+    ImGuizmo::Manipulate(   glm::value_ptr(view),
+                            glm::value_ptr(proj),
+                            ImGuizmo::OPERATION::TRANSLATE,
+                            ImGuizmo::MODE::WORLD,
+                            glm::value_ptr(lightTransformation));
+
+    light.mPosition = lightTransformation[3];
 }
 
 

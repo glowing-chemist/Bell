@@ -137,7 +137,7 @@ public:
 	{
         float4 mPosition;
         float4 mDirection;
-        float4 mALbedo;
+        float4 mAlbedo;
         float mIntensity;
 		float mRadius;
 		LightType mType;
