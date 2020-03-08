@@ -68,13 +68,13 @@ inline const char* passToString(const PassType passType)
             return "GBuffer_Material_Pre_Depth";
 
 		case PassType::InplaceCombine:
-			return "InplaceCombine";
+			return "Inplace_combine";
 
 		case PassType::InplaceCombineSRGB:
-			return "InplaceCombineSRGB";
+			return "Inplace_combineSRGB";
 
 		case PassType::DeferredTextureBlinnPhongLighting:
-			return "DeferredTextureBlinnPhong";
+			return "Deferred_texture_blinnPhong";
 
 		case PassType::DeferredTexturePBRIBL:
             return "Deferred_Texturing_IBL";
@@ -89,19 +89,19 @@ inline const char* passToString(const PassType passType)
 			return "ForwardIBL";
 
 		case PassType::ForwardCombinedLighting:
-			return "ForwardCombinedLighting";
+			return "Forward_combined_lighting";
 
 		case PassType::Skybox:
-			return "skybox";
+			return "Skybox";
 
 		case PassType::ConvolveSkybox:
-			return "convolveSkybox";
+			return "Convolve_skybox";
 
 		case PassType::DFGGeneration:
 			return "DFGGenration";
 
 		case PassType::LightFroxelation:
-			return "LightFroxelation";
+			return "Light_froxelation";
 
 		case PassType::DeferredAnalyticalLighting:
 			return "Deferred_analytical_lighting";

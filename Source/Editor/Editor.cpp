@@ -461,7 +461,7 @@ void Editor::drawAssistantWindow()
     if(ImGui::Begin("Assistant Editor"))
     {
 
-       if(ImGui::TreeNode("Tasks"))
+       if(ImGui::TreeNode("Techniques"))
        {
            ImGui::Indent(10.0f);
 
