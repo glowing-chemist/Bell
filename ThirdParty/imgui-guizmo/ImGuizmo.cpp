@@ -718,7 +718,7 @@ namespace ImGuizmo
       float mox = ((io.MousePos.x - position.x) / size.x) * 2.f - 1.f;
       float moy = (1.f - ((io.MousePos.y - position.y) / size.y)) * 2.f - 1.f;
 
-      rayOrigin.Transform(makeVect(mox, moy, 0.f, 1.f), mViewProjInverse);
+      rayOrigin.Transform(makeVect(mox, moy, 0.0000001f, 1.f), mViewProjInverse);
       rayOrigin *= 1.f / rayOrigin.w;
       vec_t rayEnd;
       rayEnd.Transform(makeVect(mox, moy, 1.f, 1.f), mViewProjInverse);
