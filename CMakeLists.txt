@@ -170,7 +170,7 @@ set(DearImGUI_SOURCE
     ThirdParty/imgui-master/imgui.cpp
     ThirdParty/imgui-master/imgui_draw.cpp
     ThirdParty/imgui-master/imgui_widgets.cpp
-	ThirdParty/imgui-guizmo/imGuizmo.cpp
+    ThirdParty/imgui-guizmo/ImGuizmo.cpp
     )
 
 
