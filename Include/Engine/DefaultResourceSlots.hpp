@@ -40,6 +40,8 @@ constexpr const char* kAnalyticLighting  = "AnalyticLighting";
 constexpr const char* kOverlay			 = "Overlay";
 
 constexpr const char* kDFGLUT			= "DFG";
+constexpr const char* kLTCMat           = "LTCMat";
+constexpr const char* kLTCAmp           = "LTCAmp";
 
 constexpr const char* kDefaultFontTexture = "Fonts";
 

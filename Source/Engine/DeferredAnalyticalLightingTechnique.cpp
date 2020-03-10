@@ -13,6 +13,8 @@ DeferredAnalyticalLightingTechnique::DeferredAnalyticalLightingTechnique(Engine*
 {
 	mTask.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
 	mTask.addInput(kDFGLUT, AttachmentType::Texture2D);
+    mTask.addInput(kLTCMat, AttachmentType::Texture2D);
+    mTask.addInput(kLTCAmp, AttachmentType::Texture2D);
 	mTask.addInput(kGBufferDepth, AttachmentType::Texture2D);
 	mTask.addInput(kGBufferNormals, AttachmentType::Texture2D);
 	mTask.addInput(kGBufferAlbedo, AttachmentType::Texture2D);

@@ -161,6 +161,98 @@ vec4 pointLightContribution(const Light light,
     return pointLightContribution(light, positionWS, view, N, metalness, roughness, baseAlbedo, f_ab);
 }
 
+// Area light functions.
+float IntegrateEdge(vec3 v1, vec3 v2)
+{
+    float cosTheta = dot(v1, v2);
+    float theta = acos(cosTheta);    
+    float res = cross(v1, v2).z * ((theta > 0.001) ? theta / sin(theta) : 1.0);
+
+    return res;
+}
+
+vec3 LTC_Evaluate(
+    vec3 N, vec3 V, vec3 P, mat3 Minv, vec3 points[4])
+{
+    // construct orthonormal basis around N
+    vec3 T1, T2;
+    T1 = normalize(V - N*dot(V, N));
+    T2 = cross(N, T1);
+
+    // rotate area light in (T1, T2, N) basis
+    Minv = Minv * transpose(mat3(T1, T2, N));
+
+    // polygon (allocate 5 vertices for clipping)
+    vec3 L[4];
+    L[0] = Minv * (points[0] - P);
+    L[1] = Minv * (points[1] - P);
+    L[2] = Minv * (points[2] - P);
+    L[3] = Minv * (points[3] - P);
+
+    // Don't perform clipping (it's expensive and difficult to implement)
+    // Doesn't have a large impact so ignore for now.
+
+    // project onto sphere
+    L[0] = normalize(L[0]);
+    L[1] = normalize(L[1]);
+    L[2] = normalize(L[2]);
+    L[3] = normalize(L[3]);
+
+    // integrate
+    float sum = 0.0;
+
+    sum += IntegrateEdge(L[0], L[1]);
+    sum += IntegrateEdge(L[1], L[2]);
+    sum += IntegrateEdge(L[2], L[3]);
+    sum += IntegrateEdge(L[3], L[0]);
+
+    sum = max(0.0, sum);
+
+    return vec3(sum);
+}
+
+vec4 areaLightContribution(const Light light, 
+							const vec4 positionWS, 
+							const vec3 view,
+							const vec3 N,
+							const float metalness, 
+							const float roughness, 
+							const vec3 baseAlbedo, 
+							texture2D ltc_mat,
+							texture2D ltc_amp, 
+							sampler linearSampler)
+{
+	const float theta = dot(N, view);
+    const vec2 uv = vec2(roughness, theta);
+
+    const vec4 t = texture(sampler2D(ltc_mat, linearSampler), uv);
+    const mat3 Minv = mat3(
+            vec3(  1,   0, t.y),
+            vec3(  0, t.z,   0),
+            vec3(t.w,   0, t.x)
+        );
+
+    // Calculate the 4 corners of the square area light in WS.
+    vec3 points[4];
+    points[0] = light.position.xyz + vec3(-light.misc / 2.0f, light.misc / 2.0f, 0.0f);
+    points[1] = light.position.xyz + vec3(light.misc / 2.0f, light.misc / 2.0f, 0.0f);
+    points[2] = light.position.xyz + vec3(light.misc / 2.0f, -light.misc / 2.0f, 0.0f);
+    points[3] = light.position.xyz + vec3(-light.misc / 2.0f, -light.misc / 2.0f, 0.0f);
+
+    vec3 spec = LTC_Evaluate(N, view, positionWS.xyz, Minv, points);
+    spec *= texture(sampler2D(ltc_amp, linearSampler), uv).w;
+        
+    const vec3 diff = LTC_Evaluate(N, view, positionWS.xyz, mat3(1), points); 
+
+    const vec3 diffuseColor = baseAlbedo * (1.0 - DIELECTRIC_SPECULAR) * (1.0 - metalness);
+	const vec3 F0 = mix(vec3(DIELECTRIC_SPECULAR), baseAlbedo, metalness);
+        
+    vec3 colour  = light.intensity * (light.albedo.xyz * spec * F0 + light.albedo.xyz * diff * diffuseColor);
+    colour /= 2.0 * PI;
+
+    return vec4(colour, 1.0f);
+}
+
 
 // Interscetion helpers
 bool sphereAABBIntersection(const vec3 centre, const float radius, const AABB aabb)
@@ -200,14 +292,4 @@ bool areaLightAABBIntersection(const vec3 centre, const vec3 normal, const float
 	const vec3 toFar = normalize(aabb.bottomRight.xyz - centre);
 
 	return (dot(toNear, normal) > 0 || dot(toFar, normal) > 0) && sphereAABBIntersection(centre, radius, aabb);
-}
-
-
-float IntegrateEdge(vec3 v1, vec3 v2)
-{
-    float cosTheta = dot(v1, v2);
-    float theta = acos(cosTheta);    
-    float res = cross(v1, v2).z * ((theta > 0.001) ? theta/sin(theta) : 1.0);
-
-    return res;
 }

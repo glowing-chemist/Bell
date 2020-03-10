@@ -197,6 +197,7 @@ private:
     ImageView mLTCMatView;
     Image mLTCAmp;
     ImageView mLTCAmpView;
+    bool mInitialisedTLCTextures;
 
 	std::unordered_map < const StaticMesh*, std::pair<uint64_t, uint64_t>> mVertexCache;
 

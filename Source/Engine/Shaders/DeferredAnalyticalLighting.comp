@@ -16,27 +16,29 @@ layout(set = 0, binding = 0) uniform cameraBuffer
 
 // GBuffer
 layout(set = 0, binding = 1) uniform texture2D DFG;
-layout(set = 0, binding = 2) uniform texture2D depth;
-layout(set = 0, binding = 3) uniform texture2D vertexNormals;
-layout(set = 0, binding = 4) uniform texture2D Albedo;
-layout(set = 0, binding = 5) uniform texture2D MetalnessRoughness;
-layout(set = 0, binding = 6) uniform sampler linearSampler;
-layout(set = 0, binding = 7) uniform sampler pointSampler;
+layout(set = 0, binding = 2) uniform texture2D ltcMat;
+layout(set = 0, binding = 3) uniform texture2D ltcAmp;
+layout(set = 0, binding = 4) uniform texture2D depth;
+layout(set = 0, binding = 5) uniform texture2D vertexNormals;
+layout(set = 0, binding = 6) uniform texture2D Albedo;
+layout(set = 0, binding = 7) uniform texture2D MetalnessRoughness;
+layout(set = 0, binding = 8) uniform sampler linearSampler;
+layout(set = 0, binding = 9) uniform sampler pointSampler;
 
 // Light lists
-layout(std430, set = 0, binding = 8) buffer readonly sparseFroxels
+layout(std430, set = 0, binding = 10) buffer readonly sparseFroxels
 {
 	uvec2 sparseFroxelList[];
 };
 
-layout(std430, set = 0,  binding = 9) buffer froxelIndicies
+layout(std430, set = 0,  binding = 11) buffer froxelIndicies
 {
 	uint indicies[];
 };
 
-layout(set = 0, binding = 10) uniform utexture2D activeFroxels;
+layout(set = 0, binding = 12) uniform utexture2D activeFroxels;
 
-layout(rgba8, set = 0, binding = 11) uniform writeonly image2D accumilatedLight;
+layout(rgba8, set = 0, binding = 13) uniform writeonly image2D accumilatedLight;
 
 layout(std430, set = 1, binding = 0) buffer readonly sceneLights
 {
@@ -81,7 +83,7 @@ void main()
 
     	switch(uint(light.type))
 		{
-			case 0:
+			case 0: // Point.
 			{
 
     			vec4 lighting =  pointLightContribution(light, worldSpaceFragmentPos, viewDir, normal, metalness, roughness, baseAlbedo, DFG, linearSampler);
@@ -89,9 +91,16 @@ void main()
 				break;
 			}
 
-			case 1:
+			case 1: // Spot.
 			{
 				vec4 lighting =  pointLightContribution(light, worldSpaceFragmentPos, viewDir, normal, metalness, roughness, baseAlbedo, DFG, linearSampler);
+    			accum += lighting;	
+				break;
+			}
+
+			case 2: // Area.
+			{
+				vec4 lighting =  areaLightContribution(light, worldSpaceFragmentPos, viewDir, normal, metalness, roughness, baseAlbedo, ltcMat, ltcAmp, linearSampler);
     			accum += lighting;	
 				break;
 			}

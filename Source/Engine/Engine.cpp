@@ -48,10 +48,11 @@ Engine::Engine(GLFWwindow* windowPtr) :
     mVertexBuilder(),
     mIndexBuilder(),
     mMaterials{getDevice()},
-    mLTCMat(getDevice(), Format::RGBA32Float, ImageUsage::Sampled | ImageUsage::TransferDest, 64, 64, 1),
+    mLTCMat(getDevice(), Format::RGBA32Float, ImageUsage::Sampled | ImageUsage::TransferDest, 64, 64, 1, 1, 1, 1, "LTC Mat"),
     mLTCMatView(mLTCMat, ImageViewType::Colour),
-    mLTCAmp(getDevice(), Format::RG32Float, ImageUsage::Sampled | ImageUsage::TransferDest, 64, 64, 1),
-    mLTCAmpView(mLTCMat, ImageViewType::Colour),
+    mLTCAmp(getDevice(), Format::RG32Float, ImageUsage::Sampled | ImageUsage::TransferDest, 64, 64, 1, 1, 1, 1, "LTC Amp"),
+    mLTCAmpView(mLTCAmp, ImageViewType::Colour),
+    mInitialisedTLCTextures(false),
     mCurrentRenderGraph(),
 	mTechniques{},
 	mCurrentPasstypes{0},
@@ -100,13 +101,6 @@ Engine::Engine(GLFWwindow* windowPtr) :
     {
         mTAAJitter[i] = (halton_2_3(i) - 0.5f) * 2.0f;
     }
-
-    // Load textures for LTC.
-    TextureUtil::TextureInfo matInfo = TextureUtil::load128BitTexture("./Assets/ltc_mat.hdr", 4);
-    mLTCMat->setContents(matInfo.mData.data(), matInfo.width, matInfo.height, 1);
-
-    TextureUtil::TextureInfo ampInfo = TextureUtil::load128BitTexture("./Assets/ltc_amp.hdr", 2);
-    mLTCAmp->setContents(matInfo.mData.data(), matInfo.width, matInfo.height, 1);
 }
 
 
@@ -431,6 +425,8 @@ void Engine::recordScene()
     mCurrentRenderGraph.bindBuffer(kCameraBuffer, *mDeviceCameraBuffer);
 	mCurrentRenderGraph.bindBuffer(kShadowingLights, *mShadowCastingLight);
     mCurrentRenderGraph.bindShaderResourceSet(kLightBuffer, *mLightsSRS);
+    mCurrentRenderGraph.bindImage(kLTCMat, mLTCMatView);
+    mCurrentRenderGraph.bindImage(kLTCAmp, mLTCAmpView);
     mCurrentRenderGraph.bindSampler(kDefaultSampler, mDefaultSampler);
     mCurrentRenderGraph.bindVertexBuffer(kSceneVertexBuffer, mVertexBuffer);
     mCurrentRenderGraph.bindIndexBuffer(kSceneIndexBuffer, mIndexBuffer);
@@ -462,6 +458,18 @@ void Engine::submitCommandRecorder(CommandContext &ccx)
 
 void Engine::updateGlobalBuffers()
 {
+    if(!mInitialisedTLCTextures)
+    {
+        // Load textures for LTC.
+        TextureUtil::TextureInfo matInfo = TextureUtil::load128BitTexture("./Assets/ltc_mat.hdr", 4);
+        mLTCMat->setContents(matInfo.mData.data(), matInfo.width, matInfo.height, 1);
+
+        TextureUtil::TextureInfo ampInfo = TextureUtil::load128BitTexture("./Assets/ltc_amp.hdr", 2);
+        mLTCAmp->setContents(ampInfo.mData.data(), ampInfo.width, ampInfo.height, 1);
+
+        mInitialisedTLCTextures = true;
+    }
+
     // Update camera UB.
 	{
 		auto& currentCamera = getCurrentSceneCamera();

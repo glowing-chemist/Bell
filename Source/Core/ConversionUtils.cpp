@@ -410,8 +410,17 @@ uint32_t getPixelSize(const Format format)
 		break;
 
 	case Format::RGB32SFloat:
-		result = 16;
+        result = 12;
 		break;
+
+    case Format::RGBA32Float:
+    case Format::RGBA32SFloat:
+        result = 16;
+        break;
+
+    case Format::RG32Float:
+        result = 8;
+        break;
 
 	default:
 		result =  4;
