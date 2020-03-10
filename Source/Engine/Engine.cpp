@@ -102,11 +102,11 @@ Engine::Engine(GLFWwindow* windowPtr) :
     }
 
     // Load textures for LTC.
-    /*TextureUtil::TextureInfo matInfo = TextureUtil::load128BitTexture("./Assets/ltc_mat.dds", 4);
+    TextureUtil::TextureInfo matInfo = TextureUtil::load128BitTexture("./Assets/ltc_mat.hdr", 4);
     mLTCMat->setContents(matInfo.mData.data(), matInfo.width, matInfo.height, 1);
 
-    TextureUtil::TextureInfo ampInfo = TextureUtil::load128BitTexture("./Assets/ltc_amp.dds", 2);
-    mLTCAmp->setContents(matInfo.mData.data(), matInfo.width, matInfo.height, 1);*/
+    TextureUtil::TextureInfo ampInfo = TextureUtil::load128BitTexture("./Assets/ltc_amp.hdr", 2);
+    mLTCAmp->setContents(matInfo.mData.data(), matInfo.width, matInfo.height, 1);
 }
 
 
