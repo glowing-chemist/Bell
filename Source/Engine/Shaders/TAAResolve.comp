@@ -6,7 +6,7 @@
 #include "Utilities.glsl"
 
 #define DEPTH_EPSILON 0.01f
-#define STATIC_BLEND_FACTOR 1
+#define STATIC_BLEND_FACTOR 0
 
 layout(local_size_x = 32, local_size_y = 32, local_size_z = 1) in;
 
@@ -64,60 +64,56 @@ void main()
 
 	const vec4 currentColour = texture(sampler2D(colour, linearSampler), uv);
 
-	vec4 newColour = currentColour;
-	// Only include history if the depth is within the threshold.
 	const float depthDif = abs(previousLinearDepth - linearDepth);
-	if(depthDif <= DEPTH_EPSILON)
-	{
-		const float xDiff = 1.0f / camera.frameBufferSize.x;
-		const float yDiff = 1.0f / camera.frameBufferSize.y;
+	
+	const float xDiff = 1.0f / camera.frameBufferSize.x;
+	const float yDiff = 1.0f / camera.frameBufferSize.y;
 
-		// Calcaulte a AABB in YCoCg colour space for neibourghhood clipping.
-		vec3 upColour = texture(sampler2D(colour, linearSampler), uv + vec2(xDiff, 0.0f)).xyz;
-		vec3 downColour = texture(sampler2D(colour, linearSampler), uv + vec2(-xDiff, 0.0f)).xyz;
-		vec3 leftColour = texture(sampler2D(colour, linearSampler), uv + vec2(0.0f, -yDiff)).xyz;
-		vec3 rightColour = texture(sampler2D(colour, linearSampler), uv + vec2(0.0f, yDiff)).xyz;
-		upColour = calculateYCoCg(upColour);
-		downColour = calculateYCoCg(downColour);
-		leftColour = calculateYCoCg(leftColour);
-		rightColour = calculateYCoCg(rightColour);
-		const vec3 currentColourYCocg = calculateYCoCg(currentColour.xyz);
+	// Calcaulte a AABB in YCoCg colour space for neibourghhood clipping.
+	vec3 upColour = texture(sampler2D(history, linearSampler), uv + vec2(xDiff, 0.0f)).xyz;
+	vec3 downColour = texture(sampler2D(history, linearSampler), uv + vec2(-xDiff, 0.0f)).xyz;
+	vec3 leftColour = texture(sampler2D(history, linearSampler), uv + vec2(0.0f, -yDiff)).xyz;
+	vec3 rightColour = texture(sampler2D(history, linearSampler), uv + vec2(0.0f, yDiff)).xyz;
+	upColour = calculateYCoCg(upColour);
+	downColour = calculateYCoCg(downColour);
+	leftColour = calculateYCoCg(leftColour);
+	rightColour = calculateYCoCg(rightColour);
+	const vec3 currentColourYCocg = calculateYCoCg(currentColour.xyz);
 
-		vec3 aabbMin = vec3(100000.0f);
-		vec3 aabbMax = vec3(-100000.0f);
-		// Min
-		aabbMin = min(aabbMin, upColour);
-		aabbMin = min(aabbMin, downColour);
-		aabbMin = min(aabbMin, leftColour);
-		aabbMin = min(aabbMin, rightColour);
-		aabbMin = min(aabbMin, currentColourYCocg);
+	vec3 aabbMin = vec3(100000.0f);
+	vec3 aabbMax = vec3(-100000.0f);
+	// Min
+	aabbMin = min(aabbMin, upColour);
+	aabbMin = min(aabbMin, downColour);
+	aabbMin = min(aabbMin, leftColour);
+	aabbMin = min(aabbMin, rightColour);
+	aabbMin = min(aabbMin, currentColourYCocg);
 
-		// Max
-		aabbMax = max(aabbMax, upColour);
-		aabbMax = max(aabbMax, downColour);
-		aabbMax = max(aabbMax, leftColour);
-		aabbMax = max(aabbMax, rightColour);
-		aabbMax = max(aabbMax, currentColourYCocg);
+	// Max
+	aabbMax = max(aabbMax, upColour);
+	aabbMax = max(aabbMax, downColour);
+	aabbMax = max(aabbMax, leftColour);
+	aabbMax = max(aabbMax, rightColour);
+	aabbMax = max(aabbMax, currentColourYCocg);
 
-		vec4 previousColour = texture(sampler2D(history, linearSampler), previousUV);
+	vec4 previousColour = texture(sampler2D(history, linearSampler), previousUV);
 
-		// Clamp previous colour
-		vec3 previousColourYCoCg = calculateYCoCg(previousColour.xyz);
-		previousColourYCoCg = clip_aabb(aabbMin, aabbMax, previousColourYCoCg, currentColourYCocg);
+	// Clamp previous colour
+	vec3 previousColourYCoCg = calculateYCoCg(previousColour.xyz);
+	previousColourYCoCg = clip_aabb(aabbMin, aabbMax, previousColourYCoCg, currentColourYCocg);
 
-		previousColour.xyz = calculateRGB(previousColourYCoCg);
+	previousColour.xyz = calculateRGB(previousColourYCoCg);
 
 #if STATIC_BLEND_FACTOR
-		const float confidence = 0.9f;
+	const float confidence = 0.9f;
 #else
-		// Check how close (in depth) the two fragments are.
-		float confidence = (1.0f - (depthDif / DEPTH_EPSILON)) * 0.5f;
-		confidence *= 1.0f - (dot(abs(previousColourYCoCg.xy - currentColourYCocg.xy), vec2(1.0f)) / 2.0f);
-		confidence *= confidence;
+	// Check how close (in depth) the two fragments are.
+	float confidence = (1.0f - (depthDif / DEPTH_EPSILON)) * 0.5f;
+	confidence *= 1.0f - (dot(abs(previousColourYCoCg.xy - currentColourYCocg.xy), vec2(1.0f)) / 2.0f);
+	confidence *= confidence;
 #endif
 
-		newColour =  ((1.0f - confidence) * currentColour) + (confidence * previousColour);
-	}
+	vec4 newColour =  ((1.0f - confidence) * currentColour) + (confidence * previousColour);
 
 	if(gl_GlobalInvocationID.x <= gbufferSize.x && gl_GlobalInvocationID.y <= gbufferSize.y)
 			imageStore(newHistory, ivec2(gl_GlobalInvocationID.xy), newColour); 
