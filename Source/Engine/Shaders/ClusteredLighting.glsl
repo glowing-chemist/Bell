@@ -232,15 +232,17 @@ vec4 areaLightContribution(const Light light,
             vec3(t.w,   0, t.x)
         );
 
+    const vec3 rightVector = cross(vec3(0.0f, 1.0f, 0.0f), light.direction.xyz); 
+
     // Calculate the 4 corners of the square area light in WS.
     vec3 points[4];
-    points[0] = light.position.xyz + vec3(-light.misc / 2.0f, light.misc / 2.0f, 0.0f);
-    points[1] = light.position.xyz + vec3(light.misc / 2.0f, light.misc / 2.0f, 0.0f);
-    points[2] = light.position.xyz + vec3(light.misc / 2.0f, -light.misc / 2.0f, 0.0f);
-    points[3] = light.position.xyz + vec3(-light.misc / 2.0f, -light.misc / 2.0f, 0.0f);
+    points[0] = light.position.xyz + vec3(0.0, light.misc / 2.0f, 0.0f) - (light.misc / 2.0f) * rightVector;
+    points[1] = light.position.xyz + vec3(0.0f, light.misc / 2.0f, 0.0f) + (light.misc / 2.0f) * rightVector;
+    points[2] = light.position.xyz + vec3(0.0f, -light.misc / 2.0f, 0.0f) + (light.misc / 2.0f) * rightVector;
+    points[3] = light.position.xyz + vec3(0.0f, -light.misc / 2.0f, 0.0f) - (light.misc / 2.0f) * rightVector;
 
     vec3 spec = LTC_Evaluate(N, view, positionWS.xyz, Minv, points);
-    spec *= texture(sampler2D(ltc_amp, linearSampler), uv).w;
+    spec *= texture(sampler2D(ltc_amp, linearSampler), uv).x;
         
     const vec3 diff = LTC_Evaluate(N, view, positionWS.xyz, mat3(1), points); 
 
