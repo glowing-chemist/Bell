@@ -135,8 +135,15 @@ public:
 
 	struct Light
 	{
+        // Helpers to create the different light varieties.
+        static Light pointLight(const float4& position, const float4& albedo, const float intensity, const float radius);
+        static Light spotLight(const float4& position, const float4& direction, const float4& albedo, const float intensity, const float radius, const float angle);
+        static Light areaLight(const float4& position, const float4& direction, const float4& up, const float4& albedo, const float intensity, const float size);
+        static Light stripLight(const float4& position, const float4& direction, const float4& albedo, const float intensity, const float size);
+
         float4 mPosition;
         float4 mDirection;
+        float4 mUp; // Only relevant for area and line.
         float4 mAlbedo;
         float mIntensity;
 		float mRadius;

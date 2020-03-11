@@ -562,3 +562,61 @@ std::vector<Scene::Intersection> Scene::getIntersections(const InstanceID Ignore
 
 	return intersections;
 }
+
+
+Scene::Light Scene::Light::pointLight(const float4& position, const float4& albedo, const float intensity, const float radius)
+{
+    Scene::Light light{};
+    light.mPosition = position;
+    light.mAlbedo = albedo;
+    light.mIntensity = intensity;
+    light.mRadius = radius;
+    light.mType = LightType::Point;
+
+    return light;
+}
+
+
+Scene::Light Scene::Light::spotLight(const float4& position, const float4& direction, const float4& albedo, const float intensity, const float radius, const float angle)
+{
+    Scene::Light light{};
+    light.mPosition = position;
+    light.mDirection = direction;
+    light.mAlbedo = albedo;
+    light.mIntensity = intensity;
+    light.mRadius = radius;
+    light.mType = LightType::Spot;
+    light.mAngleSize = angle;
+
+    return light;
+}
+
+
+Scene::Light Scene::Light::areaLight(const float4& position, const float4& direction, const float4& up, const float4& albedo, const float intensity, const float size)
+{
+    Scene::Light light{};
+    light.mPosition = position;
+    light.mDirection = direction;
+    light.mUp = up;
+    light.mAlbedo = albedo;
+    light.mIntensity = intensity;
+    light.mType = LightType::Area;
+    light.mAngleSize = size;
+
+
+    return light;
+}
+
+
+Scene::Light Scene::Light::stripLight(const float4& position, const float4& direction, const float4& albedo, const float intensity, const float size)
+{
+    Scene::Light light{};
+    light.mPosition = position;
+    light.mDirection = direction;
+    light.mAlbedo = albedo;
+    light.mIntensity = intensity;
+    light.mType = LightType::Strip;
+    light.mAngleSize = size;
+
+    return light;
+}

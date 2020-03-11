@@ -19,6 +19,7 @@ struct Light
 {
 	vec4 position;
 	vec4 direction; // direction for spotlight.
+	vec4 up;
 	vec4 albedo;
 	float intensity;
 	float radius;
@@ -232,7 +233,7 @@ vec4 areaLightContribution(const Light light,
             vec3(t.w,   0, t.x)
         );
 
-    const vec3 rightVector = cross(vec3(0.0f, 1.0f, 0.0f), light.direction.xyz); 
+    const vec3 rightVector = cross(light.up.xyz, light.direction.xyz); 
 
     // Calculate the 4 corners of the square area light in WS.
     vec3 points[4];
