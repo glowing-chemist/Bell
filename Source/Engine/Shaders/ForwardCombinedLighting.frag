@@ -125,7 +125,19 @@ void main()
                 break;
             }
 
-            // TODO add more light types as and when supported.
+            case 1: // Spot.
+            {
+                vec4 lighting =  pointLightContribution(light, worldSpaceFragmentPos, viewDir, normal, metalness, roughness, baseAlbedo, DFG, linearSampler);
+                accum += lighting;  
+                break;
+            }
+
+            case 2: // Area.
+            {
+                vec4 lighting =  areaLightContribution(light, worldSpaceFragmentPos, viewDir, normal, metalness, roughness, baseAlbedo, ltcMat, ltcAmp, linearSampler);
+                accum += lighting;  
+                break;
+            }
 
             // Should never hit here.
             default:

@@ -592,7 +592,7 @@ Scene::Light Scene::Light::spotLight(const float4& position, const float4& direc
 }
 
 
-Scene::Light Scene::Light::areaLight(const float4& position, const float4& direction, const float4& up, const float4& albedo, const float intensity, const float size)
+Scene::Light Scene::Light::areaLight(const float4& position, const float4& direction, const float4& up, const float4& albedo, const float intensity, const float radius, const float size)
 {
     Scene::Light light{};
     light.mPosition = position;
@@ -601,6 +601,7 @@ Scene::Light Scene::Light::areaLight(const float4& position, const float4& direc
     light.mAlbedo = albedo;
     light.mIntensity = intensity;
     light.mType = LightType::Area;
+    light.mRadius = radius;
     light.mAngleSize = size;
 
 
@@ -608,7 +609,7 @@ Scene::Light Scene::Light::areaLight(const float4& position, const float4& direc
 }
 
 
-Scene::Light Scene::Light::stripLight(const float4& position, const float4& direction, const float4& albedo, const float intensity, const float size)
+Scene::Light Scene::Light::stripLight(const float4& position, const float4& direction, const float4& albedo, const float intensity, const float radius, const float size)
 {
     Scene::Light light{};
     light.mPosition = position;
@@ -616,6 +617,7 @@ Scene::Light Scene::Light::stripLight(const float4& position, const float4& dire
     light.mAlbedo = albedo;
     light.mIntensity = intensity;
     light.mType = LightType::Strip;
+    light.mRadius = radius;
     light.mAngleSize = size;
 
     return light;

@@ -237,10 +237,10 @@ vec4 areaLightContribution(const Light light,
 
     // Calculate the 4 corners of the square area light in WS.
     vec3 points[4];
-    points[0] = light.position.xyz + vec3(0.0, light.misc / 2.0f, 0.0f) - (light.misc / 2.0f) * rightVector;
-    points[1] = light.position.xyz + vec3(0.0f, light.misc / 2.0f, 0.0f) + (light.misc / 2.0f) * rightVector;
-    points[2] = light.position.xyz + vec3(0.0f, -light.misc / 2.0f, 0.0f) + (light.misc / 2.0f) * rightVector;
-    points[3] = light.position.xyz + vec3(0.0f, -light.misc / 2.0f, 0.0f) - (light.misc / 2.0f) * rightVector;
+    points[0] = light.position.xyz + (light.misc / 2.0f) * (-rightVector + light.up.xyz);
+    points[1] = light.position.xyz + (light.misc / 2.0f) * (rightVector + light.up.xyz);
+    points[2] = light.position.xyz + (light.misc / 2.0f) * (rightVector - light.up.xyz);
+    points[3] = light.position.xyz + (light.misc / 2.0f) * (-rightVector - light.up.xyz);
 
     vec3 spec = LTC_Evaluate(N, view, positionWS.xyz, Minv, points);
     spec *= texture(sampler2D(ltc_amp, linearSampler), uv).x;
@@ -294,5 +294,5 @@ bool areaLightAABBIntersection(const vec3 centre, const vec3 normal, const float
 	const vec3 toNear = normalize(aabb.topLeft.xyz - centre);
 	const vec3 toFar = normalize(aabb.bottomRight.xyz - centre);
 
-	return (dot(toNear, normal) > 0 || dot(toFar, normal) > 0) && sphereAABBIntersection(centre, radius, aabb);
+	return (dot(toNear, normal) >= 0 || dot(toFar, normal) >= 0) && sphereAABBIntersection(centre, radius, aabb);
 }

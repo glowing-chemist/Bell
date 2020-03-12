@@ -599,16 +599,10 @@ void Editor::drawLightMenu()
             }
         }
 
-        if (ImGui::Button("Add Light"))
+        if (ImGui::Button("Add point light"))
         {
             EditorLight newLight{};
-            const size_t id = mEngine.getScene().addLight({ float4(0.0f, 0.0f, 0.0f, 1.0f),
-                                                            float4(1.0f, 0.0f, 0.0f, 0.0f),
-                                                            float4(1.0f, 1.0f, 1.0f, 1.0f),
-                                                            2000.0f,
-                                                            300.0f,
-                                                            LightType::Point,
-                                                            45.0f });
+            const size_t id = mEngine.getScene().addLight(Scene::Light::pointLight(float4(0.0f, 0.0f, 0.0f, 1.0f), float4(1.0f), 20.0f, 300.0f));
             newLight.mId = id;
             newLight.mType = LightType::Point;
             newLight.mPosition = float4(0.0f, 0.0f, 0.0f, 1.0f);
@@ -616,10 +610,60 @@ void Editor::drawLightMenu()
             newLight.mColour[0] = 1.0f;
             newLight.mColour[1] = 1.0f;
             newLight.mColour[2] = 1.0f;
-            newLight.mInfluence = 2000;
+            newLight.mInfluence = 20;
 
             mLights.push_back(newLight);
         }
+
+        if (ImGui::Button("Add spot light"))
+        {
+            EditorLight newLight{};
+            const size_t id = mEngine.getScene().addLight(Scene::Light::spotLight(float4(0.0f, 0.0f, 0.0f, 1.0f), float4(1.0f, 0.0f, 0.0f, 0.0f), float4(1.0f), 20.0f, 300.0f, 45.0f));
+            newLight.mId = id;
+            newLight.mType = LightType::Spot;
+            newLight.mPosition = float4(0.0f, 0.0f, 0.0f, 1.0f);
+            newLight.mDirection = float4(1.0f, 0.0f, 0.0f, 1.0f);
+            newLight.mColour[0] = 1.0f;
+            newLight.mColour[1] = 1.0f;
+            newLight.mColour[2] = 1.0f;
+            newLight.mInfluence = 20;
+
+            mLights.push_back(newLight);
+        }
+
+        if (ImGui::Button("Add area light"))
+        {
+            EditorLight newLight{};
+            const size_t id = mEngine.getScene().addLight(Scene::Light::areaLight(float4(0.0f, 0.0f, 0.0f, 1.0f), float4(1.0f, 0.0f, 0.0f, 1.0), float4(0.0f, 1.0f, 0.0f, 0.0f), float4(1.0f), 20.0f, 300.0f, 50.0f));
+            newLight.mId = id;
+            newLight.mType = LightType::Area;
+            newLight.mPosition = float4(0.0f, 0.0f, 0.0f, 1.0f);
+            newLight.mDirection = float4(1.0f, 0.0f, 0.0f, 1.0f);
+            newLight.mColour[0] = 1.0f;
+            newLight.mColour[1] = 1.0f;
+            newLight.mColour[2] = 1.0f;
+            newLight.mInfluence = 20;
+
+            mLights.push_back(newLight);
+        }
+
+        // CUrrentlt not implemented.
+        /*if (ImGui::Button("Add strip light"))
+        {
+            EditorLight newLight{};
+            const size_t id = mEngine.getScene().addLight(Scene::Light::stripLight(float4(0.0f, 0.0f, 0.0f, 1.0f), float4(0.0f, 1.0f, 0.0f, 0.0f), float4(1.0f), 20.0f, 300.0f, 50.0f));
+            newLight.mId = id;
+            newLight.mType = LightType::Strip;
+            newLight.mPosition = float4(0.0f, 0.0f, 0.0f, 1.0f);
+            newLight.mDirection = float4(1.0f, 0.0f, 0.0f, 1.0f);
+            newLight.mColour[0] = 1.0f;
+            newLight.mColour[1] = 1.0f;
+            newLight.mColour[2] = 1.0f;
+            newLight.mInfluence = 20;
+
+            mLights.push_back(newLight);
+        }*/
+
         ImGui::TreePop();
     }
 }
