@@ -423,7 +423,10 @@ void Editor::pumpInputQueue()
 
         bool pressedEscape = glfwGetKey(mWindow, GLFW_KEY_ESCAPE) == GLFW_PRESS;
         if (pressedEscape)
+        {
             mInFreeFlyMode = false;
+            glfwSetInputMode(mWindow, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+        }
 
         if (mInFreeFlyMode)
         {
@@ -519,7 +522,11 @@ void Editor::drawAssistantWindow()
        }
 
        ImGui::Checkbox("Debug texture picker", &mShowDebugTexturePicker);
+       const bool previouseFlyMode = mInFreeFlyMode;
        ImGui::Checkbox("Camera free fly", &mInFreeFlyMode);
+
+       if(mInFreeFlyMode && !previouseFlyMode)
+           glfwSetInputMode(mWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
        drawLightMenu();
     }
