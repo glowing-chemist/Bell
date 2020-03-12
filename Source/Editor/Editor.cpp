@@ -582,15 +582,15 @@ void Editor::drawLightMenu()
             if (ImGui::TreeNode(lightName))
             {
                 EditorLight& light = mLights[i];
-                Scene::Light& sceneLight = mEngine.getScene().getLight(light.mId);
 
                 ImGui::Text("Position: X %f Y %f Z %f", light.mPosition.x, light.mPosition.y, light.mPosition.z);
                 ImGui::Text("Direction: X %f Y %f Z %f", light.mDirection.x, light.mDirection.y, light.mDirection.z);
                 ImGui::ColorEdit3("Colour", light.mColour, ImGuiColorEditFlags_InputRGB);
 
-                drawGuizmo(light, viewMatrix, projectionMatrix);
+                drawGuizmo(light, viewMatrix, projectionMatrix, ImGuizmo::OPERATION::ROTATE);
 
                 // Write back light updates to the scenes light buffer.
+                Scene::Light& sceneLight = mEngine.getScene().getLight(light.mId);
                 sceneLight.mPosition = light.mPosition;
                 sceneLight.mDirection = light.mDirection;
                 sceneLight.mAlbedo = float4(light.mColour[0], light.mColour[1], light.mColour[2], 1.0f);

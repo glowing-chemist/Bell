@@ -21,6 +21,8 @@ ForwardCombinedLightingTechnique::ForwardCombinedLightingTechnique(Engine* eng) 
 
 	mTask.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
 	mTask.addInput(kDFGLUT, AttachmentType::Texture2D);
+	mTask.addInput(kLTCMat, AttachmentType::Texture2D);
+	mTask.addInput(kLTCAmp, AttachmentType::Texture2D);
 	mTask.addInput(kActiveFroxels, AttachmentType::Texture2D);
 	mTask.addInput(kSkyBox, AttachmentType::Texture2D);
 	mTask.addInput(kConvolvedSkyBox, AttachmentType::Texture2D);

@@ -22,25 +22,27 @@ layout(set = 0, binding = 0) uniform UniformBufferObject {
     CameraBuffer camera;    
 }; 
 layout(set = 0, binding = 1) uniform texture2D DFG;
-layout(set = 0, binding = 2) uniform utexture2D activeFroxels;
-layout(set = 0, binding = 3) uniform textureCube skyBox;
-layout(set = 0, binding = 4) uniform textureCube ConvolvedSkybox;
-layout(set = 0, binding = 5) uniform sampler linearSampler;
-layout(set = 0, binding = 6) uniform sampler pointSampler;
+layout(set = 0, binding = 2) uniform texture2D ltcMat;
+layout(set = 0, binding = 3) uniform texture2D ltcAmp;
+layout(set = 0, binding = 4) uniform utexture2D activeFroxels;
+layout(set = 0, binding = 5) uniform textureCube skyBox;
+layout(set = 0, binding = 6) uniform textureCube ConvolvedSkybox;
+layout(set = 0, binding = 7) uniform sampler linearSampler;
+layout(set = 0, binding = 8) uniform sampler pointSampler;
 
 // Light lists
-layout(std430, set = 0, binding = 7) buffer readonly sparseFroxels
+layout(std430, set = 0, binding = 9) buffer readonly sparseFroxels
 {
     uvec2 sparseFroxelList[];
 };
 
-layout(std430, set = 0,  binding = 8) buffer readonly froxelIndicies
+layout(std430, set = 0,  binding = 10) buffer readonly froxelIndicies
 {
     uint indicies[];
 };
 
 #ifdef Shadow_Map
-layout(set = 0, binding = 9) uniform texture2D shadowMap;
+layout(set = 0, binding = 11) uniform texture2D shadowMap;
 #endif
 
 // an unbound array of matyerial parameter textures
@@ -127,15 +129,13 @@ void main()
 
             case 1: // Spot.
             {
-                vec4 lighting =  pointLightContribution(light, worldSpaceFragmentPos, viewDir, normal, metalness, roughness, baseAlbedo, DFG, linearSampler);
-                accum += lighting;  
+                lighting +=  pointLightContribution(light, positionWS, viewDir, normal, metalness, roughness, baseAlbedo.xyz, f_ab);
                 break;
             }
 
             case 2: // Area.
             {
-                vec4 lighting =  areaLightContribution(light, worldSpaceFragmentPos, viewDir, normal, metalness, roughness, baseAlbedo, ltcMat, ltcAmp, linearSampler);
-                accum += lighting;  
+                lighting +=  areaLightContribution(light, positionWS, viewDir, normal, metalness, roughness, baseAlbedo.xyz, ltcMat, ltcAmp, linearSampler);
                 break;
             }
 
