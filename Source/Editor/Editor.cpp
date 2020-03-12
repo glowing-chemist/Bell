@@ -267,7 +267,8 @@ Editor::Editor(GLFWwindow* window) :
     mRegisteredNodes{0},
 	mSetupNeeded(true),
     mEngine{mWindow},
-    mInProgressScene{"In construction"}
+    mInProgressScene{"In construction"},
+    mLightOperationMode{ImGuizmo::OPERATION::TRANSLATE}
 {
     ImGui::CreateContext();
 
@@ -420,6 +421,11 @@ void Editor::pumpInputQueue()
 			camera.moveLeft(4.5f);
 		if (glfwGetKey(mWindow, GLFW_KEY_D) == GLFW_PRESS)
 			camera.moveRight(4.5f);
+
+        if (glfwGetKey(mWindow, GLFW_KEY_R) == GLFW_PRESS)
+            mLightOperationMode = ImGuizmo::OPERATION::ROTATE;
+        else if (glfwGetKey(mWindow, GLFW_KEY_T) == GLFW_PRESS)
+            mLightOperationMode = ImGuizmo::OPERATION::TRANSLATE;
 
         bool pressedEscape = glfwGetKey(mWindow, GLFW_KEY_ESCAPE) == GLFW_PRESS;
         if (pressedEscape)
@@ -594,7 +600,7 @@ void Editor::drawLightMenu()
                 ImGui::Text("Direction: X %f Y %f Z %f", light.mDirection.x, light.mDirection.y, light.mDirection.z);
                 ImGui::ColorEdit3("Colour", light.mColour, ImGuiColorEditFlags_InputRGB);
 
-                drawGuizmo(light, viewMatrix, projectionMatrix, ImGuizmo::OPERATION::ROTATE);
+                drawGuizmo(light, viewMatrix, projectionMatrix, mLightOperationMode);
 
                 // Write back light updates to the scenes light buffer.
                 Scene::Light& sceneLight = mEngine.getScene().getLight(light.mId);
@@ -676,18 +682,27 @@ void Editor::drawLightMenu()
 }
 
 
-void Editor::drawGuizmo(EditorLight& light, const glm::mat4 &view, const glm::mat4 &proj)
+void Editor::drawGuizmo(EditorLight& light, const glm::mat4 &view, const glm::mat4 &proj, const ImGuizmo::OPERATION op)
 {
-    glm::mat4 lightTransformation = glm::translate(glm::mat4(1.0f), float3(light.mPosition));
+    glm::mat4 lightTransformation(1.0f);
+
+    if (op == ImGuizmo::OPERATION::TRANSLATE)
+        lightTransformation = glm::translate(lightTransformation, float3(light.mPosition.x, light.mPosition.y, light.mPosition.z));
 
     ImGuizmo::Enable(true);
     ImGuizmo::Manipulate(   glm::value_ptr(view),
                             glm::value_ptr(proj),
-                            ImGuizmo::OPERATION::TRANSLATE,
+                            op,
                             ImGuizmo::MODE::WORLD,
                             glm::value_ptr(lightTransformation));
 
-    light.mPosition = lightTransformation[3];
+    if(op == ImGuizmo::OPERATION::TRANSLATE)
+        light.mPosition = lightTransformation[3];
+    else if (op == ImGuizmo::OPERATION::ROTATE)
+    {
+        light.mDirection = lightTransformation * light.mDirection;
+        light.mUp = lightTransformation * light.mUp;
+    }
 }
 
 

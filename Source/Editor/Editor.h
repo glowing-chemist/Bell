@@ -5,6 +5,7 @@
 #include "Engine/Scene.h"
 #include "imguifilebrowser.h"
 #include "ImGuiNodeEditor.h"
+#include "ImGuizmo.h"
 
 #include "GLFW/glfw3.h"
 
@@ -15,6 +16,7 @@ struct EditorLight
     LightType mType;
     float4 mPosition;
     float4 mDirection;
+    float4 mUp;
     float mColour[3];
     size_t mInfluence;
 };
@@ -53,7 +55,7 @@ private:
     void drawAssistantWindow();
     void drawDebugTexturePicker(const std::vector<std::string>& textures);
     void drawLightMenu();
-    void drawGuizmo(EditorLight&, const glm::mat4& view, const glm::mat4& proj);
+    void drawGuizmo(EditorLight&, const glm::mat4& view, const glm::mat4& proj, const ImGuizmo::OPERATION mode);
 
     void drawPassContextMenu(const PassType);
 
@@ -92,6 +94,7 @@ private:
 
     std::vector<EditorLight> mLights;
     EditorLight mShadowingLight;
+    ImGuizmo::OPERATION mLightOperationMode;
 };
 
 #endif
