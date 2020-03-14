@@ -29,8 +29,8 @@ struct Light
 
 struct AABB
 {
-	vec4 topLeft; // smallest
-	vec4 bottomRight; // largest
+	vec4 min; // smallest
+	vec4 max; // largest
 };
 
 
@@ -261,16 +261,16 @@ vec4 areaLightContribution(const Light light,
 bool sphereAABBIntersection(const vec3 centre, const float radius, const AABB aabb)
 {
 	const float r2 = radius * radius;
-	const bvec3 lessThan = bvec3(centre.x < aabb.topLeft.x,
-							centre.y < aabb.topLeft.y,
-							centre.z < aabb.topLeft.z);
-	const vec3 lessDistance = aabb.topLeft.xyz - centre;
+	const bvec3 lessThan = bvec3(centre.x < aabb.min.x,
+							centre.y < aabb.min.y,
+							centre.z < aabb.min.z);
+	const vec3 lessDistance = aabb.min.xyz - centre;
 	vec3 dmin = mix(vec3(0.0f), lessDistance * lessDistance, lessThan);
 
-	const bvec3 greaterThan = bvec3(centre.x > aabb.bottomRight.x,
-								centre.y > aabb.bottomRight.y,
-								centre.z > aabb.bottomRight.z);
-	const vec3 greaterDistance = centre - aabb.bottomRight.xyz;
+	const bvec3 greaterThan = bvec3(centre.x > aabb.max.x,
+								centre.y > aabb.max.y,
+								centre.z > aabb.max.z);
+	const vec3 greaterDistance = centre - aabb.max.xyz;
 	dmin += mix(vec3(0.0f), greaterDistance * greaterDistance, greaterThan);
 
 	// Sum the results.
@@ -280,19 +280,31 @@ bool sphereAABBIntersection(const vec3 centre, const float radius, const AABB aa
 }
 
 
+bool AABBAABBIntersection(const AABB a, const AABB b)
+{
+	return (a.min.x <= b.max.x && a.max.x >= b.min.x) &&
+         (a.min.y <= b.max.y && a.max.y >= b.min.y) &&
+         (a.min.z <= b.max.z && a.max.z >= b.min.z);
+}
+
+
 bool spotLightAABBIntersection(const vec3 centre, const vec3 direction, const float angle, const float radius, const AABB aabb)
 {
-	const vec3 toNear = normalize(aabb.topLeft.xyz - centre);
-	const vec3 toFar = normalize(aabb.bottomRight.xyz - centre);
+	const vec3 toNear = normalize(aabb.min.xyz - centre);
+	const vec3 toFar = normalize(aabb.max.xyz - centre);
 
 	return ((acos(dot(toNear, direction)) < radians(angle)) || (acos(dot(toFar, direction)) < radians(angle))) && sphereAABBIntersection(centre, radius, aabb);
 }
 
 
-bool areaLightAABBIntersection(const vec3 centre, const vec3 normal, const float radius, const AABB aabb)
+bool areaLightAABBIntersection(const vec3 centre, const vec3 normal, const vec3 up, const float radius, const AABB aabb)
 {
-	const vec3 toNear = normalize(aabb.topLeft.xyz - centre);
-	const vec3 toFar = normalize(aabb.bottomRight.xyz - centre);
+	const vec3 right = cross(up, normal);
+	const vec3 minCorner = centre + (radius * 0.5f * (right - up));
+	const vec3 maxCorner = centre + (radius * 0.5f * (up - right)) + normal * radius;
 
-	return (dot(toNear, normal) >= 0 || dot(toFar, normal) >= 0) && sphereAABBIntersection(centre, radius, aabb);
+	const vec3 aabbMin = min(minCorner, maxCorner);
+	const vec3 aabbMax = max(maxCorner, minCorner);
+
+	return AABBAABBIntersection(AABB(vec4(aabbMin, 1.0f), vec4(aabbMax, 1.0f)), aabb);
 }
