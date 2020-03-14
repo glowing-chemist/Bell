@@ -103,7 +103,10 @@ void main()
 #endif
 
 	const float NoV = dot(normal, viewDir);
-    const vec2 f_ab = texture(sampler2D(DFG, linearSampler), vec2(NoV, roughness)).xy;
+    mat3 minV;
+    float LTCAmp;
+    vec2 f_ab;
+    initializeLightState(minV, LTCAmp, f_ab, DFG, ltcMat, ltcAmp, linearSampler, NoV, roughness);
 
     const vec3 diffuse = calculateDiffuse(baseAlbedo.xyz, metalness, irradiance);
     const vec3 specular = calculateSpecular(roughness * roughness, normal, viewDir, metalness, baseAlbedo.xyz, radiance, f_ab);
@@ -135,7 +138,7 @@ void main()
 
             case 2: // Area.
             {
-                lighting +=  areaLightContribution(light, positionWS, viewDir, normal, metalness, roughness, baseAlbedo.xyz, ltcMat, ltcAmp, linearSampler);
+                lighting +=  areaLightContribution(light, positionWS, viewDir, normal, metalness, roughness, baseAlbedo.xyz, minV, LTCAmp);
                 break;
             }
 

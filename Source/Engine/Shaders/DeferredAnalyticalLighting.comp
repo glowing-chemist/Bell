@@ -74,6 +74,12 @@ void main()
     const uint froxelIndex = texture(usampler2D(activeFroxels, pointSampler), uv).x;
     const uvec2 lightListIndicies = sparseFroxelList[froxelIndex];
 
+    // Initialize needed lighting params.
+    mat3 minV;
+    float LTCAmp;
+    vec2 f_ab;
+    initializeLightState(minV, LTCAmp, f_ab, DFG, ltcMat, ltcAmp, linearSampler, dot(normal, viewDir), roughness);
+
     vec4 accum = vec4(0.0f);
 
     for(uint i = 0; i < lightListIndicies.y; ++i)
@@ -86,21 +92,21 @@ void main()
 			case 0: // Point.
 			{
 
-    			vec4 lighting =  pointLightContribution(light, worldSpaceFragmentPos, viewDir, normal, metalness, roughness, baseAlbedo, DFG, linearSampler);
+    			vec4 lighting =  pointLightContribution(light, worldSpaceFragmentPos, viewDir, normal, metalness, roughness, baseAlbedo, f_ab);
     			accum += lighting;
 				break;
 			}
 
 			case 1: // Spot.
 			{
-				vec4 lighting =  pointLightContribution(light, worldSpaceFragmentPos, viewDir, normal, metalness, roughness, baseAlbedo, DFG, linearSampler);
+				vec4 lighting =  pointLightContribution(light, worldSpaceFragmentPos, viewDir, normal, metalness, roughness, baseAlbedo, f_ab);
     			accum += lighting;	
 				break;
 			}
 
 			case 2: // Area.
 			{
-				vec4 lighting =  areaLightContribution(light, worldSpaceFragmentPos, viewDir, normal, metalness, roughness, baseAlbedo, ltcMat, ltcAmp, linearSampler);
+				vec4 lighting =  areaLightContribution(light, worldSpaceFragmentPos, viewDir, normal, metalness, roughness, baseAlbedo, minV, LTCAmp);
     			accum += lighting;	
 				break;
 			}

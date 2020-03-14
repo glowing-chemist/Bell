@@ -124,6 +124,21 @@ AABB getFroxelAABB(const uvec3 froxelPosition, const float FOV, const vec2 frame
 }
 
 
+void initializeLightState(out mat3 minv, out float ltcAmp, out vec2 f_ab, texture2D DFG, texture2D LTCMat, texture2D LTCAmp, sampler linearSampler, const float NoV, const float R)
+{
+	f_ab = texture(sampler2D(DFG, linearSampler), vec2(NoV, R)).xy;
+
+	const vec4 t = texture(sampler2D(LTCMat, linearSampler), vec2(R, NoV));
+    minv = mat3(
+            	vec3(  1,   0, t.y),
+            	vec3(  0, t.z,   0),
+            	vec3(t.w,   0, t.x)
+        		);
+
+    ltcAmp = texture(sampler2D(LTCAmp, linearSampler), vec2(R, NoV)).x;
+}
+
+
 vec4 pointLightContribution(const Light light, 
 							const vec4 positionWS, 
 							const vec3 view,
@@ -145,22 +160,6 @@ vec4 pointLightContribution(const Light light,
     return vec4(diffuse + specular, 1.0f);
 }
 
-
-vec4 pointLightContribution(const Light light, 
-							const vec4 positionWS, 
-							const vec3 view,
-							const vec3 N,
-							const float metalness, 
-							const float roughness, 
-							const vec3 baseAlbedo, 
-							texture2D DFG, 
-							sampler linearSampler)
-{
-    const float NoH = dot(N, view);
-    const vec2 f_ab = texture(sampler2D(DFG, linearSampler), vec2(NoH, roughness)).xy;
-
-    return pointLightContribution(light, positionWS, view, N, metalness, roughness, baseAlbedo, f_ab);
-}
 
 // Area light functions.
 float IntegrateEdge(vec3 v1, vec3 v2)
@@ -219,20 +218,9 @@ vec4 areaLightContribution(const Light light,
 							const float metalness, 
 							const float roughness, 
 							const vec3 baseAlbedo, 
-							texture2D ltc_mat,
-							texture2D ltc_amp, 
-							sampler linearSampler)
+							const mat3 Minv,
+							const float amp)
 {
-	const float theta = dot(N, view);
-    const vec2 uv = vec2(roughness, theta);
-
-    const vec4 t = texture(sampler2D(ltc_mat, linearSampler), uv);
-    const mat3 Minv = mat3(
-            vec3(  1,   0, t.y),
-            vec3(  0, t.z,   0),
-            vec3(t.w,   0, t.x)
-        );
-
     const vec3 rightVector = cross(light.up.xyz, light.direction.xyz); 
 
     // Calculate the 4 corners of the square area light in WS.
@@ -243,7 +231,7 @@ vec4 areaLightContribution(const Light light,
     points[3] = light.position.xyz + (light.misc / 2.0f) * (-rightVector - light.up.xyz);
 
     vec3 spec = LTC_Evaluate(N, view, positionWS.xyz, Minv, points);
-    spec *= texture(sampler2D(ltc_amp, linearSampler), uv).x;
+    spec *= amp;
         
     const vec3 diff = LTC_Evaluate(N, view, positionWS.xyz, mat3(1), points); 
 
