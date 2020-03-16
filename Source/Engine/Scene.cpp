@@ -189,6 +189,7 @@ void Scene::addLights(const aiScene* scene)
         sceneLight.mDirection = float4(light->mDirection.x, light->mDirection.y, light->mDirection.z, 1.0f);
         sceneLight.mAlbedo = float4(light->mColorDiffuse.r, light->mColorDiffuse.g, light->mColorDiffuse.b, 1.0f);
         sceneLight.mUp = float4(light->mUp.x, light->mUp.y, light->mUp.z, 1.0f);
+        sceneLight.mAngleSize = 45.0f;
 
         mLights.push_back(sceneLight);
     }
