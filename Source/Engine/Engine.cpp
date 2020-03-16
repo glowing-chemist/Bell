@@ -403,7 +403,17 @@ void Engine::execute(RenderGraph& graph)
 
 void Engine::recordScene()
 {
-    const std::vector<const Scene::MeshInstance*> meshes = mCurrentScene.getViewableMeshes(mCurrentScene.getCamera().getFrustum());
+    std::vector<const Scene::MeshInstance*> meshes = mCurrentScene.getViewableMeshes(mCurrentScene.getCamera().getFrustum());
+    std::sort(meshes.begin(), meshes.end(), [camera = mCurrentScene.getCamera()] (const Scene::MeshInstance* lhs, const Scene::MeshInstance* rhs)
+    {
+        const float3 centralLeft = lhs->mMesh->getAABB().getCentralPoint();
+        const float leftDistance = glm::length(centralLeft - camera.getPosition());
+
+        const float3 centralright = rhs->mMesh->getAABB().getCentralPoint();
+        const float rightDistance = glm::length(centralright - camera.getPosition());
+
+        return leftDistance < rightDistance;
+    });
 
     //BELL_LOG_ARGS("Meshes %d", meshes.size());
 

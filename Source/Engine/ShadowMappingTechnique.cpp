@@ -58,7 +58,17 @@ void ShadowMappingTechnique::render(RenderGraph& graph, Engine* eng, const std::
     mResolveTask.clearCalls();
 
     const Frustum lightFrustum = eng->getScene().getShadowingLightFrustum();
-    const std::vector<const Scene::MeshInstance*> meshes = eng->getScene().getViewableMeshes(lightFrustum);
+    std::vector<const Scene::MeshInstance*> meshes = eng->getScene().getViewableMeshes(lightFrustum);
+    std::sort(meshes.begin(), meshes.end(), [lightPosition = eng->getScene().getShadowingLight().mPosition] (const Scene::MeshInstance* lhs, const Scene::MeshInstance* rhs)
+    {
+        const float3 centralLeft = lhs->mMesh->getAABB().getCentralPoint();
+        const float leftDistance = glm::length(centralLeft - float3(lightPosition));
+
+        const float3 centralright = rhs->mMesh->getAABB().getCentralPoint();
+        const float rightDistance = glm::length(centralright - float3(lightPosition));
+
+        return leftDistance < rightDistance;
+    });
 
     for (const auto& mesh : meshes)
     {

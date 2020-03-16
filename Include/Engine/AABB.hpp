@@ -64,6 +64,9 @@ public:
     const float3& getBottom() const
     { return mMinimum; }
 
+    float3 getCentralPoint() const
+    { return mMinimum + (mMaximum - mMinimum) * 0.5f; }
+
 private:
 
     float3 mMinimum;
