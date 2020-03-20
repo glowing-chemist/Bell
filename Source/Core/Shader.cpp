@@ -7,7 +7,6 @@
 #include <iterator>
 
 #include "SPIRV/GlslangToSpv.h"
-#include "StandAlone/DirStackFileIncluder.h"
 
 #ifdef VULKAN
 #include "Core/Vulkan/VulkanShader.hpp"
@@ -120,7 +119,63 @@ namespace
 			/* .generalSamplerIndexing = */ 1,
 			/* .generalVariableIndexing = */ 1,
 			/* .generalConstantMatrixVectorIndexing = */ 1,
-		}};
+		}
+	};
+
+	class ShaderIncluder : public glslang::TShader::Includer
+	{
+	public:
+
+		virtual IncludeResult* includeSystem(const char*, const char*, size_t) override final
+		{
+			BELL_TRAP; // Shouldn't end up here.
+			return nullptr;
+		}
+
+		virtual IncludeResult* includeLocal(const char* headerName, const char*, size_t) override final
+		{
+			const std::string headerPath = "./Shaders/" + std::string(headerName);
+			auto it = mHeaderMap.find(headerPath);
+			if (it != mHeaderMap.end())
+			{
+				return &(it->second.result);
+			}
+			else
+			{
+				std::ifstream fileStream(headerPath);
+				std::string data{(std::istreambuf_iterator<char>(fileStream)),
+					std::istreambuf_iterator<char>()};
+
+				BELL_ASSERT(data.c_str(), "Unable to read file");
+
+				IncludeInfo entry{ IncludeResult{ headerPath, data.c_str(), data.size(), nullptr }, std::move(data) };
+				auto newEntry = mHeaderMap.insert({ headerPath, std::move(entry) }).first;
+
+				return &newEntry->second.result;
+			}
+		}
+
+		virtual void releaseInclude(IncludeResult*)
+		{
+			// Don't need to do anything here, just free all resources at the end.
+		}
+
+		struct IncludeInfo
+		{
+			IncludeResult result;
+			std::string data;
+		};
+		const std::map<std::string, IncludeInfo>& getIncludedFiles() const
+		{
+			return mHeaderMap;
+		}
+
+	private:
+
+		std::map<std::string, IncludeInfo> mHeaderMap;
+
+	};
+
 }
 
 
@@ -159,14 +214,47 @@ bool ShaderBase::compile(const std::string& prefix)
 
 	std::string preProcessedShader;
 
-	DirStackFileIncluder includer{};
-	includer.pushExternalLocalDirectory(fs::absolute(mFilePath.parent_path()).string());
+	// Generate the spirv file path.
+	std::hash<std::string> prefixHasher{};
+	const uint64_t prefixHash = prefixHasher(prefix);
+	std::filesystem::path spirvFile = mFilePath;
+	spirvFile += '.';
+	spirvFile += std::to_string(prefixHash);
+	spirvFile += ".spv";
 
-	if(!shader.preprocess(&Resources, 100, ENoProfile, false, false, messages, &preProcessedShader, includer))
+	ShaderIncluder includer{};
+	if (!shader.preprocess(&Resources, 100, ENoProfile, false, false, messages, &preProcessedShader, includer))
 	{
 		BELL_LOG_ARGS("Shader failed to preprocess: %s", shader.getInfoLog())
 
-		return false;
+			return false;
+	}
+
+	// Check if we already have a valid spirv module on disk, if we do just load it instead.
+	if (std::filesystem::exists(spirvFile))
+	{
+		bool upToDate = true;
+		const auto spirvWriteTime = std::filesystem::last_write_time(spirvFile);
+		const auto sourceWriteTime = std::filesystem::last_write_time(mFilePath);
+		upToDate = upToDate && (spirvWriteTime >= sourceWriteTime);
+		for (const auto& [path, entry] : includer.getIncludedFiles())
+		{
+			upToDate = upToDate && (spirvWriteTime >= std::filesystem::last_write_time(path));
+		}
+
+		if (upToDate)
+		{
+			const auto fileSize = std::filesystem::file_size(spirvFile);
+			BELL_ASSERT((fileSize % sizeof(unsigned int)) == 0, "Incorrect file size")
+			mSPIRV.resize(fileSize / sizeof(unsigned int));
+
+			FILE* spirvHandle = fopen(spirvFile.string().c_str(), "rb");
+			fread(mSPIRV.data(), sizeof(unsigned int), mSPIRV.size(), spirvHandle);
+			fclose(spirvHandle);
+
+			mCompiled = true;
+			return true;
+		}
 	}
 
 	const char* preprocessCString = preProcessedShader.c_str();
@@ -188,6 +276,11 @@ bool ShaderBase::compile(const std::string& prefix)
     spv::SpvBuildLogger logger;
     glslang::SpvOptions spvOptions;
     glslang::GlslangToSpv(*program.getIntermediate(mShaderStage), mSPIRV, &logger, &spvOptions);
+
+	// Write the spirv to disk so we don't have to compile it next time.
+	FILE* spirvHandle = fopen(spirvFile.string().c_str(), "wb");
+	fwrite(mSPIRV.data(), sizeof(unsigned int), mSPIRV.size(), spirvHandle);
+	fclose(spirvHandle);
 
     mCompiled = true;
 
