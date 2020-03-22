@@ -5,20 +5,20 @@
 #include "UniformBuffers.glsl"
 
 
-layout(location = 0) in vec4 position;
-layout(location = 1) in vec2 uv;
-layout(location = 2) in vec4 normals;
+layout(location = 0) in float4 position;
+layout(location = 1) in float2 uv;
+layout(location = 2) in float4 normals;
 layout(location = 3) in uint material;
 
 
-layout(location = 0) out vec3 outNormals;
+layout(location = 0) out float3 outNormals;
 layout(location = 1) out uint outMaterialID;
-layout(location = 2) out vec2 outUv;
-layout(location = 3) out vec2 outVelocity;
+layout(location = 2) out float2 outUv;
+layout(location = 3) out float2 outVelocity;
 
 
 out gl_PerVertex {
-    vec4 gl_Position;
+    float4 gl_Position;
 };
 
 
@@ -34,17 +34,17 @@ layout(binding = 1) uniform Uniformtransformation
 
 void main()
 {
-	const mat4 transFormation = camera.viewProj * instanceTransformations[gl_InstanceID].transformation;
-	vec4 transformedPosition = transFormation * position;
+	const float4x4 transFormation = camera.viewProj * instanceTransformations[gl_InstanceID].transformation;
+	float4 transformedPosition = transFormation * position;
 
 	gl_Position = transformedPosition;
-	outNormals = mat3(instanceTransformations[gl_InstanceID].transformation) * vec3(normals.xyz);
+	outNormals = float3x3(instanceTransformations[gl_InstanceID].transformation) * float3(normals.xyz);
 	outMaterialID = material;
 	outUv = uv;
 
 	// Calculate screen space velocity.
 	transformedPosition /= transformedPosition.w;
-	vec4 previousPosition = camera.previousFrameViewProj * instanceTransformations[gl_InstanceID].meshEntry.mPreviousTransformation * position;
+	float4 previousPosition = camera.previousFrameViewProj * instanceTransformations[gl_InstanceID].meshEntry.mPreviousTransformation * position;
 	previousPosition /= previousPosition.w;
 	outVelocity = previousPosition.xy - transformedPosition.xy;
 }

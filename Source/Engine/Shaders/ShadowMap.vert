@@ -4,13 +4,13 @@
 
 #include "UniformBuffers.glsl"
 
-layout(location = 0) in vec4 position;
-layout(location = 1) in vec2 uv;
-layout(location = 2) in vec4 normals;
+layout(location = 0) in float4 position;
+layout(location = 1) in float2 uv;
+layout(location = 2) in float4 normals;
 layout(location = 3) in uint material;
 
-layout(location = 0) out vec4 positionVS;
-layout(location = 1) out vec2 outUV;
+layout(location = 0) out float4 positionVS;
+layout(location = 1) out float2 outUV;
 layout(location = 2) out uint outMaterial;
 
 
@@ -21,8 +21,8 @@ layout(set = 0, binding = 0) uniform UniformBufferObject
 
 layout(push_constant) uniform pushModelMatrix
 {
-	mat4 mesh;
-	mat4 previousMesh;
+	float4x4 mesh;
+	float4x4 previousMesh;
 } push_constants;
 
 

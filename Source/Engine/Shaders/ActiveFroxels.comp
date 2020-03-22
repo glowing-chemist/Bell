@@ -1,81 +1,65 @@
-#version 450
-#extension GL_ARB_separate_shader_objects : enable
-#extension GL_GOOGLE_include_directive : enable
-#extension GL_KHR_shader_subgroup_basic : enable
-#extension GL_KHR_shader_subgroup_arithmetic : enable
 
+#include "ClusteredLighting.hlsl"
+#include "UniformBuffers.hlsl"
 
-#include "ClusteredLighting.glsl"
-#include "UniformBuffers.glsl"
+[[vk::binding(0)]]
+RWTexture2D<uint> activeFroxels;
 
-layout(r32ui, binding = 0) uniform writeonly uimage2D activeFroxels;
+[[vk::binding(1)]]
+Texture2D<float> depth;
 
-layout(binding = 1) uniform texture2D depth;
+[[vk::binding(2)]]
+ConstantBuffer<CameraBuffer> camera;
 
-layout(binding = 2) uniform cameraBuffer
+[[vk::binding(3)]]
+SamplerState linearSampler;
+
+[[vk::binding(4)]] 
+AppendStructuredBuffer<uint4> visibleFroxles;
+
+groupshared uint froxelBitSet;
+
+[numthreads(32, 32, 1)]
+void main(	uint localIndex : SV_GroupIndex, 
+			uint3 globalIndex : SV_DispatchThreadID)
 {
-	CameraBuffer camera;
-};
-
-layout(binding = 3) uniform sampler linearSampler;
-
-layout(std430, binding = 4) buffer visibleFroxlesCounter
-{
-	uint counter;
-};
-
-layout(std430, binding = 5) buffer visibleFroxles
-{
-	uvec4 froxel[];
-};
-
-
-layout(local_size_x = 32, local_size_y = 32, local_size_z = 1) in;
-
-shared uint froxelBitSet;
-
-void main()
-{
-	if(gl_LocalInvocationIndex == 0)
+	if(localIndex == 0)
 	{
 		froxelBitSet = 0;
 	}
 
-	vec2 size = camera.frameBufferSize;
+	float2 size = camera.frameBufferSize;
 
-	vec2 uv = vec2(gl_GlobalInvocationID.xy) / size;
+	float2 uv = float2(globalIndex.xy) / size;
 
-	float depth = texture(sampler2D(depth, linearSampler), uv).x;
+	float depth = depth.Sample(linearSampler, uv);
 
-	uvec3 froxelPos = getFroxelPosition(gl_GlobalInvocationID.xy, depth, size, camera.nearPlane, camera.farPlane, camera.fov);
-	uint froxelIndex = getFroxelIndex(froxelPos, uvec2(size));
+	uint3 froxelPos = getFroxelPosition(globalIndex.xy, depth, size, camera.nearPlane, camera.farPlane, camera.fov);
+	uint froxelIndex = getFroxelIndex(froxelPos, uint2(size));
 
-	if(gl_GlobalInvocationID.x <= size.x && gl_GlobalInvocationID.y <= size.y)
-		imageStore(activeFroxels, ivec2(gl_GlobalInvocationID.xy), uvec4(froxelIndex, 0, 0, 0));
+	if(globalIndex.x <= size.x && globalIndex.y <= size.y)
+		activeFroxels[int2(globalIndex.xy)] = froxelIndex;
 
-	uint bitset = subgroupOr(1u << froxelPos.z);
+	uint bitset = WaveActiveBitOr(1u << froxelPos.z);
 
 	// Shared memory must be zeroed by now.
-	subgroupBarrier();
-	memoryBarrierShared();
-	barrier();
+	AllMemoryBarrierWithGroupSync();
 
-	if(subgroupElect())
-		atomicOr(froxelBitSet, bitset);
-
-	subgroupBarrier();
-	memoryBarrierShared();
-	barrier();
-
-	if(gl_LocalInvocationIndex < uint(DEPTH_SUBDIVISIONS)) // Max number of depth slices.
+	if(WaveIsFirstLane())
 	{
-		const uint isActive = froxelBitSet & (1u << gl_LocalInvocationIndex);
+		uint original;
+		InterlockedOr(froxelBitSet, bitset, original);
+	}
+
+	AllMemoryBarrierWithGroupSync();
+
+	if(localIndex < uint(DEPTH_SUBDIVISIONS)) // Max number of depth slices.
+	{
+		const uint isActive = froxelBitSet & (1u << localIndex);
 
 		if(isActive > 0u)
 		{
-			uint offset = atomicAdd(counter, 1u);
-
-			froxel[offset] = uvec4(froxelPos.xy, gl_LocalInvocationIndex, 0u);
+			visibleFroxles.Append(uint4(froxelPos.xy, localIndex, 0u));
 		}
 	}
 }

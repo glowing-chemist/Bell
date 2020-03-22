@@ -11,26 +11,26 @@ float lineariseReverseDepth(const float depth, const float near, const float far
 }
 
 
-float calculateLuminosityRGB(const vec3 colour)
+float calculateLuminosityRGB(const float3 colour)
 {
 	return 0.2126f * colour.x + 0.7152f * colour.y + 0.0722f * colour.z;
 }
 
 
-vec3 calculateYCoCg(const vec3 rgb)
+float3 calculateYCoCg(const float3 rgb)
 {
-	const mat3 RGBToYCoCg = mat3(	vec3(0.25f, 0.5f, 0.25f), 
-									vec3(0.5f, 0.0f, -0.5f), 
-									vec3(-0.25, 0.5f, -0.25f));
+	const float3x3 RGBToYCoCg = float3x3(	float3(0.25f, 0.5f, 0.25f), 
+									float3(0.5f, 0.0f, -0.5f), 
+									float3(-0.25, 0.5f, -0.25f));
 	return RGBToYCoCg * rgb;
 }
 
 
-vec3 calculateRGB(const vec3 YCoCg)
+float3 calculateRGB(const float3 YCoCg)
 {
-	const mat3 YCoCgToRGB = mat3(	vec3(1.0f, 1.0f, -1.0f),
-									vec3(1.0f, 0.0f, 1.0f),
-									vec3(1.0f, -1.0f, -1.0f));
+	const float3x3 YCoCgToRGB = float3x3(	float3(1.0f, 1.0f, -1.0f),
+									float3(1.0f, 0.0f, 1.0f),
+									float3(1.0f, -1.0f, -1.0f));
 
 	return YCoCgToRGB * YCoCg;
 }

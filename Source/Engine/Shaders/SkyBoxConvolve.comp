@@ -1,47 +1,63 @@
-#version 450
-#extension GL_ARB_separate_shader_objects : enable
-#extension GL_GOOGLE_include_directive : enable
+#include "PBR.hlsl"
 
-#include "PBR.glsl"
+[[vk::binding(0)]]
+TextureCube<float4> skyBox;
 
-layout(local_size_x = 8, local_size_y = 8, local_size_z = 6) in;
-
-layout(binding = 0) uniform textureCube skyBox;
-layout(binding = 1) uniform sampler defaultSampler;
+[[vk::binding(1)]]
+SamplerState defaultSampler;
 
 // All the prefiltered cubemap mips
-layout(rgba8, binding = 2) uniform writeonly imageCube mip0;
-layout(rgba8, binding = 3) uniform writeonly imageCube mip1;
-layout(rgba8, binding = 4) uniform writeonly imageCube mip2;
-layout(rgba8, binding = 5) uniform writeonly imageCube mip3;
-layout(rgba8, binding = 6) uniform writeonly imageCube mip4;
-layout(rgba8, binding = 7) uniform writeonly imageCube mip5;
-layout(rgba8, binding = 8) uniform writeonly imageCube mip6;
-layout(rgba8, binding = 9) uniform writeonly imageCube mip7;
-layout(rgba8, binding = 10) uniform writeonly imageCube mip8;
-layout(rgba8, binding = 11) uniform writeonly imageCube mip9;
+[[vk::binding(2)]]
+RWTexture2DArray<float4> mip0;
+
+[[vk::binding(3)]]
+RWTexture2DArray<float4> mip1;
+
+[[vk::binding(4)]]
+RWTexture2DArray<float4> mip2;
+
+[[vk::binding(5)]]
+RWTexture2DArray<float4> mip3;
+
+[[vk::binding(6)]]
+RWTexture2DArray<float4> mip4;
+
+[[vk::binding(7)]]
+RWTexture2DArray<float4> mip5;
+
+[[vk::binding(8)]]
+RWTexture2DArray<float4> mip6;
+
+[[vk::binding(9)]]
+RWTexture2DArray<float4> mip7;
+
+[[vk::binding(10)]]
+RWTexture2DArray<float4> mip8;
+
+[[vk::binding(11)]]
+RWTexture2DArray<float4> mip9;
 
 
-vec3 prefilterEnviromentMap(const float roughness, const vec3 R)
+float3 prefilterEnviromentMap(const float roughness, const float3 R)
 {
-	vec3 N = R;
-	vec3 V = R;
+	float3 N = R;
+	float3 V = R;
 
-	vec3 prefilteredColor = vec3(0.0);
+	float3 prefilteredColor = float3(0.0);
 
 	float TotalWeight = 0.0;
 
 	const uint SAMPLE_COUNT = 1024;
 	for(uint i = 0; i < SAMPLE_COUNT; ++i)
 	{
-		vec2 Xi = Hammersley(i, SAMPLE_COUNT);
-		vec3 H = ImportanceSampleGGX(Xi, roughness, N);
-		vec3 L = 2 * dot(V, H) * H - V;
+		float2 Xi = Hammersley(i, SAMPLE_COUNT);
+		float3 H = ImportanceSampleGGX(Xi, roughness, N);
+		float3 L = 2 * dot(V, H) * H - V;
 
 		float NoL = clamp(dot(N, L), 0.0f, 1.0f);
 		if(NoL > 0.0)
 		{
-			prefilteredColor += texture(samplerCube(skyBox, defaultSampler), L).xyz * NoL;
+			prefilteredColor += skyBox.Sample(defaultSampler, L).xyz * NoL;
 			TotalWeight += NoL;
 		}
 	}
@@ -51,178 +67,188 @@ vec3 prefilterEnviromentMap(const float roughness, const vec3 R)
 
 
 // Taken from http://hannosprogrammingblog.blogspot.com/2015/03/get-normal-for-cubemap-texel.html
-vec3 getNormalFromTexel(const ivec3 texelPosition, const vec2 size)
+float3 getNormalFromTexel(const int3 texelPosition, const float2 size)
 {
-	vec2 position = vec2(texelPosition.xy) / size;
+	float2 position = float2(texelPosition.xy) / size;
 
 	position -= 0.5; // remap 0-1 to -0.5-0.5
 	position *= 2; // remap to -1-1
 
 	const uint cubemapSide = texelPosition.z;
 
-	vec3 normal;
+	float3 normal;
 	
 	if(cubemapSide == 0) 
 	{ // facing x-dir
-		normal = vec3(1, -position.y, -position.x);
+		normal = float3(1, -position.y, -position.x);
 	} 
 	else if(cubemapSide == 1) 
 	{ // facing -x-dir
-		normal = vec3(-1, -position.y, position.x);
+		normal = float3(-1, -position.y, position.x);
 	} 
 	else if(cubemapSide == 2) 
 	{ // facing y-dir
-		normal = vec3(-position.x, 1, -position.y);
+		normal = float3(-position.x, 1, -position.y);
 	} 
 	else if(cubemapSide == 3) 
 	{ // facing -y-dir
-		normal = vec3(position.x, -1, -position.y);
+		normal = float3(position.x, -1, -position.y);
 	} 
 	else if(cubemapSide == 4) 
 	{ // facing z-dir
-		normal = vec3(position.x, -position.y, 1);
+		normal = float3(position.x, -position.y, 1);
 	} 
 	else if(cubemapSide == 5) 
 	{ // facing -z-dir
-		normal = vec3(-position.x, -position.y, -1);
+		normal = float3(-position.x, -position.y, -1);
 	}
 	
 	return normalize(normal);
 }
 
-
-void main()
+[numthreads(8, 8, 6)]
+void main(uint3 globalIndex : SV_DispatchThreadID)
 {
-	const ivec3 dispatchLocation = ivec3(gl_GlobalInvocationID);
+	const int3 dispatchLocation = int3(globalIndex);
 
 	float roughness = 0.0;
 	{
+		uint height, width, elements;
+		mip0.GetDimensions(height, width, elements);
+		const float2 size = float2(height, width);
 
-		const vec2 size = imageSize(mip0);
+		float3 normal = getNormalFromTexel(dispatchLocation, size);
 
-		vec3 normal = getNormalFromTexel(dispatchLocation, size);
-
-		vec3 convolvedColor = prefilterEnviromentMap(roughness, normal);
+		float3 convolvedColor = prefilterEnviromentMap(roughness, normal);
 
 		if(dispatchLocation.x < size.x && dispatchLocation.y < size.y)
-			imageStore(mip0, dispatchLocation, vec4(convolvedColor, 1.0f));
+			mip0[dispatchLocation] = float4(convolvedColor, 1.0f);
 
 		roughness += 0.1;
 	}
 
 	{
-		const vec2 size = imageSize(mip1);
+		uint height, width, elements;
+		mip1.GetDimensions(height, width, elements);
+		const float2 size = float2(height, width);
+		float3 normal = getNormalFromTexel(dispatchLocation, size);
 
-		vec3 normal = getNormalFromTexel(dispatchLocation, size);
-
-		vec3 convolvedColor = prefilterEnviromentMap(roughness, normal);
+		float3 convolvedColor = prefilterEnviromentMap(roughness, normal);
 
 		if(dispatchLocation.x < size.x && dispatchLocation.y < size.y)
-			imageStore(mip1, dispatchLocation, vec4(convolvedColor, 1.0f));
+			mip1[dispatchLocation] = float4(convolvedColor, 1.0f);
 
 		roughness += 0.1;
 	}
 
 	{
-		const vec2 size = imageSize(mip2);
+		uint height, width, elements;
+		mip2.GetDimensions(height, width, elements);
+		const float2 size = float2(height, width);
+		float3 normal = getNormalFromTexel(dispatchLocation, size);
 
-		vec3 normal = getNormalFromTexel(dispatchLocation, size);
-
-		vec3 convolvedColor = prefilterEnviromentMap(roughness, normal);
+		float3 convolvedColor = prefilterEnviromentMap(roughness, normal);
 
 		if(dispatchLocation.x < size.x && dispatchLocation.y < size.y)
-			imageStore(mip2, dispatchLocation, vec4(convolvedColor, 1.0f));
+			mip2[dispatchLocation] = float4(convolvedColor, 1.0f);
 
 		roughness += 0.1;
 	}
 
 	{
-		const vec2 size = imageSize(mip3);
+		uint height, width, elements;
+		mip3.GetDimensions(height, width, elements);
+		const float2 size = float2(height, width);
+		float3 normal = getNormalFromTexel(dispatchLocation, size);
 
-		vec3 normal = getNormalFromTexel(dispatchLocation, size);
-
-		vec3 convolvedColor = prefilterEnviromentMap(roughness, normal);
+		float3 convolvedColor = prefilterEnviromentMap(roughness, normal);
 
 		if(dispatchLocation.x < size.x && dispatchLocation.y < size.y)
-			imageStore(mip3, dispatchLocation, vec4(convolvedColor, 1.0f));
+			mip3[dispatchLocation] = float4(convolvedColor, 1.0f);
 
 		roughness += 0.1;
 	}
 
 	{
-		const vec2 size = imageSize(mip4);
+		uint height, width, elements;
+		mip4.GetDimensions(height, width, elements);
+		const float2 size = float2(height, width);
+		float3 normal = getNormalFromTexel(dispatchLocation, size);
 
-		vec3 normal = getNormalFromTexel(dispatchLocation, size);
-
-		vec3 convolvedColor = prefilterEnviromentMap(roughness, normal);
+		float3 convolvedColor = prefilterEnviromentMap(roughness, normal);
 
 		if(dispatchLocation.x < size.x && dispatchLocation.y < size.y)
-			imageStore(mip4, dispatchLocation, vec4(convolvedColor, 1.0f));
+			mip4[dispatchLocation] = float4(convolvedColor, 1.0f);
 
 		roughness += 0.1;
 	}
 
 	{
-		const vec2 size = imageSize(mip5);
+		uint height, width, elements;
+		mip5.GetDimensions(height, width, elements);
+		const float2 size = float2(height, width);
+		float3 normal = getNormalFromTexel(dispatchLocation, size);
 
-		vec3 normal = getNormalFromTexel(dispatchLocation, size);
-
-		vec3 convolvedColor = prefilterEnviromentMap(roughness, normal);
+		float3 convolvedColor = prefilterEnviromentMap(roughness, normal);
 
 		if(dispatchLocation.x < size.x && dispatchLocation.y < size.y)
-			imageStore(mip5, dispatchLocation, vec4(convolvedColor, 1.0f));
+			mip5[dispatchLocation] = float4(convolvedColor, 1.0f);
 
 		roughness += 0.1;
 	}
 
 	{
-		const vec2 size = imageSize(mip6);
+		uint height, width, elements;
+		mip6.GetDimensions(height, width, elements);
+		const float2 size = float2(height, width);
+		float3 normal = getNormalFromTexel(dispatchLocation, size);
 
-		vec3 normal = getNormalFromTexel(dispatchLocation, size);
-
-		vec3 convolvedColor = prefilterEnviromentMap(roughness, normal);
+		float3 convolvedColor = prefilterEnviromentMap(roughness, normal);
 
 		if(dispatchLocation.x < size.x && dispatchLocation.y < size.y)
-			imageStore(mip6, dispatchLocation, vec4(convolvedColor, 1.0f));
+			mip6[dispatchLocation] = float4(convolvedColor, 1.0f);
 
 		roughness += 0.1;
 	}
 
 	{
-		const vec2 size = imageSize(mip7);
+		uint height, width, elements;
+		mip7.GetDimensions(height, width, elements);
+		const float2 size = float2(height, width);
+		float3 normal = getNormalFromTexel(dispatchLocation, size);
 
-		vec3 normal = getNormalFromTexel(dispatchLocation, size);
-
-		vec3 convolvedColor = prefilterEnviromentMap(roughness, normal);
+		float3 convolvedColor = prefilterEnviromentMap(roughness, normal);
 
 		if(dispatchLocation.x < size.x && dispatchLocation.y < size.y)
-			imageStore(mip7, dispatchLocation, vec4(convolvedColor, 1.0f));
+			mip7[dispatchLocation] = float4(convolvedColor, 1.0f);
 
 		roughness += 0.1;
 	}
 
 	{
-		const vec2 size = imageSize(mip8);
+		uint height, width, elements;
+		mip8.GetDimensions(height, width, elements);
+		const float2 size = float2(height, width);
+		float3 normal = getNormalFromTexel(dispatchLocation, size);
 
-		vec3 normal = getNormalFromTexel(dispatchLocation, size);
-
-		vec3 convolvedColor = prefilterEnviromentMap(roughness, normal);
+		float3 convolvedColor = prefilterEnviromentMap(roughness, normal);
 
 		if(dispatchLocation.x < size.x && dispatchLocation.y < size.y)
-			imageStore(mip8, dispatchLocation, vec4(convolvedColor, 1.0f));
+			mip8[dispatchLocation] = float4(convolvedColor, 1.0f);
 
 		roughness += 0.1;
 
 	}
 
-		{
-		const vec2 size = imageSize(mip9);
+	{
+		uint height, width, elements;
+		mip9.GetDimensions(height, width, elements);
+		const float2 size = float2(height, width);
+		float3 normal = getNormalFromTexel(dispatchLocation, size);
 
-		vec3 normal = getNormalFromTexel(dispatchLocation, size);
-
-		vec3 convolvedColor = prefilterEnviromentMap(roughness, normal);
+		float3 convolvedColor = prefilterEnviromentMap(roughness, normal);
 
 		if(dispatchLocation.x < size.x && dispatchLocation.y < size.y)
-			imageStore(mip9, dispatchLocation, vec4(convolvedColor, 1.0f));
+			mip9[dispatchLocation] = float4(convolvedColor, 1.0f);
 	}
 }

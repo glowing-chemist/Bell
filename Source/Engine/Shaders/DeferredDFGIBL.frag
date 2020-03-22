@@ -1,77 +1,85 @@
-#version 450
-#extension GL_ARB_separate_shader_objects : enable
-#extension GL_GOOGLE_include_directive : enable
 
-#include "PBR.glsl"
-#include "NormalMapping.glsl"
-#include "UniformBuffers.glsl"
-#include "ShadowMapping.glsl"
+#include "PBR.hlsl"
+#include "NormalMapping.hlsl"
+#include "UniformBuffers.hlsl"
+#include "ShadowMapping.hlsl"
+#include "VertexOutputs.hlsl"
 
 #define MAX_MATERIALS 256
 
+[[vk::binding(0)]]
+ConstantBuffer<CameraBuffer> camera;
 
-layout(location = 0) in vec2 uv;
+[[vk::binding(1)]]
+Texture2D<float2> DFG;
 
+[[vk::binding(2)]]
+Texture2D<float> depth;
 
-layout(location = 0) out vec4 frameBuffer;
+[[vk::binding(3)]]
+Texture2D<float3> vertexNormals;
 
-layout(set = 0, binding = 0) uniform cameraBuffer
-{
-	CameraBuffer camera;
-};
+[[vk::binding(4)]]
+Texture2D<float4> Albedo;
 
-layout(set = 0, binding = 1) uniform texture2D DFG;
-layout(set = 0, binding = 2) uniform texture2D depth;
-layout(set = 0, binding = 3) uniform texture2D vertexNormals;
-layout(set = 0, binding = 4) uniform texture2D Albedo;
-layout(set = 0, binding = 5) uniform texture2D MetalnessRoughness;
-layout(set = 0, binding = 6) uniform textureCube skyBox;
-layout(set = 0, binding = 7) uniform textureCube ConvolvedSkybox;
-layout(set = 0, binding = 8) uniform sampler linearSampler;
+[[vk::binding(5)]]
+Texture2D<float2> MetalnessRoughness;
+
+[[vk::binding(6)]]
+TextureCube<float4> skyBox;
+
+[[vk::binding(7)]]
+TextureCube<float4> ConvolvedSkybox;
+
+[[vk::binding(8)]]
+SamplerState linearSampler;
 
 #ifdef Shadow_Map
-layout(set = 0, binding = 9) uniform texture2D shadowMap;
+[[vk::binding(9)]]
+Texture2D<float> shadowMap;
 #endif
 
 
-void main()
+float4 main(UVVertOutput vertInput)
 {
-	const float fragmentDepth = texture(sampler2D(depth, linearSampler), uv).x;
+    const float2 uv = vertInput.uv;
+	const float fragmentDepth = depth.Sample(linearSampler, uv);
 
-	vec4 worldSpaceFragmentPos = camera.invertedViewProj * vec4((uv - 0.5f) * 2.0f, fragmentDepth, 1.0f);
+	float4 worldSpaceFragmentPos = mul(camera.invertedViewProj, float4((uv - 0.5f) * 2.0f, fragmentDepth, 1.0f));
     worldSpaceFragmentPos /= worldSpaceFragmentPos.w;
 
-	vec3 normal;
-    normal = texture(sampler2D(vertexNormals, linearSampler), uv).xyz;
+	float3 normal;
+    normal = vertexNormals.Sample(linearSampler, uv);
     normal = remapNormals(normal);
     normal = normalize(normal);
 
-    const vec3 viewDir = normalize(camera.position - worldSpaceFragmentPos.xyz);
+    const float3 viewDir = normalize(camera.position - worldSpaceFragmentPos.xyz);
 
-    const vec4 baseAlbedo = texture(sampler2D(Albedo, linearSampler), uv);
-    const float roughness = texture(sampler2D(MetalnessRoughness, linearSampler), uv).y;
-    const float metalness = texture(sampler2D(MetalnessRoughness, linearSampler), uv).x;
+    const float4 baseAlbedo = Albedo.Sample(linearSampler, uv);
+    const float2 metalnessRoughness = MetalnessRoughness.Sample(linearSampler, uv);
+    const float roughness = metalnessRoughness.y;
+    const float metalness = metalnessRoughness.x;
 
 
-	const vec3 lightDir = reflect(-viewDir, normal);
+	const float3 lightDir = reflect(-viewDir, normal);
     const float NoV = dot(normal, viewDir);
 
 	const float lodLevel = roughness * 10.0f;
 
-	vec3 radiance = texture(samplerCube(ConvolvedSkybox, linearSampler), lightDir, lodLevel).xyz;
+	float3 radiance = ConvolvedSkybox.SampleLevel(linearSampler, lightDir, lodLevel).xyz;
 
-    vec3 irradiance = texture(samplerCube(skyBox, linearSampler), normal).xyz;
+    float3 irradiance = skyBox.Sample(linearSampler, normal).xyz;
 
 #ifdef Shadow_Map
-    const float occlusion = texture(sampler2D(shadowMap, linearSampler), uv).x;
+    const float occlusion = shadowMap.Sample(linearSampler, uv);
     radiance *= occlusion;
     irradiance *= occlusion;
 #endif
 
-    const vec2 f_ab = texture(sampler2D(DFG, linearSampler), vec2(NoV, roughness)).xy;
+    const float2 f_ab = DFG.Sample(linearSampler, float2(NoV, roughness));
 
-    const vec3 diffuse = calculateDiffuse(baseAlbedo.xyz, metalness, irradiance);
-    const vec3 specular = calculateSpecular(roughness * roughness, normal, viewDir, metalness, baseAlbedo.xyz, radiance, f_ab);
+    const float3 diffuse = calculateDiffuse(baseAlbedo.xyz, metalness, irradiance);
+    const float3 specular = calculateSpecular(roughness * roughness, normal, viewDir, metalness, baseAlbedo.xyz, radiance, f_ab);
 
-    frameBuffer = vec4(specular + diffuse, 1.0);
+    return float4(specular + diffuse, 1.0);
 }

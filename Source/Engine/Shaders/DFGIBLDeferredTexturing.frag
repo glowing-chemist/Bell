@@ -11,10 +11,10 @@
 #define MAX_MATERIALS 256
 
 
-layout(location = 0) in vec2 uv;
+layout(location = 0) in float2 uv;
 
 
-layout(location = 0) out vec4 frameBuffer;
+layout(location = 0) out float4 frameBuffer;
 
 layout(set = 0, binding = 0) uniform cameraBuffer
 {
@@ -40,29 +40,29 @@ void main()
 {
 	const float fragmentDepth = texture(sampler2D(depth, linearSampler), uv).x;
 
-	vec4 worldSpaceFragmentPos = camera.invertedCamera * vec4(uv, fragmentDepth, 1.0f);
+	float4 worldSpaceFragmentPos = camera.invertedCamera * float4(uv, fragmentDepth, 1.0f);
 	worldSpaceFragmentPos /= worldSpaceFragmentPos.w;
 
 	const uint materialID = texture(usampler2D(materialIDTexture, linearSampler), uv).x;
 
-	vec3 vertexNormal;
+	float3 vertexNormal;
     vertexNormal = texture(sampler2D(vertexNormals, linearSampler), uv).xyz;
     vertexNormal = remapNormals(vertexNormal);
     vertexNormal = normalize(vertexNormal);
 
-	const vec4 fragUVwithDifferentials = texture(sampler2D(uvWithDerivitives, linearSampler), uv);
+	const float4 fragUVwithDifferentials = texture(sampler2D(uvWithDerivitives, linearSampler), uv);
 
-	const vec2 xDerivities = unpackHalf2x16(floatBitsToUint(fragUVwithDifferentials.z));
-    const vec2 yDerivities = unpackHalf2x16(floatBitsToUint(fragUVwithDifferentials.w));
+	const float2 xDerivities = unpackHalf2x16(floatBitsToUint(fragUVwithDifferentials.z));
+    const float2 yDerivities = unpackHalf2x16(floatBitsToUint(fragUVwithDifferentials.w));
 
-    const vec3 viewDir = normalize(camera.position - worldSpaceFragmentPos.xyz);
+    const float3 viewDir = normalize(camera.position - worldSpaceFragmentPos.xyz);
 
-    const vec4 baseAlbedo = textureGrad(sampler2D(materials[nonuniformEXT(materialID * 4)], linearSampler),
+    const float4 baseAlbedo = textureGrad(sampler2D(materials[nonuniformEXT(materialID * 4)], linearSampler),
                                 fragUVwithDifferentials.xy,
                                 xDerivities,
                                 yDerivities);
 
-    vec3 normal = texture(sampler2D(materials[nonuniformEXT(materialID * 4) + 1], linearSampler),
+    float3 normal = texture(sampler2D(materials[nonuniformEXT(materialID * 4) + 1], linearSampler),
                                 fragUVwithDifferentials.xy).xyz;
 
     // remap normal
@@ -76,29 +76,29 @@ void main()
                                 fragUVwithDifferentials.xy).x;
 
 	{
-    	mat3 tbv = tangentSpaceMatrix(vertexNormal, viewDir, vec4(xDerivities, yDerivities));
+    	float3x3 tbv = tangentSpaceMatrix(vertexNormal, viewDir, float4(xDerivities, yDerivities));
 
     	normal = tbv * normal;
 
     	normal = normalize(normal);
 	}
 
-	const vec3 lightDir = reflect(-viewDir, normal);
+	const float3 lightDir = reflect(-viewDir, normal);
     float NoV = dot(normal, viewDir);
 
 	const float lodLevel = roughness * 10.0f;
 
-	const vec3 radiance = texture(samplerCube(ConvolvedSkybox, linearSampler), lightDir, lodLevel).xyz;
+	const float3 radiance = texture(samplerCube(ConvolvedSkybox, linearSampler), lightDir, lodLevel).xyz;
 
-    const vec3 irradiance = texture(samplerCube(skyBox, linearSampler), normal).xyz;
+    const float3 irradiance = texture(samplerCube(skyBox, linearSampler), normal).xyz;
 
-    const vec2 f_ab = texture(sampler2D(DFG, linearSampler), vec2(NoV, roughness)).xy;
+    const float2 f_ab = texture(sampler2D(DFG, linearSampler), float2(NoV, roughness)).xy;
 
     if(baseAlbedo.w == 0.0f)
         discard;
 
-    const vec3 diffuse = calculateDiffuse(baseAlbedo.xyz, metalness, irradiance);
-    const vec3 specular = calculateSpecular(roughness * roughness, normal, viewDir, metalness, baseAlbedo.xyz, radiance, f_ab);
+    const float3 diffuse = calculateDiffuse(baseAlbedo.xyz, metalness, irradiance);
+    const float3 specular = calculateSpecular(roughness * roughness, normal, viewDir, metalness, baseAlbedo.xyz, radiance, f_ab);
 
-    frameBuffer = vec4(specular + diffuse, 1.0);
+    frameBuffer = float4(specular + diffuse, 1.0);
 }

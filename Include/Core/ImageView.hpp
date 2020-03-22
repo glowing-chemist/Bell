@@ -16,7 +16,8 @@ class VulkanBarrierRecorder;
 enum class ImageViewType
 {
 	Colour,
-	Depth
+	Depth,
+	CubeMap
 };
 
 

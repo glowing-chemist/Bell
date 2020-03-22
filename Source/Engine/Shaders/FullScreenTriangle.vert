@@ -1,15 +1,11 @@
-#version 450
-#extension GL_ARB_separate_shader_objects : enable
+#include "VertexOutputs.hlsl"
 
-
-out gl_PerVertex {
-    vec4 gl_Position;
-};
-
-layout(location = 0) out vec2 uv;
-
-void main()
+PositionAndUVVertOutput main(uint vertID : SV_VertexID)
 {
-	uv = vec2((gl_VertexIndex << 1) & 2, gl_VertexIndex & 2);
-	gl_Position = vec4(uv * 2.0f + -1.0f, 0.0f, 1.0f);
+	PositionAndUVVertOutput output;
+
+	output.uv = float2((vertID << 1) & 2, vertID & 2);
+	output.position = float4(output.uv * 2.0f + -1.0f, 0.0f, 1.0f);
+
+	return output;
 }

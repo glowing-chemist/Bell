@@ -205,12 +205,14 @@ bool ShaderBase::compile(const std::string& prefix)
 	glslang::EShTargetClientVersion clientVersion = glslang::EShTargetOpenGL_450;
 #endif
     glslang::EShTargetLanguageVersion TargetVersion = glslang::EShTargetSpv_1_3;
-    shader.setEnvClient(glslang::EShClientVulkan, clientVersion);
+	shader.setEnvInput(glslang::EShSource::EShSourceHlsl, mShaderStage, glslang::EShClientVulkan, clientVersion);
 	shader.setEnvTarget(glslang::EShTargetSpv, TargetVersion);
+	shader.setEntryPoint("main");
+	shader.setSourceEntryPoint("main");
 
     TBuiltInResource Resources;
 	Resources = defaultResources;
-    EShMessages messages = static_cast<EShMessages>(EShMsgSpvRules | EShMsgVulkanRules);
+    EShMessages messages = static_cast<EShMessages>(EShMsgSpvRules | EShMsgVulkanRules | EShMsgReadHlsl);
 
 	std::string preProcessedShader;
 

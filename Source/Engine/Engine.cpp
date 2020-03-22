@@ -487,7 +487,8 @@ void Engine::updateGlobalBuffers()
         const float swapchainX = getSwapChainImage()->getExtent(0, 0).width;
         const float swapChainY = getSwapChainImage()->getExtent(0, 0).height;
 
-		mCameraBuffer.mViewMatrix = currentCamera.getViewMatrix();
+        float4x4 view = currentCamera.getViewMatrix();
+        float4x4 perspective;
         mCameraBuffer.mPreviousFrameViewProjMatrix = mCameraBuffer.mViewProjMatrix;
         // need to add jitter for TAA
         if(isPassRegistered(PassType::TAA))
@@ -495,19 +496,21 @@ void Engine::updateGlobalBuffers()
             const uint32_t index = mRenderDevice->getCurrentSubmissionIndex() % 16;
             const float2& jitter = mTAAJitter[index];
 
-            mCameraBuffer.mPerspectiveMatrix = glm::translate(float3(jitter / mCameraBuffer.mFrameBufferSize, 0.0f)) * currentCamera.getPerspectiveMatrix();
+            perspective = glm::translate(float3(jitter / mCameraBuffer.mFrameBufferSize, 0.0f)) * currentCamera.getPerspectiveMatrix();
             mCameraBuffer.mPreviousJitter = mCameraBuffer.mJitter;
             mCameraBuffer.mJitter = jitter / mCameraBuffer.mFrameBufferSize;
         }
         else
         {
-            mCameraBuffer.mPerspectiveMatrix = currentCamera.getPerspectiveMatrix();
+            perspective = currentCamera.getPerspectiveMatrix();
             mCameraBuffer.mPreviousJitter = mCameraBuffer.mJitter;
             mCameraBuffer.mJitter = float2(0.0f, 0.0f);
         }
-        mCameraBuffer.mViewProjMatrix = mCameraBuffer.mPerspectiveMatrix * mCameraBuffer.mViewMatrix;
+        mCameraBuffer.mViewProjMatrix = perspective * view;
         mCameraBuffer.mInvertedViewProjMatrix = glm::inverse(mCameraBuffer.mViewProjMatrix);
-        mCameraBuffer.mInvertedPerspective = glm::inverse(mCameraBuffer.mPerspectiveMatrix);
+        mCameraBuffer.mInvertedPerspective = glm::inverse(perspective);
+        mCameraBuffer.mViewMatrix = view;
+        mCameraBuffer.mPerspectiveMatrix = perspective;
         mCameraBuffer.mFrameBufferSize = glm::vec2{ swapchainX, swapChainY };
         mCameraBuffer.mPosition = currentCamera.getPosition();
         mCameraBuffer.mNeaPlane = currentCamera.getNearPlane();

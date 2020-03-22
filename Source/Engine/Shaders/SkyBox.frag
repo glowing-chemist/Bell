@@ -1,28 +1,21 @@
-#version 450
-#extension GL_ARB_separate_shader_objects : enable
-#extension GL_GOOGLE_include_directive : enable
+#include "UniformBuffers.hlsl"
+#include "VertexOutputs.hlsl"
 
-#include "UniformBuffers.glsl"
+[[vk::binding(0)]]
+ConstantBuffer<CameraBuffer> camera;
 
-layout(location = 0) in vec2 uv;
+[[vk::binding(1)]]
+TextureCube<float4> skyBox;
 
+[[vk::binding(2)]]
+SamplerState defaultSampler;
 
-layout(location = 0) out vec4 frameBuffer;
-
-
-layout(binding = 1) uniform textureCube skyBox;
-layout(binding = 2) uniform sampler defaultSampler;
-
-layout(binding = 0) uniform UniformBufferObject {    
-    CameraBuffer camera;    
-};
-
-void main()
+float4 main(PositionAndUVVertOutput vertInput)
 {
-	vec4 worldSpaceFragmentPos = camera.invertedViewProj * vec4((uv - 0.5f) * 2.0f, 0.00001f, 1.0f);
+	float4 worldSpaceFragmentPos = mul(camera.invertedViewProj, float4((vertInput.uv - 0.5f) * 2.0f, 0.00001f, 1.0f));
     worldSpaceFragmentPos /= worldSpaceFragmentPos.w;
 
-    const vec3 cubemapUV = normalize(worldSpaceFragmentPos.xyz - camera.position);
+    const float3 cubemapUV = normalize(worldSpaceFragmentPos.xyz - camera.position);
 
-    frameBuffer = texture(samplerCube(skyBox, defaultSampler), cubemapUV);
+    return skyBox.Sample(defaultSampler, cubemapUV);
 }

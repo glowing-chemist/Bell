@@ -11,9 +11,9 @@
 #define MAX_MATERIALS 256
 
 
-layout(location = 0) in vec2 uv;
+layout(location = 0) in float2 uv;
 
-layout(location = 0) out vec4 frameBuffer;
+layout(location = 0) out float4 frameBuffer;
 
 layout(set = 0, binding = 0) uniform LightBuffers
 {
@@ -40,35 +40,35 @@ layout(set = 1, binding = 0) uniform texture2D materials[];
 
 layout(push_constant) uniform numberOfLIghts
 {
-	mat4 lightParams;
+	float4x4 lightParams;
 };
 
 
 void main()
 {
 	const float fragmentDepth = texture(sampler2D(depth, linearSampler), uv).x;
-	vec4 worldSpaceFragmentPos = (camera.invertedCamera * vec4(uv, fragmentDepth, 1.0f));
+	float4 worldSpaceFragmentPos = (camera.invertedCamera * float4(uv, fragmentDepth, 1.0f));
     worldSpaceFragmentPos /= worldSpaceFragmentPos.w;
 
 	const uint materialID = texture(usampler2D(materialIDTexture, linearSampler), uv).x;
 
-	vec3 vertexNormal;
+	float3 vertexNormal;
     vertexNormal = texture(sampler2D(vertexNormals, linearSampler), uv).xyz;
     vertexNormal = remapNormals(vertexNormal.xy);
     vertexNormal = normalize(vertexNormal);
 
-	const vec4 fragUVwithDifferentials = texture(sampler2D(uvWithDerivitives, linearSampler), uv);
+	const float4 fragUVwithDifferentials = texture(sampler2D(uvWithDerivitives, linearSampler), uv);
 
 
-    const vec2 xDerivities = unpackUnorm2x16(floatBitsToUint(fragUVwithDifferentials.z));
-    const vec2 yDerivities = unpackUnorm2x16(floatBitsToUint(fragUVwithDifferentials.w));
+    const float2 xDerivities = unpackUnorm2x16(floatBitsToUint(fragUVwithDifferentials.z));
+    const float2 yDerivities = unpackUnorm2x16(floatBitsToUint(fragUVwithDifferentials.w));
 
-    const vec3 baseAlbedo = textureGrad(sampler2D(materials[nonuniformEXT(materialID * 4)], linearSampler),
+    const float3 baseAlbedo = textureGrad(sampler2D(materials[nonuniformEXT(materialID * 4)], linearSampler),
                                 fragUVwithDifferentials.xy,
                                 xDerivities,
                                 yDerivities).xyz;
 
-    vec3 normal = texture(sampler2D(materials[nonuniformEXT(materialID * 4) + 1], linearSampler),
+    float3 normal = texture(sampler2D(materials[nonuniformEXT(materialID * 4) + 1], linearSampler),
                                 fragUVwithDifferentials.xy).xyz;
 
     // remap normal
@@ -82,12 +82,12 @@ void main()
                                 fragUVwithDifferentials.xy).x;
     
     // then calculate lighting as usual    
-    vec3 diffuseLighting = vec3(0.0f);
-    vec3 specularLighting = vec3(0.0f);
-    vec3 viewDir = normalize(camera.position - worldSpaceFragmentPos.xyz);
+    float3 diffuseLighting = float3(0.0f);
+    float3 specularLighting = float3(0.0f);
+    float3 viewDir = normalize(camera.position - worldSpaceFragmentPos.xyz);
 
     {
-        mat3 tbv = tangentSpaceMatrix(vertexNormal, viewDir, vec4(xDerivities, yDerivities));
+        float3x3 tbv = tangentSpaceMatrix(vertexNormal, viewDir, float4(xDerivities, yDerivities));
 
         normal = tbv * normal;
 
@@ -98,24 +98,24 @@ void main()
     for(int i = 0; i < lightParams[0].x; ++i)    
     {    
         // diffuse    
-        vec3 lightDir = lights[i].light.position.xyz  - worldSpaceFragmentPos.xyz;
+        float3 lightDir = lights[i].light.position.xyz  - worldSpaceFragmentPos.xyz;
         const float lightDistance = length(lightDir);
         lightDir = normalize(lightDir); 
-        vec3 diffuse = max(dot(normal, lightDir), 0.0) * lights[i].light.albedo.xzy;    
+        float3 diffuse = max(dot(normal, lightDir), 0.0) * lights[i].light.albedo.xzy;    
         diffuseLighting += diffuse / lightDistance;
 
         // specular
-        vec3 halfVector = normalize(lightDir + viewDir);
+        float3 halfVector = normalize(lightDir + viewDir);
         float NdotH = dot( normal, halfVector );
         specularLighting += pow(clamp(NdotH, 0.0f, 1.0f), 16.0f) * lights[i].light.albedo.xzy / lightDistance;
     }
 
-    const vec3 reflect = reflect(-viewDir, normal); 
+    const float3 reflect = reflect(-viewDir, normal); 
     const float lodLevel = roughness * 10.0f;
 
-    const vec3 radiance = texture(samplerCube(ConvolvedSkybox, linearSampler), reflect, lodLevel).xyz;
+    const float3 radiance = texture(samplerCube(ConvolvedSkybox, linearSampler), reflect, lodLevel).xyz;
 
-    const vec3 irradiance = texture(samplerCube(skyBox, linearSampler), normal, 0).xyz;
+    const float3 irradiance = texture(samplerCube(skyBox, linearSampler), normal, 0).xyz;
     
-    frameBuffer = vec4(baseAlbedo * (specularLighting + irradiance) + (diffuseLighting + radiance), 1.0f);  
+    frameBuffer = float4(baseAlbedo * (specularLighting + irradiance) + (diffuseLighting + radiance), 1.0f);  
 }

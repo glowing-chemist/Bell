@@ -1,66 +1,63 @@
-#version 450
-#extension GL_ARB_separate_shader_objects : enable
-#extension GL_GOOGLE_include_directive : enable
-#extension GL_EXT_nonuniform_qualifier : enable
 
-#include "MeshAttributes.glsl"
-#include "UniformBuffers.glsl"
-#include "NormalMapping.glsl"
+#include "MeshAttributes.hlsl"
+#include "UniformBuffers.hlsl"
+#include "NormalMapping.hlsl"
+#include "VertexOutputs.hlsl"
 
 
-layout(location = 0) in vec4 position;
-layout(location = 1) in vec2 uv;
-layout(location = 2) in vec3 vertexNormal;
-layout(location = 3) in flat uint materialID;
-layout(location = 4) in vec2 velocity;
-
-layout(location = 0) out vec4 outAlbedo;
-layout(location = 1) out vec3 outNormals;
-layout(location = 2) out vec2 outMetalnessRoughness;
-layout(location = 3) out vec2 outVelocity;
-
-
-layout(set = 0, binding = 0) uniform UniformBufferObject 
-{    
-    CameraBuffer camera;
-}; 
-
-layout(set = 0, binding = 1) uniform sampler linearSampler;
-
-layout(set = 1, binding = 0) uniform texture2D materials[];
-
-
-void main()
+struct GBufferFragOutput
 {
-	const vec4 baseAlbedo = texture(sampler2D(materials[nonuniformEXT(materialID * 4)], linearSampler), uv);
+    float4 albedo;
+    float3 normal;
+    float2 metalnessRoughness;
+    float2 velocity;
+};
 
-    vec3 normal = texture(sampler2D(materials[nonuniformEXT(materialID * 4 + 1)], linearSampler), uv).xyz;
+[[vk::binding(0)]]
+ConstantBuffer<CameraBuffer> camera;
+
+[[vk::binding(1)]]
+SamplerState linearSampler;
+
+[[vk::binding(0, 1)]]
+Texture2D materials[];
+
+
+GBufferFragOutput main(GBufferVertOutput vertInput)
+{
+    GBufferFragOutput output;
+
+	const float4 baseAlbedo = materials[vertInput.materialID * 4].Sample(linearSampler, vertInput.uv);
+
+    float3 normal = materials[vertInput.materialID * 4 + 1].Sample(linearSampler, vertInput.uv).xyz;
 
     // remap normal
     normal = remapNormals(normal);
     normal = normalize(normal);
 
-    const float roughness = texture(sampler2D(materials[nonuniformEXT(materialID * 4 + 2)], linearSampler), uv).x;
-    const float metalness = texture(sampler2D(materials[nonuniformEXT(materialID * 4 + 3)], linearSampler), uv).x;
+    const float roughness = materials[vertInput.materialID * 4 + 2].Sample(linearSampler, vertInput.uv).x;
+    const float metalness = materials[vertInput.materialID * 4 + 3].Sample(linearSampler, vertInput.uv).x;
 
-    const vec2 xDerivities = dFdxFine(uv);
-    const vec2 yDerivities = dFdxFine(uv);
+    const float2 xDerivities = ddx_fine(vertInput.uv);
+    const float2 yDerivities = ddy_fine(vertInput.uv);
 
-    if(baseAlbedo.w == 0.0f)
-        discard;
-
-    const vec3 viewDir = normalize(camera.position - position.xyz);
+    const float3 viewDir = normalize(camera.position - vertInput.positionWS.xyz);
 
 	{
-    	mat3 tbv = tangentSpaceMatrix(vertexNormal, viewDir, vec4(xDerivities, yDerivities));
+    	float3x3 tbv = tangentSpaceMatrix(vertInput.normal, viewDir, float4(xDerivities, yDerivities));
 
-    	normal = tbv * normal;
+    	normal = mul(normal, tbv);
 
     	normal = normalize(normal);
     }
 
-	outAlbedo = baseAlbedo;
-	outNormals = (normal + 1.0f) * 0.5f;
-	outMetalnessRoughness = vec2(metalness, roughness);
-    outVelocity = (velocity * 0.5f) + 0.5f;
+    if(baseAlbedo.w == 0.0f)
+        discard;
+
+	output.albedo = baseAlbedo;
+	output.normal = (normal + 1.0f) * 0.5f;
+	output.metalnessRoughness = float2(metalness, roughness);
+    output.velocity = (vertInput.velocity * 0.5f) + 0.5f;
+
+    return output;
 }

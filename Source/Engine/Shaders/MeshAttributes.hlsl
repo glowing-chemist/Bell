@@ -5,7 +5,7 @@
 
 struct MeshEntry
 {
-    mat4 mTransformation;
-    mat4 mPreviousTransformation;
+    float4x4 mTransformation;
+    float4x4 mPreviousTransformation;
     uint mFlags;
 };

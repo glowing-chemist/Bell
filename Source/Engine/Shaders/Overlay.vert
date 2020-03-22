@@ -1,28 +1,22 @@
-#version 450            
-#extension GL_ARB_separate_shader_objects : enable    
-    
-    
-layout(location = 0) in vec2 fragPos;    
-layout(location = 1) in vec2 inText;     
-layout(location = 2) in vec4 inAlbedo;
+#include "VertexOutputs.hlsl"
 
 
-layout(binding = 0) uniform UniformBufferObject 
-{    
-    vec4 trans;    
-} ubo;
-
-layout(location = 0) out vec2 outTexCoord;    
-layout(location = 1) out vec4 outAlbedo;
-
-out gl_PerVertex {    
-    vec4 gl_Position;    
-};    
-      
-    
-void main()
+struct UITranslation
 {
-	gl_Position = vec4(fragPos * ubo.trans.xy + ubo.trans.zw, 0.0f, 1.0f);
-	outTexCoord = inText;
-	outAlbedo = inAlbedo;
+	float4 translation;
+};
+
+[[vk::binding(0)]]
+ConstantBuffer<UITranslation> trans;
+
+
+OverlayVertOutput main(OverlayVertex vert)
+{
+	OverlayVertOutput output;
+
+	output.position = float4(vert.position * trans.translation.xy + trans.translation.zw, 0.0f, 1.0f);
+	output.uv = vert.uv;
+	output.albedo = vert.albedo;
+
+	return output;
 }

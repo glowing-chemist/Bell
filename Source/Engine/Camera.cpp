@@ -130,13 +130,13 @@ void Camera::rotateYaw(const float angle)
 }
 
 
-glm::mat4 Camera::getViewMatrix() const
+float4x4 Camera::getViewMatrix() const
 {
 	return glm::lookAt(mPosition, mPosition + mDirection, mUp);
 }
 
 
-glm::mat4 Camera::getPerspectiveMatrix() const
+float4x4 Camera::getPerspectiveMatrix() const
 {
     float fov = 1.0f / tan(glm::radians(mFieldOfView) / 2.0f);
     return glm::mat4(

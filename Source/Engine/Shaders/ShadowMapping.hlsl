@@ -1,5 +1,5 @@
 
-float varianceOcclusionFactor(const float fragDepth, const vec2 moments)
+float varianceOcclusionFactor(const float fragDepth, const float2 moments)
 {
 	float E_x2 = moments.y;                   
 	float Ex_2 = moments.x * moments.x;                   

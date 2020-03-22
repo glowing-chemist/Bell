@@ -82,7 +82,7 @@ void Scene::loadSkybox(const std::array<std::string, 6>& paths, Engine* eng)
 			mSkybox = std::make_unique<Image>(eng->getDevice(), Format::RGBA8UNorm, ImageUsage::CubeMap | ImageUsage::Sampled | ImageUsage::TransferDest,
 				info.width, info.height, 1, 1, 6, 1, "Skybox");
 
-			mSkyboxView = std::make_unique<ImageView>(*mSkybox, ImageViewType::Colour, 0, 6);
+			mSkyboxView = std::make_unique<ImageView>(*mSkybox, ImageViewType::CubeMap, 0, 6);
 		}
 
 		(*mSkybox)->setContents(info.mData.data(), info.width, info.height, 1, i);
@@ -458,8 +458,8 @@ void Scene::generateSceneAABB(const bool includeStatic)
 
 void Scene::setShadowingLight(const float3 &position, const float3 &direction, const float3 &up)
 {
-    const glm::mat4 view = glm::lookAt(position, position + direction, up);
-    const glm::mat4 proj = glm::perspective(glm::radians(90.0f), 1920.0f / 1080.0f, 0.1f, 2000.0f);
+    const float4x4 view = glm::lookAt(position, position + direction, up);
+    const float4x4 proj = glm::perspective(glm::radians(90.0f), 1920.0f / 1080.0f, 0.1f, 2000.0f);
 
     ShadowingLight light{view, glm::inverse(view), proj * view, float4(position, 1.0f), float4(direction, 0.0f), float4(up, 1.0f)};
     mShadowingLight = light;

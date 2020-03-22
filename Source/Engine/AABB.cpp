@@ -83,7 +83,7 @@ bool AABB::contains(const AABB& aabb, const EstimationMode estimationMode) const
 }
 
 
-AABB& AABB::operator*=(const glm::mat4& mat)
+AABB& AABB::operator*=(const float4x4& mat)
 {
     // Keep track of the max/min values seen on each axis
     // so tha we still have an AABB not an OOBB.

@@ -24,29 +24,29 @@ layout(set = 0, binding = 5) uniform sampler linearSampler;
 
 void main()
 {
-	const vec2 gbufferSize = camera.frameBufferSize;
-	const vec2 uv = (vec2(gl_GlobalInvocationID.xy) / gbufferSize) + camera.jitter;
+	const float2 gbufferSize = camera.frameBufferSize;
+	const float2 uv = (float2(gl_GlobalInvocationID.xy) / gbufferSize) + camera.jitter;
 
 	const float fragmentDepth = texture(sampler2D(depth, linearSampler), uv).x;
 
-	vec4 worldSpaceFragmentPos = camera.invertedViewProj * vec4((uv - 0.5f) * 2.0f, fragmentDepth, 1.0f);
+	float4 worldSpaceFragmentPos = camera.invertedViewProj * float4((uv - 0.5f) * 2.0f, fragmentDepth, 1.0f);
     worldSpaceFragmentPos /= worldSpaceFragmentPos.w;
 
-	vec4 fragPositionVS = light.view * worldSpaceFragmentPos;
+	float4 fragPositionVS = light.view * worldSpaceFragmentPos;
     fragPositionVS /= fragPositionVS.w;
 
-    vec4 fragPositionNDC = light.viewProj * worldSpaceFragmentPos;
+    float4 fragPositionNDC = light.viewProj * worldSpaceFragmentPos;
     fragPositionNDC /= fragPositionNDC.w;
 
-    const vec2 lightSpaceUV = (fragPositionNDC.xy * 0.5f) + 0.5f;
+    const float2 lightSpaceUV = (fragPositionNDC.xy * 0.5f) + 0.5f;
     float variance = 0.0f;
     if(lightSpaceUV.x >= 0.0f && lightSpaceUV.x <= 1.0f && lightSpaceUV.y >= 0.0f && lightSpaceUV.y <= 1.0f && fragPositionVS.z <= 0.0f)
     {
-        const vec2 moments = texture(sampler2D(shadowMapRaw, linearSampler), lightSpaceUV).xy;
+        const float2 moments = texture(sampler2D(shadowMapRaw, linearSampler), lightSpaceUV).xy;
         variance = varianceOcclusionFactor(-fragPositionVS.z, moments);
     }
     variance = clamp(variance, 0.15f, 1.0f);
 
     if(gl_GlobalInvocationID.x <= gbufferSize.x && gl_GlobalInvocationID.y <= gbufferSize.y)
-			imageStore(shadowMap, ivec2(gl_GlobalInvocationID.xy), vec4(variance, 0.0f, 0.0f, 0.0f)); 
+			imageStore(shadowMap, int2(gl_GlobalInvocationID.xy), float4(variance, 0.0f, 0.0f, 0.0f)); 
 }

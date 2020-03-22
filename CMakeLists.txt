@@ -26,12 +26,12 @@ include_directories(
 			"${CMAKE_CURRENT_LIST_DIR}/ThirdParty/assimp-4.1.0/include"
 			"${CMAKE_CURRENT_LIST_DIR}/ThirdParty/imgui-master"
 			"${CMAKE_CURRENT_LIST_DIR}/ThirdParty/imgui-guizmo"
-			"${CMAKE_CURRENT_LIST_DIR}/ThirdParty/glslang"
+			"${CMAKE_CURRENT_LIST_DIR}/ThirdParty/hlslang"
 			"${CMAKE_CURRENT_LIST_DIR}/ThirdParty/imgui-node-editor/NodeEditor/Include"
 		    "${CMAKE_CURRENT_LIST_DIR}/ThirdParty/glm"	
 			"${CMAKE_CURRENT_LIST_DIR}/ThirdParty/stb_image"
 			"${CMAKE_CURRENT_LIST_DIR}/ThirdParty/glad/include"
-			${glslangIncludeDirs}
+			${hlslangIncludeDirs}
 			${glmIncludeDirs}
 		    )
 
@@ -117,9 +117,9 @@ set(BELL_BASE_SOURCE
 add_library("${PROJECT_NAME}_BASE" ${BELL_BASE_SOURCE})
 
 if(WIN32)
-    set(BELL_BASE_DEPENDANCIES ${Vulkan_LIBRARIES} glfw glslang SPIRV)
+    set(BELL_BASE_DEPENDANCIES ${Vulkan_LIBRARIES} glfw glslang SPIRV HLSL)
 else()
-    set(BELL_BASE_DEPENDANCIES ${Vulkan_LIBRARIES} glfw stdc++fs glslang SPIRV)
+    set(BELL_BASE_DEPENDANCIES ${Vulkan_LIBRARIES} glfw stdc++fs glslang SPIRV HLSL)
 endif(WIN32)
 
 target_link_libraries("${PROJECT_NAME}_BASE" ${BELL_BASE_DEPENDANCIES})
@@ -181,10 +181,10 @@ set(SHADERS
 	Overlay.vert
 	AnalyticalIBLDeferredTexture.frag          
 	CompositeSSAO.frag                  
-	GaussianBlur.glsl                        
-	PBR.glsl
+	GaussianBlur.hlsl                        
+	PBR.hlsl
 	BlinnPhongDeferredTexture.frag             
-	CubemapParallax.glsl                
+	CubemapParallax.hlsl                
 	GBuffer.frag                              
 	ShadowMap.vert
 	Blit.frag                                  
@@ -194,7 +194,7 @@ set(SHADERS
 	DeferredAnalyticalLighting.comp     
 	GBufferPassThrough.vert                   
 	SkyBox.vert
-	BlurX_Base.glsl                            
+	BlurX_Base.hlsl                            
 	DeferredDFGIBL.frag                 
 	GBufferPassThroughInstanced.vert          
 	SkyBoxConvolve.comp
@@ -208,35 +208,36 @@ set(SHADERS
 	SSAOImproved.frag
 	blurY.comp                                 
 	DFGLutGenerate.comp                 
-	Hammersley.glsl                           
+	Hammersley.hlsl                           
 	TAAResolve.comp
-	BlurY_Base.glsl                            
+	BlurY_Base.hlsl                            
 	Empty.frag                          
 	IndirectFroxelArgs.comp                   
-	UniformBuffers.glsl
+	UniformBuffers.hlsl
 	blurY_SRGB.comp                            
 	ForwardCombinedLighting.frag        
 	InPlaceCombine.comp                       
-	Utilities.glsl
+	Utilities.hlsl
 	blurYR8.comp                               
 	ForwardIBL.frag                     
 	InPlaceCombineSRGB.comp                   
 	VarianceShadowMap.frag
-	ClusteredLighting.glsl                     
+	ClusteredLighting.hlsl                     
 	ForwardMaterial.vert                
 	LightFroxelationClearCounters.comp        
 	LightingCompositeSSAO.frag
 	CompositeOverlay.frag
-	NormalMapping.glsl
+	NormalMapping.hlsl
 	CompositeOverlayCombinedLightingSSAO.frag  
 	FroxelationGenerateLightLists.comp  
 	Overlay.frag
-	ShadowMapping.glsl
+	ShadowMapping.hlsl
 	ResolveVarianceShadowMap.comp
 	blurXrg32f.comp
 	blurYrg32f.comp
 	AlphaTestDepthOnly.frag
-	MeshAttributes.glsl
+	MeshAttributes.hlsl
+	VertexOutputs.hlsl
     )
 
 foreach(shader ${SHADERS})

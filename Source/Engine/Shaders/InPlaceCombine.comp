@@ -11,16 +11,16 @@ layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
 void main()
 {
 	// Assumes images are the same size.
-	const vec2 size = imageSize(dataImage);
+	const float2 size = imageSize(dataImage);
 
-	const ivec3 dispatchLocation = ivec3(gl_GlobalInvocationID);
+	const int3 dispatchLocation = int3(gl_GlobalInvocationID);
 
 	if(dispatchLocation.x >= size.x || dispatchLocation.y >= size.y)
 		return;
 
 	const float multiplyer = imageLoad(multipleImage, dispatchLocation.xy).x;
 
-	const vec4 data = imageLoad(dataImage, dispatchLocation.xy);
+	const float4 data = imageLoad(dataImage, dispatchLocation.xy);
 
 	imageStore(dataImage, dispatchLocation.xy, data * multiplyer);
 }

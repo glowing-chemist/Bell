@@ -1,53 +1,33 @@
-#version 450
-#extension GL_ARB_separate_shader_objects : enable
-#extension GL_GOOGLE_include_directive : enable
-
-#include "UniformBuffers.glsl"
-
-layout(location = 0) in vec4 position;
-layout(location = 1) in vec2 uv;
-layout(location = 2) in vec4 normals;
-layout(location = 3) in uint material;
+#include "UniformBuffers.hlsl"
+#include "VertexOutputs.hlsl"
 
 
-layout(location = 0) out vec4 outPosition;
-layout(location = 1) out vec2 outUV;
-layout(location = 2) out vec3 outNormals;
-layout(location = 3) out uint outMaterialID;
-layout(location = 4) out vec2 outVelocity;
-
-out gl_PerVertex {
-    vec4 gl_Position;
-};
+[[vk::push_constant]]
+ConstantBuffer<ObjectMatracies> model;
 
 
-layout(push_constant) uniform pushModelMatrix
+[[vk::binding(0)]]
+ConstantBuffer<CameraBuffer> camera;
+
+
+GBufferVertOutput main(Vertex vertInput)
 {
-	mat4 mesh;
-	mat4 previousMesh;
-} push_constants;
+	GBufferVertOutput output;
 
+	const float4x4 transFormation = mul(camera.viewProj, model.meshMatrix);
+	float4 transformedPosition = mul(transFormation, vertInput.position);
 
-layout(set = 0, binding = 0) uniform UniformBufferObject 
-{    
-    CameraBuffer camera;
-}; 
-
-
-void main()
-{
-	const mat4 transFormation = camera.viewProj * push_constants.mesh;
-	vec4 transformedPosition = transFormation * position;
-
-	gl_Position = transformedPosition;
-	outPosition = push_constants.mesh * position;
-	outUV = uv;
-	outNormals = mat3(push_constants.mesh) * vec3(normals.xyz);
-	outMaterialID =  material;
+	output.position = transformedPosition;
+	output.positionWS = mul(model.meshMatrix, vertInput.position);
+	output.uv = vertInput.uv;
+	output.normal = float4(mul(float3x3(model.meshMatrix), vertInput.normal.xyz), 1.0f);
+	output.materialID =  vertInput.materialID;
 
 	// Calculate screen space velocity.
 	transformedPosition /= transformedPosition.w;
-	vec4 previousPosition = camera.previousFrameViewProj * push_constants.previousMesh * position;
+	float4 previousPosition = mul(mul(camera.previousFrameViewProj, model.meshMatrix), vertInput.position);
 	previousPosition /= previousPosition.w;
-	outVelocity = previousPosition.xy - transformedPosition.xy;
+	output.velocity = previousPosition.xy - transformedPosition.xy;
+
+	return output;
 }

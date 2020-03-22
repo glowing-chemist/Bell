@@ -49,17 +49,17 @@ LightFroxelationTechnique::LightFroxelationTechnique(Engine* eng) :
 	mActiveFroxels.addInput(kGBufferDepth, AttachmentType::Texture2D);
 	mActiveFroxels.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
 	mActiveFroxels.addInput(kDefaultSampler, AttachmentType::Sampler);
-    mActiveFroxels.addInput(kActiveFroxelsCounter, AttachmentType::DataBufferRW);
     mActiveFroxels.addInput(kActiveFroxelBuffer, AttachmentType::DataBufferWO);
+    mActiveFroxels.addInput(kActiveFroxelsCounter, AttachmentType::DataBufferRW);
 
     mIndirectArgs.addInput(kActiveFroxelsCounter, AttachmentType::DataBufferRO);
     mIndirectArgs.addInput(kFroxelIndirectArgs, AttachmentType::DataBufferWO);
 	mIndirectArgs.addDispatch(1, 1, 1);
 
-    mLightListAsignment.addInput(kActiveFroxelsCounter, AttachmentType::DataBufferRO);
     mLightListAsignment.addInput(kActiveFroxelBuffer, AttachmentType::DataBufferRO);
-    mLightListAsignment.addInput(kLightIndexCounter, AttachmentType::DataBufferRW);
+    mLightListAsignment.addInput(kActiveFroxelsCounter, AttachmentType::DataBufferRO);
     mLightListAsignment.addInput(kLightIndicies, AttachmentType::DataBufferWO);
+    mLightListAsignment.addInput(kLightIndexCounter, AttachmentType::DataBufferRW);
     mLightListAsignment.addInput(kSparseFroxels, AttachmentType::DataBufferWO);
     mLightListAsignment.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
     mLightListAsignment.addInput(kLightBuffer, AttachmentType::ShaderResourceSet);

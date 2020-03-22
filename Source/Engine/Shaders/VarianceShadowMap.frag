@@ -5,11 +5,11 @@
 
 #include "MeshAttributes.glsl"
 
-layout(location = 0) in vec4 positionVS;
-layout(location = 1) in vec2 uv;
+layout(location = 0) in float4 positionVS;
+layout(location = 1) in float2 uv;
 layout(location = 2) in flat uint materialID;
 
-layout(location = 0) out vec2 shadowMap;
+layout(location = 0) out float2 shadowMap;
 
 
 layout(set = 0, binding = 1) uniform sampler linearSampler;

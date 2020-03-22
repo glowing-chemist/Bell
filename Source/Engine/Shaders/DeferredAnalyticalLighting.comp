@@ -28,7 +28,7 @@ layout(set = 0, binding = 9) uniform sampler pointSampler;
 // Light lists
 layout(std430, set = 0, binding = 10) buffer readonly sparseFroxels
 {
-	uvec2 sparseFroxelList[];
+	uint2 sparseFroxelList[];
 };
 
 layout(std430, set = 0,  binding = 11) buffer froxelIndicies
@@ -42,45 +42,45 @@ layout(rgba8, set = 0, binding = 13) uniform writeonly image2D accumilatedLight;
 
 layout(std430, set = 1, binding = 0) buffer readonly sceneLights
 {
-	uvec4  lightCount;
+	uint4  lightCount;
 	Light lights[];
 };
 
 
 void main()
 {
-	const vec2 gbufferSize = camera.frameBufferSize;
-	const vec2 uv = vec2(gl_GlobalInvocationID.xy) / gbufferSize;
+	const float2 gbufferSize = camera.frameBufferSize;
+	const float2 uv = float2(gl_GlobalInvocationID.xy) / gbufferSize;
 
 	if(gl_GlobalInvocationID.x >= gbufferSize.x || gl_GlobalInvocationID.y >= gbufferSize.y)
 		return;
 
 	const float fragmentDepth = texture(sampler2D(depth, linearSampler), uv).x;
 
-	vec4 worldSpaceFragmentPos = camera.invertedViewProj * vec4((uv - 0.5f) * 2.0f, fragmentDepth, 1.0f);
+	float4 worldSpaceFragmentPos = camera.invertedViewProj * float4((uv - 0.5f) * 2.0f, fragmentDepth, 1.0f);
 	worldSpaceFragmentPos /= worldSpaceFragmentPos.w;
 
-	vec3 normal;
+	float3 normal;
     normal = texture(sampler2D(vertexNormals, linearSampler), uv).xyz;
     normal = remapNormals(normal);
     normal = normalize(normal);
 
-    const vec3 viewDir = normalize(vec4(camera.position, 1.0f) - worldSpaceFragmentPos).xyz;
+    const float3 viewDir = normalize(float4(camera.position, 1.0f) - worldSpaceFragmentPos).xyz;
 
-    const vec3 baseAlbedo = texture(sampler2D(Albedo, linearSampler), uv).xyz;
+    const float3 baseAlbedo = texture(sampler2D(Albedo, linearSampler), uv).xyz;
     const float roughness = texture(sampler2D(MetalnessRoughness, linearSampler), uv).y;
     const float metalness = texture(sampler2D(MetalnessRoughness, linearSampler), uv).x;
 
     const uint froxelIndex = texture(usampler2D(activeFroxels, pointSampler), uv).x;
-    const uvec2 lightListIndicies = sparseFroxelList[froxelIndex];
+    const uint2 lightListIndicies = sparseFroxelList[froxelIndex];
 
     // Initialize needed lighting params.
-    mat3 minV;
+    float3x3 minV;
     float LTCAmp;
-    vec2 f_ab;
+    float2 f_ab;
     initializeLightState(minV, LTCAmp, f_ab, DFG, ltcMat, ltcAmp, linearSampler, dot(normal, viewDir), roughness);
 
-    vec4 accum = vec4(0.0f);
+    float4 accum = float4(0.0f);
 
     for(uint i = 0; i < lightListIndicies.y; ++i)
     {
@@ -92,21 +92,21 @@ void main()
 			case 0: // Point.
 			{
 
-    			vec4 lighting =  pointLightContribution(light, worldSpaceFragmentPos, viewDir, normal, metalness, roughness, baseAlbedo, f_ab);
+    			float4 lighting =  pointLightContribution(light, worldSpaceFragmentPos, viewDir, normal, metalness, roughness, baseAlbedo, f_ab);
     			accum += lighting;
 				break;
 			}
 
 			case 1: // Spot.
 			{
-				vec4 lighting =  pointLightContribution(light, worldSpaceFragmentPos, viewDir, normal, metalness, roughness, baseAlbedo, f_ab);
+				float4 lighting =  pointLightContribution(light, worldSpaceFragmentPos, viewDir, normal, metalness, roughness, baseAlbedo, f_ab);
     			accum += lighting;	
 				break;
 			}
 
 			case 2: // Area.
 			{
-				vec4 lighting =  areaLightContribution(light, worldSpaceFragmentPos, viewDir, normal, metalness, roughness, baseAlbedo, minV, LTCAmp);
+				float4 lighting =  areaLightContribution(light, worldSpaceFragmentPos, viewDir, normal, metalness, roughness, baseAlbedo, minV, LTCAmp);
     			accum += lighting;	
 				break;
 			}
@@ -119,5 +119,5 @@ void main()
 		}
     }
 
-    imageStore(accumilatedLight, ivec2(gl_GlobalInvocationID.xy), accum);
+    imageStore(accumilatedLight, int2(gl_GlobalInvocationID.xy), accum);
 }

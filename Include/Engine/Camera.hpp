@@ -79,8 +79,8 @@ public:
     const float3 getUp() const
         { return mUp; }
 
-    glm::mat4 getViewMatrix() const;
-    glm::mat4 getPerspectiveMatrix() const;
+    float4x4 getViewMatrix() const;
+    float4x4 getPerspectiveMatrix() const;
 
 	float getNearPlane() const
 	{ return mNearPlaneDistance; }

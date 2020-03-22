@@ -5,8 +5,8 @@
 #define DEPTH_SUBDIVISION_FACTOR 1.2
 #define E 2.71828
 
-#include "Utilities.glsl"
-#include "PBR.glsl"
+#include "Utilities.hlsl"
+#include "PBR.hlsl"
 
 #define LINEAR_SUBDIVISIONS 0
 
@@ -17,10 +17,10 @@
 // 3 - strip
 struct Light
 {
-	vec4 position;
-	vec4 direction; // direction for spotlight.
-	vec4 up;
-	vec4 albedo;
+	float4 position;
+	float4 direction; // direction for spotlight.
+	float4 up;
+	float4 albedo;
 	float intensity;
 	float radius;
 	uint type;
@@ -29,12 +29,12 @@ struct Light
 
 struct AABB
 {
-	vec4 min; // smallest
-	vec4 max; // largest
+	float4 min; // smallest
+	float4 max; // largest
 };
 
 
-uint getFroxelIndex(const uvec3 position, const uvec2 size)
+uint getFroxelIndex(const uint3 position, const uint2 size)
 {
 	const uint rowSize = uint(ceil(float(size.x) / float(FROXEL_TILE_SIZE)));
 	const uint columnSize = uint(ceil(float(size.y) / float(FROXEL_TILE_SIZE)));
@@ -42,9 +42,9 @@ uint getFroxelIndex(const uvec3 position, const uvec2 size)
 }
 
 
-uvec3 getFroxelPosition(const uvec2 position, const float depth, const vec2 size, const float nearPlane, const float farPlane, const float FOV)
+uint3 getFroxelPosition(const uint2 position, const float depth, const float2 size, const float nearPlane, const float farPlane, const float FOV)
 {
-	const uvec2 xyFroxel = position / FROXEL_TILE_SIZE;
+	const uint2 xyFroxel = position / FROXEL_TILE_SIZE;
 
     float depthVS = lineariseReverseDepth(depth, nearPlane, farPlane);
     depthVS *= (farPlane - nearPlane);
@@ -64,22 +64,22 @@ uvec3 getFroxelPosition(const uvec2 position, const float depth, const vec2 size
 	const float kn = floor(log(depthVS / k1) / log(DEPTH_SUBDIVISION_FACTOR));
 #endif
 
-	return uvec3(xyFroxel, kn);
+	return uint3(xyFroxel, kn);
 }
 
 
-vec2 getWidthHeight(const float linearDepth, const float FOV, const vec2 framebufferSize)
+float2 getWidthHeight(const float linearDepth, const float FOV, const float2 framebufferSize)
 {
 	const float height = 2.0f * linearDepth * tan(radians(FOV) * 0.5f);
 
 	const float aspect = framebufferSize.x / framebufferSize.y;
 	const float width = height * aspect;
 
-	return vec2(width, height);
+	return float2(width, height);
 }
 
 
-AABB getFroxelAABB(const uvec3 froxelPosition, const float FOV, const vec2 framebufferSize, const float nearPlane, const float farPlane)
+AABB getFroxelAABB(const uint3 froxelPosition, const float FOV, const float2 framebufferSize, const float nearPlane, const float farPlane)
 {
 #if LINEAR_SUBDIVISIONS
 	float k1 = farPlane / float(DEPTH_SUBDIVISIONS);
@@ -93,23 +93,23 @@ AABB getFroxelAABB(const uvec3 froxelPosition, const float FOV, const vec2 frame
 	const float farDepth = k1 * pow(E, log(DEPTH_SUBDIVISION_FACTOR) * (froxelPosition.z + 1));
 #endif
 
-	const vec2 farWidthHeight = getWidthHeight(farDepth, FOV, framebufferSize);
-	const vec2 nearWidthHeight = getWidthHeight(nearDepth, FOV, framebufferSize);
+	const float2 farWidthHeight = getWidthHeight(farDepth, FOV, framebufferSize);
+	const float2 nearWidthHeight = getWidthHeight(nearDepth, FOV, framebufferSize);
 
-	vec3 nearVerticies[4];
-	nearVerticies[0] = vec3(((vec2((froxelPosition.xy + uvec2(0, 0)) * FROXEL_TILE_SIZE) / framebufferSize) - 0.5f) * nearWidthHeight, -nearDepth);
-	nearVerticies[1] = vec3(((vec2((froxelPosition.xy + uvec2(1, 0)) * FROXEL_TILE_SIZE) / framebufferSize) - 0.5f) * nearWidthHeight, -nearDepth);
-	nearVerticies[2] = vec3(((vec2((froxelPosition.xy + uvec2(0, 1)) * FROXEL_TILE_SIZE) / framebufferSize) - 0.5f) * nearWidthHeight, -nearDepth);
-	nearVerticies[3] = vec3(((vec2((froxelPosition.xy + uvec2(1, 1)) * FROXEL_TILE_SIZE) / framebufferSize) - 0.5f) * nearWidthHeight, -nearDepth);
+	float3 nearVerticies[4];
+	nearVerticies[0] = float3(((float2((froxelPosition.xy + uint2(0, 0)) * FROXEL_TILE_SIZE) / framebufferSize) - 0.5f) * nearWidthHeight, -nearDepth);
+	nearVerticies[1] = float3(((float2((froxelPosition.xy + uint2(1, 0)) * FROXEL_TILE_SIZE) / framebufferSize) - 0.5f) * nearWidthHeight, -nearDepth);
+	nearVerticies[2] = float3(((float2((froxelPosition.xy + uint2(0, 1)) * FROXEL_TILE_SIZE) / framebufferSize) - 0.5f) * nearWidthHeight, -nearDepth);
+	nearVerticies[3] = float3(((float2((froxelPosition.xy + uint2(1, 1)) * FROXEL_TILE_SIZE) / framebufferSize) - 0.5f) * nearWidthHeight, -nearDepth);
 
-	vec3 farVerticies[4];
-	farVerticies[0] = vec3(((vec2((froxelPosition.xy + uvec2(0, 0)) * FROXEL_TILE_SIZE) / framebufferSize) - 0.5f) * farWidthHeight, -farDepth);
-	farVerticies[1] = vec3(((vec2((froxelPosition.xy + uvec2(1, 0)) * FROXEL_TILE_SIZE) / framebufferSize) - 0.5f) * farWidthHeight, -farDepth);
-	farVerticies[2] = vec3(((vec2((froxelPosition.xy + uvec2(0, 1)) * FROXEL_TILE_SIZE) / framebufferSize) - 0.5f) * farWidthHeight, -farDepth);
-	farVerticies[3] = vec3(((vec2((froxelPosition.xy + uvec2(1, 1)) * FROXEL_TILE_SIZE) / framebufferSize) - 0.5f) * farWidthHeight, -farDepth);
+	float3 farVerticies[4];
+	farVerticies[0] = float3(((float2((froxelPosition.xy + uint2(0, 0)) * FROXEL_TILE_SIZE) / framebufferSize) - 0.5f) * farWidthHeight, -farDepth);
+	farVerticies[1] = float3(((float2((froxelPosition.xy + uint2(1, 0)) * FROXEL_TILE_SIZE) / framebufferSize) - 0.5f) * farWidthHeight, -farDepth);
+	farVerticies[2] = float3(((float2((froxelPosition.xy + uint2(0, 1)) * FROXEL_TILE_SIZE) / framebufferSize) - 0.5f) * farWidthHeight, -farDepth);
+	farVerticies[3] = float3(((float2((froxelPosition.xy + uint2(1, 1)) * FROXEL_TILE_SIZE) / framebufferSize) - 0.5f) * farWidthHeight, -farDepth);
 
-	vec3 nearViewSpace = vec3(1000000.0f);
-	vec3 farViewSpace = vec3(-1000000.0f);
+	float3 nearViewSpace = float3(1000000.0f);
+	float3 farViewSpace = float3(-1000000.0f);
 
 	for(uint i = 0; i < 4; ++i)
 	{
@@ -120,49 +120,49 @@ AABB getFroxelAABB(const uvec3 froxelPosition, const float FOV, const vec2 frame
 		farViewSpace = max(farViewSpace, farVerticies[i]);
 	}
 
-	return AABB(vec4(nearViewSpace, 1.0f), vec4(farViewSpace, 1.0f));
+	return AABB(float4(nearViewSpace, 1.0f), float4(farViewSpace, 1.0f));
 }
 
 
-void initializeLightState(out mat3 minv, out float ltcAmp, out vec2 f_ab, texture2D DFG, texture2D LTCMat, texture2D LTCAmp, sampler linearSampler, const float NoV, const float R)
+void initializeLightState(out float3x3 minv, out float ltcAmp, out float2 f_ab, Texture2D<float2> DFG, Texture2D<float4> LTCMat, Texture2D<float2> LTCAmp, SamplerState linearSampler, const float NoV, const float R)
 {
-	f_ab = texture(sampler2D(DFG, linearSampler), vec2(NoV, R)).xy;
+	f_ab = DFG.Sample(linearSampler, float2(NoV, R));
 
-	const vec4 t = texture(sampler2D(LTCMat, linearSampler), vec2(R, NoV));
-    minv = mat3(
-            	vec3(  1,   0, t.y),
-            	vec3(  0, t.z,   0),
-            	vec3(t.w,   0, t.x)
+	const float4 t = LTCMat.Sample(linearSampler, float2(R, NoV));
+    minv = float3x3(
+            	float3(  1,   0, t.y),
+            	float3(  0, t.z,   0),
+            	float3(t.w,   0, t.x)
         		);
 
-    ltcAmp = texture(sampler2D(LTCAmp, linearSampler), vec2(R, NoV)).x;
+    ltcAmp = LTCAmp.Sample(linearSampler, float2(R, NoV));
 }
 
 
-vec4 pointLightContribution(const Light light, 
-							const vec4 positionWS, 
-							const vec3 view,
-							const vec3 N,
+float4 pointLightContribution(const Light light, 
+							const float4 positionWS, 
+							const float3 view,
+							const float3 N,
 							const float metalness, 
 							const float roughness, 
-							const vec3 baseAlbedo, 
-							const vec2 f_ab)
+							const float3 baseAlbedo, 
+							const float2 f_ab)
 {
-    const vec4 lightDir = light.position - positionWS;
+    const float4 lightDir = light.position - positionWS;
 	const float lightDistance = length(lightDir);
 
     const float falloff = pow(clamp(1 - pow(lightDistance / light.radius, 4.0f), 0.0f, 1.0f), 2.0f) / ((lightDistance * lightDistance) + 1); 
-	const vec3 radiance = light.albedo.xyz * light.intensity * falloff;
+	const float3 radiance = light.albedo.xyz * light.intensity * falloff;
 
-    const vec3 diffuse = calculateDiffuseLambert(baseAlbedo.xyz, metalness, radiance);
-    const vec3 specular = calculateSpecular(roughness * roughness, N, view, metalness, baseAlbedo.xyz, radiance, f_ab);
+    const float3 diffuse = calculateDiffuseLambert(baseAlbedo.xyz, metalness, radiance);
+    const float3 specular = calculateSpecular(roughness * roughness, N, view, metalness, baseAlbedo.xyz, radiance, f_ab);
 
-    return vec4(diffuse + specular, 1.0f);
+    return float4(diffuse + specular, 1.0f);
 }
 
 
 // Area light functions.
-float IntegrateEdge(vec3 v1, vec3 v2)
+float IntegrateEdge(float3 v1, float3 v2)
 {
     float cosTheta = dot(v1, v2);
     float theta = acos(cosTheta);    
@@ -171,19 +171,19 @@ float IntegrateEdge(vec3 v1, vec3 v2)
     return res;
 }
 
-vec3 LTC_Evaluate(
-    vec3 N, vec3 V, vec3 P, mat3 Minv, vec3 points[4])
+float3 LTC_Evaluate(
+    float3 N, float3 V, float3 P, float3x3 Minv, float3 points[4])
 {
     // construct orthonormal basis around N
-    vec3 T1, T2;
+    float3 T1, T2;
     T1 = normalize(V - N*dot(V, N));
     T2 = cross(N, T1);
 
     // rotate area light in (T1, T2, N) basis
-    Minv = Minv * transpose(mat3(T1, T2, N));
+    Minv = Minv * transpose(float3x3(T1, T2, N));
 
     // polygon (allocate 5 vertices for clipping)
-    vec3 L[4];
+    float3 L[4];
     L[0] = Minv * (points[0] - P);
     L[1] = Minv * (points[1] - P);
     L[2] = Minv * (points[2] - P);
@@ -208,61 +208,61 @@ vec3 LTC_Evaluate(
 
     sum = max(0.0, sum);
 
-    return vec3(sum);
+    return float3(sum);
 }
 
-vec4 areaLightContribution(const Light light, 
-							const vec4 positionWS, 
-							const vec3 view,
-							const vec3 N,
+float4 areaLightContribution(const Light light, 
+							const float4 positionWS, 
+							const float3 view,
+							const float3 N,
 							const float metalness, 
 							const float roughness, 
-							const vec3 baseAlbedo, 
-							const mat3 Minv,
+							const float3 baseAlbedo, 
+							const float3x3 Minv,
 							const float amp)
 {
-    const vec3 rightVector = cross(light.up.xyz, light.direction.xyz); 
+    const float3 rightVector = cross(light.up.xyz, light.direction.xyz); 
 
     // Calculate the 4 corners of the square area light in WS.
-    vec3 points[4];
+    float3 points[4];
     points[0] = light.position.xyz + (light.misc / 2.0f) * (-rightVector + light.up.xyz);
     points[1] = light.position.xyz + (light.misc / 2.0f) * (rightVector + light.up.xyz);
     points[2] = light.position.xyz + (light.misc / 2.0f) * (rightVector - light.up.xyz);
     points[3] = light.position.xyz + (light.misc / 2.0f) * (-rightVector - light.up.xyz);
 
-    vec3 spec = LTC_Evaluate(N, view, positionWS.xyz, Minv, points);
+    float3 spec = LTC_Evaluate(N, view, positionWS.xyz, Minv, points);
     spec *= amp;
         
-    const vec3 diff = LTC_Evaluate(N, view, positionWS.xyz, mat3(1), points); 
+    const float3 diff = LTC_Evaluate(N, view, positionWS.xyz, float3x3(1), points); 
 
-    const vec3 diffuseColor = baseAlbedo * (1.0 - DIELECTRIC_SPECULAR) * (1.0 - metalness);
-	const vec3 F0 = mix(vec3(DIELECTRIC_SPECULAR), baseAlbedo, metalness);
+    const float3 diffuseColor = baseAlbedo * (1.0 - DIELECTRIC_SPECULAR) * (1.0 - metalness);
+	const float3 F0 = lerp(float3(DIELECTRIC_SPECULAR), baseAlbedo, metalness);
         
-    vec3 colour  = light.intensity * (light.albedo.xyz * spec * F0 + light.albedo.xyz * diff * diffuseColor);
+    float3 colour  = light.intensity * (light.albedo.xyz * spec * F0 + light.albedo.xyz * diff * diffuseColor);
     colour /= 2.0 * PI;
 
-    return vec4(colour, 1.0f);
+    return float4(colour, 1.0f);
 }
 
 
 // Interscetion helpers
-bool sphereAABBIntersection(const vec3 centre, const float radius, const AABB aabb)
+bool sphereAABBIntersection(const float3 centre, const float radius, const AABB aabb)
 {
 	const float r2 = radius * radius;
-	const bvec3 lessThan = bvec3(centre.x < aabb.min.x,
+	const bool3 lessThan = bool3(centre.x < aabb.min.x,
 							centre.y < aabb.min.y,
 							centre.z < aabb.min.z);
-	const vec3 lessDistance = aabb.min.xyz - centre;
-	vec3 dmin = mix(vec3(0.0f), lessDistance * lessDistance, lessThan);
+	const float3 lessDistance = aabb.min.xyz - centre;
+	float3 dmin = lerp(float3(0.0f), lessDistance * lessDistance, lessThan);
 
-	const bvec3 greaterThan = bvec3(centre.x > aabb.max.x,
+	const bool3 greaterThan = bool3(centre.x > aabb.max.x,
 								centre.y > aabb.max.y,
 								centre.z > aabb.max.z);
-	const vec3 greaterDistance = centre - aabb.max.xyz;
-	dmin += mix(vec3(0.0f), greaterDistance * greaterDistance, greaterThan);
+	const float3 greaterDistance = centre - aabb.max.xyz;
+	dmin += lerp(float3(0.0f), greaterDistance * greaterDistance, greaterThan);
 
 	// Sum the results.
-	dmin.x = dot(dmin, vec3(1.0f));
+	dmin.x = dot(dmin, float3(1.0f));
 
 	return dmin.x <= r2;
 }
@@ -276,23 +276,23 @@ bool AABBAABBIntersection(const AABB a, const AABB b)
 }
 
 
-bool spotLightAABBIntersection(const vec3 centre, const vec3 direction, const float angle, const float radius, const AABB aabb)
+bool spotLightAABBIntersection(const float3 centre, const float3 direction, const float angle, const float radius, const AABB aabb)
 {
-	const vec3 toNear = normalize(aabb.min.xyz - centre);
-	const vec3 toFar = normalize(aabb.max.xyz - centre);
+	const float3 toNear = normalize(aabb.min.xyz - centre);
+	const float3 toFar = normalize(aabb.max.xyz - centre);
 
 	return ((acos(dot(toNear, direction)) < radians(angle)) || (acos(dot(toFar, direction)) < radians(angle))) && sphereAABBIntersection(centre, radius, aabb);
 }
 
 
-bool areaLightAABBIntersection(const vec3 centre, const vec3 normal, const vec3 up, const float radius, const AABB aabb)
+bool areaLightAABBIntersection(const float3 centre, const float3 normal, const float3 up, const float radius, const AABB aabb)
 {
-	const vec3 right = cross(up, normal);
-	const vec3 minCorner = centre + (radius * 0.5f * (right - up));
-	const vec3 maxCorner = centre + (radius * 0.5f * (up - right)) + normal * radius;
+	const float3 right = cross(up, normal);
+	const float3 minCorner = centre + (radius * 0.5f * (right - up));
+	const float3 maxCorner = centre + (radius * 0.5f * (up - right)) + normal * radius;
 
-	const vec3 aabbMin = min(minCorner, maxCorner);
-	const vec3 aabbMax = max(maxCorner, minCorner);
+	const float3 aabbMin = min(minCorner, maxCorner);
+	const float3 aabbMax = max(maxCorner, minCorner);
 
-	return AABBAABBIntersection(AABB(vec4(aabbMin, 1.0f), vec4(aabbMax, 1.0f)), aabb);
+	return AABBAABBIntersection(AABB(float4(aabbMin, 1.0f), float4(aabbMax, 1.0f)), aabb);
 }

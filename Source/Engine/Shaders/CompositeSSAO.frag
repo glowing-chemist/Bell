@@ -2,9 +2,9 @@
 #extension GL_ARB_separate_shader_objects : enable
 
 
-layout(location = 0) in vec2 uv;
+layout(location = 0) in float2 uv;
 
-layout(location = 0) out vec4 frameBuffer;
+layout(location = 0) out float4 frameBuffer;
 
 
 layout(binding = 0) uniform texture2D globalLighting;
@@ -13,9 +13,9 @@ layout(binding = 2) uniform sampler defaultSampler;
 
 void main()
 {
-	const vec4 lighting = texture(sampler2D(globalLighting, defaultSampler), uv);
-	const vec4 aoGather = textureGather(sampler2D(ssao, defaultSampler), uv);
-	const float ao = dot(aoGather, vec4(1.0f)) / 4.0f;
+	const float4 lighting = texture(sampler2D(globalLighting, defaultSampler), uv);
+	const float4 aoGather = textureGather(sampler2D(ssao, defaultSampler), uv);
+	const float ao = dot(aoGather, float4(1.0f)) / 4.0f;
 
 	frameBuffer = lighting * ao;
 }

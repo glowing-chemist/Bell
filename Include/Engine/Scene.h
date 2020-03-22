@@ -95,17 +95,17 @@ public:
 
     struct MeshInstance
     {
-        MeshInstance(StaticMesh* mesh, const glm::mat4& trans) :
+        MeshInstance(StaticMesh* mesh, const float4x4& trans) :
             mMesh(mesh),
             mTransformation(trans),
             mPreviousTransformation(trans) {}
 
         StaticMesh* mMesh;
 
-        const glm::mat4& getTransMatrix() const
+        const float4x4& getTransMatrix() const
         { return mTransformation; }
 
-        void setTransMatrix(const glm::mat4& newTrans)
+        void setTransMatrix(const float4x4& newTrans)
         {
             mPreviousTransformation = mTransformation;
             mTransformation = newTrans;
@@ -121,8 +121,8 @@ public:
         }
 
     private:
-		glm::mat4 mTransformation;
-        glm::mat4 mPreviousTransformation;
+        float4x4 mTransformation;
+        float4x4 mPreviousTransformation;
     };
 
 	struct Material
@@ -172,9 +172,9 @@ public:
 
     struct ShadowingLight
     {
-        glm::mat4 mViewMatrix;
-        glm::mat4 mInverseView;
-        glm::mat4 mViewProj;
+        float4x4 mViewMatrix;
+        float4x4 mInverseView;
+        float4x4 mViewProj;
         float4    mPosition;
         float4    mDirection;
         float4    mUp;

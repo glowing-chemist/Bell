@@ -19,6 +19,7 @@ VulkanImageView::VulkanImageView(Image& parentImage,
 		switch(viewType)
 		{
 			case ImageViewType::Colour:
+			case ImageViewType::CubeMap:
 				return vk::ImageAspectFlagBits::eColor;
 
 			case ImageViewType::Depth:
@@ -46,7 +47,7 @@ VulkanImageView::VulkanImageView(Image& parentImage,
     if(extent.depth > 1)
         type = vk::ImageViewType::e3D;
 
-	if(parentImage->getUsage() & ImageUsage::CubeMap)
+	if(parentImage->getUsage() & ImageUsage::CubeMap && mType == ImageViewType::CubeMap)
 		type = vk::ImageViewType::eCube;
 
 

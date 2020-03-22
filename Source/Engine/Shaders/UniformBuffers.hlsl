@@ -2,31 +2,31 @@
 
 struct CameraBuffer    
 {     
-        mat4 view;    
-        mat4 perspective;
-        mat4 viewProj;
+        float4x4 view;    
+        float4x4 perspective;
+        float4x4 viewProj;
             
-        mat4 invertedViewProj;
-        mat4 invertedPerspective;
+        float4x4 invertedViewProj;
+        float4x4 invertedPerspective;
 
-        mat4 previousFrameViewProj;
+        float4x4 previousFrameViewProj;
 
         float nearPlane;
         float farPlane;
       
-        vec2 frameBufferSize;
+        float2 frameBufferSize;
 
-        vec3 position;
+        float3 position;
         float fov;
 
-        vec2 jitter;
-        vec2 previousJitter;
+        float2 jitter;
+        float2 previousJitter;
 };    
 
     
 struct SSAOBuffer    
 {    
-        vec4 offsets[64];
+        float4 offsets[64];
         float scale;
         int offsetsCount;      
 };
@@ -34,11 +34,11 @@ struct SSAOBuffer
 
 struct ShadowingLight
 {
-        mat4 view;
-        mat4 inverseView;
-        mat4 viewProj;
-        vec4 position;
-        vec4 direction;
-        vec4 up;
+        float4x4 view;
+        float4x4 inverseView;
+        float4x4 viewProj;
+        float4 position;
+        float4 direction;
+        float4 up;
 };
 

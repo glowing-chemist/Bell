@@ -8,7 +8,7 @@
 #include "Hammersley.glsl"
 
 
-layout(location = 0) in vec2 uv;
+layout(location = 0) in float2 uv;
 
 
 layout(location = 0) out float SSAOOutput;
@@ -39,12 +39,12 @@ void main()
 
   const uint maxSize = 4;// 2 x 2
   const uint flattenedPosition = (uint(camera.frameBufferSize.y * uv.y) % 3) * (uint(camera.frameBufferSize.x * uv.x) % 3);
-  const vec3 random = Hamersley_uniform(flattenedPosition, maxSize);
+  const float3 random = Hamersley_uniform(flattenedPosition, maxSize);
 
   const float depth = 1.0f - texture(sampler2D(depthTexture, linearSampler), uv).x;
  
-  const vec3 position = vec3(uv, depth);
-  vec3 normal = texture(sampler2D(normals, linearSampler), uv).xyz;
+  const float3 position = float3(uv, depth);
+  float3 normal = texture(sampler2D(normals, linearSampler), uv).xyz;
   normal = remapNormals(normal);
   normal = normalize(normal);
 
@@ -52,8 +52,8 @@ void main()
   float occlusion = 0.0;
   for(int i=0; i < 16; i++) {
   
-    vec3 ray = radius_depth * reflect(ssaoOffsets.offsets[i].xyz, random);
-    vec3 hemi_ray = position + sign(dot(ray,normal)) * ray;
+    float3 ray = radius_depth * reflect(ssaoOffsets.offsets[i].xyz, random);
+    float3 hemi_ray = position + sign(dot(ray,normal)) * ray;
     
     float occ_depth = 1.0f - texture(sampler2D(depthTexture, linearSampler), clamp(hemi_ray.xy, 0.0f, 1.0f)).x;
     float difference = depth - occ_depth;

@@ -1,22 +1,18 @@
-#version 450            
-#extension GL_ARB_separate_shader_objects : enable    
-    
-    
-layout(location = 0) in vec2 inText;         
-layout(location = 1) in vec4 inAlbedo;
+#include "VertexOutputs.hlsl"
 
-layout(location = 0) out vec4 UITexture;
+[[vk::binding(1)]]
+Texture2D<float4> fontTexture;
 
-layout(binding = 1) uniform texture2D fontTexture;
-layout(binding = 2) uniform sampler linearSampler;
+[[vk::binding(2)]]
+SamplerState linearSampler;
 
     
-void main()
+float4 main(OverlayVertOutput vertInput)
 {
-	vec4 fonts = texture(sampler2D(fontTexture, linearSampler), inText);
+	float4 fonts = fontTexture.Sample(linearSampler, vertInput.uv);
 
 	if(fonts.w == 0.0f)
 		discard;
 
-	UITexture = inAlbedo * fonts;
+	return vertInput.albedo * fonts;
 }

@@ -5,12 +5,12 @@ const float[] decomposedKernel =  {0.030078323, 0.104983664, 0.222250419, 0.2853
 
 
 // extra for eaxtr samples required at end.
-shared vec4 sharedLine[KERNEL_SIZE + (2 * 3)];
+shared float4 sharedLine[KERNEL_SIZE + (2 * 3)];
 
 
-vec4 blur(uint position)
+float4 blur(uint position)
 {
-	vec4 bluredPixel = vec4(0.0f, 0.0f, 0.0f, 0.0f);
+	float4 bluredPixel = float4(0.0f, 0.0f, 0.0f, 0.0f);
 
 	for(uint i = 0; i < 7; ++i)
 	{

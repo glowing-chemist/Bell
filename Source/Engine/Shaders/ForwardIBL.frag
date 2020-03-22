@@ -9,14 +9,14 @@
 #include "UniformBuffers.glsl"
 
 
-layout(location = 0) in vec4 positionWS;
-layout(location = 1) in vec3 vertexNormal;
+layout(location = 0) in float4 positionWS;
+layout(location = 1) in float3 vertexNormal;
 layout(location = 2) in flat uint materialID;
-layout(location = 3) in vec2 uv;
-layout(location = 4) in vec2 inVelocity;
+layout(location = 3) in float2 uv;
+layout(location = 4) in float2 inVelocity;
 
-layout(location = 0) out vec4 frameBuffer;
-layout(location = 1) out vec2 velocity;
+layout(location = 0) out float4 frameBuffer;
+layout(location = 1) out float2 velocity;
 
 layout(set = 0, binding = 0) uniform UniformBufferObject {    
     CameraBuffer camera;    
@@ -36,10 +36,10 @@ layout(set = 1, binding = 0) uniform texture2D materials[];
 
 void main()
 {
-	const vec4 baseAlbedo = texture(sampler2D(materials[nonuniformEXT(materialID * 4)], linearSampler),
+	const float4 baseAlbedo = texture(sampler2D(materials[nonuniformEXT(materialID * 4)], linearSampler),
                                 		uv);
 
-    vec3 normal = texture(sampler2D(materials[nonuniformEXT((materialID * 4) + 1)], linearSampler),
+    float3 normal = texture(sampler2D(materials[nonuniformEXT((materialID * 4) + 1)], linearSampler),
                                 uv).xyz;
 
     // remap normal
@@ -52,26 +52,26 @@ void main()
     const float metalness = texture(sampler2D(materials[nonuniformEXT((materialID * 4) + 3)], linearSampler),
                                 uv).x;
 
-	const vec3 viewDir = normalize(camera.position - positionWS.xyz);
+	const float3 viewDir = normalize(camera.position - positionWS.xyz);
 
-	const vec2 xDerivities = dFdxFine(uv);
-	const vec2 yDerivities = dFdyFine(uv);
+	const float2 xDerivities = dFdxFine(uv);
+	const float2 yDerivities = dFdyFine(uv);
 
 	{
-    	mat3 tbv = tangentSpaceMatrix(vertexNormal, viewDir, vec4(xDerivities, yDerivities));
+    	float3x3 tbv = tangentSpaceMatrix(vertexNormal, viewDir, float4(xDerivities, yDerivities));
 
     	normal = tbv * normal;
 
     	normal = normalize(normal);
 	}
 
-	const vec3 lightDir = reflect(-viewDir, normal);
+	const float3 lightDir = reflect(-viewDir, normal);
 
 	const float lodLevel = roughness * 10.0f;
 
-	vec3 radiance = textureLod(samplerCube(ConvolvedSkybox, linearSampler), lightDir, lodLevel).xyz;
+	float3 radiance = textureLod(samplerCube(ConvolvedSkybox, linearSampler), lightDir, lodLevel).xyz;
 
-    vec3 irradiance = texture(samplerCube(skyBox, linearSampler), normal).xyz;
+    float3 irradiance = texture(samplerCube(skyBox, linearSampler), normal).xyz;
 
 #ifdef Shadow_Map
     const float occlusion = texture(sampler2D(shadowMap, linearSampler), gl_FragCoord.xy / camera.frameBufferSize).x;
@@ -80,14 +80,14 @@ void main()
 #endif
 
 	const float NoV = dot(normal, viewDir);
-    const vec2 f_ab = texture(sampler2D(DFG, linearSampler), vec2(NoV, roughness)).xy;
+    const float2 f_ab = texture(sampler2D(DFG, linearSampler), float2(NoV, roughness)).xy;
 
     if(baseAlbedo.w == 0.0f)
         discard;
 
-    const vec3 diffuse = calculateDiffuse(baseAlbedo.xyz, metalness, irradiance);
-    const vec3 specular = calculateSpecular(roughness * roughness, normal, viewDir, metalness, baseAlbedo.xyz, radiance, f_ab);
+    const float3 diffuse = calculateDiffuse(baseAlbedo.xyz, metalness, irradiance);
+    const float3 specular = calculateSpecular(roughness * roughness, normal, viewDir, metalness, baseAlbedo.xyz, radiance, f_ab);
 
-    frameBuffer = vec4(specular + diffuse, 1.0);
+    frameBuffer = float4(specular + diffuse, 1.0);
     velocity = (inVelocity * 0.5f) + 0.5f;
 }

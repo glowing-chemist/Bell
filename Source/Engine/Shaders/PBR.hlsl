@@ -1,11 +1,11 @@
 #define DIELECTRIC_SPECULAR 0.04
 
-#include "Hammersley.glsl"
+#include "Hammersley.hlsl"
 
 // polynomial aproximation of a monte carlo integrated DFG function.
 // Implementation taken from https://knarkowicz.wordpress.com/2014/12/27/analytical-dfg-term-for-ibl/
 // gloss=(1-roughness)^4 
-vec3 analyticalDFG( vec3 specularColor, float gloss, float ndotv )
+float3 analyticalDFG( float3 specularColor, float gloss, float ndotv )
 {
     float x = gloss;
     float y = ndotv;
@@ -33,7 +33,7 @@ vec3 analyticalDFG( vec3 specularColor, float gloss, float ndotv )
 }
 
 
-vec3 ImportanceSampleGGX(const vec2 Xi, const float roughness, const vec3 N)
+float3 ImportanceSampleGGX(const float2 Xi, const float roughness, const float3 N)
 {
     float a = roughness*roughness;
     
@@ -42,49 +42,49 @@ vec3 ImportanceSampleGGX(const vec2 Xi, const float roughness, const vec3 N)
     float sinTheta = sqrt(1.0 - cosTheta*cosTheta);
     
     // from spherical coordinates to cartesian coordinates
-    vec3 H;
+    float3 H;
     H.x = cos(phi) * sinTheta;
     H.y = sin(phi) * sinTheta;
     H.z = cosTheta;
     
     // from tangent-space vector to world-space sample vector
-    vec3 up        = abs(N.z) < 0.999 ? vec3(0.0, 0.0, 1.0) : vec3(1.0, 0.0, 0.0);
-    vec3 tangent   = normalize(cross(up, N));
-    vec3 bitangent = cross(N, tangent);
+    float3 up        = abs(N.z) < 0.999 ? float3(0.0, 0.0, 1.0) : float3(1.0, 0.0, 0.0);
+    float3 tangent   = normalize(cross(up, N));
+    float3 bitangent = cross(N, tangent);
     
-    vec3 sampleVec = tangent * H.x + bitangent * H.y + N * H.z;
+    float3 sampleVec = tangent * H.x + bitangent * H.y + N * H.z;
     return normalize(sampleVec);
 }
 
 
-vec3 fresnelSchlickRoughness(const float cosTheta, const vec3 F0, const float roughness)
+float3 fresnelSchlickRoughness(const float cosTheta, const float3 F0, const float roughness)
 {
-    return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(1.0 - cosTheta, 5.0);
+    return F0 + (max(float3(1.0 - roughness), F0) - F0) * pow(1.0 - cosTheta, 5.0);
 }
 
 
-vec3 calculateDiffuse(const vec3 dA, const float M, const vec3 irradiance)
+float3 calculateDiffuse(const float3 dA, const float M, const float3 irradiance)
 {
-    const vec3 diffuseColor = dA * (1.0 - DIELECTRIC_SPECULAR) * (1.0 - M);
+    const float3 diffuseColor = dA * (1.0 - DIELECTRIC_SPECULAR) * (1.0 - M);
 
     return diffuseColor * irradiance;
 }
 
 
-vec3 calculateDiffuseLambert(const vec3 dA, const float M, const vec3 irradiance)
+float3 calculateDiffuseLambert(const float3 dA, const float M, const float3 irradiance)
 {
-    const vec3 diffuseColor = dA * (1.0 - DIELECTRIC_SPECULAR) * (1.0 - M);
+    const float3 diffuseColor = dA * (1.0 - DIELECTRIC_SPECULAR) * (1.0 - M);
 
     return (diffuseColor * irradiance) / PI;
 }
 
 
-vec3 calculateSpecular(const float R, const vec3 N, const vec3 V, const float M, const vec3 dA, const vec3 radiance, const vec2 DFG)
+float3 calculateSpecular(const float R, const float3 N, const float3 V, const float M, const float3 dA, const float3 radiance, const float2 DFG)
 {
     const float NoV = dot(N, V);
 
-    const vec3 F0 = mix(vec3(DIELECTRIC_SPECULAR), dA, M);
-    const vec3 F = fresnelSchlickRoughness(max(NoV, 0.0), F0, R);
+    const float3 F0 = lerp(float3(DIELECTRIC_SPECULAR), dA, M);
+    const float3 F = fresnelSchlickRoughness(max(NoV, 0.0), F0, R);
 
     return (F * DFG.x + DFG.y) * radiance;
 }

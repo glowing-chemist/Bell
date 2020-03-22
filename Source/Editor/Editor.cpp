@@ -582,8 +582,8 @@ void Editor::drawDebugTexturePicker(const std::vector<std::string>& textures)
 void Editor::drawLightMenu()
 {
     const Camera& camera = mEngine.getScene().getCamera();
-    const glm::mat4 viewMatrix = glm::lookAt(camera.getPosition(), camera.getPosition() + camera.getDirection(), float3(0.0f, 1.0f, 0.0f));
-    const glm::mat4 projectionMatrix = camera.getPerspectiveMatrix();
+    const float4x4 viewMatrix = glm::lookAt(camera.getPosition(), camera.getPosition() + camera.getDirection(), float3(0.0f, 1.0f, 0.0f));
+    const float4x4 projectionMatrix = camera.getPerspectiveMatrix();
 
     if (ImGui::TreeNode("Lights"))
     {
@@ -684,7 +684,7 @@ void Editor::drawLightMenu()
 
 void Editor::drawGuizmo(EditorLight& light, const glm::mat4 &view, const glm::mat4 &proj, const ImGuizmo::OPERATION op)
 {
-    glm::mat4 lightTransformation(1.0f);
+    float4x4 lightTransformation(1.0f);
 
     if (op == ImGuizmo::OPERATION::TRANSLATE)
         lightTransformation = glm::translate(lightTransformation, float3(light.mPosition.x, light.mPosition.y, light.mPosition.z));

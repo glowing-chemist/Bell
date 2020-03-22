@@ -12,39 +12,39 @@ float RadicalInverse_VdC(uint bits)
 }
 
 
-vec3 hemisphereSample_uniform(float u, float v)
+float3 hemisphereSample_uniform(float u, float v)
 {
     float phi = v * 2.0 * PI;
     float cosTheta = 1.0 - u;
     float sinTheta = sqrt(1.0 - cosTheta * cosTheta);
-    return vec3(cos(phi) * sinTheta, sin(phi) * sinTheta, cosTheta);
+    return float3(cos(phi) * sinTheta, sin(phi) * sinTheta, cosTheta);
 }
  
 
-vec3 hemisphereSample_cos(float u, float v)
+float3 hemisphereSample_cos(float u, float v)
 {
     float phi = v * 2.0 * PI;
     float cosTheta = sqrt(1.0 - u);
     float sinTheta = sqrt(1.0 - cosTheta * cosTheta);
-    return vec3(cos(phi) * sinTheta, sin(phi) * sinTheta, cosTheta);
+    return float3(cos(phi) * sinTheta, sin(phi) * sinTheta, cosTheta);
 }
 
 
-vec2 Hammersley(uint i, uint N)
+float2 Hammersley(uint i, uint N)
 {
-    return vec2(float(i)/float(N), RadicalInverse_VdC(i));
+    return float2(float(i)/float(N), RadicalInverse_VdC(i));
 }
 
 
-vec3 Hamersley_uniform(uint i, uint N)
+float3 Hamersley_uniform(uint i, uint N)
 {
-	vec2 ham = Hammersley(i, N);
+	float2 ham = Hammersley(i, N);
 	return hemisphereSample_uniform(ham.x, ham.y);
 }
 
 
-vec3 Hamersley_cosine(uint i, uint N)
+float3 Hamersley_cosine(uint i, uint N)
 {
-	vec2 ham = Hammersley(i, N);
+	float2 ham = Hammersley(i, N);
 	return hemisphereSample_uniform(ham.x, ham.y);
 }

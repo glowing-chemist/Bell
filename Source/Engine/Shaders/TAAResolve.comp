@@ -28,17 +28,17 @@ layout(rgba8, set = 0, binding = 5) uniform image2D newHistory;
 layout(set = 0, binding = 6) uniform sampler linearSampler;
 
 // Rather than clamp within the colour space AABB, clip it.
-vec3 clip_aabb(	vec3 aabb_min, 
-				vec3 aabb_max, 
-				vec3 p,        
-				vec3 q)        
+float3 clip_aabb(	float3 aabb_min, 
+				float3 aabb_max, 
+				float3 p,        
+				float3 q)        
 {
-	vec3 p_clip= 0.5 * (aabb_max+ aabb_min);
-	vec3 e_clip= 0.5 * (aabb_max-aabb_min);
+	float3 p_clip= 0.5 * (aabb_max+ aabb_min);
+	float3 e_clip= 0.5 * (aabb_max-aabb_min);
 
-	vec3 v_clip= q -p_clip;
-	vec3 v_unit= v_clip.xyz/ e_clip;
-	vec3 a_unit= abs(v_unit);
+	float3 v_clip= q -p_clip;
+	float3 v_unit= v_clip.xyz/ e_clip;
+	float3 a_unit= abs(v_unit);
 	float ma_unit= max(a_unit.x, max(a_unit.y,a_unit.z));
 
 	if (ma_unit> 1.0)
@@ -49,20 +49,20 @@ vec3 clip_aabb(	vec3 aabb_min,
 
 void main()
 {
-	const vec2 gbufferSize = camera.frameBufferSize;
-	const vec2 uv = (vec2(gl_GlobalInvocationID.xy) / gbufferSize);
+	const float2 gbufferSize = camera.frameBufferSize;
+	const float2 uv = (float2(gl_GlobalInvocationID.xy) / gbufferSize);
 
 	const float fragDepth = texture(sampler2D(depth, linearSampler), uv).x;
 	const float linearDepth = lineariseReverseDepth(fragDepth, camera.nearPlane, camera.farPlane);
 
-	vec2 currentVelocity = texture(sampler2D(velocity, linearSampler), uv).xy;
+	float2 currentVelocity = texture(sampler2D(velocity, linearSampler), uv).xy;
 	currentVelocity = (currentVelocity - 0.5f) * 2.0f;
 
-	const vec2 previousUV = uv - currentVelocity;
+	const float2 previousUV = uv - currentVelocity;
 	const float previousDepth = texture(sampler2D(depth, linearSampler), previousUV).x;
 	const float previousLinearDepth = lineariseReverseDepth(previousDepth, camera.nearPlane, camera.farPlane);
 
-	const vec4 currentColour = texture(sampler2D(colour, linearSampler), uv);
+	const float4 currentColour = texture(sampler2D(colour, linearSampler), uv);
 
 	const float depthDif = abs(previousLinearDepth - linearDepth);
 	
@@ -70,18 +70,18 @@ void main()
 	const float yDiff = 1.0f / camera.frameBufferSize.y;
 
 	// Calcaulte a AABB in YCoCg colour space for neibourghhood clipping.
-	vec3 upColour = texture(sampler2D(history, linearSampler), uv + vec2(xDiff, 0.0f)).xyz;
-	vec3 downColour = texture(sampler2D(history, linearSampler), uv + vec2(-xDiff, 0.0f)).xyz;
-	vec3 leftColour = texture(sampler2D(history, linearSampler), uv + vec2(0.0f, -yDiff)).xyz;
-	vec3 rightColour = texture(sampler2D(history, linearSampler), uv + vec2(0.0f, yDiff)).xyz;
+	float3 upColour = texture(sampler2D(history, linearSampler), uv + float2(xDiff, 0.0f)).xyz;
+	float3 downColour = texture(sampler2D(history, linearSampler), uv + float2(-xDiff, 0.0f)).xyz;
+	float3 leftColour = texture(sampler2D(history, linearSampler), uv + float2(0.0f, -yDiff)).xyz;
+	float3 rightColour = texture(sampler2D(history, linearSampler), uv + float2(0.0f, yDiff)).xyz;
 	upColour = calculateYCoCg(upColour);
 	downColour = calculateYCoCg(downColour);
 	leftColour = calculateYCoCg(leftColour);
 	rightColour = calculateYCoCg(rightColour);
-	const vec3 currentColourYCocg = calculateYCoCg(currentColour.xyz);
+	const float3 currentColourYCocg = calculateYCoCg(currentColour.xyz);
 
-	vec3 aabbMin = vec3(100000.0f);
-	vec3 aabbMax = vec3(-100000.0f);
+	float3 aabbMin = float3(100000.0f);
+	float3 aabbMax = float3(-100000.0f);
 	// Min
 	aabbMin = min(aabbMin, upColour);
 	aabbMin = min(aabbMin, downColour);
@@ -96,10 +96,10 @@ void main()
 	aabbMax = max(aabbMax, rightColour);
 	aabbMax = max(aabbMax, currentColourYCocg);
 
-	vec4 previousColour = texture(sampler2D(history, linearSampler), previousUV);
+	float4 previousColour = texture(sampler2D(history, linearSampler), previousUV);
 
 	// Clamp previous colour
-	vec3 previousColourYCoCg = calculateYCoCg(previousColour.xyz);
+	float3 previousColourYCoCg = calculateYCoCg(previousColour.xyz);
 	previousColourYCoCg = clip_aabb(aabbMin, aabbMax, previousColourYCoCg, currentColourYCocg);
 
 	previousColour.xyz = calculateRGB(previousColourYCoCg);
@@ -109,12 +109,12 @@ void main()
 #else
 	// Check how close (in depth) the two fragments are.
 	float confidence = (1.0f - (depthDif / DEPTH_EPSILON)) * 0.5f;
-	confidence *= 1.0f - (dot(abs(previousColourYCoCg.xy - currentColourYCocg.xy), vec2(1.0f)) / 2.0f);
+	confidence *= 1.0f - (dot(abs(previousColourYCoCg.xy - currentColourYCocg.xy), float2(1.0f)) / 2.0f);
 	confidence *= confidence;
 #endif
 
-	vec4 newColour =  ((1.0f - confidence) * currentColour) + (confidence * previousColour);
+	float4 newColour =  ((1.0f - confidence) * currentColour) + (confidence * previousColour);
 
 	if(gl_GlobalInvocationID.x <= gbufferSize.x && gl_GlobalInvocationID.y <= gbufferSize.y)
-			imageStore(newHistory, ivec2(gl_GlobalInvocationID.xy), newColour); 
+			imageStore(newHistory, int2(gl_GlobalInvocationID.xy), newColour); 
 }

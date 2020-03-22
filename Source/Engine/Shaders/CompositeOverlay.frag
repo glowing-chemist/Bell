@@ -1,20 +1,19 @@
-#version 450
-#extension GL_ARB_separate_shader_objects : enable
+#include "VertexOutputs.hlsl"
+
+[[vk::binding(0)]]
+Texture2D<float4> globalLighting;
+
+[[vk::binding(1)]]
+Texture2D<float4> overlay;
+
+[[vk::binding(2)]]
+SamplerState defaultSampler;
 
 
-layout(location = 0) in vec2 uv;
-
-layout(location = 0) out vec4 frameBuffer;
-
-
-layout(binding = 0) uniform texture2D globalLighting;
-layout(binding = 1) uniform texture2D overlay;
-layout(binding = 2) uniform sampler defaultSampler;
-
-void main()
+float4 main(PositionAndUVVertOutput vertOutput)
 {
-	const vec4 lighting = texture(sampler2D(globalLighting, defaultSampler), uv);
-	const vec4 overlay = texture(sampler2D(overlay, defaultSampler), uv);
+	const float4 lighting = globalLighting.Sample(defaultSampler, vertOutput.uv);
+	const float4 overlay = overlay.Sample(defaultSampler, vertOutput.uv);
 
-	frameBuffer = ((1.0f - overlay.w) * lighting) + overlay;
+	return ((1.0f - overlay.w) * lighting) + overlay;
 }

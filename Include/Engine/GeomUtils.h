@@ -5,10 +5,7 @@
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/glm.hpp>
-#include <glm/vec2.hpp>
-#include <glm/vec3.hpp>
-#include <glm/vec4.hpp>
-#include <glm/mat4x4.hpp>
+#include <glm/gtx/compatibility.hpp>
 
 #include <algorithm>
 
@@ -24,6 +21,9 @@ using uint4 = glm::vec<4, uint32_t>;
 using int2 = glm::vec<2, int32_t>;
 using int3 = glm::vec<3, int32_t>;
 using int4 = glm::vec<4, int32_t>;
+
+using float4x4 = glm::mat4;
+using float3x3 = glm::mat3;
 
 
 class AABB;

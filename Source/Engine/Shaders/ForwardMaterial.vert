@@ -5,28 +5,28 @@
 #include "UniformBuffers.glsl"
 
 
-layout(location = 0) in vec4 position;
-layout(location = 1) in vec2 uv;
-layout(location = 2) in vec4 normals;
+layout(location = 0) in float4 position;
+layout(location = 1) in float2 uv;
+layout(location = 2) in float4 normals;
 layout(location = 3) in uint material;
 
 
-layout(location = 0) out vec4 outPosition;
-layout(location = 1) out vec3 outNormals;
+layout(location = 0) out float4 outPosition;
+layout(location = 1) out float3 outNormals;
 layout(location = 2) out uint outMaterialID;
-layout(location = 3) out vec2 outUv;
-layout(location = 4) out vec2 outVelocity;
+layout(location = 3) out float2 outUv;
+layout(location = 4) out float2 outVelocity;
 
 
 layout(push_constant) uniform pushModelMatrix
 {
-	mat4 mesh;
-	mat4 previousMesh;
+	float4x4 mesh;
+	float4x4 previousMesh;
 } push_constants;
 
 
 out gl_PerVertex {
-    vec4 gl_Position;
+    float4 gl_Position;
 };
 
 
@@ -37,18 +37,18 @@ layout(binding = 0) uniform UniformBufferObject {
 
 void main()
 {
-	const mat4 transFormation = camera.viewProj * push_constants.mesh;
-	vec4 transformedPosition = transFormation * position;
+	const float4x4 transFormation = camera.viewProj * push_constants.mesh;
+	float4 transformedPosition = transFormation * position;
 
 	gl_Position = transformedPosition;
 	outPosition = push_constants.mesh * position;
-	outNormals = mat3(push_constants.mesh) * normals.xyz;
+	outNormals = float3x3(push_constants.mesh) * normals.xyz;
 	outMaterialID = material;
 	outUv = uv;
 
 	// Calculate screen space velocity.
 	transformedPosition /= transformedPosition.w;
-	vec4 previousPosition = camera.previousFrameViewProj * push_constants.previousMesh * position;
+	float4 previousPosition = camera.previousFrameViewProj * push_constants.previousMesh * position;
 	previousPosition /= previousPosition.w;
 	outVelocity = previousPosition.xy - transformedPosition.xy;
 }
