@@ -1,29 +1,21 @@
-#version 450
-#extension GL_ARB_separate_shader_objects : enable
-#extension GL_GOOGLE_include_directive : enable
+#include "ClusteredLighting.hlsl"
 
-#include "ClusteredLighting.glsl"
+[[vk::binding(0)]]
+StructuredBuffer<uint> counter;
 
-
-layout(std430, binding = 0) buffer count
+struct IndirectArgs
 {
-	uint counter;
+	uint x, y, z;
 };
 
-layout(std430, binding = 1) buffer visibleFroxles
-{
-	uint x;
-	uint y;
-	uint z;
-};
+[[vk::binding(1)]]
+RWStructuredBuffer<IndirectArgs> agrs;
 
 
-layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
-
-
+[numthreads(1, 1, 1)]
 void main()
 {
-	x = uint(ceil(float(counter) / 256.0f));
-	y = 1;
-	z = 1;
+	agrs[0].x = uint(ceil(float(counter[0]) / 256.0f));
+	agrs[0].y = 1;
+	agrs[0].z = 1;
 }

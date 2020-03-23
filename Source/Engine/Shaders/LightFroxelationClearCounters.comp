@@ -1,23 +1,13 @@
-#version 450
-#extension GL_ARB_separate_shader_objects : enable
+[[vk::binding(0)]]
+RWStructuredBuffer<uint> froxelCounter;
+
+[[vk::binding(1)]]
+RWStructuredBuffer<uint> indiciesCounter;
 
 
-layout(std430, binding = 0) buffer writeonly visibleFroxlesCounter
-{
-	uint froxelCounter;
-};
-
-layout(std430, binding = 1) buffer writeonly froxelIndiciesCounter
-{
-	uint indiciesCounterCounter;
-};
-
-
-layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
-
-
+[numthreads(1, 1, 1)]
 void main()
 {
-	froxelCounter = 0;
-	indiciesCounterCounter = 0;
+	froxelCounter[0] = 0;
+	indiciesCounter[0] = 0;
 }

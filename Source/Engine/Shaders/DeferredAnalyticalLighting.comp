@@ -1,77 +1,85 @@
-#version 450
-#extension GL_ARB_separate_shader_objects : enable
-#extension GL_GOOGLE_include_directive : enable
-
-#include "UniformBuffers.glsl"
-#include "NormalMapping.glsl"
-#include "ClusteredLighting.glsl"
+#include "UniformBuffers.hlsl"
+#include "NormalMapping.hlsl"
+#include "ClusteredLighting.hlsl"
 
 
-layout(local_size_x = 32, local_size_y = 32, local_size_z = 1) in;
+[[vk::binding(0)]]
+ConstantBuffer<CameraBuffer> camera;
 
-layout(set = 0, binding = 0) uniform cameraBuffer
-{
-	CameraBuffer camera;
-};
+[[vk::binding(1)]]
+Texture2D<float2> DFG;
 
-// GBuffer
-layout(set = 0, binding = 1) uniform texture2D DFG;
-layout(set = 0, binding = 2) uniform texture2D ltcMat;
-layout(set = 0, binding = 3) uniform texture2D ltcAmp;
-layout(set = 0, binding = 4) uniform texture2D depth;
-layout(set = 0, binding = 5) uniform texture2D vertexNormals;
-layout(set = 0, binding = 6) uniform texture2D Albedo;
-layout(set = 0, binding = 7) uniform texture2D MetalnessRoughness;
-layout(set = 0, binding = 8) uniform sampler linearSampler;
-layout(set = 0, binding = 9) uniform sampler pointSampler;
+[[vk::binding(2)]]
+Texture2D<float4> ltcMat;
 
-// Light lists
-layout(std430, set = 0, binding = 10) buffer readonly sparseFroxels
-{
-	uint2 sparseFroxelList[];
-};
+[[vk::binding(3)]]
+Texture2D<float2> ltcAmp;
 
-layout(std430, set = 0,  binding = 11) buffer froxelIndicies
-{
-	uint indicies[];
-};
+[[vk::binding(4)]]
+Texture2D<float> depth;
 
-layout(set = 0, binding = 12) uniform utexture2D activeFroxels;
+[[vk::binding(5)]]
+Texture2D<float4> vertexNormals;
 
-layout(rgba8, set = 0, binding = 13) uniform writeonly image2D accumilatedLight;
+[[vk::binding(6)]]
+Texture2D<float4> Albedo;
 
-layout(std430, set = 1, binding = 0) buffer readonly sceneLights
-{
-	uint4  lightCount;
-	Light lights[];
-};
+[[vk::binding(7)]]
+Texture2D<float2> MetalnessRoughness;
+
+[[vk::binding(8)]]
+SamplerState linearSampler;
+
+[[vk::binding(9)]]
+SamplerState pointSampler;
+
+[[vk::binding(10)]]
+StructuredBuffer<uint2> sparseFroxelList;
+
+[[vk::binding(11)]]
+StructuredBuffer<uint> indicies;
+
+[[vk::binding(12)]]
+Texture2D<uint> activeFroxels;
+
+[[vk::binding(13)]]
+RWTexture2D<float4> accumilatedLight;
 
 
-void main()
+[[vk::binding(0, 1)]]
+StructuredBuffer<uint4> lightCount;
+
+[[vk::binding(1, 1)]]
+StructuredBuffer<Light> sceneLights;
+
+
+[numthreads(32, 32, 1)]
+void main(uint3 globalIndex : SV_DispatchThreadID)
 {
 	const float2 gbufferSize = camera.frameBufferSize;
-	const float2 uv = float2(gl_GlobalInvocationID.xy) / gbufferSize;
+	const float2 uv = float2(globalIndex.xy) / gbufferSize;
 
-	if(gl_GlobalInvocationID.x >= gbufferSize.x || gl_GlobalInvocationID.y >= gbufferSize.y)
+	if(globalIndex.x >= gbufferSize.x || globalIndex.y >= gbufferSize.y)
 		return;
 
-	const float fragmentDepth = texture(sampler2D(depth, linearSampler), uv).x;
+	const float fragmentDepth = depth.Sample(linearSampler, uv);
 
-	float4 worldSpaceFragmentPos = camera.invertedViewProj * float4((uv - 0.5f) * 2.0f, fragmentDepth, 1.0f);
+	float4 worldSpaceFragmentPos = mul(camera.invertedViewProj, float4((uv - 0.5f) * 2.0f, fragmentDepth, 1.0f));
 	worldSpaceFragmentPos /= worldSpaceFragmentPos.w;
 
 	float3 normal;
-    normal = texture(sampler2D(vertexNormals, linearSampler), uv).xyz;
+    normal = vertexNormals.Sample(linearSampler, uv);
     normal = remapNormals(normal);
     normal = normalize(normal);
 
     const float3 viewDir = normalize(float4(camera.position, 1.0f) - worldSpaceFragmentPos).xyz;
 
-    const float3 baseAlbedo = texture(sampler2D(Albedo, linearSampler), uv).xyz;
-    const float roughness = texture(sampler2D(MetalnessRoughness, linearSampler), uv).y;
-    const float metalness = texture(sampler2D(MetalnessRoughness, linearSampler), uv).x;
+    const float3 baseAlbedo = Albedo.Sample(linearSampler, uv).xyz;
+    const float2 metalnessRoughness = MetalnessRoughness.Sample(linearSampler, uv);
+    const float roughness = metalnessRoughness.y;
+    const float metalness = metalnessRoughness.x;
 
-    const uint froxelIndex = texture(usampler2D(activeFroxels, pointSampler), uv).x;
+    const uint froxelIndex = activeFroxels.Sample(pointSampler, uv);
     const uint2 lightListIndicies = sparseFroxelList[froxelIndex];
 
     // Initialize needed lighting params.
@@ -85,7 +93,7 @@ void main()
     for(uint i = 0; i < lightListIndicies.y; ++i)
     {
     	uint indirectLightIndex = indicies[lightListIndicies.x + i];
-    	const Light light = lights[indirectLightIndex];
+    	const Light light = sceneLights[indirectLightIndex];
 
     	switch(uint(light.type))
 		{
@@ -119,5 +127,5 @@ void main()
 		}
     }
 
-    imageStore(accumilatedLight, int2(gl_GlobalInvocationID.xy), accum);
+    accumilatedLight[globalIndex.xy] = accum;
 }

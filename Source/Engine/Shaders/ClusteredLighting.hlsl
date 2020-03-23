@@ -33,7 +33,6 @@ struct AABB
 	float4 max; // largest
 };
 
-
 uint getFroxelIndex(const uint3 position, const uint2 size)
 {
 	const uint rowSize = uint(ceil(float(size.x) / float(FROXEL_TILE_SIZE)));
@@ -151,7 +150,7 @@ float4 pointLightContribution(const Light light,
     const float4 lightDir = light.position - positionWS;
 	const float lightDistance = length(lightDir);
 
-    const float falloff = pow(clamp(1 - pow(lightDistance / light.radius, 4.0f), 0.0f, 1.0f), 2.0f) / ((lightDistance * lightDistance) + 1); 
+    const float falloff = pow(saturate(1 - pow(lightDistance / light.radius, 4.0f)), 2.0f) / ((lightDistance * lightDistance) + 1); 
 	const float3 radiance = light.albedo.xyz * light.intensity * falloff;
 
     const float3 diffuse = calculateDiffuseLambert(baseAlbedo.xyz, metalness, radiance);

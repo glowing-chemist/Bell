@@ -228,6 +228,7 @@ private:
 
     PerFrameResource<Buffer> mLightBuffer;
     PerFrameResource<BufferView> mLightBufferView;
+    PerFrameResource<BufferView> mLightCountView;
     PerFrameResource<ShaderResourceSet> mLightsSRS;
 
     float2 mTAAJitter[16];

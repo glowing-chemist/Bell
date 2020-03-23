@@ -1,68 +1,50 @@
-#version 450
-#extension GL_ARB_separate_shader_objects : enable
-#extension GL_GOOGLE_include_directive : enable
+#include "ClusteredLighting.hlsl"
+#include "UniformBuffers.hlsl"
 
-#include "ClusteredLighting.glsl"
-#include "UniformBuffers.glsl"
+[[vk::binding(0)]]
+StructuredBuffer<uint4> visibleFroxles;
+
+[[vk::binding(1)]]
+RWStructuredBuffer<uint> visibleFroxelCounter;
+
+[[vk::binding(2)]]
+RWStructuredBuffer<uint> froxelIndicies;
+
+[[vk::binding(3)]]
+RWStructuredBuffer<uint> froxelIndexCounter;
+
+[[vk::binding(4)]]
+RWStructuredBuffer<uint2> sparseFroxelList;
+
+[[vk::binding(5)]]
+ConstantBuffer<CameraBuffer> camera;
+
+[[vk::binding(0, 1)]]
+StructuredBuffer<uint4> lightCount;
+
+[[vk::binding(1, 1)]]
+StructuredBuffer<Light> sceneLights;
 
 
-layout(std430, set = 0,  binding = 0) buffer visibleFroxlesCounter
+[numthreads(256, 1, 1)]
+void main(uint3 globalIndex : SV_DispatchThreadID)
 {
-	int visibleCounter;
-};
+	const uint froxelIndex = globalIndex.x;
 
-layout(std430, set = 0,  binding = 1) buffer visibleFroxles
-{
-	uint4 froxel[];
-};
-
-layout(std430, set = 0,  binding = 2) buffer froxelIndixCounter
-{
-	uint indexCounter;
-};
-
-layout(std430, set = 0,  binding = 3) buffer froxelIndicies
-{
-	uint indicies[];
-};
-
-layout(std430, set = 0, binding = 4) buffer sparseFroxels
-{
-	uint2 sparseFroxelList[];
-};
-
-layout(set =0, binding = 5) uniform cameraBuffer
-{
-	CameraBuffer camera;
-};
-
-layout(std430, set = 1, binding = 0) buffer sceneLights
-{
-	uint4  lightCount;
-	Light lights[];
-};
-
-layout(local_size_x = 256, local_size_y = 1, local_size_z = 1) in;
-
-
-void main()
-{
-	const uint froxelIndex = gl_GlobalInvocationID.x;
-
-	if(froxelIndex >= visibleCounter)
+	if(froxelIndex >= visibleFroxelCounter[0])
 		return;
 
-	const uint3 froxelToProcess = froxel[froxelIndex].xyz;
+	const uint3 froxelToProcess = visibleFroxles[froxelIndex].xyz;
 
 	const AABB aabb = getFroxelAABB(froxelToProcess, camera.fov, camera.frameBufferSize, camera.nearPlane, camera.farPlane);
 
 	uint nextFreeSlot = 0;
 	uint lightIndicies[LIGHTS_PER_FROXEL];
 
-	for(uint i = 0; i < lightCount.x; ++i)
+	for(uint i = 0; i < lightCount[0].x; ++i)
 	{
-		const Light light = lights[i];
-		float4 viewSpacePosition = camera.view * light.position;
+		const Light light = sceneLights[i];
+		float4 viewSpacePosition = mul(camera.view, light.position);
 		viewSpacePosition /= viewSpacePosition.w;
 		switch(light.type)
 		{
@@ -109,11 +91,12 @@ void main()
 	}
 
 	// Update the global data structures.
-	uint startLightIndex = atomicAdd(indexCounter, nextFreeSlot);
+	uint startLightIndex;
+	InterlockedAdd(froxelIndexCounter[0], nextFreeSlot, startLightIndex);
 
 	for(uint i = 0; i < nextFreeSlot; ++i)
 	{
-		indicies[startLightIndex + i] = lightIndicies[i];
+		froxelIndicies[startLightIndex + i] = lightIndicies[i];
 	}
 
 	sparseFroxelList[getFroxelIndex(froxelToProcess, uint2(camera.frameBufferSize))] = uint2(startLightIndex, nextFreeSlot);

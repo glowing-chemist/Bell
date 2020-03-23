@@ -15,7 +15,10 @@ ConstantBuffer<CameraBuffer> camera;
 SamplerState linearSampler;
 
 [[vk::binding(4)]] 
-AppendStructuredBuffer<uint4> visibleFroxles;
+RWStructuredBuffer<uint4> visibleFroxles;
+
+[[vk::binding(5)]]
+RWStructuredBuffer<uint> visibleFroxleCounter;
 
 groupshared uint froxelBitSet;
 
@@ -59,7 +62,9 @@ void main(	uint localIndex : SV_GroupIndex,
 
 		if(isActive > 0u)
 		{
-			visibleFroxles.Append(uint4(froxelPos.xy, localIndex, 0u));
+			uint index;
+			InterlockedAdd(visibleFroxleCounter[0], 1, index);
+			visibleFroxles[index] = uint4(froxelPos.xy, localIndex, 0u);
 		}
 	}
 }

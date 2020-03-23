@@ -1,19 +1,12 @@
-#version 450
-#extension GL_ARB_separate_shader_objects : enable
+#include "VertexOutputs.hlsl"
 
+[[vk::binding(0)]]
+Texture2D<float4> tex;
 
-layout(location = 0) in float2 uv;
+[[vk::binding(1)]]
+SamplerState defaultSampler;
 
-layout(location = 0) out float4 frameBuffer;
-
-
-layout(binding = 0) uniform texture2D tex;
-layout(binding = 1) uniform sampler defaultSampler;
-
-
-void main()
+float4 main(PositionAndUVVertOutput vertInput)
 {
-	const float4 pixel = texture(sampler2D(tex, defaultSampler), uv);
-
-	frameBuffer = pixel;
+	return  tex.Sample(defaultSampler, vertInput.uv);
 }

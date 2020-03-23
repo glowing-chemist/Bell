@@ -67,12 +67,14 @@ Engine::Engine(GLFWwindow* windowPtr) :
 	mDeviceCameraBuffer{getDevice(), BufferUsage::Uniform, sizeof(CameraBuffer), sizeof(CameraBuffer), "Camera Buffer"},
     mShadowCastingLight(getDevice(), BufferUsage::Uniform, sizeof(Scene::ShadowingLight), sizeof(Scene::ShadowingLight), "ShadowingLight"),
     mLightBuffer(getDevice(), BufferUsage::DataBuffer | BufferUsage::TransferDest, (sizeof(Scene::Light) * 1000) + sizeof(uint32_t), (sizeof(Scene::Light) * 1000) + sizeof(uint32_t), "LightBuffer"),
-    mLightBufferView(mLightBuffer),
+    mLightBufferView(mLightBuffer, sizeof(uint4)),
+    mLightCountView(mLightBuffer, 0, sizeof(uint4)),
     mLightsSRS(getDevice()),
     mWindow(windowPtr)
 {
     for(uint32_t i = 0; i < getDevice()->getSwapChainImageCount(); ++i)
     {
+        mLightsSRS.get(i)->addDataBufferRO(mLightCountView.get(i));
         mLightsSRS.get(i)->addDataBufferRW(mLightBufferView.get(i));
         mLightsSRS.get(i)->finalise();
     }
@@ -532,8 +534,7 @@ void Engine::updateGlobalBuffers()
         mLightBuffer.get()->setContents(static_cast<int>(mCurrentScene.getLights().size()), sizeof(uint32_t));
 
         if(!mCurrentScene.getLights().empty())
-            mLightBuffer.get()->setContents(mCurrentScene.getLights().data(), static_cast<uint32_t>(mCurrentScene.getLights().size() * sizeof(Scene::Light)), 
-                sizeof(float4));
+            mLightBuffer.get()->setContents(mCurrentScene.getLights().data(), static_cast<uint32_t>(mCurrentScene.getLights().size() * sizeof(Scene::Light)), sizeof(uint4));
     }
 
     {
