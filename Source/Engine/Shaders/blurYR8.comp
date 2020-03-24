@@ -1,18 +1,17 @@
-#version 450
-#extension GL_ARB_separate_shader_objects : enable
-#extension GL_GOOGLE_include_directive : enable
+#include "GaussianBlur.hlsl"
 
-#include "GaussianBlur.glsl"
+[[vk::binding(0)]]
+Texture2D<float> inImage;
 
-layout(binding = 0) uniform texture2D inImage;
-layout(r8, binding = 1) uniform writeonly image2D outImage;
-layout(binding = 2) uniform sampler linearSampler;
+[[vk::binding(1)]]
+RWTexture2D<float> outImage;
 
+[[vk::binding(2)]]
+SamplerState linearSampler;
 
-layout(local_size_x = 1, local_size_y = KERNEL_SIZE, local_size_z = 1) in;
-
-
-void main()
+[[numthreads(1, KERNEL_SIZE, 1)]]
+void main(uint3 localIndex : SV_GroupThreadID, 
+			uint3 globalIndex : SV_DispatchThreadID)
 {
-#include "BlurY_Base.glsl"
+#include "BlurY_Base.hlsl"
 }

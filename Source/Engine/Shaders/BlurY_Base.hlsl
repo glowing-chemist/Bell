@@ -1,30 +1,31 @@
+{
+	uint xSize, ySize;
+	inImage.GetDimensions(xSize, ySize);
 
-	const float2 size = textureSize(sampler2D(inImage, linearSampler), 0);
+	const float2 size = float2(xSize, ySize);
 
-	const int3 dispatchLocation = int3(gl_GlobalInvocationID);
+	const int3 dispatchLocation = int3(globalIndex);
 
-	sharedLine[gl_LocalInvocationID.y + 3] = texture(sampler2D(inImage, linearSampler), float2(dispatchLocation.xy) / size);
+	sharedLine[localIndex.y + 3] = inImage.Sample(linearSampler, float2(dispatchLocation.xy) / size);
 
 	// Load the results either side as well.
-	if(gl_LocalInvocationID.y < 3)
+	if(localIndex.y < 3)
 	{
-		sharedLine[gl_LocalInvocationID.y] = texture(sampler2D(inImage, linearSampler), float2(dispatchLocation.xy - int2(0, 3 - gl_LocalInvocationID.y)) / size);
+		sharedLine[localIndex.y] = inImage.Sample(linearSampler, float2(dispatchLocation.xy - int2(0, 3 - localIndex.y)) / size);
 	}
 
-	if(gl_LocalInvocationID.y == (KERNEL_SIZE - 1))
+	if(localIndex.y == (KERNEL_SIZE - 1))
 	{
-		sharedLine[KERNEL_SIZE + 3] = texture(sampler2D(inImage, linearSampler), float2(dispatchLocation.xy + int2(0,1)) / size);
-		sharedLine[KERNEL_SIZE + 4] = texture(sampler2D(inImage, linearSampler), float2(dispatchLocation.xy + int2(0,2)) / size);
-		sharedLine[KERNEL_SIZE + 5] = texture(sampler2D(inImage, linearSampler), float2(dispatchLocation.xy + int2(0,3)) / size);
+		sharedLine[KERNEL_SIZE + 3] = inImage.Sample(linearSampler, float2(dispatchLocation.xy + int2(0,1)) / size);
+		sharedLine[KERNEL_SIZE + 4] = inImage.Sample(linearSampler, float2(dispatchLocation.xy + int2(0,2)) / size);
+		sharedLine[KERNEL_SIZE + 5] = inImage.Sample(linearSampler, float2(dispatchLocation.xy + int2(0,3)) / size);
 	}
 
 	// wait for the shared memory to be fully populated.
-	memoryBarrierShared();
-	barrier();
+	AllMemoryBarrierWithGroupSync();
 
 	if(dispatchLocation.y >= size.y)
 		return;
 
-	float4 bluredPixel = blur(gl_LocalInvocationID.y);
-
-	imageStore(outImage, dispatchLocation.xy, bluredPixel);
+	outImage[dispatchLocation.xy] = blur(localIndex.y);
+}

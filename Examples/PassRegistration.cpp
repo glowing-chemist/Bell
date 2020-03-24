@@ -11,9 +11,9 @@ struct ImGuiOptions
     int mToggleIndex = 0;
     bool mDefered = true;
     bool mForward = false;
-    bool mShowLights = false;
+    bool mShowLights = true;
     bool mTAA = false;
-    bool mSSAO = false;
+    bool mSSAO = true;
 };
 
 static ImGuiOptions graphicsOptions;
