@@ -1,15 +1,15 @@
 #include "VertexOutputs.hlsl"
 
-[[vk::binding(0, 0)]]
+[[vk::binding(1)]]
 SamplerState linearSampler;
 
-[[vk::binding(1, 1)]]
+[[vk::binding(0, 1)]]
 Texture2D materials[];
 
-void main(ShadowMapVertOutput vertInput)
+void main(DepthOnlyOutput vertInput)
 {
 	// Just perform an alpha test.
-	const float alpha = materials[vertInput.materialID].Sample(linearSampler, vertInput.uv);
+	const float alpha = materials[vertInput.materialID * 4].Sample(linearSampler, vertInput.uv).w;
 	if(alpha == 0.0f)
 		discard;
 }

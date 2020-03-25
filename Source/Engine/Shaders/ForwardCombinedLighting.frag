@@ -1,88 +1,89 @@
-#version 450
-#extension GL_ARB_separate_shader_objects : enable
-#extension GL_GOOGLE_include_directive : enable
-#extension GL_EXT_nonuniform_qualifier : enable
+#include "VertexOutputs.hlsl"
+#include "MeshAttributes.hlsl"
+#include "NormalMapping.hlsl"
+#include "UniformBuffers.hlsl"
+#include "ClusteredLighting.hlsl"
 
-#include "MeshAttributes.glsl"
-#include "NormalMapping.glsl"
-#include "UniformBuffers.glsl"
-#include "ClusteredLighting.glsl"
-
-
-layout(location = 0) in float4 positionWS;
-layout(location = 1) in float3 vertexNormal;
-layout(location = 2) in flat uint materialID;
-layout(location = 3) in float2 uv;
-layout(location = 4) in float2 inVelocity;
-
-layout(location = 0) out float4 frameBuffer;
-layout(location = 1) out float2 velocity;
-
-layout(set = 0, binding = 0) uniform UniformBufferObject {    
-    CameraBuffer camera;    
-}; 
-layout(set = 0, binding = 1) uniform texture2D DFG;
-layout(set = 0, binding = 2) uniform texture2D ltcMat;
-layout(set = 0, binding = 3) uniform texture2D ltcAmp;
-layout(set = 0, binding = 4) uniform utexture2D activeFroxels;
-layout(set = 0, binding = 5) uniform textureCube skyBox;
-layout(set = 0, binding = 6) uniform textureCube ConvolvedSkybox;
-layout(set = 0, binding = 7) uniform sampler linearSampler;
-layout(set = 0, binding = 8) uniform sampler pointSampler;
-
-// Light lists
-layout(std430, set = 0, binding = 9) buffer readonly sparseFroxels
+struct Output
 {
-    uint2 sparseFroxelList[];
+    float4 colour;
+    float velocity;
 };
 
-layout(std430, set = 0,  binding = 10) buffer readonly froxelIndicies
-{
-    uint indicies[];
-};
+[[vk::binding(0)]]
+ConstantBuffer<CameraBuffer> camera;
+
+[[vk::binding(1)]]
+Texture2D<float2> DFG;
+
+[[vk::binding(2)]]
+Texture2D<float4> ltcMat;
+
+[[vk::binding(3)]]
+Texture2D<float2> ltcAmp;
+
+[[vk::binding(4)]]
+Texture2D<uint> activeFroxels;
+
+
+[[vk::binding(5)]]
+TextureCube<float4> skyBox;
+
+[[vk::binding(6)]]
+TextureCube<float4> ConvolvedSkybox;
+
+[[vk::binding(7)]]
+SamplerState linearSampler;
+
+[[vk::binding(8)]]
+SamplerState pointSampler;
+
+[[vk::binding(9)]]
+StructuredBuffer<uint2> sparseFroxelList;
+
+[[vk::binding(10)]]
+StructuredBuffer<uint> indicies;
 
 #ifdef Shadow_Map
-layout(set = 0, binding = 11) uniform texture2D shadowMap;
+[[vk::binding(11)]]
+Texture2D<float> shadowMap;
 #endif
 
 // an unbound array of matyerial parameter textures
 // In order albedo, normals, rougness, metalness
-layout(set = 1, binding = 0) uniform texture2D materials[];
+[[vk::binding(0, 1)]]
+Texture2D materials[];
 
-layout(std430, set = 2, binding = 0) buffer readonly sceneLights
+[[vk::binding(0, 2)]]
+StructuredBuffer<uint4> lightCount;
+
+[[vk::binding(1, 2)]]
+StructuredBuffer<Light> sceneLights;
+
+
+Output main(GBufferVertOutput vertInput)
 {
-    uint4  lightCount;
-    Light lights[];
-};
+    const float4 baseAlbedo = materials[vertInput.materialID * 4].Sample(linearSampler, vertInput.uv);
 
-
-void main()
-{
-	const float4 baseAlbedo = texture(sampler2D(materials[nonuniformEXT(materialID * 4)], linearSampler),
-                                		uv);
-
-    float3 normal = texture(sampler2D(materials[nonuniformEXT((materialID * 4) + 1)], linearSampler),
-                                uv).xyz;
+    float3 normal = materials[(vertInput.materialID * 4) + 1].Sample(linearSampler, vertInput.uv).xyz;
 
     // remap normal
     normal = remapNormals(normal);
     normal = normalize(normal);
 
-    const float roughness = texture(sampler2D(materials[nonuniformEXT((materialID * 4) + 2)], linearSampler),
-                                uv).x;
+    const float roughness = materials[(vertInput.materialID * 4) + 2].Sample(linearSampler, vertInput.uv).x;
 
-    const float metalness = texture(sampler2D(materials[nonuniformEXT((materialID * 4) + 3)], linearSampler),
-                                uv).x;
+    const float metalness = materials[(vertInput.materialID * 4) + 3].Sample(linearSampler, vertInput.uv);
 
-	const float3 viewDir = normalize(camera.position - positionWS.xyz);
+    const float3 viewDir = normalize(camera.position - vertInput.positionWS.xyz);
 
-	const float2 xDerivities = dFdxFine(uv);
-	const float2 yDerivities = dFdyFine(uv);
+	const float2 xDerivities = ddx_fine(vertInput.uv);
+	const float2 yDerivities = ddy_fine(vertInput.uv);
 
 	{
-    	float3x3 tbv = tangentSpaceMatrix(vertexNormal, viewDir, float4(xDerivities, yDerivities));
+    	float3x3 tbv = tangentSpaceMatrix(vertInput.normal, viewDir, float4(xDerivities, yDerivities));
 
-    	normal = tbv * normal;
+    	normal = mul(normal, tbv);
 
     	normal = normalize(normal);
 	}
@@ -92,12 +93,12 @@ void main()
 	const float lodLevel = roughness * 10.0f;
 
     // Calculate contribution from enviroment.
-	float3 radiance = textureLod(samplerCube(ConvolvedSkybox, linearSampler), lightDir, lodLevel).xyz;
+    float3 radiance = ConvolvedSkybox.SampleLevel(linearSampler, lightDir, lodLevel).xyz;
 
-    float3 irradiance = texture(samplerCube(skyBox, linearSampler), normal).xyz;
+    float3 irradiance = skyBox.Sample(linearSampler, normal).xyz;
 
 #ifdef Shadow_Map
-    const float occlusion = texture(sampler2D(shadowMap, linearSampler), gl_FragCoord.xy / camera.frameBufferSize).x;
+    const float occlusion = shadowMap.Sample(linearSampler, vertInput.position.xy / camera.frameBufferSize);
     radiance *= occlusion;
     irradiance *= occlusion;
 #endif
@@ -114,31 +115,31 @@ void main()
     float4 lighting = float4(diffuse + specular, 1.0f);
 
     // Calculate contribution from lights.
-    const uint froxelIndex = texture(usampler2D(activeFroxels, pointSampler), gl_FragCoord.xy / camera.frameBufferSize).x;
+    const uint froxelIndex = activeFroxels.Sample(pointSampler, vertInput.position.xy / camera.frameBufferSize);
     const uint2 lightListIndicies = sparseFroxelList[froxelIndex];
 
     for(uint i = 0; i < lightListIndicies.y; ++i)
     {
         uint indirectLightIndex = indicies[lightListIndicies.x + i];
-        const Light light = lights[indirectLightIndex];
+        const Light light = sceneLights[indirectLightIndex];
 
         switch(uint(light.type))
         {
             case 0:
             {
-                lighting += pointLightContribution(light, positionWS, viewDir, normal, metalness, roughness, baseAlbedo.xyz, f_ab);
+                lighting += pointLightContribution(light, vertInput.positionWS, viewDir, normal, metalness, roughness, baseAlbedo.xyz, f_ab);
                 break;
             }
 
             case 1: // Spot.
             {
-                lighting +=  pointLightContribution(light, positionWS, viewDir, normal, metalness, roughness, baseAlbedo.xyz, f_ab);
+                lighting +=  pointLightContribution(light, vertInput.positionWS, viewDir, normal, metalness, roughness, baseAlbedo.xyz, f_ab);
                 break;
             }
 
             case 2: // Area.
             {
-                lighting +=  areaLightContribution(light, positionWS, viewDir, normal, metalness, roughness, baseAlbedo.xyz, minV, LTCAmp);
+                lighting +=  areaLightContribution(light, vertInput.positionWS, viewDir, normal, metalness, roughness, baseAlbedo.xyz, minV, LTCAmp);
                 break;
             }
 
@@ -151,6 +152,10 @@ void main()
     if(baseAlbedo.w == 0.0f)
         discard;
 
-    frameBuffer = lighting;
-    velocity = (inVelocity * 0.5f) + 0.5f;
+    Output output;
+
+    output.colour = lighting;
+    output.velocity = (vertInput.velocity * 0.5f) + 0.5f;
+
+    return output;
 }

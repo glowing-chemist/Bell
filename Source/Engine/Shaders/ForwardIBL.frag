@@ -1,66 +1,64 @@
-#version 450
-#extension GL_ARB_separate_shader_objects : enable
-#extension GL_GOOGLE_include_directive : enable
-#extension GL_EXT_nonuniform_qualifier : enable
-
-#include "MeshAttributes.glsl"
-#include "PBR.glsl"
-#include "NormalMapping.glsl"
-#include "UniformBuffers.glsl"
+#include "VertexOutputs.hlsl"
+#include "MeshAttributes.hlsl"
+#include "PBR.hlsl"
+#include "NormalMapping.hlsl"
+#include "UniformBuffers.hlsl"
 
 
-layout(location = 0) in float4 positionWS;
-layout(location = 1) in float3 vertexNormal;
-layout(location = 2) in flat uint materialID;
-layout(location = 3) in float2 uv;
-layout(location = 4) in float2 inVelocity;
+struct Output
+{
+    float4 colour;
+    float velocity;
+};
 
-layout(location = 0) out float4 frameBuffer;
-layout(location = 1) out float2 velocity;
+[[vk::binding(0)]]
+ConstantBuffer<CameraBuffer> camera;
 
-layout(set = 0, binding = 0) uniform UniformBufferObject {    
-    CameraBuffer camera;    
-}; 
-layout(set = 0, binding = 1) uniform texture2D DFG;
-layout(set = 0, binding = 2) uniform textureCube skyBox;
-layout(set = 0, binding = 3) uniform textureCube ConvolvedSkybox;
-layout(set = 0, binding = 4) uniform sampler linearSampler;
+[[vk::binding(1)]]
+Texture2D<float2> DFG;
+
+[[vk::binding(2)]]
+TextureCube<float4> skyBox;
+
+[[vk::binding(3)]]
+TextureCube<float4> ConvolvedSkybox;
+
+[[vk::binding(4)]]
+SamplerState linearSampler;
 
 #ifdef Shadow_Map
-layout(set = 0, binding = 5) uniform texture2D shadowMap;
+[[vk::binding(5)]]
+Texture2D<float> shadowMap;
 #endif
 
 // an unbound array of matyerial parameter textures
 // In order albedo, normals, rougness, metalness
-layout(set = 1, binding = 0) uniform texture2D materials[];
+[[vk::binding(0, 1)]]
+Texture2D materials[];
 
-void main()
+
+Output main(GBufferVertOutput vertInput)
 {
-	const float4 baseAlbedo = texture(sampler2D(materials[nonuniformEXT(materialID * 4)], linearSampler),
-                                		uv);
+	const float4 baseAlbedo = materials[vertInput.materialID * 4].Sample(linearSampler, vertInput.uv);
 
-    float3 normal = texture(sampler2D(materials[nonuniformEXT((materialID * 4) + 1)], linearSampler),
-                                uv).xyz;
-
+    float3 normal = materials[(vertInput.materialID * 4) + 1].Sample(linearSampler, vertInput.uv).xyz;
     // remap normal
     normal = remapNormals(normal);
     normal = normalize(normal);
 
-    const float roughness = texture(sampler2D(materials[nonuniformEXT((materialID * 4) + 2)], linearSampler),
-                                uv).x;
+    const float roughness = materials[(vertInput.materialID * 4) + 2].Sample(linearSampler, vertInput.uv).x;
 
-    const float metalness = texture(sampler2D(materials[nonuniformEXT((materialID * 4) + 3)], linearSampler),
-                                uv).x;
+    const float metalness = materials[(vertInput.materialID * 4) + 3].Sample(linearSampler, vertInput.uv);
 
-	const float3 viewDir = normalize(camera.position - positionWS.xyz);
+	const float3 viewDir = normalize(camera.position - vertInput.positionWS.xyz);
 
-	const float2 xDerivities = dFdxFine(uv);
-	const float2 yDerivities = dFdyFine(uv);
+	const float2 xDerivities = ddx_fine(vertInput.uv);
+	const float2 yDerivities = ddy_fine(vertInput.uv);
 
 	{
-    	float3x3 tbv = tangentSpaceMatrix(vertexNormal, viewDir, float4(xDerivities, yDerivities));
+    	float3x3 tbv = tangentSpaceMatrix(vertInput.normal, viewDir, float4(xDerivities, yDerivities));
 
-    	normal = tbv * normal;
+    	normal = mul(normal, tbv);
 
     	normal = normalize(normal);
 	}
@@ -69,18 +67,18 @@ void main()
 
 	const float lodLevel = roughness * 10.0f;
 
-	float3 radiance = textureLod(samplerCube(ConvolvedSkybox, linearSampler), lightDir, lodLevel).xyz;
+	float3 radiance = ConvolvedSkybox.SampleLevel(linearSampler, lightDir, lodLevel).xyz;
 
-    float3 irradiance = texture(samplerCube(skyBox, linearSampler), normal).xyz;
+    float3 irradiance = skyBox.Sample(linearSampler, normal).xyz;
 
 #ifdef Shadow_Map
-    const float occlusion = texture(sampler2D(shadowMap, linearSampler), gl_FragCoord.xy / camera.frameBufferSize).x;
+    const float occlusion = shadowMap.Sample(linearSampler, vertInput.position.xy / camera.frameBufferSize);
     radiance *= occlusion;
     irradiance *= occlusion;
 #endif
 
 	const float NoV = dot(normal, viewDir);
-    const float2 f_ab = texture(sampler2D(DFG, linearSampler), float2(NoV, roughness)).xy;
+    const float2 f_ab = DFG.Sample(linearSampler, float2(NoV, roughness));
 
     if(baseAlbedo.w == 0.0f)
         discard;
@@ -88,6 +86,10 @@ void main()
     const float3 diffuse = calculateDiffuse(baseAlbedo.xyz, metalness, irradiance);
     const float3 specular = calculateSpecular(roughness * roughness, normal, viewDir, metalness, baseAlbedo.xyz, radiance, f_ab);
 
-    frameBuffer = float4(specular + diffuse, 1.0);
-    velocity = (inVelocity * 0.5f) + 0.5f;
+    Output output;
+
+    output.colour = float4(specular + diffuse, 1.0);
+    output.velocity = (vertInput.velocity * 0.5f) + 0.5f;
+
+    return output;
 }

@@ -1,30 +1,23 @@
-#version 450
-#extension GL_ARB_separate_shader_objects : enable
-#extension GL_GOOGLE_include_directive : enable
-#extension GL_EXT_nonuniform_qualifier : enable
+#include "VertexOutputs.hlsl"
+#include "MeshAttributes.hlsl"
 
-#include "MeshAttributes.glsl"
+[[vk::binding(1)]]
+SamplerState linearSampler;
 
-layout(location = 0) in float4 positionVS;
-layout(location = 1) in float2 uv;
-layout(location = 2) in flat uint materialID;
-
-layout(location = 0) out float2 shadowMap;
+[[vk::binding(0, 1)]]
+Texture2D materials[];
 
 
-layout(set = 0, binding = 1) uniform sampler linearSampler;
-
-layout(set = 1, binding = 0) uniform texture2D materials[];
-
-
-void main()
+float2 main(ShadowMapVertOutput vertInput)
 {
 	{
-		const float alpha = texture(sampler2D(materials[nonuniformEXT(materialID * 4)], linearSampler), uv).w;
+		const float alpha = materials[vertInput.materialID * 4].Sample(linearSampler, vertInput.uv).w;
 		if(alpha == 0.0f)
 			discard;
 	}
+	float2 shadowMap;
+	shadowMap.x = -vertInput.positionVS.z;
+	shadowMap.y = vertInput.positionVS.z * vertInput.positionVS.z;
 
-	shadowMap.x = -positionVS.z;
-	shadowMap.y = positionVS.z * positionVS.z;
+	return shadowMap;
 }

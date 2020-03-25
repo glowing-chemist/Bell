@@ -8,9 +8,9 @@
 
 struct ImGuiOptions
 {
-    int mToggleIndex = 0;
-    bool mDefered = true;
-    bool mForward = false;
+    int mToggleIndex = 1;
+    bool mDefered = false;
+    bool mForward = true;
     bool mShowLights = true;
     bool mTAA = false;
     bool mSSAO = true;
@@ -191,7 +191,7 @@ int main()
 
         engine.registerPass(PassType::ConvolveSkybox);
         engine.registerPass(PassType::Skybox);
-        //engine.registerPass(PassType::Shadow);
+        engine.registerPass(PassType::Shadow);
 
         if (graphicsOptions.mShowLights)
             engine.registerPass(PassType::LightFroxelation);

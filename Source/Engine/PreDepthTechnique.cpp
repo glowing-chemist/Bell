@@ -32,7 +32,7 @@ void PreDepthTechnique::render(RenderGraph& graph, Engine* eng, const std::vecto
 
     for (const auto& mesh : meshes)
     {
-        // Don't render transparent or alpha tested geometry.
+        // Don't render transparent geometry.
         if((mesh->mMesh->getAttributes() & MeshAttributes::Transparent) > 0)
             continue;
 

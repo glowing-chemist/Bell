@@ -1,54 +1,33 @@
-#version 450
-#extension GL_ARB_separate_shader_objects : enable
-#extension GL_GOOGLE_include_directive : enable
-
-#include "UniformBuffers.glsl"
+#include "VertexOutputs.hlsl"
+#include "UniformBuffers.hlsl"
 
 
-layout(location = 0) in float4 position;
-layout(location = 1) in float2 uv;
-layout(location = 2) in float4 normals;
-layout(location = 3) in uint material;
+[[vk::push_constant]]
+ConstantBuffer<ObjectMatracies> model;
 
 
-layout(location = 0) out float4 outPosition;
-layout(location = 1) out float3 outNormals;
-layout(location = 2) out uint outMaterialID;
-layout(location = 3) out float2 outUv;
-layout(location = 4) out float2 outVelocity;
+[[vk::binding(0)]]
+ConstantBuffer<CameraBuffer> camera;
 
 
-layout(push_constant) uniform pushModelMatrix
+GBufferVertOutput main(Vertex vertex)
 {
-	float4x4 mesh;
-	float4x4 previousMesh;
-} push_constants;
+	GBufferVertOutput output;
 
+	const float4x4 transFormation = mul(camera.viewProj, model.meshMatrix);
+	float4 transformedPosition = mul(transFormation, vertex.position);
 
-out gl_PerVertex {
-    float4 gl_Position;
-};
-
-
-layout(binding = 0) uniform UniformBufferObject {    
-    CameraBuffer camera;    
-}; 
-
-
-void main()
-{
-	const float4x4 transFormation = camera.viewProj * push_constants.mesh;
-	float4 transformedPosition = transFormation * position;
-
-	gl_Position = transformedPosition;
-	outPosition = push_constants.mesh * position;
-	outNormals = float3x3(push_constants.mesh) * normals.xyz;
-	outMaterialID = material;
-	outUv = uv;
+	output.position = transformedPosition;
+	output.positionWS = mul(model.meshMatrix, vertex.position);
+	output.normal = float4(mul((float3x3)model.meshMatrix, vertex.normal.xyz), 1.0f);
+	output.materialID = vertex.materialID;
+	output.uv = vertex.uv;
 
 	// Calculate screen space velocity.
 	transformedPosition /= transformedPosition.w;
-	float4 previousPosition = camera.previousFrameViewProj * push_constants.previousMesh * position;
+	float4 previousPosition = mul(mul(camera.previousFrameViewProj, model.prevMeshMatrix), vertex.position);
 	previousPosition /= previousPosition.w;
-	outVelocity = previousPosition.xy - transformedPosition.xy;
+	output.velocity = previousPosition.xy - transformedPosition.xy;
+
+	return output;
 }

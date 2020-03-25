@@ -1,35 +1,21 @@
-#version 450
-#extension GL_ARB_separate_shader_objects : enable
-#extension GL_GOOGLE_include_directive : enable
+#include "VertexOutputs.hlsl"
+#include "UniformBuffers.hlsl"
 
-#include "UniformBuffers.glsl"
+[[vk::binding(0)]]
+ConstantBuffer<ShadowingLight> light;
 
-layout(location = 0) in float4 position;
-layout(location = 1) in float2 uv;
-layout(location = 2) in float4 normals;
-layout(location = 3) in uint material;
-
-layout(location = 0) out float4 positionVS;
-layout(location = 1) out float2 outUV;
-layout(location = 2) out uint outMaterial;
+[[vk::push_constant]]
+ConstantBuffer<ObjectMatracies> model;
 
 
-layout(set = 0, binding = 0) uniform UniformBufferObject 
-{    
-    ShadowingLight light;
-};
-
-layout(push_constant) uniform pushModelMatrix
+ShadowMapVertOutput main(Vertex vert)
 {
-	float4x4 mesh;
-	float4x4 previousMesh;
-} push_constants;
+	ShadowMapVertOutput output;
 
+	output.position = mul(mul(light.viewProj, model.meshMatrix), vert.position);
+	output.positionVS = mul(mul(light.view, model.meshMatrix), vert.position);
+	output.uv = vert.uv;
+	output.materialID = vert.materialID;
 
-void main()
-{
-	gl_Position = light.viewProj * push_constants.mesh * position;
-	positionVS = light.view * push_constants.mesh * position;
-	outUV = uv;
-	outMaterial = material;
+	return output;
 }

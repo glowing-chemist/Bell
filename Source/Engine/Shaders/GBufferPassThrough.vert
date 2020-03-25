@@ -20,7 +20,7 @@ GBufferVertOutput main(Vertex vertInput)
 	output.position = transformedPosition;
 	output.positionWS = mul(model.meshMatrix, vertInput.position);
 	output.uv = vertInput.uv;
-	output.normal = float4(mul(float3x3(model.meshMatrix), vertInput.normal.xyz), 1.0f);
+	output.normal = float4(mul((float3x3)model.meshMatrix, vertInput.normal.xyz), 1.0f);
 	output.materialID =  vertInput.materialID;
 
 	// Calculate screen space velocity.

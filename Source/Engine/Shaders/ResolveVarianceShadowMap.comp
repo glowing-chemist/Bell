@@ -1,52 +1,52 @@
-#version 450
-#extension GL_ARB_separate_shader_objects : enable
-#extension GL_GOOGLE_include_directive : enable
-
-#include "UniformBuffers.glsl"
-#include "Utilities.glsl"
-#include "ShadowMapping.glsl" 
+#include "UniformBuffers.hlsl"
+#include "Utilities.hlsl"
+#include "ShadowMapping.hlsl" 
 
 
-layout(local_size_x = 32, local_size_y = 32, local_size_z = 1) in;
+[[vk::binding(0)]]
+Texture2D<float> depth;
 
-layout(set = 0, binding = 0) uniform texture2D depth;
-layout(set = 0, binding = 1) uniform texture2D shadowMapRaw;
-layout(r8, set = 0, binding = 2) uniform image2D shadowMap;
-layout(set = 0, binding = 3) uniform UniformBufferObject 
-{    
-    ShadowingLight light;
-};
-layout(set = 0, binding = 4) uniform cameraBuffer
-{
-	CameraBuffer camera;
-};
-layout(set = 0, binding = 5) uniform sampler linearSampler;
+[[vk::binding(1)]]
+Texture2D<float2> shadowMapRaw;
 
-void main()
+[[vk::binding(2)]]
+RWTexture2D<float> shadowMap;
+
+[[vk::binding(3)]]
+ConstantBuffer<ShadowingLight> light;
+
+[[vk::binding(4)]]
+ConstantBuffer<CameraBuffer> camera;
+
+[[vk::binding(5)]]
+SamplerState linearSampler;
+
+[numthreads(32, 32, 1)]
+void main(uint3 globalIndex : SV_DispatchThreadID)
 {
 	const float2 gbufferSize = camera.frameBufferSize;
-	const float2 uv = (float2(gl_GlobalInvocationID.xy) / gbufferSize) + camera.jitter;
+	const float2 uv = (float2(globalIndex.xy) / gbufferSize) + camera.jitter;
 
-	const float fragmentDepth = texture(sampler2D(depth, linearSampler), uv).x;
+	const float fragmentDepth = depth.Sample(linearSampler, uv);
 
-	float4 worldSpaceFragmentPos = camera.invertedViewProj * float4((uv - 0.5f) * 2.0f, fragmentDepth, 1.0f);
+	float4 worldSpaceFragmentPos = mul(camera.invertedViewProj, float4((uv - 0.5f) * 2.0f, fragmentDepth, 1.0f));
     worldSpaceFragmentPos /= worldSpaceFragmentPos.w;
 
-	float4 fragPositionVS = light.view * worldSpaceFragmentPos;
+	float4 fragPositionVS = mul(light.view, worldSpaceFragmentPos);
     fragPositionVS /= fragPositionVS.w;
 
-    float4 fragPositionNDC = light.viewProj * worldSpaceFragmentPos;
+    float4 fragPositionNDC = mul(light.viewProj, worldSpaceFragmentPos);
     fragPositionNDC /= fragPositionNDC.w;
 
     const float2 lightSpaceUV = (fragPositionNDC.xy * 0.5f) + 0.5f;
     float variance = 0.0f;
     if(lightSpaceUV.x >= 0.0f && lightSpaceUV.x <= 1.0f && lightSpaceUV.y >= 0.0f && lightSpaceUV.y <= 1.0f && fragPositionVS.z <= 0.0f)
     {
-        const float2 moments = texture(sampler2D(shadowMapRaw, linearSampler), lightSpaceUV).xy;
+        const float2 moments = shadowMapRaw.Sample(linearSampler, lightSpaceUV);
         variance = varianceOcclusionFactor(-fragPositionVS.z, moments);
     }
     variance = clamp(variance, 0.15f, 1.0f);
 
-    if(gl_GlobalInvocationID.x <= gbufferSize.x && gl_GlobalInvocationID.y <= gbufferSize.y)
-			imageStore(shadowMap, int2(gl_GlobalInvocationID.xy), float4(variance, 0.0f, 0.0f, 0.0f)); 
+    if(globalIndex.x <= gbufferSize.x && globalIndex.y <= gbufferSize.y)
+			shadowMap[globalIndex.xy] =  variance; 
 }
