@@ -130,12 +130,7 @@ void VulkanImage::setContents(const void* data,
     const uint32_t size = xsize * ysize * zsize * getPixelSize(mFormat);
     VulkanBuffer stagingBuffer(getDevice(), BufferUsage::TransferSrc, size, 1, "Staging Buffer");
 
-	MapInfo mapInfo{};
-	mapInfo.mOffset = 0;
-	mapInfo.mSize = stagingBuffer.getSize();
-	void* mappedBuffer = stagingBuffer.map(mapInfo);
-    std::memcpy(mappedBuffer, data, size);
-    stagingBuffer.unmap();
+	stagingBuffer.setContents(data, size, 0);
 
     vk::BufferImageCopy copyInfo{};
     copyInfo.setBufferOffset(0);

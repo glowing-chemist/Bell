@@ -27,7 +27,7 @@ inline TextureInfo load32BitTexture(const char* filePath, int chanels)
 	    //BELL_ASSERT(texChannels == chanels, "Texture file has a different ammount of channels than requested")
 
 	std::vector<unsigned char> imageData{};
-	imageData.resize(texWidth * texHeight * 4);
+	imageData.resize(texWidth * texHeight * chanels);
 
 	std::memcpy(imageData.data(), pixels, texWidth * texHeight * chanels);
 
@@ -46,9 +46,9 @@ inline TextureInfo load128BitTexture(const char* filePath, int chanels)
         //BELL_ASSERT(texChannels == chanels, "Texture file has a different ammount of channels than requested")
 
     std::vector<unsigned char> imageData{};
-    imageData.resize(texWidth * texHeight * 4 * sizeof(float));
+    imageData.resize(texWidth * texHeight * chanels * sizeof(float));
 
-    std::memcpy(imageData.data(), pixels, texWidth * texHeight * chanels);
+    std::memcpy(imageData.data(), pixels, texWidth * texHeight * chanels * sizeof(float));
 
     stbi_image_free(pixels);
 

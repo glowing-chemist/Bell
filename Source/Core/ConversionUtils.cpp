@@ -422,6 +422,9 @@ uint32_t getPixelSize(const Format format)
         result = 8;
         break;
 
+	case Format::R8UNorm:
+		return 1;
+
 	default:
 		result =  4;
 	}
