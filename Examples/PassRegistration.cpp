@@ -8,11 +8,11 @@
 
 struct ImGuiOptions
 {
-    int mToggleIndex = 1;
-    bool mDefered = false;
-    bool mForward = true;
+    int mToggleIndex = 0;
+    bool mDefered = true;
+    bool mForward = false;
     bool mShowLights = true;
-    bool mTAA = false;
+    bool mTAA = true;
     bool mSSAO = true;
 };
 

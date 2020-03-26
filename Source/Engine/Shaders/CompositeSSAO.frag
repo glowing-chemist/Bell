@@ -12,7 +12,7 @@ SamplerState defaultSampler;
 float4 main(PositionAndUVVertOutput vertInput)
 {
 	const float4 lighting = globalLighting.Sample(defaultSampler, vertInput.uv);
-	const float4 aoGather = globalLighting.Gather(defaultSampler, vertInput.uv);
+	const float4 aoGather = ssao.Gather(defaultSampler, vertInput.uv);
 	const float ao = dot(aoGather, float4(1.0f)) / 4.0f;
 
 	return lighting * ao;

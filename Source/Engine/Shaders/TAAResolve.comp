@@ -1,31 +1,29 @@
-#version 450
-#extension GL_ARB_separate_shader_objects : enable
-#extension GL_GOOGLE_include_directive : enable
-
-#include "UniformBuffers.glsl"
-#include "Utilities.glsl"
+#include "UniformBuffers.hlsl"
+#include "Utilities.hlsl"
 
 #define DEPTH_EPSILON 0.01f
-#define STATIC_BLEND_FACTOR 0
+#define STATIC_BLEND_FACTOR 1
 
-layout(local_size_x = 32, local_size_y = 32, local_size_z = 1) in;
+[[vk::binding(0)]]
+ConstantBuffer<CameraBuffer> camera;
 
-layout(set = 0, binding = 0) uniform cameraBuffer
-{
-	CameraBuffer camera;
-};
+[[vk::binding(1)]]
+Texture2D<float> depth;
 
-layout(set = 0, binding = 1) uniform texture2D depth;
+[[vk::binding(2)]]
+Texture2D<float2> velocity;
 
-layout(set = 0, binding = 2) uniform texture2D velocity;
+[[vk::binding(3)]]
+Texture2D<float4> colour;
 
-layout(set = 0, binding = 3) uniform texture2D colour;
+[[vk::binding(4)]]
+Texture2D<float4> history;
 
-layout(set = 0, binding = 4) uniform texture2D history;
+[[vk::binding(5)]]
+RWTexture2D<float4> newHistory;
 
-layout(rgba8, set = 0, binding = 5) uniform image2D newHistory;
-
-layout(set = 0, binding = 6) uniform sampler linearSampler;
+[[vk::binding(6)]]
+SamplerState linearSampler;
 
 // Rather than clamp within the colour space AABB, clip it.
 float3 clip_aabb(	float3 aabb_min, 
@@ -47,33 +45,35 @@ float3 clip_aabb(	float3 aabb_min,
 		return q;
 }
 
-void main()
+[numthreads(32, 32, 1)]
+void main(uint3 globalIndex : SV_DispatchThreadID)
 {
 	const float2 gbufferSize = camera.frameBufferSize;
-	const float2 uv = (float2(gl_GlobalInvocationID.xy) / gbufferSize);
+	const float2 uv = (float2(globalIndex.xy) / gbufferSize);
 
-	const float fragDepth = texture(sampler2D(depth, linearSampler), uv).x;
+	const float fragDepth = depth.Sample(linearSampler, uv);;
 	const float linearDepth = lineariseReverseDepth(fragDepth, camera.nearPlane, camera.farPlane);
 
-	float2 currentVelocity = texture(sampler2D(velocity, linearSampler), uv).xy;
+	float2 currentVelocity = velocity.Sample(linearSampler, uv);
 	currentVelocity = (currentVelocity - 0.5f) * 2.0f;
 
 	const float2 previousUV = uv - currentVelocity;
-	const float previousDepth = texture(sampler2D(depth, linearSampler), previousUV).x;
+#if !STATIC_BLEND_FACTOR
+	const float previousDepth = depth.Sample(linearSampler, previousUV);
 	const float previousLinearDepth = lineariseReverseDepth(previousDepth, camera.nearPlane, camera.farPlane);
-
-	const float4 currentColour = texture(sampler2D(colour, linearSampler), uv);
-
 	const float depthDif = abs(previousLinearDepth - linearDepth);
+#endif
+
+	const float4 currentColour = colour.Sample(linearSampler, uv);
 	
 	const float xDiff = 1.0f / camera.frameBufferSize.x;
 	const float yDiff = 1.0f / camera.frameBufferSize.y;
 
 	// Calcaulte a AABB in YCoCg colour space for neibourghhood clipping.
-	float3 upColour = texture(sampler2D(history, linearSampler), uv + float2(xDiff, 0.0f)).xyz;
-	float3 downColour = texture(sampler2D(history, linearSampler), uv + float2(-xDiff, 0.0f)).xyz;
-	float3 leftColour = texture(sampler2D(history, linearSampler), uv + float2(0.0f, -yDiff)).xyz;
-	float3 rightColour = texture(sampler2D(history, linearSampler), uv + float2(0.0f, yDiff)).xyz;
+	float3 upColour = history.Sample(linearSampler, uv + float2(xDiff, 0.0f)).xyz;
+	float3 downColour = history.Sample(linearSampler, uv + float2(-xDiff, 0.0f)).xyz;
+	float3 leftColour = history.Sample(linearSampler, uv + float2(0.0f, -yDiff)).xyz;
+	float3 rightColour = history.Sample(linearSampler, uv + float2(0.0f, yDiff)).xyz;
 	upColour = calculateYCoCg(upColour);
 	downColour = calculateYCoCg(downColour);
 	leftColour = calculateYCoCg(leftColour);
@@ -96,7 +96,7 @@ void main()
 	aabbMax = max(aabbMax, rightColour);
 	aabbMax = max(aabbMax, currentColourYCocg);
 
-	float4 previousColour = texture(sampler2D(history, linearSampler), previousUV);
+	float4 previousColour = history.Sample(linearSampler, previousUV);
 
 	// Clamp previous colour
 	float3 previousColourYCoCg = calculateYCoCg(previousColour.xyz);
@@ -115,6 +115,6 @@ void main()
 
 	float4 newColour =  ((1.0f - confidence) * currentColour) + (confidence * previousColour);
 
-	if(gl_GlobalInvocationID.x <= gbufferSize.x && gl_GlobalInvocationID.y <= gbufferSize.y)
-			imageStore(newHistory, int2(gl_GlobalInvocationID.xy), newColour); 
+	if(globalIndex.x <= gbufferSize.x && globalIndex.y <= gbufferSize.y)
+			newHistory[globalIndex.xy] = newColour; 
 }
