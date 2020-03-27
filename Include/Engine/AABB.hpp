@@ -10,15 +10,15 @@
 struct Cube
 {
     // Verticies going clockwise looking down (perpendicular) to a single face
-    float3 mUpper1; // Corresponds to TopFrontLeft
-    float3 mUpper2;
-    float3 mUpper3;
-    float3 mUpper4;
+    float4 mUpper1; // Corresponds to TopFrontLeft
+    float4 mUpper2;
+    float4 mUpper3;
+    float4 mUpper4;
 
-    float3 mLower1;
-    float3 mLower2;
-    float3 mLower3; // Corresponds to BottomBackRight
-    float3 mLower4;
+    float4 mLower1;
+    float4 mLower2;
+    float4 mLower3; // Corresponds to BottomBackRight
+    float4 mLower4;
 };
 
 
@@ -26,7 +26,7 @@ struct Cube
 class AABB
 {
 public:
-    AABB(const float3& diagonalTop, const float3& diagonalBottom) :
+    AABB(const float4& diagonalTop, const float4& diagonalBottom) :
         mMinimum{diagonalTop},
         mMaximum{diagonalBottom} {}
 
@@ -38,39 +38,39 @@ public:
 	AABB() = default;
 
     Cube getCube() const;
-    std::array<float3, 8> getCubeAsVertexArray() const;
+    std::array<float4, 8> getCubeAsVertexArray() const;
 
     // std::limits<float>::max() to indicate no intersection
     float intersectionDistance(const Ray&) const;
 
-	bool contains(const float3&) const;
+	bool contains(const float4&) const;
     bool contains(const AABB&, const EstimationMode) const;
 
     AABB& operator*=(const float4x4&);
 
-    AABB& operator*=(const float3&);
-    AABB& operator+=(const float3&);
-    AABB& operator-=(const float3&);
+    AABB& operator*=(const float4&);
+    AABB& operator+=(const float4&);
+    AABB& operator-=(const float4&);
 
 	AABB operator*(const glm::mat4&) const;
 
-	AABB operator*(const float3&) const;
-	AABB operator+(const float3&) const;
-	AABB operator-(const float3&) const;
+	AABB operator*(const float4&) const;
+	AABB operator+(const float4&) const;
+	AABB operator-(const float4&) const;
 
-    const float3& getTop() const
+    const float4& getTop() const
     { return mMaximum; }
 
-    const float3& getBottom() const
+    const float4& getBottom() const
     { return mMinimum; }
 
-    float3 getCentralPoint() const
+    float4 getCentralPoint() const
     { return mMinimum + (mMaximum - mMinimum) * 0.5f; }
 
 private:
 
-    float3 mMinimum;
-    float3 mMaximum;
+    float4 mMinimum;
+    float4 mMaximum;
 
 };
 

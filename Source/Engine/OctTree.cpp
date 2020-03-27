@@ -184,19 +184,19 @@ std::array<AABB, 8> OctTreeFactory<T>::splitAABB(const AABB& aabb) const
 {
 	Cube cube = aabb.getCube();
 
-	const float3 diagonal = cube.mLower3 - cube.mUpper1;
-	const float3 centre = cube.mUpper1 + (diagonal / 2.0f);
+	const float4 diagonal = cube.mLower3 - cube.mUpper1;
+	const float4 centre = cube.mUpper1 + (diagonal / 2.0f);
 
 	// Top layer
 	const AABB first(cube.mUpper1, centre);
-	const AABB second(cube.mUpper1 + float3(0.0f, 0.0f, diagonal.z / 2.0f), centre + float3(0.0f, 0.0f, diagonal.z / 2.0f));
-	const AABB third(cube.mUpper1 + float3(diagonal.x / 2.0f, 0.0f, 0.0f), centre + float3(diagonal.x / 2.0f, 0.0f, 0.0f));
-	const AABB fourth(cube.mUpper1 + float3(diagonal.x / 2.0f, 0.0f, diagonal.z / 2.0f), centre + float3(diagonal.x / 2.0f, 0.0f, diagonal.z / 2.0f));
+	const AABB second(cube.mUpper1 + float4(0.0f, 0.0f, diagonal.z / 2.0f, 1.0f), centre + float4(0.0f, 0.0f, diagonal.z / 2.0f, 1.0f));
+	const AABB third(cube.mUpper1 + float4(diagonal.x / 2.0f, 0.0f, 0.0f, 1.0f), centre + float4(diagonal.x / 2.0f, 0.0f, 0.0f, 1.0f));
+	const AABB fourth(cube.mUpper1 + float4(diagonal.x / 2.0f, 0.0f, diagonal.z / 2.0f, 1.0f), centre + float4(diagonal.x / 2.0f, 0.0f, diagonal.z / 2.0f, 1.0f));
 
 	// Bottom layer
-	const AABB fith(cube.mUpper1 + float3(0.0f, diagonal.y / 2.0f, 0.0f), centre + float3(0.0f, diagonal.y / 2.0f, 0.0f));
-	const AABB sixth(cube.mUpper1 + float3(0.0f, diagonal.y / 2.0f, diagonal.z / 2.0f), centre + float3(0.0f, diagonal.y / 2.0f, diagonal.z / 2.0f));
-	const AABB seventh(cube.mUpper1 + float3(diagonal.x / 2.0f, diagonal.y / 2.0f, 0.0f), centre + float3(diagonal.x / 2.0f, diagonal.y / 2.0f, 0.0f));
+	const AABB fith(cube.mUpper1 + float4(0.0f, diagonal.y / 2.0f, 0.0f, 1.0f), centre + float4(0.0f, diagonal.y / 2.0f, 0.0f, 1.0f));
+	const AABB sixth(cube.mUpper1 + float4(0.0f, diagonal.y / 2.0f, diagonal.z / 2.0f, 1.0f), centre + float4(0.0f, diagonal.y / 2.0f, diagonal.z / 2.0f, 1.0f));
+	const AABB seventh(cube.mUpper1 + float4(diagonal.x / 2.0f, diagonal.y / 2.0f, 0.0f, 1.0f), centre + float4(diagonal.x / 2.0f, diagonal.y / 2.0f, 0.0f, 1.0f));
 	const AABB eighth(centre, cube.mLower3);
 
 	return { first, second, third, fourth,

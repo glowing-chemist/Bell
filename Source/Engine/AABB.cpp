@@ -2,17 +2,17 @@
 
 #include <limits>
 
-std::array<float3, 8> AABB::getCubeAsVertexArray() const
+std::array<float4, 8> AABB::getCubeAsVertexArray() const
 {
-    float3 upper1{mMinimum};
-    float3 upper2{mMinimum.x, mMinimum.y, mMaximum.z};
-    float3 upper3{mMaximum.x, mMinimum.y, mMaximum.z};
-    float3 upper4{mMaximum.x, mMinimum.y, mMinimum.z};
+    float4 upper1{mMinimum};
+    float4 upper2{mMinimum.x, mMinimum.y, mMaximum.z, 1.0f};
+    float4 upper3{mMaximum.x, mMinimum.y, mMaximum.z, 1.0f };
+    float4 upper4{mMaximum.x, mMinimum.y, mMinimum.z, 1.0f };
 
-    float3 lower1{mMinimum.x, mMaximum.y, mMinimum.z};
-    float3 lower2{mMinimum.x, mMaximum.y, mMaximum.z};
-    float3 lower3{mMaximum};
-    float3 lower4{mMaximum.x, mMaximum.y, mMinimum.z};
+    float4 lower1{mMinimum.x, mMaximum.y, mMinimum.z, 1.0f };
+    float4 lower2{mMinimum.x, mMaximum.y, mMaximum.z, 1.0f };
+    float4 lower3{mMaximum};
+    float4 lower4{mMaximum.x, mMaximum.y, mMinimum.z, 1.0f };
 
     return {upper1, upper2, upper3, upper4,
             lower1, lower2, lower3, lower4};
@@ -57,7 +57,7 @@ float AABB::intersectionDistance(const Ray& ray) const
 }
 
 
-bool AABB::contains(const float3& point) const
+bool AABB::contains(const float4& point) const
 {
 	return point.x >= mMinimum.x && point.x <= mMaximum.x &&
 		point.y >= mMinimum.y && point.y <= mMaximum.y &&
@@ -88,11 +88,11 @@ AABB& AABB::operator*=(const float4x4& mat)
     // Keep track of the max/min values seen on each axis
     // so tha we still have an AABB not an OOBB.
     const auto cubeVerticies= getCubeAsVertexArray();
-	float3 smallest = float3(10000000.0f);
-	float3 largest = float3(-10000000.0f);
+    float4 smallest = float4(10000000.0f);
+    float4 largest = float4(-10000000.0f);
 	for (const auto& vertex : cubeVerticies)
 	{
-		float3 transformedPoint = mat * float4(vertex, 1.0f);
+        float4 transformedPoint = mat * vertex;
 		smallest = componentWiseMin(smallest, transformedPoint);
 
 		largest = componentWiseMax(largest, transformedPoint);
@@ -105,7 +105,7 @@ AABB& AABB::operator*=(const float4x4& mat)
 }
 
 
-AABB& AABB::operator*=(const float3& vec)
+AABB& AABB::operator*=(const float4& vec)
 {
     mMinimum *= vec;
     mMaximum *= vec;
@@ -114,7 +114,7 @@ AABB& AABB::operator*=(const float3& vec)
 }
 
 
-AABB& AABB::operator+=(const float3& vec)
+AABB& AABB::operator+=(const float4& vec)
 {
     mMinimum += vec;
     mMaximum += vec;
@@ -123,7 +123,7 @@ AABB& AABB::operator+=(const float3& vec)
 }
 
 
-AABB& AABB::operator-=(const float3& vec)
+AABB& AABB::operator-=(const float4& vec)
 {
     mMinimum -= vec;
     mMaximum -= vec;
@@ -132,16 +132,16 @@ AABB& AABB::operator-=(const float3& vec)
 }
 
 
-AABB AABB::operator*(const glm::mat4& mat) const
+AABB AABB::operator*(const float4x4& mat) const
 {
 	// Keep track of the max/min values seen on each axis
 	// so tha we still have an AABB not an OOBB.
 	const auto cubeVerticies = getCubeAsVertexArray();
-	float3 smallest = float3(10000000.0f);
-	float3 largest = float3(-10000000.0f);
+    float4 smallest = float4(10000000.0f);
+    float4 largest = float4(-10000000.0f);
 	for (const auto& vertex : cubeVerticies)
 	{
-		float3 transformedPoint = mat * float4(vertex, 1.0f);
+        const float4 transformedPoint = mat * vertex;
 		smallest = componentWiseMin(smallest, transformedPoint);
 
 		largest = componentWiseMax(largest, transformedPoint);
@@ -151,19 +151,19 @@ AABB AABB::operator*(const glm::mat4& mat) const
 }
 
 
-AABB AABB::operator*(const float3& vec) const
+AABB AABB::operator*(const float4& vec) const
 {
 	return AABB{ mMinimum * vec, mMaximum * vec };
 }
 
 
-AABB AABB::operator+(const float3& vec) const
+AABB AABB::operator+(const float4& vec) const
 {
 	return AABB{ mMinimum + vec, mMaximum + vec };
 }
 
 
-AABB AABB::operator-(const float3& vec) const
+AABB AABB::operator-(const float4& vec) const
 {
 	return AABB{ mMinimum - vec, mMaximum - vec };
 }
