@@ -351,7 +351,7 @@ void Editor::renderOverlay()
         if(optionalPath)
         {
             mShowFileBrowser = false;
-			loadScene((*optionalPath).generic_u8string());
+			loadScene((*optionalPath).string());
         }
     }
 
