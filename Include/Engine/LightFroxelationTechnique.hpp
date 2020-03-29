@@ -11,7 +11,7 @@
 class LightFroxelationTechnique : public Technique
 {
 public:
-	LightFroxelationTechnique(Engine*);
+	LightFroxelationTechnique(Engine*, RenderGraph&);
 	~LightFroxelationTechnique() = default;
 
     virtual PassType getPassType() const override final
@@ -26,16 +26,16 @@ public:
 private:
 
     ComputePipelineDescription      mActiveFroxelsDesc;
-    ComputeTask                     mActiveFroxels;
+    TaskID                          mActiveFroxels;
 
     ComputePipelineDescription      mIndirectArgsDesc;
-    ComputeTask                     mIndirectArgs;
+    TaskID                          mIndirectArgs;
 
     ComputePipelineDescription      mClearCountersDesc;
-    ComputeTask                     mClearCounters;
+    TaskID                          mClearCounters;
 
     ComputePipelineDescription      mLightAsignmentDesc;
-    ComputeTask                     mLightListAsignment;
+    TaskID                          mLightListAsignment;
 
     uint32_t mXTiles;
     uint32_t mYTiles;

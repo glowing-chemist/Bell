@@ -4,7 +4,7 @@
 #include "imgui.h"
 
 
-OverlayTechnique::OverlayTechnique(Engine* eng) :
+OverlayTechnique::OverlayTechnique(Engine* eng, RenderGraph& graph) :
 	Technique{"Overlay", eng->getDevice()},
 	mFontTexture(getDevice(), Format::RGBA8UNorm, ImageUsage::Sampled | ImageUsage::TransferDest, 512, 64, 1, 1, 1, 1, "Font Texture"),
 	mFontImageView(mFontTexture, ImageViewType::Colour),
@@ -34,6 +34,17 @@ OverlayTechnique::OverlayTechnique(Engine* eng) :
 	io.Fonts->GetTexDataAsRGBA32(&pixels, &width, &height);
 
 	mFontTexture->setContents(pixels, static_cast<uint32_t>(width), static_cast<uint32_t>(height), 1);
+
+	GraphicsTask task("ImGuiOverlay", mPipelineDescription);
+	task.setVertexAttributes(VertexAttributes::Position2 | VertexAttributes::TextureCoordinates | VertexAttributes::Albedo);
+	task.addInput("OverlayUBO", AttachmentType::UniformBuffer);
+	task.addInput(kDefaultFontTexture, AttachmentType::Texture2D);
+	task.addInput(kDefaultSampler, AttachmentType::Sampler);
+	task.addInput("OverlayVertex", AttachmentType::VertexBuffer);
+	task.addInput("OverlayIndex", AttachmentType::IndexBuffer);
+	task.addOutput(kOverlay, AttachmentType::RenderTarget2D, eng->getSwapChainImage()->getFormat(), SizeClass::Swapchain, LoadOp::Clear_Black);
+
+	mTaskID = graph.addTask(task);
 }
 
 
@@ -44,15 +55,8 @@ void OverlayTechnique::render(RenderGraph& graph, Engine* engine, const std::vec
 	mFontImageView->updateLastAccessed();
 
 	ImDrawData* drawData = ImGui::GetDrawData();
-
-	GraphicsTask task("ImGuiOverlay", mPipelineDescription);
-	task.setVertexAttributes(VertexAttributes::Position2 | VertexAttributes::TextureCoordinates | VertexAttributes::Albedo);
-	task.addInput("OverlayUBO", AttachmentType::UniformBuffer);
-	task.addInput(kDefaultFontTexture, AttachmentType::Texture2D);
-	task.addInput(kDefaultSampler, AttachmentType::Sampler);
-    task.addInput("OverlayVertex", AttachmentType::VertexBuffer);
-    task.addInput("OverlayIndex", AttachmentType::IndexBuffer);
-	task.addOutput(kOverlay, AttachmentType::RenderTarget2D, engine->getSwapChainImage()->getFormat(), SizeClass::Swapchain, LoadOp::Clear_Black);
+	GraphicsTask& task = static_cast<GraphicsTask&>(graph.getTask(mTaskID));
+	task.clearCalls();
 
 	if (drawData)
 	{
@@ -116,6 +120,4 @@ void OverlayTechnique::render(RenderGraph& graph, Engine* engine, const std::vec
 			vertexOffset += cmd_list->VtxBuffer.Size;
 		}
 	}
-
-	graph.addTask(task);
 }

@@ -39,7 +39,7 @@ namespace
 }
 
 
-SSAOTechnique::SSAOTechnique(Engine* eng) :
+SSAOTechnique::SSAOTechnique(Engine* eng, RenderGraph& graph) :
 	Technique{"SSAO", eng->getDevice()},
     	mPipelineDesc{eng->getShader("Shaders/FullScreenTriangle.vert")
                   ,eng->getShader("Shaders/SSAO.frag"),
@@ -47,36 +47,39 @@ SSAOTechnique::SSAOTechnique(Engine* eng) :
 						getDevice()->getSwapChain()->getSwapChainImageHeight() / 2},
 				  Rect{getDevice()->getSwapChain()->getSwapChainImageWidth() / 2,
 				  getDevice()->getSwapChain()->getSwapChainImageHeight() / 2}},
-    mTask{"SSAO", mPipelineDesc},
     mBlurXDesc{eng->getShader("Shaders/blurXR8.comp")},
-    mBlurXTask("SSAOBlurX", mBlurXDesc),
     mBlurYDesc{eng->getShader("Shaders/blurYR8.comp")},
-    mBlurYTask("SSAOBlurY", mBlurYDesc),
     mSSAOBuffer(getDevice(), BufferUsage::Uniform, sizeof(SSAOBuffer), sizeof(SSAOBuffer), "SSAO Offsets"),
     mSSAOBufferView(mSSAOBuffer)
 {
     // full screen triangle so no vertex attributes.
-    mTask.setVertexAttributes(0);
+    GraphicsTask task{"SSAO", mPipelineDesc};
+    task.setVertexAttributes(0);
 
-    mTask.addInput(kSSAOBuffer, AttachmentType::UniformBuffer);
-    mTask.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
+    task.addInput(kSSAOBuffer, AttachmentType::UniformBuffer);
+    task.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
 
-    mTask.addInput(kGBufferDepth, AttachmentType::Texture2D);
-    mTask.addInput(kDefaultSampler, AttachmentType::Sampler);
+    task.addInput(kGBufferDepth, AttachmentType::Texture2D);
+    task.addInput(kDefaultSampler, AttachmentType::Sampler);
 
-    mTask.addOutput(kSSAORough, AttachmentType::RenderTarget2D, Format::R8UNorm, SizeClass::HalfSwapchain, LoadOp::Clear_Black);
+    task.addOutput(kSSAORough, AttachmentType::RenderTarget2D, Format::R8UNorm, SizeClass::HalfSwapchain, LoadOp::Clear_Black);
 
-    mTask.addDrawCall(0, 3);
+    task.addDrawCall(0, 3);
+    graph.addTask(task);
 
-    mBlurXTask.addInput(kSSAORough, AttachmentType::Texture2D);
-    mBlurXTask.addInput(kSSAOBlurIntermidiate, AttachmentType::Image2D);
-    mBlurXTask.addInput(kDefaultSampler, AttachmentType::Sampler);
-    mBlurXTask.addDispatch(std::ceil(getDevice()->getSwapChain()->getSwapChainImageWidth() / 512.0f), getDevice()->getSwapChain()->getSwapChainImageHeight() / 2, 1.0f);
+    ComputeTask blurXTask{ "SSAOBlurX", mBlurXDesc };
+    blurXTask.addInput(kSSAORough, AttachmentType::Texture2D);
+    blurXTask.addInput(kSSAOBlurIntermidiate, AttachmentType::Image2D);
+    blurXTask.addInput(kDefaultSampler, AttachmentType::Sampler);
+    blurXTask.addDispatch(std::ceil(getDevice()->getSwapChain()->getSwapChainImageWidth() / 512.0f), getDevice()->getSwapChain()->getSwapChainImageHeight() / 2, 1.0f);
+    graph.addTask(blurXTask);
 
-    mBlurYTask.addInput(kSSAOBlurIntermidiate, AttachmentType::Texture2D);
-    mBlurYTask.addInput(kSSAO, AttachmentType::Image2D);
-    mBlurYTask.addInput(kDefaultSampler, AttachmentType::Sampler);
-    mBlurYTask.addDispatch(getDevice()->getSwapChain()->getSwapChainImageWidth() / 2, std::ceil(getDevice()->getSwapChain()->getSwapChainImageHeight() / 512.0f), 1.0f);
+    ComputeTask blurYTask{ "SSAOBlurY", mBlurYDesc };
+    blurYTask.addInput(kSSAOBlurIntermidiate, AttachmentType::Texture2D);
+    blurYTask.addInput(kSSAO, AttachmentType::Image2D);
+    blurYTask.addInput(kDefaultSampler, AttachmentType::Sampler);
+    blurYTask.addDispatch(getDevice()->getSwapChain()->getSwapChainImageWidth() / 2, std::ceil(getDevice()->getSwapChain()->getSwapChainImageHeight() / 512.0f), 1.0f);
+    graph.addTask(blurYTask);
 }
 
 
@@ -88,22 +91,11 @@ void SSAOTechnique::render(RenderGraph& graph, Engine*, const std::vector<const 
     ssaoBuffer.mOffsetsCount = offsets.size();
     memcpy(ssaoBuffer.mOffsets, offsets.data(), sizeof(float4) * offsets.size());
 
-    MapInfo info{};
-    info.mSize = sizeof(SSAOBuffer);
-
-    void* SSAOBufferPtr = mSSAOBuffer.get()->map(info);
-
-        std::memcpy(SSAOBufferPtr, &ssaoBuffer, sizeof(SSAOBuffer));
-
-    mSSAOBuffer.get()->unmap();
-
-    graph.addTask(mTask);
-    graph.addTask(mBlurXTask);
-    graph.addTask(mBlurYTask);
+    (*mSSAOBuffer)->setContents(&ssaoBuffer, sizeof(SSAOBuffer));
 }
 
 
-SSAOImprovedTechnique::SSAOImprovedTechnique(Engine* eng) :
+SSAOImprovedTechnique::SSAOImprovedTechnique(Engine* eng, RenderGraph& graph) :
     Technique{ "SSAO", eng->getDevice() },
     mPipelineDesc{ eng->getShader("Shaders/FullScreenTriangle.vert")
               ,eng->getShader("Shaders/SSAOImproved.frag"),
@@ -111,36 +103,39 @@ SSAOImprovedTechnique::SSAOImprovedTechnique(Engine* eng) :
                     getDevice()->getSwapChain()->getSwapChainImageHeight()},
               Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
               getDevice()->getSwapChain()->getSwapChainImageHeight()} },
-    mTask{ "SSAO", mPipelineDesc },
     mBlurXDesc{eng->getShader("Shaders/blurXR8.comp")},
-    mBlurXTask("SSAOBlurX", mBlurXDesc),
     mBlurYDesc{eng->getShader("Shaders/blurYR8.comp")},
-    mBlurYTask("SSAOBlurY", mBlurYDesc),
     mSSAOBuffer(getDevice(), BufferUsage::Uniform, sizeof(SSAOBuffer), sizeof(SSAOBuffer), "SSAO Offsets"),
     mSSAOBufferView(mSSAOBuffer)
 {
-    mTask.setVertexAttributes(0);
+    GraphicsTask task{ "SSAO", mPipelineDesc };
+    task.setVertexAttributes(0);
 
-    mTask.addInput(kSSAOBuffer, AttachmentType::UniformBuffer);
-    mTask.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
+    task.addInput(kSSAOBuffer, AttachmentType::UniformBuffer);
+    task.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
 
-    mTask.addInput(kGBufferDepth, AttachmentType::Texture2D);
-    mTask.addInput(kGBufferNormals, AttachmentType::Texture2D);
-    mTask.addInput(kDefaultSampler, AttachmentType::Sampler);
+    task.addInput(kGBufferDepth, AttachmentType::Texture2D);
+    task.addInput(kGBufferNormals, AttachmentType::Texture2D);
+    task.addInput(kDefaultSampler, AttachmentType::Sampler);
 
-    mTask.addOutput(kSSAORough, AttachmentType::RenderTarget2D, Format::R8UNorm, SizeClass::Swapchain, LoadOp::Clear_Black);
+    task.addOutput(kSSAORough, AttachmentType::RenderTarget2D, Format::R8UNorm, SizeClass::Swapchain, LoadOp::Clear_Black);
 
-    mTask.addDrawCall(0, 3);
+    task.addDrawCall(0, 3);
+    graph.addTask(task);
 
-    mBlurXTask.addInput(kSSAORough, AttachmentType::Texture2D);
-    mBlurXTask.addInput(kSSAOBlurIntermidiate, AttachmentType::Image2D);
-    mBlurXTask.addInput(kDefaultSampler, AttachmentType::Sampler);
-    mBlurXTask.addDispatch(std::ceil(getDevice()->getSwapChain()->getSwapChainImageWidth() / 256.0f), getDevice()->getSwapChain()->getSwapChainImageHeight(), 1.0f);
+    ComputeTask blurXTask{ "SSAOBlurX", mBlurXDesc };
+    blurXTask.addInput(kSSAORough, AttachmentType::Texture2D);
+    blurXTask.addInput(kSSAOBlurIntermidiate, AttachmentType::Image2D);
+    blurXTask.addInput(kDefaultSampler, AttachmentType::Sampler);
+    blurXTask.addDispatch(std::ceil(getDevice()->getSwapChain()->getSwapChainImageWidth() / 256.0f), getDevice()->getSwapChain()->getSwapChainImageHeight(), 1.0f);
+    graph.addTask(blurXTask);
 
-    mBlurYTask.addInput(kSSAOBlurIntermidiate, AttachmentType::Texture2D);
-    mBlurYTask.addInput(kSSAO, AttachmentType::Image2D);
-    mBlurYTask.addInput(kDefaultSampler, AttachmentType::Sampler);
-    mBlurYTask.addDispatch(getDevice()->getSwapChain()->getSwapChainImageWidth(), std::ceil(getDevice()->getSwapChain()->getSwapChainImageHeight() / 256.0f), 1.0f);
+    ComputeTask blurYTask{ "SSAOBlurY", mBlurYDesc };
+    blurYTask.addInput(kSSAOBlurIntermidiate, AttachmentType::Texture2D);
+    blurYTask.addInput(kSSAO, AttachmentType::Image2D);
+    blurYTask.addInput(kDefaultSampler, AttachmentType::Sampler);
+    blurYTask.addDispatch(getDevice()->getSwapChain()->getSwapChainImageWidth(), std::ceil(getDevice()->getSwapChain()->getSwapChainImageHeight() / 256.0f), 1.0f);
+    graph.addTask(blurYTask);
 }
 
 
@@ -152,16 +147,5 @@ void SSAOImprovedTechnique::render(RenderGraph& graph, Engine*, const std::vecto
     ssaoBuffer.mOffsetsCount = offsets.size();
     memcpy(ssaoBuffer.mOffsets, offsets.data(), sizeof(float4) * offsets.size());
 
-    MapInfo info{};
-    info.mSize = sizeof(SSAOBuffer);
-
-    void* SSAOBufferPtr = mSSAOBuffer.get()->map(info);
-
-        std::memcpy(SSAOBufferPtr, &ssaoBuffer, sizeof(SSAOBuffer));
-
-    mSSAOBuffer.get()->unmap();
-
-    graph.addTask(mTask);
-    graph.addTask(mBlurXTask);
-    graph.addTask(mBlurYTask);
+    (*mSSAOBuffer)->setContents(&ssaoBuffer, sizeof(SSAOBuffer));
 }

@@ -10,7 +10,7 @@
 class DeferredAnalyticalLightingTechnique : public Technique
 {
 public:
-	DeferredAnalyticalLightingTechnique(Engine*);
+	DeferredAnalyticalLightingTechnique(Engine*, RenderGraph&);
 	~DeferredAnalyticalLightingTechnique() = default;
 
 	virtual PassType getPassType() const override final
@@ -22,8 +22,6 @@ public:
 	{
 		mAnalyticalLighting.get()->updateLastAccessed();
 		mAnalyticalLightingView.get()->updateLastAccessed();
-
-		graph.addTask(mTask);
 	}
 
     virtual void bindResources(RenderGraph& graph) override final
@@ -35,7 +33,7 @@ public:
 private:
 
 	ComputePipelineDescription mPipelineDesc;
-	ComputeTask mTask;
+	TaskID mTaskID;
 
 	PerFrameResource<Image> mAnalyticalLighting;
 	PerFrameResource<ImageView> mAnalyticalLightingView;

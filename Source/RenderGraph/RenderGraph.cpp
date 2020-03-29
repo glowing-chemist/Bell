@@ -10,7 +10,7 @@
 #include <string>
 
 
-void RenderGraph::addTask(const GraphicsTask& task)
+TaskID RenderGraph::addTask(const GraphicsTask& task)
 {
     const uint32_t taskIndex = static_cast<uint32_t>(mGraphicsTasks.size());
     mGraphicsTasks.push_back(task);
@@ -21,10 +21,12 @@ void RenderGraph::addTask(const GraphicsTask& task)
     mOutputResources.emplace_back();
     mFrameBuffersNeedUpdating.push_back(false);
     mDescriptorsNeedUpdating.push_back(false);
+
+	return taskIndex + 1;
 }
 
 
-void RenderGraph::addTask(const ComputeTask& task)
+TaskID RenderGraph::addTask(const ComputeTask& task)
 {
 	const uint32_t taskIndex = static_cast<uint32_t>(mComputeTasks.size());
 	mComputeTasks.push_back(task);
@@ -36,6 +38,25 @@ void RenderGraph::addTask(const ComputeTask& task)
     mOutputResources.emplace_back();
     mFrameBuffersNeedUpdating.push_back(false);
     mDescriptorsNeedUpdating.push_back(false);
+
+	return -static_cast<TaskID>(taskIndex) - 1;
+}
+
+
+RenderTask& RenderGraph::getTask(const TaskID id)
+{
+	BELL_ASSERT(id != 0, "0 is an invalid task ID");
+
+	if (id > 0)
+	{
+		BELL_ASSERT(id - 1 < mGraphicsTasks.size(), "Invalid graphics task ID");
+		return mGraphicsTasks[id - 1];
+	}
+	else
+	{
+		BELL_ASSERT(-id - 1 < mComputeTasks.size(), "Invalid compute task ID");
+		return mComputeTasks[-id - 1];
+	}
 }
 
 
@@ -342,6 +363,15 @@ void RenderGraph::bindShaderResourceSet(const std::string& name, const ShaderRes
 }
 
 
+void RenderGraph::bindInternalResources()
+{
+	for (const auto& resourceEntry : mInternalResources)
+	{
+		bindImage(resourceEntry.mSlot, *resourceEntry.mResourceView);
+	}
+}
+
+
 void RenderGraph::createTransientImage(RenderDevice* dev, const std::string& name, const Format format, const ImageUsage usage, const SizeClass size)
 {
     const auto [width, height] = [=]() -> std::pair<uint32_t, uint32_t>
@@ -384,7 +414,47 @@ void RenderGraph::createTransientImage(RenderDevice* dev, const std::string& nam
 }
 
 
-void RenderGraph::generateTransientImages(RenderDevice* dev)
+void RenderGraph::createInternalResource(RenderDevice* dev, const std::string& name, const Format format, const ImageUsage usage, const SizeClass size)
+{
+	const auto [width, height] = [=]() -> std::pair<uint32_t, uint32_t>
+	{
+		const uint32_t swapChainWidth = dev->getSwapChain()->getSwapChainImageWidth();
+		const uint32_t swapChainHeight = dev->getSwapChain()->getSwapChainImageHeight();
+
+		switch (size)
+		{
+		case SizeClass::Swapchain:
+			return { swapChainWidth, swapChainHeight };
+
+		case SizeClass::HalfSwapchain:
+			return { swapChainWidth / 2, swapChainHeight / 2 };
+
+		case SizeClass::QuarterSwapchain:
+			return { swapChainWidth / 4, swapChainHeight / 4 };
+
+		case SizeClass::DoubleSwapchain:
+			return { swapChainWidth * 2, swapChainHeight * 2 };
+
+		case SizeClass::QuadrupleSwapChain:
+			return { swapChainWidth * 4, swapChainHeight * 4 };
+
+		default:
+			BELL_TRAP;
+			return { swapChainWidth, swapChainHeight };
+		}
+	}();
+
+	PerFrameResource<Image> generatedImage(dev, format, usage,
+		width, height, 1, 1, 1, 1, name);
+
+	PerFrameResource<ImageView> view{ generatedImage, usage & ImageUsage::DepthStencil ?
+										ImageViewType::Depth : ImageViewType::Colour };
+
+	mInternalResources.emplace_back(name, generatedImage, view);
+}
+
+
+void RenderGraph::generateInternalResources(RenderDevice* dev)
 {
 	// Currently (and probably will only ever) support creating non persistent resources for graphics tasks.
 	for(const auto& task : mGraphicsTasks)
@@ -397,7 +467,7 @@ void RenderGraph::generateTransientImages(RenderDevice* dev)
 			if(output.mSize == SizeClass::Custom)
 				continue;
 
-            createTransientImage(dev,
+            createInternalResource(dev,
                                  output.mName,
                                  output.mFormat,
                                  (output.mType == AttachmentType::Depth ? ImageUsage::DepthStencil :  ImageUsage::ColourAttachment) | ImageUsage::Sampled,
@@ -901,11 +971,9 @@ std::vector<BarrierRecorder> RenderGraph::generateBarriers(RenderDevice* dev)
 
 void RenderGraph::reset()
 {
-	// Clear all bound resources
-    mImageViews.clear();
-	mBufferViews.clear();
-	mSamplers.clear();
-	mSRS.clear();
+	resetBindings();
+
+	mInternalResources.clear();
 
 	mInputResources.clear();
 	mOutputResources.clear();
@@ -913,14 +981,30 @@ void RenderGraph::reset()
 	mFrameBuffersNeedUpdating.clear();
 	mDescriptorsNeedUpdating.clear();
 
-	// clear non-persistent resources
-	mNonPersistentImages.clear();
-
 	// Clear all jobs
 	mGraphicsTasks.clear();
 	mComputeTasks.clear();
 	mTaskOrder.clear();
 	mTaskDependancies.clear();
+}
+
+
+void RenderGraph::resetBindings()
+{
+	// Clear all bound resources
+	mImageViews.clear();
+	mBufferViews.clear();
+	mSamplers.clear();
+	mSRS.clear();
+
+	for (auto& resourceSet : mInputResources)
+		resourceSet.clear();
+
+	for (auto& resourceSet : mOutputResources)
+		resourceSet.clear();
+
+	// clear non-persistent resources
+	mNonPersistentImages.clear();
 }
 
 

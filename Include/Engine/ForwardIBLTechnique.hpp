@@ -10,7 +10,7 @@ class ForwardIBLTechnique : public Technique
 {
 public:
 
-	ForwardIBLTechnique(Engine*);
+	ForwardIBLTechnique(Engine*, RenderGraph&);
 	~ForwardIBLTechnique() = default;
 
 	virtual PassType getPassType() const
@@ -25,8 +25,7 @@ public:
 private:
 
 	GraphicsPipelineDescription mDesc;
-	GraphicsTask mTask;
-
+	TaskID mTaskID;
 };
 
 #endif

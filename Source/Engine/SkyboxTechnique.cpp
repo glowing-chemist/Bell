@@ -3,7 +3,7 @@
 #include "Engine/Engine.hpp"
 #include "Engine/DefaultResourceSlots.hpp"
 
-SkyboxTechnique::SkyboxTechnique(Engine* eng) :
+SkyboxTechnique::SkyboxTechnique(Engine* eng, RenderGraph& graph) :
 	Technique("Skybox", eng->getDevice()),
 	mPipelineDesc{eng->getShader("./Shaders/SkyBox.vert"),
 						 eng->getShader("./Shaders/SkyBox.frag"),
@@ -11,15 +11,16 @@ SkyboxTechnique::SkyboxTechnique(Engine* eng) :
 							   getDevice()->getSwapChain()->getSwapChainImageHeight()},
 						 Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
 						 getDevice()->getSwapChain()->getSwapChainImageHeight()},
-                         false, BlendMode::None, BlendMode::None, false, DepthTest::Equal, Primitive::TriangleList},
-	mTask{"skybox", mPipelineDesc}
+                         false, BlendMode::None, BlendMode::None, false, DepthTest::Equal, Primitive::TriangleList}
 {
-	mTask.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
-	mTask.addInput(kSkyBox, AttachmentType::Texture2D);
-	mTask.addInput(kDefaultSampler, AttachmentType::Sampler);
+	GraphicsTask task{ "skybox", mPipelineDesc };
+	task.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
+	task.addInput(kSkyBox, AttachmentType::Texture2D);
+	task.addInput(kDefaultSampler, AttachmentType::Sampler);
 
-    mTask.addOutput(kGlobalLighting, AttachmentType::RenderTarget2D, Format::RGBA8UNorm);
-    mTask.addOutput(kGBufferDepth, AttachmentType::Depth, Format::D32Float);
+	task.addOutput(kGlobalLighting, AttachmentType::RenderTarget2D, Format::RGBA8UNorm);
+	task.addOutput(kGBufferDepth, AttachmentType::Depth, Format::D32Float);
 
-	mTask.addDrawCall(0, 3);
+	task.addDrawCall(0, 3);
+	mTaskID = graph.addTask(task);
 }

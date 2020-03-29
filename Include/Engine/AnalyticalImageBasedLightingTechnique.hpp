@@ -9,7 +9,7 @@ class AnalyticalImageBasedLightingTechnique : public Technique
 {
 public:
 
-    AnalyticalImageBasedLightingTechnique(Engine*);
+    AnalyticalImageBasedLightingTechnique(Engine*, RenderGraph&);
     virtual ~AnalyticalImageBasedLightingTechnique() = default;
 
     virtual PassType getPassType() const override final
@@ -19,16 +19,14 @@ public:
 
     // default empty implementations as most classes won't need to do anything for one of these.
     virtual void render(RenderGraph& graph, Engine*, const std::vector<const Scene::MeshInstance*>&) override final
-    {
-		graph.addTask(mTask);
-    }
+    {}
 
     virtual void bindResources(RenderGraph&) override final {}
 
 private:
 
     GraphicsPipelineDescription mPipelineDesc;
-    GraphicsTask mTask;
+    TaskID mTaskID;
 };
 
 #endif

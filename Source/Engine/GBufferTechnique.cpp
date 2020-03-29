@@ -1,7 +1,7 @@
 #include "Engine/GBufferTechnique.hpp"
 
 
-GBufferTechnique::GBufferTechnique(Engine* eng) :
+GBufferTechnique::GBufferTechnique(Engine* eng, RenderGraph& graph) :
 	Technique{"GBuffer", eng->getDevice()},
     	mPipelineDescription{eng->getShader("./Shaders/GBufferPassThrough.vert"),
                          eng->getShader("./Shaders/GBuffer.frag"),
@@ -9,30 +9,34 @@ GBufferTechnique::GBufferTechnique(Engine* eng) :
                                getDevice()->getSwapChain()->getSwapChainImageHeight()},
                          Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
                          getDevice()->getSwapChain()->getSwapChainImageHeight()},
-                         true, BlendMode::None, BlendMode::None, true, DepthTest::GreaterEqual, Primitive::TriangleList},
-
-    mTask{"GBuffer", mPipelineDescription}
+                         true, BlendMode::None, BlendMode::None, true, DepthTest::GreaterEqual, Primitive::TriangleList}
 {
-    mTask.setVertexAttributes(VertexAttributes::Position4 | VertexAttributes::Normals | VertexAttributes::TextureCoordinates | VertexAttributes::Material);
+    GraphicsTask task{ "GBuffer", mPipelineDescription };
 
-    mTask.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
-    mTask.addInput(kDefaultSampler, AttachmentType::Sampler);
-    mTask.addInput(kMaterials, AttachmentType::ShaderResourceSet);
-    mTask.addInput("Model Matrix", AttachmentType::PushConstants);
-    mTask.addInput(kSceneVertexBuffer, AttachmentType::VertexBuffer);
-    mTask.addInput(kSceneIndexBuffer, AttachmentType::IndexBuffer);
+    task.setVertexAttributes(VertexAttributes::Position4 | VertexAttributes::Normals | VertexAttributes::TextureCoordinates | VertexAttributes::Material);
 
-    mTask.addOutput(kGBufferAlbedo,    AttachmentType::RenderTarget2D, Format::RGBA8UNorm, SizeClass::Swapchain, LoadOp::Clear_Black);
-    mTask.addOutput(kGBufferNormals,     AttachmentType::RenderTarget2D, Format::RGBA8UNorm, SizeClass::Swapchain, LoadOp::Clear_Black);
-    mTask.addOutput(kGBufferMetalnessRoughness,   AttachmentType::RenderTarget2D, Format::RG8UNorm, SizeClass::Swapchain, LoadOp::Clear_Black);
-    mTask.addOutput(kGBufferVelocity,   AttachmentType::RenderTarget2D, Format::RG16UNorm, SizeClass::Swapchain, LoadOp::Clear_Black);
-    mTask.addOutput(kGBufferDepth,      AttachmentType::Depth, Format::D32Float, SizeClass::Swapchain, LoadOp::Clear_Black);
+    task.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
+    task.addInput(kDefaultSampler, AttachmentType::Sampler);
+    task.addInput(kMaterials, AttachmentType::ShaderResourceSet);
+    task.addInput("Model Matrix", AttachmentType::PushConstants);
+    task.addInput(kSceneVertexBuffer, AttachmentType::VertexBuffer);
+    task.addInput(kSceneIndexBuffer, AttachmentType::IndexBuffer);
+
+    task.addOutput(kGBufferAlbedo,    AttachmentType::RenderTarget2D, Format::RGBA8UNorm, SizeClass::Swapchain, LoadOp::Clear_Black);
+    task.addOutput(kGBufferNormals,     AttachmentType::RenderTarget2D, Format::RGBA8UNorm, SizeClass::Swapchain, LoadOp::Clear_Black);
+    task.addOutput(kGBufferMetalnessRoughness,   AttachmentType::RenderTarget2D, Format::RG8UNorm, SizeClass::Swapchain, LoadOp::Clear_Black);
+    task.addOutput(kGBufferVelocity,   AttachmentType::RenderTarget2D, Format::RG16UNorm, SizeClass::Swapchain, LoadOp::Clear_Black);
+    task.addOutput(kGBufferDepth,      AttachmentType::Depth, Format::D32Float, SizeClass::Swapchain, LoadOp::Clear_Black);
+
+    mTaskID = graph.addTask(task);
 }
 
 
 void GBufferTechnique::render(RenderGraph& graph, Engine* eng, const std::vector<const Scene::MeshInstance *>& meshes)
 {
-	mTask.clearCalls();
+    GraphicsTask& task = static_cast<GraphicsTask&>(graph.getTask(mTaskID));
+
+    task.clearCalls();
 
 	for (const auto& mesh : meshes)
 	{
@@ -40,15 +44,13 @@ void GBufferTechnique::render(RenderGraph& graph, Engine* eng, const std::vector
 
         const MeshEntry entry = mesh->getMeshShaderEntry();
 
-        mTask.addPushConsatntValue(&entry, sizeof(MeshEntry));
-        mTask.addIndexedDrawCall(vertexOffset / mesh->mMesh->getVertexStride(), indexOffset / sizeof(uint32_t), mesh->mMesh->getIndexData().size());
+        task.addPushConsatntValue(&entry, sizeof(MeshEntry));
+        task.addIndexedDrawCall(vertexOffset / mesh->mMesh->getVertexStride(), indexOffset / sizeof(uint32_t), mesh->mMesh->getIndexData().size());
     }
-
-	graph.addTask(mTask);
 }
 
 
-GBufferPreDepthTechnique::GBufferPreDepthTechnique(Engine* eng) :
+GBufferPreDepthTechnique::GBufferPreDepthTechnique(Engine* eng, RenderGraph& graph) :
     Technique{"GBufferPreDepth", eng->getDevice()},
         mPipelineDescription{eng->getShader("./Shaders/GBufferPassThrough.vert"),
                          eng->getShader("./Shaders/GBuffer.frag"),
@@ -56,29 +58,34 @@ GBufferPreDepthTechnique::GBufferPreDepthTechnique(Engine* eng) :
                                getDevice()->getSwapChain()->getSwapChainImageHeight()},
                          Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
                          getDevice()->getSwapChain()->getSwapChainImageHeight()},
-                         true, BlendMode::None, BlendMode::None, false, DepthTest::GreaterEqual, Primitive::TriangleList},
-
-    mTask{"GBufferPreDepth", mPipelineDescription}
+                         true, BlendMode::None, BlendMode::None, false, DepthTest::GreaterEqual, Primitive::TriangleList}
 {
-    mTask.setVertexAttributes(VertexAttributes::Position4 | VertexAttributes::Normals | VertexAttributes::TextureCoordinates | VertexAttributes::Material);
+    GraphicsTask task{ "GBuffer", mPipelineDescription };
 
-    mTask.addInput(kSceneVertexBuffer, AttachmentType::VertexBuffer);
-    mTask.addInput(kSceneIndexBuffer, AttachmentType::IndexBuffer);
-    mTask.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
-    mTask.addInput(kDefaultSampler, AttachmentType::Sampler);
-    mTask.addInput(kMaterials, AttachmentType::ShaderResourceSet);
-    mTask.addInput("Model Matrix", AttachmentType::PushConstants);
+    task.setVertexAttributes(VertexAttributes::Position4 | VertexAttributes::Normals | VertexAttributes::TextureCoordinates | VertexAttributes::Material);
 
-    mTask.addOutput(kGBufferAlbedo,  AttachmentType::RenderTarget2D, Format::RGBA8UNorm, SizeClass::Swapchain, LoadOp::Clear_Black);
-    mTask.addOutput(kGBufferNormals,   AttachmentType::RenderTarget2D, Format::RGBA8UNorm, SizeClass::Swapchain, LoadOp::Clear_Black);
-    mTask.addOutput(kGBufferMetalnessRoughness,   AttachmentType::RenderTarget2D, Format::RG8UNorm, SizeClass::Swapchain, LoadOp::Clear_Black);
-    mTask.addOutput(kGBufferDepth,    AttachmentType::Depth, Format::D32Float, SizeClass::Custom, LoadOp::Preserve);
+    task.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
+    task.addInput(kDefaultSampler, AttachmentType::Sampler);
+    task.addInput(kMaterials, AttachmentType::ShaderResourceSet);
+    task.addInput("Model Matrix", AttachmentType::PushConstants);
+    task.addInput(kSceneVertexBuffer, AttachmentType::VertexBuffer);
+    task.addInput(kSceneIndexBuffer, AttachmentType::IndexBuffer);
+
+    task.addOutput(kGBufferAlbedo, AttachmentType::RenderTarget2D, Format::RGBA8UNorm, SizeClass::Swapchain, LoadOp::Clear_Black);
+    task.addOutput(kGBufferNormals, AttachmentType::RenderTarget2D, Format::RGBA8UNorm, SizeClass::Swapchain, LoadOp::Clear_Black);
+    task.addOutput(kGBufferMetalnessRoughness, AttachmentType::RenderTarget2D, Format::RG8UNorm, SizeClass::Swapchain, LoadOp::Clear_Black);
+    task.addOutput(kGBufferVelocity, AttachmentType::RenderTarget2D, Format::RG16UNorm, SizeClass::Swapchain, LoadOp::Clear_Black);
+    task.addOutput(kGBufferDepth, AttachmentType::Depth, Format::D32Float, SizeClass::Swapchain, LoadOp::Clear_Black);
+
+    mTaskID = graph.addTask(task);
 }
 
 
 void GBufferPreDepthTechnique::render(RenderGraph& graph, Engine* eng, const std::vector<const Scene::MeshInstance *>& meshes)
 {
-	mTask.clearCalls();
+    GraphicsTask& task = static_cast<GraphicsTask&>(graph.getTask(mTaskID));
+
+    task.clearCalls();
 
     for (const auto& mesh : meshes)
     {
@@ -86,9 +93,7 @@ void GBufferPreDepthTechnique::render(RenderGraph& graph, Engine* eng, const std
 
         const MeshEntry entry = mesh->getMeshShaderEntry();
 
-        mTask.addPushConsatntValue(&entry, sizeof(MeshEntry));
-        mTask.addIndexedDrawCall(vertexOffset / mesh->mMesh->getVertexStride(), indexOffset / sizeof(uint32_t), mesh->mMesh->getIndexData().size());
+        task.addPushConsatntValue(&entry, sizeof(MeshEntry));
+        task.addIndexedDrawCall(vertexOffset / mesh->mMesh->getVertexStride(), indexOffset / sizeof(uint32_t), mesh->mMesh->getIndexData().size());
     }
-
-	graph.addTask(mTask);
 }

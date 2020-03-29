@@ -2,16 +2,18 @@
 #include "Engine/Engine.hpp"
 
 
-DFGGenerationTechnique::DFGGenerationTechnique(Engine* eng) :
+DFGGenerationTechnique::DFGGenerationTechnique(Engine* eng, RenderGraph& graph) :
 	Technique("DFGGeneration", eng->getDevice()),
 	mPipelineDesc{ eng->getShader("./Shaders/DFGLutGenerate.comp") },
-	mTask("DFGGeneration", mPipelineDesc),
 	mDFGLUT(eng->getDevice(), Format::RG16UNorm, ImageUsage::Sampled | ImageUsage::Storage, 512, 512, 1, 1, 1, 1, "DFGLUT"),
 	mDFGLUTView(mDFGLUT, ImageViewType::Colour),
 	mFirstFrame(true)
 {
-	mTask.addInput(kDFGLUT, AttachmentType::Image2D);
-	mTask.addDispatch(32, 32, 1);
+	ComputeTask task{ "DFGGeneration", mPipelineDesc };
+	task.addInput(kDFGLUT, AttachmentType::Image2D);
+
+	mTaskID = graph.addTask(task);
+
 }
 
 void DFGGenerationTechnique::render(RenderGraph& graph, Engine*, const std::vector<const Scene::MeshInstance*>&)
@@ -19,9 +21,12 @@ void DFGGenerationTechnique::render(RenderGraph& graph, Engine*, const std::vect
 	mDFGLUT->updateLastAccessed();
 	mDFGLUTView->updateLastAccessed();
 
+	ComputeTask& task = static_cast<ComputeTask&>(graph.getTask(mTaskID));
+	task.clearCalls();
+
 	if (mFirstFrame)
 	{
-		graph.addTask(mTask);
+		task.addDispatch(32, 32, 1);
 
 		mFirstFrame = false;
 	}

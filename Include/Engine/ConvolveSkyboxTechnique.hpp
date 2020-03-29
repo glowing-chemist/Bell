@@ -12,7 +12,7 @@ class ConvolveSkyBoxTechnique : public Technique
 {
 public:
 
-	ConvolveSkyBoxTechnique(Engine*);
+	ConvolveSkyBoxTechnique(Engine*, RenderGraph&);
 
 	virtual PassType getPassType() const override final
 	{
@@ -29,6 +29,7 @@ public:
 
 private:
 	ComputePipelineDescription mPipelineDesc;
+	TaskID mTaskID;
 	Image mConvolvedSkybox;
 	ImageView mConvolvedView;
 	bool mFirstFrame;

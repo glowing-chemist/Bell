@@ -10,6 +10,7 @@
 #include "Core/BufferView.hpp"
 #include "Core/Sampler.hpp"
 #include "Core/ShaderResourceSet.hpp"
+#include "Core/PerFrameResource.hpp"
 
 #include <iterator>
 #include <string>
@@ -31,6 +32,8 @@ enum class BindingIteratorType
 template<BindingIteratorType>
 class BindingIterator;
 
+using TaskID = int32_t;
+
 class RenderGraph
 {
 	friend VulkanRenderDevice;
@@ -41,8 +44,9 @@ public:
 
     RenderGraph() = default;
 
-    void addTask(const GraphicsTask&);
-    void addTask(const ComputeTask&);
+	TaskID addTask(const GraphicsTask&);
+	TaskID addTask(const ComputeTask&);
+	RenderTask& getTask(const TaskID);
 
 	void addDependancy(const RenderTask& dependancy, const RenderTask& dependant);
     void addDependancy(const std::string& dependancy, const std::string& dependant);
@@ -59,6 +63,8 @@ public:
     void bindSampler(const std::string&, const Sampler&);
 	void bindShaderResourceSet(const std::string&, const ShaderResourceSet&);
 
+	void bindInternalResources();
+
     // Create and bind transient resources.
     void createTransientImage(RenderDevice*, const std::string& name, const Format, const ImageUsage, const SizeClass);
 
@@ -72,6 +78,7 @@ public:
 	std::vector<BarrierRecorder> generateBarriers(RenderDevice*);
 
 	void reset();
+	void resetBindings();
 
 	uint64_t taskCount() const { return mTaskOrder.size(); }
 
@@ -123,7 +130,7 @@ public:
 		uint32_t mResourceBinding;
 	};
 
-	void generateTransientImages(RenderDevice*);
+	void generateInternalResources(RenderDevice*);
 
 	void reorderTasks();
 	void mergeTasks();
@@ -137,6 +144,8 @@ private:
     void mergeTasks(RenderTask&, RenderTask&);
 
     void bindResource(const std::string&, const uint32_t, const ResourceType);
+
+	void createInternalResource(RenderDevice*, const std::string& name, const Format, const ImageUsage, const SizeClass);
 
     std::vector<GraphicsTask> mGraphicsTasks;
 	std::vector<ComputeTask>  mComputeTasks;
@@ -169,6 +178,17 @@ private:
 		ImageView mImageView;
 	};
 	std::vector<NonPersistentImage> mNonPersistentImages;
+
+	struct InternalResourceEntry
+	{
+		InternalResourceEntry(const std::string slot, PerFrameResource<Image>& image, PerFrameResource<ImageView>& view) :
+			mSlot{ slot }, mResource{ image }, mResourceView{ view } {}
+
+		std::string mSlot;
+		PerFrameResource<Image> mResource;
+		PerFrameResource<ImageView> mResourceView;
+	};
+	std::vector<InternalResourceEntry> mInternalResources;
 };
 
 

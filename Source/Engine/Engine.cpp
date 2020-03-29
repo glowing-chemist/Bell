@@ -54,8 +54,10 @@ Engine::Engine(GLFWwindow* windowPtr) :
     mLTCAmpView(mLTCAmp, ImageViewType::Colour),
     mInitialisedTLCTextures(false),
     mCurrentRenderGraph(),
+    mCompileGraph(true),
 	mTechniques{},
-	mCurrentPasstypes{0},
+    mPassesRegisteredThisFrame{0},
+	mCurrentRegistredPasses{0},
     mShaderPrefix(""),
 	mCommandContext(),
     mVertexBuffer{getDevice(), BufferUsage::Vertex | BufferUsage::TransferDest, 10000000, 10000000, "Vertex Buffer"},
@@ -198,70 +200,70 @@ std::unique_ptr<Technique> Engine::getSingleTechnique(const PassType passType)
     switch(passType)
     {
         case PassType::DepthPre:
-            return std::make_unique<PreDepthTechnique>(this);
+            return std::make_unique<PreDepthTechnique>(this, mCurrentRenderGraph);
 
         case PassType::GBuffer:
-            return std::make_unique<GBufferTechnique>(this);
+            return std::make_unique<GBufferTechnique>(this, mCurrentRenderGraph);
 
         case PassType::GBufferMaterial:
-            return std::make_unique<GBufferMaterialTechnique>(this);
+            return std::make_unique<GBufferMaterialTechnique>(this, mCurrentRenderGraph);
 
         case PassType::SSAO:
-            return std::make_unique<SSAOTechnique>(this);
+            return std::make_unique<SSAOTechnique>(this, mCurrentRenderGraph);
 
 		case PassType::SSAOImproved:
-			return std::make_unique<SSAOImprovedTechnique>(this);
+			return std::make_unique<SSAOImprovedTechnique>(this, mCurrentRenderGraph);
 
         case PassType::GBufferPreDepth:
-            return std::make_unique<GBufferPreDepthTechnique>(this);
+            return std::make_unique<GBufferPreDepthTechnique>(this, mCurrentRenderGraph);
 
         case PassType::GBUfferMaterialPreDepth:
-            return std::make_unique<GBufferMaterialPreDepthTechnique>(this);
+            return std::make_unique<GBufferMaterialPreDepthTechnique>(this, mCurrentRenderGraph);
 
         case PassType::DeferredTextureBlinnPhongLighting:
-            return std::make_unique<BlinnPhongDeferredTexturesTechnique>(this);
+            return std::make_unique<BlinnPhongDeferredTexturesTechnique>(this, mCurrentRenderGraph);
 
 		case PassType::Overlay:
-			return std::make_unique<OverlayTechnique>(this);
+			return std::make_unique<OverlayTechnique>(this, mCurrentRenderGraph);
 
 		case PassType::DeferredTextureAnalyticalPBRIBL:
-			return std::make_unique<AnalyticalImageBasedLightingTechnique>(this);
+			return std::make_unique<AnalyticalImageBasedLightingTechnique>(this, mCurrentRenderGraph);
 
 		case PassType::DeferredTexturePBRIBL:
-			return std::make_unique<ImageBasedLightingDeferredTexturingTechnique>(this);
+			return std::make_unique<ImageBasedLightingDeferredTexturingTechnique>(this, mCurrentRenderGraph);
 
         case PassType::DeferredPBRIBL:
-            return std::make_unique<DeferredImageBasedLightingTechnique>(this);
+            return std::make_unique<DeferredImageBasedLightingTechnique>(this, mCurrentRenderGraph);
 
 		case PassType::ConvolveSkybox:
-			return std::make_unique<ConvolveSkyBoxTechnique>(this);
+			return std::make_unique<ConvolveSkyBoxTechnique>(this, mCurrentRenderGraph);
 
 		case PassType::Skybox:
-			return std::make_unique<SkyboxTechnique>(this);
+			return std::make_unique<SkyboxTechnique>(this, mCurrentRenderGraph);
 
 		case PassType::DFGGeneration:
-			return std::make_unique<DFGGenerationTechnique>(this);
+			return std::make_unique<DFGGenerationTechnique>(this, mCurrentRenderGraph);
 
 		case PassType::Composite:
-			return std::make_unique<CompositeTechnique>(this);
+			return std::make_unique<CompositeTechnique>(this, mCurrentRenderGraph);
 
 		case PassType::ForwardIBL:
-			return std::make_unique<ForwardIBLTechnique>(this);
+			return std::make_unique<ForwardIBLTechnique>(this, mCurrentRenderGraph);
 
         case PassType::ForwardCombinedLighting:
-            return std::make_unique<ForwardCombinedLightingTechnique>(this);
+            return std::make_unique<ForwardCombinedLightingTechnique>(this, mCurrentRenderGraph);
 
 		case PassType::LightFroxelation:
-			return std::make_unique<LightFroxelationTechnique>(this);
+			return std::make_unique<LightFroxelationTechnique>(this, mCurrentRenderGraph);
 
 		case PassType::DeferredAnalyticalLighting:
-			return std::make_unique<DeferredAnalyticalLightingTechnique>(this);
+			return std::make_unique<DeferredAnalyticalLightingTechnique>(this, mCurrentRenderGraph);
 
         case PassType::Shadow:
-            return std::make_unique<ShadowMappingTechnique>(this);
+            return std::make_unique<ShadowMappingTechnique>(this, mCurrentRenderGraph);
 
         case PassType::TAA:
-            return std::make_unique<TAATechnique>(this);
+            return std::make_unique<TAATechnique>(this, mCurrentRenderGraph);
 
         default:
         {
@@ -363,11 +365,17 @@ void Engine::execute(RenderGraph& graph)
     }
 
 	// Finalize graph internal state.
-	graph.compileDependancies();
-	graph.generateTransientImages(mRenderDevice);
-	graph.reorderTasks();
-	graph.mergeTasks();
+    if(mCompileGraph)
+    {
+	    graph.compileDependancies();
+	    graph.generateInternalResources(mRenderDevice);
+	    graph.reorderTasks();
+	    graph.mergeTasks();
 
+        mCompileGraph = false;
+    }
+
+    mCurrentRenderGraph.bindInternalResources();
 	mRenderDevice->generateFrameResources(graph);
 
     auto barriers = graph.generateBarriers(mRenderDevice);
@@ -418,6 +426,20 @@ void Engine::recordScene()
     });
 
     //BELL_LOG_ARGS("Meshes %d", meshes.size());
+    
+    // Add new techniques
+    if (mPassesRegisteredThisFrame > 0)
+    {
+        mCurrentRegistredPasses |= mPassesRegisteredThisFrame;
+
+        while (mPassesRegisteredThisFrame > 0)
+        {
+            const uint64_t passTypeIndex = __builtin_ctz(mPassesRegisteredThisFrame);
+
+            mTechniques.push_back(getSingleTechnique(static_cast<PassType>(1ull << passTypeIndex)));
+            mPassesRegisteredThisFrame &= mPassesRegisteredThisFrame - 1;
+        }
+    }
 
 	BELL_ASSERT(!mTechniques.empty(), "Need at least one technique registered with the engine")
 
@@ -555,18 +577,16 @@ void Engine::updateGlobalBuffers()
 
 void Engine::registerPass(const PassType pass)
 {
-	if((static_cast<uint64_t>(pass) & mCurrentPasstypes) == 0)
+	if((static_cast<uint64_t>(pass) & mCurrentRegistredPasses) == 0)
 	{
         mShaderPrefix += "#define " + std::string(passToString(pass)) + "\n";
 
-        mCurrentPasstypes |= static_cast<uint64_t>(pass);
-
-		mTechniques.push_back(getSingleTechnique(pass));
+        mPassesRegisteredThisFrame |= static_cast<uint64_t>(pass);
 	}
 }
 
 
 bool Engine::isPassRegistered(const PassType pass) const
 {
-	return (static_cast<uint64_t>(pass) & mCurrentPasstypes) > 0;
+	return (static_cast<uint64_t>(pass) & mCurrentRegistredPasses) > 0;
 }

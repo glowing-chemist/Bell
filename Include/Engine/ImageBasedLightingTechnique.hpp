@@ -9,7 +9,7 @@ class ImageBasedLightingDeferredTexturingTechnique : public Technique
 {
 public:
 
-    ImageBasedLightingDeferredTexturingTechnique(Engine*);
+    ImageBasedLightingDeferredTexturingTechnique(Engine*, RenderGraph&);
     ~ImageBasedLightingDeferredTexturingTechnique() = default;
 
 	virtual PassType getPassType() const override final
@@ -18,16 +18,14 @@ public:
 	}
 
 	virtual void render(RenderGraph& graph, Engine*, const std::vector<const Scene::MeshInstance*>&) override final
-	{
-		graph.addTask(mTask);
-	}
+	{}
 
     virtual void bindResources(RenderGraph&) override final {}
 
 private:
 
 	GraphicsPipelineDescription mPipelineDesc;
-	GraphicsTask mTask;
+    TaskID mTaskID;
 };
 
 
@@ -35,7 +33,7 @@ class DeferredImageBasedLightingTechnique : public Technique
 {
 public:
 
-    DeferredImageBasedLightingTechnique(Engine*);
+    DeferredImageBasedLightingTechnique(Engine*, RenderGraph&);
     ~DeferredImageBasedLightingTechnique() = default;
 
     virtual PassType getPassType() const override final
@@ -44,16 +42,14 @@ public:
     }
 
     virtual void render(RenderGraph& graph, Engine*, const std::vector<const Scene::MeshInstance*>&) override final
-    {
-        graph.addTask(mTask);
-    }
+    {}
 
     virtual void bindResources(RenderGraph&) override final {}
 
 private:
 
     GraphicsPipelineDescription mPipelineDesc;
-    GraphicsTask mTask;
+    TaskID mTaskID;
 };
 
 

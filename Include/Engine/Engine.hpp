@@ -94,7 +94,9 @@ public:
 	{
 		mTechniques.clear();
         mShaderPrefix.clear();
-		mCurrentPasstypes = 0;
+		mCurrentRegistredPasses = 0;
+        mCurrentRenderGraph.reset();
+        mCompileGraph = true;
 	}
 
     void enableDebugTexture(const std::string& slot)
@@ -155,7 +157,7 @@ public:
 	void startFrame()
 	{
 		mRenderDevice->startFrame();
-		mCurrentRenderGraph.reset();
+		mCurrentRenderGraph.resetBindings();
 	}
 
 	void endFrame()
@@ -202,8 +204,10 @@ private:
 	std::unordered_map < const StaticMesh*, std::pair<uint64_t, uint64_t>> mVertexCache;
 
     RenderGraph mCurrentRenderGraph;
-	std::vector<std::unique_ptr<Technique>> mTechniques;
-	uint64_t mCurrentPasstypes;
+    bool mCompileGraph;
+    std::vector<std::unique_ptr<Technique>> mTechniques;
+    uint64_t mPassesRegisteredThisFrame;
+	uint64_t mCurrentRegistredPasses;
     std::string mShaderPrefix; // Containes defines for currently registered passes.
 
 	CommandContext mCommandContext;

@@ -6,6 +6,8 @@
 #include "Core/RenderDevice.hpp"
 #include "RenderGraph/RenderTask.hpp"
 #include "RenderGraph/GraphicsTask.hpp"
+#include "RenderGraph/ComputeTask.hpp"
+#include "RenderGraph/GraphicsTask.hpp"
 #include "Engine/GeomUtils.h"
 
 #include <vulkan/vulkan.hpp>

@@ -8,11 +8,16 @@
 #include "SwapChain.hpp"
 #include "Core/ImageView.hpp"
 #include "Core/ShaderResourceSet.hpp"
-#include "RenderGraph/RenderGraph.hpp"
 
 
 // Debug option for finding which task is causing a device loss.
 #define SUBMISSION_PER_TASK 0
+
+class RenderGraph;
+class RenderTask;
+class Executor;
+class ImageBase;
+class BufferBase;
 
 
 class RenderDevice

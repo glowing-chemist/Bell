@@ -4,7 +4,7 @@
 #include "Engine/DefaultResourceSlots.hpp"
 
 
-ForwardIBLTechnique::ForwardIBLTechnique(Engine* eng) :
+ForwardIBLTechnique::ForwardIBLTechnique(Engine* eng, RenderGraph& graph) :
 	Technique("ForwardIBL", eng->getDevice()),
 	mDesc{eng->getShader("./Shaders/ForwardMaterial.vert"),
 		  eng->getShader("./Shaders/ForwardIBL.frag"),
@@ -12,37 +12,40 @@ ForwardIBLTechnique::ForwardIBLTechnique(Engine* eng) :
 			   getDevice()->getSwapChain()->getSwapChainImageHeight()},
 		  Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
 			   getDevice()->getSwapChain()->getSwapChainImageHeight()},
-			   true, BlendMode::None, BlendMode::None, false, DepthTest::GreaterEqual, Primitive::TriangleList },
-	mTask("ForwardIBL", mDesc)
+			   true, BlendMode::None, BlendMode::None, false, DepthTest::GreaterEqual, Primitive::TriangleList }
 {
-	mTask.setVertexAttributes(VertexAttributes::Position4 | VertexAttributes::Material |
+	GraphicsTask task{ "ForwardIBL", mDesc };
+	task.setVertexAttributes(VertexAttributes::Position4 | VertexAttributes::Material |
 		VertexAttributes::Normals | VertexAttributes::TextureCoordinates);
 
-	mTask.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
-	mTask.addInput(kDFGLUT, AttachmentType::Texture2D);
-	mTask.addInput(kSkyBox, AttachmentType::Texture2D);
-	mTask.addInput(kConvolvedSkyBox, AttachmentType::Texture2D);
-	mTask.addInput(kDefaultSampler, AttachmentType::Sampler);
+	task.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
+	task.addInput(kDFGLUT, AttachmentType::Texture2D);
+	task.addInput(kSkyBox, AttachmentType::Texture2D);
+	task.addInput(kConvolvedSkyBox, AttachmentType::Texture2D);
+	task.addInput(kDefaultSampler, AttachmentType::Sampler);
 
 	if (eng->isPassRegistered(PassType::Shadow))
-		mTask.addInput(kShadowMap, AttachmentType::Texture2D);
+		task.addInput(kShadowMap, AttachmentType::Texture2D);
 
-	mTask.addInput(kMaterials, AttachmentType::ShaderResourceSet);
-	mTask.addInput("model", AttachmentType::PushConstants);
-    mTask.addInput(kSceneVertexBuffer, AttachmentType::VertexBuffer);
-    mTask.addInput(kSceneIndexBuffer, AttachmentType::IndexBuffer);
+	task.addInput(kMaterials, AttachmentType::ShaderResourceSet);
+	task.addInput("model", AttachmentType::PushConstants);
+	task.addInput(kSceneVertexBuffer, AttachmentType::VertexBuffer);
+	task.addInput(kSceneIndexBuffer, AttachmentType::IndexBuffer);
 
 
-	mTask.addOutput(kGlobalLighting, AttachmentType::RenderTarget2D, Format::RGBA8UNorm, SizeClass::Swapchain, LoadOp::Clear_Black);
-    mTask.addOutput(kGBufferVelocity, AttachmentType::RenderTarget2D, Format::RG16UNorm, SizeClass::Swapchain, LoadOp::Clear_Black);
-	mTask.addOutput(kGBufferDepth, AttachmentType::Depth, Format::D32Float, SizeClass::Custom, LoadOp::Preserve);
+	task.addOutput(kGlobalLighting, AttachmentType::RenderTarget2D, Format::RGBA8UNorm, SizeClass::Swapchain, LoadOp::Clear_Black);
+	task.addOutput(kGBufferVelocity, AttachmentType::RenderTarget2D, Format::RG16UNorm, SizeClass::Swapchain, LoadOp::Clear_Black);
+	task.addOutput(kGBufferDepth, AttachmentType::Depth, Format::D32Float, SizeClass::Custom, LoadOp::Preserve);
+
+	mTaskID = graph.addTask(task);
 }
 
 
 
 void ForwardIBLTechnique::render(RenderGraph& graph, Engine* eng, const std::vector<const Scene::MeshInstance*>& meshes)
 {
-	mTask.clearCalls();
+	GraphicsTask& task = static_cast<GraphicsTask&>(graph.getTask(mTaskID));
+	task.clearCalls();
 
 	for (const auto& mesh : meshes)
 	{
@@ -50,9 +53,7 @@ void ForwardIBLTechnique::render(RenderGraph& graph, Engine* eng, const std::vec
 
         const MeshEntry entry = mesh->getMeshShaderEntry();
 
-        mTask.addPushConsatntValue(&entry, sizeof(MeshEntry));
-        mTask.addIndexedDrawCall(vertexOffset / mesh->mMesh->getVertexStride(), indexOffset / sizeof(uint32_t), mesh->mMesh->getIndexData().size());
+		task.addPushConsatntValue(&entry, sizeof(MeshEntry));
+		task.addIndexedDrawCall(vertexOffset / mesh->mMesh->getVertexStride(), indexOffset / sizeof(uint32_t), mesh->mMesh->getIndexData().size());
 	}
-
-	graph.addTask(mTask);
 }

@@ -10,7 +10,7 @@ class ForwardCombinedLightingTechnique : public Technique
 {
 public:
 
-	ForwardCombinedLightingTechnique(Engine*);
+	ForwardCombinedLightingTechnique(Engine*, RenderGraph&);
 	~ForwardCombinedLightingTechnique() = default;
 
 	virtual PassType getPassType() const
@@ -28,7 +28,7 @@ public:
 private:
 
 	GraphicsPipelineDescription mDesc;
-	GraphicsTask mTask;
+	TaskID mTaskID;
 
 	Sampler mPointSampler;
 };

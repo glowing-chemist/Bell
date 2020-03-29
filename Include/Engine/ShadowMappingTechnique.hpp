@@ -12,7 +12,7 @@ static constexpr char kShadowMapBlured[] = "ShadowMapBlured";
 class ShadowMappingTechnique : public Technique
 {
 public:
-    ShadowMappingTechnique(Engine*);
+    ShadowMappingTechnique(Engine*, RenderGraph&);
     ~ShadowMappingTechnique() = default;
 
     virtual PassType getPassType() const override
@@ -31,16 +31,16 @@ public:
 
 private:
     GraphicsPipelineDescription mDesc;
-    GraphicsTask                mTask;
+    TaskID                      mShadowTask;
 
     ComputePipelineDescription mBlurXDesc;
-    ComputeTask mBlurXTask;
+    TaskID                     mBlurXTaskID;
 
     ComputePipelineDescription mBlurYDesc;
-    ComputeTask mBlurYTask;
+    TaskID                     mBlurYTaskID;
 
     ComputePipelineDescription mResolveDesc;
-    ComputeTask                mResolveTask;
+    TaskID                     mResolveTaskID;
 };
 
 #endif

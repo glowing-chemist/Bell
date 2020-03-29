@@ -15,7 +15,7 @@
 class GBufferMaterialTechnique : public Technique
 {
 public:
-	GBufferMaterialTechnique(Engine*);
+	GBufferMaterialTechnique(Engine*, RenderGraph&);
 	virtual ~GBufferMaterialTechnique() = default;
 
 	virtual PassType getPassType() const final override
@@ -42,14 +42,14 @@ public:
 private:
     
 	GraphicsPipelineDescription mPipelineDescription;
-	GraphicsTask mTask;
+    TaskID mTaskID;
 };
 
 
 class GBufferMaterialPreDepthTechnique : public Technique
 {
 public:
-    GBufferMaterialPreDepthTechnique(Engine*);
+    GBufferMaterialPreDepthTechnique(Engine*, RenderGraph&);
     virtual ~GBufferMaterialPreDepthTechnique() = default;
 
     virtual PassType getPassType() const final override
@@ -79,7 +79,7 @@ private:
     std::string mDepthName;
 
     GraphicsPipelineDescription mPipelineDescription;
-    GraphicsTask mTask;
+    TaskID mTaskID;
 };
 
 #endif

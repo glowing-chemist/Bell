@@ -5,11 +5,8 @@
 #include "RenderGraph/GraphicsTask.hpp"
 
 
-CompositeTechnique::CompositeTechnique(Engine* eng) :
-	Technique("Composite", eng->getDevice()) {}
-
-
-void CompositeTechnique::render(RenderGraph& graph, Engine* eng, const std::vector<const Scene::MeshInstance*>&)
+CompositeTechnique::CompositeTechnique(Engine* eng, RenderGraph& graph) :
+	Technique("Composite", eng->getDevice()) 
 {
 	const auto viewPortX = eng->getSwapChainImage()->getExtent(0, 0).width;
 	const auto viewPortY = eng->getSwapChainImage()->getExtent(0, 0).height;
@@ -22,7 +19,7 @@ void CompositeTechnique::render(RenderGraph& graph, Engine* eng, const std::vect
 	const bool usingOverlay = eng->isPassRegistered(PassType::Overlay);
 	const bool usingTAA = eng->isPassRegistered(PassType::TAA);
 
-    if (eng->debugTextureEnabled())
+	if (eng->debugTextureEnabled())
 	{
 		GraphicsPipelineDescription desc
 		(
@@ -33,7 +30,7 @@ void CompositeTechnique::render(RenderGraph& graph, Engine* eng, const std::vect
 		);
 
 		GraphicsTask compositeTask("Composite", desc);
-        compositeTask.addInput(eng->getDebugTextureSlot(), AttachmentType::Texture2D);
+		compositeTask.addInput(eng->getDebugTextureSlot(), AttachmentType::Texture2D);
 		compositeTask.addInput(kOverlay, AttachmentType::Texture2D);
 		compositeTask.addInput(kDefaultSampler, AttachmentType::Sampler);
 
@@ -65,7 +62,7 @@ void CompositeTechnique::render(RenderGraph& graph, Engine* eng, const std::vect
 
 		graph.addTask(compositeTask);
 	}
-    else if ((usingGlobalLighting != usingAnalyticalLighting) && usingOverlay && !usingTAA)
+	else if ((usingGlobalLighting != usingAnalyticalLighting) && usingOverlay && !usingTAA)
 	{
 		GraphicsPipelineDescription desc
 		(

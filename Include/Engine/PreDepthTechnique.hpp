@@ -13,7 +13,7 @@
 class PreDepthTechnique : public Technique
 {
 public:
-    PreDepthTechnique(Engine* dev);
+    PreDepthTechnique(Engine* dev, RenderGraph&);
     virtual ~PreDepthTechnique() = default;
 
     virtual PassType getPassType() const final override
@@ -30,7 +30,7 @@ public:
 private:
 
     GraphicsPipelineDescription mPipelineDescription;
-    GraphicsTask mTask;
+    TaskID mTaskID;
 };
 
 

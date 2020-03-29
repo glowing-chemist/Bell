@@ -17,7 +17,7 @@ class OverlayTechnique : public Technique
 {
 public:
 
-    OverlayTechnique(Engine* dev);
+    OverlayTechnique(Engine* dev, RenderGraph&);
     virtual ~OverlayTechnique() = default;
 
     virtual PassType getPassType() const override
@@ -47,6 +47,7 @@ private:
     PerFrameResource<BufferView> mOverlayerIndexBufferView;
 
     GraphicsPipelineDescription mPipelineDescription;
+    TaskID mTaskID;
 };
 
 #endif

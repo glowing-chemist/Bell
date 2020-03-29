@@ -8,16 +8,12 @@ constexpr const char* kLightIndexCounter = "lightIndexCounter";
 constexpr const char* kActiveFroxelsCounter = "ActiveFroxelsCounter";
 
 
-LightFroxelationTechnique::LightFroxelationTechnique(Engine* eng) :
+LightFroxelationTechnique::LightFroxelationTechnique(Engine* eng, RenderGraph& graph) :
 	Technique("LightFroxelation", eng->getDevice()),
 	mActiveFroxelsDesc{eng->getShader("./Shaders/ActiveFroxels.comp")},
-	mActiveFroxels("LightingFroxelation", mActiveFroxelsDesc),
 	mIndirectArgsDesc{ eng->getShader("./Shaders/IndirectFroxelArgs.comp") },
-	mIndirectArgs("generateFroxelIndirectArgs", mIndirectArgsDesc),
     mClearCountersDesc{eng->getShader("./Shaders/LightFroxelationClearCounters.comp")},
-    mClearCounters("clearFroxelationCounters", mClearCountersDesc),
     mLightAsignmentDesc{eng->getShader("./Shaders/FroxelationGenerateLightLists.comp")},
-    mLightListAsignment("LightAsignment", mLightAsignmentDesc),
 
     mXTiles(eng->getDevice()->getSwapChainImageView()->getImageExtent().width / 32),
     mYTiles(eng->getDevice()->getSwapChainImageView()->getImageExtent().height / 32),
@@ -41,45 +37,50 @@ LightFroxelationTechnique::LightFroxelationTechnique(Engine* eng) :
     mLightIndexBufferView(mLightIndexBuffer, std::max(eng->getDevice()->getMinStorageBufferAlignment(), sizeof(uint32_t))),
     mLightIndexCounterView(mLightIndexBuffer, 0, static_cast<uint32_t>(sizeof(uint32_t)))
 {
-    mClearCounters.addInput(kActiveFroxelsCounter, AttachmentType::DataBufferWO);
-    mClearCounters.addInput(kLightIndexCounter, AttachmentType::DataBufferWO);
-    mClearCounters.addDispatch(1, 1, 1);
+    ComputeTask clearCountersTask{ "clearFroxelationCounters", mClearCountersDesc };
+    clearCountersTask.addInput(kActiveFroxelsCounter, AttachmentType::DataBufferWO);
+    clearCountersTask.addInput(kLightIndexCounter, AttachmentType::DataBufferWO);
+    clearCountersTask.addDispatch(1, 1, 1);
+    mClearCounters = graph.addTask(clearCountersTask);
 
-	mActiveFroxels.addInput(kActiveFroxels, AttachmentType::Image2D);
-	mActiveFroxels.addInput(kGBufferDepth, AttachmentType::Texture2D);
-	mActiveFroxels.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
-	mActiveFroxels.addInput(kDefaultSampler, AttachmentType::Sampler);
-    mActiveFroxels.addInput(kActiveFroxelBuffer, AttachmentType::DataBufferWO);
-    mActiveFroxels.addInput(kActiveFroxelsCounter, AttachmentType::DataBufferRW);
+    ComputeTask activeFroxelTask{ "LightingFroxelation", mActiveFroxelsDesc };
+    activeFroxelTask.addInput(kActiveFroxels, AttachmentType::Image2D);
+    activeFroxelTask.addInput(kGBufferDepth, AttachmentType::Texture2D);
+    activeFroxelTask.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
+    activeFroxelTask.addInput(kDefaultSampler, AttachmentType::Sampler);
+    activeFroxelTask.addInput(kActiveFroxelBuffer, AttachmentType::DataBufferWO);
+    activeFroxelTask.addInput(kActiveFroxelsCounter, AttachmentType::DataBufferRW);
+    mActiveFroxels = graph.addTask(activeFroxelTask);
 
-    mIndirectArgs.addInput(kActiveFroxelsCounter, AttachmentType::DataBufferRO);
-    mIndirectArgs.addInput(kFroxelIndirectArgs, AttachmentType::DataBufferWO);
-	mIndirectArgs.addDispatch(1, 1, 1);
+    ComputeTask indirectArgsTask{ "generateFroxelIndirectArgs", mIndirectArgsDesc };
+    indirectArgsTask.addInput(kActiveFroxelsCounter, AttachmentType::DataBufferRO);
+    indirectArgsTask.addInput(kFroxelIndirectArgs, AttachmentType::DataBufferWO);
+    indirectArgsTask.addDispatch(1, 1, 1);
+    mIndirectArgs = graph.addTask(indirectArgsTask);
 
-    mLightListAsignment.addInput(kActiveFroxelBuffer, AttachmentType::DataBufferRO);
-    mLightListAsignment.addInput(kActiveFroxelsCounter, AttachmentType::DataBufferRO);
-    mLightListAsignment.addInput(kLightIndicies, AttachmentType::DataBufferWO);
-    mLightListAsignment.addInput(kLightIndexCounter, AttachmentType::DataBufferRW);
-    mLightListAsignment.addInput(kSparseFroxels, AttachmentType::DataBufferWO);
-    mLightListAsignment.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
-    mLightListAsignment.addInput(kLightBuffer, AttachmentType::ShaderResourceSet);
-    mLightListAsignment.addInput(kFroxelIndirectArgs, AttachmentType::IndirectBuffer);
-    mLightListAsignment.addIndirectDispatch(kFroxelIndirectArgs);
+    ComputeTask lightListAsignmentTask{ "LightAsignment", mLightAsignmentDesc };
+    lightListAsignmentTask.addInput(kActiveFroxelBuffer, AttachmentType::DataBufferRO);
+    lightListAsignmentTask.addInput(kActiveFroxelsCounter, AttachmentType::DataBufferRO);
+    lightListAsignmentTask.addInput(kLightIndicies, AttachmentType::DataBufferWO);
+    lightListAsignmentTask.addInput(kLightIndexCounter, AttachmentType::DataBufferRW);
+    lightListAsignmentTask.addInput(kSparseFroxels, AttachmentType::DataBufferWO);
+    lightListAsignmentTask.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
+    lightListAsignmentTask.addInput(kLightBuffer, AttachmentType::ShaderResourceSet);
+    lightListAsignmentTask.addInput(kFroxelIndirectArgs, AttachmentType::IndirectBuffer);
+    lightListAsignmentTask.addIndirectDispatch(kFroxelIndirectArgs);
+    mLightListAsignment = graph.addTask(lightListAsignmentTask);
 }
 
 
 void LightFroxelationTechnique::render(RenderGraph& graph, Engine* eng, const std::vector<const Scene::MeshInstance*>&)
 {
-	mActiveFroxels.clearCalls();
+    ComputeTask& activeFroxelsTask = static_cast<ComputeTask&>(graph.getTask(mActiveFroxels));
+
+    activeFroxelsTask.clearCalls();
 
 	const auto extent = eng->getDevice()->getSwapChainImageView()->getImageExtent();
 
-    mActiveFroxels.addDispatch(static_cast<uint32_t>(std::ceil(extent.width / 32.0f)), static_cast<uint32_t>(std::ceil(extent.height / 32.0f)), 1);
-
-    graph.addTask(mClearCounters);
-	graph.addTask(mActiveFroxels);
-	graph.addTask(mIndirectArgs);
-    graph.addTask(mLightListAsignment);
+    activeFroxelsTask.addDispatch(static_cast<uint32_t>(std::ceil(extent.width / 32.0f)), static_cast<uint32_t>(std::ceil(extent.height / 32.0f)), 1);
 
     mActiveFroxelsImageView.get()->updateLastAccessed();
     mActiveFroxelsImage.get()->updateLastAccessed();

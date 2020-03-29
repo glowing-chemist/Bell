@@ -12,7 +12,7 @@ class DFGGenerationTechnique : public Technique
 {
 public:
 
-	DFGGenerationTechnique(Engine*);
+	DFGGenerationTechnique(Engine*, RenderGraph& graph);
 	virtual ~DFGGenerationTechnique() = default;
 
 	virtual PassType getPassType() const override final
@@ -30,7 +30,7 @@ public:
 private:
 
 	ComputePipelineDescription mPipelineDesc;
-	ComputeTask mTask;
+	TaskID mTaskID;
 
 	Image mDFGLUT;
 	ImageView mDFGLUTView;

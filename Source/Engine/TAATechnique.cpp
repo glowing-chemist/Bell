@@ -3,7 +3,7 @@
 #include "Engine/DefaultResourceSlots.hpp"
 
 
-TAATechnique::TAATechnique(Engine* eng) :
+TAATechnique::TAATechnique(Engine* eng, RenderGraph& graph) :
 	Technique("TAA", eng->getDevice()),
 	mHistoryImage(	eng->getDevice(), Format::RGBA8UNorm, ImageUsage::Storage | ImageUsage::Sampled | ImageUsage::TransferDest, 
 					eng->getSwapChainImage()->getExtent(0, 0).width, 
@@ -22,6 +22,18 @@ TAATechnique::TAATechnique(Engine* eng) :
     mTAASAmpler.setAddressModeU(AddressMode::Clamp);
     mTAASAmpler.setAddressModeV(AddressMode::Clamp);
     mTAASAmpler.setAddressModeW(AddressMode::Clamp);
+
+
+	ComputeTask resolveTAA{ "Resolve TAA", mPipeline };
+	resolveTAA.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
+	resolveTAA.addInput(kGBufferDepth, AttachmentType::Texture2D);
+	resolveTAA.addInput(kGBufferVelocity, AttachmentType::Texture2D);
+	resolveTAA.addInput(kCompositeOutput, AttachmentType::Texture2D);
+	resolveTAA.addInput(kTAAHistory, AttachmentType::Texture2D);
+	resolveTAA.addInput(kNewTAAHistory, AttachmentType::Image2D);
+	resolveTAA.addInput("TAASampler", AttachmentType::Sampler);
+
+	mTaskID = graph.addTask(resolveTAA);
 }
 
 
@@ -33,28 +45,24 @@ void TAATechnique::render(RenderGraph& graph, Engine* eng, const std::vector<con
 		mFirstFrame = false;
 	}
 
-	ComputeTask ResolveTAA{"Resolve TAA", mPipeline };
-	ResolveTAA.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
-	ResolveTAA.addInput(kGBufferDepth, AttachmentType::Texture2D);
-    ResolveTAA.addInput(kGBufferVelocity, AttachmentType::Texture2D);
-	ResolveTAA.addInput(kCompositeOutput, AttachmentType::Texture2D);
-	ResolveTAA.addInput(kTAAHistory, AttachmentType::Texture2D);
-	ResolveTAA.addInput(kNewTAAHistory, AttachmentType::Image2D);
-    ResolveTAA.addInput("TAASampler", AttachmentType::Sampler);
+	ComputeTask& resolveTAA = static_cast<ComputeTask&>(graph.getTask(mTaskID));
+	resolveTAA.clearCalls();
 
 	const float threadGroupWidth = eng->getSwapChainImageView()->getImageExtent().width;
 	const float threadGroupHeight = eng->getSwapChainImageView()->getImageExtent().height;
-	ResolveTAA.addDispatch(static_cast<uint32_t>(std::ceil(threadGroupWidth / 32.0f)),
+	resolveTAA.addDispatch(static_cast<uint32_t>(std::ceil(threadGroupWidth / 32.0f)),
 							static_cast<uint32_t>(std::ceil(threadGroupHeight / 32.0f)),
 							1);
-
-	graph.addTask(ResolveTAA);
 }
 
 
 void TAATechnique::bindResources(RenderGraph& graph)
 {
 	const uint64_t submissionIndex = getDevice()->getCurrentSubmissionIndex();
+	mHistoryImage->updateLastAccessed();
+	mHistoryImageView->updateLastAccessed();
+	mNextHistoryImage->updateLastAccessed();
+	mNextHistoryImageView->updateLastAccessed();
 
 	// Ping-Pong.
 	if ((submissionIndex % 2) == 0)

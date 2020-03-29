@@ -18,7 +18,7 @@ constexpr char kSSAOBlurIntermidiate[] = "SSAOBlurInt";
 class SSAOTechnique : public Technique
 {
 public:
-	SSAOTechnique(Engine* dev);
+	SSAOTechnique(Engine* dev, RenderGraph&);
 	virtual ~SSAOTechnique() = default;
 
 	virtual PassType getPassType() const final override
@@ -41,13 +41,10 @@ private:
 	std::string mDepthNameSlot;
 
 	GraphicsPipelineDescription mPipelineDesc;
-	GraphicsTask mTask;
 
     ComputePipelineDescription mBlurXDesc;
-    ComputeTask mBlurXTask;
 
     ComputePipelineDescription mBlurYDesc;
-    ComputeTask mBlurYTask;
 
 	PerFrameResource<Buffer> mSSAOBuffer;
 	PerFrameResource<BufferView> mSSAOBufferView;
@@ -57,7 +54,7 @@ private:
 class SSAOImprovedTechnique : public Technique
 {
 public:
-	SSAOImprovedTechnique(Engine* dev);
+	SSAOImprovedTechnique(Engine* dev, RenderGraph&);
 	virtual ~SSAOImprovedTechnique() = default;
 
 	virtual PassType getPassType() const final override
@@ -81,13 +78,10 @@ private:
 	std::string mDepthNameSlot;
 
 	GraphicsPipelineDescription mPipelineDesc;
-	GraphicsTask mTask;
 
     ComputePipelineDescription mBlurXDesc;
-    ComputeTask mBlurXTask;
 
     ComputePipelineDescription mBlurYDesc;
-    ComputeTask mBlurYTask;
 
 	PerFrameResource<Buffer> mSSAOBuffer;
 	PerFrameResource<BufferView> mSSAOBufferView;

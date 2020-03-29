@@ -12,7 +12,7 @@
 class TAATechnique : public Technique
 {
 public:
-	TAATechnique(Engine*);
+	TAATechnique(Engine*, RenderGraph&);
 
 	virtual PassType getPassType() const override
 	{
@@ -34,6 +34,7 @@ private:
     Sampler mTAASAmpler;
 
 	ComputePipelineDescription mPipeline;
+	TaskID					   mTaskID;
 
 	bool mFirstFrame;// need to perform some setup;
 };

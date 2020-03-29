@@ -12,7 +12,7 @@ class Engine;
 class BlinnPhongDeferredTexturesTechnique : public Technique
 {
 public:
-    BlinnPhongDeferredTexturesTechnique(Engine* dev);
+    BlinnPhongDeferredTexturesTechnique(Engine* dev, RenderGraph&);
     virtual ~BlinnPhongDeferredTexturesTechnique() = default;
 
     std::string getLightTextureName()
@@ -47,7 +47,9 @@ public:
 
     virtual void bindResources(RenderGraph& graph) override final
 	{}
-	virtual void render(RenderGraph&, Engine*, const std::vector<const Scene::MeshInstance *> &) override final;
+	
+	virtual void render(RenderGraph&, Engine*, const std::vector<const Scene::MeshInstance*>&) override final 
+	{}
 
 private:
 
@@ -57,7 +59,7 @@ private:
 	std::string mUVName;
 
 	GraphicsPipelineDescription mPipelineDesc;
-	GraphicsTask mTask;
+	TaskID mTaskID;
 };
 
 #endif
