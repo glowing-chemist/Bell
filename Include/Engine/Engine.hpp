@@ -101,6 +101,7 @@ public:
 
     void enableDebugTexture(const std::string& slot)
     {
+        mCompileGraph = true;
         mShowDebugTexture = true;
         mDebugTextureName = slot;
     }

@@ -22,7 +22,7 @@ float3 calculateYCoCg(const float3 rgb)
 	const float3x3 RGBToYCoCg = float3x3(	float3(0.25f, 0.5f, 0.25f), 
 									float3(0.5f, 0.0f, -0.5f), 
 									float3(-0.25, 0.5f, -0.25f));
-	return RGBToYCoCg * rgb;
+	return mul(rgb, RGBToYCoCg);
 }
 
 
@@ -32,5 +32,5 @@ float3 calculateRGB(const float3 YCoCg)
 									float3(1.0f, 0.0f, 1.0f),
 									float3(1.0f, -1.0f, -1.0f));
 
-	return YCoCgToRGB * YCoCg;
+	return mul(YCoCg, YCoCgToRGB);
 }
