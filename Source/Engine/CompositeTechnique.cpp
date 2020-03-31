@@ -151,7 +151,7 @@ CompositeTechnique::CompositeTechnique(Engine* eng, RenderGraph& graph) :
 		GraphicsPipelineDescription overlayDesc
 		(
 			eng->getShader("./Shaders/FullScreenTriangle.vert"),
-			eng->getShader("./Shaders/CompositeOverlay.frag"),
+			eng->getShader("./Shaders/CompositeOverlayTAA.frag"),
 			Rect{ viewPortX, viewPortY },
 			Rect{ viewPortX, viewPortY }
 		);
@@ -160,6 +160,7 @@ CompositeTechnique::CompositeTechnique(Engine* eng, RenderGraph& graph) :
 		overlayTask.addInput(kNewTAAHistory, AttachmentType::Texture2D);
 		overlayTask.addInput(kOverlay, AttachmentType::Texture2D);
 		overlayTask.addInput(kDefaultSampler, AttachmentType::Sampler);
+		overlayTask.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
 		overlayTask.addOutput(kFrameBufer, AttachmentType::RenderTarget2D, eng->getSwapChainImage()->getFormat(), SizeClass::Custom, LoadOp::Clear_Black);
 		overlayTask.addDrawCall(0, 3);
 
@@ -189,7 +190,7 @@ CompositeTechnique::CompositeTechnique(Engine* eng, RenderGraph& graph) :
 		GraphicsPipelineDescription overlayDesc
 		(
 			eng->getShader("./Shaders/FullScreenTriangle.vert"),
-			eng->getShader("./Shaders/CompositeOverlay.frag"),
+			eng->getShader("./Shaders/CompositeOverlayTAA.frag"),
 			Rect{ viewPortX, viewPortY },
 			Rect{ viewPortX, viewPortY }
 		);
@@ -198,6 +199,7 @@ CompositeTechnique::CompositeTechnique(Engine* eng, RenderGraph& graph) :
 		overlayTask.addInput(kNewTAAHistory, AttachmentType::Texture2D);
 		overlayTask.addInput(kOverlay, AttachmentType::Texture2D);
 		overlayTask.addInput(kDefaultSampler, AttachmentType::Sampler);
+		overlayTask.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
 		overlayTask.addOutput(kFrameBufer, AttachmentType::RenderTarget2D, eng->getSwapChainImage()->getFormat(), SizeClass::Custom, LoadOp::Clear_Black);
 		overlayTask.addDrawCall(0, 3);
 

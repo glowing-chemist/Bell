@@ -227,6 +227,7 @@ set(SHADERS
 	LightFroxelationClearCounters.comp        
 	LightingCompositeSSAO.frag
 	CompositeOverlay.frag
+	CompositeOverlayTAA.frag
 	NormalMapping.hlsl
 	CompositeOverlayCombinedLightingSSAO.frag  
 	FroxelationGenerateLightLists.comp  

@@ -28,7 +28,6 @@ SamplerState linearSampler;
 // Rather than clamp within the colour space AABB, clip it.
 float3 clip_aabb(	float3 aabb_min, 
 				float3 aabb_max, 
-				float3 p,        
 				float3 q)        
 {
 	float3 p_clip= 0.5 * (aabb_max+ aabb_min);
@@ -70,10 +69,10 @@ void main(uint3 globalIndex : SV_DispatchThreadID)
 	const float yDiff = 1.0f / camera.frameBufferSize.y;
 
 	// Calcaulte a AABB in YCoCg colour space for neibourghhood clipping.
-	float3 upColour = history.Sample(linearSampler, uv + float2(xDiff, 0.0f)).xyz;
-	float3 downColour = history.Sample(linearSampler, uv + float2(-xDiff, 0.0f)).xyz;
-	float3 leftColour = history.Sample(linearSampler, uv + float2(0.0f, -yDiff)).xyz;
-	float3 rightColour = history.Sample(linearSampler, uv + float2(0.0f, yDiff)).xyz;
+	float3 upColour = colour.Sample(linearSampler, uv + float2(xDiff, 0.0f)).xyz;
+	float3 downColour = colour.Sample(linearSampler, uv + float2(-xDiff, 0.0f)).xyz;
+	float3 leftColour = colour.Sample(linearSampler, uv + float2(0.0f, -yDiff)).xyz;
+	float3 rightColour = colour.Sample(linearSampler, uv + float2(0.0f, yDiff)).xyz;
 	upColour = calculateYCoCg(upColour);
 	downColour = calculateYCoCg(downColour);
 	leftColour = calculateYCoCg(leftColour);
@@ -96,13 +95,13 @@ void main(uint3 globalIndex : SV_DispatchThreadID)
 	aabbMax = max(aabbMax, rightColour);
 	aabbMax = max(aabbMax, currentColourYCocg);
 
-	float4 previousColour = history.Sample(linearSampler, previousUV);
+	float4 historyColour = history.Sample(linearSampler, previousUV);
 
 	// Clamp previous colour
-	float3 previousColourYCoCg = calculateYCoCg(previousColour.xyz);
-	previousColourYCoCg = clip_aabb(aabbMin, aabbMax, previousColourYCoCg, currentColourYCocg);
+	float3 previousColourYCoCg = calculateYCoCg(historyColour.xyz);
+	previousColourYCoCg = clip_aabb(aabbMin, aabbMax, previousColourYCoCg);
 
-	previousColour.xyz = calculateRGB(previousColourYCoCg);
+	historyColour.xyz = calculateRGB(previousColourYCoCg);
 
 #if STATIC_BLEND_FACTOR
 	const float confidence = 0.9f;
@@ -113,7 +112,7 @@ void main(uint3 globalIndex : SV_DispatchThreadID)
 	confidence *= confidence;
 #endif
 
-	float4 newColour =  ((1.0f - confidence) * currentColour) + (confidence * previousColour);
+	float4 newColour =  ((1.0f - confidence) * currentColour) + (confidence * historyColour);
 
 	if(globalIndex.x <= gbufferSize.x && globalIndex.y <= gbufferSize.y)
 			newHistory[globalIndex.xy] = newColour; 
