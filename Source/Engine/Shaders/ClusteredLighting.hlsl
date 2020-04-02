@@ -129,9 +129,9 @@ void initializeLightState(out float3x3 minv, out float ltcAmp, out float2 f_ab, 
 
 	const float4 t = LTCMat.Sample(linearSampler, float2(R, NoV));
     minv = float3x3(
-            	float3(  1,   0, t.y),
+            	float3(  1,   0, t.w),
             	float3(  0, t.z,   0),
-            	float3(t.w,   0, t.x)
+            	float3(t.y,   0, t.x)
         		);
 
     ltcAmp = LTCAmp.Sample(linearSampler, float2(R, NoV));
@@ -170,23 +170,22 @@ float IntegrateEdge(float3 v1, float3 v2)
     return res;
 }
 
-float3 LTC_Evaluate(
-    float3 N, float3 V, float3 P, float3x3 Minv, float3 points[4])
+float3 LTC_Evaluate(float3 N, float3 V, float3 P, float3x3 Minv, float3 points[4])
 {
     // construct orthonormal basis around N
     float3 T1, T2;
-    T1 = normalize(V - N*dot(V, N));
+    T1 = normalize(V - N * dot(V, N));
     T2 = cross(N, T1);
 
     // rotate area light in (T1, T2, N) basis
-    Minv = Minv * transpose(float3x3(T1, T2, N));
+    Minv = mul(Minv, float3x3(T1, T2, N));
 
     // polygon (allocate 5 vertices for clipping)
     float3 L[4];
-    L[0] = Minv * (points[0] - P);
-    L[1] = Minv * (points[1] - P);
-    L[2] = Minv * (points[2] - P);
-    L[3] = Minv * (points[3] - P);
+    L[0] = mul(Minv, (points[0] - P));
+    L[1] = mul(Minv, (points[1] - P));
+    L[2] = mul(Minv, (points[2] - P));
+    L[3] = mul(Minv, (points[3] - P));
 
     // Don't perform clipping (it's expensive and difficult to implement)
     // Doesn't have a large impact so ignore for now.
