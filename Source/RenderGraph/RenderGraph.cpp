@@ -143,6 +143,15 @@ void RenderGraph::addDependancy(const std::string& dependancy, const std::string
 }
 
 
+void RenderGraph::compile(RenderDevice* dev)
+{
+	compileDependancies();
+	generateInternalResources(dev);
+	reorderTasks();
+	mergeTasks();
+}
+
+
 void RenderGraph::compileDependancies()
 {
 	std::set<std::pair<uint32_t, uint32_t>> dependancies;

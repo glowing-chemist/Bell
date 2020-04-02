@@ -9,7 +9,6 @@
 
 #include "Engine/Scene.h"
 #include "Engine/Camera.hpp"
-#include "Engine/CommandContext.hpp"
 #include "Engine/Bufferbuilder.h"
 #include "Engine/UniformBuffers.h"
 #include "Engine/Technique.hpp"
@@ -170,8 +169,6 @@ public:
 	void swap()
 		{ mRenderDevice->swap(); }
 
-    void submitCommandRecorder(CommandContext& ccx);
-
 	void flushWait()
 	{ mRenderDevice->flushWait(); }
 
@@ -211,7 +208,6 @@ private:
 	uint64_t mCurrentRegistredPasses;
     std::string mShaderPrefix; // Containes defines for currently registered passes.
 
-	CommandContext mCommandContext;
 
 	std::unordered_map<std::string, Shader> mShaderCache;
 

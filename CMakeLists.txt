@@ -159,8 +159,6 @@ set(BELL_SOURCE
     Source/Engine/ForwardLightingCombinedTechnique.cpp
     Source/Engine/TAATechnique.cpp
 
-    Source/Engine/CommandContext.cpp
-
     # used for texture loading
     ThirdParty/stb_image/stb_image.cpp
     )
@@ -277,6 +275,3 @@ target_link_libraries(BELL_EDITOR BELL imgui_node_editor)
 # Example targets TODO move in to seperate cmakelist
 add_executable(PASS_EXAMPLE "Examples/PassRegistration.cpp")
 target_link_libraries(PASS_EXAMPLE BELL)
-
-add_executable(COMMAND_CONTEXT_EXAMPLE "Examples/CommandContext.cpp")
-target_link_libraries(COMMAND_CONTEXT_EXAMPLE BELL)

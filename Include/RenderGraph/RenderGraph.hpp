@@ -51,8 +51,7 @@ public:
 	void addDependancy(const RenderTask& dependancy, const RenderTask& dependant);
     void addDependancy(const std::string& dependancy, const std::string& dependant);
 
-    // compiles the dependancy graph based on slots (assuming resources are finished writing to by their first read from)
-    void compileDependancies();
+	void compile(RenderDevice* dev);
 
     // Bind persistent resourcers.
     void bindImage(const std::string&, const ImageView &);
@@ -130,12 +129,14 @@ public:
 		uint32_t mResourceBinding;
 	};
 
+private:
+
+	// compiles the dependancy graph based on slots (assuming resources are finished writing to by their first read from)
+	void compileDependancies();
 	void generateInternalResources(RenderDevice*);
 
 	void reorderTasks();
 	void mergeTasks();
-
-private:
 
 	// Selecets the best task to execuet next based on some heuristics.
 	uint32_t selectNextTask(const std::vector<uint8_t>& dependancies, const TaskType) const;

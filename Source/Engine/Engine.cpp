@@ -59,7 +59,6 @@ Engine::Engine(GLFWwindow* windowPtr) :
     mPassesRegisteredThisFrame{0},
 	mCurrentRegistredPasses{0},
     mShaderPrefix(""),
-	mCommandContext(),
     mVertexBuffer{getDevice(), BufferUsage::Vertex | BufferUsage::TransferDest, 10000000, 10000000, "Vertex Buffer"},
     mIndexBuffer{getDevice(), BufferUsage::Index | BufferUsage::TransferDest, 10000000, 10000000, "Index Buffer"},
     mDefaultSampler(SamplerType::Linear),
@@ -367,10 +366,7 @@ void Engine::execute(RenderGraph& graph)
 	// Finalize graph internal state.
     if(mCompileGraph)
     {
-	    graph.compileDependancies();
-	    graph.generateInternalResources(mRenderDevice);
-	    graph.reorderTasks();
-	    graph.mergeTasks();
+        graph.compile(mRenderDevice);
 
         mCompileGraph = false;
     }
@@ -473,20 +469,6 @@ void Engine::recordScene()
 void Engine::render()
 {
 	execute(mCurrentRenderGraph);
-}
-
-
-void Engine::submitCommandRecorder(CommandContext &ccx)
-{
-    RenderGraph& renderGraph = ccx.finialise();
-
-    mVertexBuilder.reset();
-    mIndexBuilder.reset();
-
-    renderGraph.bindBuffer(kSceneVertexBuffer, mVertexBuffer);
-    renderGraph.bindBuffer(kSceneIndexBuffer, mIndexBuffer);
-
-    execute(renderGraph);
 }
 
 
