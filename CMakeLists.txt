@@ -158,6 +158,7 @@ set(BELL_SOURCE
     Source/Engine/ShadowMappingTechnique.cpp
     Source/Engine/ForwardLightingCombinedTechnique.cpp
     Source/Engine/TAATechnique.cpp
+	Source/Engine/LineariseDepthTechnique.cpp
 
     # used for texture loading
     ThirdParty/stb_image/stb_image.cpp
@@ -237,6 +238,7 @@ set(SHADERS
 	AlphaTestDepthOnly.frag
 	MeshAttributes.hlsl
 	VertexOutputs.hlsl
+	LineariseDepth.comp
     )
 
 foreach(shader ${SHADERS})

@@ -45,7 +45,7 @@ uint3 getFroxelPosition(const uint2 position, const float depth, const float2 si
 {
 	const uint2 xyFroxel = position / FROXEL_TILE_SIZE;
 
-    float depthVS = lineariseReverseDepth(depth, nearPlane, farPlane);
+	float depthVS = depth;
     depthVS *= (farPlane - nearPlane);
     depthVS += nearPlane;
 

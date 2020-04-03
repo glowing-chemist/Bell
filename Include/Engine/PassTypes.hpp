@@ -32,7 +32,8 @@
 					DeferredCombinedLighting = 1 << 25, \
 					ForwardCombinedLighting = 1 << 26, \
 					SSAOImproved = 1 << 27, \
-					TAA = 1 << 28 \
+					TAA = 1 << 28, \
+					LineariseDepth = 1 << 29
 
 // An enum to keep track of which 
 enum class PassType : uint64_t
@@ -155,6 +156,7 @@ enum class Format
 	D32Float,
 	D24S8Float,
 	R32Uint,
+	R32Float,
 	R8UNorm,
     RG8UNorm,
 	RG16UNorm,

@@ -45,7 +45,7 @@ LightFroxelationTechnique::LightFroxelationTechnique(Engine* eng, RenderGraph& g
 
     ComputeTask activeFroxelTask{ "LightingFroxelation", mActiveFroxelsDesc };
     activeFroxelTask.addInput(kActiveFroxels, AttachmentType::Image2D);
-    activeFroxelTask.addInput(kGBufferDepth, AttachmentType::Texture2D);
+    activeFroxelTask.addInput(kLinearDepth, AttachmentType::Texture2D);
     activeFroxelTask.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
     activeFroxelTask.addInput(kDefaultSampler, AttachmentType::Sampler);
     activeFroxelTask.addInput(kActiveFroxelBuffer, AttachmentType::DataBufferWO);

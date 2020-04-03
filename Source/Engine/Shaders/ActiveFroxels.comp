@@ -6,7 +6,7 @@
 RWTexture2D<uint> activeFroxels;
 
 [[vk::binding(1)]]
-Texture2D<float> depth;
+Texture2D<float> linearDepth;
 
 [[vk::binding(2)]]
 ConstantBuffer<CameraBuffer> camera;
@@ -35,7 +35,7 @@ void main(	uint localIndex : SV_GroupIndex,
 
 	float2 uv = float2(globalIndex.xy) / size;
 
-	float depth = depth.Sample(linearSampler, uv);
+	float depth = linearDepth.Sample(linearSampler, uv);
 
 	uint3 froxelPos = getFroxelPosition(globalIndex.xy, depth, size, camera.nearPlane, camera.farPlane, camera.fov);
 	uint froxelIndex = getFroxelIndex(froxelPos, uint2(size));

@@ -8,7 +8,7 @@
 ConstantBuffer<CameraBuffer> camera;
 
 [[vk::binding(1)]]
-Texture2D<float> depth;
+Texture2D<float> linearDepthBuffer;
 
 [[vk::binding(2)]]
 Texture2D<float2> velocity;
@@ -50,16 +50,14 @@ void main(uint3 globalIndex : SV_DispatchThreadID)
 	const float2 gbufferSize = camera.frameBufferSize;
 	const float2 uv = (float2(globalIndex.xy) / gbufferSize);
 
-	const float fragDepth = depth.Sample(linearSampler, uv);;
-	const float linearDepth = lineariseReverseDepth(fragDepth, camera.nearPlane, camera.farPlane);
-
 	float2 currentVelocity = velocity.Sample(linearSampler, uv);
 	currentVelocity = (currentVelocity - 0.5f) * 2.0f;
 
 	const float2 previousUV = uv - currentVelocity;
 #if !STATIC_BLEND_FACTOR
-	const float previousDepth = depth.Sample(linearSampler, previousUV);
-	const float previousLinearDepth = lineariseReverseDepth(previousDepth, camera.nearPlane, camera.farPlane);
+	const float linearDepth = linearDepthBuffer.Sample(linearSampler, uv);
+
+	const float previousLinearDepth = linearDepthBuffer.Sample(linearSampler, previousUV);
 	const float depthDif = abs(previousLinearDepth - linearDepth);
 #endif
 

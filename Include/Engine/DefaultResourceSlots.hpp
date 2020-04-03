@@ -24,6 +24,7 @@ constexpr const char* kShadowingLights    = "ShadowingLights";
 constexpr const char* kCompositeOutput = "CompositeOutput";
 constexpr const char* kTAAHistory		= "TAAHistory";
 constexpr const char* kNewTAAHistory		= "NewTAAHistory";
+constexpr const char* kLinearDepth		= "LinearDepth";
 
 
 constexpr const char* kCameraBuffer	    = "CameraBuffer";

@@ -1,0 +1,26 @@
+#include "UniformBuffers.hlsl"
+#include "Utilities.hlsl"
+
+[[vk::binding(0)]]
+RWTexture2D<float> linearDepthBuffer;
+
+[[vk::binding(1)]]
+Texture2D<float> gbufferDepth;
+
+[[vk::binding(2)]]
+ConstantBuffer<CameraBuffer> camera;
+
+[[vk::binding(3)]]
+SamplerState linearSampler;
+
+[numthreads(32, 32, 1)]
+void main(uint3 globalIndex : SV_DispatchThreadID)
+{
+	const float2 uv = float2(globalIndex.xy) / camera.frameBufferSize;
+
+	const float depth = gbufferDepth.Sample(linearSampler, uv);
+	const float linearDepth = lineariseReverseDepth(depth, camera.nearPlane, camera.farPlane);
+
+	if(globalIndex.x <= camera.frameBufferSize.x && globalIndex.y <= camera.frameBufferSize.y)
+		linearDepthBuffer[globalIndex.xy] = linearDepth;
+}

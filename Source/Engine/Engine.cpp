@@ -31,6 +31,7 @@
 #include "Engine/DeferredAnalyticalLightingTechnique.hpp"
 #include "Engine/ShadowMappingTechnique.hpp"
 #include "Engine/TAATechnique.hpp"
+#include "Engine/LineariseDepthTechnique.hpp"
 
 #include "glm/gtx/transform.hpp"
 
@@ -263,6 +264,9 @@ std::unique_ptr<Technique> Engine::getSingleTechnique(const PassType passType)
 
         case PassType::TAA:
             return std::make_unique<TAATechnique>(this, mCurrentRenderGraph);
+
+        case PassType::LineariseDepth:
+            return std::make_unique<LineariseDepthTechnique>(this, mCurrentRenderGraph);
 
         default:
         {

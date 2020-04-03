@@ -210,7 +210,7 @@ namespace
 			case NodeTypes::LightFroxelation:
 			{
 				std::shared_ptr<EditorNode> newNode = std::make_shared<PassNode>("LightFroxelation", passType);
-				newNode->mInputs.push_back(Pin{ 0, newNode, kGBufferDepth, PinType::Texture, PinKind::Input });
+				newNode->mInputs.push_back(Pin{ 0, newNode, kLinearDepth, PinType::Texture, PinKind::Input });
 				newNode->mOutputs.push_back(Pin{ 0, newNode, kActiveFroxels, PinType::Texture, PinKind::Output });
 				return newNode;
 			}
@@ -239,9 +239,17 @@ namespace
             {
                 std::shared_ptr<EditorNode> newNode = std::make_shared<PassNode>("TAA", passType);
                 newNode->mInputs.push_back(Pin{ 0, newNode, kGBufferVelocity, PinType::Texture, PinKind::Input });
-                newNode->mInputs.push_back(Pin{ 0, newNode, kGBufferDepth, PinType::Texture, PinKind::Input });
+                newNode->mInputs.push_back(Pin{ 0, newNode, kLinearDepth, PinType::Texture, PinKind::Input });
                 newNode->mInputs.push_back(Pin{ 0, newNode, kAnalyticLighting, PinType::Texture, PinKind::Input });
                 newNode->mInputs.push_back(Pin{ 0, newNode, kGlobalLighting, PinType::Texture, PinKind::Input });
+                return newNode;
+            }
+
+            case NodeTypes::LineariseDepth:
+            {
+                std::shared_ptr<EditorNode> newNode = std::make_shared<PassNode>("TAA", passType);
+                newNode->mInputs.push_back(Pin{ 0, newNode, kGBufferDepth, PinType::Texture, PinKind::Input });
+                newNode->mOutputs.push_back(Pin{ 0, newNode, kLinearDepth, PinType::Texture, PinKind::Output });
                 return newNode;
             }
         }
@@ -523,6 +531,7 @@ void Editor::drawAssistantWindow()
 		   drawPassContextMenu(PassType::DeferredAnalyticalLighting);
            drawPassContextMenu(PassType::Shadow);
            drawPassContextMenu(PassType::TAA);
+           drawPassContextMenu(PassType::LineariseDepth);
 
            ImGui::TreePop();
        }
