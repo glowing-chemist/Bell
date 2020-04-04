@@ -182,12 +182,18 @@ public:
 
 	vk::Pipeline						createPipeline(const vk::ComputePipelineCreateInfo& info)
 	{
-		return mDevice.createComputePipeline(nullptr, info);
+        vk::ResultValue<vk::Pipeline> result = mDevice.createComputePipeline(nullptr, info);
+        BELL_ASSERT(result.result == vk::Result::eSuccess, "Failed to create compute pipeline");
+
+        return result.value;
 	}
 
 	vk::Pipeline						createPipeline(const vk::GraphicsPipelineCreateInfo& info)
 	{
-		return mDevice.createGraphicsPipeline(nullptr, info);
+        vk::ResultValue<vk::Pipeline> result = mDevice.createGraphicsPipeline(nullptr, info);
+        BELL_ASSERT(result.result == vk::Result::eSuccess, "Failed to create graphics pipeline");
+
+        return result.value;
 	}
 
     GraphicsPipelineHandles            createPipelineHandles(const GraphicsTask&, const RenderGraph&);
