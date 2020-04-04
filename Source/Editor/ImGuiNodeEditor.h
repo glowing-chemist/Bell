@@ -118,19 +118,6 @@ struct PassNode : EditorNode
 };
 
 
-struct ResourceNode : EditorNode
-{
-    ResourceNode(const char* name, const uint64_t type, ImColor color = ImColor(255, 255, 255)) :
-        EditorNode(name, type, color)
-    {
-        // reserve some space to use as a buffer.
-        mName.reserve(16);
-    }
-
-    virtual void draw() override final;
-};
-
-
 class ImGuiNodeEditor
 {
 

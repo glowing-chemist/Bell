@@ -284,35 +284,3 @@ void PassNode::draw()
 
     ax::NodeEditor::EndNode();
 }
-
-
-void ResourceNode::draw()
-{
-    ax::NodeEditor::BeginNode(mID);
-
-        beginColumn();
-
-        for (const auto& input : mInputs)
-        {
-            ax::NodeEditor::BeginPin(input.mID, ax::NodeEditor::PinKind::Input);
-
-            ImGui::TextUnformatted(input.mName.c_str());
-
-            ax::NodeEditor::EndPin();
-        }
-
-        nextColumn();
-
-        for (const auto& input : mOutputs)
-        {
-            ax::NodeEditor::BeginPin(input.mID, ax::NodeEditor::PinKind::Output);
-
-            ImGui::TextUnformatted(input.mName.c_str());
-
-            ax::NodeEditor::EndPin();
-        }
-
-        endColumn();
-
-    ax::NodeEditor::EndNode();
-}
