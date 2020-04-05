@@ -10,10 +10,6 @@
 #include <vulkan/vulkan.hpp>
 #endif
 
-#ifdef OPENGL
-#include "glad/glad.h"
-#endif
-
 #ifdef VULKAN
 vk::ImageLayout getVulkanImageLayout(const AttachmentType);
 
@@ -30,23 +26,5 @@ Format getBellImageFormat(const vk::Format);
 vk::ImageLayout getVulkanImageLayout(const ImageLayout);
 
 vk::PipelineStageFlags getVulkanPipelineStage(const SyncPoint);
-
-#endif
-
-#ifdef OPENGL
-int getOpenGLImageFormat(const Format);
-#endif
-
-ImageLayout getImageLayout(const AttachmentType);
-
-AttachmentType getAttachmentType(const ImageLayout);
-
-uint32_t getPixelSize(const Format);
-
-SyncPoint getSyncPoint(const AttachmentType);
-
-const char* getLayoutName(const ImageLayout);
-
-const char* getAttachmentName(const AttachmentType);
 
 #endif
