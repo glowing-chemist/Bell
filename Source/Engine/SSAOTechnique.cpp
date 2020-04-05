@@ -59,7 +59,7 @@ SSAOTechnique::SSAOTechnique(Engine* eng, RenderGraph& graph) :
     task.addInput(kSSAOBuffer, AttachmentType::UniformBuffer);
     task.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
 
-    task.addInput(kLinearDepth, AttachmentType::Texture2D);
+    task.addInput(kGBufferDepth, AttachmentType::Texture2D);
     task.addInput(kDefaultSampler, AttachmentType::Sampler);
 
     task.addOutput(kSSAORough, AttachmentType::RenderTarget2D, Format::R8UNorm, SizeClass::HalfSwapchain, LoadOp::Clear_Black);
