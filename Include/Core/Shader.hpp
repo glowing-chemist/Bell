@@ -24,7 +24,7 @@ public:
 	ShaderBase(RenderDevice*, const std::string&);
     virtual ~ShaderBase() = default;
 
-    virtual bool compile(const std::string& prefix = "");
+    virtual bool compile(const std::string& prefix = "") = 0;
     virtual bool reload() = 0;
 	inline bool hasBeenCompiled() const
 	{

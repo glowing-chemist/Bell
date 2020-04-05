@@ -26,12 +26,12 @@ include_directories(
 			"${CMAKE_CURRENT_LIST_DIR}/ThirdParty/assimp-4.1.0/include"
 			"${CMAKE_CURRENT_LIST_DIR}/ThirdParty/imgui-master"
 			"${CMAKE_CURRENT_LIST_DIR}/ThirdParty/imgui-guizmo"
-			"${CMAKE_CURRENT_LIST_DIR}/ThirdParty/hlslang"
+			"${CMAKE_CURRENT_LIST_DIR}/ThirdParty/glslang"
 			"${CMAKE_CURRENT_LIST_DIR}/ThirdParty/imgui-node-editor/NodeEditor/Include"
 		    "${CMAKE_CURRENT_LIST_DIR}/ThirdParty/glm"	
 			"${CMAKE_CURRENT_LIST_DIR}/ThirdParty/stb_image"
 			"${CMAKE_CURRENT_LIST_DIR}/ThirdParty/glad/include"
-			${hlslangIncludeDirs}
+			${glslangIncludeDirs}
 			${glmIncludeDirs}
 		    )
 
