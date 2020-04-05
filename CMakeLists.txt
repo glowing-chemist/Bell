@@ -70,22 +70,7 @@ if(VULKAN)
 		Source/Core/Vulkan/VulkanBarrierManager.cpp)
 
 		add_definitions(-DVULKAN -DGLM_DEPTH_ZERO_TO_ONE)
-
-elseif(OPENGL)
-	set(BACKEND_SOURCE
-		ThirdParty/glad/src/glad.c
-		Source/Core/OpenGL/OpenGLRenderInstance.cpp
-		Source/Core/OpenGL/OpenGLRenderDevice.cpp
-		Source/Core/OpenGL/OpenGLImage.cpp
-		Source/Core/OpenGL/OpenGLImageView.cpp
-		Source/Core/OpenGL/OpenGLBuffer.cpp
-		Source/Core/OpenGL/OpenGLBufferView.cpp
-		Source/Core/OpenGL/OpenGLShader.cpp)
-
-	add_definitions(-DOPENGL)
-else()
-	message(FATAL_ERROR "SELECT A BACKEND VULKAN/OPENGL")
-endif()
+endif(VULKAN)
 
 set(BELL_BASE_SOURCE
 	# Core files (dependant on vulkan) 
