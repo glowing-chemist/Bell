@@ -29,4 +29,16 @@ vk::PipelineStageFlags getVulkanPipelineStage(const SyncPoint);
 
 #endif
 
+ImageLayout getImageLayout(const AttachmentType);
+
+AttachmentType getAttachmentType(const ImageLayout);
+
+uint32_t getPixelSize(const Format);
+
+SyncPoint getSyncPoint(const AttachmentType);
+
+const char* getLayoutName(const ImageLayout);
+
+const char* getAttachmentName(const AttachmentType);
+
 #endif

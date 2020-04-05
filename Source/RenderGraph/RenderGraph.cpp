@@ -9,6 +9,11 @@
 #include <set>
 #include <string>
 
+#ifdef _MSC_VER
+#undef max
+#undef min
+#endif
+
 
 TaskID RenderGraph::addTask(const GraphicsTask& task)
 {
