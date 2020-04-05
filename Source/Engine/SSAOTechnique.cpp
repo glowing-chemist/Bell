@@ -59,7 +59,7 @@ SSAOTechnique::SSAOTechnique(Engine* eng, RenderGraph& graph) :
     task.addInput(kSSAOBuffer, AttachmentType::UniformBuffer);
     task.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
 
-    task.addInput(kGBufferDepth, AttachmentType::Texture2D);
+    task.addInput(kLinearDepth, AttachmentType::Texture2D);
     task.addInput(kDefaultSampler, AttachmentType::Sampler);
 
     task.addOutput(kSSAORough, AttachmentType::RenderTarget2D, Format::R8UNorm, SizeClass::HalfSwapchain, LoadOp::Clear_Black);
@@ -83,7 +83,7 @@ SSAOTechnique::SSAOTechnique(Engine* eng, RenderGraph& graph) :
 }
 
 
-void SSAOTechnique::render(RenderGraph& graph, Engine*, const std::vector<const Scene::MeshInstance*>&)
+void SSAOTechnique::render(RenderGraph&, Engine*, const std::vector<const Scene::MeshInstance*>&)
 {
     SSAOBuffer ssaoBuffer;
     const auto offsets = generateSphericalOffsets<16>();
@@ -114,7 +114,7 @@ SSAOImprovedTechnique::SSAOImprovedTechnique(Engine* eng, RenderGraph& graph) :
     task.addInput(kSSAOBuffer, AttachmentType::UniformBuffer);
     task.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
 
-    task.addInput(kGBufferDepth, AttachmentType::Texture2D);
+    task.addInput(kLinearDepth, AttachmentType::Texture2D);
     task.addInput(kGBufferNormals, AttachmentType::Texture2D);
     task.addInput(kDefaultSampler, AttachmentType::Sampler);
 
