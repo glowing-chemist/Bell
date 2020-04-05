@@ -182,18 +182,26 @@ public:
 
 	vk::Pipeline						createPipeline(const vk::ComputePipelineCreateInfo& info)
 	{
+#if VK_HEADER_VERSION < 131
         vk::ResultValue<vk::Pipeline> result = mDevice.createComputePipeline(nullptr, info);
         BELL_ASSERT(result.result == vk::Result::eSuccess, "Failed to create compute pipeline");
 
         return result.value;
+#else
+        return mDevice.createComputePipeline(nullptr, info);
+#endif
 	}
 
 	vk::Pipeline						createPipeline(const vk::GraphicsPipelineCreateInfo& info)
 	{
+#if VK_HEADER_VERSION < 131
         vk::ResultValue<vk::Pipeline> result = mDevice.createGraphicsPipeline(nullptr, info);
         BELL_ASSERT(result.result == vk::Result::eSuccess, "Failed to create graphics pipeline");
 
         return result.value;
+#else
+        return mDevice.createGraphicsPipeline(nullptr, info);
+#endif
 	}
 
     GraphicsPipelineHandles            createPipelineHandles(const GraphicsTask&, const RenderGraph&);

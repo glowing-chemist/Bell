@@ -28,3 +28,5 @@ vk::ImageLayout getVulkanImageLayout(const ImageLayout);
 vk::PipelineStageFlags getVulkanPipelineStage(const SyncPoint);
 
 #endif
+
+#endif
