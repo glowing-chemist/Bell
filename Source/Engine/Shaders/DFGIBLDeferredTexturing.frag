@@ -1,98 +1,110 @@
-#version 450
-#extension GL_ARB_separate_shader_objects : enable
-#extension GL_GOOGLE_include_directive : enable
-#extension GL_EXT_nonuniform_qualifier : enable
-
-#include "PBR.glsl"
-#include "NormalMapping.glsl"
-#include "UniformBuffers.glsl"
-
+#include "PBR.hlsl"
+#include "NormalMapping.hlsl"
+#include "UniformBuffers.hlsl"
+#include "VertexOutputs.hlsl"
 
 #define MAX_MATERIALS 256
 
 
-layout(location = 0) in float2 uv;
+[[vk::binding(0)]]
+ConstantBuffer<CameraBuffer> camera;
 
+[[vk::binding(1)]]
+Texture2D<float2> DFG;
 
-layout(location = 0) out float4 frameBuffer;
+[[vk::binding(2)]]
+Texture2D<float> depth;
 
-layout(set = 0, binding = 0) uniform cameraBuffer
-{
-	CameraBuffer camera;
-};
+[[vk::binding(3)]]
+Texture2D<float3> vertexNormals;
 
-layout(set = 0, binding = 1) uniform texture2D DFG;
-layout(set = 0, binding = 2) uniform texture2D depth;
-layout(set = 0, binding = 3) uniform texture2D vertexNormals;
-layout(set = 0, binding = 4) uniform utexture2D materialIDTexture;
-layout(set = 0, binding = 5) uniform texture2D uvWithDerivitives;
-layout(set = 0, binding = 6) uniform textureCube skyBox;
-layout(set = 0, binding = 7) uniform textureCube ConvolvedSkybox;
-layout(set = 0, binding = 8) uniform sampler linearSampler;
+[[vk::binding(4)]]
+Texture2D<uint> materialIDTexture;
 
-// an unbound array of matyerial parameter textures
+[[vk::binding(5)]]
+Texture2D<float4> uvWithDerivitives;
+
+[[vk::binding(6)]]
+TextureCube<float4> skyBox;
+
+[[vk::binding(7)]]
+TextureCube<float4> ConvolvedSkybox;
+
+[[vk::binding(8)]]
+SamplerState linearSampler;
+
+#ifdef Shadow_Map
+[[vk::binding(9)]]
+Texture2D<float> shadowMap;
+#endif
+
+// an unbound array of material parameter textures
 // In order albedo, normals, rougness, metalness
-layout(set = 1, binding = 0) uniform texture2D materials[];
+[[vk::binding(0, 1)]]
+Texture2D materials[];
 
 #define MATERIAL_COUNT 		4
 
-void main()
+float4 main(PositionAndUVVertOutput vertOutput)
 {
-	const float fragmentDepth = texture(sampler2D(depth, linearSampler), uv).x;
+	const float2 uv = vertOutput.uv;
 
-	float4 worldSpaceFragmentPos = camera.invertedCamera * float4(uv, fragmentDepth, 1.0f);
-	worldSpaceFragmentPos /= worldSpaceFragmentPos.w;
+    const float fragmentDepth = depth.Sample(linearSampler, uv);
 
-	const uint materialID = texture(usampler2D(materialIDTexture, linearSampler), uv).x;
+    float4 worldSpaceFragmentPos = mul(camera.invertedViewProj, float4((uv - 0.5f) * 2.0f, fragmentDepth, 1.0f));
+    worldSpaceFragmentPos /= worldSpaceFragmentPos.w;
 
-	float3 vertexNormal;
-    vertexNormal = texture(sampler2D(vertexNormals, linearSampler), uv).xyz;
+    const uint materialID = materialIDTexture.Sample(linearSampler, uv);
+
+    float3 vertexNormal;
+    vertexNormal = vertexNormals.Sample(linearSampler, uv);
     vertexNormal = remapNormals(vertexNormal);
     vertexNormal = normalize(vertexNormal);
 
-	const float4 fragUVwithDifferentials = texture(sampler2D(uvWithDerivitives, linearSampler), uv);
+    const float4 fragUVwithDifferentials = uvWithDerivitives.Sample(linearSampler, uv);
 
-	const float2 xDerivities = unpackHalf2x16(floatBitsToUint(fragUVwithDifferentials.z));
-    const float2 yDerivities = unpackHalf2x16(floatBitsToUint(fragUVwithDifferentials.w));
+    const float2 xDerivities = float2(asfloat(asuint(fragUVwithDifferentials.z) & 0xFFFF0000), asfloat(asuint(fragUVwithDifferentials.z) >> 16));
+    const float2 yDerivities = float2(asfloat(asuint(fragUVwithDifferentials.w) & 0xFFFF0000), asfloat(asuint(fragUVwithDifferentials.w) >> 16));
 
     const float3 viewDir = normalize(camera.position - worldSpaceFragmentPos.xyz);
 
-    const float4 baseAlbedo = textureGrad(sampler2D(materials[nonuniformEXT(materialID * 4)], linearSampler),
-                                fragUVwithDifferentials.xy,
-                                xDerivities,
-                                yDerivities);
+    const float4 baseAlbedo = materials[NonUniformResourceIndex(materialID * 4)].SampleGrad(  linearSampler, fragUVwithDifferentials.xy,
+                                                                                    xDerivities, yDerivities);
 
-    float3 normal = texture(sampler2D(materials[nonuniformEXT(materialID * 4) + 1], linearSampler),
-                                fragUVwithDifferentials.xy).xyz;
+    float3 normal = materials[NonUniformResourceIndex((materialID * 4) + 1)].Sample(linearSampler, fragUVwithDifferentials.xy);
 
     // remap normal
     normal = remapNormals(normal);
     normal = normalize(normal);
 
-    const float roughness = texture(sampler2D(materials[nonuniformEXT(materialID * 4) + 2], linearSampler),
-                                fragUVwithDifferentials.xy).x;
+    const float roughness = materials[NonUniformResourceIndex((materialID * 4) + 2)].Sample(linearSampler, fragUVwithDifferentials.xy);
 
-    const float metalness = texture(sampler2D(materials[nonuniformEXT(materialID * 4) + 3], linearSampler),
-                                fragUVwithDifferentials.xy).x;
+    const float metalness = materials[NonUniformResourceIndex((materialID * 4) + 3)].Sample(linearSampler, fragUVwithDifferentials.xy);
 
-	{
-    	float3x3 tbv = tangentSpaceMatrix(vertexNormal, viewDir, float4(xDerivities, yDerivities));
+    {
+        float3x3 tbv = tangentSpaceMatrix(vertexNormal, viewDir, float4(xDerivities, yDerivities));
 
-    	normal = tbv * normal;
+        normal = tbv * normal;
 
-    	normal = normalize(normal);
-	}
+        normal = normalize(normal);
+    }
 
 	const float3 lightDir = reflect(-viewDir, normal);
     float NoV = dot(normal, viewDir);
 
 	const float lodLevel = roughness * 10.0f;
 
-	const float3 radiance = texture(samplerCube(ConvolvedSkybox, linearSampler), lightDir, lodLevel).xyz;
+    float3 radiance = ConvolvedSkybox.SampleLevel(linearSampler, lightDir, lodLevel).xyz;
 
-    const float3 irradiance = texture(samplerCube(skyBox, linearSampler), normal).xyz;
+    float3 irradiance = skyBox.Sample(linearSampler, normal).xyz;
 
-    const float2 f_ab = texture(sampler2D(DFG, linearSampler), float2(NoV, roughness)).xy;
+#ifdef Shadow_Map
+    const float occlusion = shadowMap.Sample(linearSampler, uv);
+    radiance *= occlusion;
+    irradiance *= occlusion;
+#endif
+
+    const float2 f_ab = DFG.Sample(linearSampler, float2(NoV, roughness));
 
     if(baseAlbedo.w == 0.0f)
         discard;
@@ -100,5 +112,5 @@ void main()
     const float3 diffuse = calculateDiffuse(baseAlbedo.xyz, metalness, irradiance);
     const float3 specular = calculateSpecular(roughness * roughness, normal, viewDir, metalness, baseAlbedo.xyz, radiance, f_ab);
 
-    frameBuffer = float4(specular + diffuse, 1.0);
+    return float4(specular + diffuse, 1.0);
 }

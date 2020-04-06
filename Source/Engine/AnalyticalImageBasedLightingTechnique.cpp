@@ -21,6 +21,10 @@ AnalyticalImageBasedLightingTechnique::AnalyticalImageBasedLightingTechnique(Eng
 	task.addInput(kSkyBox, AttachmentType::Texture2D);
 	task.addInput(kConvolvedSkyBox, AttachmentType::Texture2D);
 	task.addInput(kDefaultSampler, AttachmentType::Sampler);
+
+	if (eng->isPassRegistered(PassType::Shadow))
+		task.addInput(kShadowMap, AttachmentType::Texture2D);
+
 	task.addInput(kMaterials, AttachmentType::ShaderResourceSet);
 
 	task.addOutput(kGlobalLighting, AttachmentType::RenderTarget2D, Format::RGBA8UNorm,

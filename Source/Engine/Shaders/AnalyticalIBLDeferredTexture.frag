@@ -1,4 +1,4 @@
-
+#include "VertexOutputs.hlsl"
 #include "PBR.hlsl"
 #include "NormalMapping.hlsl"
 #include "UniformBuffers.hlsl"
@@ -20,13 +20,13 @@ Texture2D<uint> materialIDTexture;
 Texture2D<float4> uvWithDerivitives;
 
 [[vk::binding(5)]]
-TextureCube<float4> skyBox
+TextureCube<float4> skyBox;
 
 [[vk::binding(6)]]
-TextureCube<float4> ConvolvedSkybox
+TextureCube<float4> ConvolvedSkybox;
 
 [[vk::binding(7)]]
-SamplerState linearSampler
+SamplerState linearSampler;
 
 #ifdef Shadow_Map
 [[vk::binding(8)]]
@@ -40,7 +40,7 @@ Texture2D materials[];
 
 #define MATERIAL_COUNT 		4
 
-float4 main(UVVertOutput vertOutput : TEXCOORD0)
+float4 main(UVVertOutput vertOutput)
 {
     const float2 uv = vertOutput.uv;
 
@@ -58,8 +58,8 @@ float4 main(UVVertOutput vertOutput : TEXCOORD0)
 
 	const float4 fragUVwithDifferentials = uvWithDerivitives.Sample(linearSampler, uv);
 
-	const float2 xDerivities = unpackHalf2x16(floatBitsToUint(fragUVwithDifferentials.z));
-    const float2 yDerivities = unpackHalf2x16(floatBitsToUint(fragUVwithDifferentials.w));
+	const float2 xDerivities = float2(asfloat(asuint(fragUVwithDifferentials.z) & 0xFFFF0000), asfloat(asuint(fragUVwithDifferentials.z) >> 16));
+    const float2 yDerivities = float2(asfloat(asuint(fragUVwithDifferentials.w) & 0xFFFF0000), asfloat(asuint(fragUVwithDifferentials.w) >> 16));
 
     const float3 viewDir = normalize(camera.position - worldSpaceFragmentPos.xyz);
 

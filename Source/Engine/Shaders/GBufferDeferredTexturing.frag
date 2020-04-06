@@ -1,35 +1,34 @@
-#version 450
-#extension GL_ARB_separate_shader_objects : enable
+#include "VertexOutputs.hlsl"
 
-
-layout(location = 0) in float3 normals;
-layout(location = 1) in flat uint materialID;
-layout(location = 2) in float2 uv;
-layout(location = 3) in float2 velocity;
-
-layout(location = 0) out float3 outNormals;
-layout(location = 1) out float4 outUV;
-layout(location = 2) out uint outMaterial;
-layout(location = 3) out float2 outVelocity;
-
-
-void main()
+struct DeferredGBuffer
 {
-	outNormals = (normals.xyz + 1.0f) * 0.5f;
+	float3 normal;
+	float2 uv;
+	uint materialID;
+	float2 velocity;
+};
+
+DeferredGBuffer main(GBufferVertOutput vertInput)
+{
+	DeferredGBuffer output;
+
+	output.normal = (vertInput.normal.xyz + 1.0f) * 0.5f;
 
 	// calculate the partial derivitves of the uvs so that we can do manual LOD selection
 	// in the lighting shaders. Will also help us calculate tangent space matracies later.
 	float4 uvWithDerivitives;
-	uvWithDerivitives.xy = uv;
+	uvWithDerivitives.xy = vertInput.uv;
 
 	// Pack the derivitives in to a single float this should still give us plenty of precision.
-	uint packedXDerivitives = packHalf2x16(dFdxFine(uv));
-	uint packedYDerivitives = packHalf2x16(dFdyFine(uv));
+	uint2 packedXDerivitives = f32tof16(ddx_fine(vertInput.uv));
+	uint2 packedYDerivitives = f32tof16(ddy_fine(vertInput.uv));
 
-	uvWithDerivitives.z = uintBitsToFloat(packedXDerivitives);
-	uvWithDerivitives.w = uintBitsToFloat(packedYDerivitives);
+	uvWithDerivitives.z = asfloat(packedXDerivitives.x | packedXDerivitives.y << 16);
+	uvWithDerivitives.w = asfloat(packedYDerivitives.x | packedYDerivitives.y << 16);
 
-	outUV = uvWithDerivitives;
-	outMaterial = materialID;
-	outVelocity = (velocity * 0.5f) + 0.5f;
+	output.uv = uvWithDerivitives;
+	output.materialID = vertInput.materialID;
+	output.velocity = (vertInput.velocity * 0.5f) + 0.5f;
+
+	return output;
 }
