@@ -13,7 +13,8 @@ endif(WIN32)
 find_package(Vulkan REQUIRED)
 # glfw doesn't have a good way to find itself on windows so include the source as a dependancy
 
-set(VULKAN 1) # vulkan default backend
+set(VULKAN 0) # vulkan default backend
+set(DX_12  1)
 
 include_directories(
 			"${CMAKE_CURRENT_LIST_DIR}/"
@@ -69,8 +70,16 @@ if(VULKAN)
 		Source/Core/Vulkan/VulkanSwapChain.cpp
 		Source/Core/Vulkan/VulkanBarrierManager.cpp)
 
-		add_definitions(-DVULKAN -DGLM_DEPTH_ZERO_TO_ONE)
-endif(VULKAN)
+	add_definitions(-DVULKAN -DGLM_DEPTH_ZERO_TO_ONE)
+elseif(DX_12)
+	set(BACKEND_SOURCE
+		Source/Core/DX_12/DX_12RenderInstance.cpp
+		Source/Core/DX_12/DX_12RenderDevice.cpp)
+
+		add_definitions(-DDX_12 -DGLM_DEPTH_ZERO_TO_ONE)
+else()
+message(FATAL_ERROR "no rendering back-end selected select VULKAN or DX_12")
+endif()
 
 set(BELL_BASE_SOURCE
 	# Core files (dependant on vulkan) 
@@ -102,10 +111,16 @@ set(BELL_BASE_SOURCE
 add_library("${PROJECT_NAME}_BASE" ${BELL_BASE_SOURCE})
 
 if(WIN32)
-    set(BELL_BASE_DEPENDANCIES ${Vulkan_LIBRARIES} glfw glslang SPIRV HLSL)
+    set(BELL_BASE_DEPENDANCIES glfw)
 else()
-    set(BELL_BASE_DEPENDANCIES ${Vulkan_LIBRARIES} glfw stdc++fs glslang SPIRV HLSL)
+    set(BELL_BASE_DEPENDANCIES glfw stdc++fs)
 endif(WIN32)
+
+if(VULKAN)
+	list(APPEND BELL_BASE_DEPENDANCIES ${Vulkan_LIBRARIES} glslang SPIRV HLSL)
+elseif(DX_12)
+	list(APPEND BELL_BASE_DEPENDANCIES D3d12 DXGI)
+endif()
 
 target_link_libraries("${PROJECT_NAME}_BASE" ${BELL_BASE_DEPENDANCIES})
 

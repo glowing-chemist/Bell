@@ -5,6 +5,10 @@
 #include "Core/Vulkan/VulkanRenderInstance.hpp" 
 #endif
 
+#ifdef DX_12
+#include "Core/DX_12/DX_12RenderInstance.hpp"
+#endif
+
 #include "Engine/Engine.hpp"
 #include "Engine/TextureUtil.hpp"
 #include "Engine/PreDepthTechnique.hpp"
@@ -35,6 +39,9 @@
 Engine::Engine(GLFWwindow* windowPtr) :
 #ifdef VULKAN
     mRenderInstance( new VulkanRenderInstance(windowPtr)),
+#endif
+#ifdef DX_12
+    mRenderInstance(new DX_12RenderInstance(windowPtr)),
 #endif
     mRenderDevice(mRenderInstance->createRenderDevice(DeviceFeaturesFlags::Compute | DeviceFeaturesFlags::Subgroup)),
     mCurrentScene("Initial current scene"),
