@@ -5,6 +5,8 @@
 
 #include <vulkan/vulkan.hpp>
 
+#include "glslang/Public/ShaderLang.h"
+
 
 class VulkanShader : public ShaderBase
 {
@@ -22,6 +24,9 @@ public:
 	}
 
 private:
+
+	EShLanguage getShaderStage(const std::string&) const;
+	EShLanguage mShaderStage;
 
 	vk::ShaderModule mShaderModule;
 

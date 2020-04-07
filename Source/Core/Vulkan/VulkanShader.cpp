@@ -175,7 +175,8 @@ namespace
 }
 
 VulkanShader::VulkanShader(RenderDevice* device, const std::string& path) :
-    ShaderBase{device, path}
+    ShaderBase{device, path},
+	mShaderStage{getShaderStage(mFilePath.string())}
 {
 }
 
@@ -319,3 +320,21 @@ bool VulkanShader::reload()
     return false;
 }
 
+
+EShLanguage VulkanShader::getShaderStage(const std::string& path) const
+{
+	if (path.find(".vert") != std::string::npos)
+		return EShLanguage::EShLangVertex;
+	else if (path.find(".frag") != std::string::npos)
+		return EShLanguage::EShLangFragment;
+	else if (path.find(".comp") != std::string::npos)
+		return EShLanguage::EShLangCompute;
+	else if (path.find(".geom") != std::string::npos)
+		return EShLanguage::EShLangGeometry;
+	else if (path.find(".tesc") != std::string::npos)
+		return EShLanguage::EShLangTessControl;
+	else if (path.find(".tese") != std::string::npos)
+		return EShLanguage::EShLangTessEvaluation;
+	else
+		return EShLanguage::EShLangFragment;
+}

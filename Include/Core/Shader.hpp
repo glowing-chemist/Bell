@@ -9,8 +9,6 @@
 #include <vector>
 #include <filesystem>
 
-#include "glslang/Public/ShaderLang.h"
-
 namespace fs = std::filesystem;
 
 
@@ -36,13 +34,10 @@ public:
 
 protected:
 
-    EShLanguage getShaderStage(const std::string&) const;
-
     std::string mGLSLSource;
     std::vector<unsigned int> mSPIRV;
 
 	fs::path mFilePath;
-    EShLanguage mShaderStage;
 
     bool mCompiled;
 
