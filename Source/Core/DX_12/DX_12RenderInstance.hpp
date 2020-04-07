@@ -22,6 +22,7 @@ private:
 	ID3D12Debug* mDebugHandle;
 
 	IDXGIFactory4* mFactory;
+	IDXGIAdapter3* mAdapter;
 	ID3D12Device6* mDevice;
 
 };

@@ -7,7 +7,10 @@
 
 DX_12RenderInstance::DX_12RenderInstance(GLFWwindow* window) :
 	RenderInstance(window),
-	mDebugHandle{nullptr}
+	mDebugHandle{nullptr},
+	mFactory{nullptr},
+	mAdapter{nullptr},
+	mDevice{nullptr}
 {
 	uint32_t factoryFlags = 0;
 #ifndef NDEBUG
@@ -22,7 +25,10 @@ DX_12RenderInstance::DX_12RenderInstance(GLFWwindow* window) :
 
 DX_12RenderInstance::~DX_12RenderInstance()
 {
-	
+	mDevice->Release();
+	mAdapter->Release();
+	mFactory->Release();
+	mDebugHandle->Release();
 }
 
 
@@ -55,6 +61,7 @@ RenderDevice* DX_12RenderInstance::createRenderDevice(const int DeviceFeatureFla
 	IDXGIAdapter3* chosenAdapter = nullptr;
 	mFactory->EnumAdapterByLuid(adapterLUID, __uuidof(IDXGIAdapter3), reinterpret_cast<void**>(&chosenAdapter));
 	BELL_ASSERT(chosenAdapter, "Unable to fetch adapter");
+	mAdapter = chosenAdapter;
 
 	ID3D12Device6* device = nullptr;
 	HRESULT result = D3D12CreateDevice(chosenAdapter, D3D_FEATURE_LEVEL_12_0, __uuidof(ID3D12Device6), reinterpret_cast<void**>(&device));
@@ -69,7 +76,7 @@ RenderDevice* DX_12RenderInstance::createRenderDevice(const int DeviceFeatureFla
 		BELL_ASSERT(subgroupSupportInfo.WaveOps, "Subgroup support requested but not supported by device");
 	}
 
-	return new DX_12RenderDevice(device);
+	return new DX_12RenderDevice(device, mAdapter, mWindow);
 }
 
 

@@ -2,12 +2,14 @@
 #define DX_12_RENDER_DEVICE_HPP
 
 #include "Core/RenderDevice.hpp"
+#include "D3D12MemAlloc.h"
 #include <d3d12.h>
+#include <dxgi1_4.h>
 
 class DX_12RenderDevice : public RenderDevice
 {
 public:
-	DX_12RenderDevice(ID3D12Device6*, GLFWwindow*);
+	DX_12RenderDevice(ID3D12Device*, IDXGIAdapter* adapter, GLFWwindow*);
 	~DX_12RenderDevice();
 
 	virtual void					   generateFrameResources(RenderGraph&) override;
@@ -41,7 +43,11 @@ public:
 private:
 
 	ID3D12Device6* mDevice;
+	IDXGIAdapter3* mAdapter;
 	GLFWwindow* mWindow;
+
+	D3D12MA::Allocator* mMemoryManager;
+
 };
 
 #endif

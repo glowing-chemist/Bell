@@ -31,7 +31,7 @@ include_directories(
 			"${CMAKE_CURRENT_LIST_DIR}/ThirdParty/imgui-node-editor/NodeEditor/Include"
 		    "${CMAKE_CURRENT_LIST_DIR}/ThirdParty/glm"	
 			"${CMAKE_CURRENT_LIST_DIR}/ThirdParty/stb_image"
-			"${CMAKE_CURRENT_LIST_DIR}/ThirdParty/glad/include"
+			"${CMAKE_CURRENT_LIST_DIR}/ThirdParty/D3D12MemoryAllocator/src"
 			${glslangIncludeDirs}
 			${glmIncludeDirs}
 		    )
@@ -74,7 +74,10 @@ if(VULKAN)
 elseif(DX_12)
 	set(BACKEND_SOURCE
 		Source/Core/DX_12/DX_12RenderInstance.cpp
-		Source/Core/DX_12/DX_12RenderDevice.cpp)
+		Source/Core/DX_12/DX_12RenderDevice.cpp
+		
+		ThirdParty/D3D12MemoryAllocator/src/D3D12MemAlloc.cpp
+		)
 
 		add_definitions(-DDX_12 -DGLM_DEPTH_ZERO_TO_ONE)
 else()
