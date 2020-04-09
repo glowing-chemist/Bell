@@ -280,6 +280,11 @@ vk::PipelineStageFlags getVulkanPipelineStage(const SyncPoint syncPoint)
 }
 #endif
 
+#ifdef DX_12
+
+
+
+#endif
 
 ImageLayout getImageLayout(const AttachmentType type)
 {

@@ -24,7 +24,6 @@ private:
 	IDXGIFactory4* mFactory;
 	IDXGIAdapter3* mAdapter;
 	ID3D12Device6* mDevice;
-
 };
 
 #endif

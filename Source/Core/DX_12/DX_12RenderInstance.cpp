@@ -16,7 +16,7 @@ DX_12RenderInstance::DX_12RenderInstance(GLFWwindow* window) :
 #ifndef NDEBUG
 	factoryFlags |= DXGI_CREATE_FACTORY_DEBUG;
 #endif
-	HRESULT result = CreateDXGIFactory2(factoryFlags, __uuidof(IDXGIFactory4), reinterpret_cast<void**>(&mFactory));
+	HRESULT result = CreateDXGIFactory2(factoryFlags, IID_PPV_ARGS(&mFactory));
 	BELL_ASSERT(result == S_OK, "Failed to create instace factory");
 
 	enableDebugCallback();
@@ -34,11 +34,11 @@ DX_12RenderInstance::~DX_12RenderInstance()
 
 RenderDevice* DX_12RenderInstance::createRenderDevice(const int DeviceFeatureFlags)
 {
-	bool geometryWanted = DeviceFeatureFlags & DeviceFeaturesFlags::Geometry;
-	bool tessWanted = DeviceFeatureFlags & DeviceFeaturesFlags::Tessalation;
-	bool discreteWanted = DeviceFeatureFlags & DeviceFeaturesFlags::Discrete;
-	bool computeWanted = DeviceFeatureFlags & DeviceFeaturesFlags::Compute;
-	bool subgroupWanted = DeviceFeatureFlags & DeviceFeaturesFlags::Subgroup;
+	const bool geometryWanted = DeviceFeatureFlags & DeviceFeaturesFlags::Geometry;
+	const bool tessWanted = DeviceFeatureFlags & DeviceFeaturesFlags::Tessalation;
+	const bool discreteWanted = DeviceFeatureFlags & DeviceFeaturesFlags::Discrete;
+	const bool computeWanted = DeviceFeatureFlags & DeviceFeaturesFlags::Compute;
+	const bool subgroupWanted = DeviceFeatureFlags & DeviceFeaturesFlags::Subgroup;
 
 	// Find the adapter with the larget amout of video memory
 	IDXGIAdapter1* testAdapter;
@@ -59,12 +59,12 @@ RenderDevice* DX_12RenderInstance::createRenderDevice(const int DeviceFeatureFla
 	}
 
 	IDXGIAdapter3* chosenAdapter = nullptr;
-	mFactory->EnumAdapterByLuid(adapterLUID, __uuidof(IDXGIAdapter3), reinterpret_cast<void**>(&chosenAdapter));
+	mFactory->EnumAdapterByLuid(adapterLUID, IID_PPV_ARGS(&chosenAdapter));
 	BELL_ASSERT(chosenAdapter, "Unable to fetch adapter");
 	mAdapter = chosenAdapter;
 
 	ID3D12Device6* device = nullptr;
-	HRESULT result = D3D12CreateDevice(chosenAdapter, D3D_FEATURE_LEVEL_12_0, __uuidof(ID3D12Device6), reinterpret_cast<void**>(&device));
+	HRESULT result = D3D12CreateDevice(chosenAdapter, D3D_FEATURE_LEVEL_12_0, IID_PPV_ARGS(&device));
 	BELL_ASSERT(device, "Unable to create device");
 
 	if (subgroupWanted)
@@ -82,7 +82,7 @@ RenderDevice* DX_12RenderInstance::createRenderDevice(const int DeviceFeatureFla
 
 void DX_12RenderInstance::enableDebugCallback()
 {
-	HRESULT result = D3D12GetDebugInterface(__uuidof(ID3D12Debug), reinterpret_cast<void**>(&mDebugHandle));
+	HRESULT result = D3D12GetDebugInterface(IID_PPV_ARGS(&mDebugHandle));
 	BELL_ASSERT(result == S_OK, "Failed to create debug Interface");
 
 	mDebugHandle->EnableDebugLayer();

@@ -86,7 +86,7 @@ VulkanImage::VulkanImage(RenderDevice* dev,
 
 VulkanImage::~VulkanImage()
 {
-	static_cast<VulkanRenderDevice*>(getDevice())->destroyImage(*this);
+	getDevice()->destroyImage(*this);
 }
 
 

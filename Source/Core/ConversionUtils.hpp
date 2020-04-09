@@ -10,6 +10,12 @@
 #include <vulkan/vulkan.hpp>
 #endif
 
+#ifdef DX_12
+#include <d3d12.h>
+#undef max
+#undef min
+#endif
+
 #ifdef VULKAN
 vk::ImageLayout getVulkanImageLayout(const AttachmentType);
 
@@ -27,6 +33,24 @@ vk::ImageLayout getVulkanImageLayout(const ImageLayout);
 
 vk::PipelineStageFlags getVulkanPipelineStage(const SyncPoint);
 
+#endif
+
+#ifdef DX_12
+D3D12_RESOURCE_STATES getDX12ImageLayout(const AttachmentType);
+
+AttachmentType getAttachmentType(const D3D12_RESOURCE_STATES);
+
+DXGI_FORMAT getDX12ImageFormat(const Format);
+
+D3D12_RESOURCE_FLAGS getDX12ImageUsage(const ImageUsage);
+
+D3D12_RESOURCE_FLAGS getDX12BufferUsage(const BufferUsage);
+
+Format getBellImageFormat(const DXGI_FORMAT);
+
+D3D12_RESOURCE_STATES getDX12ImageLayout(const ImageLayout);
+
+uint32_t getDX12PipelineStage(const SyncPoint); // Need to investigate Syn on DX12 more, looks like barriers are immediate?
 #endif
 
 ImageLayout getImageLayout(const AttachmentType);

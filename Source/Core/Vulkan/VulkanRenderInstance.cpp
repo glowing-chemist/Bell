@@ -128,11 +128,11 @@ RenderDevice* VulkanRenderInstance::createRenderDevice(const int DeviceFeatureFl
 
 std::pair<vk::PhysicalDevice, vk::Device> VulkanRenderInstance::findSuitableDevices(int DeviceFeatureFlags)
 {
-    bool geometryWanted = DeviceFeatureFlags & DeviceFeaturesFlags::Geometry;
-    bool tessWanted     = DeviceFeatureFlags & DeviceFeaturesFlags::Tessalation;
-    bool discreteWanted = DeviceFeatureFlags & DeviceFeaturesFlags::Discrete;
-    bool computeWanted  = DeviceFeatureFlags & DeviceFeaturesFlags::Compute;
-	bool subgroupWanted = DeviceFeatureFlags & DeviceFeaturesFlags::Subgroup;
+    const bool geometryWanted = DeviceFeatureFlags & DeviceFeaturesFlags::Geometry;
+    const bool tessWanted     = DeviceFeatureFlags & DeviceFeaturesFlags::Tessalation;
+    const bool discreteWanted = DeviceFeatureFlags & DeviceFeaturesFlags::Discrete;
+    const bool computeWanted  = DeviceFeatureFlags & DeviceFeaturesFlags::Compute;
+	const bool subgroupWanted = DeviceFeatureFlags & DeviceFeaturesFlags::Subgroup;
 
     auto availableDevices = mInstance.enumeratePhysicalDevices();
 
