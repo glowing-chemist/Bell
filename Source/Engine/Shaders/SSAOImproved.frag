@@ -21,9 +21,7 @@ SamplerState linearSampler;
 
 float main(PositionAndUVVertOutput vertInput)
 {     
-  const float area = 0.0075;
-  const float falloff = 0.000001;
-  const float radius = 0.00002;
+  const float radius = 0.0002;
 
   const uint maxSize = 4;// 2 x 2
   const uint flattenedPosition = (uint(camera.frameBufferSize.y *  vertInput.uv.y) % 3) * (uint(camera.frameBufferSize.x *  vertInput.uv.x) % 3);
@@ -45,7 +43,7 @@ float main(PositionAndUVVertOutput vertInput)
     float occ_depth = linearisedDepth.Sample(linearSampler, saturate(hemi_ray.xy));
     float difference = hemi_ray.z - occ_depth;
     
-    occlusion += step(falloff, difference) * (1.0f - smoothstep(falloff, area, difference));
+    occlusion += uint(hemi_ray.z < occ_depth);
   }
   
   float ao = 1.0f - (occlusion * (1.0f / 16.0f));
