@@ -36,6 +36,9 @@ void PreDepthTechnique::render(RenderGraph& graph, Engine*)
     task.setRecordCommandsCallback(
         [](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>& meshes)
         {
+            exec->bindIndexBuffer(eng->getIndexBuffer(), 0);
+            exec->bindVertexBuffer(eng->getVertexBuffer(), 0);
+
             for (const auto& mesh : meshes)
             {
                 // Don't render transparent geometry.

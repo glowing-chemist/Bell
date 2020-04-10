@@ -43,7 +43,7 @@ ForwardIBLTechnique::ForwardIBLTechnique(Engine* eng, RenderGraph& graph) :
 
 
 
-void ForwardIBLTechnique::render(RenderGraph& graph, Engine* eng)
+void ForwardIBLTechnique::render(RenderGraph& graph, Engine*)
 {
 	GraphicsTask& task = static_cast<GraphicsTask&>(graph.getTask(mTaskID));
 
