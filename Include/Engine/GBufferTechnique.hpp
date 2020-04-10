@@ -22,7 +22,7 @@ public:
 		{ return PassType::GBuffer; }
 
     virtual void bindResources(RenderGraph&) override final {};
-	virtual void render(RenderGraph&, Engine*, const std::vector<const Scene::MeshInstance *> &) override final;
+	virtual void render(RenderGraph&, Engine*) override final;
 
 private:
 
@@ -42,7 +42,7 @@ public:
 
 
     virtual void bindResources(RenderGraph&) override final {}
-	virtual void render(RenderGraph&, Engine*, const std::vector<const Scene::MeshInstance *> &) override final;
+	virtual void render(RenderGraph&, Engine*) override final;
 
 private:
 

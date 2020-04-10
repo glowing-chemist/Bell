@@ -24,7 +24,7 @@ public:
 
     virtual PassType getPassType() const = 0;
 
-	virtual void render(RenderGraph&, Engine*, const std::vector<const Scene::MeshInstance*>&) = 0;
+	virtual void render(RenderGraph&, Engine*) = 0;
 
     virtual void bindResources(RenderGraph&) = 0;
 

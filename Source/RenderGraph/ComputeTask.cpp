@@ -1,40 +1,6 @@
 #include "RenderGraph/ComputeTask.hpp"
 #include "RenderGraph/RenderGraph.hpp"
 
-void ComputeTask::recordCommands(Executor& exec, const RenderGraph& graph, const uint32_t taskIndex) const
-{
-    for(const auto& thunk : mComputeCalls)
-    {
-        switch(thunk.mDispatchType)
-        {
-            case DispatchType::Standard:
-                exec.dispatch(thunk.x,
-                                   thunk.y,
-                                   thunk.z);
-                break;
-
-            case DispatchType::Indirect:
-                exec.dispatchIndirect(graph.getBoundBuffer(thunk.mIndirectBuffer));
-                break;
-        }
-    }
-}
-
-
-void ComputeTask::mergeWith(const RenderTask& task)
-{
-	const auto& compueTask = static_cast<const ComputeTask&>(task);
-
-	mComputeCalls.insert(mComputeCalls.end(), compueTask.mComputeCalls.begin(), compueTask.mComputeCalls.end());
-
-	if(compueTask.mInputAttachments.size() > mInputAttachments.size())
-		mInputAttachments = compueTask.mInputAttachments;
-
-	if(compueTask.mOutputAttachments.size() > mOutputAttachments.size())
-		mOutputAttachments = compueTask.mOutputAttachments;
-}
-
-
 namespace std
 {
 

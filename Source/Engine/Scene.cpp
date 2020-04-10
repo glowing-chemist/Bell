@@ -387,7 +387,7 @@ void Scene::computeBounds(const MeshType type)
 }
 
 
-std::vector<const Scene::MeshInstance *> Scene::getViewableMeshes(const Frustum& frustum) const
+std::vector<const MeshInstance *> Scene::getViewableMeshes(const Frustum& frustum) const
 {
     std::vector<const MeshInstance*> instances;
 
@@ -407,7 +407,7 @@ Frustum Scene::getShadowingLightFrustum() const
 }
 
 
-Scene::MeshInstance* Scene::getMeshInstance(const InstanceID id)
+MeshInstance* Scene::getMeshInstance(const InstanceID id)
 {
 	if (id <= 0)
 	{
@@ -472,8 +472,8 @@ std::vector<Scene::Intersection> Scene::getIntersections() const
 
 	for (auto& mesh : mStaticMeshInstances)
 	{
-        const std::vector<Scene::MeshInstance*> staticMeshes = mStaticMeshBoundingVolume.getIntersections(mesh.mMesh->getAABB() * mesh.getTransMatrix());
-        const std::vector<Scene::MeshInstance*> dynamicMeshes = mDynamicMeshBoundingVolume.getIntersections(mesh.mMesh->getAABB() * mesh.getTransMatrix());
+        const std::vector<MeshInstance*> staticMeshes = mStaticMeshBoundingVolume.getIntersections(mesh.mMesh->getAABB() * mesh.getTransMatrix());
+        const std::vector<MeshInstance*> dynamicMeshes = mDynamicMeshBoundingVolume.getIntersections(mesh.mMesh->getAABB() * mesh.getTransMatrix());
 
 		for (auto& m : staticMeshes)
 		{
@@ -488,8 +488,8 @@ std::vector<Scene::Intersection> Scene::getIntersections() const
 
 	for (auto& mesh : mDynamicMeshInstances)
 	{
-        const std::vector<Scene::MeshInstance*> staticMeshes = mStaticMeshBoundingVolume.getIntersections(mesh.mMesh->getAABB() * mesh.getTransMatrix());
-        const std::vector<Scene::MeshInstance*> dynamicMeshes = mDynamicMeshBoundingVolume.getIntersections(mesh.mMesh->getAABB() * mesh.getTransMatrix());
+        const std::vector<MeshInstance*> staticMeshes = mStaticMeshBoundingVolume.getIntersections(mesh.mMesh->getAABB() * mesh.getTransMatrix());
+        const std::vector<MeshInstance*> dynamicMeshes = mDynamicMeshBoundingVolume.getIntersections(mesh.mMesh->getAABB() * mesh.getTransMatrix());
 
 		for (auto& m : staticMeshes)
 		{
@@ -510,8 +510,8 @@ std::vector<Scene::Intersection> Scene::getIntersections(const InstanceID id)
 {
 	const MeshInstance* instanceToTest = getMeshInstance(id);
 
-    const std::vector<Scene::MeshInstance*> staticMeshes = mStaticMeshBoundingVolume.getIntersections(instanceToTest->mMesh->getAABB() * instanceToTest->getTransMatrix());
-    const std::vector<Scene::MeshInstance*> dynamicMeshes = mDynamicMeshBoundingVolume.getIntersections(instanceToTest->mMesh->getAABB() * instanceToTest->getTransMatrix());
+    const std::vector<MeshInstance*> staticMeshes = mStaticMeshBoundingVolume.getIntersections(instanceToTest->mMesh->getAABB() * instanceToTest->getTransMatrix());
+    const std::vector<MeshInstance*> dynamicMeshes = mDynamicMeshBoundingVolume.getIntersections(instanceToTest->mMesh->getAABB() * instanceToTest->getTransMatrix());
 
 	std::vector<Intersection> intersections{};
 	intersections.reserve(staticMeshes.size() + dynamicMeshes.size());
@@ -540,8 +540,8 @@ std::vector<Scene::Intersection> Scene::getIntersections(const InstanceID Ignore
 {
 	const MeshInstance* instanceToIgnore = getMeshInstance(IgnoreID);
 
-	const std::vector<Scene::MeshInstance*> staticMeshes = mStaticMeshBoundingVolume.getIntersections(aabbToTest);
-	const std::vector<Scene::MeshInstance*> dynamicMeshes = mDynamicMeshBoundingVolume.getIntersections(aabbToTest);
+	const std::vector<MeshInstance*> staticMeshes = mStaticMeshBoundingVolume.getIntersections(aabbToTest);
+	const std::vector<MeshInstance*> dynamicMeshes = mDynamicMeshBoundingVolume.getIntersections(aabbToTest);
 
 	std::vector<Intersection> intersections{};
 	intersections.reserve(staticMeshes.size() + dynamicMeshes.size());

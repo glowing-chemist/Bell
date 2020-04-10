@@ -1,5 +1,6 @@
 #include "Engine/DFGGenerationTechnique.hpp"
 #include "Engine/Engine.hpp"
+#include "Core/Executor.hpp"
 
 
 DFGGenerationTechnique::DFGGenerationTechnique(Engine* eng, RenderGraph& graph) :
@@ -16,18 +17,31 @@ DFGGenerationTechnique::DFGGenerationTechnique(Engine* eng, RenderGraph& graph) 
 
 }
 
-void DFGGenerationTechnique::render(RenderGraph& graph, Engine*, const std::vector<const Scene::MeshInstance*>&)
+void DFGGenerationTechnique::render(RenderGraph& graph, Engine*)
 {
 	mDFGLUT->updateLastAccessed();
 	mDFGLUTView->updateLastAccessed();
 
 	ComputeTask& task = static_cast<ComputeTask&>(graph.getTask(mTaskID));
-	task.clearCalls();
 
 	if (mFirstFrame)
 	{
-		task.addDispatch(32, 32, 1);
+		task.setRecordCommandsCallback(
+			[](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+			{
+				exec->dispatch(32, 32, 1);
+			}
+		);
 
 		mFirstFrame = false;
+	}
+	else
+	{
+		task.setRecordCommandsCallback(
+			[](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+			{
+				return;
+			}
+		);
 	}
 }

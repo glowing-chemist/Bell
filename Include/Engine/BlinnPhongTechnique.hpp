@@ -48,7 +48,7 @@ public:
     virtual void bindResources(RenderGraph& graph) override final
 	{}
 	
-	virtual void render(RenderGraph&, Engine*, const std::vector<const Scene::MeshInstance*>&) override final 
+	virtual void render(RenderGraph&, Engine*) override final 
 	{}
 
 private:

@@ -1,4 +1,5 @@
 #include "Engine/PreDepthTechnique.hpp"
+#include "Core/Executor.hpp"
 
 
 PreDepthTechnique::PreDepthTechnique(Engine* eng, RenderGraph& graph) :
@@ -28,23 +29,26 @@ PreDepthTechnique::PreDepthTechnique(Engine* eng, RenderGraph& graph) :
 }
 
 
-void PreDepthTechnique::render(RenderGraph& graph, Engine* eng, const std::vector<const Scene::MeshInstance *>& meshes)
+void PreDepthTechnique::render(RenderGraph& graph, Engine*)
 {
     GraphicsTask& task = static_cast<GraphicsTask&>(graph.getTask(mTaskID));
 
-    task.clearCalls();
+    task.setRecordCommandsCallback(
+        [](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>& meshes)
+        {
+            for (const auto& mesh : meshes)
+            {
+                // Don't render transparent geometry.
+                if ((mesh->mMesh->getAttributes() & MeshAttributes::Transparent) > 0)
+                    continue;
 
-    for (const auto& mesh : meshes)
-    {
-        // Don't render transparent geometry.
-        if((mesh->mMesh->getAttributes() & MeshAttributes::Transparent) > 0)
-            continue;
+                const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->mMesh);
 
-        const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->mMesh);
+                const MeshEntry entry = mesh->getMeshShaderEntry();
 
-        const MeshEntry entry = mesh->getMeshShaderEntry();
-
-        task.addPushConsatntValue(&entry, sizeof(MeshEntry));
-        task.addIndexedDrawCall(vertexOffset / mesh->mMesh->getVertexStride(), indexOffset / sizeof(uint32_t), mesh->mMesh->getIndexData().size());
-    }
+                exec->insertPushConsatnt(&entry, sizeof(MeshEntry));
+                exec->indexedDraw(vertexOffset / mesh->mMesh->getVertexStride(), indexOffset / sizeof(uint32_t), mesh->mMesh->getIndexData().size());
+            }
+        }
+    );
 }

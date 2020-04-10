@@ -18,7 +18,7 @@ public:
     }
 
     // default empty implementations as most classes won't need to do anything for one of these.
-    virtual void render(RenderGraph& graph, Engine*, const std::vector<const Scene::MeshInstance*>&) override final
+    virtual void render(RenderGraph& graph, Engine*) override final
     {}
 
     virtual void bindResources(RenderGraph&) override final {}

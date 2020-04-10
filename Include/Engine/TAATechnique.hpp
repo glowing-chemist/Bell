@@ -19,7 +19,7 @@ public:
 		return PassType::TAA;
 	}
 
-	virtual void render(RenderGraph&, Engine*, const std::vector<const Scene::MeshInstance*>&) override;
+	virtual void render(RenderGraph&, Engine*) override;
 
 	virtual void bindResources(RenderGraph&) override;
 

@@ -3,6 +3,7 @@
 #include "Engine/Engine.hpp"
 #include "Engine/DefaultResourceSlots.hpp"
 #include "RenderGraph/GraphicsTask.hpp"
+#include "Core/Executor.hpp"
 
 
 CompositeTechnique::CompositeTechnique(Engine* eng, RenderGraph& graph) :
@@ -36,7 +37,12 @@ CompositeTechnique::CompositeTechnique(Engine* eng, RenderGraph& graph) :
 
 		compositeTask.addOutput(kFrameBufer, AttachmentType::RenderTarget2D, eng->getSwapChainImage()->getFormat(), SizeClass::Custom, LoadOp::Clear_Black);
 
-		compositeTask.addDrawCall(0, 3);
+		compositeTask.setRecordCommandsCallback(
+			[](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+			{
+				exec->draw(0, 3);
+			}
+		);
 
 		graph.addTask(compositeTask);
 	}
@@ -58,7 +64,12 @@ CompositeTechnique::CompositeTechnique(Engine* eng, RenderGraph& graph) :
 
 		compositeTask.addOutput(kFrameBufer, AttachmentType::RenderTarget2D, eng->getSwapChainImage()->getFormat(), SizeClass::Custom, LoadOp::Clear_Black);
 
-		compositeTask.addDrawCall(0, 3);
+		compositeTask.setRecordCommandsCallback(
+			[](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+			{
+				exec->draw(0, 3);
+			}
+		);
 
 		graph.addTask(compositeTask);
 	}
@@ -79,7 +90,12 @@ CompositeTechnique::CompositeTechnique(Engine* eng, RenderGraph& graph) :
 
 		compositeTask.addOutput(kFrameBufer, AttachmentType::RenderTarget2D, eng->getSwapChainImage()->getFormat(), SizeClass::Custom, LoadOp::Clear_Black);
 
-		compositeTask.addDrawCall(0, 3);
+		compositeTask.setRecordCommandsCallback(
+			[](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+			{
+				exec->draw(0, 3);
+			}
+		);
 
 		graph.addTask(compositeTask);
 	}
@@ -102,7 +118,12 @@ CompositeTechnique::CompositeTechnique(Engine* eng, RenderGraph& graph) :
 
 		compositeTask.addOutput(kFrameBufer, AttachmentType::RenderTarget2D, eng->getSwapChainImage()->getFormat(), SizeClass::Custom, LoadOp::Clear_Black);
 
-		compositeTask.addDrawCall(0, 3);
+		compositeTask.setRecordCommandsCallback(
+			[](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+			{
+				exec->draw(0, 3);
+			}
+		);
 
 		graph.addTask(compositeTask);
 	}
@@ -122,7 +143,12 @@ CompositeTechnique::CompositeTechnique(Engine* eng, RenderGraph& graph) :
 
 		compositeTask.addOutput(kFrameBufer, AttachmentType::RenderTarget2D, eng->getSwapChainImage()->getFormat(), SizeClass::Custom, LoadOp::Clear_Black);
 
-		compositeTask.addDrawCall(0, 3);
+		compositeTask.setRecordCommandsCallback(
+			[](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+			{
+				exec->draw(0, 3);
+			}
+		);
 
 		graph.addTask(compositeTask);
 	}
@@ -143,7 +169,12 @@ CompositeTechnique::CompositeTechnique(Engine* eng, RenderGraph& graph) :
 		compositeTask.addInput(kSSAO, AttachmentType::Texture2D);
 		compositeTask.addInput(kDefaultSampler, AttachmentType::Sampler);
 		compositeTask.addOutput(kCompositeOutput, AttachmentType::RenderTarget2D, eng->getSwapChainImage()->getFormat(), SizeClass::Swapchain, LoadOp::Clear_Black);
-		compositeTask.addDrawCall(0, 3);
+		compositeTask.setRecordCommandsCallback(
+			[](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+			{
+				exec->draw(0, 3);
+			}
+		);
 
 		graph.addTask(compositeTask);
 
@@ -162,7 +193,12 @@ CompositeTechnique::CompositeTechnique(Engine* eng, RenderGraph& graph) :
 		overlayTask.addInput(kDefaultSampler, AttachmentType::Sampler);
 		overlayTask.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
 		overlayTask.addOutput(kFrameBufer, AttachmentType::RenderTarget2D, eng->getSwapChainImage()->getFormat(), SizeClass::Custom, LoadOp::Clear_Black);
-		overlayTask.addDrawCall(0, 3);
+		overlayTask.setRecordCommandsCallback(
+			[](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+			{
+				exec->draw(0, 3);
+			}
+		);
 
 		graph.addTask(overlayTask);
 	}
@@ -182,7 +218,12 @@ CompositeTechnique::CompositeTechnique(Engine* eng, RenderGraph& graph) :
 		compositeTask.addInput(kSSAO, AttachmentType::Texture2D);
 		compositeTask.addInput(kDefaultSampler, AttachmentType::Sampler);
 		compositeTask.addOutput(kCompositeOutput, AttachmentType::RenderTarget2D, eng->getSwapChainImage()->getFormat(), SizeClass::Swapchain, LoadOp::Clear_Black);
-		compositeTask.addDrawCall(0, 3);
+		compositeTask.setRecordCommandsCallback(
+			[](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+			{
+				exec->draw(0, 3);
+			}
+		);
 
 		graph.addTask(compositeTask);
 
@@ -201,7 +242,12 @@ CompositeTechnique::CompositeTechnique(Engine* eng, RenderGraph& graph) :
 		overlayTask.addInput(kDefaultSampler, AttachmentType::Sampler);
 		overlayTask.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
 		overlayTask.addOutput(kFrameBufer, AttachmentType::RenderTarget2D, eng->getSwapChainImage()->getFormat(), SizeClass::Custom, LoadOp::Clear_Black);
-		overlayTask.addDrawCall(0, 3);
+		overlayTask.setRecordCommandsCallback(
+			[](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+			{
+				exec->draw(0, 3);
+			}
+		);
 
 		graph.addTask(overlayTask);
 	}
@@ -221,7 +267,12 @@ CompositeTechnique::CompositeTechnique(Engine* eng, RenderGraph& graph) :
 
 		compositeTask.addOutput(kFrameBufer, AttachmentType::RenderTarget2D, eng->getSwapChainImage()->getFormat(), SizeClass::Custom, LoadOp::Clear_Black);
 
-		compositeTask.addDrawCall(0, 3);
+		compositeTask.setRecordCommandsCallback(
+			[](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+			{
+				exec->draw(0, 3);
+			}
+		);
 
 		graph.addTask(compositeTask);
 	}

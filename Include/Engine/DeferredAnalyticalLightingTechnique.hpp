@@ -18,7 +18,7 @@ public:
 		return PassType::DeferredAnalyticalLighting;
 	}
 
-	virtual void render(RenderGraph& graph, Engine*, const std::vector<const Scene::MeshInstance*>&) override final
+	virtual void render(RenderGraph& graph, Engine*) override final
 	{
 		mAnalyticalLighting.get()->updateLastAccessed();
 		mAnalyticalLightingView.get()->updateLastAccessed();

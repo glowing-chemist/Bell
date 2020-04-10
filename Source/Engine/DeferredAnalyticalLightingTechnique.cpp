@@ -1,5 +1,6 @@
 #include "Engine/DeferredAnalyticalLightingTechnique.hpp"
 #include "Engine/Engine.hpp"
+#include "Core/Executor.hpp"
 
 
 DeferredAnalyticalLightingTechnique::DeferredAnalyticalLightingTechnique(Engine* eng, RenderGraph& graph) :
@@ -27,12 +28,17 @@ DeferredAnalyticalLightingTechnique::DeferredAnalyticalLightingTechnique(Engine*
 	task.addInput(kAnalyticLighting, AttachmentType::Image2D);
 	task.addInput(kLightBuffer, AttachmentType::ShaderResourceSet);
 
-	const float threadGroupWidth = eng->getSwapChainImageView()->getImageExtent().width;
-	const float threadGroupHeight = eng->getSwapChainImageView()->getImageExtent().height;
+	task.setRecordCommandsCallback(
+		[](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+		{
+			const float threadGroupWidth = eng->getSwapChainImageView()->getImageExtent().width;
+			const float threadGroupHeight = eng->getSwapChainImageView()->getImageExtent().height;
 
-	task.addDispatch(	static_cast<uint32_t>(std::ceil(threadGroupWidth / 32.0f)),
-						static_cast<uint32_t>(std::ceil(threadGroupHeight / 32.0f)),
-						1);
+			exec->dispatch(	static_cast<uint32_t>(std::ceil(threadGroupWidth / 32.0f)),
+							static_cast<uint32_t>(std::ceil(threadGroupHeight / 32.0f)),
+							1);
+		}
+	);
 
 	mTaskID = graph.addTask(task);
 }

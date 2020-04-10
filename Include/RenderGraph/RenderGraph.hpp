@@ -136,13 +136,9 @@ private:
 	void generateInternalResources(RenderDevice*);
 
 	void reorderTasks();
-	void mergeTasks();
 
 	// Selecets the best task to execuet next based on some heuristics.
 	uint32_t selectNextTask(const std::vector<uint8_t>& dependancies, const TaskType) const;
-
-    bool areSupersets(const RenderTask&, const RenderTask&);
-    void mergeTasks(RenderTask&, RenderTask&);
 
     void bindResource(const std::string&, const uint32_t, const ResourceType);
 

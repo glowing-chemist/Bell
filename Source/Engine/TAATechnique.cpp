@@ -1,6 +1,7 @@
 #include "Engine/TAATechnique.hpp"
 #include "Engine/Engine.hpp"
 #include "Engine/DefaultResourceSlots.hpp"
+#include "Core/Executor.hpp"
 
 
 TAATechnique::TAATechnique(Engine* eng, RenderGraph& graph) :
@@ -37,7 +38,7 @@ TAATechnique::TAATechnique(Engine* eng, RenderGraph& graph) :
 }
 
 
-void TAATechnique::render(RenderGraph& graph, Engine* eng, const std::vector<const Scene::MeshInstance*>&)
+void TAATechnique::render(RenderGraph& graph, Engine* eng)
 {
 	if (mFirstFrame)
 	{
@@ -46,13 +47,18 @@ void TAATechnique::render(RenderGraph& graph, Engine* eng, const std::vector<con
 	}
 
 	ComputeTask& resolveTAA = static_cast<ComputeTask&>(graph.getTask(mTaskID));
-	resolveTAA.clearCalls();
 
-	const float threadGroupWidth = eng->getSwapChainImageView()->getImageExtent().width;
-	const float threadGroupHeight = eng->getSwapChainImageView()->getImageExtent().height;
-	resolveTAA.addDispatch(static_cast<uint32_t>(std::ceil(threadGroupWidth / 32.0f)),
+	resolveTAA.setRecordCommandsCallback(
+		[](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+		{
+			const float threadGroupWidth = eng->getSwapChainImageView()->getImageExtent().width;
+			const float threadGroupHeight = eng->getSwapChainImageView()->getImageExtent().height;
+
+			exec->dispatch(	static_cast<uint32_t>(std::ceil(threadGroupWidth / 32.0f)),
 							static_cast<uint32_t>(std::ceil(threadGroupHeight / 32.0f)),
 							1);
+		}
+	);
 }
 
 

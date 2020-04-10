@@ -1,5 +1,6 @@
 #include "Engine/LineariseDepthTechnique.hpp"
 #include "Engine/Engine.hpp"
+#include "Core/Executor.hpp"
 
 
 LineariseDepthTechnique::LineariseDepthTechnique(Engine* eng, RenderGraph& graph) :
@@ -20,11 +21,15 @@ LineariseDepthTechnique::LineariseDepthTechnique(Engine* eng, RenderGraph& graph
 }
 
 
-void LineariseDepthTechnique::render(RenderGraph& graph, Engine* eng, const std::vector<const Scene::MeshInstance*>&)
+void LineariseDepthTechnique::render(RenderGraph& graph, Engine* eng)
 {
 	ComputeTask& task = static_cast<ComputeTask&>(graph.getTask(mTaskID));
-	task.clearCalls();
 
-	const auto extent = eng->getDevice()->getSwapChainImageView()->getImageExtent();
-	task.addDispatch(std::ceil(extent.width / 32.0f), std::ceil(extent.height / 32.0f), 1);
+	task.setRecordCommandsCallback(
+		[](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+		{
+			const auto extent = eng->getDevice()->getSwapChainImageView()->getImageExtent();
+			exec->dispatch(std::ceil(extent.width / 32.0f), std::ceil(extent.height / 32.0f), 1);
+		}
+	);
 }

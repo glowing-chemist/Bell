@@ -378,22 +378,34 @@ void Engine::execute(RenderGraph& graph)
     mCurrentRenderGraph.bindInternalResources();
 	mRenderDevice->generateFrameResources(graph);
 
-    auto barriers = graph.generateBarriers(mRenderDevice);
+    std::vector<const MeshInstance*> meshes = mCurrentScene.getViewableMeshes(mCurrentScene.getCamera().getFrustum());
+    std::sort(meshes.begin(), meshes.end(), [camera = mCurrentScene.getCamera()](const MeshInstance* lhs, const MeshInstance* rhs)
+    {
+        const float3 centralLeft = lhs->mMesh->getAABB().getCentralPoint();
+        const float leftDistance = glm::length(centralLeft - camera.getPosition());
 
+        const float3 centralright = rhs->mMesh->getAABB().getCentralPoint();
+        const float rightDistance = glm::length(centralright - camera.getPosition());
+
+        return leftDistance < rightDistance;
+    });
+
+    //BELL_LOG_ARGS("Meshes %d", meshes.size());
+
+    auto barriers = graph.generateBarriers(mRenderDevice);
 	// process scene.
     auto barrier = barriers.begin();
     uint32_t taskIndex = 0;
     for (auto task = graph.taskBegin(); task != graph.taskEnd(); ++task, ++barrier, ++taskIndex)
 	{
-
         mRenderDevice->execute(*barrier);
 
 		mRenderDevice->startPass(*task);
 
 		Executor* exec = mRenderDevice->getPassExecutor();
-		BELL_ASSERT(exec, "Failed to create executor")
+        BELL_ASSERT(exec, "Failed to create executor");
 
-        (*task).recordCommands(*exec, graph, taskIndex);
+        (*task).executeRecordCommandsCallback(exec, this, meshes);
 
         mRenderDevice->freePassExecutor(exec);
 
@@ -412,21 +424,7 @@ void Engine::execute(RenderGraph& graph)
 
 
 void Engine::recordScene()
-{
-    std::vector<const Scene::MeshInstance*> meshes = mCurrentScene.getViewableMeshes(mCurrentScene.getCamera().getFrustum());
-    std::sort(meshes.begin(), meshes.end(), [camera = mCurrentScene.getCamera()] (const Scene::MeshInstance* lhs, const Scene::MeshInstance* rhs)
-    {
-        const float3 centralLeft = lhs->mMesh->getAABB().getCentralPoint();
-        const float leftDistance = glm::length(centralLeft - camera.getPosition());
-
-        const float3 centralright = rhs->mMesh->getAABB().getCentralPoint();
-        const float rightDistance = glm::length(centralright - camera.getPosition());
-
-        return leftDistance < rightDistance;
-    });
-
-    //BELL_LOG_ARGS("Meshes %d", meshes.size());
-    
+{   
     // Add new techniques
     if (mPassesRegisteredThisFrame > 0)
     {
@@ -445,7 +443,7 @@ void Engine::recordScene()
 
 	for(auto& tech : mTechniques)
 	{
-		tech->render(mCurrentRenderGraph, this, meshes);
+		tech->render(mCurrentRenderGraph, this);
 	}
 
 	for(const auto& tech : mTechniques)

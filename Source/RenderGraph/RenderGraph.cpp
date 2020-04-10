@@ -153,7 +153,6 @@ void RenderGraph::compile(RenderDevice* dev)
 	compileDependancies();
 	generateInternalResources(dev);
 	reorderTasks();
-	mergeTasks();
 }
 
 
@@ -583,9 +582,6 @@ uint32_t RenderGraph::selectNextTask(const std::vector<uint8_t>& dependancies, c
 			if(task.taskType() == taskType)
 				taskCompatibilityScore += 30;
 
-			// Take in to account how much work each task will do
-			taskCompatibilityScore += task.recordedCommandCount();
-
 			// Calculate how many other tasks depend on this one, prioritise tasks that have a larger
 			// number of dependants.
 			uint32_t dependantTasks = 0;
@@ -610,76 +606,6 @@ uint32_t RenderGraph::selectNextTask(const std::vector<uint8_t>& dependancies, c
 	BELL_ASSERT(maxElementIt != prospectiveTaskIndicies.end(), "Unable to find next task")
 
 	return (*maxElementIt).first;
-}
-
-
-void RenderGraph::mergeTasks()
-{
-    for(uint32_t i = 0; i < taskCount() - 1; ++i)
-    {
-        const auto [type, index] = mTaskOrder[i];
-        const auto [secondType, secondIndex] = mTaskOrder[i + 1];
-
-        auto& task1 = getTask(type, index);
-        auto& task2 = getTask(secondType, secondIndex);
-
-        if(areSupersets(task1, task2))
-        {
-            mergeTasks(task1, task2);
-
-            // We souldn't need to worry about cleaning up any other tracking state as we should have already serialised by now.
-            if(task2.taskType() == TaskType::Graphics)
-            {
-                mGraphicsTasks.erase(std::remove(mGraphicsTasks.begin(), mGraphicsTasks.end(), static_cast<GraphicsTask&>(task2)), mGraphicsTasks.end());
-            } else
-            {
-				mComputeTasks.erase(std::remove(mComputeTasks.begin(), mComputeTasks.end(), static_cast<ComputeTask&>(task2)), mComputeTasks.end());
-            }
-
-            mTaskOrder.erase(mTaskOrder.begin() + i + 1);
-            mInputResources.erase(mInputResources.begin() + i + 1);
-            mOutputResources.erase(mOutputResources.begin() + i + 1);
-        }
-    }
-}
-
-
-bool RenderGraph::areSupersets(const RenderTask& task1, const RenderTask& task2)
-{
-    if(task1.taskType() != task2.taskType())
-        return false;
-
-	auto outputPred = [](const RenderTask::OutputAttachmentInfo& lhs, const RenderTask::OutputAttachmentInfo& rhs)
-	{
-		return lhs.mName == rhs.mName; // Should be strong enough?
-	};
-
-	auto inputPred = [](const auto& lhs, const auto& rhs)
-	{
-		return lhs.mName == rhs.mName; // Should be strong enough?
-	};
-
-	bool isFrameBufferSubset = std::search(task1.getOuputAttachments().begin(), task1.getOuputAttachments().end(),
-								  task2.getOuputAttachments().begin(), task2.getOuputAttachments().end(), outputPred) == task1.getOuputAttachments().begin();
-
-	isFrameBufferSubset = isFrameBufferSubset || std::search(task2.getOuputAttachments().begin(), task2.getOuputAttachments().end(),
-								  task1.getOuputAttachments().begin(), task1.getOuputAttachments().end(), outputPred) == task2.getOuputAttachments().begin();
-
-	bool isDescriptorSubset = std::search(task1.getInputAttachments().begin(), task1.getInputAttachments().end(),
-							  task2.getInputAttachments().begin(), task2.getInputAttachments().end(), inputPred) == task1.getInputAttachments().begin();
-
-	isDescriptorSubset = isDescriptorSubset || std::search(task2.getInputAttachments().begin(), task2.getInputAttachments().end(),
-							  task1.getInputAttachments().begin(), task1.getInputAttachments().end(), inputPred) == task2.getInputAttachments().begin();
-
-    return isFrameBufferSubset && isDescriptorSubset;
-}
-
-
-void RenderGraph::mergeTasks(RenderTask& task1, RenderTask& task2)
-{
-	task1.mergeWith(task2);
-
-    task2.clearCalls();
 }
 
 

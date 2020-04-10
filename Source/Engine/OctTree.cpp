@@ -209,9 +209,9 @@ std::array<AABB, 8> OctTreeFactory<T>::splitAABB(const AABB& aabb) const
 #include "Engine/Scene.h"
 
 template
-class OctTreeFactory<Scene::MeshInstance*>;
+class OctTreeFactory<MeshInstance*>;
 
 template
-class OctTree<Scene::MeshInstance*>;
+class OctTree<MeshInstance*>;
 
 

@@ -1,7 +1,7 @@
 #include "Engine/GBufferMaterialTechnique.hpp"
 
 #include "Engine/DefaultResourceSlots.hpp"
-
+#include "Core/Executor.hpp"
 
 GBufferMaterialTechnique::GBufferMaterialTechnique(Engine* eng, RenderGraph& graph) :
     Technique{"GBufferMaterial", eng->getDevice()},
@@ -33,21 +33,30 @@ GBufferMaterialTechnique::GBufferMaterialTechnique(Engine* eng, RenderGraph& gra
 }
 
 
-void GBufferMaterialTechnique::render(RenderGraph& graph, Engine* eng, const std::vector<const Scene::MeshInstance *>& meshes)
+void GBufferMaterialTechnique::render(RenderGraph& graph, Engine* eng)
 {
     GraphicsTask& task = static_cast<GraphicsTask&>(graph.getTask(mTaskID));
 
-    task.clearCalls();
+    task.setRecordCommandsCallback(
+        [](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>& meshes)
+        {
+            exec->bindIndexBuffer(eng->getIndexBuffer(), 0);
+            exec->bindVertexBuffer(eng->getVertexBuffer(), 0);
 
-    for (const auto& mesh : meshes)
-    {
-        const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->mMesh);
+            for (const auto& mesh : meshes)
+            {
+                if (mesh->mMesh->getAttributes() & MeshAttributes::Transparent)
+                    continue;
 
-        const MeshEntry entry = mesh->getMeshShaderEntry();
+                const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->mMesh);
 
-        task.addPushConsatntValue(&entry, sizeof(MeshEntry));
-        task.addIndexedDrawCall(vertexOffset / mesh->mMesh->getVertexStride(), indexOffset / sizeof(uint32_t), mesh->mMesh->getIndexData().size());
-    }
+                const MeshEntry entry = mesh->getMeshShaderEntry();
+
+                exec->insertPushConsatnt(&entry, sizeof(MeshEntry));
+                exec->indexedDraw(vertexOffset / mesh->mMesh->getVertexStride(), indexOffset / sizeof(uint32_t), mesh->mMesh->getIndexData().size());
+            }
+        }
+    );
 }
 
 
@@ -84,19 +93,28 @@ GBufferMaterialPreDepthTechnique::GBufferMaterialPreDepthTechnique(Engine* eng, 
 }
 
 
-void GBufferMaterialPreDepthTechnique::render(RenderGraph& graph, Engine* eng, const std::vector<const Scene::MeshInstance *>& meshes)
+void GBufferMaterialPreDepthTechnique::render(RenderGraph& graph, Engine* eng)
 {
     GraphicsTask& task = static_cast<GraphicsTask&>(graph.getTask(mTaskID));
 
-    task.clearCalls();
+    task.setRecordCommandsCallback(
+        [](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>& meshes)
+        {
+            exec->bindIndexBuffer(eng->getIndexBuffer(), 0);
+            exec->bindVertexBuffer(eng->getVertexBuffer(), 0);
 
-    for (const auto& mesh : meshes)
-    {
-        const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->mMesh);
+            for (const auto& mesh : meshes)
+            {
+                if (mesh->mMesh->getAttributes() & MeshAttributes::Transparent)
+                    continue;
 
-        const MeshEntry entry = mesh->getMeshShaderEntry();
+                const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->mMesh);
 
-        task.addPushConsatntValue(&entry, sizeof(MeshEntry));
-        task.addIndexedDrawCall(vertexOffset / mesh->mMesh->getVertexStride(), indexOffset / sizeof(uint32_t), mesh->mMesh->getIndexData().size());
-    }
+                const MeshEntry entry = mesh->getMeshShaderEntry();
+
+                exec->insertPushConsatnt(&entry, sizeof(MeshEntry));
+                exec->indexedDraw(vertexOffset / mesh->mMesh->getVertexStride(), indexOffset / sizeof(uint32_t), mesh->mMesh->getIndexData().size());
+            }
+        }
+    );
 }

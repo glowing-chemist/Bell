@@ -1,5 +1,6 @@
 #include "Engine/OverlayTechnique.hpp"
 #include "Engine/Engine.hpp"
+#include "Core/Executor.hpp"
 
 #include "imgui.h"
 
@@ -48,19 +49,15 @@ OverlayTechnique::OverlayTechnique(Engine* eng, RenderGraph& graph) :
 }
 
 
-void OverlayTechnique::render(RenderGraph& graph, Engine* engine, const std::vector<const Scene::MeshInstance *>&)
+void OverlayTechnique::render(RenderGraph& graph, Engine*)
 {
 	(*mOverlayUniformBuffer)->updateLastAccessed();
 	mFontTexture->updateLastAccessed();
 	mFontImageView->updateLastAccessed();
 
 	ImDrawData* drawData = ImGui::GetDrawData();
-	GraphicsTask& task = static_cast<GraphicsTask&>(graph.getTask(mTaskID));
-	task.clearCalls();
-
 	if (drawData)
 	{
-
 		float transformations[4];
 		transformations[0] = 2.0f / drawData->DisplaySize.x;
 		transformations[1] = 2.0f / drawData->DisplaySize.y;
@@ -102,22 +99,44 @@ void OverlayTechnique::render(RenderGraph& graph, Engine* engine, const std::vec
 			mOverlayVertexBuffer.get()->setContents(vertexData.data(), vertexData.size() * sizeof(ImDrawVert));
 			mOverlayIndexBuffer.get()->setContents(indexData.data(), indexData.size() * sizeof(uint32_t));
 		}
-
-		// Render command lists
-		uint32_t vertexOffset = 0;
-		uint32_t indexOffset = 0;
-		for (int n = 0; n < drawData->CmdListsCount; n++)
-		{
-			const ImDrawList* cmd_list = drawData->CmdLists[n];
-			for (int cmd_i = 0; cmd_i < cmd_list->CmdBuffer.Size; cmd_i++)
-			{
-				const ImDrawCmd* pcmd = &cmd_list->CmdBuffer[cmd_i];
-
-                task.addIndexedDrawCall(vertexOffset, indexOffset, pcmd->ElemCount);
-
-				indexOffset += pcmd->ElemCount;
-			}
-			vertexOffset += cmd_list->VtxBuffer.Size;
-		}
 	}
+
+	GraphicsTask& task = static_cast<GraphicsTask&>(graph.getTask(mTaskID));
+
+	task.setRecordCommandsCallback(
+		[this](Executor* exec, Engine*, const std::vector<const MeshInstance*>&)
+		{
+			ImDrawData* drawData = ImGui::GetDrawData();
+			if (drawData)
+			{
+				exec->bindIndexBuffer(*this->mOverlayerIndexBufferView, 0);
+				exec->bindVertexBuffer(*this->mOverlayerVertexBufferView, 0);
+
+				// Render command lists
+				uint32_t vertexOffset = 0;
+				uint32_t indexOffset = 0;
+				for (int n = 0; n < drawData->CmdListsCount; n++)
+				{
+					const ImDrawList* cmd_list = drawData->CmdLists[n];
+					for (int cmd_i = 0; cmd_i < cmd_list->CmdBuffer.Size; cmd_i++)
+					{
+						const ImDrawCmd* pcmd = &cmd_list->CmdBuffer[cmd_i];
+
+						exec->indexedDraw(vertexOffset, indexOffset, pcmd->ElemCount);
+
+						indexOffset += pcmd->ElemCount;
+					}
+					vertexOffset += cmd_list->VtxBuffer.Size;
+				}
+			}
+		}
+	);
+}
+
+void OverlayTechnique::bindResources(RenderGraph& graph)
+{
+	graph.bindImage(kDefaultFontTexture, mFontImageView);
+	graph.bindBuffer("OverlayUBO", *mOverlayerBufferView);
+	graph.bindVertexBuffer("OverlayVertex", mOverlayerVertexBufferView.get());
+	graph.bindIndexBuffer("OverlayIndex", mOverlayerIndexBufferView.get());
 }

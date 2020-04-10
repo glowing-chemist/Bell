@@ -1,5 +1,6 @@
 #include "Engine/ConvolveSkyboxTechnique.hpp"
 #include "Engine/Engine.hpp"
+#include "Core/Executor.hpp"
 
 ConvolveSkyBoxTechnique::ConvolveSkyBoxTechnique(Engine* eng, RenderGraph& graph) :
 	Technique("convolveskybox", eng->getDevice()),
@@ -35,18 +36,31 @@ ConvolveSkyBoxTechnique::ConvolveSkyBoxTechnique(Engine* eng, RenderGraph& graph
 }
 
 
-void ConvolveSkyBoxTechnique::render(RenderGraph& graph, Engine*, const std::vector<const Scene::MeshInstance *>&)
+void ConvolveSkyBoxTechnique::render(RenderGraph& graph, Engine*)
 {
 	mConvolvedSkybox->updateLastAccessed();
 	mConvolvedView->updateLastAccessed();
 
 	ComputeTask& convolveTask = static_cast<ComputeTask&>(graph.getTask(mTaskID));
-	convolveTask.clearCalls();
 
 	if(mFirstFrame)
 	{
-		convolveTask.addDispatch(64, 64, 1);
+		convolveTask.setRecordCommandsCallback(
+			[](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+			{
+				exec->dispatch(64, 64, 1);
+			}
+		);
 
 		mFirstFrame = false;
+	}
+	else
+	{
+		convolveTask.setRecordCommandsCallback(
+			[](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+			{
+				return;
+			}
+		);
 	}
 }

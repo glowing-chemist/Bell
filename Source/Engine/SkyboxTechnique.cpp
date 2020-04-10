@@ -2,6 +2,7 @@
 
 #include "Engine/Engine.hpp"
 #include "Engine/DefaultResourceSlots.hpp"
+#include "Core/Executor.hpp"
 
 SkyboxTechnique::SkyboxTechnique(Engine* eng, RenderGraph& graph) :
 	Technique("Skybox", eng->getDevice()),
@@ -21,6 +22,11 @@ SkyboxTechnique::SkyboxTechnique(Engine* eng, RenderGraph& graph) :
 	task.addOutput(kGlobalLighting, AttachmentType::RenderTarget2D, Format::RGBA8UNorm);
 	task.addOutput(kGBufferDepth, AttachmentType::Depth, Format::D32Float);
 
-	task.addDrawCall(0, 3);
+	task.setRecordCommandsCallback(
+		[](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+		{
+			exec->draw(0, 3);
+		}
+	);
 	mTaskID = graph.addTask(task);
 }

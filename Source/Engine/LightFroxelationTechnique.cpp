@@ -2,6 +2,7 @@
 
 #include "Engine/Engine.hpp"
 #include "Engine/DefaultResourceSlots.hpp"
+#include "Core/Executor.hpp"
 
 constexpr const char* kFroxelIndirectArgs = "FroxelIndirectArgs";
 constexpr const char* kLightIndexCounter = "lightIndexCounter";
@@ -40,7 +41,12 @@ LightFroxelationTechnique::LightFroxelationTechnique(Engine* eng, RenderGraph& g
     ComputeTask clearCountersTask{ "clearFroxelationCounters", mClearCountersDesc };
     clearCountersTask.addInput(kActiveFroxelsCounter, AttachmentType::DataBufferWO);
     clearCountersTask.addInput(kLightIndexCounter, AttachmentType::DataBufferWO);
-    clearCountersTask.addDispatch(1, 1, 1);
+    clearCountersTask.setRecordCommandsCallback(
+        [](Executor* exec, Engine*, const std::vector<const MeshInstance*>&)
+        {
+            exec->dispatch(1, 1, 1);
+        }
+    );
     mClearCounters = graph.addTask(clearCountersTask);
 
     ComputeTask activeFroxelTask{ "LightingFroxelation", mActiveFroxelsDesc };
@@ -55,7 +61,12 @@ LightFroxelationTechnique::LightFroxelationTechnique(Engine* eng, RenderGraph& g
     ComputeTask indirectArgsTask{ "generateFroxelIndirectArgs", mIndirectArgsDesc };
     indirectArgsTask.addInput(kActiveFroxelsCounter, AttachmentType::DataBufferRO);
     indirectArgsTask.addInput(kFroxelIndirectArgs, AttachmentType::DataBufferWO);
-    indirectArgsTask.addDispatch(1, 1, 1);
+    indirectArgsTask.setRecordCommandsCallback(
+        [](Executor* exec, Engine*, const std::vector<const MeshInstance*>&)
+        {
+            exec->dispatch(1, 1, 1);
+        }
+    );
     mIndirectArgs = graph.addTask(indirectArgsTask);
 
     ComputeTask lightListAsignmentTask{ "LightAsignment", mLightAsignmentDesc };
@@ -67,20 +78,27 @@ LightFroxelationTechnique::LightFroxelationTechnique(Engine* eng, RenderGraph& g
     lightListAsignmentTask.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
     lightListAsignmentTask.addInput(kLightBuffer, AttachmentType::ShaderResourceSet);
     lightListAsignmentTask.addInput(kFroxelIndirectArgs, AttachmentType::IndirectBuffer);
-    lightListAsignmentTask.addIndirectDispatch(kFroxelIndirectArgs);
+    lightListAsignmentTask.setRecordCommandsCallback(
+        [this](Executor* exec, Engine*, const std::vector<const MeshInstance*>&)
+        {
+            exec->dispatchIndirect(*this->mIndirectArgsView);
+        }
+    );
     mLightListAsignment = graph.addTask(lightListAsignmentTask);
 }
 
 
-void LightFroxelationTechnique::render(RenderGraph& graph, Engine* eng, const std::vector<const Scene::MeshInstance*>&)
+void LightFroxelationTechnique::render(RenderGraph& graph, Engine* eng)
 {
     ComputeTask& activeFroxelsTask = static_cast<ComputeTask&>(graph.getTask(mActiveFroxels));
 
-    activeFroxelsTask.clearCalls();
+    activeFroxelsTask.setRecordCommandsCallback([](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+        {
+            const auto extent = eng->getDevice()->getSwapChainImageView()->getImageExtent();
 
-	const auto extent = eng->getDevice()->getSwapChainImageView()->getImageExtent();
-
-    activeFroxelsTask.addDispatch(static_cast<uint32_t>(std::ceil(extent.width / 32.0f)), static_cast<uint32_t>(std::ceil(extent.height / 32.0f)), 1);
+            exec->dispatch(static_cast<uint32_t>(std::ceil(extent.width / 32.0f)), static_cast<uint32_t>(std::ceil(extent.height / 32.0f)), 1);
+        }
+    );
 
     mActiveFroxelsImageView.get()->updateLastAccessed();
     mActiveFroxelsImage.get()->updateLastAccessed();

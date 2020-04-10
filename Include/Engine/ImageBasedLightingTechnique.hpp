@@ -17,7 +17,7 @@ public:
 		return PassType::DeferredTexturePBRIBL;
 	}
 
-	virtual void render(RenderGraph& graph, Engine*, const std::vector<const Scene::MeshInstance*>&) override final
+	virtual void render(RenderGraph& graph, Engine*) override final
 	{}
 
     virtual void bindResources(RenderGraph&) override final {}
@@ -41,7 +41,7 @@ public:
         return PassType::DeferredPBRIBL;
     }
 
-    virtual void render(RenderGraph& graph, Engine*, const std::vector<const Scene::MeshInstance*>&) override final
+    virtual void render(RenderGraph& graph, Engine*) override final
     {}
 
     virtual void bindResources(RenderGraph&) override final {}

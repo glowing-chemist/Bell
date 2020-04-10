@@ -23,15 +23,9 @@ public:
     virtual PassType getPassType() const override
     { return PassType::Overlay; }
 
-    virtual void render(RenderGraph&, Engine*, const std::vector<const Scene::MeshInstance *>&) override;
+    virtual void render(RenderGraph&, Engine*) override;
 
-    virtual void bindResources(RenderGraph& graph) override
-    {
-		graph.bindImage(kDefaultFontTexture, mFontImageView);
-		graph.bindBuffer("OverlayUBO", *mOverlayerBufferView);
-        graph.bindVertexBuffer("OverlayVertex", mOverlayerVertexBufferView.get());
-        graph.bindIndexBuffer("OverlayIndex", mOverlayerIndexBufferView.get());
-    }
+    virtual void bindResources(RenderGraph& graph) override;
 
 private:
     Image mFontTexture;

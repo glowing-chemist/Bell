@@ -2,6 +2,8 @@
 
 #include "Engine/Engine.hpp"
 #include "Engine/DefaultResourceSlots.hpp"
+#include "Core/Executor.hpp"
+
 
 AnalyticalImageBasedLightingTechnique::AnalyticalImageBasedLightingTechnique(Engine* eng, RenderGraph& graph) :
 	Technique("Analytical IBL", eng->getDevice()),
@@ -30,6 +32,11 @@ AnalyticalImageBasedLightingTechnique::AnalyticalImageBasedLightingTechnique(Eng
 	task.addOutput(kGlobalLighting, AttachmentType::RenderTarget2D, Format::RGBA8UNorm,
 					SizeClass::Swapchain, LoadOp::Clear_Black);
 
-	task.addDrawCall(0, 3);
+	task.setRecordCommandsCallback(
+		[](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+		{
+			exec->draw(0, 3);
+		}
+	);
 	mTaskID = graph.addTask(task);
 }

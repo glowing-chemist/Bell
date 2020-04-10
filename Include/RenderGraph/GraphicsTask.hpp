@@ -216,88 +216,12 @@ public:
 	const GraphicsPipelineDescription& getPipelineDescription() const { return mPipelineDescription; }
 	GraphicsPipelineDescription& getPipelineDescription() { return mPipelineDescription; }
 
-    struct ThunkedDraw {
-		DrawType mDrawType;
-
-        struct DrawData
-        {
-            uint32_t mVertexOffset;
-            uint32_t mNumberOfVerticies;
-            uint32_t mIndexOffset;
-            uint32_t mNumberOfIndicies;
-            uint32_t mNumberOfInstances;
-            char mIndirectBufferName[16];
-        };
-
-        union
-        {
-            DrawData mDrawData;
-            char mPushConstants[128]; // Min garanteed push constant size.
-        } mData;
-	};
-
 	void setVertexAttributes(int vertexAttributes)
 		{ mVertexAttributes = vertexAttributes; }
 
 	int getVertexAttributes() const { return mVertexAttributes; }
 
-    void addDrawCall(const uint32_t vertexOffset, const uint32_t vertexCount)
-	{ 
-            mDrawCalls.push_back({DrawType::Standard, {ThunkedDraw::DrawData{vertexOffset, vertexCount, 0, 0, 1, ""}}});
-	}
-
-    void addInstancedDraw(const uint32_t vertexOffset, const uint32_t vertexCount, const uint32_t instanceCount)
-    {
-        mDrawCalls.push_back({DrawType::Instanced, {ThunkedDraw::DrawData{vertexOffset, vertexCount, 0, 0, instanceCount, ""}}});
-    }
-
-	void addIndexedDrawCall(const uint32_t vertexOffset, const uint32_t indexOffset, const uint32_t numberOfIndicies) 
-	{ 
-        mDrawCalls.push_back({ DrawType::Indexed, {ThunkedDraw::DrawData{vertexOffset, 0, indexOffset, numberOfIndicies, 1, ""}}});
-	}
-
-    void addIndirectDrawCall(const uint32_t drawCalls, const std::string& indirectBuffer)
-    {
-        ThunkedDraw::DrawData data
-        {
-            0, 0, 0, 0, drawCalls, ""
-        };
-        strcpy(data.mIndirectBufferName, indirectBuffer.c_str());
-
-        mDrawCalls.push_back({DrawType::Indirect, {data}});
-    }
-
-	void addIndexedInstancedDrawCall(const uint32_t vertexOffset, const uint32_t indexOffset, const uint32_t numberOfInstances, const uint32_t numberOfIndicies)
-	{
-        mDrawCalls.push_back({ DrawType::IndexedInstanced, {ThunkedDraw::DrawData{vertexOffset, 0, indexOffset, numberOfIndicies, numberOfInstances, ""}}});
-	}
-
-    void addIndexedIndirectDrawCall(const uint32_t drawCalls, const uint32_t indexOffset, const uint32_t numberOfIndicies, const std::string& indirectName)
-	{
-        ThunkedDraw::DrawData data
-        {
-            0, 0, indexOffset, numberOfIndicies, drawCalls, ""
-        };
-        strcpy(data.mIndirectBufferName, indirectName.c_str());
-
-        mDrawCalls.push_back({ DrawType::IndexedIndirect, {data}});
-	}
-
-    void addPushConsatntValue(const void* val, const size_t size)
-	{
-        ThunkedDraw drawData{DrawType::SetPushConstant, {{}}};
-        memcpy(drawData.mData.mPushConstants, val, size);
-
-        mDrawCalls.push_back(drawData);
-	}
-
-    void recordCommands(Executor&, const RenderGraph&, const uint32_t taskIndex) const override final;
-
     std::vector<ClearValues> getClearValues() const;
-
-	void mergeWith(const RenderTask&) override final;
-
-	void clearCalls() override final { mDrawCalls.clear(); }
 
 	void setVertexBufferOffset(const uint32_t offset)
 	{ mVertexBufferOffset = offset; }
@@ -305,15 +229,11 @@ public:
 	uint32_t getVertexBufferOffset() const
 	{ return mVertexBufferOffset; }
 
-	uint32_t recordedCommandCount() const override final { return mDrawCalls.size(); }
-
 	TaskType taskType() const override final { return TaskType::Graphics; }
 
     friend bool operator==(const GraphicsTask& lhs, const GraphicsTask& rhs);
 
 private:
-
-    std::vector<ThunkedDraw> mDrawCalls;
 
 	GraphicsPipelineDescription mPipelineDescription;
 	

@@ -4,14 +4,18 @@
 #include <map>
 #include <string>
 #include <vector>
-#include <map>
 #include <tuple>
+#include <functional>
 
 #include "Engine/PassTypes.hpp"
-#include "Core/Executor.hpp"
 
 
 class RenderGraph;
+class Executor;
+class Engine;
+struct MeshInstance;
+
+using CommandCallbackFunc = std::function<void(Executor*, Engine*, const std::vector<const MeshInstance*>&)>;
 
 enum class LoadOp
 {
@@ -47,8 +51,6 @@ public:
     RenderTask(const std::string& name) : mName{name} {}
 	virtual ~RenderTask() = default;
 
-    virtual void recordCommands(Executor& exec, const RenderGraph&, const uint32_t taskIndex) const = 0;
-
     virtual void addInput(const std::string& name, const AttachmentType attachmentType, const size_t arraySize = 0)
     {
        mInputAttachments.push_back({name, attachmentType, arraySize});
@@ -82,17 +84,20 @@ public:
     const std::vector<OutputAttachmentInfo>& getOuputAttachments() const
         { return mOutputAttachments; }
 
-	virtual void clearCalls() = 0;
-
-	virtual uint32_t recordedCommandCount() const = 0;
-
 	virtual TaskType taskType() const = 0;
-
-	virtual void mergeWith(const RenderTask&) = 0;
 
     const std::string& getName() const
         { return mName; }
 
+    void setRecordCommandsCallback(const CommandCallbackFunc& callback)
+    {
+        mRecordCommandsCallback = callback;
+    }
+
+    void executeRecordCommandsCallback(Executor* exec, Engine* eng, const std::vector<const MeshInstance*>& meshes) const
+    {
+        mRecordCommandsCallback(exec, eng, meshes);
+    }
 
 protected:
 
@@ -100,6 +105,8 @@ protected:
 
     std::vector<OutputAttachmentInfo> mOutputAttachments;
     std::vector<InputAttachmentInfo> mInputAttachments;
+
+    CommandCallbackFunc mRecordCommandsCallback;
 };
 
 

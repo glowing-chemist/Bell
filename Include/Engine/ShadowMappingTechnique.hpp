@@ -20,7 +20,7 @@ public:
         return PassType::Shadow;
     }
 
-    virtual void render(RenderGraph&, Engine*, const std::vector<const Scene::MeshInstance*>&) override;
+    virtual void render(RenderGraph&, Engine*) override;
 
     virtual void bindResources(RenderGraph& graph) override 
     {

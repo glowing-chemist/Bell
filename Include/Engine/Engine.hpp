@@ -150,6 +150,24 @@ public:
 	void setIndexBufferforScene(const Buffer& indexBuf)
         { mIndexBuffer = indexBuf; }
 
+    Buffer& getVertexBuffer()
+    {  return mVertexBuffer; }
+
+    const Buffer& getVertexBuffer() const
+    {
+        return mVertexBuffer;
+    }
+
+    Buffer& getIndexBuffer()
+    {
+        return mIndexBuffer;
+    }
+
+    const Buffer& getIndexBuffer() const
+    {
+        return mIndexBuffer;
+    }
+
     void recordScene();
 
 	void execute(RenderGraph&);

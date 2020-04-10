@@ -2,6 +2,7 @@
 
 #include "Engine/Engine.hpp"
 #include "Engine/DefaultResourceSlots.hpp"
+#include "Core/Executor.hpp"
 
 
 ForwardCombinedLightingTechnique::ForwardCombinedLightingTechnique(Engine* eng, RenderGraph& graph) :
@@ -50,18 +51,28 @@ ForwardCombinedLightingTechnique::ForwardCombinedLightingTechnique(Engine* eng, 
 
 
 
-void ForwardCombinedLightingTechnique::render(RenderGraph& graph, Engine* eng, const std::vector<const Scene::MeshInstance*>& meshes)
+void ForwardCombinedLightingTechnique::render(RenderGraph& graph, Engine*)
 {
 	GraphicsTask& task = static_cast<GraphicsTask&>(graph.getTask(mTaskID));
-	task.clearCalls();
 
-	for (const auto& mesh : meshes)
-	{
-		const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->mMesh);
+	task.setRecordCommandsCallback(
+		[](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>& meshes)
+		{
+			exec->bindIndexBuffer(eng->getIndexBuffer(), 0);
+			exec->bindVertexBuffer(eng->getVertexBuffer(), 0);
 
-        const MeshEntry entry = mesh->getMeshShaderEntry();
+			for (const auto& mesh : meshes)
+			{
+				if (mesh->mMesh->getAttributes() & MeshAttributes::Transparent)
+					continue;
 
-		task.addPushConsatntValue(&entry, sizeof(MeshEntry));
-		task.addIndexedDrawCall(vertexOffset / mesh->mMesh->getVertexStride(), indexOffset / sizeof(uint32_t), mesh->mMesh->getIndexData().size());
-	}
+				const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->mMesh);
+
+				const MeshEntry entry = mesh->getMeshShaderEntry();
+
+				exec->insertPushConsatnt(&entry, sizeof(MeshEntry));
+				exec->indexedDraw(vertexOffset / mesh->mMesh->getVertexStride(), indexOffset / sizeof(uint32_t), mesh->mMesh->getIndexData().size());
+			}
+		}
+	);
 }

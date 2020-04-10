@@ -1,6 +1,7 @@
 #include "Engine/ShadowMappingTechnique.hpp"
 #include "Engine/Engine.hpp"
 #include "Engine/DefaultResourceSlots.hpp"
+#include "Core/Executor.hpp"
 
 
 ShadowMappingTechnique::ShadowMappingTechnique(Engine* eng, RenderGraph& graph) :
@@ -54,52 +55,77 @@ ShadowMappingTechnique::ShadowMappingTechnique(Engine* eng, RenderGraph& graph) 
 }
 
 
-void ShadowMappingTechnique::render(RenderGraph& graph, Engine* eng, const std::vector<const Scene::MeshInstance*>&)
+void ShadowMappingTechnique::render(RenderGraph& graph, Engine* eng)
 {
     GraphicsTask& shadowTask = static_cast<GraphicsTask&>(graph.getTask(mShadowTask));
     ComputeTask& blurXTask = static_cast<ComputeTask&>(graph.getTask(mBlurXTaskID));
     ComputeTask& blurYTask = static_cast<ComputeTask&>(graph.getTask(mBlurYTaskID));
     ComputeTask& resolveTask = static_cast<ComputeTask&>(graph.getTask(mResolveTaskID));
 
-    shadowTask.clearCalls();
-    blurXTask.clearCalls();
-    blurYTask.clearCalls();
-    resolveTask.clearCalls();
+    shadowTask.setRecordCommandsCallback(
+        [](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+        {
+            const Frustum lightFrustum = eng->getScene().getShadowingLightFrustum();
+            std::vector<const MeshInstance*> meshes = eng->getScene().getViewableMeshes(lightFrustum);
+            std::sort(meshes.begin(), meshes.end(), [lightPosition = eng->getScene().getShadowingLight().mPosition](const MeshInstance* lhs, const MeshInstance* rhs)
+            {
+                const float3 centralLeft = lhs->mMesh->getAABB().getCentralPoint();
+                const float leftDistance = glm::length(centralLeft - float3(lightPosition));
 
-    const Frustum lightFrustum = eng->getScene().getShadowingLightFrustum();
-    std::vector<const Scene::MeshInstance*> meshes = eng->getScene().getViewableMeshes(lightFrustum);
-    std::sort(meshes.begin(), meshes.end(), [lightPosition = eng->getScene().getShadowingLight().mPosition] (const Scene::MeshInstance* lhs, const Scene::MeshInstance* rhs)
-    {
-        const float3 centralLeft = lhs->mMesh->getAABB().getCentralPoint();
-        const float leftDistance = glm::length(centralLeft - float3(lightPosition));
+                const float3 centralright = rhs->mMesh->getAABB().getCentralPoint();
+                const float rightDistance = glm::length(centralright - float3(lightPosition));
 
-        const float3 centralright = rhs->mMesh->getAABB().getCentralPoint();
-        const float rightDistance = glm::length(centralright - float3(lightPosition));
+                return leftDistance < rightDistance;
+            });
 
-        return leftDistance < rightDistance;
-    });
+            exec->bindIndexBuffer(eng->getIndexBuffer(), 0);
+            exec->bindVertexBuffer(eng->getVertexBuffer(), 0);
 
-    for (const auto& mesh : meshes)
-    {
-        // Don't render transparent geometry.
-        if ((mesh->mMesh->getAttributes() & MeshAttributes::Transparent) > 0)
-           continue;
+            for (const auto& mesh : meshes)
+            {
+                // Don't render transparent geometry.
+                if ((mesh->mMesh->getAttributes() & MeshAttributes::Transparent) > 0)
+                    continue;
 
-        const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->mMesh);
+                const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->mMesh);
 
-        const MeshEntry entry = mesh->getMeshShaderEntry();
+                const MeshEntry entry = mesh->getMeshShaderEntry();
 
-        shadowTask.addPushConsatntValue(&entry, sizeof(MeshEntry));
-        shadowTask.addIndexedDrawCall(vertexOffset / mesh->mMesh->getVertexStride(), indexOffset / sizeof(uint32_t), mesh->mMesh->getIndexData().size());
-    }
+                exec->insertPushConsatnt(&entry, sizeof(MeshEntry));
+                exec->indexedDraw(vertexOffset / mesh->mMesh->getVertexStride(), indexOffset / sizeof(uint32_t), mesh->mMesh->getIndexData().size());
+            }
+        }
+    );
 
-    const float threadGroupWidth = eng->getSwapChainImageView()->getImageExtent().width;
-    const float threadGroupHeight = eng->getSwapChainImageView()->getImageExtent().height;
+    blurXTask.setRecordCommandsCallback(
+        [](Executor * exec, Engine * eng, const std::vector<const MeshInstance*>&)
+        {
+            const float threadGroupWidth = eng->getSwapChainImageView()->getImageExtent().width;
+            const float threadGroupHeight = eng->getSwapChainImageView()->getImageExtent().height;
 
-    blurXTask.addDispatch(std::ceil(threadGroupWidth / 128.0f), threadGroupHeight * 2, 1.0f);
-    blurYTask.addDispatch(threadGroupWidth * 2, std::ceil(threadGroupHeight / 128.0f), 1.0f);
+            exec->dispatch(std::ceil(threadGroupWidth / 128.0f), threadGroupHeight * 2, 1.0f);
+        }
+    );
 
-    resolveTask.addDispatch(static_cast<uint32_t>(std::ceil(threadGroupWidth / 32.0f)),
-        static_cast<uint32_t>(std::ceil(threadGroupHeight / 32.0f)),
-        1);
+    blurYTask.setRecordCommandsCallback(
+        [](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+        {
+            const float threadGroupWidth = eng->getSwapChainImageView()->getImageExtent().width;
+            const float threadGroupHeight = eng->getSwapChainImageView()->getImageExtent().height;
+
+            exec->dispatch(threadGroupWidth * 2, std::ceil(threadGroupHeight / 128.0f), 1.0f);
+        }
+    );
+
+    resolveTask.setRecordCommandsCallback(
+        [](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+        {
+            const float threadGroupWidth = eng->getSwapChainImageView()->getImageExtent().width;
+            const float threadGroupHeight = eng->getSwapChainImageView()->getImageExtent().height;
+
+            exec->dispatch( static_cast<uint32_t>(std::ceil(threadGroupWidth / 32.0f)),
+                            static_cast<uint32_t>(std::ceil(threadGroupHeight / 32.0f)),
+                            1);
+        }
+    );
 }

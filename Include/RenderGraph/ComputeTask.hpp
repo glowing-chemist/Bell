@@ -39,24 +39,12 @@ public:
     ComputePipelineDescription getPipelineDescription() const
         { return mPipelineDescription; }
 
-    void addDispatch(const uint32_t x, const uint32_t y, const uint32_t z) { mComputeCalls.push_back({DispatchType::Standard, x, y, z, ""}); }
-    void addIndirectDispatch(const std::string& indirectBufferSlot) { mComputeCalls.push_back({DispatchType::Indirect, 0, 0, 0, indirectBufferSlot}); }
-
     void addOutput(const std::string& name, const AttachmentType attachmentType, const Format, const SizeClass = SizeClass::Custom, const LoadOp = LoadOp::Preserve) override final
     {
         // All outputs needs to be part of the descriptor set for compute pipelies
         // as compuite shaders writes don't go to the framebuffer.
         mInputAttachments.push_back({name, attachmentType, 0});
     }
-
-	void mergeWith(const RenderTask&) override final;
-
-    // Needs to take the graph to be able to lookup indirect buffers tha are bound to the graph.
-    void recordCommands(Executor&, const RenderGraph&, const uint32_t taskIndex) const override final;
-
-	void clearCalls() override final { mComputeCalls.clear(); }
-
-    uint32_t recordedCommandCount() const override final { return static_cast<uint32_t>(mComputeCalls.size()); }
 
 	TaskType taskType() const override final { return TaskType::Compute; }
 

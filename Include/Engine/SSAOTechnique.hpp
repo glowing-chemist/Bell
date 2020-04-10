@@ -34,7 +34,7 @@ public:
 
 	}
 
-	virtual void render(RenderGraph& graph, Engine*, const std::vector<const Scene::MeshInstance*>&) override final;
+	virtual void render(RenderGraph& graph, Engine*) override final;
 
 private:
 
@@ -71,7 +71,7 @@ public:
         graph.createTransientImage(getDevice(), kSSAOBlurIntermidiate, Format::R8UNorm, ImageUsage::Sampled | ImageUsage::Storage, SizeClass::Swapchain);
 	}
 
-	virtual void render(RenderGraph& graph, Engine*, const std::vector<const Scene::MeshInstance*>&) override final;
+	virtual void render(RenderGraph& graph, Engine*) override final;
 
 private:
 

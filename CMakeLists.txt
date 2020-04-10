@@ -13,8 +13,8 @@ endif(WIN32)
 find_package(Vulkan REQUIRED)
 # glfw doesn't have a good way to find itself on windows so include the source as a dependancy
 
-set(VULKAN 0) # vulkan default backend
-set(DX_12  1)
+set(VULKAN 1) # vulkan default backend
+set(DX_12  0)
 
 include_directories(
 			"${CMAKE_CURRENT_LIST_DIR}/"

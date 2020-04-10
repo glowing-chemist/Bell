@@ -11,6 +11,7 @@
 #include <algorithm>
 #include <atomic>
 #include <cstdint>
+#include <filesystem>
 #include <memory>
 #include <string>
 #include <vector>
@@ -36,11 +37,45 @@ enum class LightType : uint32_t
 };
 
 
+struct MeshInstance
+{
+    MeshInstance(StaticMesh* mesh, const float4x4& trans) :
+        mMesh(mesh),
+        mTransformation(trans),
+        mPreviousTransformation(trans) {}
+
+    StaticMesh* mMesh;
+
+    const float4x4& getTransMatrix() const
+    {
+        return mTransformation;
+    }
+
+    void setTransMatrix(const float4x4& newTrans)
+    {
+        mPreviousTransformation = mTransformation;
+        mTransformation = newTrans;
+    }
+
+    MeshEntry getMeshShaderEntry() const
+    {
+        MeshEntry entry{};
+        entry.mTransformation = mTransformation;
+        entry.mPreviousTransformation = mPreviousTransformation;
+
+        return entry;
+    }
+
+private:
+    float4x4 mTransformation;
+    float4x4 mPreviousTransformation;
+};
+
+
 class Scene
 {
 public:
 
-    struct MeshInstance;
     struct ShadowingLight;
 
 	Scene(const std::string& name);
@@ -92,38 +127,6 @@ public:
 	{
 		return mMaterialImageViews;
 	}
-
-    struct MeshInstance
-    {
-        MeshInstance(StaticMesh* mesh, const float4x4& trans) :
-            mMesh(mesh),
-            mTransformation(trans),
-            mPreviousTransformation(trans) {}
-
-        StaticMesh* mMesh;
-
-        const float4x4& getTransMatrix() const
-        { return mTransformation; }
-
-        void setTransMatrix(const float4x4& newTrans)
-        {
-            mPreviousTransformation = mTransformation;
-            mTransformation = newTrans;
-        }
-
-        MeshEntry getMeshShaderEntry() const
-        {
-            MeshEntry entry{};
-            entry.mTransformation = mTransformation;
-            entry.mPreviousTransformation = mPreviousTransformation;
-
-            return entry;
-        }
-
-    private:
-        float4x4 mTransformation;
-        float4x4 mPreviousTransformation;
-    };
 
 	struct Material
 	{
