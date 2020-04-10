@@ -52,14 +52,6 @@ public:
 
 private:
 
-	struct thunkedCompute
-	{
-		DispatchType mDispatchType;
-		uint32_t x, y, z;
-        std::string mIndirectBuffer;
-	};
-	std::vector<thunkedCompute> mComputeCalls;
-
 	ComputePipelineDescription mPipelineDescription;
 
 };
