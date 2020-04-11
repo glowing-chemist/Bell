@@ -31,7 +31,7 @@ ImageBasedLightingDeferredTexturingTechnique::ImageBasedLightingDeferredTexturin
     task.addInput(kMaterials, AttachmentType::ShaderResourceSet);
 
     task.addOutput(kGlobalLighting, AttachmentType::RenderTarget2D, Format::RGBA8UNorm,
-		SizeClass::Swapchain, LoadOp::Clear_Black);
+		SizeClass::Swapchain, LoadOp::Nothing);
 
     task.setRecordCommandsCallback(
         [](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)

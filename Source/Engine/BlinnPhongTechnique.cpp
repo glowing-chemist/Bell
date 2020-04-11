@@ -38,7 +38,7 @@ BlinnPhongDeferredTexturesTechnique::BlinnPhongDeferredTexturesTechnique(Engine*
     // Bound by the engine.
 	task.addInput(kDefaultSampler, AttachmentType::Sampler);
 
-	task.addOutput(getLightTextureName(), AttachmentType::RenderTarget2D, Format::RGBA8SRGB, SizeClass::Swapchain, LoadOp::Clear_Black);
+	task.addOutput(getLightTextureName(), AttachmentType::RenderTarget2D, Format::RGBA8SRGB, SizeClass::Swapchain, LoadOp::Nothing);
 
 	task.setRecordCommandsCallback(
 		[](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
