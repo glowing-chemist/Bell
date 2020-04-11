@@ -178,11 +178,9 @@ set(DearImGUI_SOURCE
 
 set(SHADERS
     ActiveFroxels.comp                         
-	CompositeOverlaySSAO.frag           
 	FullScreenTriangle.vert                   
 	Overlay.vert
 	AnalyticalIBLDeferredTexture.frag          
-	CompositeSSAO.frag                  
 	GaussianBlur.hlsl                        
 	PBR.hlsl
 	BlinnPhongDeferredTexture.frag             
@@ -227,11 +225,9 @@ set(SHADERS
 	ClusteredLighting.hlsl                     
 	ForwardMaterial.vert                
 	LightFroxelationClearCounters.comp        
-	LightingCompositeSSAO.frag
 	CompositeOverlay.frag
 	CompositeOverlayTAA.frag
 	NormalMapping.hlsl
-	CompositeOverlayCombinedLightingSSAO.frag  
 	FroxelationGenerateLightLists.comp  
 	Overlay.frag
 	ShadowMapping.hlsl
@@ -242,6 +238,7 @@ set(SHADERS
 	MeshAttributes.hlsl
 	VertexOutputs.hlsl
 	LineariseDepth.comp
+	FinalComposite.frag
     )
 
 foreach(shader ${SHADERS})

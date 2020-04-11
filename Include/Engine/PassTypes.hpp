@@ -115,6 +115,9 @@ inline const char* passToString(const PassType passType)
 
 		case PassType::LineariseDepth:
 			return "Linearise_depth";
+
+		case PassType::Overlay:
+			return "Overlay";
     }
 
     return "UNKNOWN PASS TYPE";

@@ -180,8 +180,9 @@ Buffer Engine::createBuffer(const uint32_t size,
 
 Shader Engine::getShader(const std::string& path)
 {
-	if(mShaderCache.find(path) != mShaderCache.end())
-		return (*mShaderCache.find(path)).second;
+    const std::string shaderKey = path + mShaderPrefix;
+	if(mShaderCache.find(shaderKey) != mShaderCache.end())
+		return (*mShaderCache.find(shaderKey)).second;
 
 	Shader newShader{mRenderDevice, path};
 
@@ -189,7 +190,7 @@ Shader Engine::getShader(const std::string& path)
 
 	BELL_ASSERT(compiled, "Shader failed to compile")
 
-	mShaderCache.insert({path, newShader});
+	mShaderCache.insert({ shaderKey, newShader});
 
 	return newShader;
 }
@@ -376,7 +377,10 @@ void Engine::execute(RenderGraph& graph)
     }
 
     mCurrentRenderGraph.bindInternalResources();
-	mRenderDevice->generateFrameResources(graph);
+
+    std::hash<std::string> prefixHasher{};
+    const uint64_t prefixHash = prefixHasher(mShaderPrefix);
+	mRenderDevice->generateFrameResources(graph, prefixHash);
 
     std::vector<const MeshInstance*> meshes = mCurrentScene.getViewableMeshes(mCurrentScene.getCamera().getFrustum());
     std::sort(meshes.begin(), meshes.end(), [camera = mCurrentScene.getCamera()](const MeshInstance* lhs, const MeshInstance* rhs)

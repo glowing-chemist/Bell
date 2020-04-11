@@ -108,7 +108,7 @@ VulkanRenderDevice::~VulkanRenderDevice()
 
     mMemoryManager.Destroy();
 
-    for(auto& [desc, graphicsHandles] : mGraphicsPipelineCache)
+    for(auto& [_, graphicsHandles] : mGraphicsPipelineCache)
     {
         mDevice.destroyPipeline(graphicsHandles.mGraphicsPipeline->getHandle());
         mDevice.destroyPipelineLayout(graphicsHandles.mGraphicsPipeline->getLayoutHandle());
@@ -116,7 +116,7 @@ VulkanRenderDevice::~VulkanRenderDevice()
         mDevice.destroyDescriptorSetLayout(graphicsHandles.mDescriptorSetLayout[0]); // if there are any more they will get destroyed elsewhere.
     }
 
-    for(auto& [desc, computeHandles]: mComputePipelineCache)
+    for(auto& [_, computeHandles]: mComputePipelineCache)
     {
         mDevice.destroyPipeline(computeHandles.mComputePipeline->getHandle());
         mDevice.destroyPipelineLayout(computeHandles.mComputePipeline->getLayoutHandle());
@@ -186,10 +186,14 @@ uint32_t VulkanRenderDevice::getQueueFamilyIndex(const QueueType type) const
 }
 
 
-GraphicsPipelineHandles VulkanRenderDevice::createPipelineHandles(const GraphicsTask& task, const RenderGraph& graph)
+GraphicsPipelineHandles VulkanRenderDevice::createPipelineHandles(const GraphicsTask& task, const RenderGraph& graph, const uint64_t prefixHash)
 {
-    if(mGraphicsPipelineCache[task.getPipelineDescription()].mGraphicsPipeline)
-        return mGraphicsPipelineCache[task.getPipelineDescription()];
+    std::hash<GraphicsPipelineDescription> hasher{};
+    uint64_t hash = hasher(task.getPipelineDescription());
+    hash += prefixHash;
+
+    if(mGraphicsPipelineCache[hash].mGraphicsPipeline)
+        return mGraphicsPipelineCache[hash];
 
     const vk::RenderPass renderPass = generateRenderPass(task);
 
@@ -200,23 +204,27 @@ GraphicsPipelineHandles VulkanRenderDevice::createPipelineHandles(const Graphics
 											renderPass);
 
     GraphicsPipelineHandles handles{pipeline, renderPass, SRSLayouts };
-    mGraphicsPipelineCache[task.getPipelineDescription()] = handles;
+    mGraphicsPipelineCache[hash] = handles;
 
     return handles;
 }
 
 
-ComputePipelineHandles VulkanRenderDevice::createPipelineHandles(const ComputeTask& task, const RenderGraph& graph)
+ComputePipelineHandles VulkanRenderDevice::createPipelineHandles(const ComputeTask& task, const RenderGraph& graph, const uint64_t prefixHash)
 {
-	if(mComputePipelineCache[task.getPipelineDescription()].mComputePipeline)
-        return mComputePipelineCache[task.getPipelineDescription()];
+    std::hash<ComputePipelineDescription> hasher{};
+    uint64_t hash = hasher(task.getPipelineDescription());
+    hash += prefixHash;
+
+	if(mComputePipelineCache[hash].mComputePipeline)
+        return mComputePipelineCache[hash];
 
 	const std::vector<vk::DescriptorSetLayout> SRSLayouts = generateShaderResourceSetLayouts(task, graph);
 
     const auto pipeline = generatePipeline(task, SRSLayouts);
 
     ComputePipelineHandles handles{pipeline, SRSLayouts };
-    mComputePipelineCache[task.getPipelineDescription()] = handles;
+    mComputePipelineCache[hash] = handles;
 
     return handles;
 }
@@ -579,7 +587,7 @@ vk::PipelineLayout VulkanRenderDevice::generatePipelineLayout(const std::vector<
 }
 
 
-void VulkanRenderDevice::generateVulkanResources(RenderGraph& graph)
+void VulkanRenderDevice::generateVulkanResources(RenderGraph& graph, const uint64_t prefixHash)
 {
 	auto task = graph.taskBegin();
 	clearVulkanResources();
@@ -591,7 +599,7 @@ void VulkanRenderDevice::generateVulkanResources(RenderGraph& graph)
         if((*task).taskType() == TaskType::Graphics)
         {
             const GraphicsTask& graphicsTask = static_cast<const GraphicsTask&>(*task);
-            GraphicsPipelineHandles pipelineHandles = createPipelineHandles(graphicsTask, graph);
+            GraphicsPipelineHandles pipelineHandles = createPipelineHandles(graphicsTask, graph, prefixHash);
 
             vulkanResources& taskResources = *resource;
             taskResources.mPipeline = pipelineHandles.mGraphicsPipeline;
@@ -602,7 +610,7 @@ void VulkanRenderDevice::generateVulkanResources(RenderGraph& graph)
         else
         {
             const ComputeTask& computeTask = static_cast<const ComputeTask&>(*task);
-            ComputePipelineHandles pipelineHandles = createPipelineHandles(computeTask, graph);
+            ComputePipelineHandles pipelineHandles = createPipelineHandles(computeTask, graph, prefixHash);
 
             vulkanResources& taskResources = *resource;
             taskResources.mPipeline = pipelineHandles.mComputePipeline;
@@ -772,10 +780,10 @@ vk::Sampler VulkanRenderDevice::getImmutableSampler(const Sampler& samplerDesc)
 }
 
 
-void VulkanRenderDevice::generateFrameResources(RenderGraph& graph)
+void VulkanRenderDevice::generateFrameResources(RenderGraph& graph, const uint64_t prefixHash)
 {
 	// generate internal resources.
-	generateVulkanResources(graph);
+	generateVulkanResources(graph, prefixHash);
 	getCurrentCommandPool()->reserve(static_cast<uint32_t>(graph.taskCount()) + 1, QueueType::Graphics); // +1 for the primary cmd buffer all the secondaries will be recorded in to.
 }
 

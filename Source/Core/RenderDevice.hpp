@@ -32,7 +32,7 @@ public:
 
     virtual ~RenderDevice() = default;
 
-	virtual void					   generateFrameResources(RenderGraph&) = 0;
+	virtual void					   generateFrameResources(RenderGraph&, const uint64_t prefixHash) = 0;
 
 	virtual void                       startPass(const RenderTask&) = 0;
 	virtual Executor*				   getPassExecutor() = 0;

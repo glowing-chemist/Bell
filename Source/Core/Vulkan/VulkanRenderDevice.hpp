@@ -72,7 +72,7 @@ public:
 	VulkanRenderDevice(vk::Instance, vk::PhysicalDevice, vk::Device, vk::SurfaceKHR, GLFWwindow*);
     ~VulkanRenderDevice();
 
-	virtual void					   generateFrameResources(RenderGraph&) override;
+	virtual void					   generateFrameResources(RenderGraph&, const uint64_t prefixHash) override;
 
 	virtual void                       startPass(const RenderTask&) override;
 	virtual Executor*				   getPassExecutor() override;
@@ -204,8 +204,8 @@ public:
 #endif
 	}
 
-    GraphicsPipelineHandles            createPipelineHandles(const GraphicsTask&, const RenderGraph&);
-    ComputePipelineHandles             createPipelineHandles(const ComputeTask&, const RenderGraph&);
+    GraphicsPipelineHandles            createPipelineHandles(const GraphicsTask&, const RenderGraph&, const uint64_t prefixHash);
+    ComputePipelineHandles             createPipelineHandles(const ComputeTask&, const RenderGraph&, const uint64_t prefixHash);
 
     // Accessors
     MemoryManager*                     getMemoryManager() { return &mMemoryManager; }
@@ -277,7 +277,7 @@ private:
     std::shared_ptr<ComputePipeline>                                             generatePipeline(const ComputeTask&,
                                                                                  const std::vector< vk::DescriptorSetLayout>&);
 
-	void														generateVulkanResources(RenderGraph&);
+	void														generateVulkanResources(RenderGraph&, const uint64_t prefixHash);
 
     void                                                        generateDescriptorSets(RenderGraph&);
 
@@ -369,8 +369,8 @@ private:
 
     vk::PhysicalDeviceLimits mLimits;
 
-    std::unordered_map<GraphicsPipelineDescription, GraphicsPipelineHandles> mGraphicsPipelineCache;
-    std::unordered_map<ComputePipelineDescription, ComputePipelineHandles> mComputePipelineCache;
+    std::unordered_map<uint64_t, GraphicsPipelineHandles> mGraphicsPipelineCache;
+    std::unordered_map<uint64_t, ComputePipelineHandles> mComputePipelineCache;
 
     std::unordered_map<Sampler, vk::Sampler> mImmutableSamplerCache;
 
