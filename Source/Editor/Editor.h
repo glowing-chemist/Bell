@@ -78,6 +78,7 @@ private:
     int mCurrentDebugTexture;
     std::string mDebugTextureName;
 
+    bool mRecompileGraph;
     bool mInFreeFlyMode;
 
     bool mShowFileBrowser;

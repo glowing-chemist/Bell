@@ -278,6 +278,7 @@ Editor::Editor(GLFWwindow* window) :
     mShowDebugTexturePicker{false},
     mCurrentDebugTexture(-1),
     mDebugTextureName(""),
+    mRecompileGraph(false),
     mInFreeFlyMode(false),
     mShowFileBrowser{false},
     mFileBrowser{"/"},
@@ -320,16 +321,22 @@ void Editor::run()
 
 		startFrame();
 
-		if (previousMode != mMode)
+        if (mRecompileGraph)
+        {
 			mEngine.clearRegisteredPasses();
+            mRecompileGraph = false;
+        }
 
         // Only draw the scene if we're in scene mode else draw the
         // pass/shader graphs.
         if(mMode == 0)
             renderScene();
 
-		previousMode = mMode;
-		renderOverlay();
+        previousMode = mMode;
+        renderOverlay();
+
+        mRecompileGraph = mRecompileGraph || previousMode != mMode;
+
 
 		swap();
 
@@ -566,7 +573,11 @@ void Editor::drawAssistantWindow()
 
         if(mCurrentDebugTexture != -1)
         {
+            std::string previousDebugTexture = mDebugTextureName;
             mDebugTextureName = textures[mCurrentDebugTexture];
+
+            if(mDebugTextureName != previousDebugTexture)
+                mRecompileGraph = true;
         }
     }
     else

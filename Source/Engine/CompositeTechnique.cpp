@@ -38,7 +38,7 @@ CompositeTechnique::CompositeTechnique(Engine* eng, RenderGraph& graph) :
 		compositeTask.addOutput(kFrameBufer, AttachmentType::RenderTarget2D, eng->getSwapChainImage()->getFormat(), SizeClass::Custom, LoadOp::Clear_Black);
 
 		compositeTask.setRecordCommandsCallback(
-			[](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+            [](Executor* exec, Engine*, const std::vector<const MeshInstance*>&)
 			{
 				exec->draw(0, 3);
 			}
@@ -46,90 +46,93 @@ CompositeTechnique::CompositeTechnique(Engine* eng, RenderGraph& graph) :
 
 		graph.addTask(compositeTask);
 	}
-	else if(usingAnalyticalLighting || usingGlobalLighting)
-	{
-		GraphicsPipelineDescription desc
-		{
-			eng->getShader("./Shaders/FullScreenTriangle.vert"),
-			eng->getShader("./Shaders/FinalComposite.frag"),
-			Rect{ viewPortX, viewPortY },
-			Rect{ viewPortX, viewPortY }
-		};
+    else
+    {
+        if(usingAnalyticalLighting || usingGlobalLighting)
+        {
+            GraphicsPipelineDescription desc
+            {
+                eng->getShader("./Shaders/FullScreenTriangle.vert"),
+                eng->getShader("./Shaders/FinalComposite.frag"),
+                Rect{ viewPortX, viewPortY },
+                Rect{ viewPortX, viewPortY }
+            };
 
-		GraphicsTask compositeTask("Composite", desc);
-		compositeTask.addInput(kGlobalLighting, AttachmentType::Texture2D);
-		if (usingAnalyticalLighting)
-			compositeTask.addInput(kAnalyticLighting, AttachmentType::Texture2D);
-		if (usingOverlay)
-			compositeTask.addInput(kOverlay, AttachmentType::Texture2D);
-		if (usingSSAO)
-			compositeTask.addInput(kSSAO, AttachmentType::Texture2D);
-		compositeTask.addInput(kDefaultSampler, AttachmentType::Sampler);
+            GraphicsTask compositeTask("Composite", desc);
+            compositeTask.addInput(kGlobalLighting, AttachmentType::Texture2D);
+            if (usingAnalyticalLighting)
+                compositeTask.addInput(kAnalyticLighting, AttachmentType::Texture2D);
+            if (usingOverlay)
+                compositeTask.addInput(kOverlay, AttachmentType::Texture2D);
+            if (usingSSAO)
+                compositeTask.addInput(kSSAO, AttachmentType::Texture2D);
+            compositeTask.addInput(kDefaultSampler, AttachmentType::Sampler);
 
-		compositeTask.addOutput(usingTAA ? kCompositeOutput : kFrameBufer, AttachmentType::RenderTarget2D, eng->getSwapChainImage()->getFormat(), usingTAA ? SizeClass::Swapchain : SizeClass::Custom, LoadOp::Nothing);
+            compositeTask.addOutput(usingTAA ? kCompositeOutput : kFrameBufer, AttachmentType::RenderTarget2D, eng->getSwapChainImage()->getFormat(), usingTAA ? SizeClass::Swapchain : SizeClass::Custom, LoadOp::Nothing);
 
-		compositeTask.setRecordCommandsCallback(
-			[](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
-			{
-				exec->draw(0, 3);
-			}
-		);
+            compositeTask.setRecordCommandsCallback(
+                [](Executor* exec, Engine*, const std::vector<const MeshInstance*>&)
+                {
+                    exec->draw(0, 3);
+                }
+            );
 
-		graph.addTask(compositeTask);
-	}
-	
-	if (usingTAA)
-	{
-		// Now add the overlay the final TAA'd result to the framebuffer.
-		GraphicsPipelineDescription overlayDesc
-		(
-			eng->getShader("./Shaders/FullScreenTriangle.vert"),
-			eng->getShader("./Shaders/CompositeOverlayTAA.frag"),
-			Rect{ viewPortX, viewPortY },
-			Rect{ viewPortX, viewPortY }
-		);
+            graph.addTask(compositeTask);
+        }
 
-		GraphicsTask overlayTask("OverlayComposite", overlayDesc);
-		overlayTask.addInput(kNewTAAHistory, AttachmentType::Texture2D);
-		overlayTask.addInput(kOverlay, AttachmentType::Texture2D);
-		overlayTask.addInput(kDefaultSampler, AttachmentType::Sampler);
-		overlayTask.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
-		overlayTask.addOutput(kFrameBufer, AttachmentType::RenderTarget2D, eng->getSwapChainImage()->getFormat(), SizeClass::Custom, LoadOp::Clear_Black);
-		overlayTask.setRecordCommandsCallback(
-			[](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
-			{
-				exec->draw(0, 3);
-			}
-		);
+        if (usingTAA)
+        {
+            // Now add the overlay the final TAA'd result to the framebuffer.
+            GraphicsPipelineDescription overlayDesc
+            (
+                eng->getShader("./Shaders/FullScreenTriangle.vert"),
+                eng->getShader("./Shaders/CompositeOverlayTAA.frag"),
+                Rect{ viewPortX, viewPortY },
+                Rect{ viewPortX, viewPortY }
+            );
 
-		graph.addTask(overlayTask);
-	}
-	
-	if (usingOverlay && !usingGlobalLighting && !usingAnalyticalLighting)
-	{
-		GraphicsPipelineDescription desc
-		(
-			eng->getShader("./Shaders/FullScreenTriangle.vert"),
-			eng->getShader("./Shaders/Blit.frag"),
-			Rect{ viewPortX, viewPortY },
-			Rect{ viewPortX, viewPortY }
-		);
+            GraphicsTask overlayTask("OverlayComposite", overlayDesc);
+            overlayTask.addInput(kNewTAAHistory, AttachmentType::Texture2D);
+            overlayTask.addInput(kOverlay, AttachmentType::Texture2D);
+            overlayTask.addInput(kDefaultSampler, AttachmentType::Sampler);
+            overlayTask.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
+            overlayTask.addOutput(kFrameBufer, AttachmentType::RenderTarget2D, eng->getSwapChainImage()->getFormat(), SizeClass::Custom, LoadOp::Clear_Black);
+            overlayTask.setRecordCommandsCallback(
+                [](Executor* exec, Engine*, const std::vector<const MeshInstance*>&)
+                {
+                    exec->draw(0, 3);
+                }
+            );
 
-		GraphicsTask compositeTask("Composite", desc);
-		compositeTask.addInput(kOverlay, AttachmentType::Texture2D);
-		compositeTask.addInput(kDefaultSampler, AttachmentType::Sampler);
+            graph.addTask(overlayTask);
+        }
 
-		compositeTask.addOutput(kFrameBufer, AttachmentType::RenderTarget2D, eng->getSwapChainImage()->getFormat(), SizeClass::Custom, LoadOp::Clear_Black);
+        if (usingOverlay && !usingGlobalLighting && !usingAnalyticalLighting)
+        {
+            GraphicsPipelineDescription desc
+            (
+                eng->getShader("./Shaders/FullScreenTriangle.vert"),
+                eng->getShader("./Shaders/Blit.frag"),
+                Rect{ viewPortX, viewPortY },
+                Rect{ viewPortX, viewPortY }
+            );
 
-		compositeTask.setRecordCommandsCallback(
-			[](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
-			{
-				exec->draw(0, 3);
-			}
-		);
+            GraphicsTask compositeTask("Composite", desc);
+            compositeTask.addInput(kOverlay, AttachmentType::Texture2D);
+            compositeTask.addInput(kDefaultSampler, AttachmentType::Sampler);
 
-		graph.addTask(compositeTask);
-	}
+            compositeTask.addOutput(kFrameBufer, AttachmentType::RenderTarget2D, eng->getSwapChainImage()->getFormat(), SizeClass::Custom, LoadOp::Clear_Black);
+
+            compositeTask.setRecordCommandsCallback(
+                [](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+                {
+                    exec->draw(0, 3);
+                }
+            );
+
+            graph.addTask(compositeTask);
+        }
+    }
 }
 
 
