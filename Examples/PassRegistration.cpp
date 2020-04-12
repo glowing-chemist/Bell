@@ -14,6 +14,7 @@ struct ImGuiOptions
     bool mShowLights = true;
     bool mTAA = true;
     bool mSSAO = true;
+    bool mShadows = true;
 };
 
 static ImGuiOptions graphicsOptions;
@@ -71,6 +72,7 @@ bool renderMenu(GLFWwindow* win, const Camera& cam)
     ImGui::Checkbox("Show lights", &graphicsOptions.mShowLights);
     ImGui::Checkbox("Enable TAA", &graphicsOptions.mTAA);
     ImGui::Checkbox("Enable SSAO", &graphicsOptions.mSSAO);
+    ImGui::Checkbox("Enable shadows", &graphicsOptions.mShadows);
 
     ImGui::Text("Camera position: X: %f Y: %f Z: %f", cam.getPosition().x, cam.getPosition().y, cam.getPosition().z);
     ImGui::Text("Camera direction: X: %f Y: %f Z: %f", cam.getDirection().x, cam.getDirection().y, cam.getDirection().z);
@@ -191,8 +193,10 @@ int main()
 
         engine.registerPass(PassType::ConvolveSkybox);
         engine.registerPass(PassType::Skybox);
-        engine.registerPass(PassType::Shadow);
         engine.registerPass(PassType::LineariseDepth);
+
+        if(graphicsOptions.mShadows)
+            engine.registerPass(PassType::Shadow);
 
         if (graphicsOptions.mShowLights)
             engine.registerPass(PassType::LightFroxelation);
