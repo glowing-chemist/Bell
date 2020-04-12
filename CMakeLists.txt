@@ -75,6 +75,11 @@ elseif(DX_12)
 	set(BACKEND_SOURCE
 		Source/Core/DX_12/DX_12RenderInstance.cpp
 		Source/Core/DX_12/DX_12RenderDevice.cpp
+		Source/Core/DX_12/DX_12Image.cpp
+		Source/Core/DX_12/DX_12ImageView.cpp
+		Source/Core/DX_12/DX_12Buffer.cpp
+		Source/Core/DX_12/DX_12BufferView.cpp
+		Source/Core/DX_12/DX_12Shader.cpp
 		
 		ThirdParty/D3D12MemoryAllocator/src/D3D12MemAlloc.cpp
 		)
@@ -162,6 +167,7 @@ set(BELL_SOURCE
     Source/Engine/ForwardLightingCombinedTechnique.cpp
     Source/Engine/TAATechnique.cpp
 	Source/Engine/LineariseDepthTechnique.cpp
+	Source/Engine/ScreenSpaceReflectionTechnique.cpp
 
     # used for texture loading
     ThirdParty/stb_image/stb_image.cpp

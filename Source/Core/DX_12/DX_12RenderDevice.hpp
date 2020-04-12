@@ -12,7 +12,7 @@ public:
 	DX_12RenderDevice(ID3D12Device*, IDXGIAdapter* adapter, GLFWwindow*);
 	~DX_12RenderDevice();
 
-	virtual void					   generateFrameResources(RenderGraph&) override;
+	virtual void					   generateFrameResources(RenderGraph&, const uint64_t prefixHash) override;
 
 	virtual void                       startPass(const RenderTask&) override;
 	virtual Executor*				   getPassExecutor() override;

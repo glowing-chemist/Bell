@@ -2,6 +2,7 @@
 #include "DX_12RenderDevice.hpp"
 #include "Core/ConversionUtils.hpp"
 
+#include <algorithm>
 
 DX_12Image::DX_12Image( RenderDevice* device,
                         const Format format,
@@ -23,7 +24,7 @@ DX_12Image::DX_12Image( RenderDevice* device,
     D3D12_RESOURCE_DESC imageDesc{};
     imageDesc.Width = x;
     imageDesc.Height = y;
-    imageDesc.DepthOrArraySize = std:max(z, levels);
+    imageDesc.DepthOrArraySize = std::max(z, levels);
     imageDesc.Dimension = type;
     imageDesc.Layout = D3D12_TEXTURE_LAYOUT::D3D12_TEXTURE_LAYOUT_UNKNOWN;
     imageDesc.Format = getDX12ImageFormat(format);
@@ -49,7 +50,18 @@ DX_12Image::~DX_12Image()
 
 void DX_12Image::swap(ImageBase& other)
 {
+    ImageBase::swap(other);
 
+    DX_12Image& DXImage = static_cast<DX_12Image&>(other);
+
+    ID3D12Resource* tmpImage = mImage;
+    D3D12MA::Allocation* tmpMemory;
+
+    mImage = DXImage.mImage;
+    mImageMemory = DXImage.mImageMemory;
+
+    DXImage.mImage = tmpImage;
+    DXImage.mImageMemory = tmpMemory;
 }
 
 

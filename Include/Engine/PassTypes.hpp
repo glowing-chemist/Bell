@@ -33,7 +33,8 @@
 					ForwardCombinedLighting = 1 << 26, \
 					SSAOImproved = 1 << 27, \
 					TAA = 1 << 28, \
-					LineariseDepth = 1 << 29
+					LineariseDepth = 1 << 29, \
+					SSR = 1 << 30
 
 // An enum to keep track of which 
 enum class PassType : uint64_t

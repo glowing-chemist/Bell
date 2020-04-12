@@ -26,7 +26,7 @@ DX_12RenderDevice::~DX_12RenderDevice()
 }
 
 
-void DX_12RenderDevice::generateFrameResources(RenderGraph&)
+void DX_12RenderDevice::generateFrameResources(RenderGraph&, const uint64_t)
 {
 }
 

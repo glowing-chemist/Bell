@@ -282,7 +282,207 @@ vk::PipelineStageFlags getVulkanPipelineStage(const SyncPoint syncPoint)
 
 #ifdef DX_12
 
+D3D12_RESOURCE_STATES getDX12ImageLayout(const AttachmentType type)
+{
+	switch (type)
+	{
+	case AttachmentType::RenderTarget1D:
+	case AttachmentType::RenderTarget2D:
+	case AttachmentType::RenderTarget3D:
+		return D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_RENDER_TARGET;
 
+	case AttachmentType::Image1D:
+	case AttachmentType::Image2D:
+	case AttachmentType::Image3D:
+		return D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+
+	case AttachmentType::Texture1D:
+	case AttachmentType::Texture2D:
+	case AttachmentType::Texture3D:
+		return D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
+
+	case AttachmentType::Depth:
+		return D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_DEPTH_WRITE;
+
+	default:
+		return D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+	}
+}
+
+
+// This conversion looses dimensionality.
+AttachmentType getAttachmentType(const D3D12_RESOURCE_STATES)
+{
+	__debugbreak();
+	return AttachmentType::Texture2D;
+}
+
+
+DXGI_FORMAT getDX12ImageFormat(const Format format)
+{
+	switch (format)
+	{
+	case Format::RGBA8SRGB:
+		return DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+
+	case Format::RGB32SFloat:
+		return DXGI_FORMAT_R32G32B32_FLOAT;
+
+	case Format::RGBA32SFloat:
+		return DXGI_FORMAT_R32G32B32A32_FLOAT;
+
+	case Format::RGBA8UNorm:
+		return DXGI_FORMAT_R8G8B8A8_UNORM;
+
+	case Format::BGRA8UNorm:
+		return DXGI_FORMAT_B8G8R8A8_UNORM;
+
+	case Format::D32Float:
+		return DXGI_FORMAT_D32_FLOAT;
+
+	case Format::D24S8Float:
+		return DXGI_FORMAT_D32_FLOAT_S8X24_UINT;
+
+	case Format::R32Uint:
+		return DXGI_FORMAT_R32_UINT;
+
+	case Format::R32Float:
+		return DXGI_FORMAT_R32_FLOAT;
+
+	case Format::R8UNorm:
+		return DXGI_FORMAT_R8_UNORM;
+
+	case Format::RG8UNorm:
+		return DXGI_FORMAT_R8G8_UNORM;
+
+	case Format::RG16UNorm:
+		return DXGI_FORMAT_R16G16_UNORM;
+
+	case Format::RGB16UNorm:
+		return DXGI_FORMAT_R16G16B16A16_UNORM;
+
+	case Format::RGBA16UNorm:
+		return DXGI_FORMAT_R16G16B16A16_UNORM;
+
+	case Format::RGBA16SNorm:
+		return DXGI_FORMAT_R16G16B16A16_SNORM;
+
+	case Format::RGBA32Float:
+		return DXGI_FORMAT_R32G32B32A32_FLOAT;
+
+	case Format::RGB8UNorm:
+		return DXGI_FORMAT_R8G8B8A8_UNORM;
+
+	case Format::RGB8SRGB:
+		return DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+
+	case Format::RG32Float:
+		return DXGI_FORMAT_R32G32_FLOAT;
+
+	case Format::RGBA16UInt:
+		return DXGI_FORMAT_R16G16B16A16_UINT;
+
+	case Format::R16UInt:
+		return DXGI_FORMAT_R16_UINT;
+
+	default:
+		return DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+	}
+}
+
+
+D3D12_RESOURCE_FLAGS getDX12ImageUsage(const ImageUsage usage)
+{
+	D3D12_RESOURCE_FLAGS usageFlags = D3D12_RESOURCE_FLAG_NONE;
+
+	if (!(usage & ImageUsage::Sampled))
+		usageFlags |= D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE;
+
+	if (usage & ImageUsage::ColourAttachment)
+		usageFlags |= D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
+
+	if (usage & ImageUsage::DepthStencil)
+		usageFlags |= D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
+
+	if (usage & ImageUsage::Storage)
+		usageFlags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+
+
+	return usageFlags;
+}
+
+
+D3D12_RESOURCE_STATES getDX12ImageLayout(const ImageLayout layout)
+{
+	switch (layout)
+	{
+	case ImageLayout::ColorAttachment:
+		return D3D12_RESOURCE_STATE_RENDER_TARGET;
+
+	case ImageLayout::DepthStencil:
+		return D3D12_RESOURCE_STATE_DEPTH_WRITE;
+
+	case ImageLayout::DepthStencilRO:
+		return D3D12_RESOURCE_STATE_DEPTH_READ;
+
+	case ImageLayout::General:
+		return D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+
+	case ImageLayout::Present:
+		return D3D12_RESOURCE_STATE_PRESENT;
+
+	case ImageLayout::Sampled:
+		return D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
+
+	case ImageLayout::TransferDst:
+		return D3D12_RESOURCE_STATE_COPY_DEST;
+
+	case ImageLayout::TransferSrc:
+		return D3D12_RESOURCE_STATE_COPY_SOURCE;
+
+	case ImageLayout::Undefined:
+		return D3D12_RESOURCE_STATE_COMMON;
+	}
+}
+
+uint32_t getDX12PipelineStage(const SyncPoint)
+{
+	/*switch (syncPoint)
+	{
+	case SyncPoint::TopOfPipe:
+		return vk::PipelineStageFlagBits::eTopOfPipe;
+
+	case SyncPoint::IndirectArgs:
+		return vk::PipelineStageFlagBits::eDrawIndirect;
+
+	case SyncPoint::TransferSource:
+		return vk::PipelineStageFlagBits::eTransfer;
+
+	case SyncPoint::TransferDestination:
+		return vk::PipelineStageFlagBits::eTransfer;
+
+	case SyncPoint::VertexInput:
+		return vk::PipelineStageFlagBits::eVertexInput;
+
+	case SyncPoint::VertexShader:
+		return vk::PipelineStageFlagBits::eVertexShader;
+
+	case SyncPoint::FragmentShader:
+		return vk::PipelineStageFlagBits::eFragmentShader;
+
+	case SyncPoint::FragmentShaderOutput:
+		return vk::PipelineStageFlagBits::eColorAttachmentOutput;
+
+	case SyncPoint::ComputeShader:
+		return vk::PipelineStageFlagBits::eComputeShader;
+
+	case SyncPoint::BottomOfPipe:
+		return vk::PipelineStageFlagBits::eBottomOfPipe;
+	}
+
+	return vk::PipelineStageFlagBits::eTopOfPipe;*/
+	return 0;
+}
 
 #endif
 
