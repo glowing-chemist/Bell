@@ -382,9 +382,7 @@ void Engine::execute(RenderGraph& graph)
 
     mCurrentRenderGraph.bindInternalResources();
 
-    std::hash<std::string> prefixHasher{};
-    const uint64_t prefixHash = prefixHasher(mShaderPrefix);
-	mRenderDevice->generateFrameResources(graph, prefixHash);
+    mRenderDevice->generateFrameResources(graph, mCurrentRegistredPasses);
 
     std::vector<const MeshInstance*> meshes = mCurrentScene.getViewableMeshes(mCurrentScene.getCamera().getFrustum());
     std::sort(meshes.begin(), meshes.end(), [camera = mCurrentScene.getCamera()](const MeshInstance* lhs, const MeshInstance* rhs)
