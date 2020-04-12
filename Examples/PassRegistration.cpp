@@ -201,6 +201,7 @@ int main()
 		{
             engine.registerPass(PassType::GBuffer);
             engine.registerPass(PassType::DeferredPBRIBL);
+            engine.registerPass(PassType::SSR);
 
             if (graphicsOptions.mShowLights)
                 engine.registerPass(PassType::DeferredAnalyticalLighting);

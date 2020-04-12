@@ -24,7 +24,7 @@ public:
 
 	virtual void render(RenderGraph&, Engine*) override final {}
 
-	virtual void bindResources(RenderGraph& graph)
+    virtual void bindResources(RenderGraph& graph) override final
 	{
 		graph.bindImage(kReflectionMap, *mReflectionMapView);
 	}

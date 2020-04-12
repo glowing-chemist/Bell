@@ -32,6 +32,7 @@
 #include "Engine/ShadowMappingTechnique.hpp"
 #include "Engine/TAATechnique.hpp"
 #include "Engine/LineariseDepthTechnique.hpp"
+#include "Engine/ScreenSpaceReflectionTechnique.hpp"
 
 #include "glm/gtx/transform.hpp"
 
@@ -268,6 +269,9 @@ std::unique_ptr<Technique> Engine::getSingleTechnique(const PassType passType)
 
         case PassType::LineariseDepth:
             return std::make_unique<LineariseDepthTechnique>(this, mCurrentRenderGraph);
+
+        case PassType::SSR:
+            return std::make_unique<ScreenSpaceReflectionTechnique>(this, mCurrentRenderGraph);
 
         default:
         {

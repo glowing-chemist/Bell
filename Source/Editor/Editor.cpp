@@ -252,6 +252,17 @@ namespace
                 newNode->mOutputs.push_back(Pin{ 0, newNode, kLinearDepth, PinType::Texture, PinKind::Output });
                 return newNode;
             }
+
+            case NodeTypes::SSR:
+            {
+                std::shared_ptr<EditorNode> newNode = std::make_shared<PassNode>("Screen space reflection", passType);
+                newNode->mInputs.push_back(Pin{ 0, newNode, kLinearDepth, PinType::Texture, PinKind::Input });
+                newNode->mInputs.push_back(Pin{ 0, newNode, kGlobalLighting, PinType::Texture, PinKind::Input });
+                newNode->mInputs.push_back(Pin{ 0, newNode, kGBufferNormals, PinType::Texture, PinKind::Input });
+                newNode->mInputs.push_back(Pin{ 0, newNode, kGBufferMetalnessRoughness, PinType::Texture, PinKind::Input });
+                newNode->mOutputs.push_back(Pin{ 0, newNode, kReflectionMap, PinType::Texture, PinKind::Output });
+                return newNode;
+            }
         }
     }
 
@@ -532,6 +543,7 @@ void Editor::drawAssistantWindow()
            drawPassContextMenu(PassType::Shadow);
            drawPassContextMenu(PassType::TAA);
            drawPassContextMenu(PassType::LineariseDepth);
+            drawPassContextMenu(PassType::SSR);
 
            ImGui::TreePop();
        }

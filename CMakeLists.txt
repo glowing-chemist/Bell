@@ -166,8 +166,8 @@ set(BELL_SOURCE
     Source/Engine/ShadowMappingTechnique.cpp
     Source/Engine/ForwardLightingCombinedTechnique.cpp
     Source/Engine/TAATechnique.cpp
-	Source/Engine/LineariseDepthTechnique.cpp
-	Source/Engine/ScreenSpaceReflectionTechnique.cpp
+    Source/Engine/LineariseDepthTechnique.cpp
+    Source/Engine/ScreenSpaceReflectionTechnique.cpp
 
     # used for texture loading
     ThirdParty/stb_image/stb_image.cpp
@@ -245,6 +245,7 @@ set(SHADERS
 	VertexOutputs.hlsl
 	LineariseDepth.comp
 	FinalComposite.frag
+	ScreenSpaceReflection.frag
     )
 
 foreach(shader ${SHADERS})
