@@ -32,7 +32,7 @@ Texture2D<float> AnalyticalLighting;
 #endif
 
 
-#define MAX_RAY_LENGTH 0.5f
+#define MAX_RAY_LENGTH 1.5f
 #define SAMPLE_COUNT 5
 #define MAX_SAMPLE_COUNT 15
 
@@ -81,8 +81,7 @@ float4 main(PositionAndUVVertOutput vertInput)
 	for(uint i = 0; i < MAX_SAMPLE_COUNT; ++i)
 	{
 		const float2 Xi = Hammersley(i, MAX_SAMPLE_COUNT);
-		const float3 H = ImportanceSampleGGX(Xi, roughness, normal);
-		const float3 L = 2 * dot(view, H) * H - view;
+		const float3 L = ImportanceSampleGGX(Xi, roughness, normal);
 
 		float NoL = saturate(dot(normal, L));
 		if(NoL > 0.0)
