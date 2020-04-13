@@ -242,6 +242,7 @@ namespace
                 newNode->mInputs.push_back(Pin{ 0, newNode, kLinearDepth, PinType::Texture, PinKind::Input });
                 newNode->mInputs.push_back(Pin{ 0, newNode, kAnalyticLighting, PinType::Texture, PinKind::Input });
                 newNode->mInputs.push_back(Pin{ 0, newNode, kGlobalLighting, PinType::Texture, PinKind::Input });
+                newNode->mInputs.push_back(Pin{ 0, newNode, kReflectionMap, PinType::Texture, PinKind::Input });
                 return newNode;
             }
 

@@ -33,12 +33,14 @@ TAATechnique::TAATechnique(Engine* eng, RenderGraph& graph) :
 	resolveTAA.addInput(kTAAHistory, AttachmentType::Texture2D);
 	resolveTAA.addInput(kNewTAAHistory, AttachmentType::Image2D);
 	resolveTAA.addInput("TAASampler", AttachmentType::Sampler);
+    if(eng->isPassRegistered(PassType::SSR))
+        resolveTAA.addInput(kReflectionMap, AttachmentType::Texture2D);
 
 	mTaskID = graph.addTask(resolveTAA);
 }
 
 
-void TAATechnique::render(RenderGraph& graph, Engine* eng)
+void TAATechnique::render(RenderGraph& graph, Engine*)
 {
 	if (mFirstFrame)
 	{

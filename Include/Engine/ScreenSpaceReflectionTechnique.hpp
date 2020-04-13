@@ -27,11 +27,14 @@ public:
     virtual void bindResources(RenderGraph& graph) override final
 	{
 		graph.bindImage(kReflectionMap, *mReflectionMapView);
+        graph.bindSampler("SSRSampler", mClampedSampler);
 	}
 
 private:
 	PerFrameResource<Image> mReflectionMap;
 	PerFrameResource<ImageView> mReflectionMapView;
+
+    Sampler mClampedSampler;
 };
 
 #endif

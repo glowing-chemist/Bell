@@ -15,6 +15,7 @@ struct ImGuiOptions
     bool mTAA = true;
     bool mSSAO = true;
     bool mShadows = true;
+    bool mSSR = false;
 };
 
 static ImGuiOptions graphicsOptions;
@@ -73,6 +74,7 @@ bool renderMenu(GLFWwindow* win, const Camera& cam)
     ImGui::Checkbox("Enable TAA", &graphicsOptions.mTAA);
     ImGui::Checkbox("Enable SSAO", &graphicsOptions.mSSAO);
     ImGui::Checkbox("Enable shadows", &graphicsOptions.mShadows);
+    ImGui::Checkbox("Enable Screen space reflection", &graphicsOptions.mSSR);
 
     ImGui::Text("Camera position: X: %f Y: %f Z: %f", cam.getPosition().x, cam.getPosition().y, cam.getPosition().z);
     ImGui::Text("Camera direction: X: %f Y: %f Z: %f", cam.getDirection().x, cam.getDirection().y, cam.getDirection().z);
@@ -204,8 +206,11 @@ int main()
         if (graphicsOptions.mDefered)
 		{
             engine.registerPass(PassType::GBuffer);
+
             engine.registerPass(PassType::DeferredPBRIBL);
-            engine.registerPass(PassType::SSR);
+
+            if(graphicsOptions.mSSR)
+                engine.registerPass(PassType::SSR);
 
             if (graphicsOptions.mShowLights)
                 engine.registerPass(PassType::DeferredAnalyticalLighting);

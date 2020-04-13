@@ -121,7 +121,7 @@ inline const char* passToString(const PassType passType)
 			return "Overlay";
 
         case PassType::SSR:
-            return "Screen space reflection";
+            return "Screen_Space_Reflection";
 
         case PassType::Composite:
             return "Composite";
