@@ -81,7 +81,7 @@ VulkanRenderInstance::VulkanRenderInstance(GLFWwindow* window) :
     instanceInfo.setPApplicationInfo(&appInfo);
 #if BELL_ENABLE_LOGGING
     const auto availableLayers = vk::enumerateInstanceLayerProperties();
-    std::vector<const char*> validationLayers = {"VK_LAYER_LUNARG_standard_validation"
+    std::vector<const char*> validationLayers = {"VK_LAYER_KHRONOS_validation"
 #if DUMP_API
                                                  ,"VK_LAYER_LUNARG_api_dump"
 #endif
@@ -91,7 +91,7 @@ VulkanRenderInstance::VulkanRenderInstance(GLFWwindow* window) :
     {
         for(auto& availableLayer : availableLayers) {
 
-            BELL_LOG_ARGS("instance layer: %s", availableLayer.layerName)
+            BELL_LOG_ARGS("instance layer: %s", availableLayer.layerName.data())
 
             if(strcmp(availableLayer.layerName, neededLayer) == 0) {
                 ++layersFound;
@@ -142,7 +142,7 @@ std::pair<vk::PhysicalDevice, vk::Device> VulkanRenderInstance::findSuitableDevi
         const vk::PhysicalDeviceFeatures   features   = availableDevices[i].getFeatures();
         const QueueIndicies queueIndices = getAvailableQueues(mWindowSurface, availableDevices[i]);
 
-        BELL_LOG_ARGS("Device Found: %s", properties.deviceName)
+        BELL_LOG_ARGS("Device Found: %s", properties.deviceName.data());
 
 		if (geometryWanted && !features.geometryShader)
 			continue;
@@ -163,7 +163,7 @@ std::pair<vk::PhysicalDevice, vk::Device> VulkanRenderInstance::findSuitableDevi
 
     vk::PhysicalDevice physicalDevice = availableDevices[physDeviceIndex];
 
-    BELL_LOG_ARGS("Device selected: %s", physicalDevice.getProperties().deviceName)
+    BELL_LOG_ARGS("Device selected: %s", physicalDevice.getProperties().deviceName.data())
 
     const QueueIndicies queueIndices = getAvailableQueues(mWindowSurface, physicalDevice);
 
