@@ -32,25 +32,24 @@ Texture2D<float> AnalyticalLighting;
 #endif
 
 
-#define MAX_RAY_LENGTH 1.5f
+#define MAX_RAY_LENGTH 0.75f
 #define SAMPLE_COUNT 5
 #define MAX_SAMPLE_COUNT 15
 
 
 float2 marchRay(float3 position, const float3 direction, const float rayLength, const uint maxSteps)
 {
-	const float xStepSize = (direction * rayLength).x / float(maxSteps);
-	const float yStepSize = (direction * rayLength).y / float(maxSteps);
-	float3 steppedPosition = position;
+
+	const float3 finalPosition =  position + (float3(1.0f, -1.0f, 1.0f) * (direction * rayLength));
 
 	for(uint i = 0; i < maxSteps; ++i)
 	{
-		steppedPosition.xy += float2(xStepSize, yStepSize);
+		const float3 steppedPosition = lerp(position, finalPosition, float(i + 1) / float(maxSteps));
 
 		const float2 steppedUV = steppedPosition.xy * 0.5f + 0.5f;
 		const float steppedDepth = LinearDepth.Sample(linearSampler, steppedUV);
 
-		if(steppedDepth >= position.z)
+		if(steppedPosition.z >= steppedDepth)
 			return steppedUV;
 	}
 
@@ -83,7 +82,7 @@ float4 main(PositionAndUVVertOutput vertInput)
 		const float2 Xi = Hammersley(i, MAX_SAMPLE_COUNT);
 		const float3 L = ImportanceSampleGGX(Xi, roughness, normal);
 
-		float NoL = saturate(dot(normal, L));
+		float NoL = dot(normal, L);
 		if(NoL > 0.0)
 		{
 			// March the ray.
