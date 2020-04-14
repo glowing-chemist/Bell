@@ -80,6 +80,7 @@ private:
 
     bool mRecompileGraph;
     bool mInFreeFlyMode;
+    float mCameraSpeed;
 
     bool mShowFileBrowser;
     ImGuiFileBrowser mFileBrowser;

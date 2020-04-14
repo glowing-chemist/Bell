@@ -41,7 +41,7 @@ namespace
             case NodeTypes::SSAO:
             {
                 std::shared_ptr<EditorNode> newNode = std::make_shared<PassNode>("SSAO", passType);
-                newNode->mInputs.push_back(Pin{0, newNode, kGBufferDepth, PinType::Texture, PinKind::Input});
+                newNode->mInputs.push_back(Pin{0, newNode, kLinearDepth, PinType::Texture, PinKind::Input});
                 newNode->mOutputs.push_back(Pin{0, newNode, kSSAO, PinType::Texture, PinKind::Output});
                 return newNode;
             }
@@ -50,7 +50,7 @@ namespace
             {
                 std::shared_ptr<EditorNode> newNode = std::make_shared<PassNode>("SSAO Improved", passType);
                 newNode->mInputs.push_back(Pin{ 0, newNode, kGBufferNormals, PinType::Texture, PinKind::Input });
-                newNode->mInputs.push_back(Pin{ 0, newNode, kGBufferDepth, PinType::Texture, PinKind::Input });
+                newNode->mInputs.push_back(Pin{ 0, newNode, kLinearDepth, PinType::Texture, PinKind::Input });
                 newNode->mOutputs.push_back(Pin{ 0, newNode, kSSAO, PinType::Texture, PinKind::Output });
                 return newNode;
             }
@@ -280,6 +280,7 @@ Editor::Editor(GLFWwindow* window) :
     mDebugTextureName(""),
     mRecompileGraph(false),
     mInFreeFlyMode(false),
+    mCameraSpeed(1.0f),
     mShowFileBrowser{false},
     mFileBrowser{"/"},
     mShowNodeEditor{false},
@@ -440,13 +441,13 @@ void Editor::pumpInputQueue()
 		Camera& camera = mEngine.getCurrentSceneCamera();
 
 		if (glfwGetKey(mWindow, GLFW_KEY_W) == GLFW_PRESS)
-			camera.moveForward(4.5f);
+            camera.moveForward(mCameraSpeed);
 		if (glfwGetKey(mWindow, GLFW_KEY_S) == GLFW_PRESS)
-			camera.moveBackward(4.5f);
+            camera.moveBackward(mCameraSpeed);
 		if (glfwGetKey(mWindow, GLFW_KEY_A) == GLFW_PRESS)
-			camera.moveLeft(4.5f);
+            camera.moveLeft(mCameraSpeed);
 		if (glfwGetKey(mWindow, GLFW_KEY_D) == GLFW_PRESS)
-			camera.moveRight(4.5f);
+            camera.moveRight(mCameraSpeed);
 
         if (glfwGetKey(mWindow, GLFW_KEY_R) == GLFW_PRESS)
             mLightOperationMode = ImGuizmo::OPERATION::ROTATE;
@@ -558,6 +559,7 @@ void Editor::drawAssistantWindow()
        ImGui::Checkbox("Debug texture picker", &mShowDebugTexturePicker);
        const bool previouseFlyMode = mInFreeFlyMode;
        ImGui::Checkbox("Camera free fly", &mInFreeFlyMode);
+       ImGui::SliderFloat("Camera speed", &mCameraSpeed, 0.1f, 100.0f);
 
        if(mInFreeFlyMode && !previouseFlyMode)
            glfwSetInputMode(mWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
