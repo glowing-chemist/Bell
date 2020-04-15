@@ -235,11 +235,12 @@ private:
 	// return a mapping between mesh name and material index
 	MaterialMappings loadMaterialsInternal(Engine*);
 
-	void parseNode(const aiScene* scene,
-				   const aiNode* node,
-				   const aiMatrix4x4& parentTransofrmation,
-				   const int vertAttributes,
-				   const MaterialMappings& materialIndexMappings);
+    void parseNode(const aiScene* scene,
+                   const aiNode* node,
+                   const aiMatrix4x4& parentTransofrmation,
+                   const int vertAttributes,
+                   const MaterialMappings& materialIndexMappings,
+                   std::unordered_map<const aiMesh *, SceneID> &meshMappings);
 
 	void addLights(const aiScene* scene);
 

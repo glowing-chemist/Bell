@@ -108,19 +108,21 @@ void Scene::loadFromFile(const int vertAttributes, Engine* eng)
 	mSceneMeshes.reserve(scene->mNumMeshes);
 
 	const auto meshMaterials = loadMaterialsInternal(eng);
+    std::unordered_map<const aiMesh*, SceneID> meshToSceneIDMapping{};
 
 	// parse node is recursive so will add all meshes to the scene.
-	parseNode(scene, rootNode, aiMatrix4x4{}, vertAttributes, meshMaterials);
+    parseNode(scene, rootNode, aiMatrix4x4{}, vertAttributes, meshMaterials, meshToSceneIDMapping);
 
     addLights(scene);
 }
 
 
 void Scene::parseNode(const aiScene* scene,
-					  const aiNode* node,
-					  const aiMatrix4x4& parentTransofrmation,
-					  const int vertAttributes,
-					  const MaterialMappings& materialIndexMappings)
+                      const aiNode* node,
+                      const aiMatrix4x4& parentTransofrmation,
+                      const int vertAttributes,
+                      const MaterialMappings& materialIndexMappings,
+                      std::unordered_map<const aiMesh*, SceneID>& meshMappings)
 {
     aiMatrix4x4 transformation = parentTransofrmation * node->mTransformation;
 
@@ -133,24 +135,31 @@ void Scene::parseNode(const aiScene* scene,
 
         const uint32_t materialIndex = nameIt->second.index;
 
-        StaticMesh mesh{currentMesh, vertAttributes};
-        mesh.setAttributes(nameIt->second.attributes);
+        SceneID meshID = 0;
+        if(meshMappings.find(currentMesh) == meshMappings.end())
+        {
+            StaticMesh mesh{currentMesh, vertAttributes};
+            mesh.setAttributes(nameIt->second.attributes);
 
-        const SceneID meshID = addMesh(mesh, MeshType::Static);
+            meshID = addMesh(mesh, MeshType::Static);
+
+            meshMappings[currentMesh] = meshID;
+        }
+        else
+            meshID = meshMappings[currentMesh];
 
         const glm::mat4 transformationMatrix{transformation.a1, transformation.a2, transformation.a3, transformation.a4,
                                              transformation.b1, transformation.b2, transformation.b3, transformation.b4,
                                              transformation.c1, transformation.c2, transformation.c3, transformation.c4,
                                              transformation.d1, transformation.d2, transformation.d3, transformation.d4};
 
-        // TODO: For now don't attempt to deduplicate the meshes (even though this class has the functionality)
         addMeshInstance(meshID, transformationMatrix, materialIndex);
     }
 
     // Recurse through all child nodes
     for(uint32_t i = 0; i < node->mNumChildren; ++i)
     {
-		parseNode(scene, node->mChildren[i], transformation, vertAttributes, materialIndexMappings);
+        parseNode(scene, node->mChildren[i], transformation, vertAttributes, materialIndexMappings, meshMappings);
     }
 }
 
