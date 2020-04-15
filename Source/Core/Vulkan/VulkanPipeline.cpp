@@ -171,7 +171,6 @@ void GraphicsPipeline::setVertexAttributes(const int vertexInputs)
 	const bool hasTextureCoords = vertexInputs & VertexAttributes::TextureCoordinates;
 	const bool hasNormals = vertexInputs & VertexAttributes::Normals;
 	const bool hasAlbedo = vertexInputs & VertexAttributes::Albedo;
-	const bool hasMaterial = vertexInputs & VertexAttributes::Material;
 
 	uint32_t positionSize = 0;
 	if (hasPosition2)
@@ -181,7 +180,7 @@ void GraphicsPipeline::setVertexAttributes(const int vertexInputs)
 	else if (hasPosition4)
 		positionSize = 16;
 
-	const uint32_t vertexStride = positionSize + (hasTextureCoords ? 8 : 0) + (hasNormals ? 16 : 0) + (hasAlbedo ? 4 : 0) + (hasMaterial ? 4 : 0);
+    const uint32_t vertexStride = positionSize + (hasTextureCoords ? 8 : 0) + (hasNormals ? 16 : 0) + (hasAlbedo ? 4 : 0);
 
 	vk::VertexInputBindingDescription bindingDesc{};
 	bindingDesc.setStride(vertexStride);
@@ -266,19 +265,6 @@ void GraphicsPipeline::setVertexAttributes(const int vertexInputs)
 		attribDescAlbedo.setOffset(currentOffset);
 
 		attribs.push_back(attribDescAlbedo);
-		currentOffset += 4;
-		++currentLocation;
-	}
-
-	if (hasMaterial)
-	{
-		vk::VertexInputAttributeDescription attribDescMaterial{};
-		attribDescMaterial.setBinding(0);
-		attribDescMaterial.setLocation(currentLocation);
-		attribDescMaterial.setFormat(vk::Format::eR32Uint);
-		attribDescMaterial.setOffset(currentOffset);
-
-		attribs.push_back(attribDescMaterial);
 	}
 
 	mVertexAttribs = std::move(attribs);

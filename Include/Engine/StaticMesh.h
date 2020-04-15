@@ -21,9 +21,11 @@ enum MeshAttributes
 
 struct MeshEntry
 {
-    glm::mat4 mTransformation;
-    glm::mat4 mPreviousTransformation;
+    float3x4 mTransformation;
+    float3x4 mPreviousTransformation;
+    uint32_t materialIndex;
 };
+static_assert (sizeof(MeshEntry) <= 128, "Mesh Entry will no longer fit inside push constants");
 
 
 class StaticMesh
@@ -31,8 +33,6 @@ class StaticMesh
 public:
 	
     StaticMesh(const std::string& filePath, const int vertexAttributes);
-    StaticMesh(const std::string& filePath, const int vertexAttributes, const uint32_t materialID);
-    StaticMesh(const aiMesh* mesh, const int vertexAttributes, const uint32_t materialID);
     StaticMesh(const aiMesh* mesh, const int vertexAttributes);
 
 
@@ -93,7 +93,6 @@ public:
 
 private:
 
-    void configure(const aiMesh* mesh, const int vertexAttributes, const uint32_t materialID);
     void configure(const aiMesh* mesh, const int vertexAttributes);
 
     void writeVertexVector4(const aiVector3D&, const uint32_t);

@@ -773,7 +773,7 @@ void Editor::loadScene(const std::string& scene)
                                         "./Assets/Skybox.png" };
 
 	Scene testScene(scene);
-	testScene.loadFromFile(VertexAttributes::Position4 | VertexAttributes::Normals | VertexAttributes::TextureCoordinates | VertexAttributes::Material, &mEngine);
+	testScene.loadFromFile(VertexAttributes::Position4 | VertexAttributes::Normals | VertexAttributes::TextureCoordinates, &mEngine);
 	testScene.loadSkybox(skybox, &mEngine);
 	testScene.uploadData(&mEngine);
 	testScene.computeBounds(MeshType::Static);

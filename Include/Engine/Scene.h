@@ -39,16 +39,22 @@ enum class LightType : uint32_t
 
 struct MeshInstance
 {
-    MeshInstance(StaticMesh* mesh, const float4x4& trans) :
+    MeshInstance(StaticMesh* mesh, const float4x3& trans, const uint32_t materialID) :
         mMesh(mesh),
         mTransformation(trans),
-        mPreviousTransformation(trans) {}
+        mPreviousTransformation(trans),
+        mMaterialID{materialID} {}
 
     StaticMesh* mMesh;
 
     const float4x4& getTransMatrix() const
     {
         return mTransformation;
+    }
+
+    uint32_t getmaterialID() const
+    {
+        return mMaterialID;
     }
 
     void setTransMatrix(const float4x4& newTrans)
@@ -60,8 +66,9 @@ struct MeshInstance
     MeshEntry getMeshShaderEntry() const
     {
         MeshEntry entry{};
-        entry.mTransformation = mTransformation;
-        entry.mPreviousTransformation = mPreviousTransformation;
+        entry.mTransformation = float3x4(mTransformation);
+        entry.mPreviousTransformation = float3x4(mPreviousTransformation);
+        entry.materialIndex = mMaterialID;
 
         return entry;
     }
@@ -69,6 +76,7 @@ struct MeshInstance
 private:
     float4x4 mTransformation;
     float4x4 mPreviousTransformation;
+    uint32_t mMaterialID;
 };
 
 
@@ -86,7 +94,7 @@ public:
 	void loadSkybox(const std::array<std::string, 6>& path, Engine*);
 
     SceneID       addMesh(const StaticMesh&, MeshType);
-    InstanceID    addMeshInstance(const SceneID, const glm::mat4&);
+    InstanceID    addMeshInstance(const SceneID, const float4x3&, const uint32_t materialID);
 
     void          uploadData(Engine*);
     void          computeBounds(const MeshType);

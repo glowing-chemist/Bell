@@ -17,7 +17,7 @@ ForwardCombinedLightingTechnique::ForwardCombinedLightingTechnique(Engine* eng, 
 	mPointSampler(SamplerType::Point)
 {
 	GraphicsTask task{ "ForwardCombinedLighting", mDesc };
-	task.setVertexAttributes(VertexAttributes::Position4 | VertexAttributes::Material |
+	task.setVertexAttributes(VertexAttributes::Position4 |
 		VertexAttributes::Normals | VertexAttributes::TextureCoordinates);
 
 	task.addInput(kCameraBuffer, AttachmentType::UniformBuffer);

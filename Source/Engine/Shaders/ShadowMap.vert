@@ -8,14 +8,17 @@ ConstantBuffer<ShadowingLight> light;
 ConstantBuffer<ObjectMatracies> model;
 
 
-ShadowMapVertOutput main(Vertex vert)
+ShadowMapVertOutput main(Vertex vertex)
 {
 	ShadowMapVertOutput output;
 
-	output.position = mul(mul(light.viewProj, model.meshMatrix), vert.position);
-	output.positionVS = mul(mul(light.view, model.meshMatrix), vert.position);
-	output.uv = vert.uv;
-	output.materialID = vert.materialID;
+	float4 transformedPositionWS = mul(model.meshMatrix, vertex.position.xyz);
+	transformedPositionWS.w = 1.0f;
+
+	output.position = mul(light.viewProj, transformedPositionWS);
+	output.positionVS = mul(light.view, transformedPositionWS);
+	output.uv = vertex.uv;
+	output.materialID = model.materialID;
 
 	return output;
 }

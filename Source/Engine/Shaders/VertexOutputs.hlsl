@@ -49,7 +49,6 @@ struct Vertex
 	float4 position : POSITION;
 	float2 uv : TEXCOORD0;
 	float4 normal : NORMAL0;
-	uint materialID;
 };
 
 struct OverlayVertex
@@ -61,6 +60,7 @@ struct OverlayVertex
 
 struct ObjectMatracies
 {
-	float4x4 meshMatrix;
-	float4x4 prevMeshMatrix;
+	float4x3 meshMatrix;
+	float4x3 prevMeshMatrix;
+	uint materialID;
 };

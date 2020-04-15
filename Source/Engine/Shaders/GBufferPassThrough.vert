@@ -14,18 +14,21 @@ GBufferVertOutput main(Vertex vertInput)
 {
 	GBufferVertOutput output;
 
-	const float4x4 transFormation = mul(camera.viewProj, model.meshMatrix);
-	float4 transformedPosition = mul(transFormation, vertInput.position);
+	float4 transformedPositionWS = mul(model.meshMatrix, vertInput.position.xyz);
+	transformedPositionWS.w = 1.0f;
+	float4 transformedPosition = mul(camera.viewProj, transformedPositionWS);
 
 	output.position = transformedPosition;
-	output.positionWS = mul(model.meshMatrix, vertInput.position);
+	output.positionWS = transformedPositionWS;
 	output.uv = vertInput.uv;
 	output.normal = float4(mul((float3x3)model.meshMatrix, vertInput.normal.xyz), 1.0f);
-	output.materialID =  vertInput.materialID;
+	output.materialID =  model.materialID;
 
 	// Calculate screen space velocity.
 	transformedPosition /= transformedPosition.w;
-	float4 previousPosition = mul(mul(camera.previousFrameViewProj, model.meshMatrix), vertInput.position);
+	float4 previousPositionWS = mul(model.prevMeshMatrix, vertInput.position.xyz);
+	previousPositionWS.w = 1.0f;
+	float4 previousPosition = mul(camera.previousFrameViewProj, previousPositionWS);
 	previousPosition /= previousPosition.w;
 	output.velocity = previousPosition.xy - transformedPosition.xy;
 

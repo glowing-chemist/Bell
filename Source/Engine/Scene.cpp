@@ -133,7 +133,7 @@ void Scene::parseNode(const aiScene* scene,
 
         const uint32_t materialIndex = nameIt->second.index;
 
-		StaticMesh mesh{currentMesh, vertAttributes, materialIndex};
+        StaticMesh mesh{currentMesh, vertAttributes};
         mesh.setAttributes(nameIt->second.attributes);
 
         const SceneID meshID = addMesh(mesh, MeshType::Static);
@@ -144,7 +144,7 @@ void Scene::parseNode(const aiScene* scene,
                                              transformation.d1, transformation.d2, transformation.d3, transformation.d4};
 
         // TODO: For now don't attempt to deduplicate the meshes (even though this class has the functionality)
-        addMeshInstance(meshID, transformationMatrix);
+        addMeshInstance(meshID, transformationMatrix, materialIndex);
     }
 
     // Recurse through all child nodes
@@ -318,7 +318,7 @@ SceneID Scene::addMesh(const StaticMesh& mesh, MeshType meshType)
 
 // It's invalid to use the InstanceID for a static mesh for anything other than state tracking.
 // As the BVH for them will not be updated.
-InstanceID Scene::addMeshInstance(const SceneID meshID, const glm::mat4& transformation)
+InstanceID Scene::addMeshInstance(const SceneID meshID, const float4x3 &transformation, const uint32_t materialID)
 {
     auto& [mesh, meshType] = mSceneMeshes[meshID];
 
@@ -328,13 +328,13 @@ InstanceID Scene::addMeshInstance(const SceneID meshID, const glm::mat4& transfo
     {
         id = static_cast<InstanceID>(mStaticMeshInstances.size() + 1);
 
-        mStaticMeshInstances.push_back({&mesh, transformation});
+        mStaticMeshInstances.push_back({&mesh, transformation, materialID});
     }
     else
     {
         id = -static_cast<InstanceID>(mDynamicMeshInstances.size());
 
-        mDynamicMeshInstances.push_back({&mesh, transformation});
+        mDynamicMeshInstances.push_back({&mesh, transformation, materialID});
     }
 
     return id;

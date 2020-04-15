@@ -18,7 +18,7 @@ ShadowMappingTechnique::ShadowMappingTechnique(Engine* eng, RenderGraph& graph) 
     mResolveDesc{eng->getShader("./Shaders/ResolveVarianceShadowMap.comp")}
 {
     GraphicsTask shadowTask{ "ShadowMapping", mDesc };
-    shadowTask.setVertexAttributes(VertexAttributes::Position4 | VertexAttributes::Material |
+    shadowTask.setVertexAttributes(VertexAttributes::Position4 |
                               VertexAttributes::Normals | VertexAttributes::TextureCoordinates);
 
     shadowTask.addInput(kShadowingLights, AttachmentType::UniformBuffer);

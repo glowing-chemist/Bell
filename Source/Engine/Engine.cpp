@@ -112,7 +112,7 @@ Engine::Engine(GLFWwindow* windowPtr) :
 void Engine::loadScene(const std::string& path)
 {
     mLoadingScene = Scene(path);
-	mLoadingScene.loadFromFile(VertexAttributes::Position4 | VertexAttributes::TextureCoordinates | VertexAttributes::Normals | VertexAttributes::Material, this);
+	mLoadingScene.loadFromFile(VertexAttributes::Position4 | VertexAttributes::TextureCoordinates | VertexAttributes::Normals, this);
 
     mLoadingScene.uploadData(this);
     mLoadingScene.computeBounds(MeshType::Static);
@@ -130,7 +130,7 @@ void Engine::transitionScene()
 void Engine::setScene(const std::string& path)
 {
     mCurrentScene = Scene(path);
-    mCurrentScene.loadFromFile(VertexAttributes::Position4 | VertexAttributes::TextureCoordinates | VertexAttributes::Normals | VertexAttributes::Material, this);
+    mCurrentScene.loadFromFile(VertexAttributes::Position4 | VertexAttributes::TextureCoordinates | VertexAttributes::Normals, this);
 
     mLoadingScene.uploadData(this);
     mLoadingScene.computeBounds(MeshType::Static);

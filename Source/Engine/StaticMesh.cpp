@@ -17,32 +17,6 @@ StaticMesh::StaticMesh(const std::string& path, const int vertAttributes) :
     mVertexStride(0),
     mAttributes(0)
 {
-    Assimp::Importer importer;
-
-    const aiScene* model = importer.ReadFile(path.c_str(),
-                                             aiProcess_Triangulate |
-                                             aiProcess_JoinIdenticalVertices |
-											 aiProcess_GenNormals |
-											 aiProcess_FlipUVs);
-
-    BELL_ASSERT(model->mNumMeshes == 1, "This files containes more than 1 mesh, which one is loaded is undefined.")
-
-    const aiMesh* mesh = model->mMeshes[0];
-
-	configure(mesh, vertAttributes);
-}
-
-
-StaticMesh::StaticMesh(const std::string& path, const int vertAttributes, const uint32_t materialID) :
-	mVertexData{},
-	mIndexData{},
-    mAABB{},
-    mPassTypes{static_cast<uint64_t>(PassType::EditorDefault)},
-	mVertexCount(0),
-    mVertexAttributes(vertAttributes),
-    mVertexStride(0),
-    mAttributes(0)
-{
 	Assimp::Importer importer;
 
 	const aiScene* model = importer.ReadFile(path.c_str(),
@@ -55,109 +29,14 @@ StaticMesh::StaticMesh(const std::string& path, const int vertAttributes, const 
 
 	const aiMesh* mesh = model->mMeshes[0];
 
-	configure(mesh, vertAttributes, materialID);
-}
-
-
-StaticMesh::StaticMesh(const aiMesh* mesh, const int vertexAttributes, const uint32_t materialID) :
-    mVertexAttributes(vertexAttributes)
-{
-	configure(mesh, vertexAttributes, materialID);
+    configure(mesh, vertAttributes);
 }
 
 
 StaticMesh::StaticMesh(const aiMesh* mesh, const int vertexAttributes) :
     mVertexAttributes(vertexAttributes)
 {
-	configure(mesh, vertexAttributes);
-}
-
-
-void StaticMesh::configure(const aiMesh* mesh, const int vertAttributes, const uint32_t materialID)
-{
-    const unsigned int primitiveType = mesh->mPrimitiveTypes;
-
-    const uint32_t primitiveSize = getPrimitiveSize(static_cast<aiPrimitiveType>(primitiveType));
-
-    const bool positionNeeded = mesh->HasPositions() && ((vertAttributes & VertexAttributes::Position2 ||
-                                                     vertAttributes & VertexAttributes::Position3 ||
-                                                     vertAttributes & VertexAttributes::Position4));
-
-    const bool UVNeeded = mesh->HasTextureCoords(0) && (vertAttributes & VertexAttributes::TextureCoordinates);
-
-    const bool normalsNeeded = mesh->HasNormals() && (vertAttributes & VertexAttributes::Normals);
-
-    const bool albedoNeeded = mesh->HasVertexColors(0) && (vertAttributes & VertexAttributes::Albedo);
-
-    const uint32_t vertexStride =   ((positionNeeded ? primitiveSize : 0) +
-                                    (UVNeeded ? 2 : 0) +
-                                    (normalsNeeded ? 4 : 0) +
-                                    (albedoNeeded ? 4 : 0) +
-                                    1) * sizeof(float);
-
-	mVertexStride = vertexStride;
-	mVertexCount = mesh->mNumVertices;
-
-    // assume triangles atm
-    mIndexData.resize(mesh->mNumFaces * mesh->mFaces[0].mNumIndices);
-    mVertexData.resize(mesh->mNumVertices * vertexStride);
-
-    // Copy the index data
-    uint32_t currentIndex = 0;
-    for(uint32_t i = 0; i < mesh->mNumFaces; ++i, currentIndex += 3)
-    {
-        mIndexData[currentIndex] = mesh->mFaces[i].mIndices[0];
-        mIndexData[currentIndex + 1] = mesh->mFaces[i].mIndices[1];
-        mIndexData[currentIndex + 2] = mesh->mFaces[i].mIndices[2];
-    }
-
-    uint32_t currentOffset = 0;
-
-    float4 topLeft{std::numeric_limits<float>::infinity(), std::numeric_limits<float>::infinity(), std::numeric_limits<float>::infinity(), 1.0f};
-    float4 bottumRight{-std::numeric_limits<float>::infinity(), -std::numeric_limits<float>::infinity(), -std::numeric_limits<float>::infinity(), 1.0f};
-
-
-    // Copy the vertex buffer data.
-    for(uint32_t i = 0; i < mesh->mNumVertices; ++i)
-    {
-        if(positionNeeded)
-        {
-            writeVertexVector4(mesh->mVertices[i], currentOffset);
-            currentOffset += 4 * sizeof(float);
-
-            // update the AABB positions
-            topLeft = componentWiseMin(topLeft, float4{	mesh->mVertices[i].x,
-                                                        mesh->mVertices[i].y,
-                                                        mesh->mVertices[i].z, 1.0f});
-
-            bottumRight = componentWiseMax(bottumRight, float4{	mesh->mVertices[i].x,
-                                                                mesh->mVertices[i].y,
-                                                                mesh->mVertices[i].z, 1.0f});
-        }
-
-        if(UVNeeded)
-        {
-            writeVertexVector2({mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y}, currentOffset);
-            currentOffset += 2 * sizeof(float);
-        }
-
-        if(normalsNeeded)
-        {
-            writeVertexVector4(mesh->mNormals[i], currentOffset);
-            currentOffset += 4 * sizeof(float);
-        }
-
-        if(albedoNeeded)
-        {
-            writeVertexVector4({mesh->mColors[i]->r, mesh->mColors[i]->g, mesh->mColors[i]->b}, currentOffset);
-            currentOffset += 4 * sizeof(float);
-        }
-
-        WriteVertexInt(materialID, currentOffset);
-        currentOffset += sizeof(uint32_t);
-    }
-
-    mAABB = AABB{topLeft, bottumRight};
+    configure(mesh, vertexAttributes);
 }
 
 
@@ -177,16 +56,12 @@ void StaticMesh::configure(const aiMesh* mesh, const int vertAttributes)
 
     const bool albedoNeeded = mesh->HasVertexColors(0) && (vertAttributes & VertexAttributes::Albedo);
 
-    // For now just assume if we request a material ID that one exists.
-    const bool materialNeeded = (vertAttributes & VertexAttributes::Material);
-
     // relys on float and MaterialID beingn the same size (should always be true).
     static_assert(sizeof(float) == sizeof(uint32_t), "Material ID doesn't match sizeof(float");
     const uint32_t vertexStride =   ((positionNeeded ? primitiveSize : 0) +
                                     (UVNeeded ? 2 : 0) +
                                     (normalsNeeded ? 4 : 0) +
-                                    (albedoNeeded ? 4 : 0) +
-                                    (materialNeeded ? 1 : 0)) * sizeof(float);
+                                    (albedoNeeded ? 4 : 0)) * sizeof(float);
 
 	mVertexStride = vertexStride;
 	mVertexCount = mesh->mNumVertices;
@@ -243,12 +118,6 @@ void StaticMesh::configure(const aiMesh* mesh, const int vertAttributes)
         {
             writeVertexVector4({mesh->mColors[i]->r, mesh->mColors[i]->g, mesh->mColors[i]->b}, currentOffset);
             currentOffset += 4 * sizeof(float);
-        }
-
-        if(materialNeeded)
-        {
-            writeVertexFloat(mesh->mMaterialIndex, currentOffset);
-            currentOffset += sizeof(uint32_t);
         }
     }
 

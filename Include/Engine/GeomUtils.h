@@ -24,7 +24,8 @@ using int4 = glm::vec<4, int32_t>;
 
 using float4x4 = glm::mat4;
 using float3x3 = glm::mat3;
-
+using float4x3 = glm::mat4x3;
+using float3x4 = glm::mat3x4;
 
 class AABB;
 

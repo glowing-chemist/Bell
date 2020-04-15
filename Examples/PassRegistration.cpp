@@ -123,7 +123,7 @@ int main()
     std::array<std::string, 6> skybox{"./Assets/Skybox.png", "./Assets/Skybox.png", "./Assets/Skybox.png", "./Assets/Skybox.png", "./Assets/Skybox.png", "./Assets/Skybox.png"};
 
     Scene testScene("./Assets/Sponza/sponzaPBR.obj");
-    testScene.loadFromFile(VertexAttributes::Position4 | VertexAttributes::Normals | VertexAttributes::TextureCoordinates | VertexAttributes::Material, &engine);
+    testScene.loadFromFile(VertexAttributes::Position4 | VertexAttributes::Normals | VertexAttributes::TextureCoordinates, &engine);
     testScene.loadSkybox(skybox, &engine);
     testScene.uploadData(&engine);
     testScene.computeBounds(MeshType::Static);
