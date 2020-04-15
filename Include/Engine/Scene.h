@@ -68,7 +68,8 @@ struct MeshInstance
         MeshEntry entry{};
         entry.mTransformation = float3x4(mTransformation);
         entry.mPreviousTransformation = float3x4(mPreviousTransformation);
-        entry.materialIndex = mMaterialID;
+        entry.mMaterialIndex = mMaterialID;
+        entry.mAttributes = mMesh->getAttributes();
 
         return entry;
     }
