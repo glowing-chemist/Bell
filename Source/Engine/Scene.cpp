@@ -339,6 +339,10 @@ Scene::MaterialMappings Scene::loadMaterialsInternal(Engine* eng)
 			BELL_TRAP;
 		}
 	}
+    // Add the last material
+    if(mat.mNormals || mat.mAlbedoorDiffuse || mat.mRoughnessOrGloss || mat.mMetalnessOrSpecular)
+        mMaterials.push_back(mat);
+    mMaterialFlags |= mat.mMaterialTypes;
 
 	return materialMappings;
 }
