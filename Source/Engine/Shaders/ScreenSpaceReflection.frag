@@ -40,7 +40,7 @@ Texture2D<float> AnalyticalLighting;
 float2 marchRay(float3 position, const float3 direction, const float rayLength, const uint maxSteps)
 {
 
-	const float3 finalPosition =  position + (float3(1.0f, -1.0f, 1.0f) * (direction * rayLength));
+	const float3 finalPosition =  position + /*(float3(1.0f, -1.0f, 1.0f) */ (direction * rayLength);
 
 	for(uint i = 0; i < maxSteps; ++i)
 	{
@@ -73,21 +73,21 @@ float4 main(PositionAndUVVertOutput vertInput)
 	roughness *= roughness;
 
 	// camera is at 0.0, 0.0, 0.0 so view vector is just position.
-	const float3 view = -position;
+	const float3 view = position;
 	float4 reflectedColour = float4(0.0f, 0.0f, 0.0f, 0.0f);
 	float totalWeight = 0.0f;
 	uint usedSamples = 0;
 	for(uint i = 0; i < MAX_SAMPLE_COUNT; ++i)
 	{
 		const float2 Xi = Hammersley(i, MAX_SAMPLE_COUNT);
-		const float3 L = ImportanceSampleGGX(Xi, roughness, normal);
+		const float3 L = reflect(view, normal);// ImportanceSampleGGX(Xi, roughness, normal);
 
-		float NoL = dot(normal, L);
+		float NoL = saturate(dot(normal, L));
 		if(NoL > 0.0)
 		{
 			// March the ray.
 			//prefilteredColor += skyBox.Sample(defaultSampler, L).xyz * NoL;
-			const float2 colourUV = marchRay(position, normalize(L), MAX_RAY_LENGTH, 30);
+			const float2 colourUV = marchRay(position, L, MAX_RAY_LENGTH, 30);
 			if(all(colourUV >= float2(0.0f, 0.0f)))
 			{
 				reflectedColour += GlobalLighting.Sample(linearSampler, colourUV) * NoL;

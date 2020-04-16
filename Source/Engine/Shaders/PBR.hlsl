@@ -1,6 +1,7 @@
 #define DIELECTRIC_SPECULAR 0.04
 
 #include "Hammersley.hlsl"
+#include "Materials.hlsl"
 
 // polynomial aproximation of a monte carlo integrated DFG function.
 // Implementation taken from https://knarkowicz.wordpress.com/2014/12/27/analytical-dfg-term-for-ibl/

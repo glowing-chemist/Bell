@@ -23,6 +23,7 @@ Scene::Scene(const std::string& name) :
 	mSceneCamera(float3(), float3(0.0f, 0.0f, 1.0f), 1920.0f /1080.0f ,0.1f, 2000.0f),
 	mMaterials{},
 	mMaterialImageViews{},
+    mMaterialFlags{0},
     mLights{},
     mShadowingLight{},
 	mSkybox{nullptr}
@@ -41,6 +42,7 @@ Scene::Scene(Scene&& scene) :
     mSceneCamera{std::move(scene.mSceneCamera)},
     mMaterials{std::move(scene.mMaterials)},
     mMaterialImageViews{std::move(scene.mMaterialImageViews)},
+    mMaterialFlags{scene.mMaterialFlags},
     mLights{std::move(scene.mLights)},
     mShadowingLight{std::move(scene.mShadowingLight)},
     mSkybox{std::move(scene.mSkybox)},
@@ -61,12 +63,25 @@ Scene& Scene::operator=(Scene&& scene)
     mSceneCamera = std::move(scene.mSceneCamera);
 	mMaterials = std::move(scene.mMaterials);
 	mMaterialImageViews = std::move(scene.mMaterialImageViews);
+    mMaterialFlags = scene.mMaterialFlags;
     mLights = std::move(scene.mLights);
     mShadowingLight = std::move(scene.mShadowingLight);
 	mSkybox = std::move(scene.mSkybox);
     mSkyboxView = std::move(scene.mSkyboxView);
 
     return *this;
+}
+
+
+Scene::~Scene()
+{
+    for(const auto& mat : mMaterials)
+    {
+        delete mat.mNormals;
+        delete mat.mAlbedoorDiffuse;
+        delete mat.mRoughnessOrGloss;
+        delete mat.mMetalnessOrSpecular;
+    }
 }
 
 
@@ -247,62 +262,76 @@ Scene::MaterialMappings Scene::loadMaterialsInternal(Engine* eng)
         materialMappings.insert({aiString(token), {materialIndex, attributes}});
 	}
 
-	std::string albedoFile;
+    Material mat{nullptr, nullptr, nullptr, nullptr, 0};
+    std::string albedoOrDiffuseFile;
 	std::string normalsFile;
-	std::string roughnessFile;
-	std::string metalnessFile;
+    std::string roughnessOrGlossFile;
+    std::string metalnessOrSpecularFile;
 	while(materialFile >> token)
 	{
 		if(token == "Material")
 		{
+            // add the previously read material if it exists.
+            if(mat.mNormals || mat.mAlbedoorDiffuse || mat.mRoughnessOrGloss || mat.mMetalnessOrSpecular)
+                mMaterials.push_back(mat);
+
+            mMaterialFlags |= mat.mMaterialTypes;
+
+            mat.mNormals = nullptr;
+            mat.mAlbedoorDiffuse = nullptr;
+            mat.mRoughnessOrGloss = nullptr;
+            mat.mMetalnessOrSpecular = nullptr;
+            mat.mMaterialTypes = 0;
+
 			materialFile >> materialIndex;
 			continue;
 		}
-		else if(token == "Albedo")
+        else if(token == "Albedo" || token == "Diffuse")
 		{
-			materialFile >> albedoFile;
+            materialFile >> albedoOrDiffuseFile;
+            TextureUtil::TextureInfo diffuseInfo = TextureUtil::load32BitTexture((sceneDirectory / albedoOrDiffuseFile).string().c_str(), STBI_rgb_alpha);
+            Image *diffuseTexture = new Image(eng->getDevice(), Format::RGBA8UNorm, ImageUsage::Sampled | ImageUsage::TransferDest,
+                                 static_cast<uint32_t>(diffuseInfo.width), static_cast<uint32_t>(diffuseInfo.height), 1, 1, 1, 1, albedoOrDiffuseFile);
+            (*diffuseTexture)->setContents(diffuseInfo.mData.data(), static_cast<uint32_t>(diffuseInfo.width), static_cast<uint32_t>(diffuseInfo.height), 1);
+            mat.mAlbedoorDiffuse = diffuseTexture;
+            mMaterialImageViews.emplace_back(*diffuseTexture, ImageViewType::Colour);
+
+            mat.mMaterialTypes |= token == "Albedo" ? static_cast<uint32_t>(MaterialType::Albedo) : static_cast<uint32_t>(MaterialType::Diffuse);
 		}
 		else if(token == "Normal")
 		{
 			materialFile >> normalsFile;
-		}
-		else if(token == "Roughness")
-		{
-			materialFile >> roughnessFile;
-		}
-		else if(token == "Metalness")
-		{
-			materialFile >> metalnessFile;
-
-            TextureUtil::TextureInfo diffuseInfo = TextureUtil::load32BitTexture((sceneDirectory / albedoFile).string().c_str(), STBI_rgb_alpha);
-            Image diffuseTexture(eng->getDevice(), Format::RGBA8UNorm, ImageUsage::Sampled | ImageUsage::TransferDest,
-								 static_cast<uint32_t>(diffuseInfo.width), static_cast<uint32_t>(diffuseInfo.height), 1, 1, 1, 1, albedoFile);
-			diffuseTexture->setContents(diffuseInfo.mData.data(), static_cast<uint32_t>(diffuseInfo.width), static_cast<uint32_t>(diffuseInfo.height), 1);
-
-
             TextureUtil::TextureInfo normalsInfo = TextureUtil::load32BitTexture((sceneDirectory / normalsFile).string().c_str(), STBI_rgb_alpha);
-            Image normalsTexture(eng->getDevice(), Format::RGBA8UNorm, ImageUsage::Sampled | ImageUsage::TransferDest,
-								 static_cast<uint32_t>(normalsInfo.width), static_cast<uint32_t>(normalsInfo.height), 1, 1, 1, 1, normalsFile);
-			normalsTexture->setContents(normalsInfo.mData.data(), static_cast<uint32_t>(normalsInfo.width), static_cast<uint32_t>(normalsInfo.height), 1);
+            Image* normalsTexture = new Image(eng->getDevice(), Format::RGBA8UNorm, ImageUsage::Sampled | ImageUsage::TransferDest,
+                                 static_cast<uint32_t>(normalsInfo.width), static_cast<uint32_t>(normalsInfo.height), 1, 1, 1, 1, normalsFile);
+            (*normalsTexture)->setContents(normalsInfo.mData.data(), static_cast<uint32_t>(normalsInfo.width), static_cast<uint32_t>(normalsInfo.height), 1);
+            mat.mNormals = nullptr;
+            mMaterialImageViews.emplace_back(*normalsTexture, ImageViewType::Colour);
 
+            mat.mMaterialTypes |= static_cast<uint32_t>(MaterialType::Normals);
+		}
+        else if(token == "Roughness" || token == "Gloss")
+		{
+            materialFile >> roughnessOrGlossFile;
+            TextureUtil::TextureInfo roughnessInfo = TextureUtil::load32BitTexture((sceneDirectory / roughnessOrGlossFile).string().c_str(), STBI_grey);
+            Image* roughnessTexture = new Image(eng->getDevice(), Format::R8UNorm, ImageUsage::Sampled | ImageUsage::TransferDest,
+                                 static_cast<uint32_t>(roughnessInfo.width), static_cast<uint32_t>(roughnessInfo.height), 1, 1, 1, 1, roughnessOrGlossFile);
+            (*roughnessTexture)->setContents(roughnessInfo.mData.data(), static_cast<uint32_t>(roughnessInfo.width), static_cast<uint32_t>(roughnessInfo.height), 1);
+            mat.mRoughnessOrGloss = roughnessTexture;
+            mMaterialImageViews.emplace_back(*roughnessTexture, ImageViewType::Colour);
 
-            TextureUtil::TextureInfo roughnessInfo = TextureUtil::load32BitTexture((sceneDirectory / roughnessFile).string().c_str(), STBI_grey);
-            Image roughnessTexture(eng->getDevice(), Format::R8UNorm, ImageUsage::Sampled | ImageUsage::TransferDest,
-								 static_cast<uint32_t>(roughnessInfo.width), static_cast<uint32_t>(roughnessInfo.height), 1, 1, 1, 1, roughnessFile);
-			roughnessTexture->setContents(roughnessInfo.mData.data(), static_cast<uint32_t>(roughnessInfo.width), static_cast<uint32_t>(roughnessInfo.height), 1);
+            mat.mMaterialTypes |= token == "Roughness" ? static_cast<uint32_t>(MaterialType::Roughness) : static_cast<uint32_t>(MaterialType::Gloss);
+		}
+        else if(token == "Metalness" || token == "Specular")
+		{
+            materialFile >> metalnessOrSpecularFile;
+            TextureUtil::TextureInfo metalnessInfo = TextureUtil::load32BitTexture((sceneDirectory / metalnessOrSpecularFile).string().c_str(), token == "Metalness" ? STBI_grey : STBI_rgb_alpha);
+            Image* metalnessTexture = new Image(eng->getDevice(), token == "Metalness" ? Format::R8UNorm : Format::RGBA8UNorm, ImageUsage::Sampled | ImageUsage::TransferDest,
+                                 static_cast<uint32_t>(metalnessInfo.width), static_cast<uint32_t>(metalnessInfo.height), 1, 1, 1, 1, metalnessOrSpecularFile);
+            (*metalnessTexture)->setContents(metalnessInfo.mData.data(), static_cast<uint32_t>(metalnessInfo.width), static_cast<uint32_t>(metalnessInfo.height), 1);
+            mMaterialImageViews.emplace_back(*metalnessTexture, ImageViewType::Colour);
 
-
-            TextureUtil::TextureInfo metalnessInfo = TextureUtil::load32BitTexture((sceneDirectory / metalnessFile).string().c_str(), STBI_grey);
-            Image metalnessTexture(eng->getDevice(), Format::R8UNorm, ImageUsage::Sampled | ImageUsage::TransferDest,
-								 static_cast<uint32_t>(metalnessInfo.width), static_cast<uint32_t>(metalnessInfo.height), 1, 1, 1, 1, metalnessFile);
-			metalnessTexture->setContents(metalnessInfo.mData.data(), static_cast<uint32_t>(metalnessInfo.width), static_cast<uint32_t>(metalnessInfo.height), 1);
-
-			mMaterials.push_back({diffuseTexture, normalsTexture, roughnessTexture, metalnessTexture});
-
-			mMaterialImageViews.emplace_back(diffuseTexture, ImageViewType::Colour);
-			mMaterialImageViews.emplace_back(normalsTexture, ImageViewType::Colour);
-			mMaterialImageViews.emplace_back(roughnessTexture, ImageViewType::Colour);
-			mMaterialImageViews.emplace_back(metalnessTexture, ImageViewType::Colour);
+            mat.mMaterialTypes |= token == "Metalness" ? static_cast<uint32_t>(MaterialType::Metalness) : static_cast<uint32_t>(MaterialType::Specular);
 		}
 		else
 		{
@@ -337,13 +366,13 @@ InstanceID Scene::addMeshInstance(const SceneID meshID, const float4x3 &transfor
     {
         id = static_cast<InstanceID>(mStaticMeshInstances.size() + 1);
 
-        mStaticMeshInstances.push_back({&mesh, transformation, materialID});
+        mStaticMeshInstances.push_back({&mesh, transformation, materialID, mMaterialFlags});
     }
     else
     {
         id = -static_cast<InstanceID>(mDynamicMeshInstances.size());
 
-        mDynamicMeshInstances.push_back({&mesh, transformation, materialID});
+        mDynamicMeshInstances.push_back({&mesh, transformation, materialID, mMaterialFlags});
     }
 
     return id;

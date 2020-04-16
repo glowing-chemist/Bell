@@ -206,11 +206,9 @@ set(SHADERS
 	SkyBoxConvolve.comp
 	blurX_SRGB.comp                            
 	DepthOnly.vert                      
-	GBufferPassThroughMaterial.vert           
 	SSAO.frag
 	blurXR8.comp                               
 	DFGIBLDeferredTexturing.frag        
-	GBufferPassThroughMaterialInstanced.vert  
 	SSAOImproved.frag
 	blurY.comp                                 
 	DFGLutGenerate.comp                 
@@ -246,6 +244,7 @@ set(SHADERS
 	LineariseDepth.comp
 	FinalComposite.frag
 	ScreenSpaceReflection.frag
+	Materials.hlsl
     )
 
 foreach(shader ${SHADERS})

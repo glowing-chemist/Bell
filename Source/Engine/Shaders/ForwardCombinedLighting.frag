@@ -60,42 +60,30 @@ StructuredBuffer<uint4> lightCount;
 [[vk::binding(1, 2)]]
 StructuredBuffer<Light> sceneLights;
 
+[[vk::push_constant]]
+ConstantBuffer<ObjectMatracies> model;
+
+
+#include "PBR.hlsl"
 
 Output main(GBufferVertOutput vertInput)
 {
-    const float4 baseAlbedo = materials[vertInput.materialID * 4].Sample(linearSampler, vertInput.uv);
+const float3 viewDir = normalize(camera.position - vertInput.positionWS.xyz);
 
-    float3 normal = materials[(vertInput.materialID * 4) + 1].Sample(linearSampler, vertInput.uv).xyz;
+    MaterialInfo material = calculateMaterialInfo(  vertInput.normal, 
+                                                    model.materialAttributes, 
+                                                    vertInput.materialID, 
+                                                    viewDir, 
+                                                    vertInput.uv);
 
-    // remap normal
-    normal = remapNormals(normal);
-    normal = normalize(normal);
+	const float3 lightDir = reflect(-viewDir, material.normal);
 
-    const float roughness = materials[(vertInput.materialID * 4) + 2].Sample(linearSampler, vertInput.uv).x;
-
-    const float metalness = materials[(vertInput.materialID * 4) + 3].Sample(linearSampler, vertInput.uv);
-
-    const float3 viewDir = normalize(camera.position - vertInput.positionWS.xyz);
-
-	const float2 xDerivities = ddx_fine(vertInput.uv);
-	const float2 yDerivities = ddy_fine(vertInput.uv);
-
-	{
-    	float3x3 tbv = tangentSpaceMatrix(vertInput.normal, viewDir, float4(xDerivities, yDerivities));
-
-    	normal = mul(normal, tbv);
-
-    	normal = normalize(normal);
-	}
-
-	const float3 lightDir = reflect(-viewDir, normal);
-
-	const float lodLevel = roughness * 10.0f;
+	const float lodLevel = material.roughness * 10.0f;
 
     // Calculate contribution from enviroment.
     float3 radiance = ConvolvedSkybox.SampleLevel(linearSampler, lightDir, lodLevel).xyz;
 
-    float3 irradiance = skyBox.Sample(linearSampler, normal).xyz;
+    float3 irradiance = skyBox.Sample(linearSampler, material.normal.xyz).xyz;
 
 #ifdef Shadow_Map
     const float occlusion = shadowMap.Sample(linearSampler, vertInput.position.xy / camera.frameBufferSize);
@@ -103,14 +91,23 @@ Output main(GBufferVertOutput vertInput)
     irradiance *= occlusion;
 #endif
 
-	const float NoV = dot(normal, viewDir);
+	const float NoV = dot(material.normal.xyz, viewDir);
     float3x3 minV;
     float LTCAmp;
     float2 f_ab;
-    initializeLightState(minV, LTCAmp, f_ab, DFG, ltcMat, ltcAmp, linearSampler, NoV, roughness);
+    initializeLightState(minV, LTCAmp, f_ab, DFG, ltcMat, ltcAmp, linearSampler, NoV, material.roughness);
 
-    const float3 diffuse = calculateDiffuse(baseAlbedo.xyz, metalness, irradiance);
-    const float3 specular = calculateSpecular(roughness * roughness, normal, viewDir, metalness, baseAlbedo.xyz, radiance, f_ab);
+    if(material.albedoOrDiffuse.w == 0.0f)
+        discard;
+
+    const float3 diffuse = calculateDiffuse(material.albedoOrDiffuse.xyz, material.metalnessOrSpecular.x, irradiance);
+    const float3 specular = calculateSpecular(  material.roughness * material.roughness, 
+                                                material.normal.xyz, 
+                                                viewDir, 
+                                                material.metalnessOrSpecular.x, 
+                                                material.albedoOrDiffuse.xyz, 
+                                                radiance, 
+                                                f_ab);
 
     float4 lighting = float4(diffuse + specular, 1.0f);
 
@@ -127,19 +124,41 @@ Output main(GBufferVertOutput vertInput)
         {
             case 0:
             {
-                lighting += pointLightContribution(light, vertInput.positionWS, viewDir, normal, metalness, roughness, baseAlbedo.xyz, f_ab);
+                lighting += pointLightContribution( light, 
+                                                    vertInput.positionWS, 
+                                                    viewDir, 
+                                                    material.normal.xyz, 
+                                                    material.metalnessOrSpecular.x,
+                                                    material.roughness, 
+                                                    material.albedoOrDiffuse.xyz,
+                                                    f_ab);
                 break;
             }
 
             case 1: // Spot.
             {
-                lighting +=  pointLightContribution(light, vertInput.positionWS, viewDir, normal, metalness, roughness, baseAlbedo.xyz, f_ab);
+                lighting +=  pointLightContribution(light, 
+                                                    vertInput.positionWS, 
+                                                    viewDir, 
+                                                    material.normal.xyz, 
+                                                    material.metalnessOrSpecular.x, 
+                                                    material.roughness, 
+                                                    material.albedoOrDiffuse.xyz, 
+                                                    f_ab);
                 break;
             }
 
             case 2: // Area.
             {
-                lighting +=  areaLightContribution(light, vertInput.positionWS, viewDir, normal, metalness, roughness, baseAlbedo.xyz, minV, LTCAmp);
+                lighting +=  areaLightContribution( light, 
+                                                    vertInput.positionWS, 
+                                                    viewDir, 
+                                                    material.normal.xyz, 
+                                                    material.metalnessOrSpecular.x, 
+                                                    material.roughness, 
+                                                    material.albedoOrDiffuse.xyz, 
+                                                    minV, 
+                                                    LTCAmp);
                 break;
             }
 
@@ -149,7 +168,7 @@ Output main(GBufferVertOutput vertInput)
         }
     }
 
-    if(baseAlbedo.w == 0.0f)
+    if(material.albedoOrDiffuse.w == 0.0f)
         discard;
 
     Output output;

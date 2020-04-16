@@ -36,14 +36,35 @@ enum class LightType : uint32_t
 	Strip = 3
 };
 
+enum class MaterialType
+{
+    Albedo = 1,
+    Diffuse = 1 << 1,
+    Normals = 1 << 2,
+    Roughness = 1 << 3,
+    Gloss = 1 << 4,
+    Metalness = 1 << 5,
+    Specular = 1 << 6
+};
+
+enum class PBRType
+{
+    Metalness,
+    Specular
+};
+
 
 struct MeshInstance
 {
-    MeshInstance(StaticMesh* mesh, const float4x3& trans, const uint32_t materialID) :
+    MeshInstance(StaticMesh* mesh,
+                 const float4x3& trans,
+                 const uint32_t materialID,
+                 const uint32_t materialFlags) :
         mMesh(mesh),
         mTransformation(trans),
         mPreviousTransformation(trans),
-        mMaterialID{materialID} {}
+        mMaterialID{materialID},
+        mMaterialFlags{materialFlags} {}
 
     StaticMesh* mMesh;
 
@@ -70,6 +91,7 @@ struct MeshInstance
         entry.mPreviousTransformation = float3x4(mPreviousTransformation);
         entry.mMaterialIndex = mMaterialID;
         entry.mAttributes = mMesh->getAttributes();
+        entry.mMaterialAttributes = mMaterialFlags;
 
         return entry;
     }
@@ -78,6 +100,7 @@ private:
     float4x4 mTransformation;
     float4x4 mPreviousTransformation;
     uint32_t mMaterialID;
+    uint32_t mMaterialFlags;
 };
 
 
@@ -89,6 +112,7 @@ public:
 
 	Scene(const std::string& name);
     Scene(Scene&&);
+    ~Scene();
     Scene& operator=(Scene&&);
 
 	void loadFromFile(const int vertAttributes, Engine*);
@@ -137,12 +161,23 @@ public:
 		return mMaterialImageViews;
 	}
 
+    PBRType getPBRType() const
+    {
+        return mPBRType;
+    }
+
+    void setPBRType(const PBRType type)
+    {
+        mPBRType = type;
+    }
+
 	struct Material
 	{
-		Image mAlbedo;
-		Image mNormals;
-		Image mRoughness;
-		Image mMetalness;
+        Image* mAlbedoorDiffuse;
+        Image* mNormals;
+        Image* mRoughnessOrGloss;
+        Image* mMetalnessOrSpecular;
+        uint32_t mMaterialTypes;
 	};
 
 	struct Light
@@ -260,6 +295,8 @@ private:
 
 	std::vector<Material> mMaterials;
 	std::vector<ImageView> mMaterialImageViews;
+    PBRType mPBRType = PBRType::Metalness;
+    uint32_t mMaterialFlags;
 
     std::vector<Light> mLights;
     ShadowingLight mShadowingLight;

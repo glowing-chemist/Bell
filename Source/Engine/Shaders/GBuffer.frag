@@ -22,41 +22,30 @@ SamplerState linearSampler;
 [[vk::binding(0, 1)]]
 Texture2D materials[];
 
+[[vk::push_constant]]
+ConstantBuffer<ObjectMatracies> model;
+
+
+#include "PBR.hlsl"
+
 
 GBufferFragOutput main(GBufferVertOutput vertInput)
 {
-    GBufferFragOutput output;
-
-	const float4 baseAlbedo = materials[vertInput.materialID * 4].Sample(linearSampler, vertInput.uv);
-
-    float3 normal = materials[vertInput.materialID * 4 + 1].Sample(linearSampler, vertInput.uv).xyz;
-
-    // remap normal
-    normal = remapNormals(normal);
-    normal = normalize(normal);
-
-    const float roughness = materials[vertInput.materialID * 4 + 2].Sample(linearSampler, vertInput.uv).x;
-    const float metalness = materials[vertInput.materialID * 4 + 3].Sample(linearSampler, vertInput.uv).x;
-
-    const float2 xDerivities = ddx_fine(vertInput.uv);
-    const float2 yDerivities = ddy_fine(vertInput.uv);
-
     const float3 viewDir = normalize(camera.position - vertInput.positionWS.xyz);
 
-	{
-    	float3x3 tbv = tangentSpaceMatrix(vertInput.normal, viewDir, float4(xDerivities, yDerivities));
+    MaterialInfo material = calculateMaterialInfo(  vertInput.normal, 
+                                                    model.materialAttributes, 
+                                                    vertInput.materialID, 
+                                                    viewDir, 
+                                                    vertInput.uv);
 
-    	normal = mul(normal, tbv);
-
-    	normal = normalize(normal);
-    }
-
-    if(baseAlbedo.w == 0.0f)
+    if(material.albedoOrDiffuse.w == 0.0f)
         discard;
 
-	output.albedo = baseAlbedo;
-	output.normal = (normal + 1.0f) * 0.5f;
-	output.metalnessRoughness = float2(metalness, roughness);
+    GBufferFragOutput output;
+	output.albedo = material.albedoOrDiffuse;
+	output.normal = (material.normal.xyz + 1.0f) * 0.5f;
+	output.metalnessRoughness = float2(material.metalnessOrSpecular.x, material.roughness);
     output.velocity = (vertInput.velocity * 0.5f) + 0.5f;
 
     return output;

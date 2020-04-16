@@ -1,6 +1,5 @@
 #include "VertexOutputs.hlsl"
 #include "MeshAttributes.hlsl"
-#include "PBR.hlsl"
 #include "NormalMapping.hlsl"
 #include "UniformBuffers.hlsl"
 
@@ -36,40 +35,31 @@ Texture2D<float> shadowMap;
 [[vk::binding(0, 1)]]
 Texture2D materials[];
 
+[[vk::push_constant]]
+ConstantBuffer<ObjectMatracies> model;
+
+
+#include "PBR.hlsl"
+
+
 
 Output main(GBufferVertOutput vertInput)
 {
-	const float4 baseAlbedo = materials[vertInput.materialID * 4].Sample(linearSampler, vertInput.uv);
+    const float3 viewDir = normalize(camera.position - vertInput.positionWS.xyz);
 
-    float3 normal = materials[(vertInput.materialID * 4) + 1].Sample(linearSampler, vertInput.uv).xyz;
-    // remap normal
-    normal = remapNormals(normal);
-    normal = normalize(normal);
+    MaterialInfo material = calculateMaterialInfo(  vertInput.normal, 
+                                                    model.materialAttributes, 
+                                                    vertInput.materialID, 
+                                                    viewDir, 
+                                                    vertInput.uv);
 
-    const float roughness = materials[(vertInput.materialID * 4) + 2].Sample(linearSampler, vertInput.uv).x;
+	const float3 lightDir = reflect(-viewDir, material.normal.xyz);
 
-    const float metalness = materials[(vertInput.materialID * 4) + 3].Sample(linearSampler, vertInput.uv);
-
-	const float3 viewDir = normalize(camera.position - vertInput.positionWS.xyz);
-
-	const float2 xDerivities = ddx_fine(vertInput.uv);
-	const float2 yDerivities = ddy_fine(vertInput.uv);
-
-	{
-    	float3x3 tbv = tangentSpaceMatrix(vertInput.normal, viewDir, float4(xDerivities, yDerivities));
-
-    	normal = mul(normal, tbv);
-
-    	normal = normalize(normal);
-	}
-
-	const float3 lightDir = reflect(-viewDir, normal);
-
-	const float lodLevel = roughness * 10.0f;
+	const float lodLevel = material.roughness * 10.0f;
 
 	float3 radiance = ConvolvedSkybox.SampleLevel(linearSampler, lightDir, lodLevel).xyz;
 
-    float3 irradiance = skyBox.Sample(linearSampler, normal).xyz;
+    float3 irradiance = skyBox.Sample(linearSampler, material.normal.xyz).xyz;
 
 #ifdef Shadow_Map
     const float occlusion = shadowMap.Sample(linearSampler, vertInput.position.xy / camera.frameBufferSize);
@@ -77,14 +67,20 @@ Output main(GBufferVertOutput vertInput)
     irradiance *= occlusion;
 #endif
 
-	const float NoV = dot(normal, viewDir);
-    const float2 f_ab = DFG.Sample(linearSampler, float2(NoV, roughness));
+	const float NoV = dot(material.normal.xyz, viewDir);
+    const float2 f_ab = DFG.Sample(linearSampler, float2(NoV, material.roughness));
 
-    if(baseAlbedo.w == 0.0f)
+    if(material.albedoOrDiffuse.w == 0.0f)
         discard;
 
-    const float3 diffuse = calculateDiffuse(baseAlbedo.xyz, metalness, irradiance);
-    const float3 specular = calculateSpecular(roughness * roughness, normal, viewDir, metalness, baseAlbedo.xyz, radiance, f_ab);
+    const float3 diffuse = calculateDiffuse(material.albedoOrDiffuse.xyz, material.metalnessOrSpecular.x, irradiance);
+    const float3 specular = calculateSpecular(  material.roughness * material.roughness, 
+                                                material.normal.xyz, 
+                                                viewDir, 
+                                                material.metalnessOrSpecular.x, 
+                                                material.albedoOrDiffuse.xyz, 
+                                                radiance, 
+                                                f_ab);
 
     Output output;
 
