@@ -171,6 +171,11 @@ public:
         mPBRType = type;
     }
 
+    uint32_t getMaterialFlags() const
+    {
+        return mMaterialFlags;
+    }
+
 	struct Material
 	{
         Image* mAlbedoorDiffuse;

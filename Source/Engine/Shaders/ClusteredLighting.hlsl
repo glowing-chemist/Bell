@@ -141,10 +141,8 @@ void initializeLightState(out float3x3 minv, out float ltcAmp, out float2 f_ab, 
 float4 pointLightContribution(const Light light, 
 							const float4 positionWS, 
 							const float3 view,
-							const float3 N,
-							const float metalness, 
-							const float roughness, 
-							const float3 baseAlbedo, 
+							const MaterialInfo material,
+							const uint materialFlags,
 							const float2 f_ab)
 {
     const float4 lightDir = light.position - positionWS;
@@ -153,8 +151,8 @@ float4 pointLightContribution(const Light light,
     const float falloff = pow(saturate(1 - pow(lightDistance / light.radius, 4.0f)), 2.0f) / ((lightDistance * lightDistance) + 1); 
 	const float3 radiance = light.albedo.xyz * light.intensity * falloff;
 
-    const float3 diffuse = calculateDiffuseLambert(baseAlbedo.xyz, metalness, radiance);
-    const float3 specular = calculateSpecular(roughness * roughness, N, view, metalness, baseAlbedo.xyz, radiance, f_ab);
+    const float3 diffuse = calculateDiffuseLambert(material, materialFlags, radiance);
+    const float3 specular = calculateSpecular(material, materialFlags, view, radiance, f_ab);
 
     return float4(diffuse + specular, 1.0f);
 }
@@ -212,10 +210,8 @@ float3 LTC_Evaluate(float3 N, float3 V, float3 P, float3x3 Minv, float3 points[4
 float4 areaLightContribution(const Light light, 
 							const float4 positionWS, 
 							const float3 view,
-							const float3 N,
-							const float metalness, 
-							const float roughness, 
-							const float3 baseAlbedo, 
+							const MaterialInfo material,
+							const uint materialFlags,
 							const float3x3 Minv,
 							const float amp)
 {
@@ -228,13 +224,23 @@ float4 areaLightContribution(const Light light,
     points[2] = light.position.xyz + (light.misc / 2.0f) * (rightVector - light.up.xyz);
     points[3] = light.position.xyz + (light.misc / 2.0f) * (-rightVector - light.up.xyz);
 
-    float3 spec = LTC_Evaluate(N, view, positionWS.xyz, Minv, points);
+    float3 spec = LTC_Evaluate(material.normal.xyz, view, positionWS.xyz, Minv, points);
     spec *= amp;
         
-    const float3 diff = LTC_Evaluate(N, view, positionWS.xyz, float3x3(1), points); 
+    const float3 diff = LTC_Evaluate(material.normal.xyz, view, positionWS.xyz, float3x3(1), points); 
 
-    const float3 diffuseColor = baseAlbedo * (1.0 - DIELECTRIC_SPECULAR) * (1.0 - metalness);
-	const float3 F0 = lerp(float3(DIELECTRIC_SPECULAR), baseAlbedo, metalness);
+    float3 F0;
+    float3 diffuseColor;
+    if(materialFlags & kMaterial_Metalness)
+    {
+	    diffuseColor = material.albedoOrDiffuse.xyz * (1.0 - DIELECTRIC_SPECULAR) * (1.0 - material.metalnessOrSpecular.x);
+		F0 = lerp(float3(DIELECTRIC_SPECULAR), material.albedoOrDiffuse.xyz, material.metalnessOrSpecular.x);
+	}
+	else if(materialFlags & kMaterial_Specular)
+	{
+		diffuseColor = material.albedoOrDiffuse.xyz;
+		F0 = material.metalnessOrSpecular.xyz;
+	}
         
     float3 colour  = light.intensity * (light.albedo.xyz * spec * F0 + light.albedo.xyz * diff * diffuseColor);
     colour /= 2.0 * PI;

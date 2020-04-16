@@ -53,6 +53,15 @@ StructuredBuffer<uint4> lightCount;
 StructuredBuffer<Light> sceneLights;
 
 
+struct MaterialAttributes
+{
+    uint materialAttributes;
+};
+
+[[vk::push_constant]]
+ConstantBuffer<MaterialAttributes> materialAttributes;
+
+
 [numthreads(32, 32, 1)]
 void main(uint3 globalIndex : SV_DispatchThreadID)
 {
@@ -74,10 +83,13 @@ void main(uint3 globalIndex : SV_DispatchThreadID)
 
     const float3 viewDir = normalize(float4(camera.position, 1.0f) - worldSpaceFragmentPos).xyz;
 
-    const float3 baseAlbedo = Albedo.Sample(linearSampler, uv).xyz;
     const float2 metalnessRoughness = MetalnessRoughness.Sample(linearSampler, uv);
-    const float roughness = metalnessRoughness.y;
-    const float metalness = metalnessRoughness.x;
+
+    MaterialInfo material;
+    material.albedoOrDiffuse = Albedo.Sample(linearSampler, uv);
+    material.normal = float4(normal, 1.0f);
+    material.metalnessOrSpecular.x = metalnessRoughness.x;
+    material.roughness = metalnessRoughness.y;
 
     const uint froxelIndex = activeFroxels.Sample(pointSampler, uv);
     const uint2 lightListIndicies = sparseFroxelList[froxelIndex];
@@ -86,46 +98,56 @@ void main(uint3 globalIndex : SV_DispatchThreadID)
     float3x3 minV;
     float LTCAmp;
     float2 f_ab;
-    initializeLightState(minV, LTCAmp, f_ab, DFG, ltcMat, ltcAmp, linearSampler, dot(normal, viewDir), roughness);
+    initializeLightState(minV, LTCAmp, f_ab, DFG, ltcMat, ltcAmp, linearSampler, dot(material.normal.xyz, viewDir), material.roughness);
 
-    float4 accum = float4(0.0f);
+    float4 lighting = float4(0.0f);
 
     for(uint i = 0; i < lightListIndicies.y; ++i)
     {
     	uint indirectLightIndex = indicies[lightListIndicies.x + i];
     	const Light light = sceneLights[indirectLightIndex];
 
-    	switch(uint(light.type))
-		{
-			case 0: // Point.
-			{
+    	        switch(uint(light.type))
+        {
+            case 0:
+            {
+                lighting += pointLightContribution( light, 
+                                                    worldSpaceFragmentPos, 
+                                                    viewDir, 
+                                                    material,
+                                                    materialAttributes.materialAttributes,
+                                                    f_ab);
+                break;
+            }
 
-    			float4 lighting =  pointLightContribution(light, worldSpaceFragmentPos, viewDir, normal, metalness, roughness, baseAlbedo, f_ab);
-    			accum += lighting;
-				break;
-			}
+            case 1: // Spot.
+            {
+                lighting +=  pointLightContribution(light, 
+                                                    worldSpaceFragmentPos, 
+                                                    viewDir, 
+                                                    material,
+                                                    materialAttributes.materialAttributes,
+                                                    f_ab);
+                break;
+            }
 
-			case 1: // Spot.
-			{
-				float4 lighting =  pointLightContribution(light, worldSpaceFragmentPos, viewDir, normal, metalness, roughness, baseAlbedo, f_ab);
-    			accum += lighting;	
-				break;
-			}
+            case 2: // Area.
+            {
+                lighting +=  areaLightContribution( light, 
+                                                    worldSpaceFragmentPos, 
+                                                    viewDir, 
+                                                    material,
+                                                    materialAttributes.materialAttributes,
+                                                    minV, 
+                                                    LTCAmp);
+                break;
+            }
 
-			case 2: // Area.
-			{
-				float4 lighting =  areaLightContribution(light, worldSpaceFragmentPos, viewDir, normal, metalness, roughness, baseAlbedo, minV, LTCAmp);
-    			accum += lighting;	
-				break;
-			}
-
-			// TODO add more light types as and when supported.
-
-			// Should never hit here.
-			default:
-				continue;
-		}
+            // Should never hit here.
+            default:
+                continue;
+        }
     }
 
-    accumilatedLight[globalIndex.xy] = accum;
+    accumilatedLight[globalIndex.xy] = lighting;
 }

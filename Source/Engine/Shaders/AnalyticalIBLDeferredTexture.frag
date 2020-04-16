@@ -38,8 +38,6 @@ Texture2D<float> shadowMap;
 [[vk::binding(0, 1)]]
 Texture2D materials[];
 
-#define MATERIAL_COUNT 		4
-
 float4 main(UVVertOutput vertOutput)
 {
     const float2 uv = vertOutput.uv;

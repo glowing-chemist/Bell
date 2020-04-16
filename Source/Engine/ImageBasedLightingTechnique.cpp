@@ -29,6 +29,7 @@ ImageBasedLightingDeferredTexturingTechnique::ImageBasedLightingDeferredTexturin
         task.addInput(kShadowMap, AttachmentType::Texture2D);
 
     task.addInput(kMaterials, AttachmentType::ShaderResourceSet);
+    task.addInput("IBLMaterial", AttachmentType::PushConstants);
 
     task.addOutput(kGlobalLighting, AttachmentType::RenderTarget2D, Format::RGBA8UNorm,
 		SizeClass::Swapchain, LoadOp::Nothing);
@@ -36,6 +37,8 @@ ImageBasedLightingDeferredTexturingTechnique::ImageBasedLightingDeferredTexturin
     task.setRecordCommandsCallback(
         [](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
         {
+            const uint32_t materialFlags = eng->getScene().getMaterialFlags();
+            exec->insertPushConsatnt(&materialFlags, sizeof(uint32_t));
             exec->draw(0, 3);
         }
     );
@@ -67,12 +70,16 @@ DeferredImageBasedLightingTechnique::DeferredImageBasedLightingTechnique(Engine*
     if (eng->isPassRegistered(PassType::Shadow))
         task.addInput(kShadowMap, AttachmentType::Texture2D);
 
+    task.addInput("IBLMaterial", AttachmentType::PushConstants);
+
     task.addOutput(kGlobalLighting, AttachmentType::RenderTarget2D, Format::RGBA8UNorm,
         SizeClass::Swapchain, LoadOp::Clear_Black);
 
     task.setRecordCommandsCallback(
         [](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
         {
+            const uint32_t materialFlags = eng->getScene().getMaterialFlags();
+            exec->insertPushConsatnt(&materialFlags, sizeof(uint32_t));
             exec->draw(0, 3);
         }
     );

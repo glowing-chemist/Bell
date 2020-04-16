@@ -39,6 +39,14 @@ SamplerState linearSampler;
 Texture2D<float> shadowMap;
 #endif
 
+struct MaterialAttributes
+{
+    uint materialAttributes;
+};
+
+[[vk::push_constant]]
+ConstantBuffer<MaterialAttributes> materialAttributes;
+
 
 float4 main(UVVertOutput vertInput)
 {
@@ -78,8 +86,13 @@ float4 main(UVVertOutput vertInput)
 
     const float2 f_ab = DFG.Sample(linearSampler, float2(NoV, roughness));
 
-    const float3 diffuse = calculateDiffuse(baseAlbedo.xyz, metalness, irradiance);
-    const float3 specular = calculateSpecular(roughness * roughness, normal, viewDir, metalness, baseAlbedo.xyz, radiance, f_ab);
+    MaterialInfo material;
+    material.albedoOrDiffuse = baseAlbedo;
+    material.normal = float4(normal, 1.0f);
+    material.metalnessOrSpecular.x = metalness;
+    material.roughness = roughness;
+    const float3 diffuse = calculateDiffuse(material, materialAttributes.materialAttributes, irradiance);
+    const float3 specular = calculateSpecular(material, materialAttributes.materialAttributes, viewDir, radiance, f_ab);
 
     return float4(specular + diffuse, 1.0);
 }

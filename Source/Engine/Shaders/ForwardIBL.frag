@@ -2,6 +2,7 @@
 #include "MeshAttributes.hlsl"
 #include "NormalMapping.hlsl"
 #include "UniformBuffers.hlsl"
+#include "PBR.hlsl"
 
 
 struct Output
@@ -39,8 +40,8 @@ Texture2D materials[];
 ConstantBuffer<ObjectMatracies> model;
 
 
-#include "PBR.hlsl"
 
+#include "Materials.hlsl"
 
 
 Output main(GBufferVertOutput vertInput)
@@ -73,12 +74,10 @@ Output main(GBufferVertOutput vertInput)
     if(material.albedoOrDiffuse.w == 0.0f)
         discard;
 
-    const float3 diffuse = calculateDiffuse(material.albedoOrDiffuse.xyz, material.metalnessOrSpecular.x, irradiance);
-    const float3 specular = calculateSpecular(  material.roughness * material.roughness, 
-                                                material.normal.xyz, 
-                                                viewDir, 
-                                                material.metalnessOrSpecular.x, 
-                                                material.albedoOrDiffuse.xyz, 
+    const float3 diffuse = calculateDiffuse(material, model.materialAttributes, irradiance);
+    const float3 specular = calculateSpecular(  material,
+                                                model.materialAttributes, 
+                                                viewDir,
                                                 radiance, 
                                                 f_ab);
 

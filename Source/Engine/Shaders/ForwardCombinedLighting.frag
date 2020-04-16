@@ -64,7 +64,7 @@ StructuredBuffer<Light> sceneLights;
 ConstantBuffer<ObjectMatracies> model;
 
 
-#include "PBR.hlsl"
+#include "Materials.hlsl"
 
 Output main(GBufferVertOutput vertInput)
 {
@@ -100,12 +100,10 @@ const float3 viewDir = normalize(camera.position - vertInput.positionWS.xyz);
     if(material.albedoOrDiffuse.w == 0.0f)
         discard;
 
-    const float3 diffuse = calculateDiffuse(material.albedoOrDiffuse.xyz, material.metalnessOrSpecular.x, irradiance);
-    const float3 specular = calculateSpecular(  material.roughness * material.roughness, 
-                                                material.normal.xyz, 
-                                                viewDir, 
-                                                material.metalnessOrSpecular.x, 
-                                                material.albedoOrDiffuse.xyz, 
+    const float3 diffuse = calculateDiffuse(material, model.materialAttributes, irradiance);
+    const float3 specular = calculateSpecular(  material,
+                                                model.materialAttributes,
+                                                viewDir,
                                                 radiance, 
                                                 f_ab);
 
@@ -127,10 +125,8 @@ const float3 viewDir = normalize(camera.position - vertInput.positionWS.xyz);
                 lighting += pointLightContribution( light, 
                                                     vertInput.positionWS, 
                                                     viewDir, 
-                                                    material.normal.xyz, 
-                                                    material.metalnessOrSpecular.x,
-                                                    material.roughness, 
-                                                    material.albedoOrDiffuse.xyz,
+                                                    material,
+                                                    model.materialAttributes,
                                                     f_ab);
                 break;
             }
@@ -140,10 +136,8 @@ const float3 viewDir = normalize(camera.position - vertInput.positionWS.xyz);
                 lighting +=  pointLightContribution(light, 
                                                     vertInput.positionWS, 
                                                     viewDir, 
-                                                    material.normal.xyz, 
-                                                    material.metalnessOrSpecular.x, 
-                                                    material.roughness, 
-                                                    material.albedoOrDiffuse.xyz, 
+                                                    material,
+                                                    model.materialAttributes,
                                                     f_ab);
                 break;
             }
@@ -153,10 +147,8 @@ const float3 viewDir = normalize(camera.position - vertInput.positionWS.xyz);
                 lighting +=  areaLightContribution( light, 
                                                     vertInput.positionWS, 
                                                     viewDir, 
-                                                    material.normal.xyz, 
-                                                    material.metalnessOrSpecular.x, 
-                                                    material.roughness, 
-                                                    material.albedoOrDiffuse.xyz, 
+                                                    material,
+                                                    model.materialAttributes,
                                                     minV, 
                                                     LTCAmp);
                 break;

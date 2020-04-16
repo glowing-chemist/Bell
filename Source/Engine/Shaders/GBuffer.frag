@@ -1,4 +1,5 @@
 
+#include "PBR.hlsl"
 #include "MeshAttributes.hlsl"
 #include "UniformBuffers.hlsl"
 #include "NormalMapping.hlsl"
@@ -26,7 +27,7 @@ Texture2D materials[];
 ConstantBuffer<ObjectMatracies> model;
 
 
-#include "PBR.hlsl"
+#include "Materials.hlsl"
 
 
 GBufferFragOutput main(GBufferVertOutput vertInput)
