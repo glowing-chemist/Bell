@@ -105,46 +105,6 @@ namespace
 				return newNode;
 			}
 
-			case NodeTypes::DeferredTextureBlinnPhongLighting:
-			{
-				std::shared_ptr<EditorNode> newNode = std::make_shared<PassNode>("DeferredTextureBlinnPhongLighting", passType);
-				newNode->mInputs.push_back(Pin{ 0, newNode, kGBufferNormals, PinType::Texture, PinKind::Input });
-				newNode->mInputs.push_back(Pin{ 0, newNode, kGBufferUV, PinType::Texture, PinKind::Input });
-				newNode->mInputs.push_back(Pin{ 0, newNode, kGBufferMaterialID, PinType::Texture, PinKind::Input });
-				newNode->mInputs.push_back(Pin{ 0, newNode, kGBufferDepth, PinType::Texture, PinKind::Input });
-				newNode->mInputs.push_back(Pin{ 0, newNode, kSkyBox, PinType::Texture, PinKind::Input });
-				newNode->mInputs.push_back(Pin{ 0, newNode, kConvolvedSkyBox, PinType::Texture, PinKind::Input });
-				newNode->mOutputs.push_back(Pin{ 0, newNode, kGlobalLighting, PinType::Texture, PinKind::Output });
-				return newNode;
-			}
-
-			case NodeTypes::DeferredTexturePBRIBL:
-			{
-                std::shared_ptr<EditorNode> newNode = std::make_shared<PassNode>("Deferred texuring IBL", passType);
-				newNode->mInputs.push_back(Pin{ 0, newNode, kDFGLUT, PinType::Texture, PinKind::Input });
-				newNode->mInputs.push_back(Pin{ 0, newNode, kGBufferNormals, PinType::Texture, PinKind::Input });
-				newNode->mInputs.push_back(Pin{ 0, newNode, kGBufferUV, PinType::Texture, PinKind::Input });
-				newNode->mInputs.push_back(Pin{ 0, newNode, kGBufferMaterialID, PinType::Texture, PinKind::Input });
-				newNode->mInputs.push_back(Pin{ 0, newNode, kGBufferDepth, PinType::Texture, PinKind::Input });
-				newNode->mInputs.push_back(Pin{ 0, newNode, kSkyBox, PinType::Texture, PinKind::Input });
-				newNode->mInputs.push_back(Pin{ 0, newNode, kConvolvedSkyBox, PinType::Texture, PinKind::Input });
-				newNode->mOutputs.push_back(Pin{ 0, newNode, kGlobalLighting, PinType::Texture, PinKind::Output });
-				return newNode;
-			}
-
-			case NodeTypes::DeferredTextureAnalyticalPBRIBL:
-			{
-                std::shared_ptr<EditorNode> newNode = std::make_shared<PassNode>("Analytical deferred texuring IBL", passType);
-				newNode->mInputs.push_back(Pin{ 0, newNode, kGBufferNormals, PinType::Texture, PinKind::Input });
-				newNode->mInputs.push_back(Pin{ 0, newNode, kGBufferUV, PinType::Texture, PinKind::Input });
-				newNode->mInputs.push_back(Pin{ 0, newNode, kGBufferMaterialID, PinType::Texture, PinKind::Input });
-				newNode->mInputs.push_back(Pin{ 0, newNode, kGBufferDepth, PinType::Texture, PinKind::Input });
-				newNode->mInputs.push_back(Pin{ 0, newNode, kSkyBox, PinType::Texture, PinKind::Input });
-				newNode->mInputs.push_back(Pin{ 0, newNode, kConvolvedSkyBox, PinType::Texture, PinKind::Input });
-				newNode->mOutputs.push_back(Pin{ 0, newNode, kGlobalLighting, PinType::Texture, PinKind::Output });
-				return newNode;
-			}
-
             case NodeTypes::DeferredPBRIBL:
             {
                 std::shared_ptr<EditorNode> newNode = std::make_shared<PassNode>("deferred IBL", passType);
@@ -537,9 +497,6 @@ void Editor::drawAssistantWindow()
            drawPassContextMenu(PassType::SSAOImproved);
 		   drawPassContextMenu(PassType::InplaceCombine);
 		   drawPassContextMenu(PassType::InplaceCombineSRGB);
-		   drawPassContextMenu(PassType::DeferredTextureBlinnPhongLighting);
-		   drawPassContextMenu(PassType::DeferredTexturePBRIBL);
-		   drawPassContextMenu(PassType::DeferredTextureAnalyticalPBRIBL);
            drawPassContextMenu(PassType::DeferredPBRIBL);
 		   drawPassContextMenu(PassType::ForwardIBL);
            drawPassContextMenu(PassType::ForwardCombinedLighting);
@@ -559,7 +516,7 @@ void Editor::drawAssistantWindow()
        ImGui::Checkbox("Debug texture picker", &mShowDebugTexturePicker);
        const bool previouseFlyMode = mInFreeFlyMode;
        ImGui::Checkbox("Camera free fly", &mInFreeFlyMode);
-       ImGui::SliderFloat("Camera speed", &mCameraSpeed, 0.1f, 100.0f);
+       ImGui::SliderFloat("Camera speed", &mCameraSpeed, 0.01f, 10.0f);
 
        if(mInFreeFlyMode && !previouseFlyMode)
            glfwSetInputMode(mWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
