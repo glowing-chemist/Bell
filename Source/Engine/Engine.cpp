@@ -17,9 +17,7 @@
 #include "Engine/SSAOTechnique.hpp"
 #include "Engine/BlurXTechnique.hpp"
 #include "Engine/BlurYTechnique.hpp"
-#include "Engine/BlinnPhongTechnique.hpp"
 #include "Engine/OverlayTechnique.hpp"
-#include "Engine/AnalyticalImageBasedLightingTechnique.hpp"
 #include "Engine/ImageBasedLightingTechnique.hpp"
 #include "Engine/DFGGenerationTechnique.hpp"
 #include "Engine/ConvolveSkyboxTechnique.hpp"
@@ -225,17 +223,8 @@ std::unique_ptr<Technique> Engine::getSingleTechnique(const PassType passType)
         case PassType::GBUfferMaterialPreDepth:
             return std::make_unique<GBufferMaterialPreDepthTechnique>(this, mCurrentRenderGraph);
 
-        case PassType::DeferredTextureBlinnPhongLighting:
-            return std::make_unique<BlinnPhongDeferredTexturesTechnique>(this, mCurrentRenderGraph);
-
 		case PassType::Overlay:
 			return std::make_unique<OverlayTechnique>(this, mCurrentRenderGraph);
-
-		case PassType::DeferredTextureAnalyticalPBRIBL:
-			return std::make_unique<AnalyticalImageBasedLightingTechnique>(this, mCurrentRenderGraph);
-
-		case PassType::DeferredTexturePBRIBL:
-			return std::make_unique<ImageBasedLightingDeferredTexturingTechnique>(this, mCurrentRenderGraph);
 
         case PassType::DeferredPBRIBL:
             return std::make_unique<DeferredImageBasedLightingTechnique>(this, mCurrentRenderGraph);
@@ -305,9 +294,6 @@ bool Engine::isGraphicsTask(const PassType passType) const
             return true;
 
         case PassType::GBUfferMaterialPreDepth:
-            return true;
-
-        case PassType::DeferredTextureBlinnPhongLighting:
             return true;
 
         default:
