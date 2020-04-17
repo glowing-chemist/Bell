@@ -152,12 +152,10 @@ set(BELL_SOURCE
     Source/Engine/BlurXTechnique.cpp
     Source/Engine/BlurYTechnique.cpp
     Source/Engine/PreDepthTechnique.cpp
-    Source/Engine/BlinnPhongTechnique.cpp
     Source/Engine/OverlayTechnique.cpp
     Source/Engine/SkyboxTechnique.cpp
     Source/Engine/ConvolveSkyboxTechnique.cpp
     Source/Engine/DFGGenerationTechnique.cpp
-    Source/Engine/AnalyticalImageBasedLightingTechnique.cpp
     Source/Engine/ImageBasedLightingTechnique.cpp
     Source/Engine/CompositeTechnique.cpp
     Source/Engine/ForwardIBLTechnique.cpp
@@ -186,15 +184,12 @@ set(SHADERS
     ActiveFroxels.comp                         
 	FullScreenTriangle.vert                   
 	Overlay.vert
-	AnalyticalIBLDeferredTexture.frag          
 	GaussianBlur.hlsl                        
 	PBR.hlsl
-	BlinnPhongDeferredTexture.frag             
 	CubemapParallax.hlsl                
 	GBuffer.frag                              
 	ShadowMap.vert
 	Blit.frag                                  
-	GBufferDeferredTexturing.frag             
 	SkyBox.frag
 	blurX.comp                                 
 	DeferredAnalyticalLighting.comp     
@@ -208,7 +203,6 @@ set(SHADERS
 	DepthOnly.vert                      
 	SSAO.frag
 	blurXR8.comp                               
-	DFGIBLDeferredTexturing.frag        
 	SSAOImproved.frag
 	blurY.comp                                 
 	DFGLutGenerate.comp                 

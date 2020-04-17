@@ -7,34 +7,31 @@
 #define PASS_TYPES  DepthPre = 1, \
                     GBuffer = 1 << 1, \
                     Animation = 1 << 2, \
-                    DeferredTextureBlinnPhongLighting = 1 << 3, \
-                    Shadow = 1 << 4, \
-                    CascadingShadow = 1 << 5, \
-                    SSAO = 1 << 6, \
-                    GBufferMaterial = 1 << 7, \
-                    EditorDefault = 1 << 8, \
-                    GBufferPreDepth = 1 << 9, \
-                    GBUfferMaterialPreDepth = 1 << 10, \
-					InplaceCombine = 1 << 11, \
-					InplaceCombineSRGB = 1 << 12, \
-					DeferredTexturePBRIBL = 1 << 13, \
-					Overlay = 1 << 14, \
-					Skybox = 1 << 15, \
-					ConvolveSkybox = 1 << 16, \
-					DFGGeneration = 1 << 17, \
-					DeferredTextureAnalyticalPBRIBL = 1 << 18, \
-					Composite = 1 << 19, \
-					ForwardIBL = 1 << 20, \
-                    LightFroxelation = 1 << 21, \
-                    DeferredPBRIBL = 1 << 22, \
-					DeferredAnalyticalLighting = 1 << 23, \
-					ForwardAnalyticalLighting = 1 << 24, \
-					DeferredCombinedLighting = 1 << 25, \
-					ForwardCombinedLighting = 1 << 26, \
-					SSAOImproved = 1 << 27, \
-					TAA = 1 << 28, \
-					LineariseDepth = 1 << 29, \
-					SSR = 1 << 30
+                    Shadow = 1 << 3, \
+                    CascadingShadow = 1 << 4, \
+                    SSAO = 1 << 5, \
+                    GBufferMaterial = 1 << 6, \
+                    EditorDefault = 1 << 7, \
+                    GBufferPreDepth = 1 << 8, \
+                    GBUfferMaterialPreDepth = 1 << 9, \
+                    InplaceCombine = 1 << 10, \
+                    InplaceCombineSRGB = 1 << 11, \
+                    Overlay = 1 << 12, \
+                    Skybox = 1 << 13, \
+                    ConvolveSkybox = 1 << 14, \
+                    DFGGeneration = 1 << 15, \
+                    Composite = 1 << 16, \
+                    ForwardIBL = 1 << 17, \
+                    LightFroxelation = 1 << 18, \
+                    DeferredPBRIBL = 1 << 19, \
+                    DeferredAnalyticalLighting = 1 << 20, \
+                    ForwardAnalyticalLighting = 1 << 21, \
+                    DeferredCombinedLighting = 1 << 22, \
+                    ForwardCombinedLighting = 1 << 23, \
+                    SSAOImproved = 1 << 24, \
+                    TAA = 1 << 25, \
+                    LineariseDepth = 1 << 26, \
+                    SSR = 1 << 27
 
 // An enum to keep track of which 
 enum class PassType : uint64_t
@@ -75,17 +72,8 @@ inline const char* passToString(const PassType passType)
 		case PassType::InplaceCombineSRGB:
 			return "Inplace_combineSRGB";
 
-		case PassType::DeferredTextureBlinnPhongLighting:
-			return "Deferred_texture_blinnPhong";
-
-		case PassType::DeferredTexturePBRIBL:
-            return "Deferred_Texturing_IBL";
-
         case PassType::DeferredPBRIBL:
             return "Deferred_PBR_IBL";
-
-		case PassType::DeferredTextureAnalyticalPBRIBL:
-            return "Analytical_deferred_texturing_IBL";
 
 		case PassType::ForwardIBL:
 			return "ForwardIBL";
