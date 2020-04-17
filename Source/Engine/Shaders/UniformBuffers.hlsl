@@ -42,3 +42,7 @@ struct ShadowingLight
         float4 up;
 };
 
+struct MaterialAttributes
+{
+    uint materialAttributes;
+};

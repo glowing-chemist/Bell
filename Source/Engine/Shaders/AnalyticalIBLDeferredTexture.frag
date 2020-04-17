@@ -36,6 +36,9 @@ Texture2D<float> shadowMap;
 // an unbound array of material parameter textures
 // In order albedo, normals, rougness, metalness
 [[vk::binding(0, 1)]]
+ConstantBuffer<MaterialAttributes> materialFlags;
+
+[[vk::binding(1, 1)]]
 Texture2D materials[];
 
 float4 main(UVVertOutput vertOutput)

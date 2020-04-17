@@ -23,8 +23,7 @@ ScreenSpaceReflectionTechnique::ScreenSpaceReflectionTechnique(Engine* eng, Rend
     task.addInput(kLinearDepth, AttachmentType::Texture2D);
     task.addInput(kGlobalLighting, AttachmentType::Texture2D);
     task.addInput(kGBufferNormals, AttachmentType::Texture2D);
-    task.addInput(kGBufferMetalnessRoughness, AttachmentType::Texture2D);
-    task.addInput(kGBufferAlbedo, AttachmentType::Texture2D);
+    task.addInput(kGBufferSpecularRoughness, AttachmentType::Texture2D);
     task.addInput("SSRSampler", AttachmentType::Sampler);
     task.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
     if(eng->isPassRegistered(PassType::DeferredAnalyticalLighting))

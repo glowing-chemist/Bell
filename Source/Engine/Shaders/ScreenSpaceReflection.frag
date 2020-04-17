@@ -14,19 +14,16 @@ Texture2D<float4> GlobalLighting;
 Texture2D<float3> Normals;
 
 [[vk::binding(3)]]
-Texture2D<float2> MetalnessRoughnes;
+Texture2D<float4> SpecularRoughness;
 
 [[vk::binding(4)]]
-Texture2D<float4> Albedo;
-
-[[vk::binding(5)]]
 SamplerState linearSampler;
 
-[[vk::binding(6)]]
+[[vk::binding(5)]]
 ConstantBuffer<CameraBuffer> camera;
 
 #if defined(Deferred_analytical_lighting)
-[[vk::binding(7)]]
+[[vk::binding(6)]]
 Texture2D<float> AnalyticalLighting;
 #define USING_ANALYTICAL_LIGHTING
 #endif
@@ -68,8 +65,8 @@ float4 main(PositionAndUVVertOutput vertInput)
 	normal = remapNormals(normal);
 	normal = normalize(normal);
 
-	const float2 metalRoughnes = MetalnessRoughnes.Sample(linearSampler, uv);
-	float roughness = metalRoughnes.y;
+	const float4 specularRoughnes = SpecularRoughness.Sample(linearSampler, uv);
+	float roughness = specularRoughnes.w;
 	roughness *= roughness;
 
 	// camera is at 0.0, 0.0, 0.0 so view vector is just position.
@@ -106,9 +103,5 @@ float4 main(PositionAndUVVertOutput vertInput)
 			break;
 	}
 
-	const float3 albedo = Albedo.Sample(linearSampler, uv);
-	const float NoV = dot(normal, view);
-	const float3 F0 = lerp(float3(DIELECTRIC_SPECULAR), albedo, metalRoughnes.x);
-    const float3 F = fresnelSchlickRoughness(max(NoV, 0.0), F0, roughness);
-	return (reflectedColour / totalWeight) * float4(F, 1.0f);
+	return (reflectedColour / totalWeight) * float4(specularRoughnes.specularRoughness.xyz, 1.0f);
 }

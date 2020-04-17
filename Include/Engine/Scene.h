@@ -3,6 +3,8 @@
 
 #include "Core/Image.hpp"
 #include "Core/ImageView.hpp"
+#include "Core/Buffer.hpp"
+#include "Core/BufferView.hpp"
 
 #include "Engine/OctTree.hpp"
 #include "Engine/Camera.hpp"
@@ -58,13 +60,11 @@ struct MeshInstance
 {
     MeshInstance(StaticMesh* mesh,
                  const float4x3& trans,
-                 const uint32_t materialID,
-                 const uint32_t materialFlags) :
+                 const uint32_t materialID) :
         mMesh(mesh),
         mTransformation(trans),
         mPreviousTransformation(trans),
-        mMaterialID{materialID},
-        mMaterialFlags{materialFlags} {}
+        mMaterialID{materialID} {}
 
     StaticMesh* mMesh;
 
@@ -91,7 +91,6 @@ struct MeshInstance
         entry.mPreviousTransformation = float3x4(mPreviousTransformation);
         entry.mMaterialIndex = mMaterialID;
         entry.mAttributes = mMesh->getAttributes();
-        entry.mMaterialAttributes = mMaterialFlags;
 
         return entry;
     }
@@ -100,7 +99,6 @@ private:
     float4x4 mTransformation;
     float4x4 mPreviousTransformation;
     uint32_t mMaterialID;
-    uint32_t mMaterialFlags;
 };
 
 
@@ -160,16 +158,6 @@ public:
 	{
 		return mMaterialImageViews;
 	}
-
-    PBRType getPBRType() const
-    {
-        return mPBRType;
-    }
-
-    void setPBRType(const PBRType type)
-    {
-        mPBRType = type;
-    }
 
     uint32_t getMaterialFlags() const
     {
@@ -300,7 +288,6 @@ private:
 
 	std::vector<Material> mMaterials;
 	std::vector<ImageView> mMaterialImageViews;
-    PBRType mPBRType = PBRType::Metalness;
     uint32_t mMaterialFlags;
 
     std::vector<Light> mLights;

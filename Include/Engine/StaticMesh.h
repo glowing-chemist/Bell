@@ -25,7 +25,6 @@ struct MeshEntry
     float3x4 mPreviousTransformation;
     uint32_t mMaterialIndex;
     uint32_t mAttributes;
-    uint32_t mMaterialAttributes;
 };
 static_assert (sizeof(MeshEntry) <= 128, "Mesh Entry will no longer fit inside push constants");
 

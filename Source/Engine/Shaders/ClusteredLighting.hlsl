@@ -142,7 +142,6 @@ float4 pointLightContribution(const Light light,
 							const float4 positionWS, 
 							const float3 view,
 							const MaterialInfo material,
-							const uint materialFlags,
 							const float2 f_ab)
 {
     const float4 lightDir = light.position - positionWS;
@@ -151,8 +150,8 @@ float4 pointLightContribution(const Light light,
     const float falloff = pow(saturate(1 - pow(lightDistance / light.radius, 4.0f)), 2.0f) / ((lightDistance * lightDistance) + 1); 
 	const float3 radiance = light.albedo.xyz * light.intensity * falloff;
 
-    const float3 diffuse = calculateDiffuseLambert(material, materialFlags, radiance);
-    const float3 specular = calculateSpecular(material, materialFlags, view, radiance, f_ab);
+    const float3 diffuse = calculateDiffuseLambert(material, radiance);
+    const float3 specular = calculateSpecular(material, radiance, f_ab);
 
     return float4(diffuse + specular, 1.0f);
 }
@@ -211,7 +210,6 @@ float4 areaLightContribution(const Light light,
 							const float4 positionWS, 
 							const float3 view,
 							const MaterialInfo material,
-							const uint materialFlags,
 							const float3x3 Minv,
 							const float amp)
 {
@@ -228,21 +226,8 @@ float4 areaLightContribution(const Light light,
     spec *= amp;
         
     const float3 diff = LTC_Evaluate(material.normal.xyz, view, positionWS.xyz, float3x3(1), points); 
-
-    float3 F0;
-    float3 diffuseColor;
-    if(materialFlags & kMaterial_Metalness)
-    {
-	    diffuseColor = material.albedoOrDiffuse.xyz * (1.0 - DIELECTRIC_SPECULAR) * (1.0 - material.metalnessOrSpecular.x);
-		F0 = lerp(float3(DIELECTRIC_SPECULAR), material.albedoOrDiffuse.xyz, material.metalnessOrSpecular.x);
-	}
-	else if(materialFlags & kMaterial_Specular)
-	{
-		diffuseColor = material.albedoOrDiffuse.xyz;
-		F0 = material.metalnessOrSpecular.xyz;
-	}
         
-    float3 colour  = light.intensity * (light.albedo.xyz * spec * F0 + light.albedo.xyz * diff * diffuseColor);
+    float3 colour  = light.intensity * (light.albedo.xyz * spec * material.specularRoughness.xyz + light.albedo.xyz * diff * material.diffuse);
     colour /= 2.0 * PI;
 
     return float4(colour, 1.0f);

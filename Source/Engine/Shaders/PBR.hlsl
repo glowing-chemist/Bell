@@ -1,4 +1,3 @@
-#define DIELECTRIC_SPECULAR 0.04
 
 #include "Hammersley.hlsl"
 
@@ -12,10 +11,9 @@
 
 struct MaterialInfo
 {
-    float4 albedoOrDiffuse;
+    float4 diffuse;
+    float4 specularRoughness;
     float4 normal;
-    float4 metalnessOrSpecular;
-    float roughness;
 };
 
 // polynomial aproximation of a monte carlo integrated DFG function.
@@ -73,50 +71,20 @@ float3 ImportanceSampleGGX(const float2 Xi, const float roughness, const float3 
 }
 
 
-float3 fresnelSchlickRoughness(const float cosTheta, const float3 F0, const float roughness)
+float3 calculateDiffuse(const MaterialInfo material, const float3 irradiance)
 {
-    return F0 + (max(float3(1.0 - roughness), F0) - F0) * pow(1.0 - cosTheta, 5.0);
+    return material.diffuse * irradiance;
 }
 
 
-float3 calculateDiffuse(const MaterialInfo material, const uint materialFlags, const float3 irradiance)
+float3 calculateDiffuseLambert(const MaterialInfo material, const float3 irradiance)
 {
-    float3 diffuseColor;
 
-    if(materialFlags & kMaterial_Albedo)
-        diffuseColor= material.albedoOrDiffuse.xyz * (1.0 - DIELECTRIC_SPECULAR) * (1.0 - material.metalnessOrSpecular.x);
-    else if(materialFlags & kMaterial_Diffuse)
-        diffuseColor = material.albedoOrDiffuse.xyz;
-
-    return diffuseColor * irradiance;
+    return (material.diffuse * irradiance) / PI;
 }
 
 
-float3 calculateDiffuseLambert(const MaterialInfo material, const uint materialFlags, const float3 irradiance)
+float3 calculateSpecular(const MaterialInfo material, const float3 radiance, const float2 DFG)
 {
-    float3 diffuseColor;
-
-    if(materialFlags & kMaterial_Albedo)
-        diffuseColor=  material.albedoOrDiffuse.xyz * (1.0 - DIELECTRIC_SPECULAR) * (1.0 - material.metalnessOrSpecular.x);
-    else if(materialFlags & kMaterial_Diffuse)
-        diffuseColor = material.albedoOrDiffuse.xyz;
-
-    return (diffuseColor * irradiance) / PI;
-}
-
-
-float3 calculateSpecular(const MaterialInfo material, const uint materialFlags, const float3 V, const float3 radiance, const float2 DFG)
-{
-    float3 F;
-    if(materialFlags & kMaterial_Albedo && materialFlags && kMaterial_Metalness)
-    {
-        const float NoV = dot(material.normal.xyz, V);
-
-        const float3 F0 = lerp(float3(DIELECTRIC_SPECULAR), material.albedoOrDiffuse.xyz, material.metalnessOrSpecular.x);
-        F = fresnelSchlickRoughness(max(NoV, 0.0), F0, material.roughness);
-    }
-    else if(materialFlags & kMaterial_Specular)
-        F = material.metalnessOrSpecular.xyz;
-
-    return (F * DFG.x + DFG.y) * radiance;
+    return (material.specularRoughness.xyz * DFG.x + DFG.y) * radiance;
 }

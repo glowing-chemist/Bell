@@ -17,13 +17,13 @@ Texture2D<float2> DFG;
 Texture2D<float> depth;
 
 [[vk::binding(3)]]
-Texture2D<float3> vertexNormals;
+Texture2D<float3> Normals;
 
 [[vk::binding(4)]]
-Texture2D<float4> Albedo;
+Texture2D<float4> Diffuse;
 
 [[vk::binding(5)]]
-Texture2D<float2> MetalnessRoughness;
+Texture2D<float4> SpecularRoughness;
 
 [[vk::binding(6)]]
 TextureCube<float4> skyBox;
@@ -39,14 +39,6 @@ SamplerState linearSampler;
 Texture2D<float> shadowMap;
 #endif
 
-struct MaterialAttributes
-{
-    uint materialAttributes;
-};
-
-[[vk::push_constant]]
-ConstantBuffer<MaterialAttributes> materialAttributes;
-
 
 float4 main(UVVertOutput vertInput)
 {
@@ -57,16 +49,15 @@ float4 main(UVVertOutput vertInput)
     worldSpaceFragmentPos /= worldSpaceFragmentPos.w;
 
 	float3 normal;
-    normal = vertexNormals.Sample(linearSampler, uv);
+    normal = Normals.Sample(linearSampler, uv);
     normal = remapNormals(normal);
     normal = normalize(normal);
 
     const float3 viewDir = normalize(camera.position - worldSpaceFragmentPos.xyz);
 
-    const float4 baseAlbedo = Albedo.Sample(linearSampler, uv);
-    const float2 metalnessRoughness = MetalnessRoughness.Sample(linearSampler, uv);
-    const float roughness = metalnessRoughness.y;
-    const float metalness = metalnessRoughness.x;
+    const float4 diffuse = Diffuse.Sample(linearSampler, uv);
+    const float4 specularRoughness = SpecularRoughness.Sample(linearSampler, uv);
+    const float roughness = specularRoughness.w;
 
 
 	const float3 lightDir = reflect(-viewDir, normal);
@@ -87,12 +78,11 @@ float4 main(UVVertOutput vertInput)
     const float2 f_ab = DFG.Sample(linearSampler, float2(NoV, roughness));
 
     MaterialInfo material;
-    material.albedoOrDiffuse = baseAlbedo;
+    material.diffuse = diffuse;
     material.normal = float4(normal, 1.0f);
-    material.metalnessOrSpecular.x = metalness;
-    material.roughness = roughness;
-    const float3 diffuse = calculateDiffuse(material, materialAttributes.materialAttributes, irradiance);
-    const float3 specular = calculateSpecular(material, materialAttributes.materialAttributes, viewDir, radiance, f_ab);
+    material.specularRoughness = specularRoughness;
+    const float3 diffuseLighting = calculateDiffuse(material, irradiance);
+    const float3 specularlighting = calculateSpecular(material, radiance, f_ab);
 
-    return float4(specular + diffuse, 1.0);
+    return float4(specularlighting + diffuseLighting, 1.0);
 }

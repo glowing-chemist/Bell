@@ -370,13 +370,13 @@ InstanceID Scene::addMeshInstance(const SceneID meshID, const float4x3 &transfor
     {
         id = static_cast<InstanceID>(mStaticMeshInstances.size() + 1);
 
-        mStaticMeshInstances.push_back({&mesh, transformation, materialID, mMaterialFlags});
+        mStaticMeshInstances.push_back({&mesh, transformation, materialID});
     }
     else
     {
         id = -static_cast<InstanceID>(mDynamicMeshInstances.size());
 
-        mDynamicMeshInstances.push_back({&mesh, transformation, materialID, mMaterialFlags});
+        mDynamicMeshInstances.push_back({&mesh, transformation, materialID});
     }
 
     return id;

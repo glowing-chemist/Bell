@@ -22,10 +22,10 @@ Texture2D<float> depth;
 Texture2D<float4> vertexNormals;
 
 [[vk::binding(6)]]
-Texture2D<float4> Albedo;
+Texture2D<float4> Diffuse;
 
 [[vk::binding(7)]]
-Texture2D<float2> MetalnessRoughness;
+Texture2D<float4> SpecularRoughness;
 
 [[vk::binding(8)]]
 SamplerState linearSampler;
@@ -53,15 +53,6 @@ StructuredBuffer<uint4> lightCount;
 StructuredBuffer<Light> sceneLights;
 
 
-struct MaterialAttributes
-{
-    uint materialAttributes;
-};
-
-[[vk::push_constant]]
-ConstantBuffer<MaterialAttributes> materialAttributes;
-
-
 [numthreads(32, 32, 1)]
 void main(uint3 globalIndex : SV_DispatchThreadID)
 {
@@ -83,13 +74,12 @@ void main(uint3 globalIndex : SV_DispatchThreadID)
 
     const float3 viewDir = normalize(float4(camera.position, 1.0f) - worldSpaceFragmentPos).xyz;
 
-    const float2 metalnessRoughness = MetalnessRoughness.Sample(linearSampler, uv);
+    const float4 specularRoughness = SpecularRoughness.Sample(linearSampler, uv);
 
     MaterialInfo material;
-    material.albedoOrDiffuse = Albedo.Sample(linearSampler, uv);
+    material.diffuse = Diffuse.Sample(linearSampler, uv);
     material.normal = float4(normal, 1.0f);
-    material.metalnessOrSpecular.x = metalnessRoughness.x;
-    material.roughness = metalnessRoughness.y;
+    material.specularRoughness = specularRoughness;
 
     const uint froxelIndex = activeFroxels.Sample(pointSampler, uv);
     const uint2 lightListIndicies = sparseFroxelList[froxelIndex];
@@ -98,7 +88,7 @@ void main(uint3 globalIndex : SV_DispatchThreadID)
     float3x3 minV;
     float LTCAmp;
     float2 f_ab;
-    initializeLightState(minV, LTCAmp, f_ab, DFG, ltcMat, ltcAmp, linearSampler, dot(material.normal.xyz, viewDir), material.roughness);
+    initializeLightState(minV, LTCAmp, f_ab, DFG, ltcMat, ltcAmp, linearSampler, dot(material.normal.xyz, viewDir), material.specularRoughness.w);
 
     float4 lighting = float4(0.0f);
 
@@ -115,7 +105,6 @@ void main(uint3 globalIndex : SV_DispatchThreadID)
                                                     worldSpaceFragmentPos, 
                                                     viewDir, 
                                                     material,
-                                                    materialAttributes.materialAttributes,
                                                     f_ab);
                 break;
             }
@@ -126,7 +115,6 @@ void main(uint3 globalIndex : SV_DispatchThreadID)
                                                     worldSpaceFragmentPos, 
                                                     viewDir, 
                                                     material,
-                                                    materialAttributes.materialAttributes,
                                                     f_ab);
                 break;
             }
@@ -137,7 +125,6 @@ void main(uint3 globalIndex : SV_DispatchThreadID)
                                                     worldSpaceFragmentPos, 
                                                     viewDir, 
                                                     material,
-                                                    materialAttributes.materialAttributes,
                                                     minV, 
                                                     LTCAmp);
                 break;

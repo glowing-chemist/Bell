@@ -8,9 +8,9 @@
 
 struct GBufferFragOutput
 {
-    float4 albedo;
+    float4 diffuse;
     float3 normal;
-    float2 metalnessRoughness;
+    float4 specularRoughness;
     float2 velocity;
 };
 
@@ -21,10 +21,10 @@ ConstantBuffer<CameraBuffer> camera;
 SamplerState linearSampler;
 
 [[vk::binding(0, 1)]]
-Texture2D materials[];
+ConstantBuffer<MaterialAttributes> materialFlags;
 
-[[vk::push_constant]]
-ConstantBuffer<ObjectMatracies> model;
+[[vk::binding(1, 1)]]
+Texture2D materials[];
 
 
 #include "Materials.hlsl"
@@ -35,18 +35,18 @@ GBufferFragOutput main(GBufferVertOutput vertInput)
     const float3 viewDir = normalize(camera.position - vertInput.positionWS.xyz);
 
     MaterialInfo material = calculateMaterialInfo(  vertInput.normal, 
-                                                    model.materialAttributes, 
+                                                    materialFlags.materialAttributes, 
                                                     vertInput.materialID, 
                                                     viewDir, 
                                                     vertInput.uv);
 
-    if(material.albedoOrDiffuse.w == 0.0f)
+    if(material.diffuse.w == 0.0f)
         discard;
 
     GBufferFragOutput output;
-	output.albedo = material.albedoOrDiffuse;
+	output.diffuse = material.diffuse;
 	output.normal = (material.normal.xyz + 1.0f) * 0.5f;
-	output.metalnessRoughness = float2(material.metalnessOrSpecular.x, material.roughness);
+	output.specularRoughness = material.specularRoughness;
     output.velocity = (vertInput.velocity * 0.5f) + 0.5f;
 
     return output;

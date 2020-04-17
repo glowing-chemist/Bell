@@ -52,6 +52,9 @@ Texture2D<float> shadowMap;
 // an unbound array of matyerial parameter textures
 // In order albedo, normals, rougness, metalness
 [[vk::binding(0, 1)]]
+ConstantBuffer<MaterialAttributes> materialFlags;
+
+[[vk::binding(1, 1)]]
 Texture2D materials[];
 
 [[vk::binding(0, 2)]]
@@ -59,9 +62,6 @@ StructuredBuffer<uint4> lightCount;
 
 [[vk::binding(1, 2)]]
 StructuredBuffer<Light> sceneLights;
-
-[[vk::push_constant]]
-ConstantBuffer<ObjectMatracies> model;
 
 
 #include "Materials.hlsl"
@@ -71,14 +71,14 @@ Output main(GBufferVertOutput vertInput)
 const float3 viewDir = normalize(camera.position - vertInput.positionWS.xyz);
 
     MaterialInfo material = calculateMaterialInfo(  vertInput.normal, 
-                                                    model.materialAttributes, 
+                                                    materialFlags.materialAttributes, 
                                                     vertInput.materialID, 
                                                     viewDir, 
                                                     vertInput.uv);
 
 	const float3 lightDir = reflect(-viewDir, material.normal);
 
-	const float lodLevel = material.roughness * 10.0f;
+	const float lodLevel = material.specularRoughness.w * 10.0f;
 
     // Calculate contribution from enviroment.
     float3 radiance = ConvolvedSkybox.SampleLevel(linearSampler, lightDir, lodLevel).xyz;
@@ -95,15 +95,10 @@ const float3 viewDir = normalize(camera.position - vertInput.positionWS.xyz);
     float3x3 minV;
     float LTCAmp;
     float2 f_ab;
-    initializeLightState(minV, LTCAmp, f_ab, DFG, ltcMat, ltcAmp, linearSampler, NoV, material.roughness);
+    initializeLightState(minV, LTCAmp, f_ab, DFG, ltcMat, ltcAmp, linearSampler, NoV, material.specularRoughness.w);
 
-    if(material.albedoOrDiffuse.w == 0.0f)
-        discard;
-
-    const float3 diffuse = calculateDiffuse(material, model.materialAttributes, irradiance);
+    const float3 diffuse = calculateDiffuse(material, irradiance);
     const float3 specular = calculateSpecular(  material,
-                                                model.materialAttributes,
-                                                viewDir,
                                                 radiance, 
                                                 f_ab);
 
@@ -126,7 +121,6 @@ const float3 viewDir = normalize(camera.position - vertInput.positionWS.xyz);
                                                     vertInput.positionWS, 
                                                     viewDir, 
                                                     material,
-                                                    model.materialAttributes,
                                                     f_ab);
                 break;
             }
@@ -137,7 +131,6 @@ const float3 viewDir = normalize(camera.position - vertInput.positionWS.xyz);
                                                     vertInput.positionWS, 
                                                     viewDir, 
                                                     material,
-                                                    model.materialAttributes,
                                                     f_ab);
                 break;
             }
@@ -148,7 +141,6 @@ const float3 viewDir = normalize(camera.position - vertInput.positionWS.xyz);
                                                     vertInput.positionWS, 
                                                     viewDir, 
                                                     material,
-                                                    model.materialAttributes,
                                                     minV, 
                                                     LTCAmp);
                 break;
@@ -160,7 +152,7 @@ const float3 viewDir = normalize(camera.position - vertInput.positionWS.xyz);
         }
     }
 
-    if(material.albedoOrDiffuse.w == 0.0f)
+    if(material.diffuse.w == 0.0f)
         discard;
 
     Output output;
