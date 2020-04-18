@@ -89,13 +89,14 @@ VulkanRenderInstance::VulkanRenderInstance(GLFWwindow* window) :
                                                 };
 
     std::vector<const char*> foundValidationLayers{};
-    uint8_t layersFound = 0;
     for(const auto* neededLayer : validationLayers )
     {
         for(auto& availableLayer : availableLayers) {
-
+#ifdef __linux__
+            BELL_LOG_ARGS("instance layer: %s", availableLayer.layerName.data())
+#else
             BELL_LOG_ARGS("instance layer: %s", availableLayer.layerName)
-
+#endif
             if(strcmp(availableLayer.layerName, neededLayer) == 0)
             {
                 foundValidationLayers.push_back(availableLayer.layerName);
@@ -145,8 +146,11 @@ std::pair<vk::PhysicalDevice, vk::Device> VulkanRenderInstance::findSuitableDevi
         const vk::PhysicalDeviceFeatures   features   = availableDevices[i].getFeatures();
         const QueueIndicies queueIndices = getAvailableQueues(mWindowSurface, availableDevices[i]);
 
+#ifdef __linux__
+        BELL_LOG_ARGS("Device Found: %s", properties.deviceName.data());
+#else
         BELL_LOG_ARGS("Device Found: %s", properties.deviceName);
-
+#endif
 		if (geometryWanted && !features.geometryShader)
 			continue;
 		if (tessWanted && !features.tessellationShader)
@@ -166,8 +170,11 @@ std::pair<vk::PhysicalDevice, vk::Device> VulkanRenderInstance::findSuitableDevi
 
     vk::PhysicalDevice physicalDevice = availableDevices[physDeviceIndex];
 
+#ifdef __linux__
+    BELL_LOG_ARGS("Device selected: %s", physicalDevice.getProperties().deviceName.data())
+#else
     BELL_LOG_ARGS("Device selected: %s", physicalDevice.getProperties().deviceName)
-
+#endif
     const QueueIndicies queueIndices = getAvailableQueues(mWindowSurface, physicalDevice);
 
     float queuePriority = 1.0f;
