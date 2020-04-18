@@ -291,14 +291,14 @@ bool VulkanShader::compile(const std::string& prefix)
 
     vk::ShaderModuleCreateInfo shaderModuleInfo{};
     shaderModuleInfo.setPCode(mSPIRV.data());
-    shaderModuleInfo.setCodeSize(mSPIRV.size() * 4);
+    shaderModuleInfo.setCodeSize(mSPIRV.size() * sizeof(unsigned int));
     mShaderModule = device->createShaderModule(shaderModuleInfo);
 
 	device->setDebugName(mFilePath.string(), *reinterpret_cast<uint64_t*>(&mShaderModule), VK_OBJECT_TYPE_SHADER_MODULE);
 
 	mSPIRV.clear();
 
-    return mCompiled;
+	return mCompiled;
 }
 
 

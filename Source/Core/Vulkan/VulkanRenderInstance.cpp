@@ -82,7 +82,7 @@ VulkanRenderInstance::VulkanRenderInstance(GLFWwindow* window) :
 #if BELL_ENABLE_LOGGING
     const auto availableLayers = vk::enumerateInstanceLayerProperties();
     std::vector<const char*> validationLayers = {"VK_LAYER_KHRONOS_validation",
-                                                    "VK_LAYER_LUNARG_validation"
+                                                 "VK_LAYER_LUNARG_standard_validation"
 #if DUMP_API
                                                  ,"VK_LAYER_LUNARG_api_dump"
 #endif
@@ -96,7 +96,8 @@ VulkanRenderInstance::VulkanRenderInstance(GLFWwindow* window) :
 
             BELL_LOG_ARGS("instance layer: %s", availableLayer.layerName)
 
-            if(strcmp(availableLayer.layerName, neededLayer) == 0) {
+            if(strcmp(availableLayer.layerName, neededLayer) == 0)
+            {
                 foundValidationLayers.push_back(availableLayer.layerName);
             }
         }

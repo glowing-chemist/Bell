@@ -13,6 +13,7 @@
 
 ShaderBase::ShaderBase(RenderDevice* device, const std::string& path) :
     DeviceChild{device},
+    mGLSLSource{""},
     mFilePath{path},
     mCompiled{false}
 {
