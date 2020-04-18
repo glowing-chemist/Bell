@@ -309,8 +309,8 @@ vk::RenderPass	VulkanRenderDevice::generateRenderPass(const GraphicsTask& task)
         attachmentDesc.setInitialLayout((layout));
 		attachmentDesc.setFinalLayout(layout);
 
-		vk::AttachmentLoadOp op = [loadop](){
-			switch(loadop)
+		vk::AttachmentLoadOp op = [loadType = loadop](){
+			switch(loadType)
 			{
 				case LoadOp::Preserve:
 					return vk::AttachmentLoadOp::eLoad;
@@ -482,9 +482,9 @@ vk::DescriptorSetLayout VulkanRenderDevice::generateDescriptorSetLayoutBindings(
     for (const auto& [_, type, arraySize] : bindings)
 	{
 		// Translate between Bell enums to the vulkan equivelent.
-		vk::DescriptorType descriptorType = [type]()
+		vk::DescriptorType descriptorType = [attachmentType = type]()
 		{
-			switch (type)
+			switch (attachmentType)
 			{
 			case AttachmentType::Texture1D:
 			case AttachmentType::Texture2D:
