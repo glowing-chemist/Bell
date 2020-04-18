@@ -124,7 +124,7 @@ endif()
 
 
 if(NOT TARGET SPIRV-Tools-opt)
-    set(ENABLE_OPT OFF)
+    set(ENABLE_OPT ON)
 endif()
 
 if(ENABLE_OPT)
