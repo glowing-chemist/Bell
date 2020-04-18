@@ -242,7 +242,7 @@ bool VulkanShader::compile(const std::string& prefix)
 		{
 			const auto fileSize = std::filesystem::file_size(spirvFile);
 			BELL_ASSERT((fileSize % sizeof(unsigned int)) == 0, "Incorrect file size")
-				mSPIRV.resize(fileSize / sizeof(unsigned int));
+			mSPIRV.resize(fileSize / sizeof(unsigned int));
 
 			FILE* spirvHandle = fopen(spirvFile.string().c_str(), "rb");
 			fread(mSPIRV.data(), sizeof(unsigned int), mSPIRV.size(), spirvHandle);
@@ -260,7 +260,7 @@ bool VulkanShader::compile(const std::string& prefix)
 		{
 			BELL_LOG_ARGS("Shader failed to parse: %s", shader.getInfoLog())
 
-				return false;
+			return false;
 		}
 
 		glslang::TProgram program;

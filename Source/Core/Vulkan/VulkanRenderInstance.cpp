@@ -81,27 +81,29 @@ VulkanRenderInstance::VulkanRenderInstance(GLFWwindow* window) :
     instanceInfo.setPApplicationInfo(&appInfo);
 #if BELL_ENABLE_LOGGING
     const auto availableLayers = vk::enumerateInstanceLayerProperties();
-    std::vector<const char*> validationLayers = {"VK_LAYER_KHRONOS_validation"
+    std::vector<const char*> validationLayers = {"VK_LAYER_KHRONOS_validation",
+                                                    "VK_LAYER_LUNARG_validation"
 #if DUMP_API
                                                  ,"VK_LAYER_LUNARG_api_dump"
 #endif
                                                 };
+
+    std::vector<const char*> foundValidationLayers{};
     uint8_t layersFound = 0;
     for(const auto* neededLayer : validationLayers )
     {
         for(auto& availableLayer : availableLayers) {
 
-            BELL_LOG_ARGS("instance layer: %s", availableLayer.layerName.data())
+            BELL_LOG_ARGS("instance layer: %s", availableLayer.layerName)
 
             if(strcmp(availableLayer.layerName, neededLayer) == 0) {
-                ++layersFound;
+                foundValidationLayers.push_back(availableLayer.layerName);
             }
         }
     }
-    if(layersFound != validationLayers.size()) throw std::runtime_error{"Running in debug but validation layers not found"};
 
-    instanceInfo.setEnabledLayerCount(validationLayers.size());
-    instanceInfo.setPpEnabledLayerNames(validationLayers.data());    
+    instanceInfo.setEnabledLayerCount(foundValidationLayers.size());
+    instanceInfo.setPpEnabledLayerNames(foundValidationLayers.data());
 #endif
 
     mInstance = vk::createInstance(instanceInfo);
@@ -142,7 +144,7 @@ std::pair<vk::PhysicalDevice, vk::Device> VulkanRenderInstance::findSuitableDevi
         const vk::PhysicalDeviceFeatures   features   = availableDevices[i].getFeatures();
         const QueueIndicies queueIndices = getAvailableQueues(mWindowSurface, availableDevices[i]);
 
-        BELL_LOG_ARGS("Device Found: %s", properties.deviceName.data());
+        BELL_LOG_ARGS("Device Found: %s", properties.deviceName);
 
 		if (geometryWanted && !features.geometryShader)
 			continue;
@@ -163,7 +165,7 @@ std::pair<vk::PhysicalDevice, vk::Device> VulkanRenderInstance::findSuitableDevi
 
     vk::PhysicalDevice physicalDevice = availableDevices[physDeviceIndex];
 
-    BELL_LOG_ARGS("Device selected: %s", physicalDevice.getProperties().deviceName.data())
+    BELL_LOG_ARGS("Device selected: %s", physicalDevice.getProperties().deviceName)
 
     const QueueIndicies queueIndices = getAvailableQueues(mWindowSurface, physicalDevice);
 
