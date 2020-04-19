@@ -157,6 +157,28 @@ float4 pointLightContribution(const Light light,
 }
 
 
+float4 spotLightContribution(const Light light, 
+							const float4 positionWS, 
+							const float3 view,
+							const MaterialInfo material,
+							const float2 f_ab)
+{
+	if(acos(dot(positionWS - light.position, light.direction)) < radians(light.misc))
+		return float4(0.0f, 0.0f, 0.0f, 0.0f);
+
+    const float4 lightDir = light.position - positionWS;
+	const float lightDistance = length(lightDir);
+
+    const float falloff = pow(saturate(1 - pow(lightDistance / light.radius, 4.0f)), 2.0f) / ((lightDistance * lightDistance) + 1); 
+	const float3 radiance = light.albedo.xyz * light.intensity * falloff;
+
+    const float3 diffuse = calculateDiffuseLambert(material, radiance);
+    const float3 specular = calculateSpecular(material, radiance, f_ab);
+
+    return float4(diffuse + specular, 1.0f);
+}
+
+
 // Area light functions.
 float IntegrateEdge(float3 v1, float3 v2)
 {

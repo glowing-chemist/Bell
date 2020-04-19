@@ -111,7 +111,7 @@ void main(uint3 globalIndex : SV_DispatchThreadID)
 
             case 1: // Spot.
             {
-                lighting +=  pointLightContribution(light, 
+                lighting +=  spotLightContribution( light, 
                                                     worldSpaceFragmentPos, 
                                                     viewDir, 
                                                     material,

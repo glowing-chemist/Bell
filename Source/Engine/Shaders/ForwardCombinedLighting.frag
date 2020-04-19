@@ -127,7 +127,7 @@ const float3 viewDir = normalize(camera.position - vertInput.positionWS.xyz);
 
             case 1: // Spot.
             {
-                lighting +=  pointLightContribution(light, 
+                lighting +=  spotLightContribution( light, 
                                                     vertInput.positionWS, 
                                                     viewDir, 
                                                     material,
