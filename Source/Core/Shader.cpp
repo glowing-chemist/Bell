@@ -13,14 +13,17 @@
 
 ShaderBase::ShaderBase(RenderDevice* device, const std::string& path) :
     DeviceChild{device},
-    mGLSLSource{""},
+    mSource{},
     mFilePath{path},
     mCompiled{false}
 {
     // Load the glsl Source from disk in to mGLSLSource.
-    std::ifstream sourceFile{mFilePath};
-    std::string source{std::istreambuf_iterator<char>(sourceFile), std::istreambuf_iterator<char>()};
-    mGLSLSource = std::move(source);
+	const auto fileSize = std::filesystem::file_size(path);
+	mSource.resize(fileSize);
+
+	FILE* file = fopen(path.c_str(), "r");
+	fread(mSource.data(), sizeof(char), mSource.size(), file);
+	fclose(file);
 
 	mLastFileAccessTime = fs::last_write_time(path);
 }

@@ -34,7 +34,7 @@ public:
 
 protected:
 
-    std::string mGLSLSource;
+    std::vector<char> mSource;
     std::vector<unsigned int> mSPIRV;
 
 	fs::path mFilePath;

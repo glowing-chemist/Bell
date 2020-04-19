@@ -190,7 +190,7 @@ VulkanShader::~VulkanShader()
 bool VulkanShader::compile(const std::string& prefix)
 {
 	glslang::TShader shader{ mShaderStage };
-	const char* shaderSources[] = { mGLSLSource.c_str() };
+	const char* shaderSources[] = { mSource.data() };
 	shader.setPreamble(prefix.c_str());
 	shader.setStrings(shaderSources, 1);
 #ifdef VULKAN
@@ -281,8 +281,8 @@ bool VulkanShader::compile(const std::string& prefix)
 		mCompiled = true;
 	}
 
-#ifndef NDEBUG // get rid of the source when not in debug builds to save memory.
-	mGLSLSource.clear();
+#ifdef NDEBUG // get rid of the source when not in debug builds to save memory.
+	mSource.clear();
 #endif
 
     BELL_ASSERT(mCompiled, "Failed to compile shader to SPIRV");
@@ -310,8 +310,8 @@ bool VulkanShader::reload()
 
         // Reload the modified source
         std::ifstream sourceFile{mFilePath};
-        std::string source{std::istreambuf_iterator<char>(sourceFile), std::istreambuf_iterator<char>()};
-        mGLSLSource = std::move(source);
+        std::vector<char> source{std::istreambuf_iterator<char>(sourceFile), std::istreambuf_iterator<char>()};
+        mSource = std::move(source);
 
         compile();
         return true;
