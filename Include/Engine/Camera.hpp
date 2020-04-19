@@ -79,11 +79,11 @@ public:
     const float3 getUp() const
         { return mUp; }
 
-    void setNearPlane(const float near)
-        { mNearPlaneDistance = near; }
+    void setNearPlane(const float nearDistance)
+        { mNearPlaneDistance = nearDistance; }
 
-    void setFarPlane(const float far)
-        { mFarPlaneDistance = far; }
+    void setFarPlane(const float farDistance)
+        { mFarPlaneDistance = farDistance; }
 
     void setFOVDegrees(const float fov)
         { mFieldOfView = fov; }
