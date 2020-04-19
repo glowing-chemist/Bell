@@ -103,5 +103,5 @@ float4 main(PositionAndUVVertOutput vertInput)
 			break;
 	}
 
-	return (reflectedColour / totalWeight) * float4(specularRoughnes.specularRoughness.xyz, 1.0f);
+	return (reflectedColour / totalWeight) * float4(specularRoughnes.xyz, 1.0f);
 }

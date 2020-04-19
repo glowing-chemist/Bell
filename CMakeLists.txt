@@ -27,7 +27,6 @@ include_directories(
 			"${CMAKE_CURRENT_LIST_DIR}/ThirdParty/assimp-4.1.0/include"
 			"${CMAKE_CURRENT_LIST_DIR}/ThirdParty/imgui-master"
 			"${CMAKE_CURRENT_LIST_DIR}/ThirdParty/imgui-guizmo"
-			"${CMAKE_CURRENT_LIST_DIR}/ThirdParty/glslang"
 			"${CMAKE_CURRENT_LIST_DIR}/ThirdParty/imgui-node-editor/NodeEditor/Include"
 		    "${CMAKE_CURRENT_LIST_DIR}/ThirdParty/glm"	
 			"${CMAKE_CURRENT_LIST_DIR}/ThirdParty/stb_image"
@@ -42,8 +41,6 @@ set(GLFW_BUILD_TESTS 0)
 set(GLFW_BUILD_EXAMPLES 0)
 add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/ThirdParty/GLFW3/glfw-3.2.1")
 add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/ThirdParty/assimp-4.1.0")
-add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/ThirdParty/SPIRV-Tools-master")
-add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/ThirdParty/glslang")
 add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/ThirdParty/imgui-node-editor/NodeEditor")
 
 
@@ -126,7 +123,7 @@ else()
 endif(WIN32)
 
 if(VULKAN)
-	list(APPEND BELL_BASE_DEPENDANCIES ${Vulkan_LIBRARIES} glslang SPIRV HLSL)
+	list(APPEND BELL_BASE_DEPENDANCIES ${Vulkan_LIBRARIES} "$ENV{VULKAN_SDK}/Lib/shaderc_combined.lib" )
 elseif(DX_12)
 	list(APPEND BELL_BASE_DEPENDANCIES D3d12 DXGI)
 endif()

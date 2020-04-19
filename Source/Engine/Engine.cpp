@@ -60,7 +60,7 @@ Engine::Engine(GLFWwindow* windowPtr) :
 	mTechniques{},
     mPassesRegisteredThisFrame{0},
 	mCurrentRegistredPasses{0},
-    mShaderPrefix(""),
+    mShaderPrefix{},
     mVertexBuffer{getDevice(), BufferUsage::Vertex | BufferUsage::TransferDest, 10000000, 10000000, "Vertex Buffer"},
     mIndexBuffer{getDevice(), BufferUsage::Index | BufferUsage::TransferDest, 10000000, 10000000, "Index Buffer"},
     mDefaultSampler(SamplerType::Linear),
@@ -565,7 +565,7 @@ void Engine::registerPass(const PassType pass)
 {
 	if((static_cast<uint64_t>(pass) & mCurrentRegistredPasses) == 0)
 	{
-        mShaderPrefix += "#define " + std::string(passToString(pass)) + "\n";
+        mShaderPrefix.push_back(std::string(passToString(pass)));
 
         mPassesRegisteredThisFrame |= static_cast<uint64_t>(pass);
 	}

@@ -225,7 +225,7 @@ private:
     std::vector<std::unique_ptr<Technique>> mTechniques;
     uint64_t mPassesRegisteredThisFrame;
 	uint64_t mCurrentRegistredPasses;
-    std::string mShaderPrefix; // Containes defines for currently registered passes.
+    std::vector<std::string> mShaderPrefix; // Containes defines for currently registered passes.
 
 
 	std::unordered_map<uint64_t, Shader> mShaderCache;

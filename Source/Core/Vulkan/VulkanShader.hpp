@@ -5,7 +5,7 @@
 
 #include <vulkan/vulkan.hpp>
 
-#include "glslang/Public/ShaderLang.h"
+#include "shaderc/shaderc.hpp"
 
 
 class VulkanShader : public ShaderBase
@@ -15,7 +15,7 @@ public:
 	VulkanShader(RenderDevice*, const std::string&);
 	~VulkanShader();
 
-	virtual bool compile(const std::string& prefix = "") override;
+	virtual bool compile(const std::vector<std::string>& prefix = {}) override;
 	virtual bool reload() override;
 
 	vk::ShaderModule getShaderModule() const
@@ -25,8 +25,8 @@ public:
 
 private:
 
-	EShLanguage getShaderStage(const std::string&) const;
-	EShLanguage mShaderStage;
+	shaderc_shader_kind getShaderStage(const std::string&) const;
+	shaderc_shader_kind mShaderStage;
 
 	vk::ShaderModule mShaderModule;
 
