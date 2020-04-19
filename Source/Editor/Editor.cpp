@@ -429,7 +429,7 @@ void Editor::pumpInputQueue()
 }
 
 
-void Editor::mouseScroll_callback(GLFWwindow* window, double xoffset, double yoffset)
+void Editor::mouseScroll_callback(GLFWwindow*, double, double yoffset)
 {
     mMouseScrollAmount.store(yoffset);
 }
@@ -574,7 +574,7 @@ void Editor::drawDebugTexturePicker(const std::vector<std::string>& textures)
 
         ImGui::BeginGroup();
 
-        for(int i = 0; i < textures.size(); ++i)
+        for(size_t i = 0; i < textures.size(); ++i)
         {
             ImGui::RadioButton(textures[i].c_str(), &mCurrentDebugTexture, i);
         }
@@ -601,9 +601,11 @@ void Editor::drawLightMenu()
             {
                 EditorLight& light = mLights[i];
 
-                ImGui::Text("Position: X %f Y %f Z %f", light.mPosition.x, light.mPosition.y, light.mPosition.z);
-                ImGui::Text("Direction: X %f Y %f Z %f", light.mDirection.x, light.mDirection.y, light.mDirection.z);
+                ImGui::InputFloat3("Position", &light.mPosition[0]);
+                ImGui::InputFloat3("Direction", &light.mDirection[0]);
                 ImGui::ColorEdit3("Colour", light.mColour, ImGuiColorEditFlags_InputRGB);
+                ImGui::SliderFloat("influence radius", &light.mRadius, 0.1f, 500.0f);
+                ImGui::SliderFloat("intensity", &light.mIntensity, 0.1f, 50.0f);
 
                 drawGuizmo(light, viewMatrix, projectionMatrix, mLightOperationMode);
 
@@ -612,6 +614,8 @@ void Editor::drawLightMenu()
                 sceneLight.mPosition = light.mPosition;
                 sceneLight.mDirection = light.mDirection;
                 sceneLight.mAlbedo = float4(light.mColour[0], light.mColour[1], light.mColour[2], 1.0f);
+                sceneLight.mRadius = light.mRadius;
+                sceneLight.mIntensity = light.mIntensity;
 
                 ImGui::TreePop();
             }
@@ -628,7 +632,8 @@ void Editor::drawLightMenu()
             newLight.mColour[0] = 1.0f;
             newLight.mColour[1] = 1.0f;
             newLight.mColour[2] = 1.0f;
-            newLight.mInfluence = 20;
+            newLight.mIntensity = 20.0f;
+            newLight.mRadius = 300.0f;
 
             mLights.push_back(newLight);
         }
@@ -644,7 +649,8 @@ void Editor::drawLightMenu()
             newLight.mColour[0] = 1.0f;
             newLight.mColour[1] = 1.0f;
             newLight.mColour[2] = 1.0f;
-            newLight.mInfluence = 20;
+            newLight.mIntensity = 20.0f;
+            newLight.mRadius = 300.0f;
 
             mLights.push_back(newLight);
         }
@@ -660,7 +666,8 @@ void Editor::drawLightMenu()
             newLight.mColour[0] = 1.0f;
             newLight.mColour[1] = 1.0f;
             newLight.mColour[2] = 1.0f;
-            newLight.mInfluence = 20;
+            newLight.mIntensity = 20.0f;
+            newLight.mRadius = 300.0f;
 
             mLights.push_back(newLight);
         }
