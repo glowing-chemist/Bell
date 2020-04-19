@@ -79,8 +79,16 @@ private:
     std::string mDebugTextureName;
 
     bool mRecompileGraph;
-    bool mInFreeFlyMode;
-    float mCameraSpeed;
+
+    struct CameraInfo
+    {
+        bool mInFreeFlyMode;
+        float mCameraSpeed;
+        float mNearPlaneDistance;
+        float mFarPlaneDistance;
+        float mFOV;
+    };
+    CameraInfo mCameraInfo;
 
     bool mShowFileBrowser;
     ImGuiFileBrowser mFileBrowser;

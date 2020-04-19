@@ -79,6 +79,15 @@ public:
     const float3 getUp() const
         { return mUp; }
 
+    void setNearPlane(const float near)
+        { mNearPlaneDistance = near; }
+
+    void setFarPlane(const float far)
+        { mFarPlaneDistance = far; }
+
+    void setFOVDegrees(const float fov)
+        { mFieldOfView = fov; }
+
     float4x4 getViewMatrix() const;
     float4x4 getPerspectiveMatrix() const;
 

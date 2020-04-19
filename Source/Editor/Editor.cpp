@@ -239,8 +239,7 @@ Editor::Editor(GLFWwindow* window) :
     mCurrentDebugTexture(-1),
     mDebugTextureName(""),
     mRecompileGraph(false),
-    mInFreeFlyMode(false),
-    mCameraSpeed(1.0f),
+    mCameraInfo{false, 1.0f, 0.1f, 2000.0f, 90.0f},
     mShowFileBrowser{false},
     mFileBrowser{"/"},
     mShowNodeEditor{false},
@@ -401,13 +400,13 @@ void Editor::pumpInputQueue()
 		Camera& camera = mEngine.getCurrentSceneCamera();
 
 		if (glfwGetKey(mWindow, GLFW_KEY_W) == GLFW_PRESS)
-            camera.moveForward(mCameraSpeed);
+            camera.moveForward(mCameraInfo.mCameraSpeed);
 		if (glfwGetKey(mWindow, GLFW_KEY_S) == GLFW_PRESS)
-            camera.moveBackward(mCameraSpeed);
+            camera.moveBackward(mCameraInfo.mCameraSpeed);
 		if (glfwGetKey(mWindow, GLFW_KEY_A) == GLFW_PRESS)
-            camera.moveLeft(mCameraSpeed);
+            camera.moveLeft(mCameraInfo.mCameraSpeed);
 		if (glfwGetKey(mWindow, GLFW_KEY_D) == GLFW_PRESS)
-            camera.moveRight(mCameraSpeed);
+            camera.moveRight(mCameraInfo.mCameraSpeed);
 
         if (glfwGetKey(mWindow, GLFW_KEY_R) == GLFW_PRESS)
             mLightOperationMode = ImGuizmo::OPERATION::ROTATE;
@@ -417,11 +416,11 @@ void Editor::pumpInputQueue()
         bool pressedEscape = glfwGetKey(mWindow, GLFW_KEY_ESCAPE) == GLFW_PRESS;
         if (pressedEscape)
         {
-            mInFreeFlyMode = false;
+            mCameraInfo.mInFreeFlyMode = false;
             glfwSetInputMode(mWindow, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
         }
 
-        if (mInFreeFlyMode)
+        if (mCameraInfo.mInFreeFlyMode)
         {
             camera.rotatePitch(mCursorPosDelta.y);
             camera.rotateYaw(-mCursorPosDelta.x);
@@ -514,12 +513,27 @@ void Editor::drawAssistantWindow()
        }
 
        ImGui::Checkbox("Debug texture picker", &mShowDebugTexturePicker);
-       const bool previouseFlyMode = mInFreeFlyMode;
-       ImGui::Checkbox("Camera free fly", &mInFreeFlyMode);
-       ImGui::SliderFloat("Camera speed", &mCameraSpeed, 0.01f, 10.0f);
 
-       if(mInFreeFlyMode && !previouseFlyMode)
-           glfwSetInputMode(mWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+       if(ImGui::TreeNode("Camera settings"))
+       {
+           const bool previouseFlyMode = mCameraInfo.mInFreeFlyMode;
+           ImGui::Checkbox("Camera free fly", &mCameraInfo.mInFreeFlyMode);
+           ImGui::SliderFloat("Camera speed", &mCameraInfo.mCameraSpeed, 0.01f, 10.0f);
+           ImGui::SliderFloat("near plane", &mCameraInfo.mNearPlaneDistance, 0.01f, 10.0f);
+           ImGui::SliderFloat("far plane", &mCameraInfo.mFarPlaneDistance, 50.0f, 2000.0f);
+           ImGui::SliderFloat("field of view", &mCameraInfo.mFOV, 45.0f, 180.0f);
+
+           if(mCameraInfo.mInFreeFlyMode && !previouseFlyMode)
+               glfwSetInputMode(mWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
+           ImGui::TreePop();
+
+           // update the current scene camera.
+           Camera& camera = mEngine.getCurrentSceneCamera();
+           camera.setNearPlane(mCameraInfo.mNearPlaneDistance);
+           camera.setFarPlane(mCameraInfo.mFarPlaneDistance);
+           camera.setFOVDegrees(mCameraInfo.mFOV);
+        }
 
        drawLightMenu();
     }
