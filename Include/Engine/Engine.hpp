@@ -228,7 +228,7 @@ private:
     std::string mShaderPrefix; // Containes defines for currently registered passes.
 
 
-	std::unordered_map<std::string, Shader> mShaderCache;
+	std::unordered_map<uint64_t, Shader> mShaderCache;
 
     Buffer mVertexBuffer;
     Buffer mIndexBuffer;

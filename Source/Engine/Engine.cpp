@@ -182,7 +182,9 @@ Buffer Engine::createBuffer(const uint32_t size,
 
 Shader Engine::getShader(const std::string& path)
 {
-    const std::string shaderKey = path + mShaderPrefix;
+    std::hash<std::string> pathHasher{};
+    const uint64_t hashedPath = pathHasher(path);
+    const uint64_t shaderKey = hashedPath + mCurrentRegistredPasses;
 	if(mShaderCache.find(shaderKey) != mShaderCache.end())
 		return (*mShaderCache.find(shaderKey)).second;
 
