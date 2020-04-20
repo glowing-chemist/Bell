@@ -14,7 +14,7 @@ struct Output
 ConstantBuffer<CameraBuffer> camera;
 
 [[vk::binding(1)]]
-Texture2D<float2> DFG;
+Texture2D<float3> DFG;
 
 [[vk::binding(2)]]
 Texture2D<float4> ltcMat;
@@ -25,12 +25,11 @@ Texture2D<float2> ltcAmp;
 [[vk::binding(4)]]
 Texture2D<uint> activeFroxels;
 
-
 [[vk::binding(5)]]
-TextureCube<float4> skyBox;
+TextureCube<float4> ConvolvedSkyboxSpecular;
 
 [[vk::binding(6)]]
-TextureCube<float4> ConvolvedSkybox;
+TextureCube<float4> ConvolvedSkyboxDiffuse;
 
 [[vk::binding(7)]]
 SamplerState linearSampler;
@@ -81,9 +80,9 @@ const float3 viewDir = normalize(camera.position - vertInput.positionWS.xyz);
 	const float lodLevel = material.specularRoughness.w * 10.0f;
 
     // Calculate contribution from enviroment.
-    float3 radiance = ConvolvedSkybox.SampleLevel(linearSampler, lightDir, lodLevel).xyz;
+    float3 radiance = ConvolvedSkyboxSpecular.SampleLevel(linearSampler, lightDir, lodLevel).xyz;
 
-    float3 irradiance = skyBox.Sample(linearSampler, material.normal.xyz).xyz;
+    float3 irradiance = ConvolvedSkyboxDiffuse.Sample(linearSampler, material.normal.xyz).xyz;
 
 #ifdef Shadow_Map
     const float occlusion = shadowMap.Sample(linearSampler, vertInput.position.xy / camera.frameBufferSize);
@@ -94,13 +93,13 @@ const float3 viewDir = normalize(camera.position - vertInput.positionWS.xyz);
 	const float NoV = dot(material.normal.xyz, viewDir);
     float3x3 minV;
     float LTCAmp;
-    float2 f_ab;
-    initializeLightState(minV, LTCAmp, f_ab, DFG, ltcMat, ltcAmp, linearSampler, NoV, material.specularRoughness.w);
+    float3 dfg;
+    initializeLightState(minV, LTCAmp, dfg, DFG, ltcMat, ltcAmp, linearSampler, NoV, material.specularRoughness.w);
 
-    const float3 diffuse = calculateDiffuse(material, irradiance);
+    const float3 diffuse = calculateDiffuseDisney(material, irradiance, dfg);
     const float3 specular = calculateSpecular(  material,
                                                 radiance, 
-                                                f_ab);
+                                                dfg);
 
     float4 lighting = float4(diffuse + specular, 1.0f);
 
@@ -121,7 +120,7 @@ const float3 viewDir = normalize(camera.position - vertInput.positionWS.xyz);
                                                     vertInput.positionWS, 
                                                     viewDir, 
                                                     material,
-                                                    f_ab);
+                                                    dfg);
                 break;
             }
 
@@ -131,7 +130,7 @@ const float3 viewDir = normalize(camera.position - vertInput.positionWS.xyz);
                                                     vertInput.positionWS, 
                                                     viewDir, 
                                                     material,
-                                                    f_ab);
+                                                    dfg);
                 break;
             }
 

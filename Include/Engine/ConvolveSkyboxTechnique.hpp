@@ -24,14 +24,17 @@ public:
 
     virtual void bindResources(RenderGraph& graph) override final
 	{
-		graph.bindImage(kConvolvedSkyBox, mConvolvedView);
+        graph.bindImage(kConvolvedSpecularSkyBox, mConvolvedSpecularView);
+        graph.bindImage(kConvolvedDiffuseSkyBox, mConvolvedDiffuseView);
 	}
 
 private:
 	ComputePipelineDescription mPipelineDesc;
 	TaskID mTaskID;
-	Image mConvolvedSkybox;
-	ImageView mConvolvedView;
+    Image mConvolvedSpecularSkybox;
+    ImageView mConvolvedSpecularView;
+    Image mConvolvedDiffuseSkybox;
+    ImageView mConvolvedDiffuseView;
 	bool mFirstFrame;
 };
 

@@ -6,7 +6,7 @@
 DFGGenerationTechnique::DFGGenerationTechnique(Engine* eng, RenderGraph& graph) :
 	Technique("DFGGeneration", eng->getDevice()),
 	mPipelineDesc{ eng->getShader("./Shaders/DFGLutGenerate.comp") },
-	mDFGLUT(eng->getDevice(), Format::RG16UNorm, ImageUsage::Sampled | ImageUsage::Storage, 512, 512, 1, 1, 1, 1, "DFGLUT"),
+    mDFGLUT(eng->getDevice(), Format::RGBA16UNorm, ImageUsage::Sampled | ImageUsage::Storage, 512, 512, 1, 1, 1, 1, "DFGLUT"),
 	mDFGLUTView(mDFGLUT, ImageViewType::Colour),
 	mFirstFrame(true)
 {
@@ -27,7 +27,7 @@ void DFGGenerationTechnique::render(RenderGraph& graph, Engine*)
 	if (mFirstFrame)
 	{
 		task.setRecordCommandsCallback(
-			[](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+            [](Executor* exec, Engine*, const std::vector<const MeshInstance*>&)
 			{
 				exec->dispatch(32, 32, 1);
 			}
@@ -38,7 +38,7 @@ void DFGGenerationTechnique::render(RenderGraph& graph, Engine*)
 	else
 	{
 		task.setRecordCommandsCallback(
-			[](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+            [](Executor*, Engine*, const std::vector<const MeshInstance*>&)
 			{
 				return;
 			}

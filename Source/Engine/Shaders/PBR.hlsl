@@ -71,6 +71,46 @@ float3 ImportanceSampleGGX(const float2 Xi, const float roughness, const float3 
 }
 
 
+void  importanceSampleCosDir(in float2 u, in float3 N, out float3 L, out  float NdotL)
+{
+    //  Local  referencial
+    float3  upVector = abs(N.z) < 0.999 ? float3 (0,0,1) : float3 (1,0,0);
+    float3  tangentX = normalize( cross( upVector , N ) );
+    float3  tangentY = cross( N, tangentX );
+
+    float  u1 = u.x;
+    float  u2 = u.y;
+
+    float r = sqrt(u1);
+    float  phi = u2 * PI * 2;
+
+    L = float3(r*cos(phi), r*sin(phi), sqrt(max (0.0f,1.0f-u1)));
+    L = normalize(tangentX * L.y + tangentY * L.x + N * L.z);
+
+    NdotL = dot(L,N);
+}
+
+
+// Moving frostbite to PBR.
+float3 F_Schlick(in float3 f0, in float f90, in float u)
+{
+    return  f0 + (f90 - f0) * pow (1.f - u, 5.f);
+}
+
+
+float Fr_DisneyDiffuse(float  NdotV , float  NdotL , float  LdotH ,float linearRoughness)
+{
+    float  energyBias = lerp(0, 0.5,  linearRoughness);
+    float  energyFactor = lerp (1.0, 1.0 / 1.51,  linearRoughness);
+    float  fd90 = energyBias + 2.0 * LdotH*LdotH * linearRoughness;
+    float3  f0 = float3 (1.0f, 1.0f, 1.0f);
+    float  lightScatter   = F_Schlick(f0, fd90 , NdotL).r;
+    float  viewScatter    = F_Schlick(f0, fd90 , NdotV).r;
+
+    return  lightScatter * viewScatter * energyFactor;
+}
+
+
 float3 calculateDiffuse(const MaterialInfo material, const float3 irradiance)
 {
     return material.diffuse * irradiance;
@@ -83,8 +123,13 @@ float3 calculateDiffuseLambert(const MaterialInfo material, const float3 irradia
     return (material.diffuse * irradiance) / PI;
 }
 
+float3 calculateDiffuseDisney(const MaterialInfo material, const float3 irradiance, const float3 DFG)
+{
+    return material.diffuse * DFG.z * irradiance;
+}
 
-float3 calculateSpecular(const MaterialInfo material, const float3 radiance, const float2 DFG)
+
+float3 calculateSpecular(const MaterialInfo material, const float3 radiance, const float3 DFG)
 {
     return (material.specularRoughness.xyz * DFG.x + DFG.y) * radiance;
 }

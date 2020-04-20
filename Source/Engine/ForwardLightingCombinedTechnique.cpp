@@ -25,8 +25,8 @@ ForwardCombinedLightingTechnique::ForwardCombinedLightingTechnique(Engine* eng, 
 	task.addInput(kLTCMat, AttachmentType::Texture2D);
 	task.addInput(kLTCAmp, AttachmentType::Texture2D);
 	task.addInput(kActiveFroxels, AttachmentType::Texture2D);
-	task.addInput(kSkyBox, AttachmentType::Texture2D);
-	task.addInput(kConvolvedSkyBox, AttachmentType::Texture2D);
+    task.addInput(kConvolvedSpecularSkyBox, AttachmentType::Texture2D);
+    task.addInput(kConvolvedDiffuseSkyBox, AttachmentType::Texture2D);
 	task.addInput(kDefaultSampler, AttachmentType::Sampler);
 	task.addInput("ForwardPointSampler", AttachmentType::Sampler);
 	task.addInput(kSparseFroxels, AttachmentType::DataBufferRO);

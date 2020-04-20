@@ -123,9 +123,9 @@ AABB getFroxelAABB(const uint3 froxelPosition, const float FOV, const float2 fra
 }
 
 
-void initializeLightState(out float3x3 minv, out float ltcAmp, out float2 f_ab, Texture2D<float2> DFG, Texture2D<float4> LTCMat, Texture2D<float2> LTCAmp, SamplerState linearSampler, const float NoV, const float R)
+void initializeLightState(out float3x3 minv, out float ltcAmp, out float3 dfg, Texture2D<float3> DFG, Texture2D<float4> LTCMat, Texture2D<float2> LTCAmp, SamplerState linearSampler, const float NoV, const float R)
 {
-	f_ab = DFG.Sample(linearSampler, float2(NoV, R));
+	dfg = DFG.Sample(linearSampler, float2(NoV, R));
 
 	const float4 t = LTCMat.Sample(linearSampler, float2(R, NoV));
     minv = float3x3(
@@ -142,7 +142,7 @@ float4 pointLightContribution(const Light light,
 							const float4 positionWS, 
 							const float3 view,
 							const MaterialInfo material,
-							const float2 f_ab)
+							const float3 dfg)
 {
     const float4 lightDir = light.position - positionWS;
 	const float lightDistance = length(lightDir);
@@ -150,8 +150,8 @@ float4 pointLightContribution(const Light light,
     const float falloff = pow(saturate(1 - pow(lightDistance / light.radius, 4.0f)), 2.0f) / ((lightDistance * lightDistance) + 1); 
 	const float3 radiance = light.albedo.xyz * light.intensity * falloff;
 
-    const float3 diffuse = calculateDiffuseLambert(material, radiance);
-    const float3 specular = calculateSpecular(material, radiance, f_ab);
+    const float3 diffuse = calculateDiffuseDisney(material, radiance, dfg);
+    const float3 specular = calculateSpecular(material, radiance, dfg);
 
     return float4(diffuse + specular, 1.0f);
 }
@@ -161,7 +161,7 @@ float4 spotLightContribution(const Light light,
 							const float4 positionWS, 
 							const float3 view,
 							const MaterialInfo material,
-							const float2 f_ab)
+							const float3 dfg)
 {
 	if(acos(dot(positionWS - light.position, light.direction)) < radians(light.misc))
 		return float4(0.0f, 0.0f, 0.0f, 0.0f);
@@ -172,8 +172,8 @@ float4 spotLightContribution(const Light light,
     const float falloff = pow(saturate(1 - pow(lightDistance / light.radius, 4.0f)), 2.0f) / ((lightDistance * lightDistance) + 1); 
 	const float3 radiance = light.albedo.xyz * light.intensity * falloff;
 
-    const float3 diffuse = calculateDiffuseLambert(material, radiance);
-    const float3 specular = calculateSpecular(material, radiance, f_ab);
+    const float3 diffuse = calculateDiffuseDisney(material, radiance, dfg);
+    const float3 specular = calculateSpecular(material, radiance, dfg);
 
     return float4(diffuse + specular, 1.0f);
 }

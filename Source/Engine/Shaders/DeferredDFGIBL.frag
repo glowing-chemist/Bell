@@ -11,7 +11,7 @@
 ConstantBuffer<CameraBuffer> camera;
 
 [[vk::binding(1)]]
-Texture2D<float2> DFG;
+Texture2D<float3> DFG;
 
 [[vk::binding(2)]]
 Texture2D<float> depth;
@@ -26,10 +26,10 @@ Texture2D<float4> Diffuse;
 Texture2D<float4> SpecularRoughness;
 
 [[vk::binding(6)]]
-TextureCube<float4> skyBox;
+TextureCube<float4> ConvolvedSkyboxSpecular;
 
 [[vk::binding(7)]]
-TextureCube<float4> ConvolvedSkybox;
+TextureCube<float4> ConvolvedSkyboxDiffuse;
 
 [[vk::binding(8)]]
 SamplerState linearSampler;
@@ -65,9 +65,9 @@ float4 main(UVVertOutput vertInput)
 
 	const float lodLevel = roughness * 10.0f;
 
-	float3 radiance = ConvolvedSkybox.SampleLevel(linearSampler, lightDir, lodLevel).xyz;
+	float3 radiance = ConvolvedSkyboxSpecular.SampleLevel(linearSampler, lightDir, lodLevel).xyz;
 
-    float3 irradiance = skyBox.Sample(linearSampler, normal).xyz;
+    float3 irradiance = ConvolvedSkyboxDiffuse.Sample(linearSampler, normal).xyz;
 
 #ifdef Shadow_Map
     const float occlusion = shadowMap.Sample(linearSampler, uv);
@@ -75,14 +75,14 @@ float4 main(UVVertOutput vertInput)
     irradiance *= occlusion;
 #endif
 
-    const float2 f_ab = DFG.Sample(linearSampler, float2(NoV, roughness));
+    const float3 dfg = DFG.Sample(linearSampler, float2(NoV, roughness));
 
     MaterialInfo material;
     material.diffuse = diffuse;
     material.normal = float4(normal, 1.0f);
     material.specularRoughness = specularRoughness;
-    const float3 diffuseLighting = calculateDiffuse(material, irradiance);
-    const float3 specularlighting = calculateSpecular(material, radiance, f_ab);
+    const float3 diffuseLighting = calculateDiffuseDisney(material, irradiance, dfg);
+    const float3 specularlighting = calculateSpecular(material, radiance, dfg);
 
     return float4(specularlighting + diffuseLighting, 1.0);
 }

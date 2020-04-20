@@ -7,7 +7,7 @@
 ConstantBuffer<CameraBuffer> camera;
 
 [[vk::binding(1)]]
-Texture2D<float2> DFG;
+Texture2D<float3> DFG;
 
 [[vk::binding(2)]]
 Texture2D<float4> ltcMat;
@@ -87,8 +87,8 @@ void main(uint3 globalIndex : SV_DispatchThreadID)
     // Initialize needed lighting params.
     float3x3 minV;
     float LTCAmp;
-    float2 f_ab;
-    initializeLightState(minV, LTCAmp, f_ab, DFG, ltcMat, ltcAmp, linearSampler, dot(material.normal.xyz, viewDir), material.specularRoughness.w);
+    float3 dfg;
+    initializeLightState(minV, LTCAmp, dfg, DFG, ltcMat, ltcAmp, linearSampler, dot(material.normal.xyz, viewDir), material.specularRoughness.w);
 
     float4 lighting = float4(0.0f);
 
@@ -105,7 +105,7 @@ void main(uint3 globalIndex : SV_DispatchThreadID)
                                                     worldSpaceFragmentPos, 
                                                     viewDir, 
                                                     material,
-                                                    f_ab);
+                                                    dfg);
                 break;
             }
 
@@ -115,7 +115,7 @@ void main(uint3 globalIndex : SV_DispatchThreadID)
                                                     worldSpaceFragmentPos, 
                                                     viewDir, 
                                                     material,
-                                                    f_ab);
+                                                    dfg);
                 break;
             }
 

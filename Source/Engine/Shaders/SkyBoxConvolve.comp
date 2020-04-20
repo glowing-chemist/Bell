@@ -37,8 +37,11 @@ RWTexture2DArray<float4> mip8;
 [[vk::binding(11)]]
 RWTexture2DArray<float4> mip9;
 
+[[vk::binding(12)]]
+RWTexture2DArray<float4> diffuseConvolve;
 
-float3 prefilterEnviromentMap(const float roughness, const float3 R)
+
+float3 prefilterEnviromentMapSpecular(const float roughness, const float3 R)
 {
 	float3 N = R;
 	float3 V = R;
@@ -59,6 +62,47 @@ float3 prefilterEnviromentMap(const float roughness, const float3 R)
 		{
 			prefilteredColor += skyBox.Sample(defaultSampler, L).xyz * NoL;
 			TotalWeight += NoL;
+		}
+	}
+
+	return prefilteredColor / TotalWeight;
+}
+
+
+float3 prefilterEnviromentMapDiffuse(const float roughness, const float3 R)
+{
+	float3 N = R;
+	float3 V = R;
+
+	float3 prefilteredColor = float3(0.0);
+
+	float TotalWeight = 0.0;
+
+	const uint SAMPLE_COUNT = 1024;
+	for(uint i = 0; i < SAMPLE_COUNT; ++i)
+	{
+		float2 Xi = Hammersley(i, SAMPLE_COUNT);
+		float3 L;
+		float  NdotL;
+		importanceSampleCosDir(Xi, N, L, NdotL);
+
+		if(NdotL > 0.0)
+		{
+			// Half  angle  formula:
+			// cos(2  theta) = 2cos ^2( theta) - 1
+			float  cosD = sqrt((dot(V, L) + 1.0f) * 0.5);
+			float  NdotV = saturate(dot(R , V));
+			float  NdotL_sat = saturate(NdotL);
+
+			//  Disney  diffuse  BRDF  operates  in  linear  roughness ,
+			//  which is the  sqrt of the  GGX  alpha  roughness  term
+			float  fd90 = 0.5 + 2 * cosD*cosD * sqrt(roughness);
+			float  lightScatter =   1 + (fd90 -1) * pow(1-NdotL_sat , 5);
+			float  viewScatter   =   1 + (fd90 -1) * pow(1-NdotV , 5);
+			float f = lightScatter * viewScatter;
+
+			prefilteredColor += skyBox.Sample(defaultSampler, L).xyz * f;
+			TotalWeight += 1.0f;
 		}
 	}
 
@@ -119,7 +163,7 @@ void main(uint3 globalIndex : SV_DispatchThreadID)
 
 		float3 normal = getNormalFromTexel(dispatchLocation, size);
 
-		float3 convolvedColor = prefilterEnviromentMap(roughness, normal);
+		float3 convolvedColor = prefilterEnviromentMapSpecular(roughness, normal);
 
 		if(dispatchLocation.x < size.x && dispatchLocation.y < size.y)
 			mip0[dispatchLocation] = float4(convolvedColor, 1.0f);
@@ -133,7 +177,7 @@ void main(uint3 globalIndex : SV_DispatchThreadID)
 		const float2 size = float2(height, width);
 		float3 normal = getNormalFromTexel(dispatchLocation, size);
 
-		float3 convolvedColor = prefilterEnviromentMap(roughness, normal);
+		float3 convolvedColor = prefilterEnviromentMapSpecular(roughness, normal);
 
 		if(dispatchLocation.x < size.x && dispatchLocation.y < size.y)
 			mip1[dispatchLocation] = float4(convolvedColor, 1.0f);
@@ -147,7 +191,7 @@ void main(uint3 globalIndex : SV_DispatchThreadID)
 		const float2 size = float2(height, width);
 		float3 normal = getNormalFromTexel(dispatchLocation, size);
 
-		float3 convolvedColor = prefilterEnviromentMap(roughness, normal);
+		float3 convolvedColor = prefilterEnviromentMapSpecular(roughness, normal);
 
 		if(dispatchLocation.x < size.x && dispatchLocation.y < size.y)
 			mip2[dispatchLocation] = float4(convolvedColor, 1.0f);
@@ -161,7 +205,7 @@ void main(uint3 globalIndex : SV_DispatchThreadID)
 		const float2 size = float2(height, width);
 		float3 normal = getNormalFromTexel(dispatchLocation, size);
 
-		float3 convolvedColor = prefilterEnviromentMap(roughness, normal);
+		float3 convolvedColor = prefilterEnviromentMapSpecular(roughness, normal);
 
 		if(dispatchLocation.x < size.x && dispatchLocation.y < size.y)
 			mip3[dispatchLocation] = float4(convolvedColor, 1.0f);
@@ -175,7 +219,7 @@ void main(uint3 globalIndex : SV_DispatchThreadID)
 		const float2 size = float2(height, width);
 		float3 normal = getNormalFromTexel(dispatchLocation, size);
 
-		float3 convolvedColor = prefilterEnviromentMap(roughness, normal);
+		float3 convolvedColor = prefilterEnviromentMapSpecular(roughness, normal);
 
 		if(dispatchLocation.x < size.x && dispatchLocation.y < size.y)
 			mip4[dispatchLocation] = float4(convolvedColor, 1.0f);
@@ -189,7 +233,7 @@ void main(uint3 globalIndex : SV_DispatchThreadID)
 		const float2 size = float2(height, width);
 		float3 normal = getNormalFromTexel(dispatchLocation, size);
 
-		float3 convolvedColor = prefilterEnviromentMap(roughness, normal);
+		float3 convolvedColor = prefilterEnviromentMapSpecular(roughness, normal);
 
 		if(dispatchLocation.x < size.x && dispatchLocation.y < size.y)
 			mip5[dispatchLocation] = float4(convolvedColor, 1.0f);
@@ -203,7 +247,7 @@ void main(uint3 globalIndex : SV_DispatchThreadID)
 		const float2 size = float2(height, width);
 		float3 normal = getNormalFromTexel(dispatchLocation, size);
 
-		float3 convolvedColor = prefilterEnviromentMap(roughness, normal);
+		float3 convolvedColor = prefilterEnviromentMapSpecular(roughness, normal);
 
 		if(dispatchLocation.x < size.x && dispatchLocation.y < size.y)
 			mip6[dispatchLocation] = float4(convolvedColor, 1.0f);
@@ -217,7 +261,7 @@ void main(uint3 globalIndex : SV_DispatchThreadID)
 		const float2 size = float2(height, width);
 		float3 normal = getNormalFromTexel(dispatchLocation, size);
 
-		float3 convolvedColor = prefilterEnviromentMap(roughness, normal);
+		float3 convolvedColor = prefilterEnviromentMapSpecular(roughness, normal);
 
 		if(dispatchLocation.x < size.x && dispatchLocation.y < size.y)
 			mip7[dispatchLocation] = float4(convolvedColor, 1.0f);
@@ -231,7 +275,7 @@ void main(uint3 globalIndex : SV_DispatchThreadID)
 		const float2 size = float2(height, width);
 		float3 normal = getNormalFromTexel(dispatchLocation, size);
 
-		float3 convolvedColor = prefilterEnviromentMap(roughness, normal);
+		float3 convolvedColor = prefilterEnviromentMapSpecular(roughness, normal);
 
 		if(dispatchLocation.x < size.x && dispatchLocation.y < size.y)
 			mip8[dispatchLocation] = float4(convolvedColor, 1.0f);
@@ -246,9 +290,22 @@ void main(uint3 globalIndex : SV_DispatchThreadID)
 		const float2 size = float2(height, width);
 		float3 normal = getNormalFromTexel(dispatchLocation, size);
 
-		float3 convolvedColor = prefilterEnviromentMap(roughness, normal);
+		float3 convolvedColor = prefilterEnviromentMapSpecular(roughness, normal);
 
 		if(dispatchLocation.x < size.x && dispatchLocation.y < size.y)
 			mip9[dispatchLocation] = float4(convolvedColor, 1.0f);
+	}
+
+	// Convolve for diffuse.
+	{
+		uint height, width, elements;
+		diffuseConvolve.GetDimensions(height, width, elements);
+		const float2 size = float2(height, width);
+		float3 normal = getNormalFromTexel(dispatchLocation, size);
+
+		float3 convolvedColor = prefilterEnviromentMapDiffuse(roughness, normal);
+
+		if(dispatchLocation.x < size.x && dispatchLocation.y < size.y)
+			diffuseConvolve[dispatchLocation] = float4(convolvedColor, 1.0f);
 	}
 }
