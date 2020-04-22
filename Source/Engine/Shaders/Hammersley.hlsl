@@ -46,5 +46,5 @@ float3 Hamersley_uniform(uint i, uint N)
 float3 Hamersley_cosine(uint i, uint N)
 {
 	float2 ham = Hammersley(i, N);
-	return hemisphereSample_uniform(ham.x, ham.y);
+	return hemisphereSample_cos(ham.x, ham.y);
 }
