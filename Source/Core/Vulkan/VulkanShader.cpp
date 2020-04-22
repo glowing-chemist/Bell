@@ -146,7 +146,7 @@ shaderc_shader_kind VulkanShader::getShaderStage(const std::string& path) const
 	else if (path.find(".comp") != std::string::npos)
 		return shaderc_compute_shader;
 	else if (path.find(".geom") != std::string::npos)
-		return shaderc_compute_shader;
+        return shaderc_geometry_shader;
 	else if (path.find(".tesc") != std::string::npos)
 		return shaderc_tess_control_shader;
 	else if (path.find(".tese") != std::string::npos)

@@ -31,7 +31,6 @@ include_directories(
 		    "${CMAKE_CURRENT_LIST_DIR}/ThirdParty/glm"	
 			"${CMAKE_CURRENT_LIST_DIR}/ThirdParty/stb_image"
 			"${CMAKE_CURRENT_LIST_DIR}/ThirdParty/D3D12MemoryAllocator/src"
-			${glslangIncludeDirs}
 			${glmIncludeDirs}
 		    )
 
@@ -170,6 +169,7 @@ set(BELL_SOURCE
     Source/Engine/TAATechnique.cpp
     Source/Engine/LineariseDepthTechnique.cpp
     Source/Engine/ScreenSpaceReflectionTechnique.cpp
+    Source/Engine/VoxalizeTechnique.cpp
 
     # used for texture loading
     ThirdParty/stb_image/stb_image.cpp
@@ -243,6 +243,9 @@ set(SHADERS
 	FinalComposite.frag
 	ScreenSpaceReflection.frag
 	Materials.hlsl
+	Voxalize.vert
+	Voxalize.geom
+	Voxalize.frag
     )
 
 foreach(shader ${SHADERS})

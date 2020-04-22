@@ -67,7 +67,7 @@ StructuredBuffer<Light> sceneLights;
 
 Output main(GBufferVertOutput vertInput)
 {
-const float3 viewDir = normalize(camera.position - vertInput.positionWS.xyz);
+    const float3 viewDir = normalize(camera.position - vertInput.positionWS.xyz);
 
     MaterialInfo material = calculateMaterialInfo(  vertInput.normal, 
                                                     materialFlags.materialAttributes, 

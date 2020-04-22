@@ -42,7 +42,16 @@ struct ShadowingLight
         float4 up;
 };
 
+
 struct MaterialAttributes
 {
     uint materialAttributes;
+};
+
+
+struct VoxelDimmensions
+{
+    float4 voxelCentreWS;
+    float4 recipVoxelSize; // mapes from world -> to voxel Coords;
+    float4 recipVolumeSize; // maps from voxel coords to clip space.
 };

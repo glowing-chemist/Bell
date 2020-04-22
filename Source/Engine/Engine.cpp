@@ -31,6 +31,7 @@
 #include "Engine/TAATechnique.hpp"
 #include "Engine/LineariseDepthTechnique.hpp"
 #include "Engine/ScreenSpaceReflectionTechnique.hpp"
+#include "Engine/VoxalizeTechnique.hpp"
 
 #include "glm/gtx/transform.hpp"
 
@@ -42,7 +43,7 @@ Engine::Engine(GLFWwindow* windowPtr) :
 #ifdef DX_12
     mRenderInstance(new DX_12RenderInstance(windowPtr)),
 #endif
-    mRenderDevice(mRenderInstance->createRenderDevice(DeviceFeaturesFlags::Compute | DeviceFeaturesFlags::Subgroup)),
+    mRenderDevice(mRenderInstance->createRenderDevice(DeviceFeaturesFlags::Compute | DeviceFeaturesFlags::Subgroup | DeviceFeaturesFlags::Geometry)),
     mCurrentScene("Initial current scene"),
     mLoadingScene("Initial loading scene"),
     mVertexBuilder(),
@@ -266,6 +267,9 @@ std::unique_ptr<Technique> Engine::getSingleTechnique(const PassType passType)
 
         case PassType::SSR:
             return std::make_unique<ScreenSpaceReflectionTechnique>(this, mCurrentRenderGraph);
+
+        case PassType::Voxelize:
+            return std::make_unique<VoxalizeTechnique>(this, mCurrentRenderGraph);
 
         default:
         {

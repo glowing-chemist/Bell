@@ -27,6 +27,7 @@ constexpr const char* kTAAHistory		= "TAAHistory";
 constexpr const char* kNewTAAHistory		= "NewTAAHistory";
 constexpr const char* kLinearDepth		= "LinearDepth";
 constexpr const char* kReflectionMap = "ReflectionMap";
+constexpr const char* kDiffuseVoxelMap = "DiffuseVoxelMap";
 
 constexpr const char* kCameraBuffer	    = "CameraBuffer";
 constexpr const char* kLightBuffer	    = "LightBuffer";

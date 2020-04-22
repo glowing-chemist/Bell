@@ -43,6 +43,15 @@ struct ShadowMapVertOutput
 	uint materialID;
 };
 
+struct VoxalizeGeometryOutput
+{
+	float4 position : SV_Position;
+	float2 uv : TEXCOORD0;
+	float3 positionWS : POSITIONWS;
+	float4 normal : NORMAL0;
+	uint materialID;
+};
+
 // Vertex inputs.
 struct Vertex
 {

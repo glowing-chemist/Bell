@@ -31,7 +31,8 @@
                     SSAOImproved = 1 << 24, \
                     TAA = 1 << 25, \
                     LineariseDepth = 1 << 26, \
-                    SSR = 1 << 27
+                    SSR = 1 << 27, \
+                    Voxelize = 1 << 28
 
 // An enum to keep track of which 
 enum class PassType : uint64_t
