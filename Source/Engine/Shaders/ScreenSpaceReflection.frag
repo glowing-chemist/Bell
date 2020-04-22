@@ -37,7 +37,7 @@ Texture2D<float> AnalyticalLighting;
 float2 marchRay(float3 position, const float3 direction, const float rayLength, const uint maxSteps)
 {
 
-	const float3 finalPosition =  position + /*(float3(1.0f, -1.0f, 1.0f) */ (direction * rayLength);
+	const float3 finalPosition =  position + (direction * rayLength);
 
 	for(uint i = 0; i < maxSteps; ++i)
 	{
@@ -77,7 +77,8 @@ float4 main(PositionAndUVVertOutput vertInput)
 	for(uint i = 0; i < MAX_SAMPLE_COUNT; ++i)
 	{
 		const float2 Xi = Hammersley(i, MAX_SAMPLE_COUNT);
-		const float3 L = reflect(view, normal);// ImportanceSampleGGX(Xi, roughness, normal);
+		const float3 H = ImportanceSampleGGX(Xi, roughness, normal);
+		float3 L = 2 * dot(V, H) * H - V;
 
 		float NoL = saturate(dot(normal, L));
 		if(NoL > 0.0)
