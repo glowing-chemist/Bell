@@ -635,13 +635,13 @@ void VulkanRenderDevice::generateFrameBuffers(RenderGraph& graph)
 	while(outputBindings != graph.outputBindingEnd())
     {
 		// Just reuse the old frameBuffer if no knew resources have been bound.
-		if(!graph.mFrameBuffersNeedUpdating[taskIndex])
+        if(!(*resource).mRenderPass)
 		{
 			++resource;
 			++outputBindings;
 			++taskIndex;
 			continue;
-		}
+        }
 
         std::vector<vk::ImageView> imageViews{};
         ImageExtent imageExtent;
