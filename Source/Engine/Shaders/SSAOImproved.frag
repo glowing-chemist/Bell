@@ -33,19 +33,20 @@ float main(PositionAndUVVertOutput vertInput)
   float3 normal = normals.Sample(linearSampler, vertInput.uv);
   normal = remapNormals(normal);
   normal = normalize(normal);
+  // bring in to view space
+  normal = normalize(mul((float3x3)camera.view, normal));
 
   float occlusion = 0.0;
   for(int i = 0; i < 16; i++) {
   
     float3 ray = radius * reflect(ssaoOffsets.offsets[i].xyz, random);
-    float3 hemi_ray = position + sign(dot(ray,normal)) * ray;
+    float3 hemi_ray = position + sign(dot(normalize(ray),normal)) * ray;
     
     float occ_depth = linearisedDepth.Sample(linearSampler, saturate(hemi_ray.xy));
-    float difference = hemi_ray.z - occ_depth;
     
-    occlusion += uint(hemi_ray.z < occ_depth);
+    occlusion += float(hemi_ray.z < occ_depth);
   }
   
-  float ao = 1.0f - (occlusion * (1.0f / 16.0f));
+  float ao = occlusion * (1.0f / 16.0f);
   return saturate(ao);
 }
