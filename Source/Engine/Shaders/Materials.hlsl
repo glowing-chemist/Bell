@@ -84,7 +84,7 @@ MaterialInfo calculateMaterialInfo(	const float4 vertexNormal,
 		mat.diffuse.w = albedo.w;// Preserve teh alpha chanle.
 
 		const float NoV = dot(mat.normal.xyz, view);
-        const float3 F0 = lerp(float3(DIELECTRIC_SPECULAR), albedo.xyz, metalness);
+        const float3 F0 = lerp(float3(DIELECTRIC_SPECULAR, DIELECTRIC_SPECULAR, DIELECTRIC_SPECULAR), albedo.xyz, metalness);
         mat.specularRoughness.xyz = fresnelSchlickRoughness(max(NoV, 0.0), F0, mat.specularRoughness.w);
 	}
 

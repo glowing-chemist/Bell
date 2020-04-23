@@ -157,6 +157,23 @@ float4 pointLightContribution(const Light light,
 }
 
 
+float4 pointLightContributionDiffuse(const Light light, 
+									const float4 positionWS, 
+									const MaterialInfo material,
+									const float3 dfg)
+{
+    const float4 lightDir = light.position - positionWS;
+	const float lightDistance = length(lightDir);
+
+    const float falloff = pow(saturate(1 - pow(lightDistance / light.radius, 4.0f)), 2.0f) / ((lightDistance * lightDistance) + 1); 
+	const float3 radiance = light.albedo.xyz * light.intensity * falloff;
+
+    const float3 diffuse = calculateDiffuseDisney(material, radiance, dfg);
+
+    return float4(diffuse, 1.0f);
+}
+
+
 float4 spotLightContribution(const Light light, 
 							const float4 positionWS, 
 							const float3 view,
@@ -176,6 +193,26 @@ float4 spotLightContribution(const Light light,
     const float3 specular = calculateSpecular(material, radiance, dfg);
 
     return float4(diffuse + specular, 1.0f);
+}
+
+
+float4 spotLightContributionDiffuse(const Light light, 
+									const float4 positionWS, 
+									const MaterialInfo material,
+									const float3 dfg)
+{
+	if(acos(dot(positionWS - light.position, light.direction)) < radians(light.misc))
+		return float4(0.0f, 0.0f, 0.0f, 0.0f);
+
+    const float4 lightDir = light.position - positionWS;
+	const float lightDistance = length(lightDir);
+
+    const float falloff = pow(saturate(1 - pow(lightDistance / light.radius, 4.0f)), 2.0f) / ((lightDistance * lightDistance) + 1); 
+	const float3 radiance = light.albedo.xyz * light.intensity * falloff;
+
+    const float3 diffuse = calculateDiffuseDisney(material, radiance, dfg);
+
+    return float4(diffuse, 1.0f);
 }
 
 
@@ -250,6 +287,30 @@ float4 areaLightContribution(const Light light,
     const float3 diff = LTC_Evaluate(material.normal.xyz, view, positionWS.xyz, float3x3(1), points); 
         
     float3 colour  = light.intensity * (light.albedo.xyz * spec * material.specularRoughness.xyz + light.albedo.xyz * diff * material.diffuse);
+    colour /= 2.0 * PI;
+
+    return float4(colour, 1.0f);
+}
+
+
+float4 areaLightContributionDiffuse(const Light light, 
+									const float4 positionWS, 
+									const float3 view,
+									const MaterialInfo material,
+									const float3x3 Minv)
+{
+    const float3 rightVector = cross(light.up.xyz, light.direction.xyz); 
+
+    // Calculate the 4 corners of the square area light in WS.
+    float3 points[4];
+    points[0] = light.position.xyz + (light.misc / 2.0f) * (-rightVector + light.up.xyz);
+    points[1] = light.position.xyz + (light.misc / 2.0f) * (rightVector + light.up.xyz);
+    points[2] = light.position.xyz + (light.misc / 2.0f) * (rightVector - light.up.xyz);
+    points[3] = light.position.xyz + (light.misc / 2.0f) * (-rightVector - light.up.xyz);
+        
+    const float3 diff = LTC_Evaluate(material.normal.xyz, view, positionWS.xyz, float3x3(1), points); 
+        
+    float3 colour  = light.intensity * (light.albedo.xyz * diff * material.diffuse);
     colour /= 2.0 * PI;
 
     return float4(colour, 1.0f);

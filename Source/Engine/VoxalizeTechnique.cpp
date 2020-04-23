@@ -5,7 +5,7 @@
 
 VoxalizeTechnique::VoxalizeTechnique(Engine* eng, RenderGraph& graph) :
     Technique("Voxalize", eng->getDevice()),
-    mVoxelMap(eng->getDevice(), Format::RGBA8UNorm, ImageUsage::Storage | ImageUsage::Sampled, 128, 128, 256, 5, 1, 1, "Diffuse voxel map"),
+    mVoxelMap(eng->getDevice(), Format::RGBA8Uint, ImageUsage::Storage | ImageUsage::Sampled, 128, 128, 256, 5, 1, 1, "Diffuse voxel map"),
     mVoxelMapView(mVoxelMap, ImageViewType::Colour),
     mVoxelDimmensions(eng->getDevice(), BufferUsage::Uniform, sizeof(ConstantBuffer), sizeof(ConstantBuffer), "Voxel Dimmensions"),
     mVoxelDimmensionsView(mVoxelDimmensions),
@@ -31,6 +31,9 @@ VoxalizeTechnique::VoxalizeTechnique(Engine* eng, RenderGraph& graph) :
     task.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
     task.addInput("VoxelDimm", AttachmentType::UniformBuffer);
     task.addInput(kDiffuseVoxelMap, AttachmentType::Image3D);
+    task.addInput(kDFGLUT, AttachmentType::Texture2D);
+    task.addInput(kLTCMat, AttachmentType::Texture2D);
+    task.addInput(kLTCAmp, AttachmentType::Texture2D);
     task.addInput(kDefaultSampler, AttachmentType::Sampler);
     task.addInput(kDiffuseVoxelMap, AttachmentType::Texture2D);
 
@@ -38,6 +41,7 @@ VoxalizeTechnique::VoxalizeTechnique(Engine* eng, RenderGraph& graph) :
     {
         task.addInput(kSparseFroxels, AttachmentType::DataBufferRO);
         task.addInput(kLightIndicies, AttachmentType::DataBufferRO);
+        task.addInput(kActiveFroxels, AttachmentType::Texture2D);
     }
 
     if(eng->isPassRegistered(PassType::Shadow))
