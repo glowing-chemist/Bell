@@ -619,6 +619,8 @@ RenderTask& RenderGraph::getTask(TaskType taskType, uint32_t taskIndex)
                 return mGraphicsTasks[taskIndex];
             case TaskType::Compute:
 				return mComputeTasks[taskIndex];
+            case TaskType::All:
+                return mGraphicsTasks[taskIndex];
         }
     }();
 
@@ -636,6 +638,8 @@ const RenderTask& RenderGraph::getTask(TaskType taskType, uint32_t taskIndex) co
                 return mGraphicsTasks[taskIndex];
             case TaskType::Compute:
 				return mComputeTasks[taskIndex];
+            case TaskType::All:
+                return mGraphicsTasks[taskIndex];
         }
     }();
 
