@@ -196,6 +196,7 @@ int main()
         engine.registerPass(PassType::ConvolveSkybox);
         engine.registerPass(PassType::Skybox);
         engine.registerPass(PassType::LineariseDepth);
+        //engine.registerPass(PassType::Voxelize);
 
         if(graphicsOptions.mShadows)
             engine.registerPass(PassType::Shadow);

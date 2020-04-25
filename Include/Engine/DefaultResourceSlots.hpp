@@ -28,6 +28,8 @@ constexpr const char* kNewTAAHistory		= "NewTAAHistory";
 constexpr const char* kLinearDepth		= "LinearDepth";
 constexpr const char* kReflectionMap = "ReflectionMap";
 constexpr const char* kDiffuseVoxelMap = "DiffuseVoxelMap";
+constexpr const char* kDebugVoxels = "DebugVoxels";
+constexpr const char* kVoxelDimmensions = "VoxelDimm";
 
 constexpr const char* kCameraBuffer	    = "CameraBuffer";
 constexpr const char* kLightBuffer	    = "LightBuffer";

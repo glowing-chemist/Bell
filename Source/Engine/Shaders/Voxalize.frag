@@ -6,8 +6,11 @@
 [[vk::binding(0)]]
 ConstantBuffer<CameraBuffer> camera;
 
+[[vk::binding(1)]]
+ConstantBuffer<VoxelDimmensions> voxelDimmensions;
+
 [[vk::binding(2)]]
-RWTexture3D<uint4> voxelGrid;
+RWTexture3D<float4> voxelGrid;
 
 [[vk::binding(3)]]
 Texture2D<float3> DFG;
@@ -65,7 +68,10 @@ StructuredBuffer<Light> sceneLights;
 // Don't export anything this shader just writes to a uav.
 void main(VoxalizeGeometryOutput vertInput)
 {
-	const float2 screenUV = vertInput.position.xy / float2(128.0f, 128.0f);
+    uint width, height, depth;
+    voxelGrid.GetDimensions(width, height, depth);
+
+	const float2 screenUV = vertInput.position.xy / float2(width, height);
 
 	const float3 viewDir = normalize(camera.position - vertInput.positionWS.xyz);
 
@@ -142,8 +148,13 @@ void main(VoxalizeGeometryOutput vertInput)
 
 #endif
 
-	uint voxelDepth = uint(floor(lerp(0.0f, 256.0f, vertInput.positionWS.z / camera.farPlane)));
+    const float3 viewSpacePosition = mul(camera.view, float4(vertInput.positionWS, 1.0f)).xyz;
+    const uint voxelDepth = uint(floor(lerp(0.0f, float(depth), -viewSpacePosition.z / camera.farPlane)));
+    const float aspect = camera.frameBufferSize.x / camera.frameBufferSize.y;
 
-    uint4 previousValue;
-    InterlockedAdd(voxelGrid[uint3(vertInput.position.xy, voxelDepth)], uint4(uint3(diffuse * 256.0f), 1), previousValue);
+    const float worldSpaceHeight = 2.0f * viewSpacePosition.z * tan(radians(camera.fov) * 0.5f);
+    const float worldSpaceWidth = worldSpaceHeight * aspect;
+    const uint2 viewSpaceXY = uint2((float2(viewSpacePosition.xy / float2(worldSpaceWidth, -worldSpaceHeight)) + float2(0.5f)) * voxelDimmensions.voxelVolumeSize);
+
+    voxelGrid[uint3(viewSpaceXY, voxelDepth)] = float4(diffuse, 1.0f);
 }

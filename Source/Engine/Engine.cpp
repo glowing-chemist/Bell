@@ -520,6 +520,7 @@ void Engine::updateGlobalBuffers()
         mCameraBuffer.mInvertedPerspective = glm::inverse(perspective);
         mCameraBuffer.mViewMatrix = view;
         mCameraBuffer.mPerspectiveMatrix = perspective;
+        mCameraBuffer.mOrthoMatrix = currentCamera.getOrthographicsMatrix();
         mCameraBuffer.mFrameBufferSize = glm::vec2{ swapchainX, swapChainY };
         mCameraBuffer.mPosition = currentCamera.getPosition();
         mCameraBuffer.mNeaPlane = currentCamera.getNearPlane();

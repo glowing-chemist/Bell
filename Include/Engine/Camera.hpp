@@ -79,6 +79,10 @@ public:
     const float3 getUp() const
         { return mUp; }
 
+    // Get the vector perpendicular to the direction vector (rotated 90 degrees clockwise)
+    float3 getRight() const
+    { return glm::cross(glm::normalize(mDirection), mUp); }
+
     void setNearPlane(const float nearDistance)
         { mNearPlaneDistance = nearDistance; }
 
@@ -90,6 +94,7 @@ public:
 
     float4x4 getViewMatrix() const;
     float4x4 getPerspectiveMatrix() const;
+    float4x4 getOrthographicsMatrix() const;
 
 	float getNearPlane() const
 	{ return mNearPlaneDistance; }
@@ -103,10 +108,6 @@ public:
     Frustum getFrustum() const;
 
 private:
-
-    // Get the vector perpendicular to the direction vector (rotated 90 degrees clockwise)
-    float3 rightDirectionVector() const
-    { return glm::cross(glm::normalize(mDirection), mUp); }
 
     float3 mPosition;
     float3 mDirection;

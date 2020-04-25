@@ -245,7 +245,9 @@ set(SHADERS
 	Materials.hlsl
 	Voxalize.vert
 	Voxalize.geom
+	Voxalize.geom.spv
 	Voxalize.frag
+	DebugVoxels.comp
     )
 
 foreach(shader ${SHADERS})

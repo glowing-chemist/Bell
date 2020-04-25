@@ -4,6 +4,7 @@ struct CameraBuffer
 {     
         float4x4 view;    
         float4x4 perspective;
+        float4x4 ortho;
         float4x4 viewProj;
             
         float4x4 invertedViewProj;
@@ -54,4 +55,5 @@ struct VoxelDimmensions
     float4 voxelCentreWS;
     float4 recipVoxelSize; // mapes from world -> to voxel Coords;
     float4 recipVolumeSize; // maps from voxel coords to clip space.
+    float4 voxelVolumeSize;
 };

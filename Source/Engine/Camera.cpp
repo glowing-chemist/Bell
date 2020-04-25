@@ -92,13 +92,13 @@ void Camera::moveBackward(const float distance)
 
 void Camera::moveLeft(const float distance)
 {
-    mPosition -= distance * rightDirectionVector();
+    mPosition -= distance * getRight();
 }
 
 
 void Camera::moveRight(const float distance)
 {
-    mPosition += distance * rightDirectionVector();
+    mPosition += distance * getRight();
 }
 
 
@@ -116,7 +116,7 @@ void Camera::moveDown(const float distance)
 
 void Camera::rotatePitch(const float angle)
 {
-	const float3 rotationAxis = rightDirectionVector();
+    const float3 rotationAxis = getRight();
 	const glm::mat3 rotation = glm::rotate(glm::mat4(1.0f), glm::radians(angle), rotationAxis);
     mDirection = glm::normalize(rotation * mDirection);
     mUp = glm::normalize(rotation * mUp);
@@ -144,6 +144,12 @@ float4x4 Camera::getPerspectiveMatrix() const
         0.0f, fov, 0.0f, 0.0f,
         0.0f, 0.0f, 0.0f, -1.0f,
         0.0f, 0.0f, mNearPlaneDistance, 0.0f);
+}
+
+
+float4x4 Camera::getOrthographicsMatrix() const
+{
+    return glm::ortho(0.0f, 500.0f, 0.0f, 500.0f, 1.0f, -1.0f);
 }
 
 

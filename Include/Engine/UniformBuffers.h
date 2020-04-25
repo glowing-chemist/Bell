@@ -1,9 +1,6 @@
 #ifndef CONSTANTBUFFERS_HPP
 #define CONSTANTBUFFERS_HPP
 
-#include <glm/mat4x4.hpp>
-#include <glm/vec4.hpp>
-
 #include <array>
 
 
@@ -11,6 +8,7 @@ struct CameraBuffer
 {
     float4x4 mViewMatrix;
     float4x4 mPerspectiveMatrix;
+    float4x4 mOrthoMatrix;
     float4x4 mViewProjMatrix;
 
     float4x4 mInvertedViewProjMatrix;
@@ -34,7 +32,7 @@ struct CameraBuffer
 
 struct SSAOBuffer
 {
-	glm::vec4 mOffsets[64];
+    float4 mOffsets[64];
     float mScale;
     int mOffsetsCount;
 };
@@ -42,8 +40,8 @@ struct SSAOBuffer
 
 struct Light
 {
-	glm::vec4 position;
-	glm::vec4 albedo;
+    float4 position;
+    float4 albedo;
 	float influence;
 	float FOV;
 	float brightness;

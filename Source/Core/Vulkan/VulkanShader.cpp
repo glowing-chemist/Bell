@@ -93,7 +93,11 @@ bool VulkanShader::compile(const std::vector<std::string>& prefix)
         shaderc::Compiler compiler;
         shaderc::CompileOptions options;
         options.SetSourceLanguage(shaderc_source_language::shaderc_source_language_hlsl);
+#ifndef NDEBUG
+        options.SetOptimizationLevel(shaderc_optimization_level::shaderc_optimization_level_zero);
+#else
         options.SetOptimizationLevel(shaderc_optimization_level::shaderc_optimization_level_performance);
+#endif
         for (const auto& define : prefix)
             options.AddMacroDefinition(define);
         std::unique_ptr<shaderc::CompileOptions::IncluderInterface> includer = std::make_unique<ShaderIncluder>();

@@ -223,7 +223,8 @@ std::pair<vk::PhysicalDevice, vk::Device> VulkanRenderInstance::findSuitableDevi
 	BELL_ASSERT(extensionsToEnable.size() >= requireDeviceExtensions.size(), "Missing required extension!")
 
     vk::PhysicalDeviceFeatures physicalFeatures{};
-    physicalFeatures.geometryShader = geometryWanted;
+    physicalFeatures.setGeometryShader(geometryWanted);
+    physicalFeatures.setFragmentStoresAndAtomics(geometryWanted);
     physicalFeatures.setSamplerAnisotropy(true);
 
 	vk::PhysicalDeviceDescriptorIndexingFeaturesEXT descriptorIndexingInfo{};

@@ -17,8 +17,8 @@ struct GBufferVertOutput
 	float4 positionWS : POSITION0;
 	float2 uv : TEXCOORD0;
 	float4 normal : NORMAL0;
-	uint materialID;
-	float2 velocity;
+	uint materialID : MATERIALID;
+	float2 velocity : VELOCITY;
 };
 
 struct OverlayVertOutput
@@ -49,7 +49,7 @@ struct VoxalizeGeometryOutput
 	float2 uv : TEXCOORD0;
 	float3 positionWS : POSITIONWS;
 	float4 normal : NORMAL0;
-	uint materialID;
+	uint materialID : MATERIALID;
 };
 
 // Vertex inputs.

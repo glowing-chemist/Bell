@@ -1,0 +1,40 @@
+#include "UniformBuffers.hlsl"
+
+
+[[vk::binding(0)]]
+ConstantBuffer<CameraBuffer> camera;
+
+[[vk::binding(1)]]
+ConstantBuffer<VoxelDimmensions> voxelDimmensions;
+
+[[vk::binding(2)]]
+Texture2D<float> depth;
+
+[[vk::binding(3)]]
+Texture3D<float4> voxelMap;
+
+[[vk::binding(4)]]
+RWTexture2D<float4> debugVoxels;
+
+[[vk::binding(5)]]
+SamplerState linearSampler;
+
+
+[numthreads(32, 32, 1)]
+void main(uint3 globalIndex : SV_DispatchThreadID)
+{
+	const float2 gbufferSize = camera.frameBufferSize;
+	const float2 uv = float2(globalIndex.xy) / gbufferSize;
+
+	const float fragmentDepth = depth.Sample(linearSampler, uv);
+
+	float4 worldSpaceFragmentPos = mul(camera.invertedViewProj, float4((uv - 0.5f) * 2.0f, fragmentDepth, 1.0f));
+	worldSpaceFragmentPos /= worldSpaceFragmentPos.w;
+
+
+	const float3 voxelCoords = (worldSpaceFragmentPos.xyz - voxelDimmensions.voxelCentreWS) * voxelDimmensions.recipVoxelSize;
+	const float4 diffuse = voxelMap.Sample(linearSampler, voxelCoords / voxelDimmensions.voxelVolumeSize);
+
+	if(globalIndex.x < gbufferSize.x && globalIndex.y < gbufferSize.y)
+		debugVoxels[globalIndex.xy] = diffuse;
+}
