@@ -9,7 +9,7 @@ ConvolveSkyBoxTechnique::ConvolveSkyBoxTechnique(Engine* eng, RenderGraph& graph
                      512, 512, 1, 10, 6, 1, "convolved skybox"),
     mConvolvedSpecularView(mConvolvedSpecularSkybox, ImageViewType::CubeMap, 0, 6, 0, 10),
     mConvolvedDiffuseSkybox(eng->getDevice(), Format::RGBA8UNorm, ImageUsage::CubeMap | ImageUsage::Sampled | ImageUsage::Storage,
-                     512, 512, 1, 0, 6, 1, "convolved skybox"),
+                     512, 512, 1, 1, 6, 1, "convolved skybox"),
     mConvolvedDiffuseView(mConvolvedDiffuseSkybox, ImageViewType::CubeMap, 0, 6),
 	mFirstFrame(true)
 {
