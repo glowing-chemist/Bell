@@ -29,7 +29,7 @@ Texture2D<float> AnalyticalLighting;
 #endif
 
 
-#define MAX_RAY_LENGTH 0.75f
+#define MAX_RAY_LENGTH 1.5f
 #define SAMPLE_COUNT 5
 #define MAX_SAMPLE_COUNT 15
 
@@ -63,14 +63,15 @@ float4 main(PositionAndUVVertOutput vertInput)
 
 	float3 normal = Normals.Sample(linearSampler, uv);
 	normal = remapNormals(normal);
+	normal = mul((float3x3)camera.viewProj, normal);
 	normal = normalize(normal);
 
 	const float4 specularRoughnes = SpecularRoughness.Sample(linearSampler, uv);
 	float roughness = specularRoughnes.w;
 	roughness *= roughness;
 
-	// camera is at 0.0, 0.0, 0.0 so view vector is just position.
-	const float3 view = position;
+	// camera is at 0.0, 0.0, 0.0 so view vector is just the negative position sans the x component.
+	const float3 view = float3(0.0f, -position.yz);
 	float4 reflectedColour = float4(0.0f, 0.0f, 0.0f, 0.0f);
 	float totalWeight = 0.0f;
 	uint usedSamples = 0;
@@ -78,13 +79,12 @@ float4 main(PositionAndUVVertOutput vertInput)
 	{
 		const float2 Xi = Hammersley(i, MAX_SAMPLE_COUNT);
 		const float3 H = ImportanceSampleGGX(Xi, roughness, normal);
-		float3 L = 2 * dot(V, H) * H - V;
+		float3 L = 2 * dot(view, H) * H - view;
 
 		float NoL = saturate(dot(normal, L));
 		if(NoL > 0.0)
 		{
 			// March the ray.
-			//prefilteredColor += skyBox.Sample(defaultSampler, L).xyz * NoL;
 			const float2 colourUV = marchRay(position, L, MAX_RAY_LENGTH, 30);
 			if(all(colourUV >= float2(0.0f, 0.0f)))
 			{
