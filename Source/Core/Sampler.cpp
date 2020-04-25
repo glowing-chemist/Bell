@@ -4,9 +4,13 @@ namespace std
 {
     size_t hash<Sampler>::operator()(const Sampler& sampler) const noexcept
     {
-        std::hash<uint8_t> hasher{};
+        size_t hash = sampler.mSamples;
+        hash |= static_cast<size_t>(sampler.mType) << 4;
+        hash |= static_cast<size_t>(sampler.mU) << 6;
+        hash |= static_cast<size_t>(sampler.mV) << 9;
+        hash |= static_cast<size_t>(sampler.mW) << 12;
 
-        return hasher(sampler.mSamples) | hasher(static_cast<uint8_t>(sampler.mType));
+        return hash;
     }
 }
 
