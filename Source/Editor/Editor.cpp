@@ -249,6 +249,7 @@ Editor::Editor(GLFWwindow* window) :
     mRegisteredNodes{0},
 	mSetupNeeded(true),
     mEngine{mWindow},
+    mSceneInstanceIDs{},
     mInProgressScene{"In construction"},
     mLightOperationMode{ImGuizmo::OPERATION::TRANSLATE}
 {
@@ -509,7 +510,40 @@ void Editor::drawAssistantWindow()
            drawPassContextMenu(PassType::Shadow);
            drawPassContextMenu(PassType::TAA);
            drawPassContextMenu(PassType::LineariseDepth);
-            drawPassContextMenu(PassType::SSR);
+           drawPassContextMenu(PassType::SSR);
+
+           ImGui::TreePop();
+       }
+
+       if(ImGui::TreeNode("Mesh instances"))
+       {
+
+           for(InstanceID ID : mSceneInstanceIDs)
+           {
+                MeshInstance* instance = mEngine.getScene().getMeshInstance(ID);
+
+                if(ImGui::TreeNode(instance->getName().c_str()))
+                {
+                    uint32_t instanceFlags = instance->getInstanceFlags();
+                    bool draw = instanceFlags & InstanceFlags::Draw;
+                    ImGui::Checkbox("Draw", &draw);
+
+                    bool wireFrame = instanceFlags & InstanceFlags::DrawWireFrame;
+                    ImGui::Checkbox("WireFrame", &wireFrame);
+
+                    bool aabb = instanceFlags & InstanceFlags::DrawAABB;
+                    ImGui::Checkbox("AABB", &aabb);
+
+                    uint32_t newInstanceFlags = 0;
+                    newInstanceFlags |= draw ? InstanceFlags::Draw : 0;
+                    newInstanceFlags |= wireFrame ? InstanceFlags::DrawWireFrame : 0;
+                    newInstanceFlags |= aabb ? InstanceFlags::DrawAABB : 0;
+
+                    instance->setInstanceFlags(newInstanceFlags);
+
+                    ImGui::TreePop();
+                }
+           }
 
            ImGui::TreePop();
        }
@@ -753,7 +787,7 @@ void Editor::loadScene(const std::string& scene)
                                         "./Assets/Skybox.png" };
 
 	Scene testScene(scene);
-	testScene.loadFromFile(VertexAttributes::Position4 | VertexAttributes::Normals | VertexAttributes::TextureCoordinates, &mEngine);
+    mSceneInstanceIDs = testScene.loadFromFile(VertexAttributes::Position4 | VertexAttributes::Normals | VertexAttributes::TextureCoordinates, &mEngine);
 	testScene.loadSkybox(skybox, &mEngine);
 	testScene.uploadData(&mEngine);
 	testScene.computeBounds(MeshType::Static);

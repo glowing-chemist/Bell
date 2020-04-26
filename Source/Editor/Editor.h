@@ -101,6 +101,8 @@ private:
 
     Engine mEngine;
 
+    std::vector<InstanceID> mSceneInstanceIDs;
+
     Scene mInProgressScene;
 
     std::vector<EditorLight> mLights;

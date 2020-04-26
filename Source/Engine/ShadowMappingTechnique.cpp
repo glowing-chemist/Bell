@@ -55,7 +55,7 @@ ShadowMappingTechnique::ShadowMappingTechnique(Engine* eng, RenderGraph& graph) 
 }
 
 
-void ShadowMappingTechnique::render(RenderGraph& graph, Engine* eng)
+void ShadowMappingTechnique::render(RenderGraph& graph, Engine*)
 {
     GraphicsTask& shadowTask = static_cast<GraphicsTask&>(graph.getTask(mShadowTask));
     ComputeTask& blurXTask = static_cast<ComputeTask&>(graph.getTask(mBlurXTaskID));
@@ -84,7 +84,7 @@ void ShadowMappingTechnique::render(RenderGraph& graph, Engine* eng)
             for (const auto& mesh : meshes)
             {
                 // Don't render transparent geometry.
-                if ((mesh->mMesh->getAttributes() & MeshAttributes::Transparent) > 0)
+                if ((mesh->mMesh->getAttributes() & MeshAttributes::Transparent) > 0 || !(mesh->getInstanceFlags() & InstanceFlags::Draw))
                     continue;
 
                 const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->mMesh);

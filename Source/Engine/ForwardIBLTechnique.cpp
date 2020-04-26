@@ -55,7 +55,7 @@ void ForwardIBLTechnique::render(RenderGraph& graph, Engine*)
 
 			for (const auto& mesh : meshes)
 			{
-				if (mesh->mMesh->getAttributes() & MeshAttributes::Transparent)
+                if (mesh->mMesh->getAttributes() & MeshAttributes::Transparent || !(mesh->getInstanceFlags() & InstanceFlags::Draw))
 					continue;
 
 				const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->mMesh);

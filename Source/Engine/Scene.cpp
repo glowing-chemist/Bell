@@ -106,7 +106,7 @@ void Scene::loadSkybox(const std::array<std::string, 6>& paths, Engine* eng)
 }
 
 
-void Scene::loadFromFile(const int vertAttributes, Engine* eng)
+std::vector<InstanceID> Scene::loadFromFile(const int vertAttributes, Engine* eng)
 {
     Assimp::Importer importer;
 
@@ -125,10 +125,20 @@ void Scene::loadFromFile(const int vertAttributes, Engine* eng)
 	const auto meshMaterials = loadMaterialsInternal(eng);
     std::unordered_map<const aiMesh*, SceneID> meshToSceneIDMapping{};
 
+    std::vector<InstanceID> instanceIDs;
+
 	// parse node is recursive so will add all meshes to the scene.
-    parseNode(scene, rootNode, aiMatrix4x4{}, vertAttributes, meshMaterials, meshToSceneIDMapping);
+    parseNode(scene,
+              rootNode,
+              aiMatrix4x4{},
+              vertAttributes,
+              meshMaterials,
+              meshToSceneIDMapping,
+              instanceIDs);
 
     addLights(scene);
+
+    return instanceIDs;
 }
 
 
@@ -137,7 +147,8 @@ void Scene::parseNode(const aiScene* scene,
                       const aiMatrix4x4& parentTransofrmation,
                       const int vertAttributes,
                       const MaterialMappings& materialIndexMappings,
-                      std::unordered_map<const aiMesh*, SceneID>& meshMappings)
+                      std::unordered_map<const aiMesh*, SceneID>& meshMappings,
+                      std::vector<InstanceID>& instanceIds)
 {
     aiMatrix4x4 transformation = parentTransofrmation * node->mTransformation;
 
@@ -168,13 +179,20 @@ void Scene::parseNode(const aiScene* scene,
                                              transformation.c1, transformation.c2, transformation.c3, transformation.c4,
                                              transformation.d1, transformation.d2, transformation.d3, transformation.d4};
 
-        addMeshInstance(meshID, transformationMatrix, materialIndex);
+        InstanceID instanceID = addMeshInstance(meshID, transformationMatrix, materialIndex, currentMesh->mName.C_Str());
+        instanceIds.push_back(instanceID);
     }
 
     // Recurse through all child nodes
     for(uint32_t i = 0; i < node->mNumChildren; ++i)
     {
-        parseNode(scene, node->mChildren[i], transformation, vertAttributes, materialIndexMappings, meshMappings);
+        parseNode(scene,
+                  node->mChildren[i],
+                  transformation,
+                  vertAttributes,
+                  materialIndexMappings,
+                  meshMappings,
+                  instanceIds);
     }
 }
 
@@ -360,7 +378,10 @@ SceneID Scene::addMesh(const StaticMesh& mesh, MeshType meshType)
 
 // It's invalid to use the InstanceID for a static mesh for anything other than state tracking.
 // As the BVH for them will not be updated.
-InstanceID Scene::addMeshInstance(const SceneID meshID, const float4x3 &transformation, const uint32_t materialID)
+InstanceID Scene::addMeshInstance(const SceneID meshID,
+                                  const float4x3 &transformation,
+                                  const uint32_t materialID,
+                                  const std::string &name)
 {
     auto& [mesh, meshType] = mSceneMeshes[meshID];
 
@@ -370,13 +391,13 @@ InstanceID Scene::addMeshInstance(const SceneID meshID, const float4x3 &transfor
     {
         id = static_cast<InstanceID>(mStaticMeshInstances.size() + 1);
 
-        mStaticMeshInstances.push_back({&mesh, transformation, materialID});
+        mStaticMeshInstances.push_back({&mesh, transformation, materialID, name});
     }
     else
     {
         id = -static_cast<InstanceID>(mDynamicMeshInstances.size());
 
-        mDynamicMeshInstances.push_back({&mesh, transformation, materialID});
+        mDynamicMeshInstances.push_back({&mesh, transformation, materialID, name});
     }
 
     return id;

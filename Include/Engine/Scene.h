@@ -55,16 +55,26 @@ enum class PBRType
     Specular
 };
 
+enum InstanceFlags
+{
+    Draw = 1,
+    DrawAABB = 1 << 1,
+    DrawWireFrame = 1 << 2
+};
+
 
 struct MeshInstance
 {
     MeshInstance(StaticMesh* mesh,
                  const float4x3& trans,
-                 const uint32_t materialID) :
+                 const uint32_t materialID,
+                 const std::string& name = "") :
         mMesh(mesh),
         mTransformation(trans),
         mPreviousTransformation(trans),
-        mMaterialID{materialID} {}
+        mName{name},
+        mMaterialID{materialID},
+        mInstanceFlags{InstanceFlags::Draw} {}
 
     StaticMesh* mMesh;
 
@@ -76,6 +86,21 @@ struct MeshInstance
     uint32_t getmaterialID() const
     {
         return mMaterialID;
+    }
+
+    const std::string& getName() const
+    {
+        return mName;
+    }
+
+    uint32_t getInstanceFlags() const
+    {
+        return mInstanceFlags;
+    }
+
+    void setInstanceFlags(const uint32_t flags)
+    {
+        mInstanceFlags = flags;
     }
 
     void setTransMatrix(const float4x4& newTrans)
@@ -98,7 +123,9 @@ struct MeshInstance
 private:
     float4x4 mTransformation;
     float4x4 mPreviousTransformation;
+    std::string mName;
     uint32_t mMaterialID;
+    uint32_t mInstanceFlags;
 };
 
 
@@ -113,11 +140,11 @@ public:
     ~Scene();
     Scene& operator=(Scene&&);
 
-	void loadFromFile(const int vertAttributes, Engine*);
+    std::vector<InstanceID> loadFromFile(const int vertAttributes, Engine*);
 	void loadSkybox(const std::array<std::string, 6>& path, Engine*);
 
     SceneID       addMesh(const StaticMesh&, MeshType);
-    InstanceID    addMeshInstance(const SceneID, const float4x3&, const uint32_t materialID);
+    InstanceID    addMeshInstance(const SceneID, const float4x3&, const uint32_t materialID, const std::string& name = "");
 
     void          uploadData(Engine*);
     void          computeBounds(const MeshType);
@@ -268,7 +295,8 @@ private:
                    const aiMatrix4x4& parentTransofrmation,
                    const int vertAttributes,
                    const MaterialMappings& materialIndexMappings,
-                   std::unordered_map<const aiMesh *, SceneID> &meshMappings);
+                   std::unordered_map<const aiMesh *, SceneID> &meshMappings,
+                   std::vector<InstanceID>& instanceIds);
 
 	void addLights(const aiScene* scene);
 

@@ -45,7 +45,7 @@ void GBufferMaterialTechnique::render(RenderGraph& graph, Engine* eng)
 
             for (const auto& mesh : meshes)
             {
-                if (mesh->mMesh->getAttributes() & MeshAttributes::Transparent)
+                if (mesh->mMesh->getAttributes() & MeshAttributes::Transparent || !(mesh->getInstanceFlags() & InstanceFlags::Draw))
                     continue;
 
                 const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->mMesh);
@@ -105,7 +105,7 @@ void GBufferMaterialPreDepthTechnique::render(RenderGraph& graph, Engine* eng)
 
             for (const auto& mesh : meshes)
             {
-                if (mesh->mMesh->getAttributes() & MeshAttributes::Transparent)
+                if (mesh->mMesh->getAttributes() & MeshAttributes::Transparent || !(mesh->getInstanceFlags() & InstanceFlags::Draw))
                     continue;
 
                 const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->mMesh);

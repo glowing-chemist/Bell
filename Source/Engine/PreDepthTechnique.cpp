@@ -42,7 +42,7 @@ void PreDepthTechnique::render(RenderGraph& graph, Engine*)
             for (const auto& mesh : meshes)
             {
                 // Don't render transparent geometry.
-                if ((mesh->mMesh->getAttributes() & MeshAttributes::Transparent) > 0)
+                if ((mesh->mMesh->getAttributes() & MeshAttributes::Transparent) > 0 || !(mesh->getInstanceFlags() & InstanceFlags::Draw))
                     continue;
 
                 const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->mMesh);
