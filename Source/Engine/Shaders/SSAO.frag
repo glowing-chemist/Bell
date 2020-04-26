@@ -43,9 +43,9 @@ float main(PositionAndUVVertOutput vertInput)
   const float depth = linearisedDepth.Sample(linearSampler, vertInput.uv);
  
   const float3 position = float3( vertInput.uv, depth);
-  const float3 normal = normalsFromDepth(depth, vertInput.uv);
+  float3 normal = normalsFromDepth(depth, vertInput.uv);
   // bring in to view space
-  normal = normalize(mul((float3x3)camera.view, normal));
+  normal = normalize(mul((float3x3)camera.viewProj, normal));
 
   float occlusion = 0.0;
   for(int i = 0; i < 16; i++) {
