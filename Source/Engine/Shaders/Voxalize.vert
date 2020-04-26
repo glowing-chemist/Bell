@@ -14,13 +14,15 @@ GBufferVertOutput main(Vertex vertex)
 {
 	GBufferVertOutput output;
 
-	float4 transformedPositionWS = mul(model.meshMatrix, vertex.position.xyz);
-	transformedPositionWS.w = 1.0f;
+	float4x4 meshMatrix;
+	float4x4 prevMeshMatrix;
+	recreateMeshMatracies(model.meshMatrix, model.prevMeshMatrix, meshMatrix, prevMeshMatrix);
+	float4 transformedPositionWS = mul(vertex.position.xyz, meshMatrix);
 	float4 transformedPosition = mul(camera.viewProj, transformedPositionWS);
 
 	output.position = transformedPosition;
 	output.positionWS = transformedPositionWS;
-	output.normal = float4(mul((float3x3)model.meshMatrix, vertex.normal.xyz), 1.0f);
+	output.normal = float4(mul(vertex.normal.xyz,(float3x3)meshMatrix), 1.0f);
 	output.materialID = model.materialID;
 	output.uv = vertex.uv;
 

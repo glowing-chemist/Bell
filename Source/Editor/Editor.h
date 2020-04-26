@@ -56,7 +56,8 @@ private:
     void drawAssistantWindow();
     void drawDebugTexturePicker(const std::vector<std::string>& textures);
     void drawLightMenu();
-    void drawGuizmo(EditorLight&, const glm::mat4& view, const glm::mat4& proj, const ImGuizmo::OPERATION mode);
+    void drawGuizmo(EditorLight&, const float4x4& view, const float4x4& proj, const ImGuizmo::OPERATION mode);
+    void drawGuizmo(float4x4&world, const float4x4& view, const float4x4& proj, const ImGuizmo::OPERATION mode);
 
     void drawPassContextMenu(const PassType);
 

@@ -12,8 +12,10 @@ ShadowMapVertOutput main(Vertex vertex)
 {
 	ShadowMapVertOutput output;
 
-	float4 transformedPositionWS = mul(model.meshMatrix, vertex.position.xyz);
-	transformedPositionWS.w = 1.0f;
+	float4x4 meshMatrix;
+	float4x4 prevMeshMatrix;
+	recreateMeshMatracies(model.meshMatrix, model.prevMeshMatrix, meshMatrix, prevMeshMatrix);
+	float4 transformedPositionWS = mul(vertex.position, meshMatrix);
 
 	output.position = mul(light.viewProj, transformedPositionWS);
 	output.positionVS = mul(light.view, transformedPositionWS);

@@ -13,8 +13,10 @@ DepthOnlyOutput main(Vertex vertex)
 {
 	DepthOnlyOutput output;
 
-	float4 transformedPositionWS = mul(model.meshMatrix, vertex.position.xyz);
-	transformedPositionWS.w = 1.0f;
+	float4x4 meshMatrix;
+	float4x4 prevMeshMatrix;
+	recreateMeshMatracies(model.meshMatrix, model.prevMeshMatrix, meshMatrix, prevMeshMatrix);
+	float4 transformedPositionWS = mul(vertex.position, meshMatrix);
 	float4 transformedPosition = mul(camera.viewProj, transformedPositionWS);
 	output.position = transformedPosition;
 	output.uv = vertex.uv;

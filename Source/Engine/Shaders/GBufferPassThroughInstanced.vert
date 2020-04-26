@@ -12,7 +12,10 @@ GBufferVertOutput main(Vertex vertInput, uint instanceID : SV_InstanceID)
 {
 	GBufferVertOutput output;
 
-	float4 transformedPositionWS = mul(instanceTransformations[instanceID].meshMatrix, vertInput.position.xyz);
+	float4x4 meshMatrix;
+	float4x4 prevMeshMatrix;
+	recreateMeshMatracies(instanceTransformations[instanceID], meshMatrix, prevMeshMatrix);
+	float4 transformedPositionWS = mul(vertInput.position, meshMatrix);
 	transformedPositionWS.w = 1.0f;
 	float4 transformedPosition = mul(camera.viewProj, transformedPositionWS);
 
@@ -25,7 +28,7 @@ GBufferVertOutput main(Vertex vertInput, uint instanceID : SV_InstanceID)
 	// Calculate screen space velocity.
 	// Calculate screen space velocity.
 	transformedPosition /= transformedPosition.w;
-	float4 previousPositionWS = mul(instanceTransformations[instanceID].prevMeshMatrix, vertInput.position.xyz);
+	float4 previousPositionWS = mul(vertInput.position, prevMeshMatrix);
 	previousPositionWS.w = 1.0f;
 	float4 previousPosition = mul(camera.previousFrameViewProj, previousPositionWS);
 	previousPosition /= previousPosition.w;

@@ -518,6 +518,10 @@ void Editor::drawAssistantWindow()
        if(ImGui::TreeNode("Mesh instances"))
        {
 
+           const Camera& camera = mEngine.getScene().getCamera();
+           const float4x4 viewMatrix = glm::lookAt(camera.getPosition(), camera.getPosition() + camera.getDirection(), float3(0.0f, 1.0f, 0.0f));
+           const float4x4 projectionMatrix = camera.getPerspectiveMatrix();
+
            for(InstanceID ID : mSceneInstanceIDs)
            {
                 MeshInstance* instance = mEngine.getScene().getMeshInstance(ID);
@@ -534,10 +538,22 @@ void Editor::drawAssistantWindow()
                     bool aabb = instanceFlags & InstanceFlags::DrawAABB;
                     ImGui::Checkbox("AABB", &aabb);
 
+                    bool guizmo = instanceFlags & InstanceFlags::DrawGuizmo;
+                    ImGui::Checkbox("Guizmo", &guizmo);
+
+                    if(guizmo)
+                    {
+                        float4x4 transMatrix = instance->getTransMatrix();
+                        drawGuizmo(transMatrix, viewMatrix, projectionMatrix, mLightOperationMode);
+
+                        instance->setTransMatrix(transMatrix);
+                    }
+
                     uint32_t newInstanceFlags = 0;
                     newInstanceFlags |= draw ? InstanceFlags::Draw : 0;
                     newInstanceFlags |= wireFrame ? InstanceFlags::DrawWireFrame : 0;
                     newInstanceFlags |= aabb ? InstanceFlags::DrawAABB : 0;
+                    newInstanceFlags |= guizmo ? InstanceFlags::DrawGuizmo : 0;
 
                     instance->setInstanceFlags(newInstanceFlags);
 
@@ -730,7 +746,7 @@ void Editor::drawLightMenu()
 }
 
 
-void Editor::drawGuizmo(EditorLight& light, const glm::mat4 &view, const glm::mat4 &proj, const ImGuizmo::OPERATION op)
+void Editor::drawGuizmo(EditorLight& light, const float4x4 &view, const float4x4 &proj, const ImGuizmo::OPERATION op)
 {
     float4x4 lightTransformation(1.0f);
 
@@ -751,6 +767,16 @@ void Editor::drawGuizmo(EditorLight& light, const glm::mat4 &view, const glm::ma
         light.mDirection = lightTransformation * light.mDirection;
         light.mUp = lightTransformation * light.mUp;
     }
+}
+
+
+void Editor::drawGuizmo(float4x4& world, const float4x4& view, const float4x4& proj, const ImGuizmo::OPERATION op)
+{
+    ImGuizmo::Manipulate(   glm::value_ptr(view),
+                            glm::value_ptr(proj),
+                            op,
+                            ImGuizmo::MODE::WORLD,
+                            glm::value_ptr(world));
 }
 
 

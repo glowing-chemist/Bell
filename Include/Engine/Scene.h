@@ -59,7 +59,8 @@ enum InstanceFlags
 {
     Draw = 1,
     DrawAABB = 1 << 1,
-    DrawWireFrame = 1 << 2
+    DrawWireFrame = 1 << 2,
+    DrawGuizmo = 1 << 3
 };
 
 
@@ -112,8 +113,8 @@ struct MeshInstance
     MeshEntry getMeshShaderEntry() const
     {
         MeshEntry entry{};
-        entry.mTransformation = float3x4(mTransformation);
-        entry.mPreviousTransformation = float3x4(mPreviousTransformation);
+        entry.mTransformation = transpose(float4x3(mTransformation));
+        entry.mPreviousTransformation = transpose(float4x3(mPreviousTransformation));
         entry.mMaterialIndex = mMaterialID;
         entry.mAttributes = mMesh->getAttributes();
 
