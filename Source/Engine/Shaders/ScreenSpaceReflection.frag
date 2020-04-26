@@ -68,7 +68,6 @@ float4 main(PositionAndUVVertOutput vertInput)
 
 	const float4 specularRoughnes = SpecularRoughness.Sample(linearSampler, uv);
 	float roughness = specularRoughnes.w;
-	roughness *= roughness;
 
 	// camera is at 0.0, 0.0, 0.0 so view vector is just the negative position sans the x component.
 	const float3 view = float3(0.0f, -position.yz);
