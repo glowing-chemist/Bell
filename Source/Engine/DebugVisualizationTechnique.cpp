@@ -64,7 +64,8 @@ DebugAABBTechnique::DebugAABBTechnique(Engine* eng, RenderGraph& graph) :
                             const AABB& meshAABB = mesh->mMesh->getAABB();
                             const float4x4 meshTransformation = mesh->getTransMatrix();
 
-                            float4x4 AABBtransformation = meshTransformation * glm::translate(float3(meshAABB.getCentralPoint())) * glm::scale(meshAABB.getSideLengths());
+                            AABB transformedAABB = meshAABB * meshTransformation;
+                            float4x4 AABBtransformation = glm::translate(float3(transformedAABB.getCentralPoint())) * glm::scale(transformedAABB.getSideLengths());
 
                             exec->insertPushConsatnt(&AABBtransformation, sizeof(float4x4));
                             exec->indexedDraw(0, 0, 24);
