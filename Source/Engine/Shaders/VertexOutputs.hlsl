@@ -52,6 +52,11 @@ struct VoxalizeGeometryOutput
 	uint materialID : MATERIALID;
 };
 
+struct PositionOutput
+{
+	float4 position : SV_Position;
+};
+
 // Vertex inputs.
 struct Vertex
 {

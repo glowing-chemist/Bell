@@ -292,7 +292,7 @@ void Editor::run()
 
         // Only draw the scene if we're in scene mode else draw the
         // pass/shader graphs.
-        if(mMode == 0)
+        if(mMode == EditorMode::SceneView)
             renderScene();
 
         previousMode = mMode;
@@ -309,6 +309,7 @@ void Editor::run()
 
 void Editor::renderScene()
 {
+    mEngine.registerPass(PassType::DebugAABB);
 	mNodeEditor.addPasses(mEngine);
 }
 

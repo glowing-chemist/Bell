@@ -32,6 +32,7 @@
 #include "Engine/LineariseDepthTechnique.hpp"
 #include "Engine/ScreenSpaceReflectionTechnique.hpp"
 #include "Engine/VoxalizeTechnique.hpp"
+#include "Engine/DebugVisualizationTechnique.hpp"
 
 #include "glm/gtx/transform.hpp"
 
@@ -270,6 +271,9 @@ std::unique_ptr<Technique> Engine::getSingleTechnique(const PassType passType)
 
         case PassType::Voxelize:
             return std::make_unique<VoxalizeTechnique>(this, mCurrentRenderGraph);
+
+        case PassType::DebugAABB:
+            return std::make_unique<DebugAABBTechnique>(this, mCurrentRenderGraph);
 
         default:
         {

@@ -32,7 +32,9 @@
                     TAA = 1 << 25, \
                     LineariseDepth = 1 << 26, \
                     SSR = 1 << 27, \
-                    Voxelize = 1 << 28
+                    Voxelize = 1 << 28, \
+                    DebugAABB = 1 << 29, \
+                    DebugWireFrame = 1 << 30
 
 // An enum to keep track of which 
 enum class PassType : uint64_t
@@ -114,6 +116,12 @@ inline const char* passToString(const PassType passType)
 
         case PassType::Composite:
             return "Composite";
+
+        case PassType::DebugAABB:
+            return "DebugAABB";
+
+        case PassType::DebugWireFrame:
+            return "WireFrame";
     }
 
     return "UNKNOWN PASS TYPE";

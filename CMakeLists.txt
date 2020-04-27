@@ -170,6 +170,7 @@ set(BELL_SOURCE
     Source/Engine/LineariseDepthTechnique.cpp
     Source/Engine/ScreenSpaceReflectionTechnique.cpp
     Source/Engine/VoxalizeTechnique.cpp
+    Source/Engine/DebugVisualizationTechnique.cpp
 
     # used for texture loading
     ThirdParty/stb_image/stb_image.cpp
@@ -248,6 +249,8 @@ set(SHADERS
 	Voxalize.geom.spv
 	Voxalize.frag
 	DebugVoxels.comp
+	DebugAABB.vert
+	DebugAABB.frag
     )
 
 foreach(shader ${SHADERS})

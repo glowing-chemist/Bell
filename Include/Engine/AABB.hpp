@@ -67,6 +67,11 @@ public:
     float4 getCentralPoint() const
     { return mMinimum + (mMaximum - mMinimum) * 0.5f; }
 
+    float3 getSideLengths() const
+    {
+        return glm::abs(mMaximum - mMinimum);
+    }
+
 private:
 
     float4 mMinimum;
