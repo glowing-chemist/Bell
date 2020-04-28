@@ -19,7 +19,9 @@ void main(uint3 globalIndex : SV_DispatchThreadID)
 	const float2 uv = float2(globalIndex.xy) / camera.frameBufferSize;
 
 	const float depth = gbufferDepth.Sample(linearSampler, uv);
-	const float linearDepth = lineariseReverseDepth(depth, camera.nearPlane, camera.farPlane);
+	float linearDepth = lineariseReverseDepth(depth, camera.nearPlane, camera.farPlane);
+
+	linearDepth = saturate(linearDepth);
 
 	if(globalIndex.x <= camera.frameBufferSize.x && globalIndex.y <= camera.frameBufferSize.y)
 		linearDepthBuffer[globalIndex.xy] = linearDepth;

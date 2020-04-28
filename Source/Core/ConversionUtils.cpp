@@ -8,7 +8,6 @@ vk::ImageLayout getVulkanImageLayout(const AttachmentType type)
 	{
 		case AttachmentType::RenderTarget1D:
 		case AttachmentType::RenderTarget2D:
-		case AttachmentType::RenderTarget3D:
 			return vk::ImageLayout::eColorAttachmentOptimal;
 
 		case AttachmentType::Image1D:
@@ -495,7 +494,6 @@ ImageLayout getImageLayout(const AttachmentType type)
 	{
 	case AttachmentType::RenderTarget1D:
 	case AttachmentType::RenderTarget2D:
-	case AttachmentType::RenderTarget3D:
 		return ImageLayout::ColorAttachment;
 
 	case AttachmentType::Image1D:
@@ -579,7 +577,6 @@ SyncPoint getSyncPoint(const AttachmentType type)
 	{
 	case AttachmentType::RenderTarget1D:
 	case AttachmentType::RenderTarget2D:
-	case AttachmentType::RenderTarget3D:
 		return SyncPoint::FragmentShaderOutput;
 
 	case AttachmentType::Image1D:
@@ -645,7 +642,6 @@ const char* getAttachmentName(const AttachmentType type)
 	{
 	case AttachmentType::RenderTarget1D:
 	case AttachmentType::RenderTarget2D:
-	case AttachmentType::RenderTarget3D:
 		return "Render Target";
 
 	case AttachmentType::Image1D:

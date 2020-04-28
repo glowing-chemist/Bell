@@ -140,7 +140,6 @@ enum class AttachmentType
 	Image3D,
 	RenderTarget1D,
 	RenderTarget2D,
-	RenderTarget3D,
 	Depth,
 	UniformBuffer,
     DataBufferRO,
