@@ -63,6 +63,7 @@ public:
 
     void rotatePitch(const float);
     void rotateYaw(const float);
+    void rotateWorldUp(const float);
 
     const float3& getPosition() const
         { return mPosition; }

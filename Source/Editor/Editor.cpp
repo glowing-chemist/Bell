@@ -416,6 +416,8 @@ void Editor::pumpInputQueue()
             mLightOperationMode = ImGuizmo::OPERATION::ROTATE;
         else if (glfwGetKey(mWindow, GLFW_KEY_T) == GLFW_PRESS)
             mLightOperationMode = ImGuizmo::OPERATION::TRANSLATE;
+        else if(glfwGetKey(mWindow, GLFW_KEY_Y) == GLFW_PRESS)
+            mLightOperationMode = ImGuizmo::OPERATION::SCALE;
 
         bool pressedEscape = glfwGetKey(mWindow, GLFW_KEY_ESCAPE) == GLFW_PRESS;
         if (pressedEscape)

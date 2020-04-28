@@ -117,7 +117,7 @@ void Camera::moveDown(const float distance)
 void Camera::rotatePitch(const float angle)
 {
     const float3 rotationAxis = getRight();
-	const glm::mat3 rotation = glm::rotate(glm::mat4(1.0f), glm::radians(angle), rotationAxis);
+    const glm::mat3 rotation = glm::rotate(glm::radians(angle), rotationAxis);
     mDirection = glm::normalize(rotation * mDirection);
     mUp = glm::normalize(rotation * mUp);
 }
@@ -125,7 +125,14 @@ void Camera::rotatePitch(const float angle)
 
 void Camera::rotateYaw(const float angle)
 {
-	const glm::mat3 rotation = glm::rotate(glm::mat4(1.0f), glm::radians(angle), mUp);
+    const glm::mat3 rotation = glm::rotate(glm::radians(angle), mUp);
+    mDirection = glm::normalize(rotation * mDirection);
+}
+
+
+void Camera::rotateWorldUp(const float angle)
+{
+    const glm::mat3 rotation = glm::rotate(glm::radians(angle), float3(0.0f, -1.0f, 0.0f));
     mDirection = glm::normalize(rotation * mDirection);
 }
 
