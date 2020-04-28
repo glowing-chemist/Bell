@@ -245,7 +245,7 @@ void RenderGraph::compileDependancies()
                 }
             }
 
-			// generate dependancies for depth -> depth (output, output)
+            // generate dependancies for framebuffer -> framebuffer e.g depth -> depth
 			{
 				const std::vector<RenderTask::OutputAttachmentInfo>& outResources = outerTask.getOuputAttachments();
 				const std::vector<RenderTask::OutputAttachmentInfo>& inResources = innerTask.getOuputAttachments();
@@ -255,9 +255,11 @@ void RenderGraph::compileDependancies()
 				{
 					for(size_t innerIndex = 0; innerIndex < inResources.size(); ++innerIndex)
 					{
-						if(outResources[outerIndex].mType == AttachmentType::Depth && inResources[innerIndex].mType == AttachmentType::Depth
-								&& outResources[outerIndex].mName == inResources[innerIndex].mName
-								&& outerDepthWrite)
+                        if(outResources[outerIndex].mName == inResources[innerIndex].mName &&
+                                ((outResources[outerIndex].mType == AttachmentType::Depth && inResources[innerIndex].mType == AttachmentType::Depth
+                                && outerDepthWrite) ||
+                                ((outResources[outerIndex].mType == AttachmentType::RenderTarget2D && inResources[innerIndex].mType == AttachmentType::RenderTarget2D) &&
+                                (outResources[outerIndex].mSize != SizeClass::Custom && inResources[innerIndex].mSize == SizeClass::Custom))))
 						{
 							dependancies.insert({i, j});
 
