@@ -37,6 +37,7 @@ public:
     void run();
 
     void mouseScroll_callback(GLFWwindow* window, double xoffset, double yoffset);
+    void text_callback(GLFWwindow* window, unsigned int codePoint);
 
 private:
 
@@ -57,7 +58,10 @@ private:
     void drawDebugTexturePicker(const std::vector<std::string>& textures);
     void drawLightMenu();
     void drawGuizmo(EditorLight&, const float4x4& view, const float4x4& proj, const ImGuizmo::OPERATION mode);
-    void drawGuizmo(float4x4&world, const float4x4& view, const float4x4& proj, const ImGuizmo::OPERATION mode);
+    void drawGuizmo(float4x4& world, const float4x4& view, const float4x4& proj, const ImGuizmo::OPERATION mode);
+
+    void addMaterial();
+    void drawAddInstanceDialog();
 
     void drawPassContextMenu(const PassType);
 
@@ -104,7 +108,24 @@ private:
 
     std::vector<InstanceID> mSceneInstanceIDs;
 
-    Scene mInProgressScene;
+    Scene* mInProgressScene;
+    struct StaticMeshEntry
+    {
+        SceneID mID;
+        std::string mName;
+    };
+    std::vector<StaticMeshEntry> mStaticMeshEntries;
+    bool mShowMeshFileBrowser;
+
+    bool mShowMaterialDialog;
+    char mMeshInstanceScratchBuffer[32];
+    ImGuiMaterialDialog mMaterialDialog;
+    std::vector<std::string> mMaterialNames;
+    uint32_t mCurrentMaterialIndex;
+    SceneID mMeshToInstance;
+    bool mShowAddInstanceDialog;
+
+    bool mPublishedScene;
 
     std::vector<EditorLight> mLights;
     EditorLight mShadowingLight;

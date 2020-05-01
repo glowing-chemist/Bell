@@ -45,8 +45,7 @@ Engine::Engine(GLFWwindow* windowPtr) :
     mRenderInstance(new DX_12RenderInstance(windowPtr)),
 #endif
     mRenderDevice(mRenderInstance->createRenderDevice(DeviceFeaturesFlags::Compute | DeviceFeaturesFlags::Subgroup | DeviceFeaturesFlags::Geometry)),
-    mCurrentScene("Initial current scene"),
-    mLoadingScene("Initial loading scene"),
+    mCurrentScene(nullptr),
     mVertexBuilder(),
     mIndexBuilder(),
     mMaterials{getDevice()},
@@ -111,43 +110,25 @@ Engine::Engine(GLFWwindow* windowPtr) :
 }
 
 
-void Engine::loadScene(const std::string& path)
-{
-    mLoadingScene = Scene(path);
-	mLoadingScene.loadFromFile(VertexAttributes::Position4 | VertexAttributes::TextureCoordinates | VertexAttributes::Normals, this);
-
-    mLoadingScene.uploadData(this);
-    mLoadingScene.computeBounds(MeshType::Static);
-    mLoadingScene.computeBounds(MeshType::Dynamic);
-
-    setScene(mCurrentScene);
-}
-
-void Engine::transitionScene()
-{
-    mCurrentScene = std::move(mLoadingScene);
-}
-
-
 void Engine::setScene(const std::string& path)
 {
-    mCurrentScene = Scene(path);
-    mCurrentScene.loadFromFile(VertexAttributes::Position4 | VertexAttributes::TextureCoordinates | VertexAttributes::Normals, this);
+    mCurrentScene = new Scene(path);
+    mCurrentScene->loadFromFile(VertexAttributes::Position4 | VertexAttributes::TextureCoordinates | VertexAttributes::Normals, this);
 
-    mLoadingScene.uploadData(this);
-    mLoadingScene.computeBounds(MeshType::Static);
-    mLoadingScene.computeBounds(MeshType::Dynamic);
+    mCurrentScene->uploadData(this);
+    mCurrentScene->computeBounds(MeshType::Static);
+    mCurrentScene->computeBounds(MeshType::Dynamic);
 
     setScene(mCurrentScene);
 }
 
 
-void Engine::setScene(Scene& scene)
+void Engine::setScene(Scene* scene)
 {
-    mCurrentScene = std::move(scene);
+    mCurrentScene = scene;
 
 	// Set up the SRS for the materials.
-	const auto& materials = mCurrentScene.getMaterials();
+    const auto& materials = mCurrentScene->getMaterials();
     mMaterials->addUniformBuffer(mMaterialFlagsBufferView);
 	mMaterials->addSampledImageArray(materials);
 	mMaterials->finalise();
@@ -156,7 +137,7 @@ void Engine::setScene(Scene& scene)
 
 Camera& Engine::getCurrentSceneCamera()
 {
-    return mCurrentScene.getCamera();
+    return mCurrentScene->getCamera();
 }
 
 
@@ -383,17 +364,22 @@ void Engine::execute(RenderGraph& graph)
 
     mRenderDevice->generateFrameResources(graph, mCurrentRegistredPasses);
 
-    std::vector<const MeshInstance*> meshes = mCurrentScene.getViewableMeshes(mCurrentScene.getCamera().getFrustum());
-    std::sort(meshes.begin(), meshes.end(), [camera = mCurrentScene.getCamera()](const MeshInstance* lhs, const MeshInstance* rhs)
+    std::vector<const MeshInstance*> meshes{};
+
+    if(mCurrentScene)
     {
-        const float3 centralLeft = lhs->mMesh->getAABB().getCentralPoint();
-        const float leftDistance = glm::length(centralLeft - camera.getPosition());
+        meshes = mCurrentScene ? mCurrentScene->getViewableMeshes(mCurrentScene->getCamera().getFrustum()) : std::vector<const MeshInstance*>{};
+        std::sort(meshes.begin(), meshes.end(), [camera = mCurrentScene->getCamera()](const MeshInstance* lhs, const MeshInstance* rhs)
+        {
+            const float3 centralLeft = lhs->mMesh->getAABB().getCentralPoint();
+            const float leftDistance = glm::length(centralLeft - camera.getPosition());
 
-        const float3 centralright = rhs->mMesh->getAABB().getCentralPoint();
-        const float rightDistance = glm::length(centralright - camera.getPosition());
+            const float3 centralright = rhs->mMesh->getAABB().getCentralPoint();
+            const float rightDistance = glm::length(centralright - camera.getPosition());
 
-        return leftDistance < rightDistance;
-    });
+            return leftDistance < rightDistance;
+        });
+    }
 
     //BELL_LOG_ARGS("Meshes %d", meshes.size());
 
@@ -468,8 +454,9 @@ void Engine::recordScene()
     mCurrentRenderGraph.bindVertexBuffer(kSceneVertexBuffer, mVertexBuffer);
     mCurrentRenderGraph.bindIndexBuffer(kSceneIndexBuffer, mIndexBuffer);
 
-	if(mCurrentScene.getSkybox())
-		mCurrentRenderGraph.bindImage(kSkyBox, *mCurrentScene.getSkybox());
+
+    if(mCurrentScene && mCurrentScene->getSkybox())
+        mCurrentRenderGraph.bindImage(kSkyBox, *mCurrentScene->getSkybox());
 }
 
 
@@ -494,78 +481,81 @@ void Engine::updateGlobalBuffers()
     }
 
     // Update camera UB.
-	{
-		auto& currentCamera = getCurrentSceneCamera();
-
-        const float swapchainX = getSwapChainImage()->getExtent(0, 0).width;
-        const float swapChainY = getSwapChainImage()->getExtent(0, 0).height;
-
-        float4x4 view = currentCamera.getViewMatrix();
-        float4x4 perspective;
-        mCameraBuffer.mPreviousFrameViewProjMatrix = mCameraBuffer.mViewProjMatrix;
-        // need to add jitter for TAA
-        if(isPassRegistered(PassType::TAA))
+    if(mCurrentScene)
+    {
         {
-            const uint32_t index = mRenderDevice->getCurrentSubmissionIndex() % 16;
-            const float2& jitter = mTAAJitter[index];
+            auto& currentCamera = getCurrentSceneCamera();
 
-            perspective = glm::translate(float3(jitter / mCameraBuffer.mFrameBufferSize, 0.0f)) * currentCamera.getPerspectiveMatrix();
-            mCameraBuffer.mPreviousJitter = mCameraBuffer.mJitter;
-            mCameraBuffer.mJitter = jitter / mCameraBuffer.mFrameBufferSize;
+            const float swapchainX = getSwapChainImage()->getExtent(0, 0).width;
+            const float swapChainY = getSwapChainImage()->getExtent(0, 0).height;
+
+            float4x4 view = currentCamera.getViewMatrix();
+            float4x4 perspective;
+            mCameraBuffer.mPreviousFrameViewProjMatrix = mCameraBuffer.mViewProjMatrix;
+            // need to add jitter for TAA
+            if(isPassRegistered(PassType::TAA))
+            {
+                const uint32_t index = mRenderDevice->getCurrentSubmissionIndex() % 16;
+                const float2& jitter = mTAAJitter[index];
+
+                perspective = glm::translate(float3(jitter / mCameraBuffer.mFrameBufferSize, 0.0f)) * currentCamera.getPerspectiveMatrix();
+                mCameraBuffer.mPreviousJitter = mCameraBuffer.mJitter;
+                mCameraBuffer.mJitter = jitter / mCameraBuffer.mFrameBufferSize;
+            }
+            else
+            {
+                perspective = currentCamera.getPerspectiveMatrix();
+                mCameraBuffer.mPreviousJitter = mCameraBuffer.mJitter;
+                mCameraBuffer.mJitter = float2(0.0f, 0.0f);
+            }
+            mCameraBuffer.mViewProjMatrix = perspective * view;
+            mCameraBuffer.mInvertedViewProjMatrix = glm::inverse(mCameraBuffer.mViewProjMatrix);
+            mCameraBuffer.mInvertedPerspective = glm::inverse(perspective);
+            mCameraBuffer.mViewMatrix = view;
+            mCameraBuffer.mPerspectiveMatrix = perspective;
+            mCameraBuffer.mOrthoMatrix = currentCamera.getOrthographicsMatrix();
+            mCameraBuffer.mFrameBufferSize = glm::vec2{ swapchainX, swapChainY };
+            mCameraBuffer.mPosition = currentCamera.getPosition();
+            mCameraBuffer.mNeaPlane = currentCamera.getNearPlane();
+            mCameraBuffer.mFarPlane = currentCamera.getFarPlane();
+            mCameraBuffer.mFOV = currentCamera.getFOV();
+
+            MapInfo mapInfo{};
+            mapInfo.mSize = sizeof(CameraBuffer);
+            mapInfo.mOffset = 0;
+
+            void* cameraBufferPtr = mDeviceCameraBuffer.get()->map(mapInfo);
+
+            std::memcpy(cameraBufferPtr, &mCameraBuffer, sizeof(CameraBuffer));
+
+            mDeviceCameraBuffer.get()->unmap();
         }
-        else
+
         {
-            perspective = currentCamera.getPerspectiveMatrix();
-            mCameraBuffer.mPreviousJitter = mCameraBuffer.mJitter;
-            mCameraBuffer.mJitter = float2(0.0f, 0.0f);
+            mLightBuffer.get()->setContents(static_cast<int>(mCurrentScene->getLights().size()), sizeof(uint32_t));
+
+            if(!mCurrentScene->getLights().empty())
+                mLightBuffer.get()->setContents(mCurrentScene->getLights().data(), static_cast<uint32_t>(mCurrentScene->getLights().size() * sizeof(Scene::Light)), sizeof(uint4));
         }
-        mCameraBuffer.mViewProjMatrix = perspective * view;
-        mCameraBuffer.mInvertedViewProjMatrix = glm::inverse(mCameraBuffer.mViewProjMatrix);
-        mCameraBuffer.mInvertedPerspective = glm::inverse(perspective);
-        mCameraBuffer.mViewMatrix = view;
-        mCameraBuffer.mPerspectiveMatrix = perspective;
-        mCameraBuffer.mOrthoMatrix = currentCamera.getOrthographicsMatrix();
-        mCameraBuffer.mFrameBufferSize = glm::vec2{ swapchainX, swapChainY };
-        mCameraBuffer.mPosition = currentCamera.getPosition();
-        mCameraBuffer.mNeaPlane = currentCamera.getNearPlane();
-        mCameraBuffer.mFarPlane = currentCamera.getFarPlane();
-        mCameraBuffer.mFOV = currentCamera.getFOV();
 
-		MapInfo mapInfo{};
-		mapInfo.mSize = sizeof(CameraBuffer);
-		mapInfo.mOffset = 0;
+        {
+            const Scene::ShadowingLight& shadowingLight = mCurrentScene->getShadowingLight();
 
-		void* cameraBufferPtr = mDeviceCameraBuffer.get()->map(mapInfo);
+            MapInfo mapInfo{};
+            mapInfo.mSize = sizeof(Scene::ShadowingLight);
+            mapInfo.mOffset = 0;
 
-		std::memcpy(cameraBufferPtr, &mCameraBuffer, sizeof(CameraBuffer));
+            void* dst = mShadowCastingLight.get()->map(mapInfo);
 
-		mDeviceCameraBuffer.get()->unmap();
-	}
+                std::memcpy(dst, &shadowingLight, sizeof(Scene::ShadowingLight));
 
-    {
-        mLightBuffer.get()->setContents(static_cast<int>(mCurrentScene.getLights().size()), sizeof(uint32_t));
+            mShadowCastingLight.get()->unmap();
+        }
 
-        if(!mCurrentScene.getLights().empty())
-            mLightBuffer.get()->setContents(mCurrentScene.getLights().data(), static_cast<uint32_t>(mCurrentScene.getLights().size() * sizeof(Scene::Light)), sizeof(uint4));
-    }
-
-    {
-        const Scene::ShadowingLight& shadowingLight = mCurrentScene.getShadowingLight();
-
-		MapInfo mapInfo{};
-		mapInfo.mSize = sizeof(Scene::ShadowingLight);
-		mapInfo.mOffset = 0;
-
-        void* dst = mShadowCastingLight.get()->map(mapInfo);
-
-            std::memcpy(dst, &shadowingLight, sizeof(Scene::ShadowingLight));
-
-        mShadowCastingLight.get()->unmap();
-    }
-
-    {
-        const uint32_t materialFLags = mCurrentScene.getMaterialFlags();
-        mMaterialFlagsBuffer->setContents(&materialFLags, sizeof(uint32_t));
+        {
+            const uint32_t materialFLags = mCurrentScene->getMaterialFlags();
+            mMaterialFlagsBuffer->setContents(&materialFLags, sizeof(uint32_t));
+        }
     }
 }
 

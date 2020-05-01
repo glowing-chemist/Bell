@@ -30,22 +30,15 @@ public:
 
     Engine(GLFWwindow*);
 
-    // async load a scene in to mLoadingScene
-    void loadScene(const std::string& path);
-
-    // make mCurrentScene, mLoadingScene (will wait for the scene to finish loading if not already finished).
-    void transitionScene();
-
-    // Will immediatly load a scene in to mCurrentScene waiting for it to finish before returning.
     void setScene(const std::string& path);
 
     // Set the current Scene, mostly for use by the editor.
-    void setScene(Scene&);
+    void setScene(Scene*);
 
-    Scene& getScene()
+    Scene* getScene()
     { return mCurrentScene; }
 
-    const Scene& getScene() const
+    const Scene* getScene() const
     { return mCurrentScene; }
 
     Camera& getCurrentSceneCamera();
@@ -202,8 +195,7 @@ private:
     RenderInstance* mRenderInstance;
     RenderDevice* mRenderDevice;
 
-    Scene mCurrentScene;
-    Scene mLoadingScene;
+    Scene* mCurrentScene;
 
     BufferBuilder mVertexBuilder;
     BufferBuilder mIndexBuilder;

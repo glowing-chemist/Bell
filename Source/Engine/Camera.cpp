@@ -134,6 +134,7 @@ void Camera::rotateWorldUp(const float angle)
 {
     const glm::mat3 rotation = glm::rotate(glm::radians(angle), float3(0.0f, -1.0f, 0.0f));
     mDirection = glm::normalize(rotation * mDirection);
+    mUp = glm::normalize(rotation * mUp);
 }
 
 

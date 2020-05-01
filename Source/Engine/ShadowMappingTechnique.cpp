@@ -65,9 +65,9 @@ void ShadowMappingTechnique::render(RenderGraph& graph, Engine*)
     shadowTask.setRecordCommandsCallback(
         [](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
         {
-            const Frustum lightFrustum = eng->getScene().getShadowingLightFrustum();
-            std::vector<const MeshInstance*> meshes = eng->getScene().getViewableMeshes(lightFrustum);
-            std::sort(meshes.begin(), meshes.end(), [lightPosition = eng->getScene().getShadowingLight().mPosition](const MeshInstance* lhs, const MeshInstance* rhs)
+            const Frustum lightFrustum = eng->getScene()->getShadowingLightFrustum();
+            std::vector<const MeshInstance*> meshes = eng->getScene()->getViewableMeshes(lightFrustum);
+            std::sort(meshes.begin(), meshes.end(), [lightPosition = eng->getScene()->getShadowingLight().mPosition](const MeshInstance* lhs, const MeshInstance* rhs)
             {
                 const float3 centralLeft = lhs->mMesh->getAABB().getCentralPoint();
                 const float leftDistance = glm::length(centralLeft - float3(lightPosition));

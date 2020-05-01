@@ -37,7 +37,7 @@ DeferredImageBasedLightingTechnique::DeferredImageBasedLightingTechnique(Engine*
     task.setRecordCommandsCallback(
         [](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
         {
-            const uint32_t materialFlags = eng->getScene().getMaterialFlags();
+            const uint32_t materialFlags = eng->getScene()->getMaterialFlags();
             exec->insertPushConsatnt(&materialFlags, sizeof(uint32_t));
             exec->draw(0, 3);
         }

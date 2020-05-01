@@ -152,7 +152,7 @@ int main()
         }
     }
 
-    engine.setScene(testScene);
+    engine.setScene(&testScene);
 
     while(!glfwWindowShouldClose(window))
     {

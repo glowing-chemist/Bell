@@ -1,5 +1,6 @@
 #include "Editor/Editor.h"
 #include "Engine/DefaultResourceSlots.hpp"
+#include "Engine/TextureUtil.hpp"
 
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtc/type_ptr.hpp"
@@ -243,18 +244,26 @@ Editor::Editor(GLFWwindow* window) :
     mRecompileGraph(false),
     mCameraInfo{false, 1.0f, 0.1f, 2000.0f, 90.0f},
     mShowFileBrowser{false},
-    mFileBrowser{"/"},
+    mFileBrowser{"scene", "/"},
     mShowNodeEditor{false},
     mNodeEditor{"render graph editor", createPassNode},
     mRegisteredNodes{0},
 	mSetupNeeded(true),
     mEngine{mWindow},
     mSceneInstanceIDs{},
-    mInProgressScene{"In construction"},
+    mInProgressScene{new Scene("Default")},
+    mStaticMeshEntries{},
+    mShowMeshFileBrowser{false},
+    mShowMaterialDialog{false},
+    mMaterialDialog{},
+    mMaterialNames{},
+    mCurrentMaterialIndex{0},
+    mMeshToInstance{0},
+    mShowAddInstanceDialog{false},
+    mPublishedScene{false},
     mLightOperationMode{ImGuizmo::OPERATION::TRANSLATE}
 {
     ImGui::CreateContext();
-
 
     // Set up cursor scrolling.
     glfwSetWindowUserPointer(mWindow, this);
@@ -263,8 +272,17 @@ Editor::Editor(GLFWwindow* window) :
         Editor* editor = static_cast<Editor*>(glfwGetWindowUserPointer(window));
         editor->mouseScroll_callback(window, 0.0, y);
     };
-
     glfwSetScrollCallback(mWindow, curor_callback);
+
+    auto text_callback = [](GLFWwindow* window, unsigned int codePoint)
+    {
+        Editor* editor = static_cast<Editor*>(glfwGetWindowUserPointer(window));
+        editor->text_callback(window, codePoint);
+    };
+    glfwSetCharCallback(mWindow, text_callback);
+
+    // Zero the scratch buffer.
+    memset(mMeshInstanceScratchBuffer, 0, 32);
 }
 
 
@@ -344,6 +362,38 @@ void Editor::renderOverlay()
 			loadScene((*optionalPath).string());
         }
     }
+
+    if(mShowMeshFileBrowser)
+    {
+        auto optionalPath = mFileBrowser.render();
+
+        if(optionalPath)
+        {
+            mShowMeshFileBrowser = false;
+
+            StaticMesh mesh(optionalPath->string(), VertexAttributes::Position4 | VertexAttributes::Normals | VertexAttributes::TextureCoordinates);
+            SceneID id = mInProgressScene->addMesh(std::move(mesh), MeshType::Dynamic);
+
+            mStaticMeshEntries.push_back({id, optionalPath->filename().string()});
+
+            mInProgressScene->uploadData(&mEngine);
+        }
+    }
+
+    if(mShowMaterialDialog)
+    {
+        bool created = mMaterialDialog.render();
+
+        if(created)
+        {
+            mShowMaterialDialog = false;
+            addMaterial();
+            ImGui::GetIO().ClearInputCharacters();
+        }
+    }
+
+    if(mShowAddInstanceDialog)
+        drawAddInstanceDialog();
 
     // Set up the draw data/ also calls endFrame.
 	ImGui::Render();
@@ -429,15 +479,25 @@ void Editor::pumpInputQueue()
         if (mCameraInfo.mInFreeFlyMode)
         {
             camera.rotatePitch(mCursorPosDelta.y);
-            camera.rotateYaw(-mCursorPosDelta.x);
+            camera.rotateWorldUp(-mCursorPosDelta.x);
         }
 	}
+    else // Add key presses for text input.
+    {
+
+    }
 }
 
 
 void Editor::mouseScroll_callback(GLFWwindow*, double, double yoffset)
 {
     mMouseScrollAmount.store(yoffset);
+}
+
+
+void Editor::text_callback(GLFWwindow*, unsigned int codePoint)
+{
+    ImGui::GetIO().AddInputCharacter(codePoint);
 }
 
 
@@ -454,6 +514,14 @@ void Editor::drawMenuBar()
 				if(ImGui::MenuItem("Close current Scene"))
 				{
 
+                }
+                if(ImGui::MenuItem("Load mesh"))
+                {
+                    mShowMeshFileBrowser = true;
+                }
+                if(ImGui::MenuItem("Load material"))
+                {
+                    mShowMaterialDialog = true;
                 }
 
 				ImGui::EndMenu();
@@ -473,6 +541,21 @@ void Editor::drawMenuBar()
                 ImGui::RadioButton("Shader graph mode", &mMode, 1);
 
             ImGui::EndGroup();
+
+            if(!mPublishedScene && ImGui::Button("publish scene"))
+            {
+                mEngine.setScene(mInProgressScene);
+
+                std::array<std::string, 6> skybox{	"./Assets/Skybox.png",
+                                                    "./Assets/Skybox.png",
+                                                    "./Assets/Skybox.png",
+                                                    "./Assets/Skybox.png",
+                                                    "./Assets/Skybox.png",
+                                                    "./Assets/Skybox.png" };
+                mInProgressScene->loadSkybox(skybox, &mEngine);
+
+                mPublishedScene = true;
+            }
 
             ImGui::EndMainMenuBar();
 	}
@@ -518,16 +601,32 @@ void Editor::drawAssistantWindow()
            ImGui::TreePop();
        }
 
+       if(ImGui::TreeNode("Static Meshes"))
+       {
+
+           for(const StaticMeshEntry& entry : mStaticMeshEntries)
+           {
+               ImGui::TextUnformatted(entry.mName.c_str());
+               ImGui::SameLine();
+               if(ImGui::Button("Add instance"))
+               {
+                    mShowAddInstanceDialog = true;
+               }
+           }
+
+           ImGui::TreePop();
+       }
+
        if(ImGui::TreeNode("Mesh instances"))
        {
 
-           const Camera& camera = mEngine.getScene().getCamera();
+           const Camera& camera = mInProgressScene->getCamera();
            const float4x4 viewMatrix = glm::lookAt(camera.getPosition(), camera.getPosition() + camera.getDirection(), float3(0.0f, 1.0f, 0.0f));
            const float4x4 projectionMatrix = camera.getPerspectiveMatrix();
 
            for(InstanceID ID : mSceneInstanceIDs)
            {
-                MeshInstance* instance = mEngine.getScene().getMeshInstance(ID);
+                MeshInstance* instance = mInProgressScene->getMeshInstance(ID);
 
                 if(ImGui::TreeNode(instance->getName().c_str()))
                 {
@@ -562,6 +661,16 @@ void Editor::drawAssistantWindow()
 
                     ImGui::TreePop();
                 }
+           }
+
+           ImGui::TreePop();
+       }
+
+       if(ImGui::TreeNode("Materials"))
+       {
+           for(const auto& materialName : mMaterialNames)
+           {
+               ImGui::TextUnformatted(materialName.c_str());
            }
 
            ImGui::TreePop();
@@ -641,7 +750,7 @@ void Editor::drawDebugTexturePicker(const std::vector<std::string>& textures)
 
 void Editor::drawLightMenu()
 {
-    const Camera& camera = mEngine.getScene().getCamera();
+    const Camera& camera = mInProgressScene->getCamera();
     const float4x4 viewMatrix = glm::lookAt(camera.getPosition(), camera.getPosition() + camera.getDirection(), float3(0.0f, 1.0f, 0.0f));
     const float4x4 projectionMatrix = camera.getPerspectiveMatrix();
 
@@ -665,7 +774,7 @@ void Editor::drawLightMenu()
                 drawGuizmo(light, viewMatrix, projectionMatrix, mLightOperationMode);
 
                 // Write back light updates to the scenes light buffer.
-                Scene::Light& sceneLight = mEngine.getScene().getLight(light.mId);
+                Scene::Light& sceneLight = mInProgressScene->getLight(light.mId);
                 sceneLight.mPosition = light.mPosition;
                 sceneLight.mDirection = light.mDirection;
                 sceneLight.mAlbedo = float4(light.mColour[0], light.mColour[1], light.mColour[2], 1.0f);
@@ -679,7 +788,7 @@ void Editor::drawLightMenu()
         if (ImGui::Button("Add point light"))
         {
             EditorLight newLight{};
-            const size_t id = mEngine.getScene().addLight(Scene::Light::pointLight(float4(0.0f, 0.0f, 0.0f, 1.0f), float4(1.0f), 20.0f, 300.0f));
+            const size_t id = mInProgressScene->addLight(Scene::Light::pointLight(float4(0.0f, 0.0f, 0.0f, 1.0f), float4(1.0f), 20.0f, 300.0f));
             newLight.mId = id;
             newLight.mType = LightType::Point;
             newLight.mPosition = float4(0.0f, 0.0f, 0.0f, 1.0f);
@@ -696,7 +805,7 @@ void Editor::drawLightMenu()
         if (ImGui::Button("Add spot light"))
         {
             EditorLight newLight{};
-            const size_t id = mEngine.getScene().addLight(Scene::Light::spotLight(float4(0.0f, 0.0f, 0.0f, 1.0f), float4(1.0f, 0.0f, 0.0f, 0.0f), float4(1.0f), 20.0f, 300.0f, 45.0f));
+            const size_t id = mInProgressScene->addLight(Scene::Light::spotLight(float4(0.0f, 0.0f, 0.0f, 1.0f), float4(1.0f, 0.0f, 0.0f, 0.0f), float4(1.0f), 20.0f, 300.0f, 45.0f));
             newLight.mId = id;
             newLight.mType = LightType::Spot;
             newLight.mPosition = float4(0.0f, 0.0f, 0.0f, 1.0f);
@@ -713,7 +822,7 @@ void Editor::drawLightMenu()
         if (ImGui::Button("Add area light"))
         {
             EditorLight newLight{};
-            const size_t id = mEngine.getScene().addLight(Scene::Light::areaLight(float4(0.0f, 0.0f, 0.0f, 1.0f), float4(1.0f, 0.0f, 0.0f, 1.0), float4(0.0f, 1.0f, 0.0f, 0.0f), float4(1.0f), 20.0f, 300.0f, 50.0f));
+            const size_t id = mInProgressScene->addLight(Scene::Light::areaLight(float4(0.0f, 0.0f, 0.0f, 1.0f), float4(1.0f, 0.0f, 0.0f, 1.0), float4(0.0f, 1.0f, 0.0f, 0.0f), float4(1.0f), 20.0f, 300.0f, 50.0f));
             newLight.mId = id;
             newLight.mType = LightType::Area;
             newLight.mPosition = float4(0.0f, 0.0f, 0.0f, 1.0f);
@@ -731,7 +840,7 @@ void Editor::drawLightMenu()
         /*if (ImGui::Button("Add strip light"))
         {
             EditorLight newLight{};
-            const size_t id = mEngine.getScene().addLight(Scene::Light::stripLight(float4(0.0f, 0.0f, 0.0f, 1.0f), float4(0.0f, 1.0f, 0.0f, 0.0f), float4(1.0f), 20.0f, 300.0f, 50.0f));
+            const size_t id = mInProgressScene.addLight(Scene::Light::stripLight(float4(0.0f, 0.0f, 0.0f, 1.0f), float4(0.0f, 1.0f, 0.0f, 0.0f), float4(1.0f), 20.0f, 300.0f, 50.0f));
             newLight.mId = id;
             newLight.mType = LightType::Strip;
             newLight.mPosition = float4(0.0f, 0.0f, 0.0f, 1.0f);
@@ -783,6 +892,90 @@ void Editor::drawGuizmo(float4x4& world, const float4x4& view, const float4x4& p
 }
 
 
+void Editor::addMaterial()
+{
+    const uint32_t materialFlags = mMaterialDialog.getMaterialFlags();
+    Scene::Material newMaterial{};
+    newMaterial.mMaterialTypes = materialFlags;
+
+    if(materialFlags & static_cast<uint32_t>(MaterialType::Albedo) || materialFlags & static_cast<uint32_t>(MaterialType::Diffuse))
+    {
+        TextureUtil::TextureInfo diffuseInfo = TextureUtil::load32BitTexture(mMaterialDialog.getAlbedoOrDiffusePath().c_str(), STBI_rgb_alpha);
+        Image *diffuseTexture = new Image(mEngine.getDevice(), Format::RGBA8UNorm, ImageUsage::Sampled | ImageUsage::TransferDest,
+                             static_cast<uint32_t>(diffuseInfo.width), static_cast<uint32_t>(diffuseInfo.height), 1, 1, 1, 1, mMaterialDialog.getAlbedoOrDiffusePath());
+        (*diffuseTexture)->setContents(diffuseInfo.mData.data(), static_cast<uint32_t>(diffuseInfo.width), static_cast<uint32_t>(diffuseInfo.height), 1);
+
+        newMaterial.mAlbedoorDiffuse = diffuseTexture;
+    }
+
+    if(materialFlags & static_cast<uint32_t>(MaterialType::Normals))
+    {
+        TextureUtil::TextureInfo normalsInfo = TextureUtil::load32BitTexture(mMaterialDialog.getNormalsPath().c_str(), STBI_rgb_alpha);
+        Image* normalsTexture = new Image(mEngine.getDevice(), Format::RGBA8UNorm, ImageUsage::Sampled | ImageUsage::TransferDest,
+                             static_cast<uint32_t>(normalsInfo.width), static_cast<uint32_t>(normalsInfo.height), 1, 1, 1, 1, mMaterialDialog.getNormalsPath());
+        (*normalsTexture)->setContents(normalsInfo.mData.data(), static_cast<uint32_t>(normalsInfo.width), static_cast<uint32_t>(normalsInfo.height), 1);
+        newMaterial.mNormals = normalsTexture;
+    }
+
+    if(materialFlags & static_cast<uint32_t>(MaterialType::Roughness) || materialFlags & static_cast<uint32_t>(MaterialType::Gloss))
+    {
+        TextureUtil::TextureInfo roughnessInfo = TextureUtil::load32BitTexture(mMaterialDialog.getRoughnessOrGlossPath().c_str(), STBI_grey);
+        Image* roughnessTexture = new Image(mEngine.getDevice(), Format::R8UNorm, ImageUsage::Sampled | ImageUsage::TransferDest,
+                             static_cast<uint32_t>(roughnessInfo.width), static_cast<uint32_t>(roughnessInfo.height), 1, 1, 1, 1, mMaterialDialog.getRoughnessOrGlossPath());
+        (*roughnessTexture)->setContents(roughnessInfo.mData.data(), static_cast<uint32_t>(roughnessInfo.width), static_cast<uint32_t>(roughnessInfo.height), 1);
+        newMaterial.mRoughnessOrGloss = roughnessTexture;
+    }
+
+    if(materialFlags & static_cast<uint32_t>(MaterialType::Metalness) || materialFlags & static_cast<uint32_t>(MaterialType::Specular))
+    {
+        TextureUtil::TextureInfo metalnessInfo = TextureUtil::load32BitTexture(mMaterialDialog.getMetalnessOrSPecularPath().c_str(), materialFlags & static_cast<uint32_t>(MaterialType::Metalness) ? STBI_grey : STBI_rgb_alpha);
+        Image* metalnessTexture = new Image(mEngine.getDevice(), materialFlags & static_cast<uint32_t>(MaterialType::Metalness) ? Format::R8UNorm : Format::RGBA8UNorm, ImageUsage::Sampled | ImageUsage::TransferDest,
+                             static_cast<uint32_t>(metalnessInfo.width), static_cast<uint32_t>(metalnessInfo.height), 1, 1, 1, 1, mMaterialDialog.getMetalnessOrSPecularPath());
+        (*metalnessTexture)->setContents(metalnessInfo.mData.data(), static_cast<uint32_t>(metalnessInfo.width), static_cast<uint32_t>(metalnessInfo.height), 1);
+        newMaterial.mMetalnessOrSpecular = metalnessTexture;
+    }
+
+    mMaterialNames.push_back(mMaterialDialog.getMaterialName());
+    mMaterialDialog.reset();
+
+    mInProgressScene->addMaterial(newMaterial);
+}
+
+
+void Editor::drawAddInstanceDialog()
+{
+    if(ImGui::Begin("Add Instance"))
+    {
+        if(ImGui::BeginCombo("Material", mMaterialNames[mCurrentMaterialIndex].c_str()))
+        {
+            for(uint32_t i = 0; i < mMaterialNames.size(); ++i)
+            {
+                if(ImGui::Selectable(mMaterialNames[i].c_str()), mCurrentMaterialIndex == i)
+                    mCurrentMaterialIndex = i;
+            }
+
+            ImGui::EndCombo();
+        }
+
+        ImGui::InputText("instance name:", mMeshInstanceScratchBuffer, 32);
+
+        if(ImGui::Button("Create"))
+        {
+            mShowAddInstanceDialog = false;
+            const InstanceID id = mInProgressScene->addMeshInstance(mMeshToInstance, float4x4(1.0f), mCurrentMaterialIndex, mMeshInstanceScratchBuffer);
+            mSceneInstanceIDs.push_back(id);
+
+            mInProgressScene->computeBounds(MeshType::Static);
+            mInProgressScene->computeBounds(MeshType::Dynamic);
+
+            ImGui::GetIO().ClearInputCharacters();
+            memset(mMeshInstanceScratchBuffer, 0, 32);
+        }
+    }
+    ImGui::End();
+}
+
+
 void Editor::drawPassContextMenu(const PassType passType)
 {
     bool enabled = (static_cast<uint64_t>(passType) & mRegisteredNodes) > 0;
@@ -807,20 +1000,11 @@ void Editor::drawPassContextMenu(const PassType passType)
 
 void Editor::loadScene(const std::string& scene)
 {
-	// Default Editor skybox.
-    std::array<std::string, 6> skybox{	"./Assets/Skybox.png",
-                                        "./Assets/Skybox.png",
-                                        "./Assets/Skybox.png",
-                                        "./Assets/Skybox.png",
-                                        "./Assets/Skybox.png",
-                                        "./Assets/Skybox.png" };
+    mInProgressScene->setPath(scene);
+    mSceneInstanceIDs = mInProgressScene->loadFromFile(VertexAttributes::Position4 | VertexAttributes::Normals | VertexAttributes::TextureCoordinates, &mEngine);
+    mInProgressScene->uploadData(&mEngine);
+    mInProgressScene->computeBounds(MeshType::Static);
+    mInProgressScene->computeBounds(MeshType::Dynamic);
 
-	Scene testScene(scene);
-    mSceneInstanceIDs = testScene.loadFromFile(VertexAttributes::Position4 | VertexAttributes::Normals | VertexAttributes::TextureCoordinates, &mEngine);
-	testScene.loadSkybox(skybox, &mEngine);
-	testScene.uploadData(&mEngine);
-	testScene.computeBounds(MeshType::Static);
-	testScene.computeBounds(MeshType::Dynamic);
-
-	mEngine.setScene(testScene);
+    mEngine.setScene(mInProgressScene);
 }

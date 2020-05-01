@@ -20,7 +20,7 @@ Scene::Scene(const std::string& name) :
     mStaticMeshBoundingVolume(),
     mDynamicMeshBoundingVolume(),
 	mSceneAABB(float4(std::numeric_limits<float>::max()), float4(std::numeric_limits<float>::min())),
-	mSceneCamera(float3(), float3(0.0f, 0.0f, 1.0f), 1920.0f /1080.0f ,0.1f, 2000.0f),
+    mSceneCamera(float3(0.0f, 0.0f, 0.0f), float3(0.0f, 0.0f, 1.0f), 1920.0f /1080.0f ,0.1f, 2000.0f),
 	mMaterials{},
 	mMaterialImageViews{},
     mMaterialFlags{0},
@@ -379,7 +379,7 @@ SceneID Scene::addMesh(const StaticMesh& mesh, MeshType meshType)
 // It's invalid to use the InstanceID for a static mesh for anything other than state tracking.
 // As the BVH for them will not be updated.
 InstanceID Scene::addMeshInstance(const SceneID meshID,
-                                  const float4x3 &transformation,
+                                  const float4x4 &transformation,
                                   const uint32_t materialID,
                                   const std::string &name)
 {
@@ -526,6 +526,37 @@ void Scene::setShadowingLight(const float3 &position, const float3 &direction, c
 
     ShadowingLight light{view, glm::inverse(view), proj * view, float4(position, 1.0f), float4(direction, 0.0f), float4(up, 1.0f)};
     mShadowingLight = light;
+}
+
+
+void Scene::addMaterial(const Scene::Material& mat)
+{
+    mMaterials.push_back(mat);
+
+    if(mat.mMaterialTypes & static_cast<uint32_t>(MaterialType::Albedo) ||
+            mat.mMaterialTypes & static_cast<uint32_t>(MaterialType::Diffuse))
+    {
+        mMaterialImageViews.emplace_back(*mat.mAlbedoorDiffuse, ImageViewType::Colour);
+    }
+
+    if(mat.mMaterialTypes & static_cast<uint32_t>(MaterialType::Normals))
+    {
+        mMaterialImageViews.emplace_back(*mat.mNormals, ImageViewType::Colour);
+    }
+
+    if(mat.mMaterialTypes & static_cast<uint32_t>(MaterialType::Roughness) ||
+            mat.mMaterialTypes & static_cast<uint32_t>(MaterialType::Gloss))
+    {
+        mMaterialImageViews.emplace_back(*mat.mRoughnessOrGloss, ImageViewType::Colour);
+    }
+
+    if(mat.mMaterialTypes & static_cast<uint32_t>(MaterialType::Metalness) ||
+            mat.mMaterialTypes & static_cast<uint32_t>(MaterialType::Specular))
+    {
+        mMaterialImageViews.emplace_back(*mat.mMetalnessOrSpecular, ImageViewType::Colour);
+    }
+
+    mMaterialFlags = mat.mMaterialTypes;
 }
 
 

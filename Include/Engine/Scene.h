@@ -141,11 +141,16 @@ public:
     ~Scene();
     Scene& operator=(Scene&&);
 
+    void setPath(const std::string& path)
+    {
+        mName = path;
+    }
+
     std::vector<InstanceID> loadFromFile(const int vertAttributes, Engine*);
 	void loadSkybox(const std::array<std::string, 6>& path, Engine*);
 
     SceneID       addMesh(const StaticMesh&, MeshType);
-    InstanceID    addMeshInstance(const SceneID, const float4x3&, const uint32_t materialID, const std::string& name = "");
+    InstanceID    addMeshInstance(const SceneID, const float4x4 &, const uint32_t materialID, const std::string& name = "");
 
     void          uploadData(Engine*);
     void          computeBounds(const MeshType);
@@ -200,6 +205,8 @@ public:
         Image* mMetalnessOrSpecular;
         uint32_t mMaterialTypes;
 	};
+
+    void addMaterial(const Material& mat);
 
 	struct Light
 	{
