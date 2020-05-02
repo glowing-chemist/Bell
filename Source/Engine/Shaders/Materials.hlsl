@@ -52,27 +52,36 @@ MaterialInfo calculateMaterialInfo(	const float4 vertexNormal,
 	    mat.normal = float4(normal, 1.0f);
 	}
 
-	if(materialTypes & kMaterial_Roughness)
-	{
-		mat.specularRoughness.w = materials[materialIndex + nextMaterialSlot].Sample(linearSampler, uv).x;
-		++nextMaterialSlot;
-	}
-
-	if(materialTypes & kMaterial_Gloss)
-	{
-		mat.specularRoughness.w = 1.0f - materials[materialIndex + nextMaterialSlot].Sample(linearSampler, uv).x;
-		++nextMaterialSlot;
-	}
-
-	if(materialTypes & kMaterial_Specular)
-	{
-		mat.specularRoughness.xyz = materials[materialIndex + nextMaterialSlot].Sample(linearSampler, uv).xyz;
-	}
-
 	float metalness = 0.0f;
-	if(materialTypes & kMaterial_Metalness)
+	if(materialTypes & kMaterial_CombinedMetalnessRoughness)
 	{
-		metalness = materials[materialIndex + nextMaterialSlot].Sample(linearSampler, uv).x;
+		const float2 metalnessRoughness = materials[materialIndex + nextMaterialSlot].Sample(linearSampler, uv).xy;
+		metalness = metalnessRoughness.x;
+		mat.specularRoughness.w = metalnessRoughness.y;
+	}
+	else
+	{
+		if(materialTypes & kMaterial_Roughness)
+		{
+			mat.specularRoughness.w = materials[materialIndex + nextMaterialSlot].Sample(linearSampler, uv).x;
+			++nextMaterialSlot;
+		}
+
+		if(materialTypes & kMaterial_Gloss)
+		{
+			mat.specularRoughness.w = 1.0f - materials[materialIndex + nextMaterialSlot].Sample(linearSampler, uv).x;
+			++nextMaterialSlot;
+		}
+
+		if(materialTypes & kMaterial_Specular)
+		{
+			mat.specularRoughness.xyz = materials[materialIndex + nextMaterialSlot].Sample(linearSampler, uv).xyz;
+		}
+
+		if(materialTypes & kMaterial_Metalness)
+		{
+			metalness = materials[materialIndex + nextMaterialSlot].Sample(linearSampler, uv).x;
+		}
 	}
 
 	if(materialTypes & kMaterial_Albedo)

@@ -5,6 +5,7 @@
 
 #include "assimp/Importer.hpp"
 #include "assimp/postprocess.h"
+#include "assimp/pbrmaterial.h"
 
 #include "glm/gtc/matrix_transform.hpp"
 
@@ -394,15 +395,6 @@ void Scene::loadMaterialsExternal(Engine* eng, const aiScene* scene)
         const aiMaterial* material = scene->mMaterials[i];
         MaterialPaths newMaterial{"", "", "", "", 0, materialOffset};
 
-        if(material->GetTextureCount(aiTextureType_DIFFUSE) > 0)
-        {
-            aiString path;
-            material->GetTexture(aiTextureType_DIFFUSE, 0, &path);
-
-            newMaterial.mAlbedoorDiffusePath = sceneDirectory + "/" + path.C_Str();
-            newMaterial.mMaterialTypes |= static_cast<uint32_t>(MaterialType::Diffuse);
-        }
-
         if(material->GetTextureCount(aiTextureType_BASE_COLOR) > 0)
         {
             aiString path;
@@ -410,6 +402,22 @@ void Scene::loadMaterialsExternal(Engine* eng, const aiScene* scene)
 
             newMaterial.mAlbedoorDiffusePath = sceneDirectory + "/" + path.C_Str();
             newMaterial.mMaterialTypes |= static_cast<uint32_t>(MaterialType::Albedo);
+        }
+        else if(material->GetTextureCount(aiTextureType_DIFFUSE) > 1)
+        {
+            aiString path;
+            material->GetTexture(AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_BASE_COLOR_TEXTURE, &path);
+
+            newMaterial.mAlbedoorDiffusePath = sceneDirectory + "/" + path.C_Str();
+            newMaterial.mMaterialTypes |= static_cast<uint32_t>(MaterialType::Albedo);
+        }
+        else if(material->GetTextureCount(aiTextureType_DIFFUSE) > 0)
+        {
+            aiString path;
+            material->GetTexture(aiTextureType_DIFFUSE, 0, &path);
+
+            newMaterial.mAlbedoorDiffusePath = sceneDirectory + "/" + path.C_Str();
+            newMaterial.mMaterialTypes |= static_cast<uint32_t>(MaterialType::Diffuse);
         }
 
         if(material->GetTextureCount(aiTextureType_NORMALS) > 0)
@@ -421,40 +429,50 @@ void Scene::loadMaterialsExternal(Engine* eng, const aiScene* scene)
             newMaterial.mMaterialTypes |= static_cast<uint32_t>(MaterialType::Normals);
         }
 
-        if(material->GetTextureCount(aiTextureType_SHININESS) > 0)
+        // AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_METALLICROUGHNESS_TEXTURE maps to aiTextureType_UNKNOWN for gltf becuase why not.
+        if(material->GetTextureCount(aiTextureType_UNKNOWN) > 0)
         {
             aiString path;
-            material->GetTexture(aiTextureType_SHININESS, 0, &path);
+            material->GetTexture(AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_METALLICROUGHNESS_TEXTURE, &path);
 
             newMaterial.mRoughnessOrGlossPath = sceneDirectory + "/" + path.C_Str();
-            newMaterial.mMaterialTypes |= static_cast<uint32_t>(MaterialType::Gloss);
+            newMaterial.mMaterialTypes |= static_cast<uint32_t>(MaterialType::CombinedMetalnessRoughness);
         }
-
-        if(material->GetTextureCount(aiTextureType_DIFFUSE_ROUGHNESS) > 0)
+        else
         {
-            aiString path;
-            material->GetTexture(aiTextureType_DIFFUSE_ROUGHNESS, 0, &path);
+            if(material->GetTextureCount(aiTextureType_DIFFUSE_ROUGHNESS) > 0)
+            {
+                aiString path;
+                material->GetTexture(aiTextureType_DIFFUSE_ROUGHNESS, 0, &path);
 
-            newMaterial.mAlbedoorDiffusePath = sceneDirectory + "/" + path.C_Str();
-            newMaterial.mMaterialTypes |= static_cast<uint32_t>(MaterialType::Roughness);
-        }
+                newMaterial.mAlbedoorDiffusePath = sceneDirectory + "/" + path.C_Str();
+                newMaterial.mMaterialTypes |= static_cast<uint32_t>(MaterialType::Roughness);
+            }
+            else if(material->GetTextureCount(aiTextureType_SHININESS) > 0)
+            {
+                aiString path;
+                material->GetTexture(aiTextureType_SHININESS, 0, &path);
 
-        if(material->GetTextureCount(aiTextureType_SPECULAR) > 0)
-        {
-            aiString path;
-            material->GetTexture(aiTextureType_NORMALS, 0, &path);
+                newMaterial.mRoughnessOrGlossPath = sceneDirectory + "/" + path.C_Str();
+                newMaterial.mMaterialTypes |= static_cast<uint32_t>(MaterialType::Gloss);
+            }
 
-            newMaterial.mMetalnessOrSpecularPath = sceneDirectory + "/" + path.C_Str();
-            newMaterial.mMaterialTypes |= static_cast<uint32_t>(MaterialType::Specular);
-        }
+            if(material->GetTextureCount(aiTextureType_METALNESS) > 0)
+            {
+                aiString path;
+                material->GetTexture(aiTextureType_METALNESS, 0, &path);
 
-        if(material->GetTextureCount(aiTextureType_METALNESS) > 0)
-        {
-            aiString path;
-            material->GetTexture(aiTextureType_METALNESS, 0, &path);
+                newMaterial.mAlbedoorDiffusePath = sceneDirectory + "/" + path.C_Str();
+                newMaterial.mMaterialTypes |= static_cast<uint32_t>(MaterialType::Metalness);
+            }
+            else if(material->GetTextureCount(aiTextureType_SPECULAR) > 0)
+            {
+                aiString path;
+                material->GetTexture(aiTextureType_NORMALS, 0, &path);
 
-            newMaterial.mAlbedoorDiffusePath = sceneDirectory + "/" + path.C_Str();
-            newMaterial.mMaterialTypes |= static_cast<uint32_t>(MaterialType::Metalness);
+                newMaterial.mMetalnessOrSpecularPath = sceneDirectory + "/" + path.C_Str();
+                newMaterial.mMaterialTypes |= static_cast<uint32_t>(MaterialType::Specular);
+            }
         }
 
         materialOffset += __builtin_popcount(newMaterial.mMaterialTypes);

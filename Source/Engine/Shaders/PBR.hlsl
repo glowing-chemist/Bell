@@ -1,13 +1,17 @@
 
 #include "Hammersley.hlsl"
 
-#define    kMaterial_Albedo 1
+#define    kMaterial_Albedo (1)
 #define    kMaterial_Diffuse (1 << 1)
 #define    kMaterial_Normals (1 << 2)
 #define    kMaterial_Roughness (1 << 3)
 #define    kMaterial_Gloss (1 << 4)
 #define    kMaterial_Metalness (1 << 5)
 #define    kMaterial_Specular (1 << 6)
+#define    kMaterial_CombinedMetalnessRoughness (1 << 7)
+#define    kMaterial_AmbientOcclusion (1 << 8)
+#define    kMaterial_Emmisive (1 << 9)
+
 
 struct MaterialInfo
 {
