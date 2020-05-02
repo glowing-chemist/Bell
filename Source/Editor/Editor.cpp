@@ -945,7 +945,8 @@ void Editor::drawAddInstanceDialog()
         if(ImGui::Button("Create"))
         {
             mShowAddInstanceDialog = false;
-            const InstanceID id = mInProgressScene->addMeshInstance(mMeshToInstance, float4x4(1.0f), mCurrentMaterialIndex, mMeshInstanceScratchBuffer);
+            const Scene::Material& mat = mInProgressScene->getMaterialDescriptions()[mCurrentMaterialIndex];
+            const InstanceID id = mInProgressScene->addMeshInstance(mMeshToInstance, float4x4(1.0f), mat.mMaterialOffset, mat.mMaterialTypes, mMeshInstanceScratchBuffer);
             mSceneInstanceIDs.push_back(id);
 
             mInProgressScene->computeBounds(MeshType::Static);

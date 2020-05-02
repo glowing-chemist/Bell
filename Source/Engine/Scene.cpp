@@ -23,7 +23,6 @@ Scene::Scene(const std::string& name) :
     mSceneCamera(float3(0.0f, 0.0f, 0.0f), float3(0.0f, 0.0f, 1.0f), 1920.0f /1080.0f ,0.1f, 2000.0f),
 	mMaterials{},
 	mMaterialImageViews{},
-    mMaterialFlags{0},
     mLights{},
     mShadowingLight{},
 	mSkybox{nullptr}
@@ -42,7 +41,6 @@ Scene::Scene(Scene&& scene) :
     mSceneCamera{std::move(scene.mSceneCamera)},
     mMaterials{std::move(scene.mMaterials)},
     mMaterialImageViews{std::move(scene.mMaterialImageViews)},
-    mMaterialFlags{scene.mMaterialFlags},
     mLights{std::move(scene.mLights)},
     mShadowingLight{std::move(scene.mShadowingLight)},
     mSkybox{std::move(scene.mSkybox)},
@@ -63,7 +61,6 @@ Scene& Scene::operator=(Scene&& scene)
     mSceneCamera = std::move(scene.mSceneCamera);
 	mMaterials = std::move(scene.mMaterials);
 	mMaterialImageViews = std::move(scene.mMaterialImageViews);
-    mMaterialFlags = scene.mMaterialFlags;
     mLights = std::move(scene.mLights);
     mShadowingLight = std::move(scene.mShadowingLight);
 	mSkybox = std::move(scene.mSkybox);
@@ -177,6 +174,9 @@ void Scene::parseNode(const aiScene* scene,
             materialIndex = currentMesh->mMaterialIndex;
         }
 
+        const uint32_t materialOffset = mMaterials[materialIndex].mMaterialOffset;
+        const uint32_t materialFlags = mMaterials[materialIndex].mMaterialTypes;
+
         SceneID meshID = 0;
         if(meshMappings.find(currentMesh) == meshMappings.end())
         {
@@ -195,7 +195,7 @@ void Scene::parseNode(const aiScene* scene,
                                              transformation.c1, transformation.c2, transformation.c3, transformation.c4,
                                              transformation.d1, transformation.d2, transformation.d3, transformation.d4};
 
-        InstanceID instanceID = addMeshInstance(meshID, transformationMatrix, materialIndex, currentMesh->mName.C_Str());
+        InstanceID instanceID = addMeshInstance(meshID, transformationMatrix, materialOffset, materialFlags, currentMesh->mName.C_Str());
         instanceIds.push_back(instanceID);
     }
 
@@ -296,7 +296,9 @@ Scene::MaterialMappings Scene::loadMaterialsInternal(Engine* eng)
         materialMappings.insert({aiString(token), {materialIndex, attributes}});
 	}
 
-    Material mat{nullptr, nullptr, nullptr, nullptr, 0};
+    uint32_t materialOffset = 0;
+
+    Material mat{nullptr, nullptr, nullptr, nullptr, 0, 0};
     std::string albedoOrDiffuseFile;
 	std::string normalsFile;
     std::string roughnessOrGlossFile;
@@ -305,11 +307,12 @@ Scene::MaterialMappings Scene::loadMaterialsInternal(Engine* eng)
 	{
 		if(token == "Material")
 		{
+            mat.mMaterialOffset = materialOffset;
+            materialOffset += __builtin_popcount(mat.mMaterialTypes);
+
             // add the previously read material if it exists.
             if(mat.mNormals || mat.mAlbedoorDiffuse || mat.mRoughnessOrGloss || mat.mMetalnessOrSpecular)
                 mMaterials.push_back(mat);
-
-            mMaterialFlags |= mat.mMaterialTypes;
 
             mat.mNormals = nullptr;
             mat.mAlbedoorDiffuse = nullptr;
@@ -376,20 +379,20 @@ Scene::MaterialMappings Scene::loadMaterialsInternal(Engine* eng)
     // Add the last material
     if(mat.mNormals || mat.mAlbedoorDiffuse || mat.mRoughnessOrGloss || mat.mMetalnessOrSpecular)
         mMaterials.push_back(mat);
-    mMaterialFlags |= mat.mMaterialTypes;
 
-	return materialMappings;
+    return materialMappings;
 }
 
 
 void Scene::loadMaterialsExternal(Engine* eng, const aiScene* scene)
 {
     const std::string sceneDirectory = mPath.parent_path().string();
+    uint32_t materialOffset = 0;
 
     for(uint32_t i = 0; i < scene->mNumMaterials; ++i)
     {
         const aiMaterial* material = scene->mMaterials[i];
-        MaterialPaths newMaterial{"", "", "", "", 0};
+        MaterialPaths newMaterial{"", "", "", "", 0, materialOffset};
 
         if(material->GetTextureCount(aiTextureType_DIFFUSE) > 0)
         {
@@ -398,6 +401,15 @@ void Scene::loadMaterialsExternal(Engine* eng, const aiScene* scene)
 
             newMaterial.mAlbedoorDiffusePath = sceneDirectory + "/" + path.C_Str();
             newMaterial.mMaterialTypes |= static_cast<uint32_t>(MaterialType::Diffuse);
+        }
+
+        if(material->GetTextureCount(aiTextureType_BASE_COLOR) > 0)
+        {
+            aiString path;
+            material->GetTexture(aiTextureType_BASE_COLOR, 0, &path);
+
+            newMaterial.mAlbedoorDiffusePath = sceneDirectory + "/" + path.C_Str();
+            newMaterial.mMaterialTypes |= static_cast<uint32_t>(MaterialType::Albedo);
         }
 
         if(material->GetTextureCount(aiTextureType_NORMALS) > 0)
@@ -418,6 +430,15 @@ void Scene::loadMaterialsExternal(Engine* eng, const aiScene* scene)
             newMaterial.mMaterialTypes |= static_cast<uint32_t>(MaterialType::Gloss);
         }
 
+        if(material->GetTextureCount(aiTextureType_DIFFUSE_ROUGHNESS) > 0)
+        {
+            aiString path;
+            material->GetTexture(aiTextureType_DIFFUSE_ROUGHNESS, 0, &path);
+
+            newMaterial.mAlbedoorDiffusePath = sceneDirectory + "/" + path.C_Str();
+            newMaterial.mMaterialTypes |= static_cast<uint32_t>(MaterialType::Roughness);
+        }
+
         if(material->GetTextureCount(aiTextureType_SPECULAR) > 0)
         {
             aiString path;
@@ -427,7 +448,17 @@ void Scene::loadMaterialsExternal(Engine* eng, const aiScene* scene)
             newMaterial.mMaterialTypes |= static_cast<uint32_t>(MaterialType::Specular);
         }
 
-        mMaterialFlags |= newMaterial.mMaterialTypes;
+        if(material->GetTextureCount(aiTextureType_METALNESS) > 0)
+        {
+            aiString path;
+            material->GetTexture(aiTextureType_METALNESS, 0, &path);
+
+            newMaterial.mAlbedoorDiffusePath = sceneDirectory + "/" + path.C_Str();
+            newMaterial.mMaterialTypes |= static_cast<uint32_t>(MaterialType::Metalness);
+        }
+
+        materialOffset += __builtin_popcount(newMaterial.mMaterialTypes);
+
         addMaterial(newMaterial, eng);
     }
 }
@@ -447,7 +478,8 @@ SceneID Scene::addMesh(const StaticMesh& mesh, MeshType meshType)
 // As the BVH for them will not be updated.
 InstanceID Scene::addMeshInstance(const SceneID meshID,
                                   const float4x4 &transformation,
-                                  const uint32_t materialID,
+                                  const uint32_t materialIndex,
+                                  const uint32_t materialFlags,
                                   const std::string &name)
 {
     auto& [mesh, meshType] = mSceneMeshes[meshID];
@@ -458,13 +490,13 @@ InstanceID Scene::addMeshInstance(const SceneID meshID,
     {
         id = static_cast<InstanceID>(mStaticMeshInstances.size() + 1);
 
-        mStaticMeshInstances.push_back({&mesh, transformation, materialID, name});
+        mStaticMeshInstances.push_back({&mesh, transformation, materialIndex, materialFlags, name});
     }
     else
     {
         id = -static_cast<InstanceID>(mDynamicMeshInstances.size());
 
-        mDynamicMeshInstances.push_back({&mesh, transformation, materialID, name});
+        mDynamicMeshInstances.push_back({&mesh, transformation, materialIndex, materialFlags, name});
     }
 
     return id;
@@ -622,8 +654,6 @@ void Scene::addMaterial(const Scene::Material& mat)
     {
         mMaterialImageViews.emplace_back(*mat.mMetalnessOrSpecular, ImageViewType::Colour);
     }
-
-    mMaterialFlags = mat.mMaterialTypes;
 }
 
 
@@ -632,6 +662,7 @@ void Scene::addMaterial(const MaterialPaths& mat, Engine* eng)
     const uint32_t materialFlags = mat.mMaterialTypes;
     Scene::Material newMaterial{};
     newMaterial.mMaterialTypes = materialFlags;
+    newMaterial.mMaterialOffset = mat.mMaterialOffset;
 
     if(materialFlags & static_cast<uint32_t>(MaterialType::Albedo) || materialFlags & static_cast<uint32_t>(MaterialType::Diffuse))
     {

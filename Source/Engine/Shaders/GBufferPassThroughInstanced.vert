@@ -23,7 +23,8 @@ GBufferVertOutput main(Vertex vertInput, uint instanceID : SV_InstanceID)
 	output.positionWS = transformedPositionWS;
 	output.uv = vertInput.uv;
 	output.normal = float4(mul((float3x3)instanceTransformations[instanceID].meshMatrix, float3(vertInput.normal.xyz)), 1.0f);
-	output.materialID =  instanceTransformations[instanceID].materialID;
+	output.materialIndex =  instanceTransformations[instanceID].materialIndex;
+	output.materialFlags = instanceTransformations[instanceID].materialFlags;
 
 	// Calculate screen space velocity.
 	// Calculate screen space velocity.

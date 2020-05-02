@@ -24,7 +24,8 @@ GBufferVertOutput main(Vertex vertInput)
 	output.positionWS = transformedPositionWS;
 	output.uv = vertInput.uv;
 	output.normal = float4(mul(vertInput.normal.xyz, (float3x3)meshMatrix), 1.0f);
-	output.materialID =  model.materialID;
+	output.materialIndex =  model.materialIndex;
+	output.materialFlags = model.materialFlags;
 
 	// Calculate screen space velocity.
 	transformedPosition /= transformedPosition.w;

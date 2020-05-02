@@ -20,7 +20,8 @@ ShadowMapVertOutput main(Vertex vertex)
 	output.position = mul(light.viewProj, transformedPositionWS);
 	output.positionVS = mul(light.view, transformedPositionWS);
 	output.uv = vertex.uv;
-	output.materialID = model.materialID;
+	output.materialIndex = model.materialIndex;
+	output.materialFlags = model.materialFlags;
 
 	return output;
 }

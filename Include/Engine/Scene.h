@@ -69,12 +69,14 @@ struct MeshInstance
     MeshInstance(StaticMesh* mesh,
                  const float4x3& trans,
                  const uint32_t materialID,
+                 const uint32_t materialFLags,
                  const std::string& name = "") :
         mMesh(mesh),
         mTransformation(trans),
         mPreviousTransformation(trans),
         mName{name},
-        mMaterialID{materialID},
+        mMaterialIndex{materialID},
+        mMaterialFlags{materialFLags},
         mInstanceFlags{InstanceFlags::Draw} {}
 
     StaticMesh* mMesh;
@@ -84,9 +86,9 @@ struct MeshInstance
         return mTransformation;
     }
 
-    uint32_t getmaterialID() const
+    uint32_t getmaterialIndex() const
     {
-        return mMaterialID;
+        return mMaterialIndex;
     }
 
     const std::string& getName() const
@@ -115,7 +117,8 @@ struct MeshInstance
         MeshEntry entry{};
         entry.mTransformation = transpose(float4x3(mTransformation));
         entry.mPreviousTransformation = transpose(float4x3(mPreviousTransformation));
-        entry.mMaterialIndex = mMaterialID;
+        entry.mMaterialIndex = mMaterialIndex;
+        entry.mMaterialFlags = mMaterialFlags;
         entry.mAttributes = mMesh->getAttributes();
 
         return entry;
@@ -125,7 +128,8 @@ private:
     float4x4 mTransformation;
     float4x4 mPreviousTransformation;
     std::string mName;
-    uint32_t mMaterialID;
+    uint32_t mMaterialIndex;
+    uint32_t mMaterialFlags;
     uint32_t mInstanceFlags;
 };
 
@@ -150,7 +154,11 @@ public:
 	void loadSkybox(const std::array<std::string, 6>& path, Engine*);
 
     SceneID       addMesh(const StaticMesh&, MeshType);
-    InstanceID    addMeshInstance(const SceneID, const float4x4 &, const uint32_t materialID, const std::string& name = "");
+    InstanceID    addMeshInstance(const SceneID,
+                                  const float4x4&,
+                                  const uint32_t materialIndex,
+                                  const uint32_t materialFlags,
+                                  const std::string& name = "");
 
     void          uploadData(Engine*);
     void          computeBounds(const MeshType);
@@ -192,11 +200,6 @@ public:
 		return mMaterialImageViews;
 	}
 
-    uint32_t getMaterialFlags() const
-    {
-        return mMaterialFlags;
-    }
-
 	struct Material
 	{
         Image* mAlbedoorDiffuse;
@@ -204,6 +207,7 @@ public:
         Image* mRoughnessOrGloss;
         Image* mMetalnessOrSpecular;
         uint32_t mMaterialTypes;
+        uint32_t mMaterialOffset;
 	};
 
     struct MaterialPaths
@@ -213,7 +217,13 @@ public:
         std::string mRoughnessOrGlossPath;
         std::string mMetalnessOrSpecularPath;
         uint32_t mMaterialTypes;
+        uint32_t mMaterialOffset;
     };
+
+    const std::vector<Material>& getMaterialDescriptions() const
+    {
+        return mMaterials;
+    }
 
     void addMaterial(const Material& mat);
     void addMaterial(const MaterialPaths& mat, Engine *eng);
@@ -336,7 +346,6 @@ private:
 
 	std::vector<Material> mMaterials;
 	std::vector<ImageView> mMaterialImageViews;
-    uint32_t mMaterialFlags;
 
     std::vector<Light> mLights;
     ShadowingLight mShadowingLight;

@@ -44,12 +44,6 @@ struct ShadowingLight
 };
 
 
-struct MaterialAttributes
-{
-    uint materialAttributes;
-};
-
-
 struct VoxelDimmensions
 {
     float4 voxelCentreWS;

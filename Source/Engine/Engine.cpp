@@ -49,8 +49,6 @@ Engine::Engine(GLFWwindow* windowPtr) :
     mVertexBuilder(),
     mIndexBuilder(),
     mMaterials{getDevice()},
-    mMaterialFlagsBuffer(getDevice(), BufferUsage::Uniform | BufferUsage::TransferDest, sizeof(uint32_t), sizeof(uint32_t), "MaterialFlags"),
-    mMaterialFlagsBufferView(mMaterialFlagsBuffer),
     mLTCMat(getDevice(), Format::RGBA32Float, ImageUsage::Sampled | ImageUsage::TransferDest, 64, 64, 1, 1, 1, 1, "LTC Mat"),
     mLTCMatView(mLTCMat, ImageViewType::Colour),
     mLTCAmp(getDevice(), Format::RG32Float, ImageUsage::Sampled | ImageUsage::TransferDest, 64, 64, 1, 1, 1, 1, "LTC Amp"),
@@ -129,7 +127,6 @@ void Engine::setScene(Scene* scene)
 
 	// Set up the SRS for the materials.
     const auto& materials = mCurrentScene->getMaterials();
-    mMaterials->addUniformBuffer(mMaterialFlagsBufferView);
 	mMaterials->addSampledImageArray(materials);
 	mMaterials->finalise();
 }
@@ -550,11 +547,6 @@ void Engine::updateGlobalBuffers()
                 std::memcpy(dst, &shadowingLight, sizeof(Scene::ShadowingLight));
 
             mShadowCastingLight.get()->unmap();
-        }
-
-        {
-            const uint32_t materialFLags = mCurrentScene->getMaterialFlags();
-            mMaterialFlagsBuffer->setContents(&materialFLags, sizeof(uint32_t));
         }
     }
 }

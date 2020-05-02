@@ -13,8 +13,6 @@ MaterialInfo calculateMaterialInfo(	const float4 vertexNormal,
 									const float3 view, 
 									const float2 uv)
 {
-	const uint materialCount = countbits(materialTypes);
-
 	MaterialInfo mat;
 	mat.diffuse = float4(0.5f, 0.5f, 0.5f, 1.0f);
 	mat.normal = vertexNormal;
@@ -24,7 +22,7 @@ MaterialInfo calculateMaterialInfo(	const float4 vertexNormal,
 
 	if(materialTypes & kMaterial_Diffuse)
 	{
-		mat.diffuse = materials[materialIndex * materialCount].Sample(linearSampler, uv);
+		mat.diffuse = materials[materialIndex].Sample(linearSampler, uv);
 		++nextMaterialSlot;
 	}
 
@@ -33,7 +31,7 @@ MaterialInfo calculateMaterialInfo(	const float4 vertexNormal,
 
 	if(materialTypes & kMaterial_Normals)
 	{
-		float3 normal = materials[materialIndex * materialCount + nextMaterialSlot].Sample(linearSampler, uv).xyz;
+		float3 normal = materials[materialIndex + nextMaterialSlot].Sample(linearSampler, uv).xyz;
 		++nextMaterialSlot;
 
 	    // remap normal
@@ -56,30 +54,30 @@ MaterialInfo calculateMaterialInfo(	const float4 vertexNormal,
 
 	if(materialTypes & kMaterial_Roughness)
 	{
-		mat.specularRoughness.w = materials[materialIndex * materialCount + nextMaterialSlot].Sample(linearSampler, uv).x;
+		mat.specularRoughness.w = materials[materialIndex + nextMaterialSlot].Sample(linearSampler, uv).x;
 		++nextMaterialSlot;
 	}
 
 	if(materialTypes & kMaterial_Gloss)
 	{
-		mat.specularRoughness.w = 1.0f - materials[materialIndex * materialCount + nextMaterialSlot].Sample(linearSampler, uv).x;
+		mat.specularRoughness.w = 1.0f - materials[materialIndex + nextMaterialSlot].Sample(linearSampler, uv).x;
 		++nextMaterialSlot;
 	}
 
 	if(materialTypes & kMaterial_Specular)
 	{
-		mat.specularRoughness.xyz = materials[materialIndex * materialCount + nextMaterialSlot].Sample(linearSampler, uv).xyz;
+		mat.specularRoughness.xyz = materials[materialIndex + nextMaterialSlot].Sample(linearSampler, uv).xyz;
 	}
 
 	float metalness = 0.0f;
 	if(materialTypes & kMaterial_Metalness)
 	{
-		metalness = materials[materialIndex * materialCount + nextMaterialSlot].Sample(linearSampler, uv).x;
+		metalness = materials[materialIndex + nextMaterialSlot].Sample(linearSampler, uv).x;
 	}
 
 	if(materialTypes & kMaterial_Albedo)
 	{
-		const float4 albedo = materials[materialIndex * materialCount].Sample(linearSampler, uv);
+		const float4 albedo = materials[materialIndex].Sample(linearSampler, uv);
 		mat.diffuse = albedo * (1.0 - DIELECTRIC_SPECULAR) * (1.0 - metalness);
 		mat.diffuse.w = albedo.w;// Preserve teh alpha chanle.
 

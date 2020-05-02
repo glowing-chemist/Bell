@@ -17,7 +17,8 @@ struct GBufferVertOutput
 	float4 positionWS : POSITION0;
 	float2 uv : TEXCOORD0;
 	float4 normal : NORMAL0;
-	uint materialID : MATERIALID;
+	uint materialIndex : MATERIALID;
+	uint materialFlags : MATERIAL_FLAGS;
 	float2 velocity : VELOCITY;
 };
 
@@ -32,7 +33,8 @@ struct DepthOnlyOutput
 {
 	float4 position : SV_Position;
 	float2 uv : TEXCOORD0;
-	uint materialID;
+	uint materialIndex;
+	uint materialFlags;
 };
 
 struct ShadowMapVertOutput
@@ -40,7 +42,8 @@ struct ShadowMapVertOutput
 	float4 position : SV_Position;
 	float4 positionVS : POSITIONVS;
 	float2 uv;
-	uint materialID;
+	uint materialIndex;
+	uint materialFlags;
 };
 
 struct VoxalizeGeometryOutput
@@ -76,7 +79,8 @@ struct ObjectMatracies
 {
 	float4x3 meshMatrix;
 	float4x3 prevMeshMatrix;
-	uint materialID;
+	uint materialIndex;
+	uint materialFlags;
 	uint attributes;
 };
 

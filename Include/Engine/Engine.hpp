@@ -201,8 +201,6 @@ private:
     BufferBuilder mIndexBuilder;
 
 	ShaderResourceSet mMaterials;
-    Buffer mMaterialFlagsBuffer;
-    BufferView mMaterialFlagsBufferView;
 
     Image mLTCMat;
     ImageView mLTCMatView;

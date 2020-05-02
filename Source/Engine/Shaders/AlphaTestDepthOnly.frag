@@ -5,9 +5,6 @@
 SamplerState linearSampler;
 
 [[vk::binding(0, 1)]]
-ConstantBuffer<MaterialAttributes> materialFlags;
-
-[[vk::binding(1, 1)]]
 Texture2D materials[];
 
 void main(DepthOnlyOutput vertInput)

@@ -6,9 +6,6 @@
 SamplerState linearSampler;
 
 [[vk::binding(0, 1)]]
-ConstantBuffer<MaterialAttributes> materialFlags;
-
-[[vk::binding(1, 1)]]
 Texture2D materials[];
 
 [[vk::push_constant]]
@@ -16,10 +13,9 @@ ConstantBuffer<ObjectMatracies> model;
 
 float2 main(ShadowMapVertOutput vertInput)
 {
-	const uint materialCount = countbits(materialFlags.materialAttributes);
 	if(model.attributes & kAlphaTested)
 	{
-		const float alpha = materials[vertInput.materialID * materialCount].Sample(linearSampler, vertInput.uv).w;
+		const float alpha = materials[vertInput.materialIndex].Sample(linearSampler, vertInput.uv).w;
 		if(alpha == 0.0f)
 			discard;
 	}

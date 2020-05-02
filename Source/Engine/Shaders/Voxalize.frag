@@ -49,9 +49,6 @@ Texture2D<float> shadowMap;
 
 // materials
 [[vk::binding(0, 1)]]
-ConstantBuffer<MaterialAttributes> materialFlags;
-
-[[vk::binding(1, 1)]]
 Texture2D materials[];
 
 
@@ -76,8 +73,8 @@ void main(VoxalizeGeometryOutput vertInput)
 	const float3 viewDir = normalize(camera.position - vertInput.positionWS.xyz);
 
     MaterialInfo material = calculateMaterialInfo(  vertInput.normal, 
-                                                    materialFlags.materialAttributes, 
-                                                    vertInput.materialID, 
+                                                    vertInput.materialFlags, 
+                                                    vertInput.materialIndex, 
                                                     viewDir, 
                                                     vertInput.uv);
 

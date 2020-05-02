@@ -20,7 +20,8 @@ DepthOnlyOutput main(Vertex vertex)
 	float4 transformedPosition = mul(camera.viewProj, transformedPositionWS);
 	output.position = transformedPosition;
 	output.uv = vertex.uv;
-	output.materialID = model.materialID;
+	output.materialIndex = model.materialIndex;
+	output.materialFlags = model.materialFlags;
 
 	return output;
 }
