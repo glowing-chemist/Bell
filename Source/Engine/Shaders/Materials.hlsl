@@ -55,7 +55,7 @@ MaterialInfo calculateMaterialInfo(	const float4 vertexNormal,
 	float metalness = 0.0f;
 	if(materialTypes & kMaterial_CombinedMetalnessRoughness)
 	{
-		const float2 metalnessRoughness = materials[materialIndex + nextMaterialSlot].Sample(linearSampler, uv).xy;
+		const float2 metalnessRoughness = materials[materialIndex + nextMaterialSlot].Sample(linearSampler, uv).zy;
 		metalness = metalnessRoughness.x;
 		mat.specularRoughness.w = metalnessRoughness.y;
 	}
