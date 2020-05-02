@@ -895,50 +895,33 @@ void Editor::drawGuizmo(float4x4& world, const float4x4& view, const float4x4& p
 void Editor::addMaterial()
 {
     const uint32_t materialFlags = mMaterialDialog.getMaterialFlags();
-    Scene::Material newMaterial{};
+    Scene::MaterialPaths newMaterial{};
     newMaterial.mMaterialTypes = materialFlags;
 
     if(materialFlags & static_cast<uint32_t>(MaterialType::Albedo) || materialFlags & static_cast<uint32_t>(MaterialType::Diffuse))
     {
-        TextureUtil::TextureInfo diffuseInfo = TextureUtil::load32BitTexture(mMaterialDialog.getAlbedoOrDiffusePath().c_str(), STBI_rgb_alpha);
-        Image *diffuseTexture = new Image(mEngine.getDevice(), Format::RGBA8UNorm, ImageUsage::Sampled | ImageUsage::TransferDest,
-                             static_cast<uint32_t>(diffuseInfo.width), static_cast<uint32_t>(diffuseInfo.height), 1, 1, 1, 1, mMaterialDialog.getAlbedoOrDiffusePath());
-        (*diffuseTexture)->setContents(diffuseInfo.mData.data(), static_cast<uint32_t>(diffuseInfo.width), static_cast<uint32_t>(diffuseInfo.height), 1);
-
-        newMaterial.mAlbedoorDiffuse = diffuseTexture;
+        newMaterial.mAlbedoorDiffusePath = mMaterialDialog.getAlbedoOrDiffusePath();
     }
 
     if(materialFlags & static_cast<uint32_t>(MaterialType::Normals))
     {
-        TextureUtil::TextureInfo normalsInfo = TextureUtil::load32BitTexture(mMaterialDialog.getNormalsPath().c_str(), STBI_rgb_alpha);
-        Image* normalsTexture = new Image(mEngine.getDevice(), Format::RGBA8UNorm, ImageUsage::Sampled | ImageUsage::TransferDest,
-                             static_cast<uint32_t>(normalsInfo.width), static_cast<uint32_t>(normalsInfo.height), 1, 1, 1, 1, mMaterialDialog.getNormalsPath());
-        (*normalsTexture)->setContents(normalsInfo.mData.data(), static_cast<uint32_t>(normalsInfo.width), static_cast<uint32_t>(normalsInfo.height), 1);
-        newMaterial.mNormals = normalsTexture;
+        newMaterial.mNormalsPath = mMaterialDialog.getNormalsPath();
     }
 
     if(materialFlags & static_cast<uint32_t>(MaterialType::Roughness) || materialFlags & static_cast<uint32_t>(MaterialType::Gloss))
     {
-        TextureUtil::TextureInfo roughnessInfo = TextureUtil::load32BitTexture(mMaterialDialog.getRoughnessOrGlossPath().c_str(), STBI_grey);
-        Image* roughnessTexture = new Image(mEngine.getDevice(), Format::R8UNorm, ImageUsage::Sampled | ImageUsage::TransferDest,
-                             static_cast<uint32_t>(roughnessInfo.width), static_cast<uint32_t>(roughnessInfo.height), 1, 1, 1, 1, mMaterialDialog.getRoughnessOrGlossPath());
-        (*roughnessTexture)->setContents(roughnessInfo.mData.data(), static_cast<uint32_t>(roughnessInfo.width), static_cast<uint32_t>(roughnessInfo.height), 1);
-        newMaterial.mRoughnessOrGloss = roughnessTexture;
+        newMaterial.mRoughnessOrGlossPath = mMaterialDialog.getRoughnessOrGlossPath();
     }
 
     if(materialFlags & static_cast<uint32_t>(MaterialType::Metalness) || materialFlags & static_cast<uint32_t>(MaterialType::Specular))
     {
-        TextureUtil::TextureInfo metalnessInfo = TextureUtil::load32BitTexture(mMaterialDialog.getMetalnessOrSPecularPath().c_str(), materialFlags & static_cast<uint32_t>(MaterialType::Metalness) ? STBI_grey : STBI_rgb_alpha);
-        Image* metalnessTexture = new Image(mEngine.getDevice(), materialFlags & static_cast<uint32_t>(MaterialType::Metalness) ? Format::R8UNorm : Format::RGBA8UNorm, ImageUsage::Sampled | ImageUsage::TransferDest,
-                             static_cast<uint32_t>(metalnessInfo.width), static_cast<uint32_t>(metalnessInfo.height), 1, 1, 1, 1, mMaterialDialog.getMetalnessOrSPecularPath());
-        (*metalnessTexture)->setContents(metalnessInfo.mData.data(), static_cast<uint32_t>(metalnessInfo.width), static_cast<uint32_t>(metalnessInfo.height), 1);
-        newMaterial.mMetalnessOrSpecular = metalnessTexture;
+        newMaterial.mMetalnessOrSpecularPath = mMaterialDialog.getMetalnessOrSPecularPath();
     }
+
+    mInProgressScene->addMaterial(newMaterial, &mEngine);
 
     mMaterialNames.push_back(mMaterialDialog.getMaterialName());
     mMaterialDialog.reset();
-
-    mInProgressScene->addMaterial(newMaterial);
 }
 
 
@@ -1006,5 +989,15 @@ void Editor::loadScene(const std::string& scene)
     mInProgressScene->computeBounds(MeshType::Static);
     mInProgressScene->computeBounds(MeshType::Dynamic);
 
+    std::array<std::string, 6> skybox{	"./Assets/Skybox.png",
+                                        "./Assets/Skybox.png",
+                                        "./Assets/Skybox.png",
+                                        "./Assets/Skybox.png",
+                                        "./Assets/Skybox.png",
+                                        "./Assets/Skybox.png" };
+    mInProgressScene->loadSkybox(skybox, &mEngine);
+
     mEngine.setScene(mInProgressScene);
+
+    mPublishedScene = true; // Scene has been published to engine.
 }

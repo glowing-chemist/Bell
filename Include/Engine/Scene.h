@@ -143,7 +143,7 @@ public:
 
     void setPath(const std::string& path)
     {
-        mName = path;
+        mPath = path;
     }
 
     std::vector<InstanceID> loadFromFile(const int vertAttributes, Engine*);
@@ -206,7 +206,17 @@ public:
         uint32_t mMaterialTypes;
 	};
 
+    struct MaterialPaths
+    {
+        std::string mAlbedoorDiffusePath;
+        std::string mNormalsPath;
+        std::string mRoughnessOrGlossPath;
+        std::string mMetalnessOrSpecularPath;
+        uint32_t mMaterialTypes;
+    };
+
     void addMaterial(const Material& mat);
+    void addMaterial(const MaterialPaths& mat, Engine *eng);
 
 	struct Light
 	{
@@ -295,8 +305,10 @@ private:
 
 	using MaterialMappings = std::map<aiString, MeshInfo, AiStringComparitor>;
 
-	// return a mapping between mesh name and material index
+    // return a mapping between mesh name and material index from the Bell material file format
 	MaterialMappings loadMaterialsInternal(Engine*);
+    // Loads materials at the index specified by the external scene file.
+    void loadMaterialsExternal(Engine*, const aiScene *scene);
 
     void parseNode(const aiScene* scene,
                    const aiNode* node,
@@ -308,7 +320,7 @@ private:
 
 	void addLights(const aiScene* scene);
 
-    std::filesystem::path mName;
+    std::filesystem::path mPath;
 
     std::vector<std::pair<StaticMesh, MeshType>> mSceneMeshes;
 

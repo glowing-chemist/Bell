@@ -15,7 +15,7 @@
 
 
 Scene::Scene(const std::string& name) :
-    mName{name},
+    mPath{name},
     mSceneMeshes(),
     mStaticMeshBoundingVolume(),
     mDynamicMeshBoundingVolume(),
@@ -32,7 +32,7 @@ Scene::Scene(const std::string& name) :
 
 
 Scene::Scene(Scene&& scene) :
-    mName{std::move(scene.mName)},
+    mPath{std::move(scene.mPath)},
     mSceneMeshes{std::move(scene.mSceneMeshes)},
     mStaticMeshInstances{std::move(scene.mStaticMeshInstances)},
     mDynamicMeshInstances{std::move(scene.mDynamicMeshInstances)},
@@ -53,7 +53,7 @@ Scene::Scene(Scene&& scene) :
 
 Scene& Scene::operator=(Scene&& scene)
 {
-    mName = std::move(scene.mName);
+    mPath = std::move(scene.mPath);
     mSceneMeshes = std::move(scene.mSceneMeshes);
     mStaticMeshInstances = std::move(scene.mStaticMeshInstances);
     mDynamicMeshInstances = std::move(scene.mDynamicMeshInstances);
@@ -110,7 +110,7 @@ std::vector<InstanceID> Scene::loadFromFile(const int vertAttributes, Engine* en
 {
     Assimp::Importer importer;
 
-    const aiScene* scene = importer.ReadFile(mName.string().c_str(),
+    const aiScene* scene = importer.ReadFile(mPath.string().c_str(),
                                              aiProcess_Triangulate |
                                              aiProcess_JoinIdenticalVertices |
                                              aiProcess_GenNormals |
@@ -122,7 +122,15 @@ std::vector<InstanceID> Scene::loadFromFile(const int vertAttributes, Engine* en
 	// so just reserve enough sie here.
 	mSceneMeshes.reserve(scene->mNumMeshes);
 
-	const auto meshMaterials = loadMaterialsInternal(eng);
+
+    MaterialMappings meshMaterials;
+    fs::path materialFile{mPath};
+    materialFile += ".mat";
+    if(fs::exists(materialFile))
+        meshMaterials = loadMaterialsInternal(eng); // Load materials from the internal .mat format.
+    else
+        loadMaterialsExternal(eng, scene);
+
     std::unordered_map<const aiMesh*, SceneID> meshToSceneIDMapping{};
 
     std::vector<InstanceID> instanceIDs;
@@ -155,17 +163,25 @@ void Scene::parseNode(const aiScene* scene,
     for(uint32_t i = 0; i < node->mNumMeshes; ++i)
     {
         const aiMesh* currentMesh = scene->mMeshes[node->mMeshes[i]];
+        uint32_t materialIndex = ~0;
+        uint32_t materialAttributes = 0;
 
         const auto nameIt = materialIndexMappings.find(currentMesh->mName);
-        BELL_ASSERT(nameIt != materialIndexMappings.end(), "Unabel to find mesh material index")
-
-        const uint32_t materialIndex = nameIt->second.index;
+        if(nameIt != materialIndexMappings.end()) // Material info has already been parsed from separate material file.
+        {
+            materialIndex = nameIt->second.index;
+            materialAttributes = nameIt->second.attributes;
+        }
+        else // No material file found, so get material index from the mesh file.
+        {
+            materialIndex = currentMesh->mMaterialIndex;
+        }
 
         SceneID meshID = 0;
         if(meshMappings.find(currentMesh) == meshMappings.end())
         {
             StaticMesh mesh{currentMesh, vertAttributes};
-            mesh.setAttributes(nameIt->second.attributes);
+            mesh.setAttributes(materialAttributes);
 
             meshID = addMesh(mesh, MeshType::Static);
 
@@ -174,7 +190,7 @@ void Scene::parseNode(const aiScene* scene,
         else
             meshID = meshMappings[currentMesh];
 
-        const glm::mat4 transformationMatrix{transformation.a1, transformation.a2, transformation.a3, transformation.a4,
+        const float4x4 transformationMatrix{transformation.a1, transformation.a2, transformation.a3, transformation.a4,
                                              transformation.b1, transformation.b2, transformation.b3, transformation.b4,
                                              transformation.c1, transformation.c2, transformation.c3, transformation.c4,
                                              transformation.d1, transformation.d2, transformation.d3, transformation.d4};
@@ -240,7 +256,7 @@ void Scene::addLights(const aiScene* scene)
 
 void Scene::loadMaterials(Engine* eng)
 {
-	const MaterialMappings mappings = loadMaterialsInternal(eng);
+    const MaterialMappings mappings = loadMaterialsInternal(eng);
 }
 
 
@@ -248,9 +264,9 @@ Scene::MaterialMappings Scene::loadMaterialsInternal(Engine* eng)
 {
 	// TODO replace this with a lower level file interface to avoid horrible iostream performance.
 	std::ifstream materialFile{};
-    materialFile.open(mName.concat(".mat"), std::ios::in);
+    materialFile.open(mPath.concat(".mat"), std::ios::in);
 
-	std::filesystem::path sceneDirectory = mName.parent_path();
+    std::filesystem::path sceneDirectory = mPath.parent_path();
 
 	MaterialMappings materialMappings;
 
@@ -363,6 +379,57 @@ Scene::MaterialMappings Scene::loadMaterialsInternal(Engine* eng)
     mMaterialFlags |= mat.mMaterialTypes;
 
 	return materialMappings;
+}
+
+
+void Scene::loadMaterialsExternal(Engine* eng, const aiScene* scene)
+{
+    const std::string sceneDirectory = mPath.parent_path().string();
+
+    for(uint32_t i = 0; i < scene->mNumMaterials; ++i)
+    {
+        const aiMaterial* material = scene->mMaterials[i];
+        MaterialPaths newMaterial{"", "", "", "", 0};
+
+        if(material->GetTextureCount(aiTextureType_DIFFUSE) > 0)
+        {
+            aiString path;
+            material->GetTexture(aiTextureType_DIFFUSE, 0, &path);
+
+            newMaterial.mAlbedoorDiffusePath = sceneDirectory + "/" + path.C_Str();
+            newMaterial.mMaterialTypes |= static_cast<uint32_t>(MaterialType::Diffuse);
+        }
+
+        if(material->GetTextureCount(aiTextureType_NORMALS) > 0)
+        {
+            aiString path;
+            material->GetTexture(aiTextureType_NORMALS, 0, &path);
+
+            newMaterial.mNormalsPath = sceneDirectory + "/" + path.C_Str();
+            newMaterial.mMaterialTypes |= static_cast<uint32_t>(MaterialType::Normals);
+        }
+
+        if(material->GetTextureCount(aiTextureType_SHININESS) > 0)
+        {
+            aiString path;
+            material->GetTexture(aiTextureType_SHININESS, 0, &path);
+
+            newMaterial.mRoughnessOrGlossPath = sceneDirectory + "/" + path.C_Str();
+            newMaterial.mMaterialTypes |= static_cast<uint32_t>(MaterialType::Gloss);
+        }
+
+        if(material->GetTextureCount(aiTextureType_SPECULAR) > 0)
+        {
+            aiString path;
+            material->GetTexture(aiTextureType_NORMALS, 0, &path);
+
+            newMaterial.mMetalnessOrSpecularPath = sceneDirectory + "/" + path.C_Str();
+            newMaterial.mMaterialTypes |= static_cast<uint32_t>(MaterialType::Specular);
+        }
+
+        mMaterialFlags |= newMaterial.mMaterialTypes;
+        addMaterial(newMaterial, eng);
+    }
 }
 
 
@@ -557,6 +624,53 @@ void Scene::addMaterial(const Scene::Material& mat)
     }
 
     mMaterialFlags = mat.mMaterialTypes;
+}
+
+
+void Scene::addMaterial(const MaterialPaths& mat, Engine* eng)
+{
+    const uint32_t materialFlags = mat.mMaterialTypes;
+    Scene::Material newMaterial{};
+    newMaterial.mMaterialTypes = materialFlags;
+
+    if(materialFlags & static_cast<uint32_t>(MaterialType::Albedo) || materialFlags & static_cast<uint32_t>(MaterialType::Diffuse))
+    {
+        TextureUtil::TextureInfo diffuseInfo = TextureUtil::load32BitTexture(mat.mAlbedoorDiffusePath.c_str(), STBI_rgb_alpha);
+        Image *diffuseTexture = new Image(eng->getDevice(), Format::RGBA8UNorm, ImageUsage::Sampled | ImageUsage::TransferDest,
+                             static_cast<uint32_t>(diffuseInfo.width), static_cast<uint32_t>(diffuseInfo.height), 1, 1, 1, 1, mat.mAlbedoorDiffusePath);
+        (*diffuseTexture)->setContents(diffuseInfo.mData.data(), static_cast<uint32_t>(diffuseInfo.width), static_cast<uint32_t>(diffuseInfo.height), 1);
+
+        newMaterial.mAlbedoorDiffuse = diffuseTexture;
+    }
+
+    if(materialFlags & static_cast<uint32_t>(MaterialType::Normals))
+    {
+        TextureUtil::TextureInfo normalsInfo = TextureUtil::load32BitTexture(mat.mNormalsPath.c_str(), STBI_rgb_alpha);
+        Image* normalsTexture = new Image(eng->getDevice(), Format::RGBA8UNorm, ImageUsage::Sampled | ImageUsage::TransferDest,
+                             static_cast<uint32_t>(normalsInfo.width), static_cast<uint32_t>(normalsInfo.height), 1, 1, 1, 1, mat.mNormalsPath);
+        (*normalsTexture)->setContents(normalsInfo.mData.data(), static_cast<uint32_t>(normalsInfo.width), static_cast<uint32_t>(normalsInfo.height), 1);
+        newMaterial.mNormals = normalsTexture;
+    }
+
+    if(materialFlags & static_cast<uint32_t>(MaterialType::Roughness) || materialFlags & static_cast<uint32_t>(MaterialType::Gloss))
+    {
+        TextureUtil::TextureInfo roughnessInfo = TextureUtil::load32BitTexture(mat.mRoughnessOrGlossPath.c_str(), STBI_grey);
+        Image* roughnessTexture = new Image(eng->getDevice(), Format::R8UNorm, ImageUsage::Sampled | ImageUsage::TransferDest,
+                             static_cast<uint32_t>(roughnessInfo.width), static_cast<uint32_t>(roughnessInfo.height), 1, 1, 1, 1, mat.mRoughnessOrGlossPath);
+        (*roughnessTexture)->setContents(roughnessInfo.mData.data(), static_cast<uint32_t>(roughnessInfo.width), static_cast<uint32_t>(roughnessInfo.height), 1);
+        newMaterial.mRoughnessOrGloss = roughnessTexture;
+    }
+
+    if(materialFlags & static_cast<uint32_t>(MaterialType::Metalness) || materialFlags & static_cast<uint32_t>(MaterialType::Specular))
+    {
+        TextureUtil::TextureInfo metalnessInfo = TextureUtil::load32BitTexture(mat.mMetalnessOrSpecularPath.c_str(), materialFlags & static_cast<uint32_t>(MaterialType::Metalness) ? STBI_grey : STBI_rgb_alpha);
+        Image* metalnessTexture = new Image(eng->getDevice(), materialFlags & static_cast<uint32_t>(MaterialType::Metalness) ? Format::R8UNorm : Format::RGBA8UNorm, ImageUsage::Sampled | ImageUsage::TransferDest,
+                             static_cast<uint32_t>(metalnessInfo.width), static_cast<uint32_t>(metalnessInfo.height), 1, 1, 1, 1, mat.mMetalnessOrSpecularPath);
+        (*metalnessTexture)->setContents(metalnessInfo.mData.data(), static_cast<uint32_t>(metalnessInfo.width), static_cast<uint32_t>(metalnessInfo.height), 1);
+        newMaterial.mMetalnessOrSpecular = metalnessTexture;
+    }
+
+    addMaterial(newMaterial);
 }
 
 
