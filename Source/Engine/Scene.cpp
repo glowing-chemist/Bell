@@ -661,6 +661,11 @@ void Scene::addMaterial(const Scene::Material& mat)
         mMaterialImageViews.emplace_back(*mat.mNormals, ImageViewType::Colour);
     }
 
+    if(mat.mMaterialTypes & static_cast<uint32_t>(MaterialType::CombinedMetalnessRoughness))
+    {
+         mMaterialImageViews.emplace_back(*mat.mRoughnessOrGloss, ImageViewType::Colour);
+    }
+
     if(mat.mMaterialTypes & static_cast<uint32_t>(MaterialType::Roughness) ||
             mat.mMaterialTypes & static_cast<uint32_t>(MaterialType::Gloss))
     {
@@ -717,6 +722,15 @@ void Scene::addMaterial(const MaterialPaths& mat, Engine* eng)
                              static_cast<uint32_t>(metalnessInfo.width), static_cast<uint32_t>(metalnessInfo.height), 1, 1, 1, 1, mat.mMetalnessOrSpecularPath);
         (*metalnessTexture)->setContents(metalnessInfo.mData.data(), static_cast<uint32_t>(metalnessInfo.width), static_cast<uint32_t>(metalnessInfo.height), 1);
         newMaterial.mMetalnessOrSpecular = metalnessTexture;
+    }
+
+    if(materialFlags & static_cast<uint32_t>(MaterialType::CombinedMetalnessRoughness))
+    {
+        TextureUtil::TextureInfo metalnessRoughnessInfo = TextureUtil::load32BitTexture(mat.mRoughnessOrGlossPath.c_str(), STBI_rgb_alpha);
+        Image* metalnessRoughnessTexture = new Image(eng->getDevice(), Format::RGBA8UNorm, ImageUsage::Sampled | ImageUsage::TransferDest,
+                             static_cast<uint32_t>(metalnessRoughnessInfo.width), static_cast<uint32_t>(metalnessRoughnessInfo.height), 1, 1, 1, 1, mat.mRoughnessOrGlossPath);
+        (*metalnessRoughnessTexture)->setContents(metalnessRoughnessInfo.mData.data(), static_cast<uint32_t>(metalnessRoughnessInfo.width), static_cast<uint32_t>(metalnessRoughnessInfo.height), 1);
+        newMaterial.mRoughnessOrGloss = metalnessRoughnessTexture;
     }
 
     addMaterial(newMaterial);
