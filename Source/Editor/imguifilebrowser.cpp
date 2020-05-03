@@ -48,7 +48,8 @@ std::optional<fs::path> ImGuiFileBrowser::renderChildren(const fs::path path)
 
     for (const auto& child : children)
     {
-        const bool is_file = fs::is_regular_file(child);
+        std::error_code ec;
+        const bool is_file = fs::is_regular_file(child, ec);
 
         if (ImGui::TreeNodeEx(child.filename().string().c_str(), is_file ? ImGuiTreeNodeFlags_Bullet : 0))
         {
@@ -76,7 +77,7 @@ std::optional<fs::path> ImGuiFileBrowser::renderChildren(const fs::path path)
 }
 
 
-uint ImGuiMaterialDialog::getMaterialFlags() const
+uint32_t ImGuiMaterialDialog::getMaterialFlags() const
 {
     uint32_t flags = 0;
 

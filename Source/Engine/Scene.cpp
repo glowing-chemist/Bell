@@ -386,12 +386,12 @@ Scene::MaterialMappings Scene::loadMaterialsInternal(Engine* eng)
 
 void Scene::loadMaterialsExternal(Engine* eng, const aiScene* scene)
 {
-    const std::string sceneDirectory = mPath.parent_path();
+    const std::string sceneDirectory = mPath.parent_path().string();
     uint32_t materialOffset = 0;
 
-    auto pathMapping = [](const std::string& path) -> std::string
+    auto pathMapping = [](const fs::path& path) -> std::string
     {
-        std::string mappedPath = path;
+        std::string mappedPath = path.string();
         std::replace(mappedPath.begin(), mappedPath.end(),
              #ifdef _MSC_VER
                 '/', '\\'
