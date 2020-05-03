@@ -490,6 +490,14 @@ void Scene::loadMaterialsExternal(Engine* eng, const aiScene* scene)
             newMaterial.mAmbientOcclusionPath = sceneDirectory + "/" + path.C_Str();
             newMaterial.mMaterialTypes |= static_cast<uint32_t>(MaterialType::AmbientOcclusion);
         }
+        else if(material->GetTextureCount(aiTextureType_LIGHTMAP) > 0) // Can also be an AO texture, why is there 2!?
+        {
+            aiString path;
+            material->GetTexture(aiTextureType_LIGHTMAP, 0, &path);
+
+            newMaterial.mAmbientOcclusionPath = sceneDirectory + "/" + path.C_Str();
+            newMaterial.mMaterialTypes |= static_cast<uint32_t>(MaterialType::AmbientOcclusion);
+        }
 
         materialOffset += __builtin_popcount(newMaterial.mMaterialTypes);
 
@@ -694,14 +702,14 @@ void Scene::addMaterial(const Scene::Material& mat)
         mMaterialImageViews.emplace_back(*mat.mMetalnessOrSpecular, ImageViewType::Colour);
     }
 
-    if(mat.mMaterialTypes & static_cast<uint32_t>(MaterialType::Emisive))
-    {
-        mMaterialImageViews.emplace_back(*mat.mEmissive, ImageViewType::Colour);
-    }
-
     if(mat.mMaterialTypes & static_cast<uint32_t>(MaterialType::AmbientOcclusion))
     {
         mMaterialImageViews.emplace_back(*mat.mAmbientOcclusion, ImageViewType::Colour);
+    }
+
+    if(mat.mMaterialTypes & static_cast<uint32_t>(MaterialType::Emisive))
+    {
+        mMaterialImageViews.emplace_back(*mat.mEmissive, ImageViewType::Colour);
     }
 }
 
@@ -770,9 +778,9 @@ void Scene::addMaterial(const MaterialPaths& mat, Engine* eng)
 
     if(materialFlags & static_cast<uint32_t>(MaterialType::AmbientOcclusion))
     {
-        TextureUtil::TextureInfo occlusionInfo = TextureUtil::load32BitTexture(mat.mEmissivePath.c_str(), STBI_grey);
+        TextureUtil::TextureInfo occlusionInfo = TextureUtil::load32BitTexture(mat.mAmbientOcclusionPath.c_str(), STBI_grey);
         Image* occlusionTexture = new Image(eng->getDevice(), Format::R8UNorm, ImageUsage::Sampled | ImageUsage::TransferDest,
-                             static_cast<uint32_t>(occlusionInfo.width), static_cast<uint32_t>(occlusionInfo.height), 1, 1, 1, 1, mat.mEmissivePath);
+                             static_cast<uint32_t>(occlusionInfo.width), static_cast<uint32_t>(occlusionInfo.height), 1, 1, 1, 1, mat.mAmbientOcclusionPath);
         (*occlusionTexture)->setContents(occlusionInfo.mData.data(), static_cast<uint32_t>(occlusionInfo.width), static_cast<uint32_t>(occlusionInfo.height), 1);
         newMaterial.mAmbientOcclusion = occlusionTexture;
     }
