@@ -49,7 +49,7 @@ enum class MaterialType
     Specular = 1 << 6,
     CombinedMetalnessRoughness = 1 << 7,
     AmbientOcclusion = 1 << 8,
-    Emmisive = 1 << 9
+    Emisive = 1 << 9
 };
 
 enum class PBRType
@@ -209,6 +209,8 @@ public:
         Image* mNormals;
         Image* mRoughnessOrGloss;
         Image* mMetalnessOrSpecular;
+        Image* mEmissive;
+        Image* mAmbientOcclusion;
         uint32_t mMaterialTypes;
         uint32_t mMaterialOffset;
 	};
@@ -219,6 +221,8 @@ public:
         std::string mNormalsPath;
         std::string mRoughnessOrGlossPath;
         std::string mMetalnessOrSpecularPath;
+        std::string mEmissivePath;
+        std::string mAmbientOcclusionPath;
         uint32_t mMaterialTypes;
         uint32_t mMaterialOffset;
     };

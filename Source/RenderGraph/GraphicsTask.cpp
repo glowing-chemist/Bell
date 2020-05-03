@@ -8,18 +8,24 @@ std::vector<ClearValues> GraphicsTask::getClearValues() const
 
     for(const auto& attatchment : mOutputAttachments)
     {
-            if(attatchment.mLoadOp == LoadOp::Clear_Black)
-            {
+        switch(attatchment.mLoadOp)
+        {
+            case LoadOp::Clear_Black:
                 clearValues.emplace_back(attatchment.mType, 0.0f, 0.0f, 0.0f, 0.0f);
-            }
-			else if(attatchment.mLoadOp == LoadOp::Clear_White)
-            {
+                break;
+
+            case LoadOp::Clear_White:
                 clearValues.emplace_back(attatchment.mType, 1.0f, 1.0f, 1.0f, 1.0f);
-            }
-			else // coprresponds to Preserve so this value will be ignored.
-			{
+                break;
+
+            case LoadOp::Clear_ColourBlack_AlphaWhite:
                 clearValues.emplace_back(attatchment.mType, 0.0f, 0.0f, 0.0f, 1.0f);
-			}
+                break;
+
+            default:
+                clearValues.emplace_back(attatchment.mType, 0.0f, 0.0f, 0.0f, 1.0f);
+                break;
+        }
     }
 
     return clearValues;

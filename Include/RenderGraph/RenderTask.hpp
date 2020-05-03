@@ -22,7 +22,8 @@ enum class LoadOp
     Preserve,
 	Nothing,
     Clear_White,
-    Clear_Black
+    Clear_Black,
+    Clear_ColourBlack_AlphaWhite
 };
 
 enum class SizeClass

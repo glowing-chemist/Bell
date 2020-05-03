@@ -12,6 +12,7 @@ struct GBufferFragOutput
     float3 normal;
     float4 specularRoughness;
     float2 velocity;
+    float4 emissiveOcclusion;
 };
 
 [[vk::binding(0)]]
@@ -45,6 +46,7 @@ GBufferFragOutput main(GBufferVertOutput vertInput)
 	output.normal = (material.normal.xyz + 1.0f) * 0.5f;
 	output.specularRoughness = material.specularRoughness;
     output.velocity = (vertInput.velocity * 0.5f) + 0.5f;
+    output.emissiveOcclusion = material.emissiveOcclusion;
 
     return output;
 }

@@ -26,16 +26,19 @@ Texture2D<float4> Diffuse;
 Texture2D<float4> SpecularRoughness;
 
 [[vk::binding(6)]]
-TextureCube<float4> ConvolvedSkyboxSpecular;
+Texture2D<float4> EmissiveOcclusion;
 
 [[vk::binding(7)]]
-TextureCube<float4> ConvolvedSkyboxDiffuse;
+TextureCube<float4> ConvolvedSkyboxSpecular;
 
 [[vk::binding(8)]]
+TextureCube<float4> ConvolvedSkyboxDiffuse;
+
+[[vk::binding(9)]]
 SamplerState linearSampler;
 
 #ifdef Shadow_Map
-[[vk::binding(9)]]
+[[vk::binding(10)]]
 Texture2D<float> shadowMap;
 #endif
 
@@ -58,7 +61,7 @@ float4 main(UVVertOutput vertInput)
     const float4 diffuse = Diffuse.Sample(linearSampler, uv);
     const float4 specularRoughness = SpecularRoughness.Sample(linearSampler, uv);
     const float roughness = specularRoughness.w;
-
+    const float4 emissiveOcclusion = EmissiveOcclusion.Sample(linearSampler, uv);
 
 	const float3 lightDir = reflect(-viewDir, normal);
     const float NoV = dot(normal, viewDir);
@@ -84,5 +87,5 @@ float4 main(UVVertOutput vertInput)
     const float3 diffuseLighting = calculateDiffuseDisney(material, irradiance, dfg);
     const float3 specularlighting = calculateSpecular(material, radiance, dfg);
 
-    return float4(specularlighting + diffuseLighting, 1.0);
+    return float4(specularlighting + diffuseLighting + emissiveOcclusion.xyz, 1.0) * emissiveOcclusion.w;
 }

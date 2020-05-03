@@ -10,14 +10,15 @@
 #define    kMaterial_Specular (1 << 6)
 #define    kMaterial_CombinedMetalnessRoughness (1 << 7)
 #define    kMaterial_AmbientOcclusion (1 << 8)
-#define    kMaterial_Emmisive (1 << 9)
+#define    kMaterial_Emissive (1 << 9)
 
 
 struct MaterialInfo
 {
     float4 diffuse;
-    float4 specularRoughness;
+    float4 specularRoughness; // xyz specular w roughness
     float4 normal;
+    float4 emissiveOcclusion; // xyz emisive w ambient occlusion.
 };
 
 // polynomial aproximation of a monte carlo integrated DFG function.

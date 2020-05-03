@@ -98,7 +98,7 @@ Output main(GBufferVertOutput vertInput)
                                                 radiance, 
                                                 dfg);
 
-    float4 lighting = float4(diffuse + specular, 1.0f);
+    float4 lighting = float4(diffuse + specular + material.emissiveOcclusion.xyz, 1.0f) * material.emissiveOcclusion.w;
 
     // Calculate contribution from lights.
     const uint froxelIndex = activeFroxels.Sample(pointSampler, vertInput.position.xy / camera.frameBufferSize);

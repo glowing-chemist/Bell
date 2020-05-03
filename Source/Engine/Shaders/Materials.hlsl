@@ -17,6 +17,7 @@ MaterialInfo calculateMaterialInfo(	const float4 vertexNormal,
 	mat.diffuse = float4(0.5f, 0.5f, 0.5f, 1.0f);
 	mat.normal = vertexNormal;
 	mat.specularRoughness = float4(0.5f, 0.5f, 0.5f, 0.5f);
+	mat.emissiveOcclusion = float4(0.0f, 0.0f, 0.0f, 1.0);
 
 	uint nextMaterialSlot = 0;
 
@@ -93,6 +94,17 @@ MaterialInfo calculateMaterialInfo(	const float4 vertexNormal,
 		const float NoV = dot(mat.normal.xyz, view);
         const float3 F0 = lerp(float3(DIELECTRIC_SPECULAR, DIELECTRIC_SPECULAR, DIELECTRIC_SPECULAR), albedo.xyz, metalness);
         mat.specularRoughness.xyz = fresnelSchlickRoughness(max(NoV, 0.0), F0, mat.specularRoughness.w);
+	}
+
+	if(materialTypes & kMaterial_AmbientOcclusion)
+	{
+		mat.emissiveOcclusion.w = materials[materialIndex + nextMaterialSlot].Sample(linearSampler, uv).x;
+		++nextMaterialSlot;
+	}
+
+	if(materialTypes & kMaterial_Emissive)
+	{
+		mat.emissiveOcclusion.xyz = materials[materialIndex + nextMaterialSlot].Sample(linearSampler, uv).xyz;
 	}
 
 

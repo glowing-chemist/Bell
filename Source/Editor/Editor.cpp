@@ -35,6 +35,7 @@ namespace
                 newNode->mOutputs.push_back(Pin{0, newNode, kGBufferDiffuse, PinType::Texture, PinKind::Output});
                 newNode->mOutputs.push_back(Pin{0, newNode, kGBufferSpecularRoughness, PinType::Texture, PinKind::Output});
                 newNode->mOutputs.push_back(Pin{ 0, newNode, kGBufferVelocity, PinType::Texture, PinKind::Output });
+                newNode->mOutputs.push_back(Pin{ 0, newNode, kGBufferEmissiveOcclusion, PinType::Texture, PinKind::Output });
                 newNode->mOutputs.push_back(Pin{0, newNode, kGBufferDepth, PinType::Texture, PinKind::Output});
                 return newNode;
             }
@@ -84,6 +85,7 @@ namespace
                 newNode->mOutputs.push_back(Pin{0, newNode, kGBufferDiffuse, PinType::Texture, PinKind::Output});
                 newNode->mOutputs.push_back(Pin{0, newNode, kGBufferSpecularRoughness, PinType::Texture, PinKind::Output});
                 newNode->mOutputs.push_back(Pin{ 0, newNode, kGBufferVelocity, PinType::Texture, PinKind::Output });
+                newNode->mOutputs.push_back(Pin{ 0, newNode, kGBufferEmissiveOcclusion, PinType::Texture, PinKind::Output });
                 newNode->mInputs.push_back(Pin{0, newNode, kGBufferDepth, PinType::Texture, PinKind::Input});
                 return newNode;
             }
@@ -113,6 +115,7 @@ namespace
                 newNode->mInputs.push_back(Pin{ 0, newNode, kGBufferNormals, PinType::Texture, PinKind::Input });
                 newNode->mInputs.push_back(Pin{ 0, newNode, kGBufferDiffuse, PinType::Texture, PinKind::Input });
                 newNode->mInputs.push_back(Pin{ 0, newNode, kGBufferSpecularRoughness, PinType::Texture, PinKind::Input });
+                newNode->mInputs.push_back(Pin{ 0, newNode, kGBufferEmissiveOcclusion, PinType::Texture, PinKind::Input });
                 newNode->mInputs.push_back(Pin{ 0, newNode, kGBufferDepth, PinType::Texture, PinKind::Input });
                 newNode->mInputs.push_back(Pin{ 0, newNode, kSkyBox, PinType::Texture, PinKind::Input });
                 newNode->mInputs.push_back(Pin{ 0, newNode, kConvolvedDiffuseSkyBox, PinType::Texture, PinKind::Input });

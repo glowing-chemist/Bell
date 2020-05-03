@@ -22,6 +22,7 @@ DeferredImageBasedLightingTechnique::DeferredImageBasedLightingTechnique(Engine*
     task.addInput(kGBufferNormals, AttachmentType::Texture2D);
     task.addInput(kGBufferDiffuse, AttachmentType::Texture2D);
     task.addInput(kGBufferSpecularRoughness, AttachmentType::Texture2D);
+    task.addInput(kGBufferEmissiveOcclusion, AttachmentType::Texture2D);
     task.addInput(kConvolvedSpecularSkyBox, AttachmentType::Texture2D);
     task.addInput(kConvolvedDiffuseSkyBox, AttachmentType::Texture2D);
     task.addInput(kDefaultSampler, AttachmentType::Sampler);

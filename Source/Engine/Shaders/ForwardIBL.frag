@@ -77,7 +77,7 @@ Output main(GBufferVertOutput vertInput)
 
     Output output;
 
-    output.colour = float4(specular + diffuse, 1.0);
+    output.colour = float4(specular + diffuse + material.emissiveOcclusion.xyz, 1.0) * emissiveOcclusion.w;
     output.velocity = (vertInput.velocity * 0.5f) + 0.5f;
 
     return output;
