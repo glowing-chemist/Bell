@@ -191,10 +191,12 @@ void Scene::parseNode(const aiScene* scene,
         else
             meshID = meshMappings[currentMesh];
 
-        const float4x4 transformationMatrix{transformation.a1, transformation.a2, transformation.a3, transformation.a4,
-                                             transformation.b1, transformation.b2, transformation.b3, transformation.b4,
-                                             transformation.c1, transformation.c2, transformation.c3, transformation.c4,
-                                             transformation.d1, transformation.d2, transformation.d3, transformation.d4};
+        float4x4 transformationMatrix{};
+        transformationMatrix[0][0] = transformation.a1; transformationMatrix[0][1] = transformation.b1;  transformationMatrix[0][2] = transformation.c1; transformationMatrix[0][3] = transformation.d1;
+        transformationMatrix[1][0] = transformation.a2; transformationMatrix[1][1] = transformation.b2;  transformationMatrix[1][2] = transformation.c2; transformationMatrix[1][3] = transformation.d2;
+        transformationMatrix[2][0] = transformation.a3; transformationMatrix[2][1] = transformation.b3;  transformationMatrix[2][2] = transformation.c3; transformationMatrix[2][3] = transformation.d3;
+        transformationMatrix[3][0] = transformation.a4; transformationMatrix[3][1] = transformation.b4;  transformationMatrix[3][2] = transformation.c4; transformationMatrix[3][3] = transformation.d4;
+
 
         InstanceID instanceID = addMeshInstance(meshID, transformationMatrix, materialOffset, materialFlags, currentMesh->mName.C_Str());
         instanceIds.push_back(instanceID);
@@ -759,8 +761,8 @@ void Scene::addMaterial(const MaterialPaths& mat, Engine* eng)
 
     if(materialFlags & static_cast<uint32_t>(MaterialType::Emisive))
     {
-        TextureUtil::TextureInfo emissiveInfo = TextureUtil::load32BitTexture(mat.mEmissivePath.c_str(), STBI_rgb);
-        Image* emissiveTexture = new Image(eng->getDevice(), Format::RGB8UNorm, ImageUsage::Sampled | ImageUsage::TransferDest,
+        TextureUtil::TextureInfo emissiveInfo = TextureUtil::load32BitTexture(mat.mEmissivePath.c_str(), STBI_rgb_alpha);
+        Image* emissiveTexture = new Image(eng->getDevice(), Format::RGBA8UNorm, ImageUsage::Sampled | ImageUsage::TransferDest,
                              static_cast<uint32_t>(emissiveInfo.width), static_cast<uint32_t>(emissiveInfo.height), 1, 1, 1, 1, mat.mEmissivePath);
         (*emissiveTexture)->setContents(emissiveInfo.mData.data(), static_cast<uint32_t>(emissiveInfo.width), static_cast<uint32_t>(emissiveInfo.height), 1);
         newMaterial.mEmissive = emissiveTexture;
