@@ -386,8 +386,22 @@ Scene::MaterialMappings Scene::loadMaterialsInternal(Engine* eng)
 
 void Scene::loadMaterialsExternal(Engine* eng, const aiScene* scene)
 {
-    const std::string sceneDirectory = mPath.parent_path().string();
+    const std::string sceneDirectory = mPath.parent_path();
     uint32_t materialOffset = 0;
+
+    auto pathMapping = [](const std::string& path) -> std::string
+    {
+        std::string mappedPath = path;
+        std::replace(mappedPath.begin(), mappedPath.end(),
+             #ifdef _MSC_VER
+                '/', '\\'
+             #else
+                '\\', '/'
+             #endif
+                     );
+
+        return mappedPath;
+    };
 
     for(uint32_t i = 0; i < scene->mNumMaterials; ++i)
     {
@@ -399,7 +413,8 @@ void Scene::loadMaterialsExternal(Engine* eng, const aiScene* scene)
             aiString path;
             material->GetTexture(aiTextureType_BASE_COLOR, 0, &path);
 
-            newMaterial.mAlbedoorDiffusePath = sceneDirectory + "/" + path.C_Str();
+            fs::path fsPath(path.C_Str());
+            newMaterial.mAlbedoorDiffusePath = pathMapping(sceneDirectory / fsPath);
             newMaterial.mMaterialTypes |= static_cast<uint32_t>(MaterialType::Albedo);
         }
         else if(material->GetTextureCount(aiTextureType_DIFFUSE) > 1)
@@ -407,7 +422,8 @@ void Scene::loadMaterialsExternal(Engine* eng, const aiScene* scene)
             aiString path;
             material->GetTexture(AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_BASE_COLOR_TEXTURE, &path);
 
-            newMaterial.mAlbedoorDiffusePath = sceneDirectory + "/" + path.C_Str();
+            fs::path fsPath(path.C_Str());
+            newMaterial.mAlbedoorDiffusePath = pathMapping(sceneDirectory / fsPath);
             newMaterial.mMaterialTypes |= static_cast<uint32_t>(MaterialType::Albedo);
         }
         else if(material->GetTextureCount(aiTextureType_DIFFUSE) > 0)
@@ -415,7 +431,8 @@ void Scene::loadMaterialsExternal(Engine* eng, const aiScene* scene)
             aiString path;
             material->GetTexture(aiTextureType_DIFFUSE, 0, &path);
 
-            newMaterial.mAlbedoorDiffusePath = sceneDirectory + "/" + path.C_Str();
+            fs::path fsPath(path.C_Str());
+            newMaterial.mAlbedoorDiffusePath = pathMapping(sceneDirectory / fsPath);
             newMaterial.mMaterialTypes |= static_cast<uint32_t>(MaterialType::Diffuse);
         }
 
@@ -424,7 +441,8 @@ void Scene::loadMaterialsExternal(Engine* eng, const aiScene* scene)
             aiString path;
             material->GetTexture(aiTextureType_NORMALS, 0, &path);
 
-            newMaterial.mNormalsPath = sceneDirectory + "/" + path.C_Str();
+            fs::path fsPath(path.C_Str());
+            newMaterial.mNormalsPath = pathMapping(sceneDirectory / fsPath);
             newMaterial.mMaterialTypes |= static_cast<uint32_t>(MaterialType::Normals);
         }
 
@@ -434,7 +452,8 @@ void Scene::loadMaterialsExternal(Engine* eng, const aiScene* scene)
             aiString path;
             material->GetTexture(AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_METALLICROUGHNESS_TEXTURE, &path);
 
-            newMaterial.mRoughnessOrGlossPath = sceneDirectory + "/" + path.C_Str();
+            fs::path fsPath(path.C_Str());
+            newMaterial.mRoughnessOrGlossPath = pathMapping(sceneDirectory / fsPath);
             newMaterial.mMaterialTypes |= static_cast<uint32_t>(MaterialType::CombinedMetalnessRoughness);
         }
         else
@@ -444,7 +463,8 @@ void Scene::loadMaterialsExternal(Engine* eng, const aiScene* scene)
                 aiString path;
                 material->GetTexture(aiTextureType_DIFFUSE_ROUGHNESS, 0, &path);
 
-                newMaterial.mAlbedoorDiffusePath = sceneDirectory + "/" + path.C_Str();
+                fs::path fsPath(path.C_Str());
+                newMaterial.mAlbedoorDiffusePath = pathMapping(sceneDirectory / fsPath);
                 newMaterial.mMaterialTypes |= static_cast<uint32_t>(MaterialType::Roughness);
             }
             else if(material->GetTextureCount(aiTextureType_SHININESS) > 0)
@@ -452,7 +472,8 @@ void Scene::loadMaterialsExternal(Engine* eng, const aiScene* scene)
                 aiString path;
                 material->GetTexture(aiTextureType_SHININESS, 0, &path);
 
-                newMaterial.mRoughnessOrGlossPath = sceneDirectory + "/" + path.C_Str();
+                fs::path fsPath(path.C_Str());
+                newMaterial.mRoughnessOrGlossPath = pathMapping(sceneDirectory / fsPath);
                 newMaterial.mMaterialTypes |= static_cast<uint32_t>(MaterialType::Gloss);
             }
 
@@ -461,15 +482,17 @@ void Scene::loadMaterialsExternal(Engine* eng, const aiScene* scene)
                 aiString path;
                 material->GetTexture(aiTextureType_METALNESS, 0, &path);
 
-                newMaterial.mAlbedoorDiffusePath = sceneDirectory + "/" + path.C_Str();
+                fs::path fsPath(path.C_Str());
+                newMaterial.mAlbedoorDiffusePath = pathMapping(sceneDirectory / fsPath);
                 newMaterial.mMaterialTypes |= static_cast<uint32_t>(MaterialType::Metalness);
             }
             else if(material->GetTextureCount(aiTextureType_SPECULAR) > 0)
             {
                 aiString path;
-                material->GetTexture(aiTextureType_NORMALS, 0, &path);
+                material->GetTexture(aiTextureType_SPECULAR, 0, &path);
 
-                newMaterial.mMetalnessOrSpecularPath = sceneDirectory + "/" + path.C_Str();
+                fs::path fsPath(path.C_Str());
+                newMaterial.mMetalnessOrSpecularPath = pathMapping(sceneDirectory / fsPath);
                 newMaterial.mMaterialTypes |= static_cast<uint32_t>(MaterialType::Specular);
             }
         }
@@ -478,7 +501,8 @@ void Scene::loadMaterialsExternal(Engine* eng, const aiScene* scene)
             aiString path;
             material->GetTexture(aiTextureType_EMISSIVE, 0, &path);
 
-            newMaterial.mEmissivePath = sceneDirectory + "/" + path.C_Str();
+            fs::path fsPath(path.C_Str());
+            newMaterial.mEmissivePath = pathMapping(sceneDirectory / fsPath);
             newMaterial.mMaterialTypes |= static_cast<uint32_t>(MaterialType::Emisive);
         }
 
@@ -487,7 +511,8 @@ void Scene::loadMaterialsExternal(Engine* eng, const aiScene* scene)
             aiString path;
             material->GetTexture(aiTextureType_AMBIENT_OCCLUSION, 0, &path);
 
-            newMaterial.mAmbientOcclusionPath = sceneDirectory + "/" + path.C_Str();
+            fs::path fsPath(path.C_Str());
+            newMaterial.mAmbientOcclusionPath = pathMapping(sceneDirectory / fsPath);
             newMaterial.mMaterialTypes |= static_cast<uint32_t>(MaterialType::AmbientOcclusion);
         }
         else if(material->GetTextureCount(aiTextureType_LIGHTMAP) > 0) // Can also be an AO texture, why is there 2!?
@@ -495,7 +520,8 @@ void Scene::loadMaterialsExternal(Engine* eng, const aiScene* scene)
             aiString path;
             material->GetTexture(aiTextureType_LIGHTMAP, 0, &path);
 
-            newMaterial.mAmbientOcclusionPath = sceneDirectory + "/" + path.C_Str();
+            fs::path fsPath(path.C_Str());
+            newMaterial.mAmbientOcclusionPath = pathMapping(sceneDirectory / fsPath);
             newMaterial.mMaterialTypes |= static_cast<uint32_t>(MaterialType::AmbientOcclusion);
         }
 
