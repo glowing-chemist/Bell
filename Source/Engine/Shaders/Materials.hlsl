@@ -71,7 +71,7 @@ MaterialInfo calculateMaterialInfo(	const float4 vertexNormal,
 
 		if(materialTypes & kMaterial_Gloss)
 		{
-			mat.specularRoughness.w = 1.0f - pow(materials[materialIndex + nextMaterialSlot].Sample(linearSampler, uv).x, 2.0f);
+			mat.specularRoughness.w = 1.0f - materials[materialIndex + nextMaterialSlot].Sample(linearSampler, uv).x;
 			++nextMaterialSlot;
 		}
 
@@ -84,7 +84,7 @@ MaterialInfo calculateMaterialInfo(	const float4 vertexNormal,
 		if(materialTypes & kMaterial_CombinedSpecularGloss)
 		{
 			mat.specularRoughness = materials[materialIndex + nextMaterialSlot].Sample(linearSampler, uv);
-			mat.specularRoughness.w = 1.0f - pow(mat.specularRoughness.w, 2.0f);
+			mat.specularRoughness.w = 1.0f - mat.specularRoughness.w;
 			++nextMaterialSlot;
 		}
 

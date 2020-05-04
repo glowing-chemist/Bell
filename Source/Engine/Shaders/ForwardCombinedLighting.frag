@@ -74,7 +74,8 @@ Output main(GBufferVertOutput vertInput)
 
 	const float3 lightDir = reflect(-viewDir, material.normal);
 
-	const float lodLevel = material.specularRoughness.w * 10.0f;
+	float roughness = material.specularRoughness.w * material.specularRoughness.w;
+    const float lodLevel = roughness * 10.0f;
 
     // Calculate contribution from enviroment.
     float3 radiance = ConvolvedSkyboxSpecular.SampleLevel(linearSampler, lightDir, lodLevel).xyz;
@@ -91,7 +92,7 @@ Output main(GBufferVertOutput vertInput)
     float3x3 minV;
     float LTCAmp;
     float3 dfg;
-    initializeLightState(minV, LTCAmp, dfg, DFG, ltcMat, ltcAmp, linearSampler, NoV, material.specularRoughness.w);
+    initializeLightState(minV, LTCAmp, dfg, DFG, ltcMat, ltcAmp, linearSampler, NoV, roughness);
 
     const float3 diffuse = calculateDiffuseDisney(material, irradiance, dfg);
     const float3 specular = calculateSpecular(  material,

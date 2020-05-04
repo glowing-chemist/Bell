@@ -60,7 +60,8 @@ float4 main(UVVertOutput vertInput)
 
     const float4 diffuse = Diffuse.Sample(linearSampler, uv);
     const float4 specularRoughness = SpecularRoughness.Sample(linearSampler, uv);
-    const float roughness = specularRoughness.w;
+    float roughness = specularRoughness.w;
+    roughness *= roughness;
     const float4 emissiveOcclusion = EmissiveOcclusion.Sample(linearSampler, uv);
 
 	const float3 lightDir = reflect(-viewDir, normal);

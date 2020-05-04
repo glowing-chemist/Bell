@@ -52,7 +52,8 @@ Output main(GBufferVertOutput vertInput)
 
 	const float3 lightDir = reflect(-viewDir, material.normal.xyz);
 
-	const float lodLevel = material.specularRoughness.w * 10.0f;
+    float roughness = material.specularRoughness.w * material.specularRoughness.w;
+	const float lodLevel = roughness * 10.0f;
 
 	float3 radiance = ConvolvedSkyboxSpecular.SampleLevel(linearSampler, lightDir, lodLevel).xyz;
 
@@ -65,7 +66,7 @@ Output main(GBufferVertOutput vertInput)
 #endif
 
 	const float NoV = dot(material.normal.xyz, viewDir);
-    const float3 dfg = DFG.Sample(linearSampler, float2(NoV, material.specularRoughness.w));
+    const float3 dfg = DFG.Sample(linearSampler, float2(NoV, roughness));
 
     if(material.diffuse.w == 0.0f)
         discard;
