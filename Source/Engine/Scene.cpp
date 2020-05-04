@@ -493,7 +493,11 @@ void Scene::loadMaterialsExternal(Engine* eng, const aiScene* scene)
 
                 fs::path fsPath(path.C_Str());
                 newMaterial.mMetalnessOrSpecularPath = pathMapping(sceneDirectory / fsPath);
-                newMaterial.mMaterialTypes |= static_cast<uint32_t>(MaterialType::Specular);
+
+                if(material->GetTextureCount(aiTextureType_SHININESS) == 0)
+                    newMaterial.mMaterialTypes |= static_cast<uint32_t>(MaterialType::CombinedSpecularGloss);
+                else
+                    newMaterial.mMaterialTypes |= static_cast<uint32_t>(MaterialType::Specular);
             }
         }
         if (material->GetTextureCount(aiTextureType_EMISSIVE) > 0)
@@ -722,8 +726,9 @@ void Scene::addMaterial(const Scene::Material& mat)
         mMaterialImageViews.emplace_back(*mat.mRoughnessOrGloss, ImageViewType::Colour);
     }
 
-    if(mat.mMaterialTypes & static_cast<uint32_t>(MaterialType::Metalness) ||
-            mat.mMaterialTypes & static_cast<uint32_t>(MaterialType::Specular))
+    if((mat.mMaterialTypes & static_cast<uint32_t>(MaterialType::Metalness)) ||
+            (mat.mMaterialTypes & static_cast<uint32_t>(MaterialType::Specular)) ||
+            (mat.mMaterialTypes & static_cast<uint32_t>(MaterialType::CombinedSpecularGloss)))
     {
         mMaterialImageViews.emplace_back(*mat.mMetalnessOrSpecular, ImageViewType::Colour);
     }
@@ -775,7 +780,7 @@ void Scene::addMaterial(const MaterialPaths& mat, Engine* eng)
         newMaterial.mRoughnessOrGloss = roughnessTexture;
     }
 
-    if(materialFlags & static_cast<uint32_t>(MaterialType::Metalness) || materialFlags & static_cast<uint32_t>(MaterialType::Specular))
+    if(materialFlags & static_cast<uint32_t>(MaterialType::Metalness) || materialFlags & static_cast<uint32_t>(MaterialType::Specular) || mat.mMaterialTypes & static_cast<uint32_t>(MaterialType::CombinedSpecularGloss))
     {
         TextureUtil::TextureInfo metalnessInfo = TextureUtil::load32BitTexture(mat.mMetalnessOrSpecularPath.c_str(), materialFlags & static_cast<uint32_t>(MaterialType::Metalness) ? STBI_grey : STBI_rgb_alpha);
         Image* metalnessTexture = new Image(eng->getDevice(), materialFlags & static_cast<uint32_t>(MaterialType::Metalness) ? Format::R8UNorm : Format::RGBA8UNorm, ImageUsage::Sampled | ImageUsage::TransferDest,

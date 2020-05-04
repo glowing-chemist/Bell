@@ -49,7 +49,8 @@ enum class MaterialType
     Specular = 1 << 6,
     CombinedMetalnessRoughness = 1 << 7,
     AmbientOcclusion = 1 << 8,
-    Emisive = 1 << 9
+    Emisive = 1 << 9,
+    CombinedSpecularGloss = 1 << 10
 };
 
 enum class PBRType

@@ -11,6 +11,7 @@
 #define    kMaterial_CombinedMetalnessRoughness (1 << 7)
 #define    kMaterial_AmbientOcclusion (1 << 8)
 #define    kMaterial_Emissive (1 << 9)
+#define    kMaterial_CombinedSpecularGloss (1 << 10)
 
 
 struct MaterialInfo
