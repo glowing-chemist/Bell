@@ -549,12 +549,12 @@ void Editor::drawMenuBar()
             {
                 mEngine.setScene(mInProgressScene);
 
-                std::array<std::string, 6> skybox{	"./Assets/Skybox.png",
-                                                    "./Assets/Skybox.png",
-                                                    "./Assets/Skybox.png",
-                                                    "./Assets/Skybox.png",
-                                                    "./Assets/Skybox.png",
-                                                    "./Assets/Skybox.png" };
+                std::array<std::string, 6> skybox{	"./Assets/skybox/px.png",
+                                                    "./Assets/skybox/nx.png",
+                                                    "./Assets/skybox/py.png",
+                                                    "./Assets/skybox/ny.png",
+                                                    "./Assets/skybox/pz.png",
+                                                    "./Assets/skybox/nz.png" };
                 mInProgressScene->loadSkybox(skybox, &mEngine);
 
                 mPublishedScene = true;
@@ -993,12 +993,12 @@ void Editor::loadScene(const std::string& scene)
     mInProgressScene->computeBounds(MeshType::Static);
     mInProgressScene->computeBounds(MeshType::Dynamic);
 
-    std::array<std::string, 6> skybox{	"./Assets/Skybox.png",
-                                        "./Assets/Skybox.png",
-                                        "./Assets/Skybox.png",
-                                        "./Assets/Skybox.png",
-                                        "./Assets/Skybox.png",
-                                        "./Assets/Skybox.png" };
+    std::array<std::string, 6> skybox{	"./Assets/skybox/px.png",
+                                        "./Assets/skybox/nx.png",
+                                        "./Assets/skybox/py.png",
+                                        "./Assets/skybox/ny.png",
+                                        "./Assets/skybox/pz.png",
+                                        "./Assets/skybox/nz.png" };
     mInProgressScene->loadSkybox(skybox, &mEngine);
 
     mEngine.setScene(mInProgressScene);

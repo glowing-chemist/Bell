@@ -771,7 +771,7 @@ vk::Sampler VulkanRenderDevice::getImmutableSampler(const Sampler& samplerDesc)
     info.setMipmapMode(mipmapMode);
     info.setMipLodBias(0.0f);
     info.setMinLod(0.0f);
-    info.setMaxLod(0.0f);
+    info.setMaxLod(16.0f);
 
     sampler =  createSampler(info);
     mImmutableSamplerCache[samplerDesc] = sampler;

@@ -132,11 +132,11 @@ float3 getNormalFromTexel(const int3 texelPosition, const float2 size)
 	} 
 	else if(cubemapSide == 2) 
 	{ // facing y-dir
-		normal = float3(-position.x, 1, -position.y);
+		normal = float3(position.x, 1, position.y);
 	} 
 	else if(cubemapSide == 3) 
 	{ // facing -y-dir
-		normal = float3(position.x, -1, -position.y);
+		normal = float3(-position.x, -1, position.y);
 	} 
 	else if(cubemapSide == 4) 
 	{ // facing z-dir
