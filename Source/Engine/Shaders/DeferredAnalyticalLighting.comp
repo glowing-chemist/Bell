@@ -84,13 +84,13 @@ void main(uint3 globalIndex : SV_DispatchThreadID)
     const uint froxelIndex = activeFroxels.Sample(pointSampler, uv);
     const uint2 lightListIndicies = sparseFroxelList[froxelIndex];
 
-    float roughness = material.specularRoughness.w * material.specularRoughness.w;
+    float roughness = material.specularRoughness.w;
 
     // Initialize needed lighting params.
     float3x3 minV;
     float LTCAmp;
     float3 dfg;
-    initializeLightState(minV, LTCAmp, dfg, DFG, ltcMat, ltcAmp, linearSampler, dot(material.normal.xyz, viewDir), roughness);
+    initializeLightState(minV, LTCAmp, dfg, DFG, ltcMat, ltcAmp, linearSampler, dot(material.normal.xyz, viewDir), roughness * roughness);
 
     float4 lighting = float4(0.0f);
 

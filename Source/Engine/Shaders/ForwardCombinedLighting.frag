@@ -74,7 +74,7 @@ Output main(GBufferVertOutput vertInput)
 
 	const float3 lightDir = reflect(-viewDir, material.normal);
 
-	float roughness = material.specularRoughness.w * material.specularRoughness.w;
+	float roughness = material.specularRoughness.w;
     const float lodLevel = roughness * 10.0f;
 
     // Calculate contribution from enviroment.
@@ -92,7 +92,7 @@ Output main(GBufferVertOutput vertInput)
     float3x3 minV;
     float LTCAmp;
     float3 dfg;
-    initializeLightState(minV, LTCAmp, dfg, DFG, ltcMat, ltcAmp, linearSampler, NoV, roughness);
+    initializeLightState(minV, LTCAmp, dfg, DFG, ltcMat, ltcAmp, linearSampler, NoV, roughness * roughness);
 
     const float3 diffuse = calculateDiffuseDisney(material, irradiance, dfg);
     const float3 specular = calculateSpecular(  material,
