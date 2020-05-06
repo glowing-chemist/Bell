@@ -125,10 +125,17 @@ void Engine::setScene(Scene* scene)
 {
     mCurrentScene = scene;
 
-	// Set up the SRS for the materials.
-    const auto& materials = mCurrentScene->getMaterials();
-	mMaterials->addSampledImageArray(materials);
-	mMaterials->finalise();
+    if(scene)
+    {
+        // Set up the SRS for the materials.
+        const auto& materials = mCurrentScene->getMaterials();
+        mMaterials->addSampledImageArray(materials);
+        mMaterials->finalise();
+    }
+    else // We're clearing the scene so need to destroy the materials.
+    {
+        mMaterials.reset(mRenderDevice);
+    }
 }
 
 
@@ -441,6 +448,7 @@ void Engine::recordScene()
 
     updateGlobalBuffers();
 
+    mMaterials->updateLastAccessed();
 	mCurrentRenderGraph.bindShaderResourceSet(kMaterials, mMaterials);
     mCurrentRenderGraph.bindBuffer(kCameraBuffer, *mDeviceCameraBuffer);
 	mCurrentRenderGraph.bindBuffer(kShadowingLights, *mShadowCastingLight);
@@ -453,7 +461,10 @@ void Engine::recordScene()
 
 
     if(mCurrentScene && mCurrentScene->getSkybox())
+    {
         mCurrentRenderGraph.bindImage(kSkyBox, *mCurrentScene->getSkybox());
+        (*mCurrentScene->getSkybox())->updateLastAccessed();
+    }
 }
 
 

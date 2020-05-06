@@ -124,7 +124,7 @@ private:
     uint32_t mCurrentMaterialIndex;
     SceneID mMeshToInstance;
     bool mShowAddInstanceDialog;
-
+    bool mResetSceneAtEndOfFrame;
     bool mPublishedScene;
 
     std::vector<EditorLight> mLights;

@@ -72,5 +72,5 @@ void VulkanShaderResourceSet::finalise()
 		++binding;
 	}
 
-	mDescSet = device->getDescriptorManager()->writeShaderResourceSet(mLayout, writes);
+    mDescSet = device->getDescriptorManager()->writeShaderResourceSet(mLayout, writes, mPool);
 }

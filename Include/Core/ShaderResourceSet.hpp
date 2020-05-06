@@ -28,6 +28,9 @@ public:
     void addDataBufferRO(const BufferView&);
     void addDataBufferRW(const BufferView&);
     void addDataBufferWO(const BufferView&);
+
+    void updateLastAccessed();
+
 	virtual void finalise() = 0;
 
 	struct ResourceInfo
@@ -75,6 +78,8 @@ public:
 	{
 		return getBase();
 	}
+
+    void reset(RenderDevice* dev);
 
 private:
 

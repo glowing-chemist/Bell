@@ -939,6 +939,7 @@ void RenderGraph::resetBindings()
 {
 	// Clear all bound resources
 	mImageViews.clear();
+    mImageViewArrays.clear();
 	mBufferViews.clear();
 	mSamplers.clear();
 	mSRS.clear();

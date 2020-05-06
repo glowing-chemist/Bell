@@ -1033,6 +1033,7 @@ void VulkanRenderDevice::clearDeferredResources()
 		if (submission <= mFinishedSubmission)
 		{
 			mDevice.destroyDescriptorSetLayout(layout);
+            mDevice.freeDescriptorSets(pool, 1, &set);
 			mSRSPendingDestruction.pop_front();
 		}
 		else

@@ -216,7 +216,7 @@ void DescriptorManager::writeDescriptors(RenderGraph& graph, std::vector<vulkanR
 }
 
 
-vk::DescriptorSet DescriptorManager::writeShaderResourceSet(const vk::DescriptorSetLayout layout, const std::vector<WriteShaderResourceSet>& writes)
+vk::DescriptorSet DescriptorManager::writeShaderResourceSet(const vk::DescriptorSetLayout layout, const std::vector<WriteShaderResourceSet>& writes, vk::DescriptorPool& outPool)
 {
 	std::vector<vk::WriteDescriptorSet> descSetWrites;
 	std::vector<vk::DescriptorImageInfo> imageInfos;
@@ -231,7 +231,9 @@ vk::DescriptorSet DescriptorManager::writeShaderResourceSet(const vk::Descriptor
 	imageInfos.reserve(maxImages);
 	bufferInfos.reserve(writes.size());
 
-	vk::DescriptorSet descSet = allocatePersistentDescriptorSet(layout, writes);
+    vk::DescriptorPool allocatedPool;
+    vk::DescriptorSet descSet = allocatePersistentDescriptorSet(layout, writes, allocatedPool);
+    outPool = allocatedPool;
 
 	for (uint32_t i = 0; i < writes.size(); ++i)
 	{
@@ -358,9 +360,10 @@ vk::DescriptorSet DescriptorManager::writeShaderResourceSet(const vk::Descriptor
 }
 
 
-vk::DescriptorSet DescriptorManager::allocatePersistentDescriptorSet(const vk::DescriptorSetLayout layout, const std::vector<WriteShaderResourceSet>& writes)
+vk::DescriptorSet DescriptorManager::allocatePersistentDescriptorSet(const vk::DescriptorSetLayout layout, const std::vector<WriteShaderResourceSet>& writes, vk::DescriptorPool& outPool)
 {
 	DescriptorPool pool = findSuitablePool(writes, mPersistentPools);
+    outPool = pool.mPool;
 
 	vk::DescriptorSetAllocateInfo allocInfo{};
 	allocInfo.setDescriptorPool(pool.mPool);

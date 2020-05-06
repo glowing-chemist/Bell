@@ -214,6 +214,22 @@ public:
         Image* mAmbientOcclusion;
         uint32_t mMaterialTypes;
         uint32_t mMaterialOffset;
+
+        void updateLastAccessed()
+        {
+            if(mAlbedoorDiffuse)
+                (*mAlbedoorDiffuse)->updateLastAccessed();
+            if(mNormals)
+                (*mNormals)->updateLastAccessed();
+            if(mRoughnessOrGloss)
+                (*mRoughnessOrGloss)->updateLastAccessed();
+            if(mMetalnessOrSpecular)
+                (*mMetalnessOrSpecular)->updateLastAccessed();
+            if(mEmissive)
+                (*mEmissive)->updateLastAccessed();
+            if(mAmbientOcclusion)
+                (*mAmbientOcclusion)->updateLastAccessed();
+        }
 	};
 
     struct MaterialPaths
@@ -302,6 +318,12 @@ public:
 	{
 		return mSceneAABB;
 	}
+
+    void updateMaterialsLastAccess()
+    {
+        for(auto& mat : mMaterials)
+            mat.updateLastAccessed();
+    }
 
 private:
 

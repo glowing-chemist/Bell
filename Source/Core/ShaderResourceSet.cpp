@@ -85,9 +85,33 @@ void ShaderResourceSetBase::addDataBufferWO(const BufferView& view)
 }
 
 
+void ShaderResourceSetBase::updateLastAccessed()
+{
+    const uint64_t submissionIndex = getDevice()->getCurrentSubmissionIndex();
+    GPUResource::updateLastAccessed(submissionIndex);
+
+    for(auto& view : mImageViews)
+            view->updateLastAccessed();
+
+    for(auto& views : mImageArrays)
+        for(auto& view : views)
+            view->updateLastAccessed();
+}
+
+
 ShaderResourceSet::ShaderResourceSet(RenderDevice* dev)
 {
 #ifdef VULKAN
 	mBase = std::make_shared<VulkanShaderResourceSet>(dev);
+#endif
+}
+
+
+void ShaderResourceSet::reset(RenderDevice* dev)
+{
+    mBase.reset();
+
+#ifdef VULKAN
+    mBase = std::make_shared<VulkanShaderResourceSet>(dev);
 #endif
 }

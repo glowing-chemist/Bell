@@ -239,7 +239,7 @@ Editor::Editor(GLFWwindow* window) :
     mWindow{window},
     mCurrentCursorPos{0.0, 0.0},
 	mCursorPosDelta{0.0, 0.0},
-    mMode{1},
+    mMode{EditorMode::NodeEditor},
     mShowHelpMenu{false},
     mShowDebugTexturePicker{false},
     mCurrentDebugTexture(-1),
@@ -263,6 +263,7 @@ Editor::Editor(GLFWwindow* window) :
     mCurrentMaterialIndex{0},
     mMeshToInstance{0},
     mShowAddInstanceDialog{false},
+    mResetSceneAtEndOfFrame{false},
     mPublishedScene{false},
     mLightOperationMode{ImGuizmo::OPERATION::TRANSLATE}
 {
@@ -313,14 +314,13 @@ void Editor::run()
 
         // Only draw the scene if we're in scene mode else draw the
         // pass/shader graphs.
-        if(mMode == EditorMode::SceneView)
+        if((mMode == EditorMode::SceneView) && mPublishedScene)
             renderScene();
 
         previousMode = mMode;
         renderOverlay();
 
         mRecompileGraph = mRecompileGraph || previousMode != mMode;
-
 
 		swap();
 
@@ -330,6 +330,7 @@ void Editor::run()
 
 void Editor::renderScene()
 {
+    mInProgressScene->updateMaterialsLastAccess();
     mEngine.registerPass(PassType::DebugAABB);
 	mNodeEditor.addPasses(mEngine);
 }
@@ -411,6 +412,22 @@ void Editor::swap()
 	mEngine.recordScene();
 	mEngine.render();
 	mEngine.swap();
+
+    if(mResetSceneAtEndOfFrame)
+    {
+        delete mInProgressScene;
+        mInProgressScene = new Scene("InProgress");
+
+        mEngine.setScene(nullptr);
+        mResetSceneAtEndOfFrame = false;
+        mPublishedScene = false;
+        mMode = EditorMode::NodeEditor;
+        mRecompileGraph = true;
+
+        mSceneInstanceIDs.clear();
+        mStaticMeshEntries.clear();
+        mLights.clear();
+    }
 }
 
 
@@ -516,7 +533,7 @@ void Editor::drawMenuBar()
 				}
 				if(ImGui::MenuItem("Close current Scene"))
 				{
-
+                    mResetSceneAtEndOfFrame = true;
                 }
                 if(ImGui::MenuItem("Load mesh"))
                 {
@@ -696,7 +713,7 @@ void Editor::drawAssistantWindow()
            ImGui::TreePop();
 
            // update the current scene camera.
-           Camera& camera = mEngine.getCurrentSceneCamera();
+           Camera& camera = mInProgressScene->getCamera();
            camera.setNearPlane(mCameraInfo.mNearPlaneDistance);
            camera.setFarPlane(mCameraInfo.mFarPlaneDistance);
            camera.setFOVDegrees(mCameraInfo.mFOV);
