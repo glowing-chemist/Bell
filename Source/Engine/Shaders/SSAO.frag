@@ -41,6 +41,8 @@ float main(PositionAndUVVertOutput vertInput)
   const float3 random = Hamersley_uniform(flattenedPosition, maxSize);
 
   const float depth = linearisedDepth.Sample(linearSampler, vertInput.uv);
+  if(depth == 1.0f)
+    return depth;
  
   const float3 position = float3( vertInput.uv, depth);
   float3 normal = normalsFromDepth(depth, vertInput.uv);
