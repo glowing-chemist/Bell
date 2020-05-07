@@ -378,7 +378,10 @@ Scene::MaterialMappings Scene::loadMaterialsInternal(Engine* eng)
 	}
     // Add the last material
     if(mat.mMaterialTypes)
+    {
+        mat.mMaterialOffset = materialOffset;
         addMaterial(mat, eng);
+    }
 
     return materialMappings;
 }
