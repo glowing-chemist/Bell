@@ -39,9 +39,10 @@ float main(PositionAndUVVertOutput vertInput)
   normal = normalize(mul((float3x3)camera.view, normal));
 
   float occlusion = 0.0;
+  const float radius_depth = radius / depth;
   for(int i = 0; i < 16; i++) {
   
-    float3 ray = radius * reflect(ssaoOffsets.offsets[i].xyz, random);
+    float3 ray = radius_depth * reflect(ssaoOffsets.offsets[i].xyz, random);
     float3 hemi_ray = position + sign(dot(normalize(ray),normal)) * ray;
     
     float occ_depth = linearisedDepth.Sample(linearSampler, saturate(hemi_ray.xy));
