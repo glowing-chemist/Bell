@@ -213,6 +213,7 @@ public:
         Image* mEmissive;
         Image* mAmbientOcclusion;
         uint32_t mMaterialTypes;
+        uint32_t mMaterialFlags;
         uint32_t mMaterialOffset;
 
         void updateLastAccessed()
@@ -241,6 +242,7 @@ public:
         std::string mEmissivePath;
         std::string mAmbientOcclusionPath;
         uint32_t mMaterialTypes;
+        uint32_t mMaterialFlags;
         uint32_t mMaterialOffset;
     };
 

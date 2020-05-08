@@ -16,7 +16,7 @@ MaterialInfo calculateMaterialInfo(	const float4 vertexNormal,
 	MaterialInfo mat;
 	mat.diffuse = float4(0.5f, 0.5f, 0.5f, 1.0f);
 	mat.normal = vertexNormal;
-	mat.specularRoughness = float4(0.5f, 0.5f, 0.5f, 0.5f);
+	mat.specularRoughness = float4(0.5f, 0.5f, 0.5f, 0.0f);
 	mat.emissiveOcclusion = float4(0.0f, 0.0f, 0.0f, 1.0);
 
 	uint nextMaterialSlot = 0;

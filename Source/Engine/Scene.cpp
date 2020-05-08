@@ -301,7 +301,7 @@ Scene::MaterialMappings Scene::loadMaterialsInternal(Engine* eng)
 
     uint32_t materialOffset = 0;
 
-    MaterialPaths mat{"", "", "", "", "", "", 0, 0};
+    MaterialPaths mat{"", "", "", "", "", "", 0, 0, 0};
     std::string albedoOrDiffuseFile;
     std::string normalsFile;
     std::string roughnessOrGlossFile;
@@ -409,7 +409,7 @@ void Scene::loadMaterialsExternal(Engine* eng, const aiScene* scene)
     for(uint32_t i = 0; i < scene->mNumMaterials; ++i)
     {
         const aiMaterial* material = scene->mMaterials[i];
-        MaterialPaths newMaterial{"", "", "", "", "", "", 0, materialOffset};
+        MaterialPaths newMaterial{"", "", "", "", "", "", 0, 0, materialOffset};
 
         if(material->GetTextureCount(aiTextureType_BASE_COLOR) > 0)
         {
@@ -531,6 +531,11 @@ void Scene::loadMaterialsExternal(Engine* eng, const aiScene* scene)
             newMaterial.mAmbientOcclusionPath = pathMapping(sceneDirectory / fsPath);
             newMaterial.mMaterialTypes |= static_cast<uint32_t>(MaterialType::AmbientOcclusion);
         }
+
+        ai_real opacity;
+        material->Get(AI_MATKEY_OPACITY, opacity);
+        if(opacity < 1.0f)
+            newMaterial.mMaterialFlags |= MeshAttributes::Transparent;
 
         materialOffset += __builtin_popcount(newMaterial.mMaterialTypes);
 
@@ -754,6 +759,7 @@ void Scene::addMaterial(const MaterialPaths& mat, Engine* eng)
     Scene::Material newMaterial{};
     newMaterial.mMaterialTypes = materialFlags;
     newMaterial.mMaterialOffset = mat.mMaterialOffset;
+    newMaterial.mMaterialFlags = mat.mMaterialFlags;
 
     if(materialFlags & static_cast<uint32_t>(MaterialType::Albedo) || materialFlags & static_cast<uint32_t>(MaterialType::Diffuse))
     {

@@ -171,6 +171,7 @@ set(BELL_SOURCE
     Source/Engine/ScreenSpaceReflectionTechnique.cpp
     Source/Engine/VoxalizeTechnique.cpp
     Source/Engine/DebugVisualizationTechnique.cpp
+    Source/Engine/TransparentTechnique.cpp
 
     # used for texture loading
     ThirdParty/stb_image/stb_image.cpp
@@ -251,6 +252,7 @@ set(SHADERS
 	DebugVoxels.comp
 	DebugAABB.vert
 	DebugAABB.frag
+	Transparent.frag
     )
 
 foreach(shader ${SHADERS})

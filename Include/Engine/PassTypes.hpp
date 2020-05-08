@@ -4,37 +4,38 @@
 #include <cstdint>
 
 
-#define PASS_TYPES  DepthPre = 1, \
-                    GBuffer = 1 << 1, \
-                    Animation = 1 << 2, \
-                    Shadow = 1 << 3, \
-                    CascadingShadow = 1 << 4, \
-                    SSAO = 1 << 5, \
-                    GBufferMaterial = 1 << 6, \
-                    EditorDefault = 1 << 7, \
-                    GBufferPreDepth = 1 << 8, \
-                    GBUfferMaterialPreDepth = 1 << 9, \
-                    InplaceCombine = 1 << 10, \
-                    InplaceCombineSRGB = 1 << 11, \
-                    Overlay = 1 << 12, \
-                    Skybox = 1 << 13, \
-                    ConvolveSkybox = 1 << 14, \
-                    DFGGeneration = 1 << 15, \
-                    Composite = 1 << 16, \
-                    ForwardIBL = 1 << 17, \
-                    LightFroxelation = 1 << 18, \
-                    DeferredPBRIBL = 1 << 19, \
-                    DeferredAnalyticalLighting = 1 << 20, \
-                    ForwardAnalyticalLighting = 1 << 21, \
-                    DeferredCombinedLighting = 1 << 22, \
-                    ForwardCombinedLighting = 1 << 23, \
-                    SSAOImproved = 1 << 24, \
-                    TAA = 1 << 25, \
-                    LineariseDepth = 1 << 26, \
-                    SSR = 1 << 27, \
-                    Voxelize = 1 << 28, \
-                    DebugAABB = 1 << 29, \
-                    DebugWireFrame = 1 << 30
+#define PASS_TYPES  DepthPre = 1ULL, \
+                    GBuffer = 1ULL << 1, \
+                    Animation = 1ULL << 2, \
+                    Shadow = 1ULL << 3, \
+                    CascadingShadow = 1ULL << 4, \
+                    SSAO = 1ULL << 5, \
+                    GBufferMaterial = 1ULL << 6, \
+                    EditorDefault = 1ULL << 7, \
+                    GBufferPreDepth = 1ULL << 8, \
+                    GBUfferMaterialPreDepth = 1ULL << 9, \
+                    InplaceCombine = 1ULL << 10, \
+                    InplaceCombineSRGB = 1ULL << 11, \
+                    Overlay = 1ULL << 12, \
+                    Skybox = 1ULL << 13, \
+                    ConvolveSkybox = 1ULL << 14, \
+                    DFGGeneration = 1ULL << 15, \
+                    Composite = 1ULL << 16, \
+                    ForwardIBL = 1ULL << 17, \
+                    LightFroxelation = 1ULL << 18, \
+                    DeferredPBRIBL = 1ULL << 19, \
+                    DeferredAnalyticalLighting = 1ULL << 20, \
+                    ForwardAnalyticalLighting = 1ULL << 21, \
+                    DeferredCombinedLighting = 1ULL << 22, \
+                    ForwardCombinedLighting = 1ULL << 23, \
+                    SSAOImproved = 1ULL << 24, \
+                    TAA = 1ULL << 25, \
+                    LineariseDepth = 1ULL << 26, \
+                    SSR = 1ULL << 27, \
+                    Voxelize = 1ULL << 28, \
+                    DebugAABB = 1ULL << 29, \
+                    DebugWireFrame = 1ULL << 30, \
+                    Transparent = 1ULL << 31
 
 // An enum to keep track of which 
 enum class PassType : uint64_t
@@ -122,6 +123,9 @@ inline const char* passToString(const PassType passType)
 
         case PassType::DebugWireFrame:
             return "WireFrame";
+
+        case PassType::Transparent:
+            return "Transparent";
     }
 
     return "UNKNOWN PASS TYPE";
