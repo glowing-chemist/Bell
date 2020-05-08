@@ -54,6 +54,7 @@ public:
     virtual void					   setDebugName(const std::string&, const uint64_t, const uint64_t objectType) = 0;
 
 	virtual void                       flushWait() const = 0;
+    virtual void                       invalidatePipelines() = 0;
 
     virtual void					   submitFrame() = 0;
     virtual void					   swap() = 0;

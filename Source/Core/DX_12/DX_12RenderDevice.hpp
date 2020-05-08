@@ -34,6 +34,7 @@ public:
 	virtual void					   setDebugName(const std::string&, const uint64_t, const uint64_t objectType) override;
 
 	virtual void                       flushWait() const override;
+    virtual void                       invalidatePipelines() override;
 
 	virtual void					   submitFrame() override;
 	virtual void					   swap() override;

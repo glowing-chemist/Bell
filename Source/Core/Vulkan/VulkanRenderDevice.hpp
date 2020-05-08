@@ -242,11 +242,8 @@ public:
     void                               bindBufferMemory(vk::Buffer&, vk::DeviceMemory, const uint64_t);
     void                               bindImageMemory(vk::Image&, vk::DeviceMemory, const uint64_t);
 
-    uint64_t						   getCurrentSubmissionIndex() const { return mCurrentSubmission; }
-    uint64_t						   getCurrentFrameIndex() const { return mCurrentFrameIndex; }
-    uint64_t                           getFinishedSubmissionIndex() const { return mFinishedSubmission; }
-
 	virtual void                       flushWait() const override { mGraphicsQueue.waitIdle();  mDevice.waitIdle(); }
+    virtual void                       invalidatePipelines() override;
 
 	virtual void					   execute(BarrierRecorder& recorder) override;
 

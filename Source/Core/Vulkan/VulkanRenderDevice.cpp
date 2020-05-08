@@ -1075,6 +1075,28 @@ void VulkanRenderDevice::setDebugName(const std::string& name, const uint64_t ha
 }
 
 
+void VulkanRenderDevice::invalidatePipelines()
+{
+    mDevice.waitIdle();
+
+    for(auto& [_, graphicsHandles] : mGraphicsPipelineCache)
+    {
+        mDevice.destroyPipeline(graphicsHandles.mGraphicsPipeline->getHandle());
+        mDevice.destroyPipelineLayout(graphicsHandles.mGraphicsPipeline->getLayoutHandle());
+        mDevice.destroyRenderPass(graphicsHandles.mRenderPass);
+        mDevice.destroyDescriptorSetLayout(graphicsHandles.mDescriptorSetLayout[0]); // if there are any more they will get destroyed elsewhere.
+    }
+    mGraphicsPipelineCache.clear();
+
+    for(auto& [_, computeHandles]: mComputePipelineCache)
+    {
+        mDevice.destroyPipeline(computeHandles.mComputePipeline->getHandle());
+        mDevice.destroyPipelineLayout(computeHandles.mComputePipeline->getLayoutHandle());
+        mDevice.destroyDescriptorSetLayout(computeHandles.mDescriptorSetLayout[0]);
+    }
+    mComputePipelineCache.clear();
+}
+
 
 // Memory management functions
 vk::PhysicalDeviceMemoryProperties VulkanRenderDevice::getMemoryProperties() const
