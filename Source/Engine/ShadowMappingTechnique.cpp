@@ -84,7 +84,7 @@ void ShadowMappingTechnique::render(RenderGraph& graph, Engine*)
             for (const auto& mesh : meshes)
             {
                 // Don't render transparent geometry.
-                if ((mesh->mMesh->getAttributes() & MeshAttributes::Transparent) > 0 || !(mesh->getInstanceFlags() & InstanceFlags::Draw))
+                if ((mesh->getMaterialFlags() & MaterialType::Transparent) > 0 || !(mesh->getInstanceFlags() & InstanceFlags::Draw))
                     continue;
 
                 const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->mMesh);

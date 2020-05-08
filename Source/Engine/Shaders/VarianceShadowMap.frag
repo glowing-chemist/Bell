@@ -13,7 +13,7 @@ ConstantBuffer<ObjectMatracies> model;
 
 float2 main(ShadowMapVertOutput vertInput)
 {
-	if(model.attributes & kAlphaTested)
+	if(model.materialFlags & kAlphaTested)
 	{
 		const float alpha = materials[vertInput.materialIndex].Sample(linearSampler, vertInput.uv).w;
 		if(alpha == 0.0f)

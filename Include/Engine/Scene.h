@@ -50,8 +50,15 @@ enum class MaterialType
     CombinedMetalnessRoughness = 1 << 7,
     AmbientOcclusion = 1 << 8,
     Emisive = 1 << 9,
-    CombinedSpecularGloss = 1 << 10
+    CombinedSpecularGloss = 1 << 10,
+
+    AlphaTested = 1 << 11,
+    Transparent = 1 << 12
 };
+inline uint32_t operator&(const uint32_t lhs, const MaterialType rhs)
+{
+    return lhs & static_cast<uint32_t>(rhs);
+}
 
 enum class PBRType
 {
@@ -116,6 +123,11 @@ struct MeshInstance
         mTransformation = newTrans;
     }
 
+    uint32_t getMaterialFlags() const
+    {
+        return mMaterialFlags;
+    }
+
     MeshEntry getMeshShaderEntry() const
     {
         MeshEntry entry{};
@@ -123,7 +135,6 @@ struct MeshInstance
         entry.mPreviousTransformation = transpose(float4x3(mPreviousTransformation));
         entry.mMaterialIndex = mMaterialIndex;
         entry.mMaterialFlags = mMaterialFlags;
-        entry.mAttributes = mMesh->getAttributes();
 
         return entry;
     }
@@ -213,7 +224,6 @@ public:
         Image* mEmissive;
         Image* mAmbientOcclusion;
         uint32_t mMaterialTypes;
-        uint32_t mMaterialFlags;
         uint32_t mMaterialOffset;
 
         void updateLastAccessed()
@@ -242,7 +252,6 @@ public:
         std::string mEmissivePath;
         std::string mAmbientOcclusionPath;
         uint32_t mMaterialTypes;
-        uint32_t mMaterialFlags;
         uint32_t mMaterialOffset;
     };
 
@@ -339,13 +348,7 @@ private:
 		}
 	};
 
-	struct MeshInfo
-	{
-		uint32_t index;
-		uint32_t attributes;
-	};
-
-	using MaterialMappings = std::map<aiString, MeshInfo, AiStringComparitor>;
+	using MaterialMappings = std::map<aiString, uint32_t, AiStringComparitor>;
 
     // return a mapping between mesh name and material index from the Bell material file format
 	MaterialMappings loadMaterialsInternal(Engine*);

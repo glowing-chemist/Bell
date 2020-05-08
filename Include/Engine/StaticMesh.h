@@ -13,19 +13,12 @@
 #include <string>
 #include <vector>
 
-enum MeshAttributes
-{
-    AlphaTested = 1,
-    Transparent = 1 << 1
-};
-
 struct MeshEntry
 {
     float3x4 mTransformation;
     float3x4 mPreviousTransformation;
     uint32_t mMaterialIndex;
     uint32_t mMaterialFlags;
-    uint32_t mAttributes;
 };
 static_assert (sizeof(MeshEntry) <= 128, "Mesh Entry will no longer fit inside push constants");
 
@@ -83,16 +76,6 @@ public:
 		return mVertexCount;
 	}
 
-    void setAttributes(const uint32_t attr)
-    {
-        mAttributes = attr;
-    }
-
-    uint32_t getAttributes() const
-    {
-        return mAttributes;
-    }
-
 private:
 
     void configure(const aiMesh* mesh, const int vertexAttributes);
@@ -112,8 +95,6 @@ private:
 	uint64_t mVertexCount;
     int mVertexAttributes;
 	uint32_t mVertexStride;
-
-    uint32_t mAttributes;
 };
 
 #endif

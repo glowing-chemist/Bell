@@ -81,7 +81,6 @@ struct ObjectMatracies
 	float4x3 prevMeshMatrix;
 	uint materialIndex;
 	uint materialFlags;
-	uint attributes;
 };
 
 

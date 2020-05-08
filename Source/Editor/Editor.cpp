@@ -927,24 +927,34 @@ void Editor::addMaterial()
     Scene::MaterialPaths newMaterial{};
     newMaterial.mMaterialTypes = materialFlags;
 
-    if(materialFlags & static_cast<uint32_t>(MaterialType::Albedo) || materialFlags & static_cast<uint32_t>(MaterialType::Diffuse))
+    if(materialFlags & MaterialType::Albedo || materialFlags & MaterialType::Diffuse)
     {
-        newMaterial.mAlbedoorDiffusePath = mMaterialDialog.getAlbedoOrDiffusePath();
+        newMaterial.mAlbedoorDiffusePath = mMaterialDialog.getPath(AlbedoDiffusePath);
     }
 
-    if(materialFlags & static_cast<uint32_t>(MaterialType::Normals))
+    if(materialFlags & MaterialType::Normals)
     {
-        newMaterial.mNormalsPath = mMaterialDialog.getNormalsPath();
+        newMaterial.mNormalsPath = mMaterialDialog.getPath(NormalsPath);
     }
 
-    if(materialFlags & static_cast<uint32_t>(MaterialType::Roughness) || materialFlags & static_cast<uint32_t>(MaterialType::Gloss))
+    if(materialFlags & MaterialType::Roughness || materialFlags & MaterialType::Gloss)
     {
-        newMaterial.mRoughnessOrGlossPath = mMaterialDialog.getRoughnessOrGlossPath();
+        newMaterial.mRoughnessOrGlossPath = mMaterialDialog.getPath(RoughnessGlossPath);
     }
 
-    if(materialFlags & static_cast<uint32_t>(MaterialType::Metalness) || materialFlags & static_cast<uint32_t>(MaterialType::Specular))
+    if(materialFlags & MaterialType::Metalness || materialFlags & MaterialType::Specular)
     {
-        newMaterial.mMetalnessOrSpecularPath = mMaterialDialog.getMetalnessOrSPecularPath();
+        newMaterial.mMetalnessOrSpecularPath = mMaterialDialog.getPath(MetalnessSpecularPath);
+    }
+
+    if (materialFlags & MaterialType::Emisive)
+    {
+        newMaterial.mEmissivePath = mMaterialDialog.getPath(EmissivePath);
+    }
+
+    if (materialFlags & MaterialType::AmbientOcclusion)
+    {
+        newMaterial.mEmissivePath = mMaterialDialog.getPath(AOPath);
     }
 
     mInProgressScene->addMaterial(newMaterial, &mEngine);

@@ -30,53 +30,44 @@ private:
 };
 
 
+enum TextureFilePaths
+{
+    AlbedoDiffusePath = 0,
+    NormalsPath,
+    RoughnessGlossPath,
+    MetalnessSpecularPath,
+    EmissivePath,
+    AOPath,
+
+    TextureFilePathCount
+};
+
 class ImGuiMaterialDialog
 {
 public:
     ImGuiMaterialDialog() :
-        mShowFileBrowserDiffuse(false),
-        mShowFileBrowserNormals(false),
-        mShowFileBrowserRoughness(false),
-        mShowFileBrowserMetalness(false),
         mFileBrowser("material", "/")
     {
-        memset(mMaterialName, 0, 32);
+        reset();
     }
 
     bool render();
     void reset()
     {
-        mShowFileBrowserDiffuse = false;
-        mShowFileBrowserNormals = false;
-        mShowFileBrowserRoughness = false;
-        mShowFileBrowserMetalness= false;
+        memset(mMaterialName, 0, 32);
 
-        mAlbedoOrDiffusePath = "";
-        mNormalsPath = "";
-        mRoughnessOrGlossPath = "";
-        mMetalnessOrSPecularPath = "";
+        for (uint32_t i = 0; i < TextureFilePathCount; ++i)
+            mShowFileBrowser[i] = false;
+
+        for (uint32_t i = 0; i < TextureFilePathCount; ++i)
+            mPaths[i] = "";
     }
 
     uint32_t getMaterialFlags() const;
 
-    const std::string& getAlbedoOrDiffusePath() const
+    const std::string& getPath(const TextureFilePaths pathType)
     {
-        return mAlbedoOrDiffusePath;
-    }
-
-    const std::string& getNormalsPath() const
-    {
-        return mNormalsPath;
-    }
-
-    const std::string& getRoughnessOrGlossPath() const
-    {
-        return mRoughnessOrGlossPath;
-    }
-
-    const std::string& getMetalnessOrSPecularPath() const
-    {
-        return mMetalnessOrSPecularPath;
+        return mPaths[pathType];
     }
 
     const char* getMaterialName() const
@@ -90,16 +81,10 @@ private:
     uint8_t mRoughnessGlossIndex = 0;
     uint8_t mMetalnessSpecularIndex = 0;
 
-    bool mShowFileBrowserDiffuse = false;
-    bool mShowFileBrowserNormals = false;
-    bool mShowFileBrowserRoughness = false;
-    bool mShowFileBrowserMetalness = false;
+    bool mShowFileBrowser[TextureFilePathCount];
     ImGuiFileBrowser mFileBrowser;
 
-    std::string mAlbedoOrDiffusePath;
-    std::string mNormalsPath;
-    std::string mRoughnessOrGlossPath;
-    std::string mMetalnessOrSPecularPath;
+    std::string mPaths[TextureFilePathCount];
     char mMaterialName[32];
 };
 

@@ -1,6 +1,6 @@
 393
-sponza_00_sponza_00_leaf 0 AlphaTested ;
-sponza_01_sponza_01_Material__57 2 AlphaTested ;
+sponza_00_sponza_00_leaf 0 ;
+sponza_01_sponza_01_Material__57 2 ;
 sponza_01_sponza_01_vase_round 1 ;
 sponza_03_sponza_03_Material__298 3 ;
 sponza_05_sponza_05_bricks 4 ;
@@ -180,7 +180,7 @@ sponza_253_sponza_253_column_b 11 ;
 sponza_254_sponza_254_column_b 11 ;
 sponza_255_sponza_255_column_b 11 ;
 sponza_256_sponza_256_column_b 11 ;
-sponza_257_sponza_257_Material__57 2 AlphaTested ;
+sponza_257_sponza_257_Material__57 2 ;
 sponza_258_sponza_258_bricks 4 ;
 sponza_259_sponza_259_flagpole 12 ;
 sponza_25_sponza_25_column_c 9 ;
@@ -200,14 +200,14 @@ sponza_271_sponza_271_flagpole 12 ;
 sponza_272_sponza_272_flagpole 12 ;
 sponza_273_sponza_273_flagpole 12 ;
 sponza_274_sponza_274_flagpole 12 ;
-sponza_275_sponza_275_leaf 0 AlphaTested ;
-sponza_276_sponza_276_leaf 0 AlphaTested ;
-sponza_277_sponza_277_leaf 0 AlphaTested ;
-sponza_278_sponza_278_leaf 0 AlphaTested ;
-sponza_279_sponza_279_leaf 0 AlphaTested ;
+sponza_275_sponza_275_leaf 0 ;
+sponza_276_sponza_276_leaf 0 ;
+sponza_277_sponza_277_leaf 0 ;
+sponza_278_sponza_278_leaf 0 ;
+sponza_279_sponza_279_leaf 0 ;
 sponza_27_sponza_27_column_c 9 ;
-sponza_280_sponza_280_leaf 0 AlphaTested ;
-sponza_281_sponza_281_leaf 0 AlphaTested ;
+sponza_280_sponza_280_leaf 0 ;
+sponza_281_sponza_281_leaf 0 ;
 sponza_282_sponza_282_fabric_e 13 ;
 sponza_283_sponza_283_fabric_d 14 ;
 sponza_284_sponza_284_fabric_a 15 ;
@@ -300,20 +300,20 @@ sponza_362_sponza_362_vase_hanging 20 ;
 sponza_363_sponza_363_vase_hanging 20 ;
 sponza_364_sponza_364_vase_hanging 20 ;
 sponza_365_sponza_365_vase_hanging 20 ;
-sponza_366_sponza_366_Material__57 2 AlphaTested ;
+sponza_366_sponza_366_Material__57 2 ;
 sponza_366_sponza_366_vase_round 1 ;
-sponza_367_sponza_367_Material__57 2 AlphaTested ;
+sponza_367_sponza_367_Material__57 2 ;
 sponza_367_sponza_367_vase_round 1 ;
-sponza_368_sponza_368_Material__57 2 AlphaTested ;
+sponza_368_sponza_368_Material__57 2 ;
 sponza_368_sponza_368_vase_round 1 ;
-sponza_369_sponza_369_Material__57 2 AlphaTested ;
+sponza_369_sponza_369_Material__57 2 ;
 sponza_369_sponza_369_vase_round 1 ;
 sponza_36_sponza_36_bricks 4 ;
-sponza_370_sponza_370_Material__57 2 AlphaTested ;
+sponza_370_sponza_370_Material__57 2 ;
 sponza_370_sponza_370_vase_round 1 ;
-sponza_371_sponza_371_Material__57 2 AlphaTested ;
+sponza_371_sponza_371_Material__57 2 ;
 sponza_371_sponza_371_vase_round 1 ;
-sponza_372_sponza_372_Material__57 2 AlphaTested ;
+sponza_372_sponza_372_Material__57 2 ;
 sponza_372_sponza_372_vase_round 1 ;
 sponza_373_sponza_373_vase 21 ;
 sponza_374_sponza_374_vase 21 ;
@@ -392,122 +392,122 @@ sponza_96_sponza_96_column_c 9 ;
 sponza_97_sponza_97_column_c 9 ;
 sponza_98_sponza_98_column_c 9 ;
 sponza_99_sponza_99_column_c 9 ;
-Material 0
+Material 0 AlphaTested ;
 Albedo textures_pbr/Sponza_Thorn_diffuse.tga
 Normal textures_pbr/Sponza_Thorn_normal.tga
 Roughness textures_pbr/Sponza_Thorn_roughness.tga
 Metalness textures_pbr/Dielectric_metallic.tga
-Material 1
+Material 1 ;
 Albedo textures_pbr/VaseRound_diffuse.tga
 Normal textures_pbr/VaseRound_normal.tga
 Roughness textures_pbr/VaseRound_roughness.tga
 Metalness textures_pbr/Dielectric_metallic.tga
-Material 2
+Material 2 AlphaTested ;
 Albedo textures_pbr/VasePlant_diffuse.tga
 Normal textures_pbr/VasePlant_normal.tga
 Roughness textures_pbr/VasePlant_roughness.tga
 Metalness textures_pbr/Dielectric_metallic.tga
-Material 3
+Material 3 ;
 Albedo textures_pbr/Background_Albedo.tga
 Normal textures_pbr/Background_Normal.tga
 Roughness textures_pbr/Background_Roughness.tga
 Metalness textures_pbr/Dielectric_metallic.tga
-Material 4
+Material 4 ;
 Albedo textures_pbr/Sponza_Bricks_a_Albedo.tga
 Normal textures_pbr/Sponza_Bricks_a_Normal.tga
 Roughness textures_pbr/Sponza_Bricks_a_Roughness.tga
 Metalness textures_pbr/Dielectric_metallic.tga
-Material 5
+Material 5 ;
 Albedo textures_pbr/Sponza_Arch_diffuse.tga
 Normal textures_pbr/Sponza_Arch_normal.tga
 Roughness textures_pbr/Sponza_Arch_roughness.tga
 Metalness textures_pbr/Dielectric_metallic.tga
-Material 6
+Material 6 ;
 Albedo textures_pbr/Sponza_Ceiling_diffuse.tga
 Normal textures_pbr/Sponza_Ceiling_normal.tga
 Roughness textures_pbr/Sponza_Ceiling_roughness.tga
 Metalness textures_pbr/Dielectric_metallic.tga
-Material 7
+Material 7 ;
 Albedo textures_pbr/Sponza_Column_a_diffuse.tga
 Normal textures_pbr/Sponza_Column_a_normal.tga
 Roughness textures_pbr/Sponza_Column_a_roughness.tga
 Metalness textures_pbr/Dielectric_metallic.tga
-Material 8
+Material 8 ;
 Albedo textures_pbr/Sponza_Floor_diffuse.tga
 Normal textures_pbr/Sponza_Floor_normal.tga
 Roughness textures_pbr/Sponza_Floor_roughness.tga
 Metalness textures_pbr/Dielectric_metallic.tga
-Material 9
+Material 9 ;
 Albedo textures_pbr/Sponza_Column_c_diffuse.tga
 Normal textures_pbr/Sponza_Column_c_normal.tga
 Roughness textures_pbr/Sponza_Column_c_roughness.tga
 Metalness textures_pbr/Dielectric_metallic.tga
-Material 10
+Material 10 ;
 Albedo textures_pbr/Sponza_Details_diffuse.tga
 Normal textures_pbr/Sponza_Details_normal.tga
 Roughness textures_pbr/Sponza_Details_roughness.tga
 Metalness textures_pbr/Dielectric_metallic.tga
-Material 11
+Material 11 ;
 Albedo textures_pbr/Sponza_Column_b_diffuse.tga
 Normal textures_pbr/Sponza_Column_b_normal.tga
 Roughness textures_pbr/Sponza_Column_b_roughness.tga
 Metalness textures_pbr/Dielectric_metallic.tga
-Material 12
+Material 12 ;
 Albedo textures_pbr/Sponza_FlagPole_diffuse.tga
 Normal textures_pbr/Sponza_FlagPole_normal.tga
 Roughness textures_pbr/Sponza_FlagPole_roughness.tga
 Metalness textures_pbr/Metallic_metallic.tga
-Material 13
+Material 13 ;
 Albedo textures_pbr/Sponza_Fabric_Green_diffuse.tga
 Normal textures_pbr/Sponza_Fabric_Green_normal.tga
 Roughness textures_pbr/Sponza_Fabric_roughness.tga
 Metalness textures_pbr/Sponza_Fabric_metallic.tga
-Material 14
+Material 14 ;
 Albedo textures_pbr/Sponza_Fabric_Blue_diffuse.tga
 Normal textures_pbr/Sponza_Fabric_Blue_normal.tga
 Roughness textures_pbr/Sponza_Fabric_roughness.tga
 Metalness textures_pbr/Sponza_Fabric_metallic.tga
-Material 15
+Material 15 ;
 Albedo textures_pbr/Sponza_Fabric_Red_diffuse.tga
 Normal textures_pbr/Sponza_Fabric_Red_normal.tga
 Roughness textures_pbr/Sponza_Fabric_roughness.tga
 Metalness textures_pbr/Sponza_Fabric_metallic.tga
-Material 16
+Material 16 ;
 Albedo textures_pbr/Sponza_Curtain_Blue_diffuse.tga
 Normal textures_pbr/Sponza_Curtain_Blue_normal.tga
 Roughness textures_pbr/Sponza_Curtain_roughness.tga
 Metalness textures_pbr/Sponza_Curtain_metallic.tga
-Material 17
+Material 17 ;
 Albedo textures_pbr/Sponza_Curtain_Red_diffuse.tga
 Normal textures_pbr/Sponza_Curtain_Red_normal.tga
 Roughness textures_pbr/Sponza_Curtain_roughness.tga
 Metalness textures_pbr/Sponza_Curtain_metallic.tga
-Material 18
+Material 18 ;
 Albedo textures_pbr/Sponza_Curtain_Green_diffuse.tga
 Normal textures_pbr/Sponza_Curtain_Green_normal.tga
 Roughness textures_pbr/Sponza_Curtain_roughness.tga
 Metalness textures_pbr/Sponza_Curtain_metallic.tga
-Material 19
+Material 19 ;
 Albedo textures_pbr/ChainTexture_Albedo.tga
 Normal textures_pbr/ChainTexture_Normal.tga
 Roughness textures_pbr/ChainTexture_Roughness.tga
 Metalness textures_pbr/ChainTexture_Metallic.tga
-Material 20
+Material 20 ;
 Albedo textures_pbr/VaseHanging_diffuse.tga
 Normal textures_pbr/VaseHanging_normal.tga
 Roughness textures_pbr/VaseHanging_roughness.tga
 Metalness textures_pbr/Metallic_metallic.tga
-Material 21
+Material 21 ;
 Albedo textures_pbr/Vase_diffuse.tga
 Normal textures_pbr/Vase_normal.tga
 Roughness textures_pbr/Vase_roughness.tga
 Metalness textures_pbr/Dielectric_metallic.tga
-Material 22
+Material 22 ;
 Albedo textures_pbr/Lion_Albedo.tga
 Normal textures_pbr/Lion_Normal.tga
 Roughness textures_pbr/Lion_Roughness.tga
 Metalness textures_pbr/Dielectric_metallic.tga
-Material 23
+Material 23 ;
 Albedo textures_pbr/Sponza_Roof_diffuse.tga
 Normal textures_pbr/Sponza_Roof_normal.tga
 Roughness textures_pbr/Sponza_Roof_roughness.tga

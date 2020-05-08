@@ -162,13 +162,11 @@ void Scene::parseNode(const aiScene* scene,
     {
         const aiMesh* currentMesh = scene->mMeshes[node->mMeshes[i]];
         uint32_t materialIndex = ~0;
-        uint32_t materialAttributes = 0;
 
         const auto nameIt = materialIndexMappings.find(currentMesh->mName);
         if(nameIt != materialIndexMappings.end()) // Material info has already been parsed from separate material file.
         {
-            materialIndex = nameIt->second.index;
-            materialAttributes = nameIt->second.attributes;
+            materialIndex = nameIt->second;
         }
         else // No material file found, so get material index from the mesh file.
         {
@@ -182,7 +180,6 @@ void Scene::parseNode(const aiScene* scene,
         if(meshMappings.find(currentMesh) == meshMappings.end())
         {
             StaticMesh mesh{currentMesh, vertAttributes};
-            mesh.setAttributes(materialAttributes);
 
             meshID = addMesh(mesh, MeshType::Static);
 
@@ -274,6 +271,7 @@ Scene::MaterialMappings Scene::loadMaterialsInternal(Engine* eng)
 	MaterialMappings materialMappings;
 
 	std::string token;
+    std::string delimiter;
 	uint32_t materialIndex;
 	uint32_t numMeshes;
 
@@ -283,25 +281,12 @@ Scene::MaterialMappings Scene::loadMaterialsInternal(Engine* eng)
 	{
 		materialFile >> token;
 		materialFile >> materialIndex;
+        materialFile >> delimiter;
 
-        uint32_t attributes = 0;
-        std::string attributeName;
-        while(materialFile >> attributeName)
-        {
-            if(attributeName == ";")
-                break;
-            else if(attributeName == "AlphaTested")
-                attributes |= MeshAttributes::AlphaTested;
-            else if(attributeName == "Transparent")
-                attributes |= MeshAttributes::Transparent;
-        }
-
-        materialMappings.insert({aiString(token), {materialIndex, attributes}});
+        materialMappings.insert({aiString(token), materialIndex});
 	}
 
-    uint32_t materialOffset = 0;
-
-    MaterialPaths mat{"", "", "", "", "", "", 0, 0, 0};
+    MaterialPaths mat{"", "", "", "", "", "", 0, 0};
     std::string albedoOrDiffuseFile;
     std::string normalsFile;
     std::string roughnessOrGlossFile;
@@ -312,8 +297,7 @@ Scene::MaterialMappings Scene::loadMaterialsInternal(Engine* eng)
 	{
 		if(token == "Material")
 		{
-            mat.mMaterialOffset = materialOffset;
-            materialOffset += __builtin_popcount(mat.mMaterialTypes);
+            mat.mMaterialOffset = mMaterialImageViews.size();
 
             // add the previously read material if it exists.
             if(mat.mMaterialTypes)
@@ -326,6 +310,18 @@ Scene::MaterialMappings Scene::loadMaterialsInternal(Engine* eng)
             mat.mMaterialTypes = 0;
 
 			materialFile >> materialIndex;
+
+            std::string materialAttributes;
+            while (materialFile >> materialAttributes)
+            {
+                if (materialAttributes == ";")
+                    break;
+                else if (materialAttributes == "AlphaTested")
+                    mat.mMaterialTypes |= static_cast<uint32_t>(MaterialType::AlphaTested);
+                else if(materialAttributes == "Transparent")
+                    mat.mMaterialTypes |= static_cast<uint32_t>(MaterialType::Transparent);
+            }
+
 			continue;
 		}
         else if(token == "Albedo" || token == "Diffuse")
@@ -379,7 +375,7 @@ Scene::MaterialMappings Scene::loadMaterialsInternal(Engine* eng)
     // Add the last material
     if(mat.mMaterialTypes)
     {
-        mat.mMaterialOffset = materialOffset;
+        mat.mMaterialOffset = mMaterialImageViews.size();
         addMaterial(mat, eng);
     }
 
@@ -390,7 +386,6 @@ Scene::MaterialMappings Scene::loadMaterialsInternal(Engine* eng)
 void Scene::loadMaterialsExternal(Engine* eng, const aiScene* scene)
 {
     const std::string sceneDirectory = mPath.parent_path().string();
-    uint32_t materialOffset = 0;
 
     auto pathMapping = [](const fs::path& path) -> std::string
     {
@@ -409,7 +404,7 @@ void Scene::loadMaterialsExternal(Engine* eng, const aiScene* scene)
     for(uint32_t i = 0; i < scene->mNumMaterials; ++i)
     {
         const aiMaterial* material = scene->mMaterials[i];
-        MaterialPaths newMaterial{"", "", "", "", "", "", 0, 0, materialOffset};
+        MaterialPaths newMaterial{"", "", "", "", "", "", 0, 0};
 
         if(material->GetTextureCount(aiTextureType_BASE_COLOR) > 0)
         {
@@ -535,9 +530,9 @@ void Scene::loadMaterialsExternal(Engine* eng, const aiScene* scene)
         ai_real opacity;
         material->Get(AI_MATKEY_OPACITY, opacity);
         if(opacity < 1.0f)
-            newMaterial.mMaterialFlags |= MeshAttributes::Transparent;
+            newMaterial.mMaterialTypes |= static_cast<uint32_t>(MaterialType::Transparent);
 
-        materialOffset += __builtin_popcount(newMaterial.mMaterialTypes);
+        newMaterial.mMaterialOffset = mMaterialImageViews.size();
 
         addMaterial(newMaterial, eng);
     }
@@ -759,7 +754,6 @@ void Scene::addMaterial(const MaterialPaths& mat, Engine* eng)
     Scene::Material newMaterial{};
     newMaterial.mMaterialTypes = materialFlags;
     newMaterial.mMaterialOffset = mat.mMaterialOffset;
-    newMaterial.mMaterialFlags = mat.mMaterialFlags;
 
     if(materialFlags & static_cast<uint32_t>(MaterialType::Albedo) || materialFlags & static_cast<uint32_t>(MaterialType::Diffuse))
     {

@@ -127,7 +127,7 @@ void VoxalizeTechnique::render(RenderGraph& graph, Engine* eng)
 
             for (const auto& mesh : meshes)
             {
-                if (mesh->mMesh->getAttributes() & MeshAttributes::Transparent)
+                if (mesh->getMaterialFlags() & MaterialType::Transparent)
                     continue;
 
                 const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->mMesh);

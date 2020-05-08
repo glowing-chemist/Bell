@@ -1,5 +1,5 @@
 
 
-#define  kAlphaTested 1
-#define  kTransparent (1 << 1)
+#define  kAlphaTested ( 1 << 11)
+#define  kTransparent (1 << 12)
 

@@ -81,7 +81,7 @@ uint32_t ImGuiMaterialDialog::getMaterialFlags() const
 {
     uint32_t flags = 0;
 
-    if(mAlbedoOrDiffusePath != "")
+    if(mPaths[AlbedoDiffusePath] != "")
     {
         if(mAlbedoOrDiffduseIndex == 0)
             flags |= static_cast<uint32_t>(MaterialType::Albedo);
@@ -89,12 +89,12 @@ uint32_t ImGuiMaterialDialog::getMaterialFlags() const
             flags |= static_cast<uint32_t>(MaterialType::Diffuse);
     }
 
-    if(mNormalsPath != "")
+    if(mPaths[NormalsPath] != "")
     {
         flags |= static_cast<uint32_t>(MaterialType::Normals);
     }
 
-    if(mRoughnessOrGlossPath != "")
+    if(mPaths[RoughnessGlossPath] != "")
     {
         if(mRoughnessGlossIndex == 0)
             flags |= static_cast<uint32_t>(MaterialType::Roughness);
@@ -102,12 +102,22 @@ uint32_t ImGuiMaterialDialog::getMaterialFlags() const
             flags |= static_cast<uint32_t>(MaterialType::Gloss);
     }
 
-    if(mMetalnessOrSPecularPath != "")
+    if(mPaths[MetalnessSpecularPath] != "")
     {
         if(mMetalnessSpecularIndex == 0)
             flags |= static_cast<uint32_t>(MaterialType::Metalness);
         else
             flags |= static_cast<uint32_t>(MaterialType::Specular);
+    }
+
+    if (mPaths[EmissivePath] != "")
+    {
+        flags |= static_cast<uint32_t>(MaterialType::Emisive);
+    }
+
+    if (mPaths[AOPath] != "")
+    {
+        flags |= static_cast<uint32_t>(MaterialType::AmbientOcclusion);
     }
 
 
@@ -140,17 +150,25 @@ bool ImGuiMaterialDialog::render()
         };
 
         const char* albedoOrDiffuse[] = {"Albedo", "Diffuse"};
-        dropDown("Diffuse/Albedo", albedoOrDiffuse, 2, mAlbedoOrDiffduseIndex, mShowFileBrowserDiffuse);
+        dropDown("Diffuse/Albedo", albedoOrDiffuse, 2, mAlbedoOrDiffduseIndex, mShowFileBrowser[AlbedoDiffusePath]);
 
         const char* normals[] = {"Normals"};
         uint8_t selectedNormals = 0;
-        dropDown("Normals", normals, 1, selectedNormals, mShowFileBrowserNormals);
+        dropDown("Normals", normals, 1, selectedNormals, mShowFileBrowser[NormalsPath]);
 
         const char* roughnessOrGloss[] = {"Roughness", "Gloss"};
-        dropDown("Roughness/Gloss", roughnessOrGloss, 2, mRoughnessGlossIndex, mShowFileBrowserRoughness);
+        dropDown("Roughness/Gloss", roughnessOrGloss, 2, mRoughnessGlossIndex, mShowFileBrowser[RoughnessGlossPath]);
 
         const char* metalnessOrSpecular[] = {"Metalness", "Specular"};
-        dropDown("Metalness/Specular", metalnessOrSpecular, 2, mMetalnessSpecularIndex, mShowFileBrowserMetalness);
+        dropDown("Metalness/Specular", metalnessOrSpecular, 2, mMetalnessSpecularIndex, mShowFileBrowser[MetalnessSpecularPath]);
+
+        const char* emissive[] = { "Emissive" };
+        uint8_t selectedEmissive = 0;
+        dropDown("Emissive", emissive, 1, selectedEmissive, mShowFileBrowser[EmissivePath]);
+
+        const char* ao[] = { "AO" };
+        uint8_t selectedAO = 0;
+        dropDown("AO", ao, 1, selectedAO, mShowFileBrowser[AOPath]);
 
         ImGui::InputText("Material name", mMaterialName, 32);
 
@@ -164,34 +182,15 @@ bool ImGuiMaterialDialog::render()
     }
     ImGui::End();
 
-    if(mShowFileBrowserDiffuse || mShowFileBrowserNormals || mShowFileBrowserRoughness || mShowFileBrowserMetalness)
+    for (uint32_t i = 0; i < TextureFilePathCount; ++i)
     {
-        auto optionalPath = mFileBrowser.render();
-        if(optionalPath)
+        if (mShowFileBrowser[i])
         {
-
-            if(mShowFileBrowserDiffuse)
+            auto optionalPath = mFileBrowser.render();
+            if (optionalPath)
             {
-                mAlbedoOrDiffusePath = optionalPath->string();
-                mShowFileBrowserDiffuse = false;
-            }
-
-            if(mShowFileBrowserNormals)
-            {
-                mNormalsPath = optionalPath->string();
-                mShowFileBrowserNormals = false;
-            }
-
-            if(mShowFileBrowserRoughness)
-            {
-                mRoughnessOrGlossPath = optionalPath->string();
-                mShowFileBrowserRoughness = false;
-            }
-
-            if(mShowFileBrowserMetalness)
-            {
-                mMetalnessOrSPecularPath = optionalPath->string();
-                mShowFileBrowserMetalness = false;
+                mPaths[i] = optionalPath->string();
+                mShowFileBrowser[i] = false;
             }
         }
     }
