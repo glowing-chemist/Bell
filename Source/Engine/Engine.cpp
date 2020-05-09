@@ -34,6 +34,7 @@
 #include "Engine/VoxalizeTechnique.hpp"
 #include "Engine/DebugVisualizationTechnique.hpp"
 #include "Engine/TransparentTechnique.hpp"
+#include "Engine/CascadeShadowMappingTechnique.hpp"
 
 #include "glm/gtx/transform.hpp"
 
@@ -266,6 +267,9 @@ std::unique_ptr<Technique> Engine::getSingleTechnique(const PassType passType)
         case PassType::Transparent:
             return std::make_unique<TransparentTechnique>(this, mCurrentRenderGraph);
 
+        case PassType::CascadingShadow:
+            return std::make_unique<CascadeShadowMappingTechnique>(this, mCurrentRenderGraph);
+
         default:
         {
             BELL_TRAP;
@@ -381,10 +385,10 @@ void Engine::execute(RenderGraph& graph)
         meshes = mCurrentScene ? mCurrentScene->getViewableMeshes(mCurrentScene->getCamera().getFrustum()) : std::vector<const MeshInstance*>{};
         std::sort(meshes.begin(), meshes.end(), [camera = mCurrentScene->getCamera()](const MeshInstance* lhs, const MeshInstance* rhs)
         {
-            const float3 centralLeft = lhs->mMesh->getAABB().getCentralPoint();
+            const float3 centralLeft = (lhs->mMesh->getAABB() *  lhs->getTransMatrix()).getCentralPoint();
             const float leftDistance = glm::length(centralLeft - camera.getPosition());
 
-            const float3 centralright = rhs->mMesh->getAABB().getCentralPoint();
+            const float3 centralright = (rhs->mMesh->getAABB() * rhs->getTransMatrix()).getCentralPoint();
             const float rightDistance = glm::length(centralright - camera.getPosition());
 
             return leftDistance < rightDistance;

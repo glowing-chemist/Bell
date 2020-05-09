@@ -1,6 +1,8 @@
 #include "RenderGraph/GraphicsTask.hpp"
 #include "RenderGraph/RenderGraph.hpp"
 
+#include <limits>
+
 
 std::vector<ClearValues> GraphicsTask::getClearValues() const
 {
@@ -20,6 +22,13 @@ std::vector<ClearValues> GraphicsTask::getClearValues() const
 
             case LoadOp::Clear_ColourBlack_AlphaWhite:
                 clearValues.emplace_back(attatchment.mType, 0.0f, 0.0f, 0.0f, 1.0f);
+                break;
+
+            case LoadOp::Clear_Float_Max:
+                clearValues.emplace_back(attatchment.mType, std::numeric_limits<float>::max(),
+                                                            std::numeric_limits<float>::max(),
+                                                            std::numeric_limits<float>::max(),
+                                                            std::numeric_limits<float>::max());
                 break;
 
             default:
@@ -55,6 +64,11 @@ namespace std
 
 		if (desc.mDepthWrite)
 			hash = ~hash;
+
+        hash += desc.mViewport.x;
+        hash += desc.mViewport.y;
+        hash += desc.mScissorRect.x;
+        hash += desc.mScissorRect.y;
 
         return hash;
     }

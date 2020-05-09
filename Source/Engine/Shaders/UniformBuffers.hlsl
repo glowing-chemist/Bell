@@ -44,6 +44,14 @@ struct ShadowingLight
 };
 
 
+struct ShadowCascades
+{
+    float near;
+    float mid;
+    float far;
+};
+
+
 struct VoxelDimmensions
 {
     float4 voxelCentreWS;

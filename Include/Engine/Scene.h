@@ -310,6 +310,25 @@ public:
         float4    mUp;
     };
 
+    struct ShadowCascades
+    {
+        float mNearEnd;
+        float mMidEnd;
+        float mFarEnd;
+    };
+
+    void setShadowCascades(const float neadEnd, const float midEnd, const float farEnd)
+    {
+        mCascadesInfo.mNearEnd = neadEnd;
+        mCascadesInfo.mMidEnd = midEnd;
+        mCascadesInfo.mFarEnd = farEnd;
+    }
+
+    const ShadowCascades& getShadowCascades() const
+    {
+        return mCascadesInfo;
+    }
+
 	void loadMaterials(Engine*);
 
 	struct Intersection
@@ -384,6 +403,7 @@ private:
 
     std::vector<Light> mLights;
     ShadowingLight mShadowingLight;
+    ShadowCascades mCascadesInfo;
 
 	std::unique_ptr<Image> mSkybox;
 	std::unique_ptr<ImageView> mSkyboxView;

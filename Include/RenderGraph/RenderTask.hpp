@@ -23,7 +23,8 @@ enum class LoadOp
 	Nothing,
     Clear_White,
     Clear_Black,
-    Clear_ColourBlack_AlphaWhite
+    Clear_ColourBlack_AlphaWhite,
+    Clear_Float_Max
 };
 
 enum class SizeClass

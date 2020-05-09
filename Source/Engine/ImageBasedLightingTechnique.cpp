@@ -27,7 +27,7 @@ DeferredImageBasedLightingTechnique::DeferredImageBasedLightingTechnique(Engine*
     task.addInput(kConvolvedDiffuseSkyBox, AttachmentType::Texture2D);
     task.addInput(kDefaultSampler, AttachmentType::Sampler);
 
-    if (eng->isPassRegistered(PassType::Shadow))
+    if (eng->isPassRegistered(PassType::Shadow) || eng->isPassRegistered(PassType::CascadingShadow))
         task.addInput(kShadowMap, AttachmentType::Texture2D);
 
     task.addOutput(kGlobalLighting, AttachmentType::RenderTarget2D, Format::RGBA8UNorm,

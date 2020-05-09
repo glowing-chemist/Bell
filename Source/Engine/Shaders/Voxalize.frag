@@ -38,7 +38,7 @@ StructuredBuffer<uint> indicies;
 Texture2D<uint> activeFroxels;
 #endif
 
-#ifdef Shadow_Map
+#if defined(Shadow_Map) || defined(Cascade_Shadow_Map)
 #ifdef Light_froxelation
 [[vk::binding(11)]]
 #else
@@ -80,7 +80,7 @@ void main(VoxalizeGeometryOutput vertInput)
 
     float3 irradiance = ConvolvedSkyboxDiffuse.Sample(linearSampler, material.normal.xyz).xyz;
 
-#ifdef Shadow_Map
+#if defined(Shadow_Map) || defined(Cascade_Shadow_Map)
     const float occlusion = shadowMap.Sample(linearSampler, screenUV);
     irradiance *= occlusion;
 #endif

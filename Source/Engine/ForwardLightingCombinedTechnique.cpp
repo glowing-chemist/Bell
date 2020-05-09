@@ -32,7 +32,7 @@ ForwardCombinedLightingTechnique::ForwardCombinedLightingTechnique(Engine* eng, 
 	task.addInput(kSparseFroxels, AttachmentType::DataBufferRO);
 	task.addInput(kLightIndicies, AttachmentType::DataBufferRO);
 
-	if (eng->isPassRegistered(PassType::Shadow))
+    if (eng->isPassRegistered(PassType::Shadow) || eng->isPassRegistered(PassType::CascadingShadow))
 		task.addInput(kShadowMap, AttachmentType::Texture2D);
 
 	task.addInput(kMaterials, AttachmentType::ShaderResourceSet);

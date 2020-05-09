@@ -182,6 +182,14 @@ void RenderGraph::compileDependancies()
 
 			const RenderTask& innerTask = getTask(mTaskOrder[j].first, mTaskOrder[j].second);
 
+            bool innerDepthWrite = false;
+            if(innerTask.taskType() == TaskType::Graphics)
+            {
+                const auto& innerGraphicsTask = static_cast<const GraphicsTask&>(innerTask);
+
+                innerDepthWrite = innerGraphicsTask.getPipelineDescription().mDepthWrite;
+            }
+
             // generate dependancies between framebuffer writes and "descriptor" reads.
             {
                 const std::vector<RenderTask::OutputAttachmentInfo>& outResources = outerTask.getOuputAttachments();
@@ -257,7 +265,7 @@ void RenderGraph::compileDependancies()
 					{
                         if(outResources[outerIndex].mName == inResources[innerIndex].mName &&
                                 ((outResources[outerIndex].mType == AttachmentType::Depth && inResources[innerIndex].mType == AttachmentType::Depth
-                                && outerDepthWrite) ||
+                                && outerDepthWrite && !innerDepthWrite) ||
                                 ((outResources[outerIndex].mType == AttachmentType::RenderTarget2D && inResources[innerIndex].mType == AttachmentType::RenderTarget2D) &&
                                 (outResources[outerIndex].mSize != SizeClass::Custom && inResources[innerIndex].mSize == SizeClass::Custom))))
 						{

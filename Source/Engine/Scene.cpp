@@ -26,6 +26,7 @@ Scene::Scene(const std::string& name) :
 	mMaterialImageViews{},
     mLights{},
     mShadowingLight{},
+    mCascadesInfo{mSceneCamera.getFarPlane() * 0.3f, mSceneCamera.getFarPlane() * 0.7f, mSceneCamera.getFarPlane()},
 	mSkybox{nullptr}
 {
 }
@@ -44,6 +45,7 @@ Scene::Scene(Scene&& scene) :
     mMaterialImageViews{std::move(scene.mMaterialImageViews)},
     mLights{std::move(scene.mLights)},
     mShadowingLight{std::move(scene.mShadowingLight)},
+    mCascadesInfo{scene.mCascadesInfo},
     mSkybox{std::move(scene.mSkybox)},
     mSkyboxView(std::move(scene.mSkyboxView))
 {
@@ -64,6 +66,7 @@ Scene& Scene::operator=(Scene&& scene)
 	mMaterialImageViews = std::move(scene.mMaterialImageViews);
     mLights = std::move(scene.mLights);
     mShadowingLight = std::move(scene.mShadowingLight);
+    mCascadesInfo = scene.mCascadesInfo;
 	mSkybox = std::move(scene.mSkybox);
     mSkyboxView = std::move(scene.mSkyboxView);
 
@@ -79,6 +82,8 @@ Scene::~Scene()
         delete mat.mAlbedoorDiffuse;
         delete mat.mRoughnessOrGloss;
         delete mat.mMetalnessOrSpecular;
+        delete mat.mEmissive;
+        delete mat.mAmbientOcclusion;
     }
 }
 

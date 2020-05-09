@@ -60,7 +60,7 @@ VoxalizeTechnique::VoxalizeTechnique(Engine* eng, RenderGraph& graph) :
         task.addInput(kActiveFroxels, AttachmentType::Texture2D);
     }
 
-    if(eng->isPassRegistered(PassType::Shadow))
+    if(eng->isPassRegistered(PassType::Shadow) || eng->isPassRegistered(PassType::CascadingShadow))
         task.addInput(kShadowMap, AttachmentType::Texture2D);
 
     task.addInput(kMaterials, AttachmentType::ShaderResourceSet);

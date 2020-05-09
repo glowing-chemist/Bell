@@ -22,7 +22,7 @@ TransparentTechnique::TransparentTechnique(Engine* eng, RenderGraph& graph) :
     task.addInput(kConvolvedSpecularSkyBox, AttachmentType::Texture2D);
     task.addInput(kDefaultSampler, AttachmentType::Sampler);
 
-    if (eng->isPassRegistered(PassType::Shadow))
+    if (eng->isPassRegistered(PassType::Shadow) || eng->isPassRegistered(PassType::CascadingShadow))
         task.addInput(kShadowMap, AttachmentType::Texture2D);
 
     task.addInput(kMaterials, AttachmentType::ShaderResourceSet);

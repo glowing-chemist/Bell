@@ -28,7 +28,7 @@ ShadowMappingTechnique::ShadowMappingTechnique(Engine* eng, RenderGraph& graph) 
     shadowTask.addInput(kSceneVertexBuffer, AttachmentType::VertexBuffer);
     shadowTask.addInput(kSceneIndexBuffer, AttachmentType::IndexBuffer);
 
-    shadowTask.addOutput(kShadowMapRaw, AttachmentType::RenderTarget2D, Format::RG32Float, SizeClass::DoubleSwapchain, LoadOp::Clear_Black);
+    shadowTask.addOutput(kShadowMapRaw, AttachmentType::RenderTarget2D, Format::RG32Float, SizeClass::DoubleSwapchain, LoadOp::Clear_Float_Max);
     shadowTask.addOutput("ShadowMapDepth", AttachmentType::Depth, Format::D32Float, SizeClass::DoubleSwapchain, LoadOp::Clear_White);
     mShadowTask = graph.addTask(shadowTask);
 
@@ -98,7 +98,7 @@ void ShadowMappingTechnique::render(RenderGraph& graph, Engine*)
     );
 
     blurXTask.setRecordCommandsCallback(
-        [](Executor * exec, Engine * eng, const std::vector<const MeshInstance*>&)
+        [](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
         {
             const float threadGroupWidth = eng->getSwapChainImageView()->getImageExtent().width;
             const float threadGroupHeight = eng->getSwapChainImageView()->getImageExtent().height;
