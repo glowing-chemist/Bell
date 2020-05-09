@@ -201,6 +201,13 @@ namespace
                 return newNode;
             }
 
+            case NodeTypes::CascadingShadow:
+            {
+                std::shared_ptr<EditorNode> newNode = std::make_shared<PassNode>("Shadow mapping", passType);
+                newNode->mOutputs.push_back(Pin{ 0, newNode, kShadowMap, PinType::Texture, PinKind::Output });
+                return newNode;
+            }
+
             case NodeTypes::TAA:
             {
                 std::shared_ptr<EditorNode> newNode = std::make_shared<PassNode>("TAA", passType);
@@ -622,6 +629,7 @@ void Editor::drawAssistantWindow()
 		   drawPassContextMenu(PassType::LightFroxelation);
 		   drawPassContextMenu(PassType::DeferredAnalyticalLighting);
            drawPassContextMenu(PassType::Shadow);
+           drawPassContextMenu(PassType::CascadingShadow);
            drawPassContextMenu(PassType::TAA);
            drawPassContextMenu(PassType::LineariseDepth);
            drawPassContextMenu(PassType::SSR);
