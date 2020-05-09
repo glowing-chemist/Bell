@@ -210,6 +210,11 @@ public:
         return mShadowingLight;
     }
 
+    ShadowingLight& getShadowingLight()
+    {
+        return mShadowingLight;
+    }
+
 	const std::vector<ImageView>& getMaterials() const
 	{
 		return mMaterialImageViews;
@@ -325,6 +330,11 @@ public:
     }
 
     const ShadowCascades& getShadowCascades() const
+    {
+        return mCascadesInfo;
+    }
+
+    ShadowCascades& getShadowCascades()
     {
         return mCascadesInfo;
     }

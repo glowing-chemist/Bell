@@ -155,7 +155,8 @@ namespace
 				newNode->mInputs.push_back(Pin{ 0, newNode, kGBufferDepth, PinType::Texture, PinKind::Input });
 				newNode->mInputs.push_back(Pin{ 0, newNode, kSkyBox, PinType::Texture, PinKind::Input });
                 newNode->mInputs.push_back(Pin{ 0, newNode, kConvolvedDiffuseSkyBox, PinType::Texture, PinKind::Input });
-                newNode->mInputs.push_back(Pin{ 0, newNode, kConvolvedSpecularSkyBox, PinType::Texture, PinKind::Input });				newNode->mOutputs.push_back(Pin{ 0, newNode, kGlobalLighting, PinType::Texture, PinKind::Output });
+                newNode->mInputs.push_back(Pin{ 0, newNode, kConvolvedSpecularSkyBox, PinType::Texture, PinKind::Input });
+                newNode->mOutputs.push_back(Pin{ 0, newNode, kGlobalLighting, PinType::Texture, PinKind::Output });
                 newNode->mOutputs.push_back(Pin{ 0, newNode, kGBufferVelocity, PinType::Texture, PinKind::Output });
 				return newNode;
 			}
@@ -197,13 +198,15 @@ namespace
             case NodeTypes::Shadow:
             {
                 std::shared_ptr<EditorNode> newNode = std::make_shared<PassNode>("Shadow mapping", passType);
+                newNode->mInputs.push_back(Pin{ 0, newNode, kGBufferDepth, PinType::Texture, PinKind::Input });
                 newNode->mOutputs.push_back(Pin{ 0, newNode, kShadowMap, PinType::Texture, PinKind::Output });
                 return newNode;
             }
 
             case NodeTypes::CascadingShadow:
             {
-                std::shared_ptr<EditorNode> newNode = std::make_shared<PassNode>("Shadow mapping", passType);
+                std::shared_ptr<EditorNode> newNode = std::make_shared<PassNode>("Cascade shadow mapping", passType);
+                newNode->mInputs.push_back(Pin{ 0, newNode, kGBufferDepth, PinType::Texture, PinKind::Input });
                 newNode->mOutputs.push_back(Pin{ 0, newNode, kShadowMap, PinType::Texture, PinKind::Output });
                 return newNode;
             }
@@ -280,7 +283,8 @@ Editor::Editor(GLFWwindow* window) :
     mShowAddInstanceDialog{false},
     mResetSceneAtEndOfFrame{false},
     mPublishedScene{false},
-    mLightOperationMode{ImGuizmo::OPERATION::TRANSLATE}
+    mLightOperationMode{ImGuizmo::OPERATION::TRANSLATE},
+    mEditShadowingLight{false}
 {
     ImGui::CreateContext();
 
@@ -889,6 +893,33 @@ void Editor::drawLightMenu()
 
             mLights.push_back(newLight);
         }*/
+
+        Scene::ShadowingLight& shadowingLight = mInProgressScene->getShadowingLight();
+        Scene::ShadowCascades& cascades = mInProgressScene->getShadowCascades();
+        ImGui::Text("Shadowing light position  X: %f Y: %f, Z: %f", shadowingLight.mPosition.x, shadowingLight.mPosition.y, shadowingLight.mPosition.z);
+        ImGui::Text("Shadowing light direction X: %f Y: %f, Z: %f", shadowingLight.mDirection.x, shadowingLight.mDirection.y, shadowingLight.mDirection.z);
+        ImGui::DragFloat3("Cascades", &cascades.mNearEnd, 5.0f, 10.0f, 2000.0f);
+        ImGui::Checkbox("shadow ligth ImGuizmo", &mEditShadowingLight);
+        if(mEditShadowingLight)
+        {
+            float4x4 lightTransformation(1.0f);
+
+            if (mEditShadowingLight == ImGuizmo::OPERATION::TRANSLATE)
+                lightTransformation = glm::translate(lightTransformation, float3(shadowingLight.mPosition.x, shadowingLight.mPosition.y, shadowingLight.mPosition.z));
+
+            drawGuizmo(lightTransformation, viewMatrix, projectionMatrix, mLightOperationMode);
+
+            if(mLightOperationMode == ImGuizmo::OPERATION::TRANSLATE)
+                shadowingLight.mPosition = lightTransformation[3];
+            else if (mLightOperationMode == ImGuizmo::OPERATION::ROTATE)
+            {
+                shadowingLight.mDirection = lightTransformation * shadowingLight.mDirection;
+                shadowingLight.mUp = lightTransformation * shadowingLight.mUp;
+            }
+
+            mInProgressScene->setShadowingLight(shadowingLight.mPosition, shadowingLight.mDirection, shadowingLight.mUp );
+        }
+
 
         ImGui::TreePop();
     }

@@ -130,6 +130,7 @@ private:
     std::vector<EditorLight> mLights;
     EditorLight mShadowingLight;
     ImGuizmo::OPERATION mLightOperationMode;
+    bool mEditShadowingLight;
 };
 
 #endif

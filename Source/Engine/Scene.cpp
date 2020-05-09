@@ -29,6 +29,7 @@ Scene::Scene(const std::string& name) :
     mCascadesInfo{mSceneCamera.getFarPlane() * 0.3f, mSceneCamera.getFarPlane() * 0.7f, mSceneCamera.getFarPlane()},
 	mSkybox{nullptr}
 {
+    setShadowingLight({0.0f, 0.0f, 0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, -1.0f, 0.0f});
 }
 
 
