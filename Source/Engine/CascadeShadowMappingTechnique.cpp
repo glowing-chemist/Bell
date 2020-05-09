@@ -284,7 +284,7 @@ void CascadeShadowMappingTechnique::render(RenderGraph& graph, Engine* eng)
          const float3 central = (inst->mMesh->getAABB() * inst->getTransMatrix()).getCentralPoint();
          const float distance = glm::length(central - cameraPosition);
 
-         return distance <= cascades.mFarEnd && distance >= cascades.mMidEnd;
+         return distance >= cascades.mMidEnd;
     });
 
     GraphicsTask& cascade0Task = static_cast<GraphicsTask&>(graph.getTask(mRenderCascade0));
@@ -297,7 +297,7 @@ void CascadeShadowMappingTechnique::render(RenderGraph& graph, Engine* eng)
                     for (const auto& mesh : nearCascadeMeshes)
                     {
                         // Don't render transparent geometry.
-                        if ((mesh->mMesh->getAttributes() & MeshAttributes::Transparent) > 0 || !(mesh->getInstanceFlags() & InstanceFlags::Draw))
+                        if ((mesh->getMaterialFlags() & MaterialType::Transparent) > 0 || !(mesh->getInstanceFlags() & InstanceFlags::Draw))
                             continue;
 
                         const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->mMesh);
@@ -320,7 +320,7 @@ void CascadeShadowMappingTechnique::render(RenderGraph& graph, Engine* eng)
                     for (const auto& mesh : midCascadeMeshes)
                     {
                         // Don't render transparent geometry.
-                        if ((mesh->mMesh->getAttributes() & MeshAttributes::Transparent) > 0 || !(mesh->getInstanceFlags() & InstanceFlags::Draw))
+                        if ((mesh->getMaterialFlags() & MaterialType::Transparent) > 0 || !(mesh->getInstanceFlags() & InstanceFlags::Draw))
                             continue;
 
                         const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->mMesh);
@@ -343,7 +343,7 @@ void CascadeShadowMappingTechnique::render(RenderGraph& graph, Engine* eng)
                     for (const auto& mesh : farCascadeMeshes)
                     {
                         // Don't render transparent geometry.
-                        if ((mesh->mMesh->getAttributes() & MeshAttributes::Transparent) > 0 || !(mesh->getInstanceFlags() & InstanceFlags::Draw))
+                        if ((mesh->getMaterialFlags() & MaterialType::Transparent) > 0 || !(mesh->getInstanceFlags() & InstanceFlags::Draw))
                             continue;
 
                         const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->mMesh);
