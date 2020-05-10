@@ -9,6 +9,7 @@
 #include "Engine/OctTree.hpp"
 #include "Engine/Camera.hpp"
 #include "Engine/StaticMesh.h"
+#include "Engine/Animation.hpp"
 
 #include <algorithm>
 #include <atomic>
@@ -403,6 +404,8 @@ private:
 
     OctTree<MeshInstance*> mStaticMeshBoundingVolume;
     OctTree<MeshInstance*> mDynamicMeshBoundingVolume;
+
+    std::map<std::string, Animation> mAnimations;
 
     AABB mSceneAABB;
 

@@ -76,9 +76,30 @@ public:
 		return mVertexCount;
 	}
 
+    struct Bone
+    {
+        uint32_t mParentIndex;
+        std::string mName;
+        float4x4 mInverseBindPose;
+        float4x4 mBindPose;
+    };
+
+    struct BoneIndex
+    {
+        uint32_t mBone;
+        float mWeight;
+    };
+
+    struct BoneIndicies
+    {
+        BoneIndex mBoneIndices[4];
+        uint8_t mUsedBones = 0;
+    };
+
 private:
 
     void configure(const aiMesh* mesh, const int vertexAttributes);
+    void loadSkeleton(const aiMesh* mesh);
 
     void writeVertexVector4(const aiVector3D&, const uint32_t);
     void writeVertexVector2(const aiVector2D&, const uint32_t);
@@ -87,6 +108,8 @@ private:
 
     uint32_t getPrimitiveSize(const aiPrimitiveType) const;
 
+    std::vector<Bone> mSkeleton;
+    std::vector<BoneIndicies> mBonesPerVertex;
     std::vector<unsigned char> mVertexData;
     std::vector<uint32_t> mIndexData;
     AABB mAABB;

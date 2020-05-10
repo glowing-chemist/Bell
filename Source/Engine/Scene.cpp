@@ -150,6 +150,14 @@ std::vector<InstanceID> Scene::loadFromFile(const int vertAttributes, Engine* en
 
     addLights(scene);
 
+
+    // Load animations.
+    for(uint32_t i = 0; i < scene->mNumAnimations; ++i)
+    {
+        const aiAnimation* animation = scene->mAnimations[i];
+        mAnimations.insert({std::string(animation->mName.C_Str()), Animation(animation)});
+    }
+
     return instanceIDs;
 }
 

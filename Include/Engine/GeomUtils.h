@@ -123,5 +123,6 @@ struct Rect
 	uint32_t x, y;
 };
 
+
 #endif
 

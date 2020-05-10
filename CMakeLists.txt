@@ -28,7 +28,7 @@ include_directories(
 			"${CMAKE_CURRENT_LIST_DIR}/ThirdParty/imgui-master"
 			"${CMAKE_CURRENT_LIST_DIR}/ThirdParty/imgui-guizmo"
 			"${CMAKE_CURRENT_LIST_DIR}/ThirdParty/imgui-node-editor/NodeEditor/Include"
-		    "${CMAKE_CURRENT_LIST_DIR}/ThirdParty/glm"	
+			"${CMAKE_CURRENT_LIST_DIR}/ThirdParty/glm"
 			"${CMAKE_CURRENT_LIST_DIR}/ThirdParty/stb_image"
 			"${CMAKE_CURRENT_LIST_DIR}/ThirdParty/D3D12MemoryAllocator/src"
 			${glmIncludeDirs}
@@ -147,6 +147,7 @@ set(BELL_SOURCE
     Source/Engine/StaticMesh.cpp
     Source/Engine/GeomUtils.cpp
     Source/Engine/Scene.cpp
+    Source/Engine/Animation.cpp
 
     # Techniques
     Source/Engine/SSAOTechnique.cpp

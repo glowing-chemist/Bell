@@ -7,6 +7,21 @@
 #include <limits>
 
 
+namespace
+{
+    float4x4 aiMatrix4x4ToFloat4x4(const aiMatrix4x4& transformation)
+    {
+        float4x4 transformationMatrix{};
+        transformationMatrix[0][0] = transformation.a1; transformationMatrix[0][1] = transformation.b1;  transformationMatrix[0][2] = transformation.c1; transformationMatrix[0][3] = transformation.d1;
+        transformationMatrix[1][0] = transformation.a2; transformationMatrix[1][1] = transformation.b2;  transformationMatrix[1][2] = transformation.c2; transformationMatrix[1][3] = transformation.d2;
+        transformationMatrix[2][0] = transformation.a3; transformationMatrix[2][1] = transformation.b3;  transformationMatrix[2][2] = transformation.c3; transformationMatrix[2][3] = transformation.d3;
+        transformationMatrix[3][0] = transformation.a4; transformationMatrix[3][1] = transformation.b4;  transformationMatrix[3][2] = transformation.c4; transformationMatrix[3][3] = transformation.d4;
+
+        return transformationMatrix;
+    }
+}
+
+
 StaticMesh::StaticMesh(const std::string& path, const int vertAttributes) :
 	mVertexData{},
 	mIndexData{},
@@ -121,6 +136,39 @@ void StaticMesh::configure(const aiMesh* mesh, const int vertAttributes)
     }
 
     mAABB = AABB{topLeft, bottumRight};
+
+    loadSkeleton(mesh);
+}
+
+
+void StaticMesh::loadSkeleton(const aiMesh* mesh)
+{
+    if(mesh->mNumBones > 0)
+    {
+        mSkeleton.resize(mesh->mNumBones);
+        mBonesPerVertex.resize(mVertexCount);
+
+        for(uint32_t i = 0; i < mesh->mNumBones; ++i)
+        {
+            const aiBone* assimpBone = mesh->mBones[i];
+
+            Bone& bone = mSkeleton[i];
+            bone.mParentIndex = ~0;
+            bone.mName = assimpBone->mName.C_Str();
+            bone.mInverseBindPose = aiMatrix4x4ToFloat4x4(assimpBone->mOffsetMatrix);
+            bone.mBindPose = glm::inverse(bone.mInverseBindPose);
+
+            for(uint32_t j = 0; j < assimpBone->mNumWeights; ++j)
+            {
+                const aiVertexWeight& weight = assimpBone->mWeights[j];
+                BoneIndicies& indicies = mBonesPerVertex[weight.mVertexId];
+                const uint8_t index = indicies.mUsedBones++;
+                BoneIndex& bone = indicies.mBoneIndices[index];
+                bone.mBone = i;
+                bone.mWeight = weight.mWeight;
+            }
+        }
+    }
 }
 
 
