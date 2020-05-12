@@ -1020,6 +1020,16 @@ void Editor::addMaterial()
         newMaterial.mEmissivePath = mMaterialDialog.getPath(AOPath);
     }
 
+    if (materialFlags & MaterialType::CombinedMetalnessRoughness)
+    {
+        newMaterial.mRoughnessOrGlossPath = mMaterialDialog.getPath(RoughnessGlossPath);
+    }
+
+    if (materialFlags & MaterialType::CombinedSpecularGloss)
+    {
+        newMaterial.mMetalnessOrSpecularPath = mMaterialDialog.getPath(MetalnessSpecularPath);
+    }
+
     mInProgressScene->addMaterial(newMaterial, &mEngine);
 
     mMaterialNames.push_back(mMaterialDialog.getMaterialName());

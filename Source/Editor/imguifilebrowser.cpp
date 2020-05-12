@@ -96,18 +96,22 @@ uint32_t ImGuiMaterialDialog::getMaterialFlags() const
 
     if(mPaths[RoughnessGlossPath] != "")
     {
-        if(mRoughnessGlossIndex == 0)
+        if (mRoughnessGlossIndex == 0)
             flags |= static_cast<uint32_t>(MaterialType::Roughness);
-        else
+        else if (mRoughnessGlossIndex == 1)
             flags |= static_cast<uint32_t>(MaterialType::Gloss);
+        else
+            flags |= static_cast<uint32_t>(MaterialType::CombinedMetalnessRoughness);
     }
 
     if(mPaths[MetalnessSpecularPath] != "")
     {
         if(mMetalnessSpecularIndex == 0)
             flags |= static_cast<uint32_t>(MaterialType::Metalness);
-        else
+        else if(mMetalnessSpecularIndex == 1)
             flags |= static_cast<uint32_t>(MaterialType::Specular);
+        else
+            flags |= static_cast<uint32_t>(MaterialType::CombinedSpecularGloss);
     }
 
     if (mPaths[EmissivePath] != "")
@@ -150,25 +154,25 @@ bool ImGuiMaterialDialog::render()
         };
 
         const char* albedoOrDiffuse[] = {"Albedo", "Diffuse"};
-        dropDown("Diffuse/Albedo", albedoOrDiffuse, 2, mAlbedoOrDiffduseIndex, mShowFileBrowser[AlbedoDiffusePath]);
+        dropDown(mPaths[AlbedoDiffusePath].empty() ? "Diffuse/Albedo" : mPaths[AlbedoDiffusePath].c_str(), albedoOrDiffuse, 2, mAlbedoOrDiffduseIndex, mShowFileBrowser[AlbedoDiffusePath]);
 
         const char* normals[] = {"Normals"};
         uint8_t selectedNormals = 0;
-        dropDown("Normals", normals, 1, selectedNormals, mShowFileBrowser[NormalsPath]);
+        dropDown(mPaths[NormalsPath].empty() ? "Normals" : mPaths[NormalsPath].c_str(), normals, 1, selectedNormals, mShowFileBrowser[NormalsPath]);
 
-        const char* roughnessOrGloss[] = {"Roughness", "Gloss"};
-        dropDown("Roughness/Gloss", roughnessOrGloss, 2, mRoughnessGlossIndex, mShowFileBrowser[RoughnessGlossPath]);
+        const char* roughnessOrGloss[] = {"Roughness", "Gloss", "RoughnessMetalnessCombined"};
+        dropDown(mPaths[RoughnessGlossPath].empty() ? "Roughness/Gloss" : mPaths[RoughnessGlossPath].c_str(), roughnessOrGloss, 3, mRoughnessGlossIndex, mShowFileBrowser[RoughnessGlossPath]);
 
-        const char* metalnessOrSpecular[] = {"Metalness", "Specular"};
-        dropDown("Metalness/Specular", metalnessOrSpecular, 2, mMetalnessSpecularIndex, mShowFileBrowser[MetalnessSpecularPath]);
+        const char* metalnessOrSpecular[] = {"Metalness", "Specular", "SpecularGlossCombined"};
+        dropDown(mPaths[MetalnessSpecularPath].empty() ? "Metalness/Specular" : mPaths[MetalnessSpecularPath].c_str(), metalnessOrSpecular, 3, mMetalnessSpecularIndex, mShowFileBrowser[MetalnessSpecularPath]);
 
         const char* emissive[] = { "Emissive" };
         uint8_t selectedEmissive = 0;
-        dropDown("Emissive", emissive, 1, selectedEmissive, mShowFileBrowser[EmissivePath]);
+        dropDown(mPaths[EmissivePath].empty() ? "Emissive" : mPaths[EmissivePath].c_str(), emissive, 1, selectedEmissive, mShowFileBrowser[EmissivePath]);
 
         const char* ao[] = { "AO" };
         uint8_t selectedAO = 0;
-        dropDown("AO", ao, 1, selectedAO, mShowFileBrowser[AOPath]);
+        dropDown(mPaths[AOPath].empty() ? "AO" : mPaths[AOPath].c_str(), ao, 1, selectedAO, mShowFileBrowser[AOPath]);
 
         ImGui::InputText("Material name", mMaterialName, 32);
 
