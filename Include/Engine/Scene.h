@@ -366,6 +366,13 @@ public:
             mat.updateLastAccessed();
     }
 
+    Animation& getAnimation(const InstanceID id, const std::string& name)
+    {
+        MeshInstance* inst = getMeshInstance(id);
+        BELL_ASSERT(inst->mMesh->hasAnimations(), "Requesting animation from mesh without animations")
+        return inst->mMesh->getAnimation(name);
+    }
+
 private:
 
     void generateSceneAABB(const bool includeStatic);
@@ -404,8 +411,6 @@ private:
 
     OctTree<MeshInstance*> mStaticMeshBoundingVolume;
     OctTree<MeshInstance*> mDynamicMeshBoundingVolume;
-
-    std::map<std::string, Animation> mAnimations;
 
     AABB mSceneAABB;
 

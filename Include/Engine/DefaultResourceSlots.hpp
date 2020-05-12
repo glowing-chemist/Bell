@@ -39,6 +39,9 @@ constexpr const char* kSparseFroxels    = "SparseFroxles";
 constexpr const char* kLightIndicies    = "LightIndicies";
 constexpr const char* kSceneVertexBuffer = "SceneVertexBuffer";
 constexpr const char* kSceneIndexBuffer  = "SceneIndexBuffer";
+constexpr const char* kTPoseVertexBuffer = "TPoseBuffer";
+constexpr const char* kBoneIndiciesBuffer = "BoneIndicies";
+constexpr const char* kBonesBuffer        = "BonesBuffer";
 
 constexpr const char* kFrameBufer        = "FrameBuffer";
 constexpr const char* kGlobalLighting	 = "GlobalLighting";

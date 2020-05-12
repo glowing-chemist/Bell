@@ -174,6 +174,7 @@ set(BELL_SOURCE
     Source/Engine/DebugVisualizationTechnique.cpp
     Source/Engine/TransparentTechnique.cpp
     Source/Engine/CascadeShadowMappingTechnique.cpp
+    Source/Engine/SkinningTechnique.cpp
 
     # used for texture loading
     ThirdParty/stb_image/stb_image.cpp
@@ -256,6 +257,7 @@ set(SHADERS
 	DebugAABB.frag
 	Transparent.frag
 	ResolveCascadeVarianceShadowMap.comp
+	Skinning.comp
     )
 
 foreach(shader ${SHADERS})

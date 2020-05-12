@@ -115,6 +115,7 @@ public:
 
     // returns an vertex and index buffer offset.
     std::pair<uint64_t, uint64_t> addMeshToBuffer(const StaticMesh*);
+    std::pair<uint64_t, uint64_t> addMeshToAnimationBuffer(const StaticMesh*);
 
 	uint64_t					  addVertexData(const void* ptr, const size_t size)
 		{ return mVertexBuilder.addData(ptr, size); }
@@ -125,6 +126,7 @@ public:
     void clearVertexCache() // To be used before uploading new vertex data.
     {
         mVertexCache.clear();
+        mTposeVertexCache.clear();
     }
 
     void   setImageInScene(const std::string& name, const ImageView& image)
@@ -160,6 +162,9 @@ public:
         return mIndexBuffer;
     }
 
+    void startAnimation(const InstanceID id, const std::string& name, const bool loop = false);
+    void terimateAnimation(const InstanceID id, const std::string& name);
+
     void recordScene();
 
 	void execute(RenderGraph&);
@@ -188,6 +193,20 @@ public:
 	RenderDevice* getDevice()
 		{ return mRenderDevice; }
 
+    struct AnimationEntry
+    {
+        std::string mName;
+        InstanceID mMesh;
+        uint64_t mBoneOffset;
+        double mTick;
+        bool mLoop;
+    };
+
+    const std::vector<AnimationEntry>& getActiveAnimations() const
+    {
+        return mActiveAnimations;
+    }
+
 private:
 
 	std::unique_ptr<Technique>                   getSingleTechnique(const PassType);
@@ -197,6 +216,8 @@ private:
 
     Scene* mCurrentScene;
 
+    BufferBuilder mAnimationVertexBuilder;
+    BufferBuilder mBoneBuilder;
     BufferBuilder mVertexBuilder;
     BufferBuilder mIndexBuilder;
 
@@ -209,6 +230,7 @@ private:
     bool mInitialisedTLCTextures;
 
 	std::unordered_map < const StaticMesh*, std::pair<uint64_t, uint64_t>> mVertexCache;
+    std::unordered_map < const StaticMesh*, std::pair<uint64_t, uint64_t>> mTposeVertexCache;
 
     RenderGraph mCurrentRenderGraph;
     bool mCompileGraph;
@@ -222,6 +244,10 @@ private:
 
     Buffer mVertexBuffer;
     Buffer mIndexBuffer;
+    // Animation data.
+    Buffer mTposeVertexBuffer; // a "clean" copy of animated meshed verticies.
+    Buffer mBonesindicesBuffer;
+    PerFrameResource<Buffer> mBoneBuffer;
 
     Sampler mDefaultSampler;
 
@@ -242,6 +268,10 @@ private:
     PerFrameResource<ShaderResourceSet> mLightsSRS;
 
     float2 mTAAJitter[16];
+
+    std::vector<AnimationEntry> mActiveAnimations;
+    void tickAnimations();
+    std::chrono::system_clock::time_point mAnimationLastTicked;
 
     void updateGlobalBuffers();
 

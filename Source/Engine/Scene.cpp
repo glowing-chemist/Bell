@@ -150,14 +150,6 @@ std::vector<InstanceID> Scene::loadFromFile(const int vertAttributes, Engine* en
 
     addLights(scene);
 
-
-    // Load animations.
-    for(uint32_t i = 0; i < scene->mNumAnimations; ++i)
-    {
-        const aiAnimation* animation = scene->mAnimations[i];
-        mAnimations.insert({std::string(animation->mName.C_Str()), Animation(animation)});
-    }
-
     return instanceIDs;
 }
 
@@ -193,7 +185,7 @@ void Scene::parseNode(const aiScene* scene,
         SceneID meshID = 0;
         if(meshMappings.find(currentMesh) == meshMappings.end())
         {
-            StaticMesh mesh{currentMesh, vertAttributes};
+            StaticMesh mesh{scene, currentMesh, vertAttributes};
 
             meshID = addMesh(mesh, MeshType::Static);
 
@@ -541,7 +533,7 @@ void Scene::loadMaterialsExternal(Engine* eng, const aiScene* scene)
             newMaterial.mMaterialTypes |= static_cast<uint32_t>(MaterialType::AmbientOcclusion);
         }
 
-        ai_real opacity;
+        ai_real opacity = 1.0f;
         material->Get(AI_MATKEY_OPACITY, opacity);
         if(opacity < 1.0f)
             newMaterial.mMaterialTypes |= static_cast<uint32_t>(MaterialType::Transparent);
@@ -600,6 +592,9 @@ void Scene::uploadData(Engine* eng)
     for(const auto& [mesh, meshType] : mSceneMeshes)
     {
         eng->addMeshToBuffer(&mesh);
+
+        if(mesh.hasAnimations())
+            eng->addMeshToAnimationBuffer(&mesh);
     }
 }
 

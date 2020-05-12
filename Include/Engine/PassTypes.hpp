@@ -129,6 +129,9 @@ inline const char* passToString(const PassType passType)
 
         case PassType::CascadingShadow:
             return "Cascade_Shadow_Map";
+
+        case PassType::Animation:
+            return "Skinning";
     }
 
     return "UNKNOWN PASS TYPE";

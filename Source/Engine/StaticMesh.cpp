@@ -33,28 +33,28 @@ StaticMesh::StaticMesh(const std::string& path, const int vertAttributes) :
 {
 	Assimp::Importer importer;
 
-	const aiScene* model = importer.ReadFile(path.c_str(),
+    const aiScene* scene = importer.ReadFile(path.c_str(),
 											 aiProcess_Triangulate |
 											 aiProcess_JoinIdenticalVertices |
 											 aiProcess_GenNormals |
 											 aiProcess_FlipUVs);
 
-    BELL_ASSERT(model->mNumMeshes == 1, "This files containes more than 1 mesh, which one is loaded is undefined.")
+    BELL_ASSERT(scene->mNumMeshes == 1, "This files containes more than 1 mesh, which one is loaded is undefined.")
 
-	const aiMesh* mesh = model->mMeshes[0];
+    const aiMesh* mesh = scene->mMeshes[0];
 
-    configure(mesh, vertAttributes);
+    configure(scene, mesh, vertAttributes);
 }
 
 
-StaticMesh::StaticMesh(const aiMesh* mesh, const int vertexAttributes) :
+StaticMesh::StaticMesh(const aiScene *scene, const aiMesh* mesh, const int vertexAttributes) :
     mVertexAttributes(vertexAttributes)
 {
-    configure(mesh, vertexAttributes);
+    configure(scene, mesh, vertexAttributes);
 }
 
 
-void StaticMesh::configure(const aiMesh* mesh, const int vertAttributes)
+void StaticMesh::configure(const aiScene* scene, const aiMesh* mesh, const int vertAttributes)
 {
     const unsigned int primitiveType = mesh->mPrimitiveTypes;
 
@@ -138,6 +138,16 @@ void StaticMesh::configure(const aiMesh* mesh, const int vertAttributes)
     mAABB = AABB{topLeft, bottumRight};
 
     loadSkeleton(mesh);
+
+    if(hasAnimations())
+    {
+        // Load animations.
+        for(uint32_t i = 0; i < scene->mNumAnimations; ++i)
+        {
+            const aiAnimation* animation = scene->mAnimations[i];
+            mAnimations.insert({std::string(animation->mName.C_Str()), Animation(*this, animation, scene)});
+        }
+    }
 }
 
 
@@ -156,12 +166,12 @@ void StaticMesh::loadSkeleton(const aiMesh* mesh)
             bone.mParentIndex = ~0;
             bone.mName = assimpBone->mName.C_Str();
             bone.mInverseBindPose = aiMatrix4x4ToFloat4x4(assimpBone->mOffsetMatrix);
-            bone.mBindPose = glm::inverse(bone.mInverseBindPose);
 
             for(uint32_t j = 0; j < assimpBone->mNumWeights; ++j)
             {
                 const aiVertexWeight& weight = assimpBone->mWeights[j];
                 BoneIndicies& indicies = mBonesPerVertex[weight.mVertexId];
+                BELL_ASSERT(indicies.mUsedBones < 4, "Only 4 or less bones per vertex are currently supported")
                 const uint8_t index = indicies.mUsedBones++;
                 BoneIndex& bone = indicies.mBoneIndices[index];
                 bone.mBone = i;

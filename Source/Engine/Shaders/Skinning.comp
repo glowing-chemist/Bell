@@ -1,0 +1,86 @@
+#include "VertexOutputs.hlsl"
+
+
+struct BoneIndex
+{
+    uint mBone;
+    float mWeight;
+};
+
+struct BoneIndicies
+{
+    BoneIndex mBoneIndices[4];
+    uint mUsedBones;
+    uint padding;
+    uint padding1;
+    uint padding2;
+};
+
+struct Bone
+{
+	float4x4 transform;
+};
+
+struct Constants
+{
+    uint mVertexCount;
+    uint mVertexReadIndex;
+    uint mVertexWriteIndex;
+    uint mBoneIndex;
+    uint mBoneIndiciesIndex;
+    uint mVertexStride;
+};
+
+[[vk::binding(0)]]
+ByteAddressBuffer TPoseBuffer;
+
+[[vk::binding(1)]]
+StructuredBuffer<BoneIndicies> boneIndicies;
+
+[[vk::binding(2)]]
+StructuredBuffer<Bone> bones;
+
+[[vk::binding(3)]]
+RWByteAddressBuffer outVertex;
+
+
+[[vk::push_constant]]
+ConstantBuffer<Constants> meshInfo;
+
+
+[numthreads(32, 1, 1)]
+void main(uint3 globalIndex : SV_DispatchThreadID)
+{
+	const uint vertexIndex = globalIndex.x;
+
+	if(vertexIndex >= meshInfo.mVertexCount)
+		return;
+
+	float4 vertToPosition = asfloat(TPoseBuffer.Load4((meshInfo.mVertexReadIndex + vertexIndex) * meshInfo.mVertexStride));
+	float2 vertToProcessUV = asfloat(TPoseBuffer.Load2(((meshInfo.mVertexReadIndex + vertexIndex) * meshInfo.mVertexStride) + 16));
+	float3 vertToProcessNormal = asfloat(TPoseBuffer.Load4(((meshInfo.mVertexReadIndex + vertexIndex) * meshInfo.mVertexStride) + 24));
+
+	BoneIndicies indiciesForVertex = boneIndicies[meshInfo.mBoneIndiciesIndex + vertexIndex];
+
+
+	float4x4 transform = float4x4(	float4(0.0f, 0.0f, 0.0f, 0.0f), 
+									float4(0.0f, 0.0f, 0.0f, 0.0f), 
+									float4(0.0f, 0.0f, 0.0f, 0.0f), 
+									float4(0.0f, 0.0f, 0.0f, 0.0f));
+	for(uint i = 0; i < 4; ++i)
+	{
+		BoneIndex index = indiciesForVertex.mBoneIndices[i];
+		Bone bone = bones[meshInfo.mBoneIndex + index.mBone];
+
+		transform += bone.transform * index.mWeight;
+	}
+
+	Vertex transformedVertex;
+	transformedVertex.position = mul(transform, vertToPosition);
+	transformedVertex.uv = vertToProcessUV;
+	transformedVertex.normal = float4(mul((float3x3)transform, vertToProcessNormal), 1.0f);
+
+	outVertex.Store4((meshInfo.mVertexWriteIndex + vertexIndex) * meshInfo.mVertexStride, asuint(transformedVertex.position));
+	outVertex.Store2(((meshInfo.mVertexWriteIndex + vertexIndex) * meshInfo.mVertexStride) + 16, asuint(transformedVertex.uv));
+	outVertex.Store4(((meshInfo.mVertexWriteIndex + vertexIndex) * meshInfo.mVertexStride) + 24, asuint(transformedVertex.normal));
+}

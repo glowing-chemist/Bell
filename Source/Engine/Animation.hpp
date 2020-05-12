@@ -9,26 +9,24 @@
 
 #include <Engine/GeomUtils.h>
 
+class StaticMesh;
 
 class Animation
 {
 public:
-    Animation(const aiAnimation*);
+    Animation(const StaticMesh &mesh, const aiAnimation*, const aiScene*);
     ~Animation() = default;
 
-    void tick() // advance the animation ticks.
-    {
-        ++mCurrentTick;
-    }
+    std::vector<float4x4> calculateBoneMatracies(const StaticMesh&, const double tick);
 
-    void reset()
-    {
-        mCurrentTick = 0;
-    }
-
-    uint32_t getTicksPerSec() const
+    double getTicksPerSec() const
     {
         return mTicksPerSec;
+    }
+
+    double getTotalTicks() const
+    {
+        return mNumTicks;
     }
 
     struct Tick
@@ -48,10 +46,16 @@ public:
     }
 
 private:
+
+    float4x4 interpolateTick(const Tick& lhs, const Tick& rhs, const double tick) const;
+
+    void readNodeHierarchy(const aiAnimation* pAnimation, const uint32_t keyFrameIndex, const aiNode* pNode, const float4x4& ParentTransform);
+    const aiNodeAnim* findNodeAnim(const aiAnimation* animation, const std::string& nodeName);
+
     std::string mName;
-    uint32_t mNumTicks;
-    uint32_t mTicksPerSec;
-    uint32_t mCurrentTick;
+    double mNumTicks;
+    double mTicksPerSec;
+    float4x4 mInverseGlobalTransform;
 
     std::map<std::string, BoneTransform> mBones;
 };

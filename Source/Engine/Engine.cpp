@@ -35,6 +35,7 @@
 #include "Engine/DebugVisualizationTechnique.hpp"
 #include "Engine/TransparentTechnique.hpp"
 #include "Engine/CascadeShadowMappingTechnique.hpp"
+#include "Engine/SkinningTechnique.hpp"
 
 #include "glm/gtx/transform.hpp"
 
@@ -48,6 +49,8 @@ Engine::Engine(GLFWwindow* windowPtr) :
 #endif
     mRenderDevice(mRenderInstance->createRenderDevice(DeviceFeaturesFlags::Compute | DeviceFeaturesFlags::Subgroup | DeviceFeaturesFlags::Geometry)),
     mCurrentScene(nullptr),
+    mAnimationVertexBuilder(),
+    mBoneBuilder(),
     mVertexBuilder(),
     mIndexBuilder(),
     mMaterials{getDevice()},
@@ -62,8 +65,11 @@ Engine::Engine(GLFWwindow* windowPtr) :
     mPassesRegisteredThisFrame{0},
 	mCurrentRegistredPasses{0},
     mShaderPrefix{},
-    mVertexBuffer{getDevice(), BufferUsage::Vertex | BufferUsage::TransferDest, 10000000, 10000000, "Vertex Buffer"},
+    mVertexBuffer{getDevice(), BufferUsage::Vertex | BufferUsage::TransferDest | BufferUsage::DataBuffer, 10000000, 10000000, "Vertex Buffer"},
     mIndexBuffer{getDevice(), BufferUsage::Index | BufferUsage::TransferDest, 10000000, 10000000, "Index Buffer"},
+    mTposeVertexBuffer(getDevice(), BufferUsage::DataBuffer | BufferUsage::TransferDest, 10000000, 10000000, "TPose Vertex Buffer"),
+    mBonesindicesBuffer(getDevice(), BufferUsage::DataBuffer | BufferUsage::TransferDest, sizeof(StaticMesh::BoneIndicies) * 300, sizeof(StaticMesh::BoneIndicies) * 300, "Bone indicies"),
+    mBoneBuffer(getDevice(), BufferUsage::DataBuffer | BufferUsage::TransferDest, sizeof(float4x4) * 300, sizeof(float4x4) * 300, "Bone buffer"),
     mDefaultSampler(SamplerType::Linear),
     mShowDebugTexture(false),
     mDebugTextureName(""),
@@ -107,6 +113,8 @@ Engine::Engine(GLFWwindow* windowPtr) :
     {
         mTAAJitter[i] = (halton_2_3(i) - 0.5f) * 2.0f;
     }
+
+    mAnimationLastTicked = std::chrono::system_clock::now();
 }
 
 
@@ -270,6 +278,9 @@ std::unique_ptr<Technique> Engine::getSingleTechnique(const PassType passType)
         case PassType::CascadingShadow:
             return std::make_unique<CascadeShadowMappingTechnique>(this, mCurrentRenderGraph);
 
+        case PassType::Animation:
+            return std::make_unique<SkinningTechnique>(this, mCurrentRenderGraph);
+
         default:
         {
             BELL_TRAP;
@@ -348,12 +359,29 @@ std::pair<uint64_t, uint64_t> Engine::addMeshToBuffer(const StaticMesh* mesh)
 }
 
 
+std::pair<uint64_t, uint64_t> Engine::addMeshToAnimationBuffer(const StaticMesh* mesh)
+{
+    const auto it = mTposeVertexCache.find(mesh);
+    if(it != mTposeVertexCache.end())
+        return it->second;
+
+    const auto& vertexData = mesh->getVertexData();
+    const auto vertexOffset = mAnimationVertexBuilder.addData(vertexData);
+
+    const auto& boneIndicies = mesh->getBoneIndicies();
+    const auto boneIndexIndices = mBoneBuilder.addData(boneIndicies);
+
+    mTposeVertexCache.insert(std::make_pair( mesh, std::pair<uint64_t, uint64_t>{vertexOffset, boneIndexIndices}));
+
+    return {vertexOffset, boneIndexIndices};
+}
+
+
 void Engine::execute(RenderGraph& graph)
 {
     // Upload vertex/index data if required.
     auto& vertexData = mVertexBuilder.finishRecording();
     auto& indexData = mIndexBuilder.finishRecording();
-
     if(!vertexData.empty() && !indexData.empty())
     {
         mVertexBuffer->resize(static_cast<uint32_t>(vertexData.size()), false);
@@ -364,6 +392,20 @@ void Engine::execute(RenderGraph& graph)
 
         mVertexBuilder.reset();
         mIndexBuilder.reset();
+    }
+
+    auto& animationVerticies = mAnimationVertexBuilder.finishRecording();
+    auto& boneIndices = mBoneBuilder.finishRecording();
+    if(!animationVerticies.empty() && !boneIndices.empty())
+    {
+        mTposeVertexBuffer->resize(static_cast<uint32_t>(animationVerticies.size()), false);
+        mBonesindicesBuffer->resize(static_cast<uint32_t>(boneIndices.size()), false);
+
+        mTposeVertexBuffer->setContents(animationVerticies.data(), static_cast<uint32_t>(animationVerticies.size()));
+        mBonesindicesBuffer->setContents(boneIndices.data(), static_cast<uint32_t>(boneIndices.size()));
+
+        mAnimationVertexBuilder.reset();
+        mBoneBuilder.reset();
     }
 
 	// Finalize graph internal state.
@@ -428,6 +470,62 @@ void Engine::execute(RenderGraph& graph)
 }
 
 
+void Engine::startAnimation(const InstanceID id, const std::string& name, const bool loop)
+{
+    mActiveAnimations.push_back({name, id, 0, 0.0, loop});
+}
+
+
+void Engine::terimateAnimation(const InstanceID id, const std::string& name)
+{
+    auto it = std::find_if(mActiveAnimations.begin(), mActiveAnimations.end(), [id, name](const AnimationEntry& entry)
+    {
+        return entry.mName == name && entry.mMesh == id;
+    });
+
+    if(it != mActiveAnimations.end())
+        (*it).mLoop = false;
+}
+
+
+void Engine::tickAnimations()
+{
+    const std::chrono::system_clock::time_point currentTime = std::chrono::system_clock::now();
+    const std::chrono::duration<double> elapsed = currentTime - mAnimationLastTicked;
+    const double elapsedTime = elapsed.count();
+    mAnimationLastTicked = currentTime;
+    uint64_t boneOffset = 0;
+    std::vector<float4x4> boneMatracies;
+
+    for(auto& animEntry : mActiveAnimations)
+    {
+        MeshInstance* instance = mCurrentScene->getMeshInstance(animEntry.mMesh);
+        Animation& animation = instance->mMesh->getAnimation(animEntry.mName);
+        double ticksPerSec = animation.getTicksPerSec();
+        animEntry.mTick += elapsedTime * ticksPerSec;
+        animEntry.mBoneOffset = boneOffset;
+
+        if(animEntry.mTick <= animation.getTotalTicks())
+        {
+            std::vector<float4x4> matracies  = animation.calculateBoneMatracies(*instance->mMesh, animEntry.mTick);
+            boneOffset += matracies.size();
+            boneMatracies.insert(boneMatracies.end(), matracies.begin(), matracies.end());
+        }
+        else if(animEntry.mLoop)
+            animEntry.mTick = 0.0;
+    }
+
+    if(!boneMatracies.empty())
+        (*mBoneBuffer)->setContents(boneMatracies.data(), boneMatracies.size() * sizeof(float4x4));
+
+    mActiveAnimations.erase(std::remove_if(mActiveAnimations.begin(), mActiveAnimations.end(), [this](const AnimationEntry& entry)
+    {
+        Animation& animation = mCurrentScene->getAnimation(entry.mMesh, entry.mName);
+        return animation.getTotalTicks() <= entry.mTick;
+    }), mActiveAnimations.end());
+}
+
+
 void Engine::recordScene()
 {   
     // Add new techniques
@@ -468,6 +566,13 @@ void Engine::recordScene()
     mCurrentRenderGraph.bindSampler(kDefaultSampler, mDefaultSampler);
     mCurrentRenderGraph.bindVertexBuffer(kSceneVertexBuffer, mVertexBuffer);
     mCurrentRenderGraph.bindIndexBuffer(kSceneIndexBuffer, mIndexBuffer);
+
+    if(!mActiveAnimations.empty())
+    {
+        mCurrentRenderGraph.bindBuffer(kTPoseVertexBuffer, mTposeVertexBuffer);
+        mCurrentRenderGraph.bindBuffer(kBoneIndiciesBuffer, mBonesindicesBuffer);
+        mCurrentRenderGraph.bindBuffer(kBonesBuffer, *mBoneBuffer);
+    }
 
 
     if(mCurrentScene && mCurrentScene->getSkybox())
@@ -569,6 +674,13 @@ void Engine::updateGlobalBuffers()
 
             mShadowCastingLight.get()->unmap();
         }
+
+        if(!mActiveAnimations.empty())
+        {
+            tickAnimations();
+        }
+        else
+            mAnimationLastTicked = std::chrono::system_clock::now();
     }
 }
 

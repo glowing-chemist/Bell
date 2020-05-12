@@ -1,8 +1,10 @@
 #ifndef STATIC_MESH_HPP
 #define STATIC_MESH_HPP
 
+#include "Core/BellLogging.hpp"
 #include "Engine/AABB.hpp"
 #include "Engine/PassTypes.hpp"
+#include "Engine/Animation.hpp"
 #include "RenderGraph/GraphicsTask.hpp"
 
 #include "assimp/vector2.h"
@@ -28,7 +30,7 @@ class StaticMesh
 public:
 	
     StaticMesh(const std::string& filePath, const int vertexAttributes);
-    StaticMesh(const aiMesh* mesh, const int vertexAttributes);
+    StaticMesh(const aiScene* scene, const aiMesh* mesh, const int vertexAttributes);
 
 
     const AABB& getAABB() const
@@ -76,13 +78,22 @@ public:
 		return mVertexCount;
 	}
 
+    bool hasAnimations() const
+    {
+        return !mSkeleton.empty();
+    }
+
     struct Bone
     {
-        uint32_t mParentIndex;
         std::string mName;
+        uint32_t mParentIndex;
         float4x4 mInverseBindPose;
-        float4x4 mBindPose;
     };
+
+    const std::vector<Bone>& getSkeleton() const
+    {
+        return mSkeleton;
+    }
 
     struct BoneIndex
     {
@@ -93,12 +104,27 @@ public:
     struct BoneIndicies
     {
         BoneIndex mBoneIndices[4];
-        uint8_t mUsedBones = 0;
+        uint32_t mUsedBones = 0;
+        uint32_t padding;
+        uint32_t padding1;
+        uint32_t padding2;
     };
+
+    const std::vector<BoneIndicies>& getBoneIndicies() const
+    {
+        return mBonesPerVertex;
+    }
+
+    Animation& getAnimation(const std::string& name)
+    {
+        BELL_ASSERT(mAnimations.find(name) != mAnimations.end(), "Unable to find animation");
+        auto it = mAnimations.find(name);
+        return it->second;
+    }
 
 private:
 
-    void configure(const aiMesh* mesh, const int vertexAttributes);
+    void configure(const aiScene *scene, const aiMesh* mesh, const int vertexAttributes);
     void loadSkeleton(const aiMesh* mesh);
 
     void writeVertexVector4(const aiVector3D&, const uint32_t);
@@ -112,6 +138,9 @@ private:
     std::vector<BoneIndicies> mBonesPerVertex;
     std::vector<unsigned char> mVertexData;
     std::vector<uint32_t> mIndexData;
+
+    std::map<std::string, Animation> mAnimations;
+
     AABB mAABB;
 
     uint64_t mPassTypes;
