@@ -122,6 +122,11 @@ public:
         return it->second;
     }
 
+    const std::map<std::string, Animation>& getAllAnimations() const
+    {
+        return mAnimations;
+    }
+
 private:
 
     void configure(const aiScene *scene, const aiMesh* mesh, const int vertexAttributes);

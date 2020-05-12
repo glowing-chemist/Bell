@@ -247,6 +247,12 @@ namespace
                 newNode->mInputs.push_back(Pin{ 0, newNode, kGlobalLighting, PinType::Texture, PinKind::Input });
                 return newNode;
             }
+
+            case NodeTypes::Animation:
+            {
+                std::shared_ptr<EditorNode> newNode = std::make_shared<PassNode>("Skinning", passType);
+                return newNode;
+            }
         }
     }
 
@@ -638,6 +644,7 @@ void Editor::drawAssistantWindow()
            drawPassContextMenu(PassType::LineariseDepth);
            drawPassContextMenu(PassType::SSR);
            drawPassContextMenu(PassType::Transparent);
+           drawPassContextMenu(PassType::Animation);
 
            ImGui::TreePop();
        }
@@ -683,6 +690,23 @@ void Editor::drawAssistantWindow()
 
                     bool guizmo = instanceFlags & InstanceFlags::DrawGuizmo;
                     ImGui::Checkbox("Guizmo", &guizmo);
+
+                    if(instance->mMesh->hasAnimations())
+                    {
+                        const auto animations = instance->mMesh->getAllAnimations();
+                        ImGui::TextUnformatted("Play animation");
+                        uint32_t i = 0;
+                        for(const auto& [name, _] : animations)
+                        {
+                            char nameBuffer[12];
+                            sprintf(nameBuffer, "Animation %d\n", i);
+                            if(ImGui::Button(nameBuffer))
+                            {
+                                mEngine.startAnimation(ID, name);
+                            }
+                            ++i;
+                        }
+                    }
 
                     if(guizmo)
                     {
