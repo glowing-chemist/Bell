@@ -699,7 +699,7 @@ void Editor::drawAssistantWindow()
                         for(const auto& [name, _] : animations)
                         {
                             char nameBuffer[12];
-                            sprintf(nameBuffer, "Animation %d\n", i);
+                            sprintf(nameBuffer, name.empty() ? "Animation %d\n" : name.c_str(), i);
                             if(ImGui::Button(nameBuffer))
                             {
                                 mEngine.startAnimation(ID, name);

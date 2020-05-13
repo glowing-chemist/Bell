@@ -49,8 +49,14 @@ private:
 
     float4x4 interpolateTick(const Tick& lhs, const Tick& rhs, const double tick) const;
 
-    void readNodeHierarchy(const aiAnimation* pAnimation, const uint32_t keyFrameIndex, const aiNode* pNode, const float4x4& ParentTransform);
+    void readNodeHierarchy(const aiAnimation* anim, const aiString &name, const aiNode* rootNode);
+    float4x4 getParentTransform(const aiAnimation* anim, const aiNode* parent, const double tick);
+
     const aiNodeAnim* findNodeAnim(const aiAnimation* animation, const std::string& nodeName);
+
+    float4x4 interpolateScale(double time, const aiNodeAnim* pNodeAnim);
+    float4x4 interpolateTranslation(double time, const aiNodeAnim* pNodeAnim);
+    float4x4 interpolateRotation(double time, const aiNodeAnim* pNodeAnim);
 
     std::string mName;
     double mNumTicks;

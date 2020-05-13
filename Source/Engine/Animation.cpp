@@ -7,6 +7,8 @@
 #include <glm/gtx/transform.hpp>
 #include <glm/gtx/matrix_decompose.hpp>
 
+#include <set>
+
 namespace
 {
     float4x4 aiMatrix4x4ToFloat4x4(const aiMatrix4x4& transformation)
@@ -33,12 +35,7 @@ Animation::Animation(const StaticMesh& mesh, const aiAnimation* anim, const aiSc
     for(const auto& bone : bones)
     {
         mBones[bone.mName]; // Just create an entry for every bone.
-    }
-
-    for(uint32_t i = 0; i < anim->mChannels[0]->mNumPositionKeys; ++i)
-    {
-        float4x4 identity(1.0f);
-        readNodeHierarchy(anim, i, scene->mRootNode, identity);
+        readNodeHierarchy(anim, aiString(bone.mName.c_str()), scene->mRootNode);
     }
 }
 
@@ -98,50 +95,64 @@ float4x4 Animation::interpolateTick(const Tick& lhs, const Tick& rhs, const doub
 }
 
 
-void Animation::readNodeHierarchy(const aiAnimation* anim, const uint32_t keyFrameIndex, const aiNode* pNode, const float4x4& ParentTransform)
+void Animation::readNodeHierarchy(const aiAnimation* anim, const aiString& name, const aiNode* rootNode)
 {
-    std::string NodeName(pNode->mName.data);
+    std::string nodeName(name.data);
 
-    float4x4 NodeTransformation(aiMatrix4x4ToFloat4x4(pNode->mTransformation));
+    BoneTransform& boneTrans = mBones[nodeName];
 
-    const aiNodeAnim* nodeAnim = findNodeAnim(anim, NodeName);
+    const aiNode* node = rootNode->FindNode(name.C_Str());
+    BELL_ASSERT(node, "Unable to find node matching anim node")
+    const aiNodeAnim* animNode = findNodeAnim(anim, nodeName);
 
-    Tick boneTransform{};
+    if(animNode)
+    {
+        std::set<double> uniqueTicks;
+        for(uint32_t i = 0; i < animNode->mNumPositionKeys; ++i)
+        {
+            uniqueTicks.insert(animNode->mPositionKeys[i].mTime);
+        }
+        for(uint32_t i = 0; i < animNode->mNumScalingKeys; ++i)
+        {
+            uniqueTicks.insert(animNode->mScalingKeys[i].mTime);
+        }
+        for(uint32_t i = 0; i < animNode->mNumRotationKeys; ++i)
+        {
+            uniqueTicks.insert(animNode->mRotationKeys[i].mTime);
+        }
+
+        for(double tick : uniqueTicks)
+        {
+            boneTrans.mTick.push_back({tick,mInverseGlobalTransform * getParentTransform(anim, node, tick)});
+        }
+    }
+    else
+    {
+        boneTrans.mTick.push_back({0.0, mInverseGlobalTransform * getParentTransform(anim, node, 0.0)});
+        boneTrans.mTick.push_back({mNumTicks, mInverseGlobalTransform * getParentTransform(anim, node, mNumTicks)});
+    }
+}
+
+
+float4x4 Animation::getParentTransform(const aiAnimation* anim, const aiNode* parent, const double tick)
+{
+    float4x4 nodeTransformation(aiMatrix4x4ToFloat4x4(parent->mTransformation));
+    std::string nodeName(parent->mName.data);
+    const aiNodeAnim* nodeAnim = findNodeAnim(anim, nodeName);
 
     if (nodeAnim)
     {
-        boneTransform.mTick = nodeAnim->mPositionKeys[keyFrameIndex].mTime;
+        const float4x4 scale = interpolateScale(tick, nodeAnim);
+        const float4x4 rotation = interpolateRotation(tick, nodeAnim);
+        const float4x4 translation = interpolateTranslation(tick, nodeAnim);
 
-        glm::quat rot;
-        rot.w = nodeAnim->mRotationKeys[keyFrameIndex].mValue.w;
-        rot.x = nodeAnim->mRotationKeys[keyFrameIndex].mValue.x;
-        rot.y = nodeAnim->mRotationKeys[keyFrameIndex].mValue.y;
-        rot.z = nodeAnim->mRotationKeys[keyFrameIndex].mValue.z;
-        float4x4 rotation = glm::toMat4(rot);
-
-        float4x4 scale = glm::scale(float4x4(1.0f), float3(nodeAnim->mScalingKeys[keyFrameIndex].mValue.x,
-                                                    nodeAnim->mScalingKeys[keyFrameIndex].mValue.y,
-                                                    nodeAnim->mScalingKeys[keyFrameIndex].mValue.z));
-
-        float4x4 translation = glm::translate(float4x4(1.0f), float3(nodeAnim->mPositionKeys[keyFrameIndex].mValue.x,
-                                                               nodeAnim->mPositionKeys[keyFrameIndex].mValue.y,
-                                                               nodeAnim->mPositionKeys[keyFrameIndex].mValue.z));
-
-        NodeTransformation = translation * rotation * scale;
+        nodeTransformation = translation * rotation * scale;
     }
 
-    float4x4 GlobalTransformation = ParentTransform * NodeTransformation;
-
-    if (mBones.find(NodeName) != mBones.end())
-    {
-       boneTransform.mBoneTransform = mInverseGlobalTransform * GlobalTransformation;
-       mBones[NodeName].mTick.push_back(boneTransform);
-    }
-
-    for (uint32_t i = 0; i < pNode->mNumChildren; i++)
-    {
-       readNodeHierarchy(anim, keyFrameIndex, pNode->mChildren[i], GlobalTransformation);
-    }
+    if(parent->mParent)
+        return getParentTransform(anim, parent->mParent, tick) * nodeTransformation;
+    else
+        return nodeTransformation;
 }
 
 
@@ -156,4 +167,116 @@ const aiNodeAnim* Animation::findNodeAnim(const aiAnimation* animation, const st
         }
     }
     return nullptr;
+}
+
+
+float4x4 Animation::interpolateScale(double time, const aiNodeAnim* pNodeAnim)
+{
+    aiVector3D scale;
+
+    if (pNodeAnim->mNumScalingKeys == 1)
+    {
+        scale = pNodeAnim->mScalingKeys[0].mValue;
+    }
+    else
+    {
+        uint32_t frameIndex = 0;
+        for (uint32_t i = 0; i < pNodeAnim->mNumScalingKeys - 1; i++)
+        {
+            if (time < (float)pNodeAnim->mScalingKeys[i + 1].mTime)
+            {
+                frameIndex = i;
+                break;
+            }
+        }
+
+        aiVectorKey currentFrame = pNodeAnim->mScalingKeys[frameIndex];
+        aiVectorKey nextFrame = pNodeAnim->mScalingKeys[(frameIndex + 1) % pNodeAnim->mNumScalingKeys];
+
+        float delta = (time - (float)currentFrame.mTime) / (float)(nextFrame.mTime - currentFrame.mTime);
+
+        const aiVector3D& start = currentFrame.mValue;
+        const aiVector3D& end = nextFrame.mValue;
+
+        scale = (start + delta * (end - start));
+    }
+
+    return glm::scale(float4x4(1.0f), float3(scale.x, scale.y, scale.z));
+}
+
+
+float4x4 Animation::interpolateTranslation(double time, const aiNodeAnim* pNodeAnim)
+{
+    aiVector3D translation;
+
+    if (pNodeAnim->mNumPositionKeys == 1)
+    {
+        translation = pNodeAnim->mPositionKeys[0].mValue;
+    }
+    else
+    {
+        uint32_t frameIndex = 0;
+        for (uint32_t i = 0; i < pNodeAnim->mNumPositionKeys - 1; i++)
+        {
+            if (time < (float)pNodeAnim->mPositionKeys[i + 1].mTime)
+            {
+                frameIndex = i;
+                break;
+            }
+        }
+
+        aiVectorKey currentFrame = pNodeAnim->mPositionKeys[frameIndex];
+        aiVectorKey nextFrame = pNodeAnim->mPositionKeys[(frameIndex + 1) % pNodeAnim->mNumPositionKeys];
+
+        float delta = (time - (float)currentFrame.mTime) / (float)(nextFrame.mTime - currentFrame.mTime);
+
+        const aiVector3D& start = currentFrame.mValue;
+        const aiVector3D& end = nextFrame.mValue;
+
+        translation = (start + delta * (end - start));
+    }
+
+    return glm::translate(float4x4(1.0f), float3(translation.x, translation.y, translation.z));
+}
+
+
+float4x4 Animation::interpolateRotation(double time, const aiNodeAnim* pNodeAnim)
+{
+    aiQuaternion rotation;
+
+    if (pNodeAnim->mNumRotationKeys == 1)
+    {
+        rotation = pNodeAnim->mRotationKeys[0].mValue;
+    }
+    else
+    {
+        uint32_t frameIndex = 0;
+        for (uint32_t i = 0; i < pNodeAnim->mNumRotationKeys - 1; i++)
+        {
+            if (time < (float)pNodeAnim->mRotationKeys[i + 1].mTime)
+            {
+                frameIndex = i;
+                break;
+            }
+        }
+
+        aiQuatKey currentFrame = pNodeAnim->mRotationKeys[frameIndex];
+        aiQuatKey nextFrame = pNodeAnim->mRotationKeys[(frameIndex + 1) % pNodeAnim->mNumRotationKeys];
+
+        float delta = (time - (float)currentFrame.mTime) / (float)(nextFrame.mTime - currentFrame.mTime);
+
+        const aiQuaternion& start = currentFrame.mValue;
+        const aiQuaternion& end = nextFrame.mValue;
+
+        aiQuaternion::Interpolate(rotation, start, end, delta);
+        rotation.Normalize();
+    }
+
+    glm::quat quat;
+    quat.x = rotation.x;
+    quat.y = rotation.y;
+    quat.z = rotation.z;
+    quat.w = rotation.w;
+
+    return glm::toMat4(quat);
 }
