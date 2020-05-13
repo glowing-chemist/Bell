@@ -491,8 +491,9 @@ void Engine::terimateAnimation(const InstanceID id, const std::string& name)
 void Engine::tickAnimations()
 {
     const std::chrono::system_clock::time_point currentTime = std::chrono::system_clock::now();
-    const std::chrono::duration<double> elapsed = currentTime - mAnimationLastTicked;
-    const double elapsedTime = elapsed.count();
+    const std::chrono::nanoseconds elapsed = currentTime - mAnimationLastTicked;
+    double elapsedTime = elapsed.count();
+    elapsedTime /= 1000000000.0;
     mAnimationLastTicked = currentTime;
     uint64_t boneOffset = 0;
     std::vector<float4x4> boneMatracies;
