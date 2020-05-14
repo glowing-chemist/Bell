@@ -61,6 +61,8 @@ void VulkanBuffer::setContents(const void* data, const uint32_t size, const uint
 {
 	VulkanRenderDevice* device = static_cast<VulkanRenderDevice*>(getDevice());
 
+    BELL_ASSERT(offset + size <= mSize, "Attempting to upload more data than buffer can hold")
+
     if(isMappable())
     {
         BELL_ASSERT(size <= mSize, "Attempting to map a larger range than the buffer supports.")

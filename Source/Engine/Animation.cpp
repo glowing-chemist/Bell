@@ -52,7 +52,7 @@ std::vector<float4x4> Animation::calculateBoneMatracies(const StaticMesh& mesh, 
         const std::vector<Tick>& ticks = transform.getTicks();
 
         uint32_t i = 1;
-        while(tick >= ticks[i].mTick)
+        while(tick > ticks[i].mTick)
         {
             ++i;
         }
@@ -191,7 +191,7 @@ float4x4 Animation::interpolateScale(double time, const aiNodeAnim* pNodeAnim)
         uint32_t frameIndex = 0;
         for (uint32_t i = 0; i < pNodeAnim->mNumScalingKeys - 1; i++)
         {
-            if (time < (float)pNodeAnim->mScalingKeys[i + 1].mTime)
+            if (time <= (float)pNodeAnim->mScalingKeys[i + 1].mTime)
             {
                 frameIndex = i;
                 break;
@@ -226,7 +226,7 @@ float4x4 Animation::interpolateTranslation(double time, const aiNodeAnim* pNodeA
         uint32_t frameIndex = 0;
         for (uint32_t i = 0; i < pNodeAnim->mNumPositionKeys - 1; i++)
         {
-            if (time < (float)pNodeAnim->mPositionKeys[i + 1].mTime)
+            if (time <= (float)pNodeAnim->mPositionKeys[i + 1].mTime)
             {
                 frameIndex = i;
                 break;
@@ -261,7 +261,7 @@ float4x4 Animation::interpolateRotation(double time, const aiNodeAnim* pNodeAnim
         uint32_t frameIndex = 0;
         for (uint32_t i = 0; i < pNodeAnim->mNumRotationKeys - 1; i++)
         {
-            if (time < (float)pNodeAnim->mRotationKeys[i + 1].mTime)
+            if (time <= (float)pNodeAnim->mRotationKeys[i + 1].mTime)
             {
                 frameIndex = i;
                 break;
