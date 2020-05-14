@@ -163,15 +163,15 @@ void StaticMesh::loadSkeleton(const aiMesh* mesh)
             const aiBone* assimpBone = mesh->mBones[i];
 
             Bone& bone = mSkeleton[i];
-            bone.mParentIndex = ~0;
             bone.mName = assimpBone->mName.C_Str();
             bone.mInverseBindPose = aiMatrix4x4ToFloat4x4(assimpBone->mOffsetMatrix);
 
             for(uint32_t j = 0; j < assimpBone->mNumWeights; ++j)
             {
                 const aiVertexWeight& weight = assimpBone->mWeights[j];
+                BELL_ASSERT(weight.mVertexId < mBonesPerVertex.size(), "Invalid vertex index")
                 BoneIndicies& indicies = mBonesPerVertex[weight.mVertexId];
-                BELL_ASSERT(indicies.mUsedBones < 7, "Only 7 or less bones per vertex are currently supported")
+                BELL_ASSERT(indicies.mUsedBones < 13, "Only 13 or less bones per vertex are currently supported")
                 const uint8_t index = indicies.mUsedBones++;
                 BoneIndex& bone = indicies.mBoneIndices[index];
                 bone.mBone = i;

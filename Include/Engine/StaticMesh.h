@@ -86,7 +86,6 @@ public:
     struct Bone
     {
         std::string mName;
-        uint32_t mParentIndex;
         float4x4 mInverseBindPose;
     };
 
@@ -107,8 +106,12 @@ public:
 
     struct BoneIndicies
     {
-        BoneIndex mBoneIndices[7];
-        uint32_t mUsedBones = 0;
+        BoneIndicies() :
+            mUsedBones(0),
+            padding(~0) {}
+
+        BoneIndex mBoneIndices[13];
+        uint32_t mUsedBones;
         uint32_t padding;
     };
 

@@ -145,6 +145,7 @@ void Engine::setScene(Scene* scene)
     else // We're clearing the scene so need to destroy the materials.
     {
         mMaterials.reset(mRenderDevice);
+        mActiveAnimations.clear();
         // need to invalidate render pipelines as the number of materials could change.
         mRenderDevice->invalidatePipelines();
     }
