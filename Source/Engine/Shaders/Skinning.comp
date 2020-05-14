@@ -9,11 +9,9 @@ struct BoneIndex
 
 struct BoneIndicies
 {
-    BoneIndex mBoneIndices[4];
+    BoneIndex mBoneIndices[7];
     uint mUsedBones;
     uint padding;
-    uint padding1;
-    uint padding2;
 };
 
 struct Bone
@@ -67,7 +65,7 @@ void main(uint3 globalIndex : SV_DispatchThreadID)
 									float4(0.0f, 0.0f, 0.0f, 0.0f), 
 									float4(0.0f, 0.0f, 0.0f, 0.0f), 
 									float4(0.0f, 0.0f, 0.0f, 0.0f));
-	for(uint i = 0; i < 4; ++i)
+	for(uint i = 0; i < 7; ++i)
 	{
 		BoneIndex index = indiciesForVertex.mBoneIndices[i];
 		Bone bone = bones[meshInfo.mBoneIndex + index.mBone];

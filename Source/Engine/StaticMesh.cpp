@@ -171,7 +171,7 @@ void StaticMesh::loadSkeleton(const aiMesh* mesh)
             {
                 const aiVertexWeight& weight = assimpBone->mWeights[j];
                 BoneIndicies& indicies = mBonesPerVertex[weight.mVertexId];
-                BELL_ASSERT(indicies.mUsedBones < 4, "Only 4 or less bones per vertex are currently supported")
+                BELL_ASSERT(indicies.mUsedBones < 7, "Only 7 or less bones per vertex are currently supported")
                 const uint8_t index = indicies.mUsedBones++;
                 BoneIndex& bone = indicies.mBoneIndices[index];
                 bone.mBone = i;
