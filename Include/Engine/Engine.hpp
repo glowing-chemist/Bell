@@ -162,7 +162,7 @@ public:
         return mIndexBuffer;
     }
 
-    void startAnimation(const InstanceID id, const std::string& name, const bool loop = false);
+    void startAnimation(const InstanceID id, const std::string& name, const bool loop = false, const float speedModifer = 1.0f);
     void terimateAnimation(const InstanceID id, const std::string& name);
 
     void recordScene();
@@ -197,6 +197,7 @@ public:
     {
         std::string mName;
         InstanceID mMesh;
+        float mSpeedModifier;
         uint64_t mBoneOffset;
         double mTick;
         bool mLoop;

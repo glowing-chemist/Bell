@@ -97,6 +97,10 @@ public:
 
     struct BoneIndex
     {
+        BoneIndex() :
+            mBone(0),
+            mWeight(0.0f) {}
+
         uint32_t mBone;
         float mWeight;
     };

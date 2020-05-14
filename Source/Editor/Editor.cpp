@@ -289,6 +289,7 @@ Editor::Editor(GLFWwindow* window) :
     mShowAddInstanceDialog{false},
     mResetSceneAtEndOfFrame{false},
     mPublishedScene{false},
+    mAnimationSpeed(1.0f),
     mLightOperationMode{ImGuizmo::OPERATION::TRANSLATE},
     mEditShadowingLight{false}
 {
@@ -702,7 +703,7 @@ void Editor::drawAssistantWindow()
                             sprintf(nameBuffer, name.empty() ? "Animation %d\n" : name.c_str(), i);
                             if(ImGui::Button(nameBuffer))
                             {
-                                mEngine.startAnimation(ID, name);
+                                mEngine.startAnimation(ID, name, false, mAnimationSpeed);
                             }
                             ++i;
                         }
@@ -763,6 +764,14 @@ void Editor::drawAssistantWindow()
            camera.setFarPlane(mCameraInfo.mFarPlaneDistance);
            camera.setFOVDegrees(mCameraInfo.mFOV);
         }
+
+       if(ImGui::TreeNode("Animations"))
+       {
+
+           ImGui::SliderFloat("Animation speed", &mAnimationSpeed, 0.1f, 10.0f);
+
+           ImGui::TreePop();
+       }
 
        drawLightMenu();
     }

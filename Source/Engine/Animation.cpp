@@ -49,14 +49,16 @@ std::vector<float4x4> Animation::calculateBoneMatracies(const StaticMesh& mesh, 
     {
         BELL_ASSERT(mBones.find(bone.mName) != mBones.end(), "Bone not found")
         BoneTransform& transform = mBones[bone.mName];
+        const std::vector<Tick>& ticks = transform.getTicks();
 
         uint32_t i = 1;
-        while(tick >= transform.mTick[i].mTick)
+        while(tick >= ticks[i].mTick)
         {
             ++i;
         }
 
-        const float4x4 boneTransform = interpolateTick(transform.mTick[i - 1], transform.mTick[i], tick);
+        BELL_ASSERT(i < ticks.size(), "tick out of bounds")
+        const float4x4 boneTransform = interpolateTick(ticks[i - 1], ticks[i], tick);
         boneTransforms.push_back(boneTransform * bone.mInverseBindPose);
     }
 
@@ -67,6 +69,7 @@ std::vector<float4x4> Animation::calculateBoneMatracies(const StaticMesh& mesh, 
 float4x4 Animation::interpolateTick(const Tick& lhs, const Tick& rhs, const double tick) const
 {
     const float lerpFactor = float(tick - lhs.mTick) / float(rhs.mTick - lhs.mTick);
+    BELL_ASSERT(lerpFactor >= 0.0 && lerpFactor <= 1.0f, "Lerp factor out of range")
 
     // Decompose matracties.
     float3 skew;
@@ -99,11 +102,12 @@ void Animation::readNodeHierarchy(const aiAnimation* anim, const aiString& name,
 {
     std::string nodeName(name.data);
 
-    BoneTransform& boneTrans = mBones[nodeName];
-
     const aiNode* node = rootNode->FindNode(name.C_Str());
     BELL_ASSERT(node, "Unable to find node matching anim node")
     const aiNodeAnim* animNode = findNodeAnim(anim, nodeName);
+
+    getParentTransform(anim, node, 0.0);
+    getParentTransform(anim, node, mNumTicks);
 
     if(animNode)
     {
@@ -123,13 +127,8 @@ void Animation::readNodeHierarchy(const aiAnimation* anim, const aiString& name,
 
         for(double tick : uniqueTicks)
         {
-            boneTrans.mTick.push_back({tick,mInverseGlobalTransform * getParentTransform(anim, node, tick)});
+            getParentTransform(anim, node, tick);
         }
-    }
-    else
-    {
-        boneTrans.mTick.push_back({0.0, mInverseGlobalTransform * getParentTransform(anim, node, 0.0)});
-        boneTrans.mTick.push_back({mNumTicks, mInverseGlobalTransform * getParentTransform(anim, node, mNumTicks)});
     }
 }
 
@@ -149,10 +148,19 @@ float4x4 Animation::getParentTransform(const aiAnimation* anim, const aiNode* pa
         nodeTransformation = translation * rotation * scale;
     }
 
+    float4x4 finalTransforms;
     if(parent->mParent)
-        return getParentTransform(anim, parent->mParent, tick) * nodeTransformation;
+        finalTransforms = getParentTransform(anim, parent->mParent, tick) * nodeTransformation;
     else
-        return nodeTransformation;
+        finalTransforms = nodeTransformation;
+
+    if(mBones.find(nodeName) != mBones.end())
+    {
+        BoneTransform& boneTrans = mBones[nodeName];
+        boneTrans.insert(tick, mInverseGlobalTransform * finalTransforms);
+    }
+
+    return finalTransforms;
 }
 
 

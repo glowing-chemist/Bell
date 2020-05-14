@@ -470,9 +470,9 @@ void Engine::execute(RenderGraph& graph)
 }
 
 
-void Engine::startAnimation(const InstanceID id, const std::string& name, const bool loop)
+void Engine::startAnimation(const InstanceID id, const std::string& name, const bool loop, const float speedModifer)
 {
-    mActiveAnimations.push_back({name, id, 0, 0.0, loop});
+    mActiveAnimations.push_back({name, id, speedModifer, 0, 0.0, loop});
 }
 
 
@@ -503,7 +503,7 @@ void Engine::tickAnimations()
         MeshInstance* instance = mCurrentScene->getMeshInstance(animEntry.mMesh);
         Animation& animation = instance->mMesh->getAnimation(animEntry.mName);
         double ticksPerSec = animation.getTicksPerSec();
-        animEntry.mTick += elapsedTime * ticksPerSec;
+        animEntry.mTick += elapsedTime * ticksPerSec * animEntry.mSpeedModifier;
         animEntry.mBoneOffset = boneOffset;
 
         if(animEntry.mTick <= animation.getTotalTicks())
@@ -522,7 +522,7 @@ void Engine::tickAnimations()
     mActiveAnimations.erase(std::remove_if(mActiveAnimations.begin(), mActiveAnimations.end(), [this](const AnimationEntry& entry)
     {
         Animation& animation = mCurrentScene->getAnimation(entry.mMesh, entry.mName);
-        return animation.getTotalTicks() <= entry.mTick;
+        return animation.getTotalTicks() < entry.mTick;
     }), mActiveAnimations.end());
 }
 

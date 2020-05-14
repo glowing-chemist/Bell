@@ -37,6 +37,26 @@ public:
 
     struct BoneTransform
     {
+        void insert(const double tick, const float4x4 trans)
+        {
+            if(std::find_if(mTick.begin(), mTick.end(), [tick](const Tick& t)
+            {
+                return tick == t.mTick;
+            }) != mTick.end())
+                return;
+
+            mTick.insert(std::find_if(mTick.begin(), mTick.end(), [tick](const Tick& t)
+            {
+                return t.mTick > tick;
+            }), Tick{tick, trans});
+        }
+        const std::vector<Tick>& getTicks() const
+        {
+            return mTick;
+        }
+
+    private:
+
         std::vector<Tick> mTick;
     };
 

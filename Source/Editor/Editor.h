@@ -127,6 +127,8 @@ private:
     bool mResetSceneAtEndOfFrame;
     bool mPublishedScene;
 
+    float mAnimationSpeed;
+
     std::vector<EditorLight> mLights;
     EditorLight mShadowingLight;
     ImGuizmo::OPERATION mLightOperationMode;
