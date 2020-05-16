@@ -33,12 +33,15 @@ struct Constants
 ByteAddressBuffer TPoseBuffer;
 
 [[vk::binding(1)]]
-StructuredBuffer<BoneIndicies> boneIndicies;
+StructuredBuffer<uint2> boneIndicies;
 
 [[vk::binding(2)]]
-StructuredBuffer<Bone> bones;
+StructuredBuffer<BoneIndex> boneWeights;
 
 [[vk::binding(3)]]
+StructuredBuffer<Bone> bones;
+
+[[vk::binding(4)]]
 RWByteAddressBuffer outVertex;
 
 
@@ -58,16 +61,15 @@ void main(uint3 globalIndex : SV_DispatchThreadID)
 	float2 vertToProcessUV = asfloat(TPoseBuffer.Load2(((meshInfo.mVertexReadIndex + vertexIndex) * meshInfo.mVertexStride) + 16));
 	float3 vertToProcessNormal = asfloat(TPoseBuffer.Load4(((meshInfo.mVertexReadIndex + vertexIndex) * meshInfo.mVertexStride) + 24));
 
-	BoneIndicies indiciesForVertex = boneIndicies[meshInfo.mBoneIndiciesIndex + vertexIndex];
-
+	uint2 weightsIndexSize = boneIndicies[meshInfo.mVertexReadIndex + vertexIndex];
 
 	float4x4 transform = float4x4(	float4(0.0f, 0.0f, 0.0f, 0.0f), 
 									float4(0.0f, 0.0f, 0.0f, 0.0f), 
 									float4(0.0f, 0.0f, 0.0f, 0.0f), 
 									float4(0.0f, 0.0f, 0.0f, 0.0f));
-	for(uint i = 0; i < 13; ++i)
+	for(uint i = 0; i < weightsIndexSize.y; ++i)
 	{
-		BoneIndex index = indiciesForVertex.mBoneIndices[i];
+		BoneIndex index = boneWeights[meshInfo.mBoneIndiciesIndex + weightsIndexSize.x + i];
 		Bone bone = bones[meshInfo.mBoneIndex + index.mBone];
 
 		transform += bone.transform * index.mWeight;

@@ -50,7 +50,8 @@ Engine::Engine(GLFWwindow* windowPtr) :
     mRenderDevice(mRenderInstance->createRenderDevice(DeviceFeaturesFlags::Compute | DeviceFeaturesFlags::Subgroup | DeviceFeaturesFlags::Geometry)),
     mCurrentScene(nullptr),
     mAnimationVertexBuilder(),
-    mBoneBuilder(),
+    mBoneIndexBuilder(),
+    mBoneWeightBuilder(),
     mVertexBuilder(),
     mIndexBuilder(),
     mMaterials{getDevice()},
@@ -68,8 +69,9 @@ Engine::Engine(GLFWwindow* windowPtr) :
     mVertexBuffer{getDevice(), BufferUsage::Vertex | BufferUsage::TransferDest | BufferUsage::DataBuffer, 10000000, 10000000, "Vertex Buffer"},
     mIndexBuffer{getDevice(), BufferUsage::Index | BufferUsage::TransferDest, 10000000, 10000000, "Index Buffer"},
     mTposeVertexBuffer(getDevice(), BufferUsage::DataBuffer | BufferUsage::TransferDest, 10000000, 10000000, "TPose Vertex Buffer"),
-    mBonesindicesBuffer(getDevice(), BufferUsage::DataBuffer | BufferUsage::TransferDest, sizeof(StaticMesh::BoneIndicies) * 300, sizeof(StaticMesh::BoneIndicies) * 300, "Bone indicies"),
-    mBoneBuffer(getDevice(), BufferUsage::DataBuffer | BufferUsage::TransferDest, sizeof(float4x4) * 300, sizeof(float4x4) * 300, "Bone buffer"),
+    mBonesWeightsBuffer(getDevice(), BufferUsage::DataBuffer | BufferUsage::TransferDest, sizeof(uint2) * 30000, sizeof(uint2) * 30000, "Bone weights"),
+    mBoneWeightsIndexBuffer(getDevice(), BufferUsage::DataBuffer | BufferUsage::TransferDest, sizeof(uint2) * 30000, sizeof(uint2) * 30000, "Bone weight indicies"),
+    mBoneBuffer(getDevice(), BufferUsage::DataBuffer | BufferUsage::TransferDest, sizeof(float4x4) * 1000, sizeof(float4x4) * 1000, "Bone buffer"),
     mDefaultSampler(SamplerType::Linear),
     mShowDebugTexture(false),
     mDebugTextureName(""),
@@ -370,11 +372,14 @@ std::pair<uint64_t, uint64_t> Engine::addMeshToAnimationBuffer(const StaticMesh*
     const auto vertexOffset = mAnimationVertexBuilder.addData(vertexData);
 
     const auto& boneIndicies = mesh->getBoneIndicies();
-    const auto boneIndexIndices = mBoneBuilder.addData(boneIndicies);
+    mBoneIndexBuilder.addData(boneIndicies);
 
-    mTposeVertexCache.insert(std::make_pair( mesh, std::pair<uint64_t, uint64_t>{vertexOffset, boneIndexIndices}));
+    const auto& boneWeights = mesh->getBoneWeights();
+    const auto boneWeightsOffset = mBoneWeightBuilder.addData(boneWeights);
 
-    return {vertexOffset, boneIndexIndices};
+    mTposeVertexCache.insert(std::make_pair( mesh, std::pair<uint64_t, uint64_t>{vertexOffset, boneWeightsOffset}));
+
+    return {vertexOffset, boneWeightsOffset};
 }
 
 
@@ -396,17 +401,20 @@ void Engine::execute(RenderGraph& graph)
     }
 
     auto& animationVerticies = mAnimationVertexBuilder.finishRecording();
-    auto& boneIndices = mBoneBuilder.finishRecording();
-    if(!animationVerticies.empty() && !boneIndices.empty())
+    auto& boneWeights = mBoneWeightBuilder.finishRecording();
+    auto& boneIndicies = mBoneIndexBuilder.finishRecording();
+    if(!animationVerticies.empty() && !boneIndicies.empty())
     {
         mTposeVertexBuffer->resize(static_cast<uint32_t>(animationVerticies.size()), false);
-        mBonesindicesBuffer->resize(static_cast<uint32_t>(boneIndices.size()), false);
+        mBoneWeightsIndexBuffer->resize(static_cast<uint32_t>(boneIndicies.size()), false);
+        mBonesWeightsBuffer->resize(static_cast<uint32_t>(boneWeights.size()), false);
 
         mTposeVertexBuffer->setContents(animationVerticies.data(), static_cast<uint32_t>(animationVerticies.size()));
-        mBonesindicesBuffer->setContents(boneIndices.data(), static_cast<uint32_t>(boneIndices.size()));
+        mBoneWeightsIndexBuffer->setContents(boneIndicies.data(), static_cast<uint32_t>(boneIndicies.size()));
+        mBonesWeightsBuffer->setContents(boneWeights.data(), static_cast<uint32_t>(boneWeights.size()));
 
         mAnimationVertexBuilder.reset();
-        mBoneBuilder.reset();
+        mBoneIndexBuilder.reset();
     }
 
 	// Finalize graph internal state.
@@ -572,7 +580,8 @@ void Engine::recordScene()
     if(!mActiveAnimations.empty())
     {
         mCurrentRenderGraph.bindBuffer(kTPoseVertexBuffer, mTposeVertexBuffer);
-        mCurrentRenderGraph.bindBuffer(kBoneIndiciesBuffer, mBonesindicesBuffer);
+        mCurrentRenderGraph.bindBuffer(kBonesWeights, mBonesWeightsBuffer);
+        mCurrentRenderGraph.bindBuffer(kBoneWeighntsIndiciesBuffer, mBoneWeightsIndexBuffer);
         mCurrentRenderGraph.bindBuffer(kBonesBuffer, *mBoneBuffer);
     }
 

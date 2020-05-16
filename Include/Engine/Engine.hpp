@@ -218,7 +218,8 @@ private:
     Scene* mCurrentScene;
 
     BufferBuilder mAnimationVertexBuilder;
-    BufferBuilder mBoneBuilder;
+    BufferBuilder mBoneIndexBuilder;
+    BufferBuilder mBoneWeightBuilder;
     BufferBuilder mVertexBuilder;
     BufferBuilder mIndexBuilder;
 
@@ -247,7 +248,8 @@ private:
     Buffer mIndexBuffer;
     // Animation data.
     Buffer mTposeVertexBuffer; // a "clean" copy of animated meshed verticies.
-    Buffer mBonesindicesBuffer;
+    Buffer mBonesWeightsBuffer;
+    Buffer mBoneWeightsIndexBuffer;
     PerFrameResource<Buffer> mBoneBuffer;
 
     Sampler mDefaultSampler;

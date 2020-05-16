@@ -156,7 +156,9 @@ void StaticMesh::loadSkeleton(const aiMesh* mesh)
     if(mesh->mNumBones > 0)
     {
         mSkeleton.resize(mesh->mNumBones);
-        mBonesPerVertex.resize(mVertexCount);
+        std::vector<BoneIndicies> bonesPerVertex;
+        bonesPerVertex.resize(mVertexCount);
+        mBoneWeightsIndicies.resize(mVertexCount);
 
         for(uint32_t i = 0; i < mesh->mNumBones; ++i)
         {
@@ -169,14 +171,26 @@ void StaticMesh::loadSkeleton(const aiMesh* mesh)
             for(uint32_t j = 0; j < assimpBone->mNumWeights; ++j)
             {
                 const aiVertexWeight& weight = assimpBone->mWeights[j];
-                BELL_ASSERT(weight.mVertexId < mBonesPerVertex.size(), "Invalid vertex index")
-                BoneIndicies& indicies = mBonesPerVertex[weight.mVertexId];
-                BELL_ASSERT(indicies.mUsedBones < 13, "Only 13 or less bones per vertex are currently supported")
+                BELL_ASSERT(weight.mVertexId < bonesPerVertex.size(), "Invalid vertex index")
+                BoneIndicies& indicies = bonesPerVertex[weight.mVertexId];
+                BELL_ASSERT(indicies.mUsedBones < 25, "Only 25 or less bones per vertex are currently supported")
                 const uint8_t index = indicies.mUsedBones++;
                 BoneIndex& bone = indicies.mBoneIndices[index];
                 bone.mBone = i;
                 bone.mWeight = weight.mWeight;
             }
+        }
+
+        // Now generate bone weights offsets per vertex.
+        for(uint32_t i = 0; i < mVertexCount; ++i)
+        {
+            const BoneIndicies& index = bonesPerVertex[i];
+
+            uint2& indexSize = mBoneWeightsIndicies[i];
+            indexSize.x = mBoneWeights.size();
+            indexSize.y = index.mUsedBones;
+
+            mBoneWeights.insert(mBoneWeights.end(), &index.mBoneIndices[0], &index.mBoneIndices[index.mUsedBones]);
         }
     }
 }

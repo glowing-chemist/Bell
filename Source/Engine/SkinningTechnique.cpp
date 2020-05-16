@@ -10,7 +10,8 @@ SkinningTechnique::SkinningTechnique(Engine* eng, RenderGraph& graph) :
 {
     ComputeTask task("Skinning", mPipelineDesc);
     task.addInput(kTPoseVertexBuffer, AttachmentType::DataBufferRO);
-    task.addInput(kBoneIndiciesBuffer, AttachmentType::DataBufferRO);
+    task.addInput(kBoneWeighntsIndiciesBuffer, AttachmentType::DataBufferRO);
+    task.addInput(kBonesWeights, AttachmentType::DataBufferRO);
     task.addInput(kBonesBuffer, AttachmentType::DataBufferRO);
     task.addInput(kSceneVertexBuffer, AttachmentType::DataBufferRW);
     task.addInput("meshParams", AttachmentType::PushConstants);

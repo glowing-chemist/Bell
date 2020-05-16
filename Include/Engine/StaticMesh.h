@@ -110,14 +110,19 @@ public:
             mUsedBones(0),
             padding(~0) {}
 
-        BoneIndex mBoneIndices[13];
+        BoneIndex mBoneIndices[25];
         uint32_t mUsedBones;
         uint32_t padding;
     };
 
-    const std::vector<BoneIndicies>& getBoneIndicies() const
+    const std::vector<uint2>& getBoneIndicies() const
     {
-        return mBonesPerVertex;
+        return mBoneWeightsIndicies;
+    }
+
+    const std::vector<BoneIndex>& getBoneWeights() const
+    {
+        return mBoneWeights;
     }
 
     Animation& getAnimation(const std::string& name)
@@ -145,7 +150,8 @@ private:
     uint32_t getPrimitiveSize(const aiPrimitiveType) const;
 
     std::vector<Bone> mSkeleton;
-    std::vector<BoneIndicies> mBonesPerVertex;
+    std::vector<BoneIndex> mBoneWeights;
+    std::vector<uint2> mBoneWeightsIndicies;
     std::vector<unsigned char> mVertexData;
     std::vector<uint32_t> mIndexData;
 

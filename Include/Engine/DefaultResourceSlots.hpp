@@ -40,7 +40,8 @@ constexpr const char* kLightIndicies    = "LightIndicies";
 constexpr const char* kSceneVertexBuffer = "SceneVertexBuffer";
 constexpr const char* kSceneIndexBuffer  = "SceneIndexBuffer";
 constexpr const char* kTPoseVertexBuffer = "TPoseBuffer";
-constexpr const char* kBoneIndiciesBuffer = "BoneIndicies";
+constexpr const char* kBoneWeighntsIndiciesBuffer = "BoneWeightsIndicies";
+constexpr const char* kBonesWeights      = "BoneWeights";
 constexpr const char* kBonesBuffer        = "BonesBuffer";
 
 constexpr const char* kFrameBufer        = "FrameBuffer";
