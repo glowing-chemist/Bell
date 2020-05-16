@@ -80,6 +80,8 @@ public:
 	void resetBindings();
 
 	uint64_t taskCount() const { return mTaskOrder.size(); }
+    uint64_t graphicsTaskCount() const { return mGraphicsTasks.size(); }
+    uint64_t computeTaskCount() const { return mComputeTasks.size(); }
 
     const BufferView &getVertexBuffer(const uint32_t taskIndex) const;
     const BufferView& getIndexBuffer(const uint32_t taskIndex) const;

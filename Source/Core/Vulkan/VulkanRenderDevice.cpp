@@ -28,7 +28,8 @@ VulkanRenderDevice::VulkanRenderDevice(vk::Instance instance,
 	mInstance(instance),
 	mSwapChainInitializer(this, surface, window, &mSwapChain),
     mMemoryManager{this},
-	mDescriptorManager{this}
+    mDescriptorManager{this},
+    mCurrentCommandBufferIndex{0}
 {
     // This is a bit of a hack to work around not being able to tell for the first few frames that
     // the fences we waited on hadn't been submitted (as no work has been done).
@@ -784,7 +785,7 @@ void VulkanRenderDevice::generateFrameResources(RenderGraph& graph, const uint64
 {
 	// generate internal resources.
 	generateVulkanResources(graph, prefixHash);
-	getCurrentCommandPool()->reserve(static_cast<uint32_t>(graph.taskCount()) + 1, QueueType::Graphics); // +1 for the primary cmd buffer all the secondaries will be recorded in to.
+    getCurrentCommandPool()->reserve(static_cast<uint32_t>(graph.graphicsTaskCount()) + 1, QueueType::Graphics); // +1 for the primary cmd buffer all the secondaries will be recorded in to.
 }
 
 
@@ -800,8 +801,12 @@ void VulkanRenderDevice::startPass(const RenderTask& task)
 	CommandPool* currentCommandPool = getCurrentCommandPool();
 	vk::CommandBuffer primaryCmdBuffer = currentCommandPool->getBufferForQueue(QueueType::Graphics);
 
+    mCurrentTasktype = TaskType::Compute;
+
 	if (task.taskType() == TaskType::Graphics)
 	{
+        mCurrentTasktype = TaskType::Graphics;
+
 		const auto& graphicsTask = static_cast<const GraphicsTask&>(task);
 		const auto& pipelineDesc = graphicsTask.getPipelineDescription();
 		vk::Rect2D renderArea{ {0, 0}, {pipelineDesc.mViewport.x, pipelineDesc.mViewport.y} };
@@ -837,28 +842,38 @@ void VulkanRenderDevice::startPass(const RenderTask& task)
 
 		secondaryInherit.setRenderPass(*resources.mRenderPass);
 		secondaryInherit.setFramebuffer(*resources.mFrameBuffer);
+
+        ++mCurrentCommandBufferIndex;
 	}
 
-	vk::CommandBufferBeginInfo secondaryBegin{};
-	secondaryBegin.setFlags(commadBufferUsage);
-	secondaryBegin.setPInheritanceInfo(&secondaryInherit);
+    vk::CommandBuffer cmdBuffer;
+    if(mCurrentTasktype == TaskType::Graphics)
+    {
+        vk::CommandBufferBeginInfo secondaryBegin{};
+        secondaryBegin.setFlags(commadBufferUsage);
+        secondaryBegin.setPInheritanceInfo(&secondaryInherit);
 
-	vk::CommandBuffer& secondaryCmdBuffer = currentCommandPool->getBufferForQueue(QueueType::Graphics, mCurrentPassIndex + 1);
-	secondaryCmdBuffer.begin(secondaryBegin);
-	setDebugName(task.getName(), reinterpret_cast<uint64_t>(VkCommandBuffer(secondaryCmdBuffer)), VK_OBJECT_TYPE_COMMAND_BUFFER);
+        cmdBuffer = currentCommandPool->getBufferForQueue(QueueType::Graphics, mCurrentCommandBufferIndex);
+        cmdBuffer.begin(secondaryBegin);
+    }
+    else
+    {
+        cmdBuffer = currentCommandPool->getBufferForQueue(QueueType::Graphics);
+    }
+    setDebugName(task.getName(), reinterpret_cast<uint64_t>(VkCommandBuffer(cmdBuffer)), VK_OBJECT_TYPE_COMMAND_BUFFER);
 
-	secondaryCmdBuffer.bindPipeline(bindPoint, resources.mPipeline->getHandle());
+    cmdBuffer.bindPipeline(bindPoint, resources.mPipeline->getHandle());
 
-	secondaryCmdBuffer.bindDescriptorSets(bindPoint, resources.mPipeline->getLayoutHandle(), 0, resources.mDescSet.size(), resources.mDescSet.data(), 0, nullptr);
+    cmdBuffer.bindDescriptorSets(bindPoint, resources.mPipeline->getLayoutHandle(), 0, resources.mDescSet.size(), resources.mDescSet.data(), 0, nullptr);
 }
 
 
 Executor* VulkanRenderDevice::getPassExecutor()
 {
 	const auto& resources = mVulkanResources[mCurrentPassIndex];
-	vk::CommandBuffer& secondaryCmdBuffer = getCurrentCommandPool()->getBufferForQueue(QueueType::Graphics, mCurrentPassIndex + 1);
+    vk::CommandBuffer& cmdBuffer = getCurrentCommandPool()->getBufferForQueue(QueueType::Graphics, mCurrentTasktype == TaskType::Graphics ? mCurrentCommandBufferIndex : 0);
 
-	return new VulkanExecutor(secondaryCmdBuffer, resources);
+    return new VulkanExecutor(cmdBuffer, resources);
 }
 
 
@@ -871,12 +886,17 @@ void VulkanRenderDevice::freePassExecutor(Executor* exec)
 void VulkanRenderDevice::endPass()
 {
 	CommandPool* currentCommandPool = getCurrentCommandPool();
-	vk::CommandBuffer primaryCmdBuffer = currentCommandPool->getBufferForQueue(QueueType::Graphics);
-	vk::CommandBuffer& secondaryCmdBuffer = currentCommandPool->getBufferForQueue(QueueType::Graphics, mCurrentPassIndex + 1);
-	const auto& resources = mVulkanResources[mCurrentPassIndex];
+    vk::CommandBuffer primaryCmdBuffer = currentCommandPool->getBufferForQueue(QueueType::Graphics);
+    const auto& resources = mVulkanResources[mCurrentPassIndex];
 
-	secondaryCmdBuffer.end();
-	primaryCmdBuffer.executeCommands(secondaryCmdBuffer);
+    if(mCurrentTasktype == TaskType::Graphics)
+    {
+        vk::CommandBuffer secondaryCmdBuffer = currentCommandPool->getBufferForQueue(QueueType::Graphics, mCurrentCommandBufferIndex);
+
+        secondaryCmdBuffer.end();
+
+        primaryCmdBuffer.executeCommands(secondaryCmdBuffer);
+    }
 
 	// end the render pass if we are executing a graphics task.
 	if (resources.mRenderPass)
@@ -895,6 +915,7 @@ void VulkanRenderDevice::startFrame()
     mMemoryManager.resetTransientAllocations();
     ++mCurrentSubmission;
     ++mFinishedSubmission;
+    mCurrentCommandBufferIndex = 0;
 }
 
 

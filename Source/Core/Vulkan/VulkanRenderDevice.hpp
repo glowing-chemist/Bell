@@ -382,6 +382,9 @@ private:
     std::vector<CommandPool> mCommandPools;
     MemoryManager mMemoryManager;
     DescriptorManager mDescriptorManager;
+
+    uint32_t mCurrentCommandBufferIndex;
+    TaskType mCurrentTasktype;
 };
 
 #endif
