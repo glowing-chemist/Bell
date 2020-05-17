@@ -786,7 +786,7 @@ void Scene::addMaterial(const MaterialPaths& mat, Engine* eng)
     if(materialFlags & static_cast<uint32_t>(MaterialType::Normals))
     {
         TextureUtil::TextureInfo normalsInfo = TextureUtil::load32BitTexture(mat.mNormalsPath.c_str(), STBI_rgb_alpha);
-        Image* normalsTexture = new Image(eng->getDevice(), Format::RGBA8UNorm, ImageUsage::Sampled | ImageUsage::TransferDest,
+        Image* normalsTexture = new Image(eng->getDevice(), Format::RGBA8UNorm, ImageUsage::Sampled | ImageUsage::TransferDest | ImageUsage::TransferSrc,
                              static_cast<uint32_t>(normalsInfo.width), static_cast<uint32_t>(normalsInfo.height), 1, calculateMips(normalsInfo), 1, 1, mat.mNormalsPath);
         (*normalsTexture)->setContents(normalsInfo.mData.data(), static_cast<uint32_t>(normalsInfo.width), static_cast<uint32_t>(normalsInfo.height), 1);
         (*normalsTexture)->generateMips();
@@ -796,7 +796,7 @@ void Scene::addMaterial(const MaterialPaths& mat, Engine* eng)
     if(materialFlags & static_cast<uint32_t>(MaterialType::Roughness) || materialFlags & static_cast<uint32_t>(MaterialType::Gloss))
     {
         TextureUtil::TextureInfo roughnessInfo = TextureUtil::load32BitTexture(mat.mRoughnessOrGlossPath.c_str(), STBI_grey);
-        Image* roughnessTexture = new Image(eng->getDevice(), Format::R8UNorm, ImageUsage::Sampled | ImageUsage::TransferDest,
+        Image* roughnessTexture = new Image(eng->getDevice(), Format::R8UNorm, ImageUsage::Sampled | ImageUsage::TransferDest | ImageUsage::TransferSrc,
                              static_cast<uint32_t>(roughnessInfo.width), static_cast<uint32_t>(roughnessInfo.height), 1, calculateMips(roughnessInfo), 1, 1, mat.mRoughnessOrGlossPath);
         (*roughnessTexture)->setContents(roughnessInfo.mData.data(), static_cast<uint32_t>(roughnessInfo.width), static_cast<uint32_t>(roughnessInfo.height), 1);
         (*roughnessTexture)->generateMips();
@@ -806,7 +806,7 @@ void Scene::addMaterial(const MaterialPaths& mat, Engine* eng)
     if(materialFlags & static_cast<uint32_t>(MaterialType::Metalness) || materialFlags & static_cast<uint32_t>(MaterialType::Specular) || mat.mMaterialTypes & static_cast<uint32_t>(MaterialType::CombinedSpecularGloss))
     {
         TextureUtil::TextureInfo metalnessInfo = TextureUtil::load32BitTexture(mat.mMetalnessOrSpecularPath.c_str(), materialFlags & static_cast<uint32_t>(MaterialType::Metalness) ? STBI_grey : STBI_rgb_alpha);
-        Image* metalnessTexture = new Image(eng->getDevice(), materialFlags & static_cast<uint32_t>(MaterialType::Metalness) ? Format::R8UNorm : Format::RGBA8UNorm, ImageUsage::Sampled | ImageUsage::TransferDest,
+        Image* metalnessTexture = new Image(eng->getDevice(), materialFlags & static_cast<uint32_t>(MaterialType::Metalness) ? Format::R8UNorm : Format::RGBA8UNorm, ImageUsage::Sampled | ImageUsage::TransferDest | ImageUsage::TransferSrc,
                              static_cast<uint32_t>(metalnessInfo.width), static_cast<uint32_t>(metalnessInfo.height), 1, calculateMips(metalnessInfo), 1, 1, mat.mMetalnessOrSpecularPath);
         (*metalnessTexture)->setContents(metalnessInfo.mData.data(), static_cast<uint32_t>(metalnessInfo.width), static_cast<uint32_t>(metalnessInfo.height), 1);
         (*metalnessTexture)->generateMips();
@@ -816,7 +816,7 @@ void Scene::addMaterial(const MaterialPaths& mat, Engine* eng)
     if(materialFlags & static_cast<uint32_t>(MaterialType::CombinedMetalnessRoughness))
     {
         TextureUtil::TextureInfo metalnessRoughnessInfo = TextureUtil::load32BitTexture(mat.mRoughnessOrGlossPath.c_str(), STBI_rgb_alpha);
-        Image* metalnessRoughnessTexture = new Image(eng->getDevice(), Format::RGBA8UNorm, ImageUsage::Sampled | ImageUsage::TransferDest,
+        Image* metalnessRoughnessTexture = new Image(eng->getDevice(), Format::RGBA8UNorm, ImageUsage::Sampled | ImageUsage::TransferDest | ImageUsage::TransferSrc,
                              static_cast<uint32_t>(metalnessRoughnessInfo.width), static_cast<uint32_t>(metalnessRoughnessInfo.height), 1, calculateMips(metalnessRoughnessInfo), 1, 1, mat.mRoughnessOrGlossPath);
         (*metalnessRoughnessTexture)->setContents(metalnessRoughnessInfo.mData.data(), static_cast<uint32_t>(metalnessRoughnessInfo.width), static_cast<uint32_t>(metalnessRoughnessInfo.height), 1);
         (*metalnessRoughnessTexture)->generateMips();
@@ -826,7 +826,7 @@ void Scene::addMaterial(const MaterialPaths& mat, Engine* eng)
     if(materialFlags & static_cast<uint32_t>(MaterialType::Emisive))
     {
         TextureUtil::TextureInfo emissiveInfo = TextureUtil::load32BitTexture(mat.mEmissivePath.c_str(), STBI_rgb_alpha);
-        Image* emissiveTexture = new Image(eng->getDevice(), Format::RGBA8UNorm, ImageUsage::Sampled | ImageUsage::TransferDest,
+        Image* emissiveTexture = new Image(eng->getDevice(), Format::RGBA8UNorm, ImageUsage::Sampled | ImageUsage::TransferDest | ImageUsage::TransferSrc,
                              static_cast<uint32_t>(emissiveInfo.width), static_cast<uint32_t>(emissiveInfo.height), 1, calculateMips(emissiveInfo), 1, 1, mat.mEmissivePath);
         (*emissiveTexture)->setContents(emissiveInfo.mData.data(), static_cast<uint32_t>(emissiveInfo.width), static_cast<uint32_t>(emissiveInfo.height), 1);
         (*emissiveTexture)->generateMips();
@@ -836,7 +836,7 @@ void Scene::addMaterial(const MaterialPaths& mat, Engine* eng)
     if(materialFlags & static_cast<uint32_t>(MaterialType::AmbientOcclusion))
     {
         TextureUtil::TextureInfo occlusionInfo = TextureUtil::load32BitTexture(mat.mAmbientOcclusionPath.c_str(), STBI_grey);
-        Image* occlusionTexture = new Image(eng->getDevice(), Format::R8UNorm, ImageUsage::Sampled | ImageUsage::TransferDest,
+        Image* occlusionTexture = new Image(eng->getDevice(), Format::R8UNorm, ImageUsage::Sampled | ImageUsage::TransferDest | ImageUsage::TransferSrc,
                              static_cast<uint32_t>(occlusionInfo.width), static_cast<uint32_t>(occlusionInfo.height), 1, calculateMips(occlusionInfo), 1, 1, mat.mAmbientOcclusionPath);
         (*occlusionTexture)->setContents(occlusionInfo.mData.data(), static_cast<uint32_t>(occlusionInfo.width), static_cast<uint32_t>(occlusionInfo.height), 1);
         (*occlusionTexture)->generateMips();
