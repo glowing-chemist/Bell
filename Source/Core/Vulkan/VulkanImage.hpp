@@ -50,6 +50,7 @@ public:
 
 	virtual void clear() override;
 
+    virtual void generateMips() override;
 
 	vk::Image getImage() const
 	{

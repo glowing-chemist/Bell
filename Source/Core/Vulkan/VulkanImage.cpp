@@ -233,3 +233,92 @@ void VulkanImage::clear()
 	updateLastAccessed();
 }
 
+
+void VulkanImage::generateMips()
+{
+    BELL_ASSERT(mNumberOfLevels == 1, "Image arrays not currently supported")
+
+    VulkanRenderDevice* device = static_cast<VulkanRenderDevice*>(getDevice());
+
+    auto CmdBuffer = device->getCurrentCommandPool()
+        ->getBufferForQueue(QueueType::Graphics);
+
+    vk::ImageLayout srcLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
+
+    for(uint32_t i = 1; i < mNumberOfMips; ++i)
+    {
+
+        auto& srcSubResource = (*mSubResourceInfo)[i - 1];
+        auto& dstSubResource = (*mSubResourceInfo)[i];
+        ImageExtent srcExtent = srcSubResource.mExtent;
+        ImageExtent dstExtent = dstSubResource.mExtent;
+
+        vk::ImageMemoryBarrier srcBarrier{};
+        srcBarrier.setSrcAccessMask(vk::AccessFlagBits::eTransferWrite);
+        srcBarrier.setDstAccessMask(vk::AccessFlagBits::eTransferRead);
+        srcBarrier.setOldLayout(srcLayout);
+        srcBarrier.setNewLayout(vk::ImageLayout::eTransferSrcOptimal);
+        srcBarrier.setSubresourceRange({ vk::ImageAspectFlagBits::eColor, i - 1, 1, 0, 1 });
+        srcBarrier.setImage(mImage);
+
+        vk::ImageMemoryBarrier dstBarrier{};
+        dstBarrier.setSrcAccessMask(vk::AccessFlagBits::eTransferRead);
+        dstBarrier.setDstAccessMask(vk::AccessFlagBits::eTransferWrite);
+        dstBarrier.setOldLayout(getVulkanImageLayout(dstSubResource.mLayout));
+        dstBarrier.setNewLayout(vk::ImageLayout::eTransferDstOptimal);
+        dstBarrier.setSubresourceRange({ vk::ImageAspectFlagBits::eColor, i, 1, 0, 1 });
+        dstBarrier.setImage(mImage);
+
+        CmdBuffer.pipelineBarrier(vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eTransfer,
+            vk::DependencyFlagBits::eByRegion, {}, {}, { srcBarrier, dstBarrier });
+        srcSubResource.mLayout = ImageLayout::TransferSrc;
+        dstSubResource.mLayout = ImageLayout::TransferDst;
+
+        vk::ImageBlit blit{};
+        blit.srcOffsets[0] = vk::Offset3D{ 0, 0, 0 };
+        blit.srcOffsets[1] = vk::Offset3D{ static_cast<int32_t>(srcExtent.width), static_cast<int32_t>(srcExtent.height), 1 };
+        blit.srcSubresource.aspectMask = vk::ImageAspectFlagBits::eColor;
+        blit.srcSubresource.mipLevel = i - 1;
+        blit.srcSubresource.baseArrayLayer = 0;
+        blit.srcSubresource.layerCount = 1;
+        blit.dstOffsets[0] = vk::Offset3D{ 0, 0, 0 };
+        blit.dstOffsets[1] = vk::Offset3D{ static_cast<int32_t>(dstExtent.width), static_cast<int32_t>(dstExtent.height), 1 };
+        blit.dstSubresource.aspectMask = vk::ImageAspectFlagBits::eColor;
+        blit.dstSubresource.mipLevel = i;
+        blit.dstSubresource.baseArrayLayer = 0;
+        blit.dstSubresource.layerCount = 1;
+
+        CmdBuffer.blitImage(mImage, vk::ImageLayout::eTransferSrcOptimal, mImage, vk::ImageLayout::eTransferDstOptimal, 1, &blit, vk::Filter::eLinear);
+
+        srcLayout = vk::ImageLayout::eTransferDstOptimal;
+
+        vk::ImageMemoryBarrier barrier{};
+        barrier.setSrcAccessMask(vk::AccessFlagBits::eTransferWrite);
+        barrier.setDstAccessMask(vk::AccessFlagBits::eTransferRead);
+        barrier.setOldLayout(vk::ImageLayout::eTransferSrcOptimal);
+        barrier.setNewLayout(vk::ImageLayout::eShaderReadOnlyOptimal);
+        barrier.setSubresourceRange({ vk::ImageAspectFlagBits::eColor, i - 1, 1, 0, 1 });
+        barrier.setImage(mImage);
+
+        CmdBuffer.pipelineBarrier(vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eTransfer,
+            vk::DependencyFlagBits::eByRegion, {}, {}, { barrier });
+
+        srcSubResource.mLayout = ImageLayout::Sampled;
+    }
+
+    // Transition mip tail.
+    vk::ImageMemoryBarrier endBarrier{};
+    endBarrier.setSrcAccessMask(vk::AccessFlagBits::eTransferWrite);
+    endBarrier.setDstAccessMask(vk::AccessFlagBits::eShaderRead);
+    endBarrier.setOldLayout(vk::ImageLayout::eTransferDstOptimal);
+    endBarrier.setNewLayout(vk::ImageLayout::eShaderReadOnlyOptimal);
+    endBarrier.setSubresourceRange({ vk::ImageAspectFlagBits::eColor, mNumberOfMips - 1, 1, 0, 1 });
+    endBarrier.setImage(mImage);
+
+    CmdBuffer.pipelineBarrier(vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eFragmentShader,
+        vk::DependencyFlagBits::eByRegion, {}, {}, { endBarrier });
+
+    (*mSubResourceInfo)[mNumberOfMips - 1].mLayout = ImageLayout::Sampled;
+
+}
+

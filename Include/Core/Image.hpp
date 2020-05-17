@@ -64,6 +64,8 @@ public:
 	// Must be called outside of a renderpass (will execuet at the beginning of the frame).
 	virtual void clear() = 0;
 
+    virtual void generateMips() = 0;
+
 	virtual void updateLastAccessed();
 
     uint32_t        numberOfMips() const { return mNumberOfMips; }
