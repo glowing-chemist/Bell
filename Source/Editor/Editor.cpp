@@ -313,6 +313,13 @@ Editor::Editor(GLFWwindow* window) :
 
     // Zero the scratch buffer.
     memset(mMeshInstanceScratchBuffer, 0, 32);
+
+    // set camera aspect ratio.
+    int width, height;
+    glfwGetWindowSize(mWindow, &width, &height);
+
+    Camera& camera = mInProgressScene->getCamera();
+    camera.setAspect(float(width) / float(height));
 }
 
 

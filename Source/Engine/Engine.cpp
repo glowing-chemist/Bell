@@ -446,7 +446,7 @@ void Engine::execute(RenderGraph& graph)
         });
     }
 
-    //BELL_LOG_ARGS("Meshes %d", meshes.size());
+    //BELL_LOG_ARGS("Meshes %zu", meshes.size());
 
     auto barriers = graph.generateBarriers(mRenderDevice);
 	// process scene.

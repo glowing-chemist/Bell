@@ -649,7 +649,7 @@ std::vector<const MeshInstance *> Scene::getViewableMeshes(const Frustum& frustu
 
 Frustum Scene::getShadowingLightFrustum() const
 {
-    return Frustum(mShadowingLight.mPosition, mShadowingLight.mDirection, mShadowingLight.mUp, 2000.0f, 0.1f, 90.0f, 1920.0f / 1080.0f);
+    return Frustum(mShadowingLight.mViewProj);
 }
 
 

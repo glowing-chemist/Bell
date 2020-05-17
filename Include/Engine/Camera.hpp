@@ -11,13 +11,7 @@ class Frustum
 {
 public:
 
-    Frustum(const float3& position,
-            const float3& direction,
-            const float3& up,
-            const float lenght,
-            const float startOffset,
-            const float angle,
-            const float aspect);
+    Frustum(const float4x4 mvp);
 
     bool isContainedWithin(const float4& point) const;
     bool isContainedWithin(const float3& point) const;
@@ -92,6 +86,9 @@ public:
 
     void setFOVDegrees(const float fov)
         { mFieldOfView = fov; }
+
+    void setAspect(const float aspect)
+        { mAspect = aspect; }
 
     float4x4 getViewMatrix() const;
     float4x4 getPerspectiveMatrix() const;

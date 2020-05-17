@@ -134,6 +134,11 @@ int main()
     testScene.computeBounds(MeshType::Static);
     testScene.computeBounds(MeshType::Dynamic);
 
+    // set camera aspect ratio.
+
+    Camera& camera = testScene.getCamera();
+    camera.setAspect(float(windowWidth) / float(windowHeight));
+
     const float3 lightDirection = glm::normalize(float3(0.22f, -0.68f, -0.69f));
     testScene.setShadowingLight(float3(-395.0f, 1475.0f, 120.0f), lightDirection, float3(-0.83f, -0.5f, 0.22f));
 

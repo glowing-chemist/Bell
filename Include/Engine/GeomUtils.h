@@ -41,23 +41,15 @@ class Plane
 {
 	public:
 	
-    Plane(const float3& position, const float3& normal) : mCenterPosition{position},
-        mNormal{normal}
-        { BELL_ASSERT(glm::length(mNormal) < 1.1f && glm::length(mNormal) > 0.9f, "Direction vecotr of plane is not normalised") }
-
+    Plane(const float4& plane) : mPlane{plane} { glm::normalize(mPlane); }
     Plane() = default;
 
     bool isInFrontOf(const AABB&, const EstimationMode) const;
     bool isInFrontOf(const float3&) const;
 
-    float distanceTo(const float3&) const;
-
-    float3 closestPoint(const float3&) const;
-
 	private:
 
-    float3 mCenterPosition;
-    float3 mNormal;
+    float4 mPlane; // x,y,z contain normal, w contains distance to origin along normal.
 };
 
 
