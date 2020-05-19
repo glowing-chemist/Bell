@@ -29,25 +29,36 @@ Texture2D<float> AnalyticalLighting;
 #endif
 
 
-#define MAX_RAY_LENGTH 1.5f
 #define SAMPLE_COUNT 5
 #define MAX_SAMPLE_COUNT 15
 
 
-float2 marchRay(float3 position, const float3 direction, const float rayLength, const uint maxSteps)
+float2 marchRay(float3 position, const float3 direction, const uint maxSteps, float2 pixelSize)
 {
-
-	const float3 finalPosition =  position + (direction * rayLength);
+	uint currentLOD = 4;
+	const float2 startUV = (position * 0.5f + 0.5f);
+	float2 uv = startUV;
+	const float2 xyDir = normalize(direction.xy); 
 
 	for(uint i = 0; i < maxSteps; ++i)
 	{
-		const float3 steppedPosition = lerp(position, finalPosition, float(i + 1) / float(maxSteps));
+		uv += xyDir * pixelSize;
 
-		const float2 steppedUV = steppedPosition.xy * 0.5f + 0.5f;
-		const float steppedDepth = LinearDepth.Sample(linearSampler, steppedUV);
+		const float steppedDepth = LinearDepth.SampleLevel(linearSampler, uv, currentLOD);
+		const float rayDepth = position.z + abs((startUV.x - uv.x) / direction.x) * direction.z;
 
-		if(steppedPosition.z >= steppedDepth)
-			return steppedUV;
+		if(rayDepth >= steppedDepth && currentLOD == 0)
+			return uv;
+		else if(rayDepth >= steppedDepth)
+		{
+			--currentLOD;
+			pixelSize /= float2(2.0f, 2.0f);
+		}
+		else if(currentLOD < 4)
+		{
+			++currentLOD;
+			pixelSize *= float2(2.0f, 2.0f);
+		}
 	}
 
 	return float2(-1.0f, -1.0f);
@@ -67,7 +78,10 @@ float4 main(PositionAndUVVertOutput vertInput)
 	normal = normalize(normal);
 
 	const float4 specularRoughnes = SpecularRoughness.Sample(linearSampler, uv);
-	float roughness = specularRoughnes.w;
+	float roughness = 0.0f;//specularRoughnes.w;
+
+	uint width, height, mips;
+	LinearDepth.GetDimensions(4, width, height, mips);
 
 	// camera is at 0.0, 0.0, 0.0 so view vector is just the negative position sans the x component.
 	const float3 view = float3(0.0f, -position.yz);
@@ -84,7 +98,7 @@ float4 main(PositionAndUVVertOutput vertInput)
 		if(NoL > 0.0)
 		{
 			// March the ray.
-			const float2 colourUV = marchRay(position, L, MAX_RAY_LENGTH, 30);
+			const float2 colourUV = marchRay(position, L, 30, float2(1.0f, 1.0f) / float2(width, height));
 			if(all(colourUV >= float2(0.0f, 0.0f)))
 			{
 				reflectedColour += GlobalLighting.Sample(linearSampler, colourUV) * NoL;
