@@ -20,10 +20,7 @@ public:
 
 	virtual void render(RenderGraph&, Engine*) override final;
 
-	virtual void bindResources(RenderGraph& graph)
-	{
-		graph.bindImage(kLinearDepth, *mLinearDepthView);
-	}
+    virtual void bindResources(RenderGraph& graph) override final;
 
 private:
 
@@ -32,6 +29,10 @@ private:
 
 	PerFrameResource<Image> mLinearDepth;
 	PerFrameResource<ImageView> mLinearDepthView;
+    PerFrameResource<ImageView> mLinearDepthViewMip1;
+    PerFrameResource<ImageView> mLinearDepthViewMip2;
+    PerFrameResource<ImageView> mLinearDepthViewMip3;
+    PerFrameResource<ImageView> mLinearDepthViewMip4;
 };
 
 #endif
