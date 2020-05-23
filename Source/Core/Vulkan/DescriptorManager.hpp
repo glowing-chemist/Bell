@@ -44,8 +44,8 @@ public:
 	DescriptorManager(RenderDevice* dev);
     ~DescriptorManager();
 
-	void	 getDescriptors(RenderGraph&, std::vector<vulkanResources>&);
-	void     writeDescriptors(RenderGraph&, std::vector<vulkanResources>&);
+    std::vector<vk::DescriptorSet>	 getDescriptors(const RenderGraph&, const uint32_t taskIndex, const vk::DescriptorSetLayout);
+    void     writeDescriptors(const RenderGraph&, const uint32_t taskIndex, vk::DescriptorSet);
 
 
     vk::DescriptorSet	writeShaderResourceSet(const vk::DescriptorSetLayout layout, const std::vector<WriteShaderResourceSet>&, vk::DescriptorPool& outPool);
@@ -57,7 +57,7 @@ private:
 	vk::DescriptorImageInfo     generateDescriptorImageInfo(const ImageView &imageView, const vk::ImageLayout) const;
 	vk::DescriptorBufferInfo    generateDescriptorBufferInfo(const BufferView &) const;
 
-    vk::DescriptorSet			allocateDescriptorSet(const RenderTask&, const vulkanResources&);
+    vk::DescriptorSet			allocateDescriptorSet(const RenderTask&, const vk::DescriptorSetLayout);
     vk::DescriptorSet			allocatePersistentDescriptorSet(const vk::DescriptorSetLayout layout, const std::vector<WriteShaderResourceSet>&, vk::DescriptorPool &pool);
 
 	struct DescriptorPool

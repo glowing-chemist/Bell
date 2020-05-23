@@ -9,33 +9,26 @@
 
 class RenderDevice;
 
-
 class CommandPool : public DeviceChild
 {
 public:
-	CommandPool(RenderDevice*);
+    CommandPool(RenderDevice*, const QueueType);
 	~CommandPool();
 
-	vk::CommandBuffer& getBufferForQueue(const QueueType, const uint32_t = 0);
-	uint32_t		   getNumberOfBuffersForQueue(const QueueType);
+    vk::CommandBuffer& getBufferForQueue(const uint32_t = 0);
+    uint32_t		   getNumberOfBuffersForQueue();
 
-    void               reserve(const uint32_t, const QueueType);
+    void               reserve(const uint32_t);
 
 	void			   reset();
 
 private:
-    std::vector<vk::CommandBuffer> allocateCommandBuffers(const uint32_t, const QueueType, const bool);
-    const vk::CommandPool& getCommandPool(const QueueType) const;
-    std::vector<vk::CommandBuffer>& getCommandBuffers(const QueueType);
+    std::vector<vk::CommandBuffer> allocateCommandBuffers(const uint32_t, const bool);
+    const vk::CommandPool& getCommandPool() const;
+    std::vector<vk::CommandBuffer>& getCommandBuffers();
 
-	vk::CommandPool mGraphicsPool;
-	std::vector<vk::CommandBuffer> mGraphicsBuffers;
-	
-	vk::CommandPool mComputePool;
-	std::vector<vk::CommandBuffer> mComputeBuffers;
-	
-	vk::CommandPool mTransferPool;
-	std::vector<vk::CommandBuffer> mTransferBuffers;
+    vk::CommandPool mPool;
+    std::vector<vk::CommandBuffer> mCmdBuffers;
 };
 
 #endif

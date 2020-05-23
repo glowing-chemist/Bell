@@ -13,7 +13,7 @@ struct vulkanResources;
 class VulkanExecutor : public Executor
 {
 public:
-	VulkanExecutor(vk::CommandBuffer cmdBuffer, const vulkanResources& resources);
+    VulkanExecutor(vk::CommandBuffer cmdBuffer);
 
 	virtual void draw(const uint32_t vertexOffset, const uint32_t vertexCount) override;
 
@@ -37,11 +37,20 @@ public:
 
     virtual void bindIndexBuffer(const BufferView&, const size_t offset) override;
 
+    virtual void recordBarriers(BarrierRecorder&) override;
+
+    void setPipelineLayout(const vk::PipelineLayout layout)
+    { mPipelineLayout = layout; }
+
+    vk::CommandBuffer getCommandBuffer()
+    {
+        return mCommandBuffer;
+    }
+
 private:
 
 	vk::CommandBuffer mCommandBuffer;
-	const vulkanResources& mResources;
-
+    vk::PipelineLayout mPipelineLayout;
 };
 
 #endif

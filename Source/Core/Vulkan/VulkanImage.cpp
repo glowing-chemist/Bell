@@ -144,8 +144,7 @@ void VulkanImage::setContents(const void* data,
 	vk::Extent3D extent{ ex.width, ex.height, ex.depth };
     copyInfo.setImageExtent(extent);
 
-	auto CmdBuffer = device->getCurrentCommandPool()
-		->getBufferForQueue(QueueType::Graphics);
+    auto CmdBuffer = device->getPrefixCommandBuffer();
 
 	{
 		vk::ImageMemoryBarrier barrier{};
@@ -193,8 +192,7 @@ void VulkanImage::clear()
 {
 	VulkanRenderDevice* device = static_cast<VulkanRenderDevice*>(getDevice());
 
-	auto CmdBuffer = device->getCurrentCommandPool()
-		->getBufferForQueue(QueueType::Graphics);
+    auto CmdBuffer = device->getPrefixCommandBuffer();
 
 	vk::ImageLayout layout = getVulkanImageLayout((*mSubResourceInfo)[0].mLayout);
 
@@ -240,8 +238,7 @@ void VulkanImage::generateMips()
 
     VulkanRenderDevice* device = static_cast<VulkanRenderDevice*>(getDevice());
 
-    auto CmdBuffer = device->getCurrentCommandPool()
-        ->getBufferForQueue(QueueType::Graphics);
+    auto CmdBuffer = device->getPrefixCommandBuffer();
 
     vk::ImageLayout srcLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
 

@@ -85,7 +85,7 @@ void VulkanBuffer::setContents(const void* data, const uint32_t size, const uint
         if(size <= 1 << 16)
         {
 
-            device->getCurrentCommandPool()->getBufferForQueue(QueueType::Graphics)
+            device->getPrefixCommandBuffer()
                     .updateBuffer(mBuffer, offset, size, data);
         }
         else
@@ -106,7 +106,7 @@ void VulkanBuffer::setContents(const void* data, const uint32_t size, const uint
             copyInfo.setSrcOffset(0);
             copyInfo.setDstOffset(offset);
 
-            device->getCurrentCommandPool()->getBufferForQueue(QueueType::Graphics)
+            device->getPrefixCommandBuffer()
                     .copyBuffer(stagingBuffer.getBuffer(), getBuffer(), copyInfo);
         }
     }
@@ -140,7 +140,7 @@ void VulkanBuffer::setContents(const int data,
 
 		VulkanRenderDevice* device = static_cast<VulkanRenderDevice*>(getDevice());
 
-        device->getCurrentCommandPool()->getBufferForQueue(QueueType::Graphics)
+        device->getPrefixCommandBuffer()
                 .fillBuffer(mBuffer, offset, size, static_cast<uint32_t>(data));
     }
 
@@ -208,7 +208,7 @@ void VulkanBuffer::resizePreserveContents(const uint32_t newSize)
     copyInfo.setDstOffset(0);
 
     // Copy the contents
-    device->getCurrentCommandPool()->getBufferForQueue(QueueType::Graphics)
+    device->getPrefixCommandBuffer()
             .copyBuffer(newBuffer, getBuffer(), copyInfo);
 
     // add the current buffer to deferred destruction queue.
@@ -226,7 +226,7 @@ void VulkanBuffer::resizePreserveContents(const uint32_t newSize)
 	barrier.setSrcAccessMask(vk::AccessFlagBits::eMemoryWrite);
 	barrier.setDstAccessMask(vk::AccessFlagBits::eMemoryRead);
 
-	device->getCurrentCommandPool()->getBufferForQueue(QueueType::Graphics)
+    device->getPrefixCommandBuffer()
 		.pipelineBarrier(vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eVertexInput,
 			vk::DependencyFlagBits::eByRegion, {}, { barrier }, {});
     

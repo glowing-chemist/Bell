@@ -7,6 +7,7 @@
 #include <unordered_map>
 #include <unordered_map>
 #include <vector>
+#include <shared_mutex>
 #include <vulkan/vulkan.hpp>
 
 #include "Core/RenderDevice.hpp"
@@ -46,9 +47,6 @@ struct vulkanResources
     std::optional<vk::RenderPass> mRenderPass;
     std::optional<vk::VertexInputBindingDescription> mVertexBindingDescription;
     std::optional<std::vector<vk::VertexInputAttributeDescription>> mVertexAttributeDescription;
-
-    std::optional<vk::Framebuffer> mFrameBuffer;
-    std::vector<vk::DescriptorSet> mDescSet;
 };
 
 
@@ -72,12 +70,7 @@ public:
 	VulkanRenderDevice(vk::Instance, vk::PhysicalDevice, vk::Device, vk::SurfaceKHR, GLFWwindow*);
     ~VulkanRenderDevice();
 
-	virtual void					   generateFrameResources(RenderGraph&, const uint64_t prefixHash) override;
-
-	virtual void                       startPass(const RenderTask&) override;
-	virtual Executor*				   getPassExecutor() override;
-	virtual void					   freePassExecutor(Executor*) override;
-	virtual void					   endPass() override;
+    virtual CommandContextBase*        getCommandContext(const uint32_t index) override;
 
     virtual void                       startFrame() override;
     virtual void                       endFrame() override;
@@ -113,6 +106,9 @@ public:
 		mSRSPendingDestruction.push_back({ set.getLastAccessed(), VkSRS.getPool(), VkSRS.getLayout(), VkSRS.getDescriptorSet() });
 	}
 
+    void                               destroyFrameBuffer(vk::Framebuffer& frameBuffer, uint64_t frameIndex)
+                                            { mFramebuffersPendingDestruction.push_back({frameIndex, frameBuffer}); }
+
 	virtual size_t					   getMinStorageBufferAlignment() const override
 	{
 		return getLimits().minStorageBufferOffsetAlignment;
@@ -123,8 +119,13 @@ public:
 		return mDevice.createImage(info);
 	}
 
+    vk::Framebuffer                    createFrameBuffer(const RenderGraph &graph, const uint32_t taskIndex, const vk::RenderPass renderPass);
+
+
     vk::CommandPool					   createCommandPool(const vk::CommandPoolCreateInfo& info)
 											{ return mDevice.createCommandPool(info); }
+
+    vk::CommandBuffer                  getPrefixCommandBuffer(); // Returns the first command buffer that will be submitted this frame.
 
 	void							   destroyCommandPool(vk::CommandPool& pool)
 											{ mDevice.destroyCommandPool(pool); }
@@ -209,9 +210,8 @@ public:
 
     // Accessors
     MemoryManager*                     getMemoryManager() { return &mMemoryManager; }
-	CommandPool*					   getCurrentCommandPool() { return &mCommandPools[getCurrentFrameIndex()]; }
     vk::PhysicalDevice*                getPhysicalDevice() { return &mPhysicalDevice; }
-	DescriptorManager*				   getDescriptorManager() { return &mDescriptorManager; }
+    DescriptorManager*				   getDescriptorManager() { return &mPermanentDescriptorManager; }
 
     // Only these two can do usefull work when const
     const vk::PhysicalDevice*                getPhysicalDevice() const { return &mPhysicalDevice; }
@@ -245,9 +245,7 @@ public:
 	virtual void                       flushWait() const override { mGraphicsQueue.waitIdle();  mDevice.waitIdle(); }
     virtual void                       invalidatePipelines() override;
 
-	virtual void					   execute(BarrierRecorder& recorder) override;
-
-    virtual void                       submitFrame() override;
+    virtual void					   submitContext(CommandContextBase*, const bool finalSubmission = false) override;
     virtual void					   swap() override;
 
 	// non const as can compile uncompiled shaders.
@@ -258,6 +256,8 @@ public:
 
 	template<typename B>
 	vk::DescriptorSetLayout										generateDescriptorSetLayoutBindings(const std::vector<B>&, const TaskType type);
+
+    vulkanResources                                             getTaskResources(const RenderGraph&, const uint32_t taskIndex, const uint64_t prefixHash);
 
 private:
 
@@ -274,17 +274,11 @@ private:
     std::shared_ptr<ComputePipeline>                                             generatePipeline(const ComputeTask&,
                                                                                  const std::vector< vk::DescriptorSetLayout>&);
 
-	void														generateVulkanResources(RenderGraph&, const uint64_t prefixHash);
-
-    void                                                        generateDescriptorSets(RenderGraph&);
-
-    virtual void                                                generateFrameBuffers(RenderGraph&);
+    vulkanResources generateVulkanResources(const RenderGraph &, const uint32_t taskIndex, const uint64_t prefixHash);
 
 	std::vector<vk::DescriptorSetLayout>						generateShaderResourceSetLayouts(const RenderTask&, const RenderGraph&);
 
     void                                                        clearDeferredResources();
-
-	void														clearVulkanResources();
 
     void														frameSyncSetup();
 
@@ -295,9 +289,6 @@ private:
 
     void                               destroyBuffer(const vk::Buffer& buffer )
                                             { mDevice.destroyBuffer(buffer); }
-
-    void                               destroyFrameBuffer(vk::Framebuffer& frameBuffer, uint64_t frameIndex)
-                                            { mFramebuffersPendingDestruction.push_back({frameIndex, frameBuffer}); }
 
 #ifndef NDEBUG
 public:
@@ -345,7 +336,8 @@ private:
 	};
 	std::deque<ShaderResourceSetsInfo> mSRSPendingDestruction;
 
-	std::vector<vulkanResources> mVulkanResources;
+    std::shared_mutex mResourcesLock;
+    std::unordered_map<uint64_t, vulkanResources> mVulkanResources;
 
     // underlying devices
     vk::Device mDevice;
@@ -379,12 +371,12 @@ private:
 		}
 	} mSwapChainInitializer;
 
-    std::vector<CommandPool> mCommandPools;
     MemoryManager mMemoryManager;
-    DescriptorManager mDescriptorManager;
+    DescriptorManager mPermanentDescriptorManager;
 
-    uint32_t mCurrentCommandBufferIndex;
-    TaskType mCurrentTasktype;
+    std::vector<std::vector<CommandContextBase*>> mCommandContexts;
+    std::vector<std::vector<vk::Semaphore>> mContextSemaphores;
+    uint32_t mSubmissionCount;
 };
 
 #endif

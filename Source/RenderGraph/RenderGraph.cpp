@@ -559,7 +559,7 @@ void RenderGraph::reorderTasks()
     mFrameBuffersNeedUpdating.swap(newFrameBuffersNeedUpdating);
     mDescriptorsNeedUpdating.swap(mDescriptorsNeedUpdating);
 
-#if 0 // Enable to print out task submission order.
+#ifndef NDEBUG // Enable to print out task submission order.
 
 	BELL_LOG("Task submission order:");
 
@@ -616,6 +616,24 @@ uint32_t RenderGraph::selectNextTask(const std::vector<uint8_t>& dependancies, c
 	BELL_ASSERT(maxElementIt != prospectiveTaskIndicies.end(), "Unable to find next task")
 
 	return (*maxElementIt).first;
+}
+
+
+RenderTask& RenderGraph::getTask(const uint32_t index)
+{
+    BELL_ASSERT(index < mTaskOrder.size(), "invalid task index")
+    auto [type, i] = mTaskOrder[index];
+
+    return getTask(type, i);
+}
+
+
+const RenderTask& RenderGraph::getTask(const uint32_t index) const
+{
+    BELL_ASSERT(index < mTaskOrder.size(), "invalid task index")
+    auto [type, i] = mTaskOrder[index];
+
+    return getTask(type, i);
 }
 
 
@@ -686,6 +704,38 @@ BufferView& RenderGraph::getBuffer(const uint32_t index)
 	BELL_ASSERT(index < mBufferViews.size(), " Attempting to fetch non buffer resource")
 
 	return mBufferViews[index].second;
+}
+
+
+const Sampler& RenderGraph::getSampler(const uint32_t index) const
+{
+    BELL_ASSERT(index < mSamplers.size(), " Attempting to fetch non sampler resource")
+
+    return mSamplers[index].second;
+}
+
+
+const ImageView& RenderGraph::getImageView(const uint32_t index) const
+{
+    BELL_ASSERT(index < mImageViews.size(), " Attempting to fetch non imageView resource")
+
+    return mImageViews[index].second;
+}
+
+
+const ImageViewArray& RenderGraph::getImageArrayViews(const uint32_t index) const
+{
+    BELL_ASSERT(index < mImageViewArrays.size(), "Attempting to fetch non imageViewArray resource")
+
+    return mImageViewArrays[index].second;
+}
+
+
+const BufferView& RenderGraph::getBuffer(const uint32_t index) const
+{
+    BELL_ASSERT(index < mBufferViews.size(), " Attempting to fetch non buffer resource")
+
+    return mBufferViews[index].second;
 }
 
 
@@ -999,25 +1049,25 @@ TaskIterator RenderGraph::taskEnd()
 }
 
 
-BindingIterator<BindingIteratorType::Input> RenderGraph::inputBindingBegin()
+BindingIterator<BindingIteratorType::Input> RenderGraph::inputBindingBegin() const
 {
 	return BindingIterator<BindingIteratorType::Input>{mInputResources, *this};
 }
 
 
-BindingIterator<BindingIteratorType::Input> RenderGraph::inputBindingEnd()
+BindingIterator<BindingIteratorType::Input> RenderGraph::inputBindingEnd() const
 {
 	return BindingIterator<BindingIteratorType::Input>{mInputResources, *this, mInputResources.size()};
 }
 
 
-BindingIterator< BindingIteratorType::Output> RenderGraph::outputBindingBegin()
+BindingIterator< BindingIteratorType::Output> RenderGraph::outputBindingBegin() const
 {
     return BindingIterator<BindingIteratorType::Output>{mOutputResources, *this};
 }
 
 
-BindingIterator< BindingIteratorType::Output> RenderGraph::outputBindingEnd()
+BindingIterator< BindingIteratorType::Output> RenderGraph::outputBindingEnd() const
 {
     return BindingIterator<BindingIteratorType::Output>{mOutputResources, *this, mOutputResources.size()};
 }

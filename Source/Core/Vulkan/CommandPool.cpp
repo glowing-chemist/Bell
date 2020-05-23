@@ -5,28 +5,17 @@
 #include <functional>
 #include <tuple>
 
-CommandPool::CommandPool(RenderDevice* renderDevice) :
+CommandPool::CommandPool(RenderDevice* renderDevice, const QueueType queueType) :
     DeviceChild{renderDevice},
-    mGraphicsBuffers{},
-    mComputeBuffers{},
-    mTransferBuffers{}
+    mCmdBuffers{}
 {
 	VulkanRenderDevice* device = static_cast<VulkanRenderDevice*>(getDevice());
 
-    std::array<vk::CommandPoolCreateInfo, 3> poolCreateInfos{};
-	uint8_t queueFamiltTypeIndex = 0;
-	for (auto& createInfo : poolCreateInfos)
-	{
-		createInfo.setQueueFamilyIndex(device->getQueueFamilyIndex(static_cast<QueueType>(queueFamiltTypeIndex)));
-		// we reset the pools every 3 frames so set these as transient.
-        createInfo.setFlags(vk::CommandPoolCreateFlagBits::eTransient);
-		++queueFamiltTypeIndex;
-	}
+    vk::CommandPoolCreateInfo poolCreateInfo{};
+    poolCreateInfo.setQueueFamilyIndex(device->getQueueFamilyIndex(queueType));
+    poolCreateInfo.setFlags(vk::CommandPoolCreateFlagBits::eTransient);
 
-	mGraphicsPool = device->createCommandPool(poolCreateInfos[0]);
-	mComputePool  = device->createCommandPool(poolCreateInfos[1]);
-	mTransferPool = device->createCommandPool(poolCreateInfos[2]);
-
+    mPool = device->createCommandPool(poolCreateInfo);
     reset();
 }
 
@@ -37,47 +26,44 @@ CommandPool::~CommandPool()
 
 	VulkanRenderDevice* device = static_cast<VulkanRenderDevice*>(getDevice());
 
-	device->destroyCommandPool(mGraphicsPool);
-    device->destroyCommandPool(mComputePool);
-    device->destroyCommandPool(mTransferPool);
+    device->destroyCommandPool(mPool);
 }
 
 
-vk::CommandBuffer& CommandPool::getBufferForQueue(const QueueType queueType, const uint32_t index)
+vk::CommandBuffer& CommandPool::getBufferForQueue(const uint32_t index)
 {
-    auto& bufferPool = getCommandBuffers(queueType);
+    auto& bufferPool = getCommandBuffers();
 
     if (bufferPool.size() < (index + 1))
 	{
         uint32_t needed_buffers = (index + 1) - bufferPool.size();
-        reserve(needed_buffers, queueType);
+        reserve(needed_buffers);
 	}
 
+    BELL_ASSERT(index < bufferPool.size(), "Invalid command buffer index")
 	return bufferPool[index];
 }
 
 
-uint32_t CommandPool::getNumberOfBuffersForQueue(const QueueType queueType)
+uint32_t CommandPool::getNumberOfBuffersForQueue()
 {
-    const auto& bufferPool = getCommandBuffers(queueType);
-
-    return static_cast<uint32_t>(bufferPool.size());
+    return static_cast<uint32_t>(mCmdBuffers.size());
 }
 
 
-void CommandPool::reserve(const uint32_t number, const QueueType queueType)
+void CommandPool::reserve(const uint32_t number)
 {
-    const int32_t existingBuffers = getNumberOfBuffersForQueue(queueType);
+    const int32_t existingBuffers = getNumberOfBuffersForQueue();
     int32_t needed = int32_t(number) - existingBuffers;
 
     if(needed <= 0)
         return;
 
-    std::vector<vk::CommandBuffer>& commandBuffers = getCommandBuffers(queueType);
+    std::vector<vk::CommandBuffer>& commandBuffers = getCommandBuffers();
     if(existingBuffers == 0)
     {
         --needed;
-        auto commandBuffer = allocateCommandBuffers(1, queueType, true)[0];
+        auto commandBuffer = allocateCommandBuffers(1, true)[0];
 
         vk::CommandBufferBeginInfo primaryBegin{};
 
@@ -89,7 +75,7 @@ void CommandPool::reserve(const uint32_t number, const QueueType queueType)
     if(needed == 0)
         return;
 
-    std::vector<vk::CommandBuffer> newBuffers = allocateCommandBuffers(needed, queueType, false);
+    std::vector<vk::CommandBuffer> newBuffers = allocateCommandBuffers(needed, false);
     commandBuffers.insert(commandBuffers.end(), newBuffers.begin(), newBuffers.end());
 }
 
@@ -98,34 +84,20 @@ void CommandPool::reset()
 {
 	VulkanRenderDevice* device = static_cast<VulkanRenderDevice*>(getDevice());
 
-	device->resetCommandPool(mGraphicsPool);
-	device->resetCommandPool(mComputePool);
-	device->resetCommandPool(mTransferPool);
+    device->resetCommandPool(mPool);
 
-    if(!mGraphicsBuffers.empty())
+    if(!mCmdBuffers.empty())
     {
         vk::CommandBufferBeginInfo primaryBegin{};
-        mGraphicsBuffers[0].begin(primaryBegin);
-    }
-
-    if(!mComputeBuffers.empty())
-    {
-        vk::CommandBufferBeginInfo primaryBegin{};
-        mComputeBuffers[0].begin(primaryBegin);
-    }
-
-    if(!mTransferBuffers.empty())
-    {
-        vk::CommandBufferBeginInfo primaryBegin{};
-        mTransferBuffers[0].begin(primaryBegin);
+        mCmdBuffers[0].begin(primaryBegin);
     }
 }
 
 
-std::vector<vk::CommandBuffer> CommandPool::allocateCommandBuffers(const uint32_t number, const QueueType queueType, const bool primaryNeeded)
+std::vector<vk::CommandBuffer> CommandPool::allocateCommandBuffers(const uint32_t number, const bool primaryNeeded)
 {
     vk::CommandBufferAllocateInfo info{};
-    info.setCommandPool(getCommandPool(queueType));
+    info.setCommandPool(getCommandPool());
     info.setCommandBufferCount(number);
     info.setLevel(primaryNeeded ? vk::CommandBufferLevel::ePrimary : vk::CommandBufferLevel::eSecondary);
 
@@ -133,45 +105,15 @@ std::vector<vk::CommandBuffer> CommandPool::allocateCommandBuffers(const uint32_
 }
 
 
-const vk::CommandPool& CommandPool::getCommandPool(const QueueType queueType) const
+const vk::CommandPool& CommandPool::getCommandPool() const
 {
-    const auto& bufferPool = [this, queueType]() -> const vk::CommandPool&
-    {
-        switch (queueType)
-        {
-        case QueueType::Graphics:
-            return mGraphicsPool;
-        case QueueType::Compute:
-            return mComputePool;
-        case QueueType::Transfer:
-            return mTransferPool;
-        default:
-            return mGraphicsPool;
-        }
-    }();
-
-    return bufferPool;
+    return mPool;
 }
 
 
-std::vector<vk::CommandBuffer>& CommandPool::getCommandBuffers(const QueueType queueType)
+std::vector<vk::CommandBuffer>& CommandPool::getCommandBuffers()
 {
-    auto& bufferPool = [this, queueType]() -> std::vector<vk::CommandBuffer>&
-    {
-        switch (queueType)
-        {
-        case QueueType::Graphics:
-            return mGraphicsBuffers;
-        case QueueType::Compute:
-            return mComputeBuffers;
-        case QueueType::Transfer:
-            return mTransferBuffers;
-        default:
-            return mGraphicsBuffers;
-        }
-    }();
-
-    return bufferPool;
+    return mCmdBuffers;
 }
 
 

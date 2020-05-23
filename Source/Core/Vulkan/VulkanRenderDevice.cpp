@@ -6,6 +6,7 @@
 #include "VulkanSwapChain.hpp"
 #include "VulkanPipeline.hpp"
 #include "VulkanExecutor.hpp"
+#include "VulkanCommandContext.hpp"
 
 #include "RenderGraph/RenderGraph.hpp"
 
@@ -28,8 +29,8 @@ VulkanRenderDevice::VulkanRenderDevice(vk::Instance instance,
 	mInstance(instance),
 	mSwapChainInitializer(this, surface, window, &mSwapChain),
     mMemoryManager{this},
-    mDescriptorManager{this},
-    mCurrentCommandBufferIndex{0}
+    mPermanentDescriptorManager{this},
+    mSubmissionCount{0}
 {
     // This is a bit of a hack to work around not being able to tell for the first few frames that
     // the fences we waited on hadn't been submitted (as no work has been done).
@@ -42,17 +43,14 @@ VulkanRenderDevice::VulkanRenderDevice(vk::Instance instance,
 
     mLimits = mPhysicalDevice.getProperties().limits;
 
-	// Create a command pool for each frame.
-    mCommandPools.reserve(mSwapChain->getNumberOfSwapChainImages());
-	for (uint32_t i = 0; i < mSwapChain->getNumberOfSwapChainImages(); ++i)
-	{
-        mCommandPools.emplace_back(this);
-	}
-
     mFrameFinished.reserve(mSwapChain->getNumberOfSwapChainImages());
+    mCommandContexts.resize(mSwapChain->getNumberOfSwapChainImages());
+    mContextSemaphores.resize(mSwapChain->getNumberOfSwapChainImages());
     for (uint32_t i = 0; i < mSwapChain->getNumberOfSwapChainImages(); ++i)
     {
         mFrameFinished.push_back(createFence(true));
+        mCommandContexts[i].push_back(new VulkanCommandContext(this));
+        mContextSemaphores[i].push_back(createSemaphore(vk::SemaphoreCreateInfo{}));
     }
 
     // Initialise the glsl compiler here rather than in the first compiled shader to avoid
@@ -75,6 +73,18 @@ VulkanRenderDevice::~VulkanRenderDevice()
     mSwapChain->destroy();
 	delete mSwapChain;
 
+    for(auto& frameContexts : mCommandContexts)
+    {
+        for(auto* context : frameContexts)
+            delete context;
+    }
+
+    for(auto& frameSemaphores : mContextSemaphores)
+    {
+        for(auto semaphore : frameSemaphores)
+            mDevice.destroySemaphore(semaphore);
+    }
+
     // We can ignore lastUsed as we have just waited till all work has finished.
     for(auto& [lastUsed, handle, memory] : mImagesPendingDestruction)
     {
@@ -96,11 +106,12 @@ VulkanRenderDevice::~VulkanRenderDevice()
     }
     mBuffersPendingDestruction.clear();
 
-    for(auto& resources : mVulkanResources)
+    // TODO
+    /*for(auto& resources : mVulkanResources)
     {
         if(resources.mFrameBuffer)
             mFramebuffersPendingDestruction.push_back({0, *resources.mFrameBuffer});
-    }
+    }*/
 
 	for(const auto& [lastUsed, frameBuffer] : mFramebuffersPendingDestruction)
     {
@@ -142,6 +153,25 @@ VulkanRenderDevice::~VulkanRenderDevice()
 #ifndef NDEBUG
     mDevice.destroyEvent(mDebugEvent);
 #endif
+}
+
+
+CommandContextBase* VulkanRenderDevice::getCommandContext(const uint32_t index)
+{
+    std::vector<CommandContextBase*>& frameContexts = mCommandContexts[mCurrentFrameIndex];
+    if(frameContexts.size() <= index)
+    {
+        std::vector<vk::Semaphore>& frameSemaphores = mContextSemaphores[mCurrentFrameIndex];
+        vk::SemaphoreCreateInfo semaphoreInfo{};
+        const uint32_t neededContexts = (frameContexts.size() - index) + 1;
+        for(uint32_t i = 0; i < neededContexts; ++i)
+        {
+            frameContexts.push_back(new VulkanCommandContext(this));
+            frameSemaphores.push_back(createSemaphore(semaphoreInfo));
+        }
+    }
+
+    return frameContexts[index];
 }
 
 
@@ -588,99 +618,104 @@ vk::PipelineLayout VulkanRenderDevice::generatePipelineLayout(const std::vector<
 }
 
 
-void VulkanRenderDevice::generateVulkanResources(RenderGraph& graph, const uint64_t prefixHash)
+vulkanResources VulkanRenderDevice::getTaskResources(const RenderGraph& graph, const uint32_t taskIndex, const uint64_t prefixHash)
 {
-	auto task = graph.taskBegin();
-	clearVulkanResources();
-    mVulkanResources.resize(graph.mTaskOrder.size());
-    auto resource = mVulkanResources.begin();
+    const RenderTask& task = graph.getTask(taskIndex);
 
-	while( task != graph.taskEnd())
+    uint64_t resourceHash = prefixHash;
+    if(task.taskType() == TaskType::Graphics)
     {
-        if((*task).taskType() == TaskType::Graphics)
-        {
-            const GraphicsTask& graphicsTask = static_cast<const GraphicsTask&>(*task);
-            GraphicsPipelineHandles pipelineHandles = createPipelineHandles(graphicsTask, graph, prefixHash);
-
-            vulkanResources& taskResources = *resource;
-            taskResources.mPipeline = pipelineHandles.mGraphicsPipeline;
-            taskResources.mDescSetLayout = pipelineHandles.mDescriptorSetLayout;
-            taskResources.mRenderPass = pipelineHandles.mRenderPass;
-            // Frame buffers and descset get created/written in a diferent place.
-        }
-        else
-        {
-            const ComputeTask& computeTask = static_cast<const ComputeTask&>(*task);
-            ComputePipelineHandles pipelineHandles = createPipelineHandles(computeTask, graph, prefixHash);
-
-            vulkanResources& taskResources = *resource;
-            taskResources.mPipeline = pipelineHandles.mComputePipeline;
-            taskResources.mDescSetLayout = pipelineHandles.mDescriptorSetLayout;
-			taskResources.mRenderPass.reset();
-			taskResources.mFrameBuffer.reset();
-        }
-		++task;
-		++resource;
+        const GraphicsTask& gTask = static_cast<const GraphicsTask&>(task);
+        std::hash<GraphicsPipelineDescription> hasher;
+        resourceHash += hasher(gTask.getPipelineDescription());
     }
-    generateFrameBuffers(graph);
-    generateDescriptorSets(graph);
+    else
+    {
+        const ComputeTask& cTask = static_cast<const ComputeTask&>(task);
+        std::hash<ComputePipelineDescription> hasher;
+        resourceHash += hasher(cTask.getPipelineDescription());
+    }
+
+    mResourcesLock.lock_shared();
+
+    if(mVulkanResources.find(resourceHash) != mVulkanResources.end())
+    {
+        vulkanResources& resources = mVulkanResources[resourceHash];
+        mResourcesLock.unlock_shared();
+
+        return resources;
+    }
+    else
+    {
+        mResourcesLock.unlock_shared();
+        mResourcesLock.lock(); // need to write to the resource map so need exclusive access.
+
+        vulkanResources resources = generateVulkanResources(graph, taskIndex, prefixHash);
+
+        mResourcesLock.unlock();
+
+        return resources;
+    }
 }
 
 
-void VulkanRenderDevice::generateFrameBuffers(RenderGraph& graph)
+vulkanResources VulkanRenderDevice::generateVulkanResources(const RenderGraph& graph, const uint32_t taskIndex, const uint64_t prefixHash)
 {
-	auto outputBindings = graph.outputBindingBegin();
-	auto resource = mVulkanResources.begin();
-	uint32_t taskIndex = 0;
+    const RenderTask& task = graph.getTask(taskIndex);
+    vulkanResources resources{};
 
-	while(outputBindings != graph.outputBindingEnd())
+    if(task.taskType() == TaskType::Graphics)
     {
-		// Just reuse the old frameBuffer if no knew resources have been bound.
-        if(!(*resource).mRenderPass)
-		{
-			++resource;
-			++outputBindings;
-			++taskIndex;
-			continue;
-        }
+        const GraphicsTask& graphicsTask = static_cast<const GraphicsTask&>(task);
+        GraphicsPipelineHandles pipelineHandles = createPipelineHandles(graphicsTask, graph, prefixHash);
 
-        std::vector<vk::ImageView> imageViews{};
-        ImageExtent imageExtent;
+        resources.mPipeline = pipelineHandles.mGraphicsPipeline;
+        resources.mDescSetLayout = pipelineHandles.mDescriptorSetLayout;
+        resources.mRenderPass = pipelineHandles.mRenderPass;
+        // Frame buffers and descset get created/written in a diferent place.
+    }
+    else
+    {
+        const ComputeTask& computeTask = static_cast<const ComputeTask&>(task);
+        ComputePipelineHandles pipelineHandles = createPipelineHandles(computeTask, graph, prefixHash);
 
-		// Sort the bindings by location within the frameBuffer.
-		// Resources aren't always bound in order so make sure that they are in order when we iterate over them.
-		std::sort((*outputBindings).begin(), (*outputBindings).end(), [](const auto& lhs, const auto& rhs)
-		{
-			return lhs.mResourceBinding < rhs.mResourceBinding;
-		});
+        resources.mPipeline = pipelineHandles.mComputePipeline;
+        resources.mDescSetLayout = pipelineHandles.mDescriptorSetLayout;
+    }
 
-        for(const auto& bindingInfo : *outputBindings)
-        {
-                const auto& imageView = graph.getImageView(bindingInfo.mResourceIndex);
-                imageExtent = imageView->getImageExtent();
-                imageViews.push_back(static_cast<const VulkanImageView&>(*imageView.getBase()).getImageView());
-        }
+    return resources;
+}
 
-        vk::FramebufferCreateInfo info{};
-        info.setRenderPass(*(*resource).mRenderPass);
-        info.setAttachmentCount(static_cast<uint32_t>(imageViews.size()));
-        info.setPAttachments(imageViews.data());
-        info.setWidth(imageExtent.width);
-        info.setHeight(imageExtent.height);
-        info.setLayers(imageExtent.depth);
 
-		// Make sure we don't leak frameBuffers, add them to the pending destruction list.
-		// Conservartively set the frameBuffer as used in the last frame.
-        if((*resource).mFrameBuffer)
-            destroyFrameBuffer(*(*resource).mFrameBuffer, getCurrentSubmissionIndex() - 1);
+vk::Framebuffer VulkanRenderDevice::createFrameBuffer(const RenderGraph& graph, const uint32_t taskIndex, const vk::RenderPass renderPass)
+{
+    auto outputBindings = *(graph.outputBindingBegin() + taskIndex);
+    // Sort the bindings by location within the frameBuffer.
+    // Resources aren't always bound in order so make sure that they are in order when we iterate over them.
+    std::sort(outputBindings.begin(), outputBindings.end(), [](const auto& lhs, const auto& rhs)
+    {
+        return lhs.mResourceBinding < rhs.mResourceBinding;
+    });
 
-		(*resource).mFrameBuffer = mDevice.createFramebuffer(info);
+    std::vector<vk::ImageView> imageViews{};
+    ImageExtent imageExtent;
 
-		++resource;
-		++outputBindings;
-        graph.mFrameBuffersNeedUpdating[taskIndex] = false;
-		++taskIndex;
-	}
+    for(const auto& bindingInfo : outputBindings)
+    {
+            const auto& imageView = graph.getImageView(bindingInfo.mResourceIndex);
+            imageExtent = imageView->getImageExtent();
+            imageViews.push_back(static_cast<const VulkanImageView&>(*imageView.getBase()).getImageView());
+    }
+
+    vk::FramebufferCreateInfo info{};
+    info.setRenderPass(renderPass);
+    info.setAttachmentCount(static_cast<uint32_t>(imageViews.size()));
+    info.setPAttachments(imageViews.data());
+    info.setWidth(imageExtent.width);
+    info.setHeight(imageExtent.height);
+    info.setLayers(imageExtent.depth);
+
+    return mDevice.createFramebuffer(info);
 }
 
 
@@ -699,13 +734,6 @@ std::vector<vk::DescriptorSetLayout> VulkanRenderDevice::generateShaderResourceS
 	}
 
 	return layouts;
-}
-
-
-void VulkanRenderDevice::generateDescriptorSets(RenderGraph & graph)
-{
-	mDescriptorManager.getDescriptors(graph, mVulkanResources);
-	mDescriptorManager.writeDescriptors(graph, mVulkanResources);
 }
 
 
@@ -781,141 +809,17 @@ vk::Sampler VulkanRenderDevice::getImmutableSampler(const Sampler& samplerDesc)
 }
 
 
-void VulkanRenderDevice::generateFrameResources(RenderGraph& graph, const uint64_t prefixHash)
-{
-	// generate internal resources.
-	generateVulkanResources(graph, prefixHash);
-    getCurrentCommandPool()->reserve(static_cast<uint32_t>(graph.graphicsTaskCount()) + 1, QueueType::Graphics); // +1 for the primary cmd buffer all the secondaries will be recorded in to.
-}
-
-
-void VulkanRenderDevice::startPass(const RenderTask& task)
-{
-	const auto& resources = mVulkanResources[mCurrentPassIndex];
-
-	vk::PipelineBindPoint bindPoint = vk::PipelineBindPoint::eCompute;
-	vk::CommandBufferUsageFlags commadBufferUsage = vk::CommandBufferUsageFlagBits::eOneTimeSubmit;
-
-	vk::CommandBufferInheritanceInfo secondaryInherit{};
-
-	CommandPool* currentCommandPool = getCurrentCommandPool();
-	vk::CommandBuffer primaryCmdBuffer = currentCommandPool->getBufferForQueue(QueueType::Graphics);
-
-    mCurrentTasktype = TaskType::Compute;
-
-	if (task.taskType() == TaskType::Graphics)
-	{
-        mCurrentTasktype = TaskType::Graphics;
-
-		const auto& graphicsTask = static_cast<const GraphicsTask&>(task);
-		const auto& pipelineDesc = graphicsTask.getPipelineDescription();
-		vk::Rect2D renderArea{ {0, 0}, {pipelineDesc.mViewport.x, pipelineDesc.mViewport.y} };
-
-        const std::vector<ClearValues> clearValues = graphicsTask.getClearValues();
-        std::vector<vk::ClearValue> vkClearValues{};
-        for (const auto& value : clearValues)
-        {
-            vk::ClearValue val{};
-            if (value.mType == AttachmentType::Depth)
-                val.setDepthStencil({ value.r, static_cast<uint32_t>(value.r) });
-            else
-                val.setColor({ std::array<float, 4>{value.r, value.g, value.b, value.a} });
-
-            vkClearValues.push_back(val);
-        }
-
-		commadBufferUsage |= vk::CommandBufferUsageFlagBits::eRenderPassContinue;
-
-		vk::RenderPassBeginInfo passBegin{};
-		passBegin.setRenderPass(*resources.mRenderPass);
-		passBegin.setFramebuffer(*resources.mFrameBuffer);
-		passBegin.setRenderArea(renderArea);
-		if (!clearValues.empty())
-		{
-			passBegin.setClearValueCount(static_cast<uint32_t>(vkClearValues.size()));
-            passBegin.setPClearValues(vkClearValues.data());
-		}
-
-		primaryCmdBuffer.beginRenderPass(passBegin, vk::SubpassContents::eSecondaryCommandBuffers);
-
-		bindPoint = vk::PipelineBindPoint::eGraphics;
-
-		secondaryInherit.setRenderPass(*resources.mRenderPass);
-		secondaryInherit.setFramebuffer(*resources.mFrameBuffer);
-
-        ++mCurrentCommandBufferIndex;
-	}
-
-    vk::CommandBuffer cmdBuffer;
-    if(mCurrentTasktype == TaskType::Graphics)
-    {
-        vk::CommandBufferBeginInfo secondaryBegin{};
-        secondaryBegin.setFlags(commadBufferUsage);
-        secondaryBegin.setPInheritanceInfo(&secondaryInherit);
-
-        cmdBuffer = currentCommandPool->getBufferForQueue(QueueType::Graphics, mCurrentCommandBufferIndex);
-        cmdBuffer.begin(secondaryBegin);
-    }
-    else
-    {
-        cmdBuffer = currentCommandPool->getBufferForQueue(QueueType::Graphics);
-    }
-    setDebugName(task.getName(), reinterpret_cast<uint64_t>(VkCommandBuffer(cmdBuffer)), VK_OBJECT_TYPE_COMMAND_BUFFER);
-
-    cmdBuffer.bindPipeline(bindPoint, resources.mPipeline->getHandle());
-
-    cmdBuffer.bindDescriptorSets(bindPoint, resources.mPipeline->getLayoutHandle(), 0, resources.mDescSet.size(), resources.mDescSet.data(), 0, nullptr);
-}
-
-
-Executor* VulkanRenderDevice::getPassExecutor()
-{
-	const auto& resources = mVulkanResources[mCurrentPassIndex];
-    vk::CommandBuffer& cmdBuffer = getCurrentCommandPool()->getBufferForQueue(QueueType::Graphics, mCurrentTasktype == TaskType::Graphics ? mCurrentCommandBufferIndex : 0);
-
-    return new VulkanExecutor(cmdBuffer, resources);
-}
-
-
-void VulkanRenderDevice::freePassExecutor(Executor* exec)
-{
-	delete exec;
-}
-
-
-void VulkanRenderDevice::endPass()
-{
-	CommandPool* currentCommandPool = getCurrentCommandPool();
-    vk::CommandBuffer primaryCmdBuffer = currentCommandPool->getBufferForQueue(QueueType::Graphics);
-    const auto& resources = mVulkanResources[mCurrentPassIndex];
-
-    if(mCurrentTasktype == TaskType::Graphics)
-    {
-        vk::CommandBuffer secondaryCmdBuffer = currentCommandPool->getBufferForQueue(QueueType::Graphics, mCurrentCommandBufferIndex);
-
-        secondaryCmdBuffer.end();
-
-        primaryCmdBuffer.executeCommands(secondaryCmdBuffer);
-    }
-
-	// end the render pass if we are executing a graphics task.
-	if (resources.mRenderPass)
-		primaryCmdBuffer.endRenderPass();
-
-	++mCurrentPassIndex;
-}
-
-
 void VulkanRenderDevice::startFrame()
 {
     frameSyncSetup();
-    getCurrentCommandPool()->reset();
+    for(CommandContextBase* context : mCommandContexts[mCurrentFrameIndex])
+        context->reset();
     clearDeferredResources();
-	mDescriptorManager.reset();
+    mPermanentDescriptorManager.reset();
     mMemoryManager.resetTransientAllocations();
     ++mCurrentSubmission;
     ++mFinishedSubmission;
-    mCurrentCommandBufferIndex = 0;
+    mSubmissionCount = 0;
 }
 
 
@@ -925,25 +829,27 @@ void VulkanRenderDevice::endFrame()
 }
 
 
-void VulkanRenderDevice::submitFrame()
+void VulkanRenderDevice::submitContext(CommandContextBase *context, const bool finalSubmission)
 {
-    vk::CommandBuffer primaryCmdBuffer = getCurrentCommandPool()->getBufferForQueue(QueueType::Graphics);
+    vk::CommandBuffer primaryCmdBuffer = static_cast<VulkanCommandContext*>(context)->getPrefixCommandBuffer();
     primaryCmdBuffer.end();
 
-	mCurrentPassIndex = 0;
-	const VulkanSwapChain* swapChain = static_cast<VulkanSwapChain*>(mSwapChain);
+    const VulkanSwapChain* swapChain = static_cast<VulkanSwapChain*>(mSwapChain);
+    std::vector<vk::Semaphore>& contextSemaphores = mContextSemaphores[mCurrentFrameIndex];
 
     vk::SubmitInfo submitInfo{};
     submitInfo.setCommandBufferCount(1);
-    submitInfo.setPCommandBuffers(&getCurrentCommandPool()->getBufferForQueue(QueueType::Graphics));
+    submitInfo.setPCommandBuffers(&primaryCmdBuffer);
     submitInfo.setWaitSemaphoreCount(1);
-    submitInfo.setPWaitSemaphores(swapChain->getImageAquired());
-    submitInfo.setPSignalSemaphores(swapChain->getImageRendered());
+    submitInfo.setPWaitSemaphores(mSubmissionCount == 0 ? swapChain->getImageAquired() : &contextSemaphores[mSubmissionCount - 1]);
+    submitInfo.setPSignalSemaphores(finalSubmission ? swapChain->getImageRendered() : &contextSemaphores[mSubmissionCount]);
     submitInfo.setSignalSemaphoreCount(1);
     auto const waitStage = vk::PipelineStageFlags(vk::PipelineStageFlagBits::eColorAttachmentOutput);
     submitInfo.setPWaitDstStageMask(&waitStage);
 
-    mGraphicsQueue.submit(submitInfo, mFrameFinished[getCurrentFrameIndex()]);
+    mGraphicsQueue.submit(submitInfo, finalSubmission ? mFrameFinished[getCurrentFrameIndex()] : vk::Fence{nullptr});
+
+    ++mSubmissionCount;
 }
 
 
@@ -961,33 +867,6 @@ void VulkanRenderDevice::frameSyncSetup()
     auto& fence = mFrameFinished[getCurrentFrameIndex()];
     mDevice.waitForFences(fence, true, std::numeric_limits<uint64_t>::max());
     mDevice.resetFences(1, &fence);
-}
-
-
-void VulkanRenderDevice::execute(BarrierRecorder& recorder)
-{
-	for (uint8_t i = 0; i < static_cast<uint8_t>(QueueType::MaxQueues); ++i)
-	{
-		QueueType currentQueue = static_cast<QueueType>(i);
-
-		VulkanBarrierRecorder& VKRecorder = static_cast<VulkanBarrierRecorder&>(*recorder.getBase());
-
-		if (!VKRecorder.empty())
-		{
-			const auto imageBarriers = VKRecorder.getImageBarriers(currentQueue);
-			const auto bufferBarriers = VKRecorder.getBufferBarriers(currentQueue);
-            const auto memoryBarriers = VKRecorder.getMemoryBarriers(currentQueue);
-
-            if(bufferBarriers.empty() && imageBarriers.empty())
-                continue;
-
-			getCurrentCommandPool()->getBufferForQueue(currentQueue).pipelineBarrier(getVulkanPipelineStage(VKRecorder.getSource()), getVulkanPipelineStage(VKRecorder.getDestination()),
-				vk::DependencyFlagBits::eByRegion,
-                static_cast<uint32_t>(memoryBarriers.size()), memoryBarriers.data(),
-                static_cast<uint32_t>(bufferBarriers.size()), bufferBarriers.data(),
-                static_cast<uint32_t>(imageBarriers.size()), imageBarriers.data());
-		}
-	}
 }
 
 
@@ -1063,21 +942,6 @@ void VulkanRenderDevice::clearDeferredResources()
 }
 
 
-void VulkanRenderDevice::clearVulkanResources()
-{
-	for(auto& resources : mVulkanResources)
-	{
-		if(resources.mFrameBuffer)
-			mFramebuffersPendingDestruction.emplace_back(getCurrentSubmissionIndex(), resources.mFrameBuffer.value());
-		resources.mFrameBuffer.reset();
-
-		resources.mDescSet.clear();
-	}
-
-	mVulkanResources.clear();
-}
-
-
 void VulkanRenderDevice::setDebugName(const std::string& name, const uint64_t handle, const uint64_t objectType)
 {
     VkDebugUtilsObjectNameInfoEXT lableInfo{};
@@ -1116,6 +980,13 @@ void VulkanRenderDevice::invalidatePipelines()
         mDevice.destroyDescriptorSetLayout(computeHandles.mDescriptorSetLayout[0]);
     }
     mComputePipelineCache.clear();
+}
+
+
+vk::CommandBuffer VulkanRenderDevice::getPrefixCommandBuffer()
+{
+    VulkanCommandContext* VKCmdContext = static_cast<VulkanCommandContext*>(getCommandContext(0));
+    return VKCmdContext->getPrefixCommandBuffer();
 }
 
 

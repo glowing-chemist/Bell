@@ -1,5 +1,7 @@
 #include "Core/ConversionUtils.hpp"
+#include "Core/CommandContext.hpp"
 #include "Core/BellLogging.hpp"
+#include "Core/Executor.hpp"
 
 #ifdef VULKAN
 #include "Core/Vulkan/VulkanRenderInstance.hpp" 
@@ -82,6 +84,7 @@ Engine::Engine(GLFWwindow* windowPtr) :
     mLightBufferView(mLightBuffer, sizeof(uint4)),
     mLightCountView(mLightBuffer, 0, sizeof(uint4)),
     mLightsSRS(getDevice()),
+    mMaxCommandContexts(3),
     mWindow(windowPtr)
 {
     for(uint32_t i = 0; i < getDevice()->getSwapChainImageCount(); ++i)
@@ -427,8 +430,6 @@ void Engine::execute(RenderGraph& graph)
 
     mCurrentRenderGraph.bindInternalResources();
 
-    mRenderDevice->generateFrameResources(graph, mCurrentRegistredPasses);
-
     std::vector<const MeshInstance*> meshes{};
 
     if(mCurrentScene)
@@ -451,31 +452,38 @@ void Engine::execute(RenderGraph& graph)
     auto barriers = graph.generateBarriers(mRenderDevice);
 	// process scene.
     auto barrier = barriers.begin();
-    uint32_t taskIndex = 0;
-    for (auto task = graph.taskBegin(); task != graph.taskEnd(); ++task, ++barrier, ++taskIndex)
+    const uint32_t taskCount = graph.taskCount();
+    const uint32_t taskPerContext = taskCount < 5 ? taskCount : taskCount / mMaxCommandContexts;
+    for (uint32_t taskIndex = 0; taskIndex < taskCount; ++taskIndex)
 	{
-        mRenderDevice->execute(*barrier);
+        RenderTask& task = graph.getTask(taskIndex);
 
-		mRenderDevice->startPass(*task);
+        const uint32_t commandContextIndex = taskIndex / taskPerContext;
+        CommandContextBase* context = mRenderDevice->getCommandContext(commandContextIndex);
+        Executor* exec = context->allocateExecutor();
+        exec->recordBarriers(*barrier);
+        context->setupState(graph, taskIndex, exec, mCurrentRegistredPasses);
 
-		Executor* exec = mRenderDevice->getPassExecutor();
-        BELL_ASSERT(exec, "Failed to create executor");
+        task.executeRecordCommandsCallback(exec, this, meshes);
 
-        (*task).executeRecordCommandsCallback(exec, this, meshes);
+        context->freeExecutor(exec);
+        ++barrier;
 
-        mRenderDevice->freePassExecutor(exec);
-
-		mRenderDevice->endPass();
+        if(taskIndex != 0 && (taskIndex % taskPerContext) == 0) // submit previous context
+            mRenderDevice->submitContext(mRenderDevice->getCommandContext(commandContextIndex - 1));
 	}
 
+    CommandContextBase* context = mRenderDevice->getCommandContext((taskCount - 1) / taskPerContext);
+    Executor* exec = context->allocateExecutor();
 	// Transition the swapchain image to a presentable format.
 	BarrierRecorder frameBufferTransition{ mRenderDevice };
 	auto& frameBufferView = getSwapChainImageView();
 	frameBufferTransition->transitionLayout(frameBufferView, ImageLayout::Present, Hazard::ReadAfterWrite, SyncPoint::FragmentShaderOutput, SyncPoint::BottomOfPipe);
 
-	mRenderDevice->execute(frameBufferTransition);
+    exec->recordBarriers(frameBufferTransition);
+    context->freeExecutor(exec);
 
-	mRenderDevice->submitFrame();
+    mRenderDevice->submitContext(context, true);
 }
 
 

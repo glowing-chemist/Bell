@@ -67,6 +67,8 @@ public:
     // Create and bind transient resources.
     void createTransientImage(RenderDevice*, const std::string& name, const Format, const ImageUsage, const SizeClass);
 
+    RenderTask& getTask(const uint32_t);
+    const RenderTask& getTask(const uint32_t) const;
 	RenderTask& getTask(TaskType, uint32_t);
 	const RenderTask& getTask(TaskType, uint32_t) const;
 
@@ -89,11 +91,11 @@ public:
 	TaskIterator taskBegin();
 	TaskIterator taskEnd();
 
-	BindingIterator<BindingIteratorType::Input> inputBindingBegin();
-	BindingIterator<BindingIteratorType::Input> inputBindingEnd();
+    BindingIterator<BindingIteratorType::Input> inputBindingBegin() const;
+    BindingIterator<BindingIteratorType::Input> inputBindingEnd() const;
 
-	BindingIterator< BindingIteratorType::Output> outputBindingBegin();
-	BindingIterator< BindingIteratorType::Output> outputBindingEnd();
+    BindingIterator< BindingIteratorType::Output> outputBindingBegin() const;
+    BindingIterator< BindingIteratorType::Output> outputBindingEnd() const;
 
 	const std::vector<bool>& getDescriptorsNeedUpdating() const
 	{
@@ -121,6 +123,11 @@ public:
 	ImageViewArray& getImageArrayViews(const uint32_t index);
 	BufferView&		getBuffer(const uint32_t index);
 	Sampler&		getSampler(const uint32_t index);
+
+    const ImageView&		getImageView(const uint32_t index) const;
+    const ImageViewArray& getImageArrayViews(const uint32_t index) const;
+    const BufferView&		getBuffer(const uint32_t index) const;
+    const Sampler&		getSampler(const uint32_t index) const;
 
 
 	struct ResourceBindingInfo
@@ -214,16 +221,17 @@ template<BindingIteratorType>
 class BindingIterator : public std::iterator<std::forward_iterator_tag,
 	std::vector<RenderGraph::ResourceBindingInfo>>
 {
-	std::vector<std::vector<RenderGraph::ResourceBindingInfo>>& mBindings;
+    const std::vector<std::vector<RenderGraph::ResourceBindingInfo>>& mBindings;
 	uint64_t mCurrentIndex;
 	const RenderGraph& mGraph;
 
 public:
 
-	BindingIterator(std::vector<std::vector<RenderGraph::ResourceBindingInfo>>& bindings, RenderGraph& graph, uint64_t startingIndex = 0) : mBindings{ bindings }, mCurrentIndex{ startingIndex }, mGraph{ graph } {}
+    BindingIterator(const std::vector<std::vector<RenderGraph::ResourceBindingInfo>>& bindings, const RenderGraph& graph, uint64_t startingIndex = 0) : mBindings{ bindings }, mCurrentIndex{ startingIndex }, mGraph{ graph } {}
 
-	std::vector<RenderGraph::ResourceBindingInfo>& operator*() { return mBindings[mCurrentIndex];  }
+    const std::vector<RenderGraph::ResourceBindingInfo>& operator*() const  { return mBindings[mCurrentIndex];  }
 	BindingIterator& operator++() { ++mCurrentIndex; return *this; }
+    BindingIterator  operator+(const uint32_t i) {mCurrentIndex += i; return *this; }
 	bool operator==(const BindingIterator& rhs) { return mCurrentIndex == rhs.mCurrentIndex; }
 	bool operator!=(const BindingIterator& rhs) { return !(*this == rhs); }
 };

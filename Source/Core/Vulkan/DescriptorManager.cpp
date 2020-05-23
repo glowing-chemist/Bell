@@ -40,37 +40,30 @@ DescriptorManager::~DescriptorManager()
 }
 
 
-void DescriptorManager::getDescriptors(RenderGraph& graph, std::vector<vulkanResources>& resources)
+std::vector<vk::DescriptorSet> DescriptorManager::getDescriptors(const RenderGraph &graph, const uint32_t taskIndex, const vk::DescriptorSetLayout layout)
 {
-	uint32_t resourceIndex = 0;
+    const RenderTask& task = graph.getTask(taskIndex);
 
-	auto task = graph.taskBegin();
-	auto resource = resources.begin();
+    vk::DescriptorSet descSet = allocateDescriptorSet(task, layout);
 
-    while(task != graph.taskEnd())
+    std::vector<vk::DescriptorSet> descSets{};
+    descSets.push_back(descSet);
+
+    // Now add all the ShaderResourceSet descriptors.
+    const auto& inputs = task.getInputAttachments();
+    for (const auto& [slot, type, _] : inputs)
     {
-		vk::DescriptorSet descSet = allocateDescriptorSet(*task, *resource);
-
-		resource->mDescSet.push_back(descSet);
-
-		// Now add all the ShaderResourceSet descriptors.
-		const auto& inputs = (*task).getInputAttachments();
-        for (const auto& [slot, type, _] : inputs)
-		{
-			if (type == AttachmentType::ShaderResourceSet)
-			{
-				resource->mDescSet.push_back(static_cast<const VulkanShaderResourceSet&>(*graph.getBoundShaderResourceSet(slot).getBase()).getDescriptorSet());
-			}
-		}
-
-		++task;
-		++resource;
-		++resourceIndex;
+        if (type == AttachmentType::ShaderResourceSet)
+        {
+            descSets.push_back(static_cast<const VulkanShaderResourceSet&>(*graph.getBoundShaderResourceSet(slot).getBase()).getDescriptorSet());
+        }
     }
+
+    return descSets;
 }
 
 
-void DescriptorManager::writeDescriptors(RenderGraph& graph, std::vector<vulkanResources>& resources)
+void DescriptorManager::writeDescriptors(const RenderGraph& graph, const uint32_t taskIndex, vk::DescriptorSet descSet)
 {
     std::vector<vk::WriteDescriptorSet> descSetWrites;
     std::vector<vk::DescriptorImageInfo> imageInfos;
@@ -87,129 +80,121 @@ void DescriptorManager::writeDescriptors(RenderGraph& graph, std::vector<vulkanR
     imageInfos.reserve(maxDescWrites);
     bufferInfos.reserve(maxDescWrites);
 
-    auto inputBindings  = graph.inputBindingBegin();
-    auto resource       = resources.begin();
-    auto task           = graph.taskBegin();
+    auto inputBindings  = graph.inputBindingBegin() + taskIndex;
+    const RenderTask& task           = graph.getTask(taskIndex);
 
-    while(inputBindings != graph.inputBindingEnd())
+    const auto& bindings = task.getInputAttachments();
+
+    for(const auto& bindingInfo : *inputBindings)
     {
-        const auto& bindings = (*task).getInputAttachments();
+        const AttachmentType attachmentType = bindings[bindingInfo.mResourceBinding].mType;
 
-        for(const auto& bindingInfo : *inputBindings)
+        if(attachmentType == AttachmentType::VertexBuffer ||
+                attachmentType == AttachmentType::IndexBuffer)
         {
-            const AttachmentType attachmentType = bindings[bindingInfo.mResourceBinding].mType;
-
-            if(attachmentType == AttachmentType::VertexBuffer ||
-               attachmentType == AttachmentType::IndexBuffer)
-            {
-                continue;
-            }
-
-            vk::WriteDescriptorSet descWrite{};
-            descWrite.setDstSet(resource->mDescSet[0]);
-            descWrite.setDstBinding(bindingInfo.mResourceBinding);
-
-            switch(bindingInfo.mResourcetype)
-            {
-                case RenderGraph::ResourceType::Image:
-                {
-					// We assume that no sampling happens from the swapchain image.
-					const vk::DescriptorType type = [attachmentType]()
-                    {
-                        switch(attachmentType)
-                        {
-                            case AttachmentType::Image1D:
-                            case AttachmentType::Image2D:
-                            case AttachmentType::Image3D:
-                                return vk::DescriptorType::eStorageImage;
-
-                            case AttachmentType::Texture1D:
-                            case AttachmentType::Texture2D:
-                            case AttachmentType::Texture3D:
-                                return vk::DescriptorType::eSampledImage;
-
-							default:
-								BELL_TRAP;
-								return vk::DescriptorType::eCombinedImageSampler;
-                        }
-                    }();
-
-					auto& imageView = graph.getImageView(bindingInfo.mResourceIndex);
-
-					vk::ImageLayout adjustedLayout = imageView->getType() == ImageViewType::Depth ? vk::ImageLayout::eDepthStencilReadOnlyOptimal : getVulkanImageLayout(attachmentType);
-
-					vk::DescriptorImageInfo info = generateDescriptorImageInfo(imageView, adjustedLayout);
-
-					imageInfos.push_back(info);
-
-                    descWrite.setPImageInfo(&imageInfos.back());
-                    descWrite.setDescriptorType(type);
-					descWrite.setDescriptorCount(1);
-                    break;
-                }
-
-				// Image arrays can only be sampled in this renderer (at least for now).
-				case RenderGraph::ResourceType::ImageArray:
-				{
-					const auto& imageViews = graph.getImageArrayViews(bindingInfo.mResourceIndex);
-
-					for(auto& view : imageViews)
-					{
-						imageInfos.push_back(generateDescriptorImageInfo(view, vk::ImageLayout::eShaderReadOnlyOptimal));
-					}
-
-					descWrite.setPImageInfo(&imageInfos[imageInfos.size() - imageViews.size()]);
-					descWrite.setDescriptorType(vk::DescriptorType::eSampledImage);
-					descWrite.setDescriptorCount(static_cast<uint32_t>(imageViews.size()));
-					break;
-				}
-
-                case RenderGraph::ResourceType::Sampler:
-                {
-                    vk::DescriptorImageInfo info{};
-                    info.setSampler(static_cast<VulkanRenderDevice*>(getDevice())->getImmutableSampler(graph.getSampler(bindingInfo.mResourceIndex)));
-
-                    imageInfos.push_back(info);
-
-                    descWrite.setPImageInfo(&imageInfos.back());
-                    descWrite.setDescriptorType(vk::DescriptorType::eSampler);
-					descWrite.setDescriptorCount(1);
-
-                    break;
-                }
-
-                case RenderGraph::ResourceType::Buffer:
-                case RenderGraph::ResourceType::VertexBuffer:
-                case RenderGraph::ResourceType::IndexBuffer:
-                {
-					auto& bufferView = graph.getBuffer(bindingInfo.mResourceIndex);
-					vk::DescriptorBufferInfo info = generateDescriptorBufferInfo(bufferView);
-                    bufferInfos.push_back(info);
-
-                    descWrite.setPBufferInfo(&bufferInfos.back());
-
-					if (attachmentType == AttachmentType::IndirectBuffer)
-						continue;
-					else if (attachmentType == AttachmentType::UniformBuffer)
-						descWrite.setDescriptorType(vk::DescriptorType::eUniformBuffer);
-					else
-                        descWrite.setDescriptorType(vk::DescriptorType::eStorageBuffer);
-
-					descWrite.setDescriptorCount(1);
-                    break;
-                }
-
-                case RenderGraph::ResourceType::SRS:
-                    BELL_TRAP;
-                    break;
-            }
-
-            descSetWrites.push_back(descWrite);
+            continue;
         }
 
-		++resource;
-		++inputBindings;
-        ++task;
+        vk::WriteDescriptorSet descWrite{};
+        descWrite.setDstSet(descSet);
+        descWrite.setDstBinding(bindingInfo.mResourceBinding);
+
+        switch(bindingInfo.mResourcetype)
+        {
+        case RenderGraph::ResourceType::Image:
+        {
+            // We assume that no sampling happens from the swapchain image.
+            const vk::DescriptorType type = [attachmentType]()
+            {
+                switch(attachmentType)
+                {
+                case AttachmentType::Image1D:
+                case AttachmentType::Image2D:
+                case AttachmentType::Image3D:
+                    return vk::DescriptorType::eStorageImage;
+
+                case AttachmentType::Texture1D:
+                case AttachmentType::Texture2D:
+                case AttachmentType::Texture3D:
+                    return vk::DescriptorType::eSampledImage;
+
+                default:
+                    BELL_TRAP;
+                    return vk::DescriptorType::eCombinedImageSampler;
+                }
+            }();
+
+            auto& imageView = graph.getImageView(bindingInfo.mResourceIndex);
+
+            vk::ImageLayout adjustedLayout = imageView->getType() == ImageViewType::Depth ? vk::ImageLayout::eDepthStencilReadOnlyOptimal : getVulkanImageLayout(attachmentType);
+
+            vk::DescriptorImageInfo info = generateDescriptorImageInfo(imageView, adjustedLayout);
+
+            imageInfos.push_back(info);
+
+            descWrite.setPImageInfo(&imageInfos.back());
+            descWrite.setDescriptorType(type);
+            descWrite.setDescriptorCount(1);
+            break;
+        }
+
+            // Image arrays can only be sampled in this renderer (at least for now).
+        case RenderGraph::ResourceType::ImageArray:
+        {
+            const auto& imageViews = graph.getImageArrayViews(bindingInfo.mResourceIndex);
+
+            for(auto& view : imageViews)
+            {
+                imageInfos.push_back(generateDescriptorImageInfo(view, vk::ImageLayout::eShaderReadOnlyOptimal));
+            }
+
+            descWrite.setPImageInfo(&imageInfos[imageInfos.size() - imageViews.size()]);
+            descWrite.setDescriptorType(vk::DescriptorType::eSampledImage);
+            descWrite.setDescriptorCount(static_cast<uint32_t>(imageViews.size()));
+            break;
+        }
+
+        case RenderGraph::ResourceType::Sampler:
+        {
+            vk::DescriptorImageInfo info{};
+            info.setSampler(static_cast<VulkanRenderDevice*>(getDevice())->getImmutableSampler(graph.getSampler(bindingInfo.mResourceIndex)));
+
+            imageInfos.push_back(info);
+
+            descWrite.setPImageInfo(&imageInfos.back());
+            descWrite.setDescriptorType(vk::DescriptorType::eSampler);
+            descWrite.setDescriptorCount(1);
+
+            break;
+        }
+
+        case RenderGraph::ResourceType::Buffer:
+        case RenderGraph::ResourceType::VertexBuffer:
+        case RenderGraph::ResourceType::IndexBuffer:
+        {
+            auto& bufferView = graph.getBuffer(bindingInfo.mResourceIndex);
+            vk::DescriptorBufferInfo info = generateDescriptorBufferInfo(bufferView);
+            bufferInfos.push_back(info);
+
+            descWrite.setPBufferInfo(&bufferInfos.back());
+
+            if (attachmentType == AttachmentType::IndirectBuffer)
+                continue;
+            else if (attachmentType == AttachmentType::UniformBuffer)
+                descWrite.setDescriptorType(vk::DescriptorType::eUniformBuffer);
+            else
+                descWrite.setDescriptorType(vk::DescriptorType::eStorageBuffer);
+
+            descWrite.setDescriptorCount(1);
+            break;
+        }
+
+        case RenderGraph::ResourceType::SRS:
+            BELL_TRAP;
+            break;
+        }
+
+        descSetWrites.push_back(descWrite);
     }
 
 	static_cast<VulkanRenderDevice*>(getDevice())->writeDescriptorSets(descSetWrites);
@@ -377,7 +362,7 @@ vk::DescriptorSet DescriptorManager::allocatePersistentDescriptorSet(const vk::D
 
 
 vk::DescriptorSet DescriptorManager::allocateDescriptorSet(const RenderTask& task,
-                                                           const vulkanResources& resources)
+                                                           const vk::DescriptorSetLayout layout)
 {    
     const auto& attachments = task.getInputAttachments();
 
@@ -387,7 +372,7 @@ vk::DescriptorSet DescriptorManager::allocateDescriptorSet(const RenderTask& tas
     vk::DescriptorSetAllocateInfo allocInfo{};
     allocInfo.setDescriptorPool(pool.mPool);
     allocInfo.setDescriptorSetCount(1);
-    allocInfo.setPSetLayouts(&resources.mDescSetLayout[0]);
+    allocInfo.setPSetLayouts(&layout);
 
     vk::DescriptorSet descSet = static_cast<VulkanRenderDevice*>(getDevice())->allocateDescriptorSet(allocInfo)[0];
 

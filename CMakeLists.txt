@@ -65,7 +65,8 @@ if(VULKAN)
 		Source/Core/Vulkan/VulkanRenderInstance.cpp
 		Source/Core/Vulkan/VulkanShader.cpp
 		Source/Core/Vulkan/VulkanSwapChain.cpp
-		Source/Core/Vulkan/VulkanBarrierManager.cpp)
+		Source/Core/Vulkan/VulkanBarrierManager.cpp
+		Source/Core/Vulkan/VulkanCommandContext.cpp)
 
 	add_definitions(-DVULKAN -DGLM_DEPTH_ZERO_TO_ONE)
 elseif(DX_12)
@@ -99,6 +100,7 @@ set(BELL_BASE_SOURCE
 	Source/Core/Sampler.cpp
 	Source/Core/PipelineCache.cpp
 	Source/Core/ShaderResourceSet.cpp
+	Source/Core/CommandContext.cpp
 	
 	${BACKEND_SOURCE}
 

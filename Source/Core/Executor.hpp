@@ -5,7 +5,7 @@
 
 class Buffer;
 class BufferView;
-
+class BarrierRecorder;
 
 class Executor
 {
@@ -34,6 +34,8 @@ public:
     virtual void bindVertexBuffer(const BufferView&, const size_t offset) = 0;
 
     virtual void bindIndexBuffer(const BufferView&, const size_t offset) = 0;
+
+    virtual void recordBarriers(BarrierRecorder&) = 0;
 };
 
 #endif

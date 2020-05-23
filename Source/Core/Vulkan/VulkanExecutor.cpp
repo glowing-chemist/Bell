@@ -3,11 +3,12 @@
 #include "VulkanBufferView.hpp"
 #include "VulkanPipeline.hpp"
 #include "VulkanRenderDevice.hpp"
+#include "VulkanBarrierManager.hpp"
+#include "Core/ConversionUtils.hpp"
 
 
-VulkanExecutor::VulkanExecutor(vk::CommandBuffer cmdBuffer, const vulkanResources& resources) :
-	mCommandBuffer{ cmdBuffer },
-	mResources{ resources }
+VulkanExecutor::VulkanExecutor(vk::CommandBuffer cmdBuffer) :
+    mCommandBuffer{ cmdBuffer }
 {
 }
 
@@ -52,7 +53,7 @@ void VulkanExecutor::indexedIndirectDraw(const uint32_t drawCalls, const BufferV
 
 void VulkanExecutor::insertPushConsatnt(const void *val, const size_t size)
 {
-    mCommandBuffer.pushConstants(mResources.mPipeline->getLayoutHandle(), vk::ShaderStageFlagBits::eAll, 0, size, val);
+    mCommandBuffer.pushConstants(mPipelineLayout, vk::ShaderStageFlagBits::eAll, 0, size, val);
 }
 
 
@@ -80,4 +81,26 @@ void VulkanExecutor::bindIndexBuffer(const BufferView& buffer, const size_t offs
 {
     const VulkanBufferView& VKBuffer = static_cast<const VulkanBufferView&>(*buffer.getBase());
 	mCommandBuffer.bindIndexBuffer(VKBuffer.getBuffer(), offset, vk::IndexType::eUint32);
+}
+
+
+void VulkanExecutor::recordBarriers(BarrierRecorder& recorder)
+{
+    VulkanBarrierRecorder& VKRecorder = static_cast<VulkanBarrierRecorder&>(*recorder.getBase());
+
+    if (!VKRecorder.empty())
+    {
+        const auto imageBarriers = VKRecorder.getImageBarriers(QueueType::Graphics);
+        const auto bufferBarriers = VKRecorder.getBufferBarriers(QueueType::Graphics);
+        const auto memoryBarriers = VKRecorder.getMemoryBarriers(QueueType::Graphics);
+
+        if(bufferBarriers.empty() && imageBarriers.empty())
+          return;
+
+        mCommandBuffer.pipelineBarrier(getVulkanPipelineStage(VKRecorder.getSource()), getVulkanPipelineStage(VKRecorder.getDestination()),
+        vk::DependencyFlagBits::eByRegion,
+        static_cast<uint32_t>(memoryBarriers.size()), memoryBarriers.data(),
+        static_cast<uint32_t>(bufferBarriers.size()), bufferBarriers.data(),
+        static_cast<uint32_t>(imageBarriers.size()), imageBarriers.data());
+    }
 }

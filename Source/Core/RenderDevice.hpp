@@ -18,6 +18,7 @@ class RenderTask;
 class Executor;
 class ImageBase;
 class BufferBase;
+class CommandContextBase;
 
 
 class RenderDevice
@@ -27,19 +28,11 @@ public:
 		mCurrentSubmission{0},
 		mFinishedSubmission{0},
 		mCurrentFrameIndex{0},
-		mCurrentPassIndex{0},
 		mSwapChain{nullptr} {}
 
     virtual ~RenderDevice() = default;
 
-	virtual void					   generateFrameResources(RenderGraph&, const uint64_t prefixHash) = 0;
-
-	virtual void                       startPass(const RenderTask&) = 0;
-	virtual Executor*				   getPassExecutor() = 0;
-	virtual void					   freePassExecutor(Executor*) = 0;
-	virtual void					   endPass() = 0;
-
-	virtual void					   execute(BarrierRecorder& recorder) = 0;
+    virtual CommandContextBase*        getCommandContext(const uint32_t index) = 0;
 
 	virtual void                       startFrame() = 0;
 	virtual void                       endFrame() = 0;
@@ -56,7 +49,7 @@ public:
 	virtual void                       flushWait() const = 0;
     virtual void                       invalidatePipelines() = 0;
 
-    virtual void					   submitFrame() = 0;
+    virtual void					   submitContext(CommandContextBase*, const bool finalSubmission = false) = 0;
     virtual void					   swap() = 0;
 
 	virtual size_t					   getMinStorageBufferAlignment() const = 0;
@@ -100,8 +93,6 @@ protected:
     uint64_t mCurrentSubmission;
     uint64_t mFinishedSubmission;
     uint32_t mCurrentFrameIndex;
-
-	uint64_t mCurrentPassIndex;
 
     SwapChainBase* mSwapChain;
 };
