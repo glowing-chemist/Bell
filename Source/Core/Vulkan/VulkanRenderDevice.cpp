@@ -980,6 +980,8 @@ void VulkanRenderDevice::invalidatePipelines()
         mDevice.destroyDescriptorSetLayout(computeHandles.mDescriptorSetLayout[0]);
     }
     mComputePipelineCache.clear();
+
+    mVulkanResources.clear();
 }
 
 
