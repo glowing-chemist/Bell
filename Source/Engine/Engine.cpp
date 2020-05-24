@@ -84,7 +84,7 @@ Engine::Engine(GLFWwindow* windowPtr) :
     mLightBufferView(mLightBuffer, sizeof(uint4)),
     mLightCountView(mLightBuffer, 0, sizeof(uint4)),
     mLightsSRS(getDevice()),
-    mMaxCommandContexts(3),
+    mMaxCommandThreads(1),
     mWindow(windowPtr)
 {
     for(uint32_t i = 0; i < getDevice()->getSwapChainImageCount(); ++i)
@@ -453,27 +453,34 @@ void Engine::execute(RenderGraph& graph)
 	// process scene.
     auto barrier = barriers.begin();
     const uint32_t taskCount = graph.taskCount();
-    const uint32_t taskPerContext = taskCount < 5 ? taskCount : taskCount / mMaxCommandContexts;
+    uint32_t recordedCommands = 0;
+    uint32_t currentContext = 0;
     for (uint32_t taskIndex = 0; taskIndex < taskCount; ++taskIndex)
 	{
         RenderTask& task = graph.getTask(taskIndex);
 
-        const uint32_t commandContextIndex = taskIndex / taskPerContext;
-        CommandContextBase* context = mRenderDevice->getCommandContext(commandContextIndex);
+        CommandContextBase* context = mRenderDevice->getCommandContext(currentContext);
         Executor* exec = context->allocateExecutor();
         exec->recordBarriers(*barrier);
         context->setupState(graph, taskIndex, exec, mCurrentRegistredPasses);
 
         task.executeRecordCommandsCallback(exec, this, meshes);
 
+        recordedCommands += exec->getRecordedCommandCount();
+        exec->resetRecordedCommandCount();
+
         context->freeExecutor(exec);
         ++barrier;
 
-        if(taskIndex != 0 && (taskIndex % taskPerContext) == 0) // submit previous context
-            mRenderDevice->submitContext(mRenderDevice->getCommandContext(commandContextIndex - 1));
+        if(taskIndex < (taskCount - 1) && recordedCommands >= 250) // submit context
+        {
+            recordedCommands = 0;
+            ++currentContext;
+            mRenderDevice->submitContext(context);
+        }
 	}
 
-    CommandContextBase* context = mRenderDevice->getCommandContext((taskCount - 1) / taskPerContext);
+    CommandContextBase* context = mRenderDevice->getCommandContext(currentContext);
     Executor* exec = context->allocateExecutor();
 	// Transition the swapchain image to a presentable format.
 	BarrierRecorder frameBufferTransition{ mRenderDevice };

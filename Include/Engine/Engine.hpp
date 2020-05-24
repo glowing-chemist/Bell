@@ -278,7 +278,7 @@ private:
 
     void updateGlobalBuffers();
 
-    uint32_t mMaxCommandContexts;
+    uint32_t mMaxCommandThreads;
     std::mutex mSubmissionLock;
 
     GLFWwindow* mWindow;

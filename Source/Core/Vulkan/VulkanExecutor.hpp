@@ -39,6 +39,16 @@ public:
 
     virtual void recordBarriers(BarrierRecorder&) override;
 
+    virtual uint32_t getRecordedCommandCount() override
+    {
+        return mRecordedCommands;
+    }
+
+    virtual void      resetRecordedCommandCount() override
+    {
+        mRecordedCommands = 0;
+    }
+
     void setPipelineLayout(const vk::PipelineLayout layout)
     { mPipelineLayout = layout; }
 
@@ -51,6 +61,8 @@ private:
 
 	vk::CommandBuffer mCommandBuffer;
     vk::PipelineLayout mPipelineLayout;
+
+    uint32_t mRecordedCommands;
 };
 
 #endif

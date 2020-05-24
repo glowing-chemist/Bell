@@ -8,7 +8,8 @@
 
 
 VulkanExecutor::VulkanExecutor(vk::CommandBuffer cmdBuffer) :
-    mCommandBuffer{ cmdBuffer }
+    mCommandBuffer{ cmdBuffer },
+    mRecordedCommands{0}
 {
 }
 
@@ -16,24 +17,28 @@ VulkanExecutor::VulkanExecutor(vk::CommandBuffer cmdBuffer) :
 void VulkanExecutor::draw(const uint32_t vertexOffset, const uint32_t vertexCount)
 {
     mCommandBuffer.draw(vertexCount, 1, vertexOffset, 0);
+    ++mRecordedCommands;
 }
 
 
 void VulkanExecutor::instancedDraw(const uint32_t vertexOffset, const uint32_t vertexCount, const uint32_t instanceCount)
 {
 	mCommandBuffer.draw(vertexCount, instanceCount, vertexOffset, 0);
+    ++mRecordedCommands;
 }
 
 
 void VulkanExecutor::indexedDraw(const uint32_t vertexOffset, const uint32_t indexOffset, const uint32_t numberOfIndicies)
 {
 	mCommandBuffer.drawIndexed(numberOfIndicies, 1, indexOffset, vertexOffset, 0);
+    ++mRecordedCommands;
 }
 
 
 void VulkanExecutor::indexedInstancedDraw(const uint32_t vertexOffset, const uint32_t indexOffset, const uint32_t numberOfInstances, const uint32_t numberOfIndicies)
 {
 	mCommandBuffer.drawIndexed(numberOfIndicies, numberOfInstances, indexOffset, vertexOffset, 0);
+    ++mRecordedCommands;
 }
 
 
@@ -41,6 +46,7 @@ void VulkanExecutor::indirectDraw(const uint32_t drawCalls, const BufferView& vi
 {
 	const VulkanBufferView& VKBuffer = static_cast<const VulkanBufferView&>(*view.getBase());
 	mCommandBuffer.drawIndirect(VKBuffer.getBuffer(), view->getOffset(), drawCalls, sizeof(vk::DrawIndirectCommand));
+    ++mRecordedCommands;
 }
 
 
@@ -48,18 +54,21 @@ void VulkanExecutor::indexedIndirectDraw(const uint32_t drawCalls, const BufferV
 {
 	const VulkanBufferView& VKBuffer = static_cast<const VulkanBufferView&>(*view.getBase());
 	mCommandBuffer.drawIndexedIndirect(VKBuffer.getBuffer(), view->getOffset(), drawCalls, sizeof(vk::DrawIndirectCommand));
+    ++mRecordedCommands;
 }
 
 
 void VulkanExecutor::insertPushConsatnt(const void *val, const size_t size)
 {
     mCommandBuffer.pushConstants(mPipelineLayout, vk::ShaderStageFlagBits::eAll, 0, size, val);
+    ++mRecordedCommands;
 }
 
 
 void VulkanExecutor::dispatch(const uint32_t x, const uint32_t y, const uint32_t z)
 {
 	mCommandBuffer.dispatch(x, y, z);
+    ++mRecordedCommands;
 }
 
 
@@ -67,6 +76,7 @@ void VulkanExecutor::dispatchIndirect(const BufferView& view)
 {
 	const VulkanBufferView& VKBuffer = static_cast<const VulkanBufferView&>(*view.getBase());
 	mCommandBuffer.dispatchIndirect(VKBuffer.getBuffer(), view->getOffset());
+    ++mRecordedCommands;
 }
 
 
@@ -74,6 +84,7 @@ void VulkanExecutor::bindVertexBuffer(const BufferView& buffer, const size_t off
 {
     const VulkanBufferView& VKBuffer = static_cast<const VulkanBufferView&>(*buffer.getBase());
 	mCommandBuffer.bindVertexBuffers(0, VKBuffer.getBuffer(), offset);
+    ++mRecordedCommands;
 }
 
 
@@ -81,6 +92,7 @@ void VulkanExecutor::bindIndexBuffer(const BufferView& buffer, const size_t offs
 {
     const VulkanBufferView& VKBuffer = static_cast<const VulkanBufferView&>(*buffer.getBase());
 	mCommandBuffer.bindIndexBuffer(VKBuffer.getBuffer(), offset, vk::IndexType::eUint32);
+    ++mRecordedCommands;
 }
 
 
@@ -103,4 +115,5 @@ void VulkanExecutor::recordBarriers(BarrierRecorder& recorder)
         static_cast<uint32_t>(bufferBarriers.size()), bufferBarriers.data(),
         static_cast<uint32_t>(imageBarriers.size()), imageBarriers.data());
     }
+    ++mRecordedCommands;
 }

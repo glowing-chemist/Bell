@@ -36,6 +36,9 @@ public:
     virtual void bindIndexBuffer(const BufferView&, const size_t offset) = 0;
 
     virtual void recordBarriers(BarrierRecorder&) = 0;
+
+    virtual uint32_t getRecordedCommandCount() = 0;
+    virtual void      resetRecordedCommandCount() = 0;
 };
 
 #endif
