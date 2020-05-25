@@ -290,7 +290,6 @@ D3D12_RESOURCE_STATES getDX12ImageLayout(const AttachmentType type)
 	{
 	case AttachmentType::RenderTarget1D:
 	case AttachmentType::RenderTarget2D:
-	case AttachmentType::RenderTarget3D:
 		return D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_RENDER_TARGET;
 
 	case AttachmentType::Image1D:

@@ -16,6 +16,7 @@ struct ImGuiOptions
     bool mSSAO = false;
     bool mShadows = true;
     bool mSSR = false;
+    bool preDepth = true;
 };
 
 static ImGuiOptions graphicsOptions;
@@ -75,6 +76,7 @@ bool renderMenu(GLFWwindow* win, const Camera& cam)
     ImGui::Checkbox("Enable SSAO", &graphicsOptions.mSSAO);
     ImGui::Checkbox("Enable shadows", &graphicsOptions.mShadows);
     ImGui::Checkbox("Enable Screen space reflection", &graphicsOptions.mSSR);
+    ImGui::Checkbox("Enable pre depth", &graphicsOptions.preDepth);
 
     ImGui::Text("Camera position: X: %f Y: %f Z: %f", cam.getPosition().x, cam.getPosition().y, cam.getPosition().z);
     ImGui::Text("Camera direction: X: %f Y: %f Z: %f", cam.getDirection().x, cam.getDirection().y, cam.getDirection().z);
@@ -208,6 +210,9 @@ int main()
         engine.registerPass(PassType::LineariseDepth);
         //engine.registerPass(PassType::Voxelize);
 
+        if (graphicsOptions.mForward || graphicsOptions.preDepth)
+            engine.registerPass(PassType::DepthPre);
+
         if(graphicsOptions.mShadows)
             engine.registerPass(PassType::Shadow);
 
@@ -230,9 +235,7 @@ int main()
                 engine.registerPass(PassType::SSAOImproved);
 		}
 		else if(graphicsOptions.mForward)
-        {
-            engine.registerPass(PassType::DepthPre);
-        
+        {        
             if (graphicsOptions.mShowLights)
                 engine.registerPass(PassType::ForwardCombinedLighting);
             else
