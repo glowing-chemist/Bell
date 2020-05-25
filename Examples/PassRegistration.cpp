@@ -16,7 +16,7 @@ struct ImGuiOptions
     bool mSSAO = false;
     bool mShadows = true;
     bool mSSR = false;
-    bool preDepth = true;
+    bool preDepth = false;
 };
 
 static ImGuiOptions graphicsOptions;
