@@ -78,6 +78,7 @@ elseif(DX_12)
 		Source/Core/DX_12/DX_12Buffer.cpp
 		Source/Core/DX_12/DX_12BufferView.cpp
 		Source/Core/DX_12/DX_12Shader.cpp
+		Source/Core/DX_12/DX_12SwapChain.cpp
 		
 		ThirdParty/D3D12MemoryAllocator/src/D3D12MemAlloc.cpp
 		)

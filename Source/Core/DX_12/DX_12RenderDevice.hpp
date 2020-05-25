@@ -9,17 +9,10 @@
 class DX_12RenderDevice : public RenderDevice
 {
 public:
-	DX_12RenderDevice(ID3D12Device*, IDXGIAdapter* adapter, GLFWwindow*);
+	DX_12RenderDevice(ID3D12Device*, IDXGIAdapter* adapter, IDXGIFactory* deviceFactory, GLFWwindow*);
 	~DX_12RenderDevice();
 
-	virtual void					   generateFrameResources(RenderGraph&, const uint64_t prefixHash) override;
-
-	virtual void                       startPass(const RenderTask&) override;
-	virtual Executor*				   getPassExecutor() override;
-	virtual void					   freePassExecutor(Executor*) override;
-	virtual void					   endPass() override;
-
-	virtual void					   execute(BarrierRecorder& recorder) override;
+	virtual CommandContextBase*		   getCommandContext(const uint32_t index) override;
 
 	virtual void                       startFrame() override;
 	virtual void                       endFrame() override;
@@ -36,7 +29,7 @@ public:
 	virtual void                       flushWait() const override;
     virtual void                       invalidatePipelines() override;
 
-	virtual void					   submitFrame() override;
+	virtual void					   submitContext(CommandContextBase*, const bool finalSubmission = false) override;
 	virtual void					   swap() override;
 
 	virtual size_t					   getMinStorageBufferAlignment() const override;
@@ -46,6 +39,11 @@ public:
 	D3D12MA::ALLOCATION_DESC		   getResourceAllocationDescription(const ImageUsage);
 	D3D12MA::ALLOCATION_DESC		   getResourceAllocationDescription(const BufferUsage);
 
+	ID3D12CommandQueue* getGraphicsQueue()
+	{
+		return mGraphicsQueue;
+	}
+
 private:
 
 	ID3D12Device6* mDevice;
@@ -54,6 +52,10 @@ private:
 
 	D3D12MA::Allocator* mMemoryManager;
 
+	ID3D12CommandQueue* mGraphicsQueue;
+	ID3D12CommandQueue* mComputeQueue;
+
+	std::vector<ID3D12Fence*> mFrameComplete;
 };
 
 #endif

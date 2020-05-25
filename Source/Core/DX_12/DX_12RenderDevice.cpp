@@ -1,8 +1,10 @@
 #include "DX_12RenderDevice.hpp"
+#include "DX_12SwapChain.hpp"
 #include "Core/BellLogging.hpp"
 
+#include <D3d12.h>
 
-DX_12RenderDevice::DX_12RenderDevice(ID3D12Device* dev, IDXGIAdapter* adapter, GLFWwindow* window) :
+DX_12RenderDevice::DX_12RenderDevice(ID3D12Device* dev, IDXGIAdapter* adapter, IDXGIFactory* deviceFactory, GLFWwindow* window) :
 	mDevice(static_cast<ID3D12Device6*>(dev)),
 	mAdapter(static_cast<IDXGIAdapter3*>(adapter)),
 	mWindow(window)
@@ -16,6 +18,39 @@ DX_12RenderDevice::DX_12RenderDevice(ID3D12Device* dev, IDXGIAdapter* adapter, G
 
 	HRESULT result = D3D12MA::CreateAllocator(&desc, &mMemoryManager);
 	BELL_ASSERT(result == S_OK, "Failed to create memory manager");
+
+	// get the queues.
+	{
+		D3D12_COMMAND_QUEUE_DESC graphicsQueueDesc{};
+		graphicsQueueDesc.Type = D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_DIRECT;
+		graphicsQueueDesc.Priority = D3D12_COMMAND_QUEUE_PRIORITY::D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;
+		graphicsQueueDesc.Flags = D3D12_COMMAND_QUEUE_FLAGS::D3D12_COMMAND_QUEUE_FLAG_NONE;
+		graphicsQueueDesc.NodeMask = 0;
+		
+		HRESULT result = mDevice->CreateCommandQueue(&graphicsQueueDesc, IID_PPV_ARGS(&mGraphicsQueue));
+		BELL_ASSERT(result == S_OK, "Failed to create graphics queue")
+		
+
+		D3D12_COMMAND_QUEUE_DESC computeQueueDesc {};
+		computeQueueDesc.Type = D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_COMPUTE;
+		computeQueueDesc.Priority = D3D12_COMMAND_QUEUE_PRIORITY::D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;
+		computeQueueDesc.Flags = D3D12_COMMAND_QUEUE_FLAGS::D3D12_COMMAND_QUEUE_FLAG_NONE;
+		computeQueueDesc.NodeMask = 0;
+
+		result = mDevice->CreateCommandQueue(&computeQueueDesc, IID_PPV_ARGS(&mComputeQueue));
+		BELL_ASSERT(result == S_OK, "Failed to create compute queue")
+	}
+
+	mSwapChain = static_cast<SwapChainBase*>(new DX_12SwapChain(this, deviceFactory, window));
+
+	for (uint32_t i = 0; i < mSwapChain->getNumberOfSwapChainImages(); ++i)
+	{
+		// Create frame complete fences.
+		ID3D12Fence* fence;
+		HRESULT result = mDevice->CreateFence(1, D3D12_FENCE_FLAGS::D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&fence));
+		BELL_ASSERT(result == S_OK, "Failed to create fence")
+		mFrameComplete.push_back(fence);
+	}
 }
 
 
@@ -23,59 +58,39 @@ DX_12RenderDevice::~DX_12RenderDevice()
 {
 	mMemoryManager->Release();
 	mMemoryManager = nullptr;
+
+	mGraphicsQueue->Release();
+	mComputeQueue->Release();
+
+	for (auto* fence : mFrameComplete)
+		fence->Release();
 }
 
 
-void DX_12RenderDevice::generateFrameResources(RenderGraph&, const uint64_t)
+CommandContextBase* DX_12RenderDevice::getCommandContext(const uint32_t index)
 {
-}
-
-
-void DX_12RenderDevice::startPass(const RenderTask&)
-{
-
-}
-
-
-Executor* DX_12RenderDevice::getPassExecutor()
-{
+	BELL_TRAP;
 	return nullptr;
-}
-
-
-void DX_12RenderDevice::freePassExecutor(Executor*)
-{
-
-}
-
-
-void DX_12RenderDevice::endPass()
-{
-
-}
-
-
-void DX_12RenderDevice::execute(BarrierRecorder& recorder)
-{
-
 }
 
 
 void DX_12RenderDevice::startFrame()
 {
-
+	ID3D12Fence* currentFence = mFrameComplete[mCurrentFrameIndex];
+	mGraphicsQueue->Wait(currentFence, 1);
+	currentFence->Signal(0); // Reset.
 }
 
 
 void DX_12RenderDevice::endFrame()
 {
-
+	mCurrentFrameIndex = (mCurrentFrameIndex + 1) % mSwapChain->getNumberOfSwapChainImages();
+	mCurrentSubmission++;
 }
 
 
 void DX_12RenderDevice::destroyImage(ImageBase& image)
 {
-
 }
 
 
@@ -97,19 +112,28 @@ void DX_12RenderDevice::destroyShaderResourceSet(const ShaderResourceSetBase& se
 }
 
 
-void DX_12RenderDevice::setDebugName(const std::string&, const uint64_t, const uint64_t objectType)
+void DX_12RenderDevice::setDebugName(const std::string& name, const uint64_t objPtr, const uint64_t)
 {
+	BELL_ASSERT(name.size() < 32, "Make buffer larger or name smaller")
+	wchar_t buf[32];
+	swprintf(buf, L"%S", name.c_str());
 
+	ID3D12Object* object = reinterpret_cast<ID3D12Object*>(objPtr);
+	object->SetName(buf);
 }
 
 
 void DX_12RenderDevice::flushWait() const
 {
-
 }
 
 
-void DX_12RenderDevice::submitFrame()
+void DX_12RenderDevice::invalidatePipelines()
+{
+
+}
+
+void DX_12RenderDevice::submitContext(CommandContextBase*, const bool finalSubmission)
 {
 
 }
@@ -123,7 +147,8 @@ void DX_12RenderDevice::swap()
 
 size_t DX_12RenderDevice::getMinStorageBufferAlignment() const
 {
-	return ~0ULL;
+	BELL_TRAP; // TODO Look in to this.
+	return 16;
 }
 
 

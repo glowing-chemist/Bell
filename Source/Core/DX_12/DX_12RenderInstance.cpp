@@ -76,7 +76,7 @@ RenderDevice* DX_12RenderInstance::createRenderDevice(const int DeviceFeatureFla
 		BELL_ASSERT(subgroupSupportInfo.WaveOps, "Subgroup support requested but not supported by device");
 	}
 
-	return new DX_12RenderDevice(device, mAdapter, mWindow);
+	return new DX_12RenderDevice(device, mAdapter, mFactory, mWindow);
 }
 
 

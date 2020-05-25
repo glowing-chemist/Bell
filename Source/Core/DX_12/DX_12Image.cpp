@@ -55,7 +55,7 @@ void DX_12Image::swap(ImageBase& other)
     DX_12Image& DXImage = static_cast<DX_12Image&>(other);
 
     ID3D12Resource* tmpImage = mImage;
-    D3D12MA::Allocation* tmpMemory;
+    D3D12MA::Allocation* tmpMemory = DXImage.mImageMemory;
 
     mImage = DXImage.mImage;
     mImageMemory = DXImage.mImageMemory;
@@ -77,6 +77,7 @@ void DX_12Image::setContents(   const void* data,
 {
 
 }
+
 
 void DX_12Image::clear()
 {
