@@ -37,6 +37,7 @@ public:
 
     virtual void clear() override final;
 
+    virtual void generateMips() override final;
 
     ID3D12Resource* getResourceHandle()
     {

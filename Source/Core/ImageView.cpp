@@ -7,6 +7,10 @@
 #include "Core/Vulkan/VulkanImageView.hpp"
 #endif
 
+#ifdef DX_12
+#include "Core/DX_12/DX_12ImageView.hpp"
+#endif
+
 
 ImageViewBase::ImageViewBase(Image& parentImage,
 					 const ImageViewType viewType,
@@ -59,5 +63,9 @@ ImageView::ImageView(Image& image,
 {
 #ifdef VULKAN
 	mBase = std::make_shared<VulkanImageView>(image, type, level, levelCount, lod, lodCount);
+#endif
+
+#ifdef DX_12
+	mBase = std::make_shared<DX_12ImageView>(image, type, level, levelCount, lod, lodCount);
 #endif
 }

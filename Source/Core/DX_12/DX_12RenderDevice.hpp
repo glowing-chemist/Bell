@@ -34,7 +34,11 @@ public:
 
 	virtual size_t					   getMinStorageBufferAlignment() const override;
 
-	void							   createImage(const D3D12_RESOURCE_DESC& desc, const D3D12MA::ALLOCATION_DESC& allocDesc, ID3D12Resource** outImage, D3D12MA::Allocation** outImageMemory);
+	void							   createImage(	const D3D12_RESOURCE_DESC& desc, 
+													const D3D12MA::ALLOCATION_DESC& allocDesc, 
+													ID3D12Resource** outImage, 
+													D3D12MA::Allocation** outImageMemory,
+													D3D12_CLEAR_VALUE* clearValue = nullptr);
 
 	D3D12MA::ALLOCATION_DESC		   getResourceAllocationDescription(const ImageUsage);
 	D3D12MA::ALLOCATION_DESC		   getResourceAllocationDescription(const BufferUsage);

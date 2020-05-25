@@ -83,3 +83,9 @@ void DX_12Image::clear()
 {
 
 }
+
+
+void DX_12Image::generateMips()
+{
+
+}

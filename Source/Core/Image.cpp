@@ -7,6 +7,10 @@
 #include "Core/Vulkan/VulkanImage.hpp"
 #endif
 
+#ifdef DX_12
+#include "Core/DX_12/DX_12Image.hpp"
+#endif
+
 ImageBase::ImageBase(RenderDevice* dev,
 			 const Format format,
 			 const ImageUsage usage,
@@ -109,5 +113,9 @@ Image::Image(RenderDevice* dev,
 {
 #ifdef VULKAN
 	mBase = std::make_shared<VulkanImage>(dev, format, usage, x, y, z, mips, levels, samples, name);
+#endif
+
+#ifdef DX_12
+	mBase = std::make_shared<DX_12Image>(dev, format, usage, x, y, z, mips, levels, samples, name);
 #endif
 }

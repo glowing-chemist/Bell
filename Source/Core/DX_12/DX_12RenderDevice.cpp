@@ -152,27 +152,13 @@ size_t DX_12RenderDevice::getMinStorageBufferAlignment() const
 }
 
 
-void DX_12RenderDevice::createImage(const D3D12_RESOURCE_DESC& desc, const D3D12MA::ALLOCATION_DESC& allocDesc, ID3D12Resource** outImage, D3D12MA::Allocation** outImageMemory)
+void DX_12RenderDevice::createImage(const D3D12_RESOURCE_DESC& desc, const D3D12MA::ALLOCATION_DESC& allocDesc, ID3D12Resource** outImage, D3D12MA::Allocation** outImageMemory, D3D12_CLEAR_VALUE* clearValue)
 {
 	BELL_ASSERT(outImage, "Need to supply a non null image ptr");
 	BELL_ASSERT(outImageMemory, "Need to supply a non null image memory ptr");
 
-	D3D12_CLEAR_VALUE clearVal;
-	if (desc.Format & DXGI_FORMAT::DXGI_FORMAT_D32_FLOAT)
-	{
-		clearVal.DepthStencil.Depth = 0.0f;
-		clearVal.DepthStencil.Stencil = 0;
-	}
-	else
-	{
-		clearVal.Color[0] = 0.0f;
-		clearVal.Color[1] = 0.0f;
-		clearVal.Color[2] = 0.0f;
-		clearVal.Color[3] = 0.0f;
-	}
-
 	HRESULT result = mMemoryManager->CreateResource(&allocDesc, &desc, allocDesc.HeapType & D3D12_HEAP_TYPE::D3D12_HEAP_TYPE_UPLOAD ? D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_GENERIC_READ : D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_COMMON, 
-													&clearVal, outImageMemory, IID_PPV_ARGS(outImage));
+													clearValue, outImageMemory, IID_PPV_ARGS(outImage));
 	BELL_ASSERT(result == S_OK, "Failed to create Image");
 }
 
