@@ -16,6 +16,9 @@ struct PoolFragment
 {
     friend class MemoryManager; // to allow this to be an opaque handle that only the memory manager can use
     friend bool operator==(const PoolFragment&, const PoolFragment&);
+#ifndef NDEBUG
+    std::string name;
+#endif
 private:
     uint64_t offset;
     uint64_t size;
@@ -46,7 +49,7 @@ class MemoryManager : public DeviceChild
 public:
 	explicit MemoryManager(RenderDevice*);
 
-    Allocation Allocate(const uint64_t size, const unsigned long allignment, const bool hostMappable);
+    Allocation Allocate(const uint64_t size, const unsigned long allignment, const bool hostMappable, const std::string& name = "");
     void       Free(Allocation alloc);
 
     void       BindImage(vk::Image& image, const Allocation& alloc);
@@ -68,7 +71,7 @@ private:
     void MergeFreePools();
     void MergePool(std::vector<std::list<PoolFragment>>& pools);
 
-    Allocation AttemptToAllocate(const uint64_t size, const unsigned long allignment, const bool deviceLocal);
+    Allocation AttemptToAllocate(const uint64_t size, const unsigned long allignment, const bool deviceLocal, const std::string &name);
 
     void AllocateDevicePool();
     void AllocateHostMappablePool();

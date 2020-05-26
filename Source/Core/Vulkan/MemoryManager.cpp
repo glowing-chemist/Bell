@@ -265,7 +265,7 @@ void MemoryManager::MergePool(std::vector<std::list<PoolFragment> > &pools)
 }
 
 
-Allocation MemoryManager::AttemptToAllocate(const uint64_t size, const unsigned long allignment, const bool hostMappable)
+Allocation MemoryManager::AttemptToAllocate(const uint64_t size, const unsigned long allignment, const bool hostMappable, const std::string& name)
 {
 	auto& memPools = hostMappable ? mHostMappablePools : mDeviceLocalPools;
 
@@ -304,6 +304,9 @@ Allocation MemoryManager::AttemptToAllocate(const uint64_t size, const unsigned 
                     pool.insert(inFrontIt, fragToInsert);
                 }
                 fragIter->free = false;
+#ifndef NDEBUG
+                fragIter->name = name;
+#endif
                 return alloc;
             }
         }
@@ -316,25 +319,27 @@ Allocation MemoryManager::AttemptToAllocate(const uint64_t size, const unsigned 
 }
 
 
-Allocation MemoryManager::Allocate(const uint64_t size, const unsigned long allignment,  const bool hostMappable)
+Allocation MemoryManager::Allocate(const uint64_t size, const unsigned long allignment,  const bool hostMappable, const std::string &name)
 {
 
-    Allocation alloc = AttemptToAllocate(size, allignment, hostMappable);
+    Allocation alloc = AttemptToAllocate(size, allignment, hostMappable, name);
     if(alloc.size != 0) return alloc;
 
     MergeFreePools(); // if we failed to allocate, perform a defrag of the pools and try again.
-    alloc = AttemptToAllocate(size, allignment, hostMappable);
-    if(alloc.size != 0) return alloc;
+    alloc = AttemptToAllocate(size, allignment, hostMappable, name);
+    if(alloc.size != 0)
+        return alloc;
 
 	if(hostMappable)
 	{
         AllocateHostMappablePool();
-	} else
+    }
+    else
 	{
         AllocateDevicePool();
     }
     MergeFreePools();
-    return AttemptToAllocate(size, allignment, hostMappable); // should succeed or we are out of memory :(
+    return AttemptToAllocate(size, allignment, hostMappable, name); // should succeed or we are out of memory :(
 }
 
 

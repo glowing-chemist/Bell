@@ -20,7 +20,7 @@ VulkanBuffer::VulkanBuffer(RenderDevice* dev,
 
     mBuffer = device->createBuffer(mSize, getVulkanBufferUsage(mUsage));
     const vk::MemoryRequirements bufferMemReqs = device->getMemoryRequirements(mBuffer);
-    mBufferMemory = device->getMemoryManager()->Allocate(bufferMemReqs.size, bufferMemReqs.alignment, isMappable());
+    mBufferMemory = device->getMemoryManager()->Allocate(bufferMemReqs.size, bufferMemReqs.alignment, isMappable(), mName);
     device->getMemoryManager()->BindBuffer(mBuffer, mBufferMemory);
 
 	if(mName != "")

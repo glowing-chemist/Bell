@@ -43,7 +43,7 @@ VulkanImage::VulkanImage(RenderDevice* dev,
 
     vk::MemoryRequirements ImageRequirements = device->getMemoryRequirements(mImage);
 
-    mImageMemory = device->getMemoryManager()->Allocate(ImageRequirements.size, ImageRequirements.alignment, false);
+    mImageMemory = device->getMemoryManager()->Allocate(ImageRequirements.size, ImageRequirements.alignment, false, debugName);
 
 	device->getMemoryManager()->BindImage(mImage, mImageMemory);
 
