@@ -60,22 +60,14 @@ void CommandPool::reserve(const uint32_t number)
         return;
 
     std::vector<vk::CommandBuffer>& commandBuffers = getCommandBuffers();
-    if(existingBuffers == 0)
+
+    std::vector<vk::CommandBuffer> newBuffers = allocateCommandBuffers(needed, true);
+    for(vk::CommandBuffer cmd : newBuffers)
     {
-        --needed;
-        auto commandBuffer = allocateCommandBuffers(1, true)[0];
+        vk::CommandBufferBeginInfo beginInfo{};
+        cmd.begin(beginInfo);
 
-        vk::CommandBufferBeginInfo primaryBegin{};
-
-        commandBuffer.begin(primaryBegin);
-
-        commandBuffers.push_back(commandBuffer);
     }
-
-    if(needed == 0)
-        return;
-
-    std::vector<vk::CommandBuffer> newBuffers = allocateCommandBuffers(needed, false);
     commandBuffers.insert(commandBuffers.end(), newBuffers.begin(), newBuffers.end());
 }
 
