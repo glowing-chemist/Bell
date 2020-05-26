@@ -395,19 +395,24 @@ void RenderGraph::bindInternalResources()
 	}
 
     // Now sort all resource bindings based on binding index.
-    for(auto& outputBinding : mOutputResources)
-        std::sort(outputBinding.begin(), outputBinding.end(), [](const ResourceBindingInfo& lhs, const ResourceBindingInfo& rhs)
-        {
-            return lhs.mResourceBinding < rhs.mResourceBinding;
-        });
-
-    for(auto& outputBinding : mInputResources)
-        std::sort(outputBinding.begin(), outputBinding.end(), [](const ResourceBindingInfo& lhs, const ResourceBindingInfo& rhs)
-        {
-            return lhs.mResourceBinding < rhs.mResourceBinding;
-        });
+    sortResourceBindings();
 }
 
+
+void RenderGraph::sortResourceBindings()
+{
+for(auto& outputBinding : mOutputResources)
+    std::sort(outputBinding.begin(), outputBinding.end(), [](const ResourceBindingInfo& lhs, const ResourceBindingInfo& rhs)
+    {
+        return lhs.mResourceBinding < rhs.mResourceBinding;
+    });
+
+for(auto& outputBinding : mInputResources)
+    std::sort(outputBinding.begin(), outputBinding.end(), [](const ResourceBindingInfo& lhs, const ResourceBindingInfo& rhs)
+    {
+        return lhs.mResourceBinding < rhs.mResourceBinding;
+    });
+}
 
 
 void RenderGraph::createInternalResource(RenderDevice* dev, const std::string& name, const Format format, const ImageUsage usage, const SizeClass size)
@@ -530,7 +535,7 @@ void RenderGraph::reorderTasks()
     mInputResources.swap(newInputBindings);
     mOutputResources.swap(newOutputBindings);
     mFrameBuffersNeedUpdating.swap(newFrameBuffersNeedUpdating);
-    mDescriptorsNeedUpdating.swap(mDescriptorsNeedUpdating);
+    mDescriptorsNeedUpdating.swap(newDescriptorsNeedUpdating);
 
 #ifndef NDEBUG // Enable to print out task submission order.
 

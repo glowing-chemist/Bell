@@ -420,7 +420,7 @@ void Engine::execute(RenderGraph& graph)
         mBoneIndexBuilder.reset();
     }
 
-	// Finalize graph internal state.
+    // Finalize graph internal state.
     if(mCompileGraph)
     {
         graph.compile(mRenderDevice);

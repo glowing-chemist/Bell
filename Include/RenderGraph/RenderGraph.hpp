@@ -144,6 +144,8 @@ private:
 
 	void reorderTasks();
 
+    void sortResourceBindings();
+
 	// Selecets the best task to execuet next based on some heuristics.
 	uint32_t selectNextTask(const std::vector<uint8_t>& dependancies, const TaskType) const;
 
@@ -158,6 +160,19 @@ private:
     std::vector<std::pair<TaskType, uint32_t>> mTaskOrder;
 	std::vector<bool> mDescriptorsNeedUpdating;
 	std::vector<bool> mFrameBuffersNeedUpdating;
+
+    // Hazard tracking info.
+    struct HazardTrackingInfo
+    {
+        uint32_t mResourceBinding;
+        Hazard mHazard;
+        SyncPoint mSrc;
+        SyncPoint mDst;
+        AttachmentType mNeededtype;
+        bool mImagetransition;
+        bool mInputResource;
+    };
+    std::vector<std::vector<HazardTrackingInfo>> mHazardInfo;
 
 	// Dependancy, Dependant
     std::vector<std::pair<uint32_t, uint32_t>> mTaskDependancies;
