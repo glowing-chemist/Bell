@@ -34,12 +34,6 @@ MemoryManager::MemoryManager(RenderDevice* dev) : DeviceChild{dev}
 
     AllocateDevicePool();
     AllocateHostMappablePool();
-    
-    mTransientDeviceLocalPools.resize(dev->getSwapChainImageCount());
-    for (uint32_t i = 0; i < dev->getSwapChainImageCount(); ++i)
-    {
-        mTransientDeviceLocalPools[i].push_back(allocateTransientPool());
-    }
 }
 
 
@@ -47,7 +41,6 @@ void MemoryManager::Destroy()
 {
     FreeDevicePools();
     FreeHostMappablePools();
-    destroyTransientPools();
 }
 
 
@@ -293,7 +286,6 @@ Allocation MemoryManager::AttemptToAllocate(const uint64_t size, const unsigned 
                 alloc.deviceLocal = true;
                 alloc.pool = poolNum;
                 alloc.size = size;
-                alloc.transient = false;
 
 				if(size + alignedOffset < (frag.size / 2))
 				{ // we'd be wasting more than half the fragment, so split it up
@@ -348,11 +340,6 @@ Allocation MemoryManager::Allocate(const uint64_t size, const unsigned long alli
 
 void MemoryManager::Free(Allocation alloc)
 {
-    // Don't attempt to free transient alloctions as we just reset the entire pool at the
-    // begginning of each frame.
-    if(alloc.transient)
-        return;
-
 	auto& pools = alloc.hostMappable ? mHostMappablePools : mDeviceLocalPools ;
     auto& pool  = pools[alloc.pool];
 
@@ -361,53 +348,6 @@ void MemoryManager::Free(Allocation alloc)
 		{
             frag.free = true;
         }
-    }
-}
-
-
-Allocation MemoryManager::allocateTransient(const uint64_t size, const unsigned long allignment, const bool hostMappable)
-{
-    BELL_ASSERT(!hostMappable, "Host mappable pools currently not supported for transient resoruces")
-
-    const auto frameIndex = getDevice()->getCurrentFrameIndex();
-    auto& framePools = mTransientDeviceLocalPools[frameIndex];
-
-    uint32_t poolIndex = 0;
-    for (auto& pool : framePools)
-    {
-        const auto requiredPosition = nextAlignedAddress(pool.mCurrentPosition, allignment);
-
-        if ((pool.mSize - requiredPosition) > size)
-        {
-            Allocation alloc{};
-            alloc.offset = requiredPosition;
-            alloc.fragOffset = pool.mCurrentPosition;
-            alloc.size = size;
-            alloc.pool = poolIndex;
-            alloc.deviceLocal = true;
-            alloc.hostMappable = hostMappable;
-            alloc.transient = true;
-
-            pool.mCurrentPosition = requiredPosition + size;
-
-            return alloc;
-        }
-        ++poolIndex;
-    }
-
-    // We failed to allocate so allocate another pool and take from that.
-    framePools.push_back(allocateTransientPool());
-
-    return allocateTransient(size, allignment, hostMappable);
-}
-
-
-void MemoryManager::resetTransientAllocations()
-{
-    const auto frameIndex = getDevice()->getCurrentFrameIndex();
-    for (auto& pool : mTransientDeviceLocalPools[frameIndex])
-    {
-        pool.mCurrentPosition = 0;
     }
 }
 
@@ -422,18 +362,9 @@ void MemoryManager::BindBuffer(vk::Buffer &buffer, const Allocation& alloc)
 
 void MemoryManager::BindImage(vk::Image &image, const Allocation& alloc)
 {
-    if (alloc.transient)
-    {
-        const transientMemoryInfo& pool = mTransientDeviceLocalPools[getDevice()->getCurrentFrameIndex()][alloc.pool];
+    const std::vector<MappableMemoryInfo>& pools = alloc.hostMappable ? mHostMappableMemoryBackers : mDeviceMemoryBackers;
 
-        static_cast<VulkanRenderDevice*>(getDevice())->bindImageMemory(image, pool.mBackingMemory, alloc.offset);
-    }
-    else
-    {
-        const std::vector<MappableMemoryInfo>& pools = alloc.hostMappable ? mHostMappableMemoryBackers : mDeviceMemoryBackers;
-
-        static_cast<VulkanRenderDevice*>(getDevice())->bindImageMemory(image, pools[alloc.pool].mBackingMemory, alloc.offset);
-    }
+    static_cast<VulkanRenderDevice*>(getDevice())->bindImageMemory(image, pools[alloc.pool].mBackingMemory, alloc.offset);
 }
 
 
@@ -460,37 +391,4 @@ void MemoryManager::UnMapAllocation(const MapInfo &info, const Allocation& alloc
 
 		static_cast<VulkanRenderDevice*>(getDevice())->flushMemoryRange(range);
 	}
-}
-
-
-MemoryManager::transientMemoryInfo MemoryManager::allocateTransientPool()
-{
-    constexpr vk::DeviceSize poolSize = 256 * 1024 * 1024;
-    vk::MemoryAllocateInfo allocInfo{ poolSize, static_cast<uint32_t>(mDeviceLocalPoolIndex) };
-
-    const vk::DeviceMemory memory = static_cast<VulkanRenderDevice*>(getDevice())->allocateMemory(allocInfo);
-
-    transientMemoryInfo pool{};
-    pool.mBackingMemory = memory;
-    pool.mBaseAddress = nullptr;
-    pool.mCurrentPosition = 0;
-    pool.mSize = poolSize;
-
-    BELL_LOG("Allocating a transient memory pool")
-
-    return pool;
-}
-
-
-void MemoryManager::destroyTransientPools()
-{
-    auto* device = static_cast<VulkanRenderDevice*>(getDevice());
-
-    for (auto& framePools : mTransientDeviceLocalPools)
-    {
-        for (auto& pool : framePools)
-        {
-            device->freeMemory(pool.mBackingMemory);
-        }
-    }
 }

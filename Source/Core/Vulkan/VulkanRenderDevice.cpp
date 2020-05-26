@@ -689,13 +689,7 @@ vulkanResources VulkanRenderDevice::generateVulkanResources(const RenderGraph& g
 
 vk::Framebuffer VulkanRenderDevice::createFrameBuffer(const RenderGraph& graph, const uint32_t taskIndex, const vk::RenderPass renderPass)
 {
-    auto outputBindings = *(graph.outputBindingBegin() + taskIndex);
-    // Sort the bindings by location within the frameBuffer.
-    // Resources aren't always bound in order so make sure that they are in order when we iterate over them.
-    std::sort(outputBindings.begin(), outputBindings.end(), [](const auto& lhs, const auto& rhs)
-    {
-        return lhs.mResourceBinding < rhs.mResourceBinding;
-    });
+    const auto& outputBindings = *(graph.outputBindingBegin() + taskIndex);
 
     std::vector<vk::ImageView> imageViews{};
     ImageExtent imageExtent;
@@ -816,7 +810,6 @@ void VulkanRenderDevice::startFrame()
         context->reset();
     clearDeferredResources();
     mPermanentDescriptorManager.reset();
-    mMemoryManager.resetTransientAllocations();
     ++mCurrentSubmission;
     ++mFinishedSubmission;
     mSubmissionCount = 0;

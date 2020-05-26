@@ -153,6 +153,7 @@ void RenderGraph::compile(RenderDevice* dev)
 	compileDependancies();
 	generateInternalResources(dev);
 	reorderTasks();
+    compileBarrierInfo();
 }
 
 
@@ -392,49 +393,21 @@ void RenderGraph::bindInternalResources()
 	{
 		bindImage(resourceEntry.mSlot, *resourceEntry.mResourceView);
 	}
-}
 
-
-void RenderGraph::createTransientImage(RenderDevice* dev, const std::string& name, const Format format, const ImageUsage usage, const SizeClass size)
-{
-    const auto [width, height] = [=]() -> std::pair<uint32_t, uint32_t>
-    {
-        const uint32_t swapChainWidth = dev->getSwapChain()->getSwapChainImageWidth();
-        const uint32_t swapChainHeight = dev->getSwapChain()->getSwapChainImageHeight();
-
-        switch(size)
+    // Now sort all resource bindings based on binding index.
+    for(auto& outputBinding : mOutputResources)
+        std::sort(outputBinding.begin(), outputBinding.end(), [](const ResourceBindingInfo& lhs, const ResourceBindingInfo& rhs)
         {
-            case SizeClass::Swapchain:
-                return {swapChainWidth, swapChainHeight};
+            return lhs.mResourceBinding < rhs.mResourceBinding;
+        });
 
-            case SizeClass::HalfSwapchain:
-                return {swapChainWidth / 2, swapChainHeight / 2 };
-
-            case SizeClass::QuarterSwapchain:
-                return {swapChainWidth / 4, swapChainHeight / 4 };
-
-			case SizeClass::DoubleSwapchain:
-				return { swapChainWidth * 2, swapChainHeight * 2 };
-
-			case SizeClass::QuadrupleSwapChain:
-				return { swapChainWidth * 4, swapChainHeight * 4 };
-
-            default:
-                BELL_TRAP;
-                return {swapChainWidth, swapChainHeight};
-        }
-    }();
-
-    Image generatedImage(dev, format, usage | ImageUsage::Transient,
-                         width, height, 1, 1, 1, 1, name);
-
-    ImageView view{generatedImage, usage & ImageUsage::DepthStencil ?
-                                        ImageViewType::Depth :  ImageViewType::Colour};
-
-    mNonPersistentImages.emplace_back(generatedImage, view);
-
-    bindImage(name, view);
+    for(auto& outputBinding : mInputResources)
+        std::sort(outputBinding.begin(), outputBinding.end(), [](const ResourceBindingInfo& lhs, const ResourceBindingInfo& rhs)
+        {
+            return lhs.mResourceBinding < rhs.mResourceBinding;
+        });
 }
+
 
 
 void RenderGraph::createInternalResource(RenderDevice* dev, const std::string& name, const Format format, const ImageUsage usage, const SizeClass size)
@@ -771,6 +744,12 @@ const ShaderResourceSet& RenderGraph::getBoundShaderResourceSet(const std::strin
 }
 
 
+void RenderGraph::compileBarrierInfo()
+{
+
+}
+
+
 std::vector<BarrierRecorder> RenderGraph::generateBarriers(RenderDevice* dev)
 {
 	std::vector<BarrierRecorder> barriers{};
@@ -1007,9 +986,6 @@ void RenderGraph::resetBindings()
 
 	for (auto& resourceSet : mOutputResources)
 		resourceSet.clear();
-
-	// clear non-persistent resources
-	mNonPersistentImages.clear();
 }
 
 

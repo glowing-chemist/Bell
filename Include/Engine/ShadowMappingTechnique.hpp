@@ -24,9 +24,9 @@ public:
 
     virtual void bindResources(RenderGraph& graph) override 
     {
-        graph.createTransientImage(getDevice(), kShadowMap, Format::R8UNorm, ImageUsage::Storage | ImageUsage::Sampled, SizeClass::Swapchain);
-        graph.createTransientImage(getDevice(), kShadowMapBlurIntermediate, Format::RG32Float, ImageUsage::Storage | ImageUsage::Sampled, SizeClass::DoubleSwapchain);
-        graph.createTransientImage(getDevice(), kShadowMapBlured, Format::RG32Float, ImageUsage::Storage | ImageUsage::Sampled, SizeClass::DoubleSwapchain);
+        graph.bindImage(kShadowMap, *mShadowMapView);
+        graph.bindImage(kShadowMapBlurIntermediate, *mShadowMapIntermediateView);
+        graph.bindImage(kShadowMapBlured, *mShadowMapBluredView);
     }
 
 private:
@@ -41,6 +41,16 @@ private:
 
     ComputePipelineDescription mResolveDesc;
     TaskID                     mResolveTaskID;
+
+    PerFrameResource<Image>    mShadowMap;
+    PerFrameResource<ImageView> mShadowMapView;
+
+    PerFrameResource<Image>    mShadowMapIntermediate;
+    PerFrameResource<ImageView> mShadowMapIntermediateView;
+
+    PerFrameResource<Image>    mShadowMapBlured;
+    PerFrameResource<ImageView> mShadowMapBluredView;
+
 };
 
 #endif

@@ -15,7 +15,17 @@ ShadowMappingTechnique::ShadowMappingTechnique(Engine* eng, RenderGraph& graph) 
         true, BlendMode::None, BlendMode::None, true, DepthTest::LessEqual, Primitive::TriangleList),
     mBlurXDesc{ eng->getShader("Shaders/blurXrg32f.comp") },
     mBlurYDesc{ eng->getShader("Shaders/blurYrg32f.comp") },
-    mResolveDesc{eng->getShader("./Shaders/ResolveVarianceShadowMap.comp")}
+    mResolveDesc{eng->getShader("./Shaders/ResolveVarianceShadowMap.comp")},
+
+    mShadowMap(getDevice(), Format::R8UNorm, ImageUsage::Storage | ImageUsage::Sampled, getDevice()->getSwapChain()->getSwapChainImageWidth(), getDevice()->getSwapChain()->getSwapChainImageHeight(),
+               1, 1, 1, 1, "ShadowMap"),
+    mShadowMapView(mShadowMap, ImageViewType::Colour),
+    mShadowMapIntermediate(getDevice(), Format::RG32Float, ImageUsage::Storage | ImageUsage::Sampled, getDevice()->getSwapChain()->getSwapChainImageWidth() * 2, getDevice()->getSwapChain()->getSwapChainImageHeight() * 2,
+               1, 1, 1, 1, "ShadowMapIntermediate"),
+    mShadowMapIntermediateView(mShadowMapIntermediate, ImageViewType::Colour),
+    mShadowMapBlured(getDevice(), Format::RG32Float, ImageUsage::Storage | ImageUsage::Sampled, getDevice()->getSwapChain()->getSwapChainImageWidth() * 2, getDevice()->getSwapChain()->getSwapChainImageHeight() * 2,
+               1, 1, 1, 1, "ShadowMapBlured"),
+    mShadowMapBluredView(mShadowMapBlured, ImageViewType::Colour)
 {
     GraphicsTask shadowTask{ "ShadowMapping", mDesc };
     shadowTask.setVertexAttributes(VertexAttributes::Position4 |
@@ -57,6 +67,13 @@ ShadowMappingTechnique::ShadowMappingTechnique(Engine* eng, RenderGraph& graph) 
 
 void ShadowMappingTechnique::render(RenderGraph& graph, Engine*)
 {
+    (*mShadowMap)->updateLastAccessed();
+    (*mShadowMapView)->updateLastAccessed();
+    (*mShadowMapIntermediate)->updateLastAccessed();
+    (*mShadowMapIntermediateView)->updateLastAccessed();
+    (*mShadowMapBlured)->updateLastAccessed();
+    (*mShadowMapBluredView)->updateLastAccessed();
+
     GraphicsTask& shadowTask = static_cast<GraphicsTask&>(graph.getTask(mShadowTask));
     ComputeTask& blurXTask = static_cast<ComputeTask&>(graph.getTask(mBlurXTaskID));
     ComputeTask& blurYTask = static_cast<ComputeTask&>(graph.getTask(mBlurYTaskID));

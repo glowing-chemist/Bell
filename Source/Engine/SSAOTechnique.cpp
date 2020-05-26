@@ -51,7 +51,13 @@ SSAOTechnique::SSAOTechnique(Engine* eng, RenderGraph& graph) :
     mBlurXDesc{eng->getShader("Shaders/blurXR8.comp")},
     mBlurYDesc{eng->getShader("Shaders/blurYR8.comp")},
     mSSAOBuffer(getDevice(), BufferUsage::Uniform, sizeof(SSAOBuffer), sizeof(SSAOBuffer), "SSAO Offsets"),
-    mSSAOBufferView(mSSAOBuffer)
+    mSSAOBufferView(mSSAOBuffer),
+    mSSAO(getDevice(), Format::R8UNorm, ImageUsage::Sampled | ImageUsage::Storage, getDevice()->getSwapChain()->getSwapChainImageWidth() / 2,
+          getDevice()->getSwapChain()->getSwapChainImageHeight() / 2, 1, 1, 1, 1, "SSAO"),
+    mSSAOView(mSSAO, ImageViewType::Colour),
+    mSSAOIntermediate(getDevice(), Format::R8UNorm, ImageUsage::Sampled | ImageUsage::Storage, getDevice()->getSwapChain()->getSwapChainImageWidth() / 2,
+          getDevice()->getSwapChain()->getSwapChainImageHeight() / 2, 1, 1, 1, 1, "SSAOIntermediate"),
+    mSSAOIntermediateView(mSSAOIntermediate, ImageViewType::Colour)
 {
     // full screen triangle so no vertex attributes.
     GraphicsTask task{"SSAO", mPipelineDesc};
@@ -101,6 +107,11 @@ SSAOTechnique::SSAOTechnique(Engine* eng, RenderGraph& graph) :
 
 void SSAOTechnique::render(RenderGraph&, Engine*)
 {
+    (*mSSAO)->updateLastAccessed();
+    (*mSSAOView)->updateLastAccessed();
+    (*mSSAOIntermediate)->updateLastAccessed();
+    (*mSSAOIntermediateView)->updateLastAccessed();
+
     SSAOBuffer ssaoBuffer;
     const auto offsets = generateSphericalOffsets<16>();
     ssaoBuffer.mScale = 0.002f;
@@ -122,7 +133,13 @@ SSAOImprovedTechnique::SSAOImprovedTechnique(Engine* eng, RenderGraph& graph) :
     mBlurXDesc{eng->getShader("Shaders/blurXR8.comp")},
     mBlurYDesc{eng->getShader("Shaders/blurYR8.comp")},
     mSSAOBuffer(getDevice(), BufferUsage::Uniform, sizeof(SSAOBuffer), sizeof(SSAOBuffer), "SSAO Offsets"),
-    mSSAOBufferView(mSSAOBuffer)
+    mSSAOBufferView(mSSAOBuffer),
+    mSSAO(getDevice(), Format::R8UNorm, ImageUsage::Sampled | ImageUsage::Storage, getDevice()->getSwapChain()->getSwapChainImageWidth(),
+          getDevice()->getSwapChain()->getSwapChainImageHeight(), 1, 1, 1, 1, "SSAO"),
+    mSSAOView(mSSAO, ImageViewType::Colour),
+    mSSAOIntermediate(getDevice(), Format::R8UNorm, ImageUsage::Sampled | ImageUsage::Storage, getDevice()->getSwapChain()->getSwapChainImageWidth(),
+          getDevice()->getSwapChain()->getSwapChainImageHeight(), 1, 1, 1, 1, "SSAOIntermediate"),
+    mSSAOIntermediateView(mSSAOIntermediate, ImageViewType::Colour)
 {
     GraphicsTask task{ "SSAO", mPipelineDesc };
     task.setVertexAttributes(0);
@@ -137,7 +154,7 @@ SSAOImprovedTechnique::SSAOImprovedTechnique(Engine* eng, RenderGraph& graph) :
     task.addOutput(kSSAORough, AttachmentType::RenderTarget2D, Format::R8UNorm, SizeClass::Swapchain, LoadOp::Nothing);
 
     task.setRecordCommandsCallback(
-        [](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+        [](Executor* exec, Engine*, const std::vector<const MeshInstance*>&)
         {
             exec->draw(0, 3);
         }
@@ -170,8 +187,13 @@ SSAOImprovedTechnique::SSAOImprovedTechnique(Engine* eng, RenderGraph& graph) :
 }
 
 
-void SSAOImprovedTechnique::render(RenderGraph& graph, Engine*)
+void SSAOImprovedTechnique::render(RenderGraph&, Engine*)
 {
+    (*mSSAO)->updateLastAccessed();
+    (*mSSAOView)->updateLastAccessed();
+    (*mSSAOIntermediate)->updateLastAccessed();
+    (*mSSAOIntermediateView)->updateLastAccessed();
+
     SSAOBuffer ssaoBuffer;
     const auto offsets = generateSphericalOffsets<16>();
     ssaoBuffer.mScale = 0.002f;

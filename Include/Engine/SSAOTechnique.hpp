@@ -28,9 +28,8 @@ public:
 	{
 		graph.bindBuffer(kSSAOBuffer, *mSSAOBufferView);
 
-        // request the needed resources.
-        graph.createTransientImage(getDevice(), kSSAO, Format::R8UNorm, ImageUsage::Sampled | ImageUsage::Storage, SizeClass::HalfSwapchain);
-        graph.createTransientImage(getDevice(), kSSAOBlurIntermidiate, Format::R8UNorm, ImageUsage::Sampled | ImageUsage::Storage, SizeClass::HalfSwapchain);
+        graph.bindImage(kSSAO, *mSSAOView);
+        graph.bindImage(kSSAOBlurIntermidiate, *mSSAOIntermediateView);
 
 	}
 
@@ -48,6 +47,12 @@ private:
 
 	PerFrameResource<Buffer> mSSAOBuffer;
 	PerFrameResource<BufferView> mSSAOBufferView;
+
+    PerFrameResource<Image> mSSAO;
+    PerFrameResource<ImageView> mSSAOView;
+
+    PerFrameResource<Image> mSSAOIntermediate;
+    PerFrameResource<ImageView> mSSAOIntermediateView;
 };
 
 
@@ -66,9 +71,8 @@ public:
 	{
 		graph.bindBuffer(kSSAOBuffer, *mSSAOBufferView);
 
-        // request the needed resources.
-        graph.createTransientImage(getDevice(), kSSAO, Format::R8UNorm, ImageUsage::Sampled | ImageUsage::Storage, SizeClass::Swapchain);
-        graph.createTransientImage(getDevice(), kSSAOBlurIntermidiate, Format::R8UNorm, ImageUsage::Sampled | ImageUsage::Storage, SizeClass::Swapchain);
+        graph.bindImage(kSSAO, *mSSAOView);
+        graph.bindImage(kSSAOBlurIntermidiate, *mSSAOIntermediateView);
 	}
 
 	virtual void render(RenderGraph& graph, Engine*) override final;
@@ -85,6 +89,12 @@ private:
 
 	PerFrameResource<Buffer> mSSAOBuffer;
 	PerFrameResource<BufferView> mSSAOBufferView;
+
+    PerFrameResource<Image> mSSAO;
+    PerFrameResource<ImageView> mSSAOView;
+
+    PerFrameResource<Image> mSSAOIntermediate;
+    PerFrameResource<ImageView> mSSAOIntermediateView;
 };
 
 

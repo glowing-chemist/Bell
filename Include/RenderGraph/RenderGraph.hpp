@@ -64,9 +64,6 @@ public:
 
 	void bindInternalResources();
 
-    // Create and bind transient resources.
-    void createTransientImage(RenderDevice*, const std::string& name, const Format, const ImageUsage, const SizeClass);
-
     RenderTask& getTask(const uint32_t);
     const RenderTask& getTask(const uint32_t) const;
 	RenderTask& getTask(TaskType, uint32_t);
@@ -143,6 +140,7 @@ private:
 	// compiles the dependancy graph based on slots (assuming resources are finished writing to by their first read from)
 	void compileDependancies();
 	void generateInternalResources(RenderDevice*);
+    void compileBarrierInfo();
 
 	void reorderTasks();
 
@@ -172,18 +170,6 @@ private:
 	std::vector<std::pair<std::string, BufferView>> mBufferViews;
     std::vector<std::pair<std::string, Sampler>> mSamplers;
 	std::vector<std::pair<std::string, ShaderResourceSet>> mSRS;
-
-	// Store the images created per frame.
-	struct NonPersistentImage
-	{
-		NonPersistentImage(const Image& i, const ImageView& v) :
-			mImage{i},
-			mImageView{v} {}
-
-		Image mImage;
-		ImageView mImageView;
-	};
-	std::vector<NonPersistentImage> mNonPersistentImages;
 
 	struct InternalResourceEntry
 	{

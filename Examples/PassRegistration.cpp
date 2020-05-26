@@ -221,7 +221,10 @@ int main()
 		
         if (graphicsOptions.mDefered)
 		{
-            engine.registerPass(PassType::GBuffer);
+            if(graphicsOptions.preDepth)
+                engine.registerPass(PassType::GBufferPreDepth);
+            else
+                engine.registerPass(PassType::GBuffer);
 
             engine.registerPass(PassType::DeferredPBRIBL);
 
