@@ -16,19 +16,22 @@ SamplerState linearSampler;
 
 #include "RayMarching.hlsl"
 
-float3 normalsFromDepth(float depth, float2 texcoords) {
+//#define RAY_MARCHING
+
+float3 normalsFromDepth(float depth, float2 texcoords)
+{
   
   const float2 yoffset = float2(0.0,0.001);
   const float2 xoffset = float2(0.001,0.0);
   
-  float depth1 = LinearDepth.Sample(linearSampler, texcoords + yoffset);
-  float depth2 = LinearDepth.Sample(linearSampler, texcoords + xoffset);
+  float depth1 = LinearDepth.SampleLevel(linearSampler, texcoords + yoffset, 0.0f);
+  float depth2 = LinearDepth.SampleLevel(linearSampler, texcoords + xoffset, 0.0f);
   
   float3 p1 = float3(yoffset, depth1 - depth);
   float3 p2 = float3(xoffset, depth2 - depth);
   
   float3 normal = cross(p1, p2);
-  normal.z = -normal.z;
+  //normal.z = -normal.z;
   
   return normalize(normal);
 }
@@ -39,15 +42,14 @@ float main(PositionAndUVVertOutput vertInput)
   if(depth == 1.0f)
     return depth;
  
-  const float3 position = float3( (vertInput.uv - 0.5f) * 2.0, depth);
   float3 normal = normalsFromDepth(depth, vertInput.uv);
-  // bring in to view space
-  normal = normalize(mul((float3x3)camera.view, normal));
-  normal.z *= -1.0f; // Put positive z facing away from the camera.
+
+#ifdef RAY_MARCHING
 
   uint width, height, mips;
   LinearDepth.GetDimensions(4, width, height, mips);
 
+  const float3 position = float3( (vertInput.uv - 0.5f) * 2.0, depth);
   float occlusion = 1.0;
   for(int i = 0; i < 16; i++) 
   {
@@ -70,6 +72,31 @@ float main(PositionAndUVVertOutput vertInput)
         }
     }
   }
+
+#else
+
+  const float3 position = float3( vertInput.uv, depth);
+  const float radius = 0.0002f;
+
+  const uint maxSize = 4;// 2 x 2
+  const uint flattenedPosition = (uint(camera.frameBufferSize.y *  vertInput.uv.y) % 3) * (uint(camera.frameBufferSize.x *  vertInput.uv.x) % 3);
+  const float3 random = Hamersley_uniform(flattenedPosition, maxSize);
+
+  float occlusion = 0.0;
+  const float radius_depth = radius / depth;
+  for(int i = 0; i < 16; i++)
+  {
+    float3 ray = radius_depth * reflect(ssaoOffsets.offsets[i].xyz, random);
+    float3 hemi_ray = position + sign(dot(normalize(ray),normal)) * ray;
+    
+    float occ_depth = LinearDepth.SampleLevel(linearSampler, saturate(hemi_ray.xy), 0.0f);
+    
+    occlusion += uint(hemi_ray.z < occ_depth);
+  }
   
+  occlusion *= 1.0f / 16.0f;
+
+#endif
+
   return saturate(occlusion);
 }
