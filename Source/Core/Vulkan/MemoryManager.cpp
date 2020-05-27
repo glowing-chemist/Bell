@@ -287,8 +287,8 @@ Allocation MemoryManager::AttemptToAllocate(const uint64_t size, const unsigned 
                 alloc.pool = poolNum;
                 alloc.size = size;
 
-				if(size + alignedOffset < (frag.size / 2))
-				{ // we'd be wasting more than half the fragment, so split it up
+                if(size + alignedOffset < frag.size)
+                { // Split the block.
                     PoolFragment fragToInsert;
                     fragToInsert.DeviceLocal = true;
                     fragToInsert.free = true;
