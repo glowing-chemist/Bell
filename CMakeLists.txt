@@ -261,6 +261,7 @@ set(SHADERS
 	Transparent.frag
 	ResolveCascadeVarianceShadowMap.comp
 	Skinning.comp
+	RayMarching.hlsl
     )
 
 foreach(shader ${SHADERS})
