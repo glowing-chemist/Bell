@@ -27,7 +27,7 @@ float main(PositionAndUVVertOutput vertInput)
   const uint flattenedPosition = (uint(camera.frameBufferSize.y *  vertInput.uv.y) % 3) * (uint(camera.frameBufferSize.x *  vertInput.uv.x) % 3);
   const float3 random = Hamersley_uniform(flattenedPosition, maxSize);
 
-  const float depth = linearisedDepth.Sample(linearSampler, vertInput.uv);
+  const float depth = linearisedDepth.SampleLevel(linearSampler, vertInput.uv, 0.0f);
   if(depth == 1.0f)
     return depth;
  
@@ -45,7 +45,7 @@ float main(PositionAndUVVertOutput vertInput)
     float3 ray = radius_depth * reflect(ssaoOffsets.offsets[i].xyz, random);
     float3 hemi_ray = position + sign(dot(normalize(ray),normal)) * ray;
     
-    float occ_depth = linearisedDepth.Sample(linearSampler, saturate(hemi_ray.xy));
+    float occ_depth = linearisedDepth.SampleLevel(linearSampler, saturate(hemi_ray.xy), 0.0f);
     
     occlusion += float(hemi_ray.z < occ_depth);
   }
