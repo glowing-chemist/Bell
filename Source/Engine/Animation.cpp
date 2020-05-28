@@ -106,12 +106,21 @@ void Animation::readNodeHierarchy(const aiAnimation* anim, const aiString& name,
     BELL_ASSERT(node, "Unable to find node matching anim node")
     const aiNodeAnim* animNode = findNodeAnim(anim, nodeName);
 
-    getParentTransform(anim, node, 0.0);
-    getParentTransform(anim, node, mNumTicks);
+    //getParentTransform(anim, node, 0.0);
+    //getParentTransform(anim, node, mNumTicks);
+
+    struct DoubleComparator
+    {
+        bool operator()(const double lhs, const double rhs) const
+        {
+            const double diff = rhs - lhs;
+            return diff > 0.001;
+        }
+    };
 
     if(animNode)
     {
-        std::set<double> uniqueTicks;
+        std::set<double, DoubleComparator> uniqueTicks;
         for(uint32_t i = 0; i < animNode->mNumPositionKeys; ++i)
         {
             uniqueTicks.insert(animNode->mPositionKeys[i].mTime);
@@ -138,6 +147,8 @@ float4x4 Animation::getParentTransform(const aiAnimation* anim, const aiNode* pa
     float4x4 nodeTransformation(aiMatrix4x4ToFloat4x4(parent->mTransformation));
     std::string nodeName(parent->mName.data);
     const aiNodeAnim* nodeAnim = findNodeAnim(anim, nodeName);
+
+    BELL_ASSERT(tick <= mNumTicks, "Tick out of bounds")
 
     if (nodeAnim)
     {
@@ -191,17 +202,20 @@ float4x4 Animation::interpolateScale(double time, const aiNodeAnim* pNodeAnim)
         uint32_t frameIndex = 0;
         for (uint32_t i = 0; i < pNodeAnim->mNumScalingKeys - 1; i++)
         {
-            if (time <= (float)pNodeAnim->mScalingKeys[i + 1].mTime)
+            if (time <= pNodeAnim->mScalingKeys[i + 1].mTime)
             {
                 frameIndex = i;
                 break;
             }
         }
 
+        BELL_ASSERT((frameIndex + 1) < pNodeAnim->mNumScalingKeys, "frame index out of bounds")
+
         aiVectorKey currentFrame = pNodeAnim->mScalingKeys[frameIndex];
         aiVectorKey nextFrame = pNodeAnim->mScalingKeys[(frameIndex + 1) % pNodeAnim->mNumScalingKeys];
 
         float delta = (time - (float)currentFrame.mTime) / (float)(nextFrame.mTime - currentFrame.mTime);
+        BELL_ASSERT(delta >= 0.0 && delta <= 1.0, "Delta out of range")
 
         const aiVector3D& start = currentFrame.mValue;
         const aiVector3D& end = nextFrame.mValue;
@@ -226,17 +240,20 @@ float4x4 Animation::interpolateTranslation(double time, const aiNodeAnim* pNodeA
         uint32_t frameIndex = 0;
         for (uint32_t i = 0; i < pNodeAnim->mNumPositionKeys - 1; i++)
         {
-            if (time <= (float)pNodeAnim->mPositionKeys[i + 1].mTime)
+            if (time <= pNodeAnim->mPositionKeys[i + 1].mTime)
             {
                 frameIndex = i;
                 break;
             }
         }
 
+        BELL_ASSERT((frameIndex + 1) < pNodeAnim->mNumPositionKeys, "frame index out of bounds")
+
         aiVectorKey currentFrame = pNodeAnim->mPositionKeys[frameIndex];
         aiVectorKey nextFrame = pNodeAnim->mPositionKeys[(frameIndex + 1) % pNodeAnim->mNumPositionKeys];
 
         float delta = (time - (float)currentFrame.mTime) / (float)(nextFrame.mTime - currentFrame.mTime);
+        BELL_ASSERT(delta >= 0.0 && delta <= 1.0, "Delta out of range")
 
         const aiVector3D& start = currentFrame.mValue;
         const aiVector3D& end = nextFrame.mValue;
@@ -261,17 +278,20 @@ float4x4 Animation::interpolateRotation(double time, const aiNodeAnim* pNodeAnim
         uint32_t frameIndex = 0;
         for (uint32_t i = 0; i < pNodeAnim->mNumRotationKeys - 1; i++)
         {
-            if (time <= (float)pNodeAnim->mRotationKeys[i + 1].mTime)
+            if (time <= pNodeAnim->mRotationKeys[i + 1].mTime)
             {
                 frameIndex = i;
                 break;
             }
         }
 
+        BELL_ASSERT((frameIndex + 1) < pNodeAnim->mNumRotationKeys, "frame index out of bounds")
+
         aiQuatKey currentFrame = pNodeAnim->mRotationKeys[frameIndex];
         aiQuatKey nextFrame = pNodeAnim->mRotationKeys[(frameIndex + 1) % pNodeAnim->mNumRotationKeys];
 
         float delta = (time - (float)currentFrame.mTime) / (float)(nextFrame.mTime - currentFrame.mTime);
+        BELL_ASSERT(delta >= 0.0 && delta <= 1.0, "Delta out of range")
 
         const aiQuaternion& start = currentFrame.mValue;
         const aiQuaternion& end = nextFrame.mValue;

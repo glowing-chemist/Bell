@@ -706,7 +706,8 @@ void Editor::drawAssistantWindow()
                         uint32_t i = 0;
                         for(const auto& [name, _] : animations)
                         {
-                            char nameBuffer[12];
+                            BELL_ASSERT(name.size() < 50, "Increase size of buffer")
+                            char nameBuffer[64];
                             sprintf(nameBuffer, name.empty() ? "Animation %d\n" : name.c_str(), i);
                             if(ImGui::Button(nameBuffer))
                             {

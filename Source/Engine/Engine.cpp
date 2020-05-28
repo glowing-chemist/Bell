@@ -520,7 +520,7 @@ void Engine::tickAnimations()
     elapsedTime /= 1000000000.0;
     mAnimationLastTicked = currentTime;
     uint64_t boneOffset = 0;
-    std::vector<float4x4> boneMatracies;
+    std::vector<float4x4> boneMatracies{};
 
     for(auto& animEntry : mActiveAnimations)
     {
@@ -530,7 +530,7 @@ void Engine::tickAnimations()
         animEntry.mTick += elapsedTime * ticksPerSec * animEntry.mSpeedModifier;
         animEntry.mBoneOffset = boneOffset;
 
-        if(animEntry.mTick <= animation.getTotalTicks())
+        if((animation.getTotalTicks() - animEntry.mTick) > 0.01)
         {
             std::vector<float4x4> matracies  = animation.calculateBoneMatracies(*instance->mMesh, animEntry.mTick);
             boneOffset += matracies.size();
@@ -546,7 +546,7 @@ void Engine::tickAnimations()
     mActiveAnimations.erase(std::remove_if(mActiveAnimations.begin(), mActiveAnimations.end(), [this](const AnimationEntry& entry)
     {
         Animation& animation = mCurrentScene->getAnimation(entry.mMesh, entry.mName);
-        return animation.getTotalTicks() < entry.mTick;
+        return (entry.mTick - animation.getTotalTicks()) > 0.01;
     }), mActiveAnimations.end());
 }
 
