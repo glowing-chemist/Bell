@@ -18,3 +18,5 @@ pictured below is a forward IBL render graph in this editor.
 And the frame it produces in the scene preview window.
 
 ![Scene preview showing forward IBLcrendering](https://github.com/glowing-chemist/Bell/blob/master/Assets/Screenshots/helmet.png)
+
+![Animation](https://github.com/glowing-chemist/Bell/blob/master/Assets/Screenshots/skinning.gif)

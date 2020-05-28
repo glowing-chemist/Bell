@@ -106,8 +106,8 @@ void Animation::readNodeHierarchy(const aiAnimation* anim, const aiString& name,
     BELL_ASSERT(node, "Unable to find node matching anim node")
     const aiNodeAnim* animNode = findNodeAnim(anim, nodeName);
 
-    //getParentTransform(anim, node, 0.0);
-    //getParentTransform(anim, node, mNumTicks);
+    getParentTransform(anim, node, 0.0);
+    getParentTransform(anim, node, mNumTicks);
 
     struct DoubleComparator
     {
