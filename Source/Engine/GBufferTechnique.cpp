@@ -4,7 +4,7 @@
 
 GBufferTechnique::GBufferTechnique(Engine* eng, RenderGraph& graph) :
 	Technique{"GBuffer", eng->getDevice()},
-    	mPipelineDescription{eng->getShader("./Shaders/GBufferPassThrough.vert"),
+        mPipelineDescription{eng->getShader("./Shaders/GBufferPassThrough.vert"),
                          eng->getShader("./Shaders/GBuffer.frag"),
                          Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
                                getDevice()->getSwapChain()->getSwapChainImageHeight()},

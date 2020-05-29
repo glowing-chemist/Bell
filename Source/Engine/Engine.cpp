@@ -502,13 +502,10 @@ void Engine::startAnimation(const InstanceID id, const std::string& name, const 
 
 void Engine::terimateAnimation(const InstanceID id, const std::string& name)
 {
-    auto it = std::find_if(mActiveAnimations.begin(), mActiveAnimations.end(), [id, name](const AnimationEntry& entry)
+    mActiveAnimations.erase(std::remove_if(mActiveAnimations.begin(), mActiveAnimations.end(), [id, name](const AnimationEntry& entry)
     {
         return entry.mName == name && entry.mMesh == id;
-    });
-
-    if(it != mActiveAnimations.end())
-        (*it).mLoop = false;
+    }));
 }
 
 
