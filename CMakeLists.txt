@@ -266,7 +266,7 @@ set(SHADERS
 
 foreach(shader ${SHADERS})
   ADD_CUSTOM_COMMAND(OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/Shaders/${shader}"
-    COMMAND cmake -E copy_if_different "${CMAKE_CURRENT_SOURCE_DIR}/Source/Engine/Shaders/${shader}" "${CMAKE_CURRENT_BINARY_DIR}/Shaders/${shader}"
+    COMMAND cmake -E copy_if_different "${CMAKE_CURRENT_SOURCE_DIR}/Source/Engine/Shaders/${shader}" "${CMAKE_BINARY_DIR}/Shaders/${shader}"
     DEPENDS   "${CMAKE_CURRENT_SOURCE_DIR}/Source/Engine/Shaders/${shader}"
     )
    list(APPEND shader_dest "${CMAKE_CURRENT_BINARY_DIR}/Shaders/${shader}")
