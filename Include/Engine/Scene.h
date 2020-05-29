@@ -60,6 +60,14 @@ inline uint32_t operator&(const uint32_t lhs, const MaterialType rhs)
 {
     return lhs & static_cast<uint32_t>(rhs);
 }
+inline uint32_t operator|(const MaterialType lhs, const MaterialType rhs)
+{
+    return static_cast<uint32_t>(lhs) | static_cast<uint32_t>(rhs);
+}
+inline uint32_t operator|(const uint32_t lhs, const MaterialType rhs)
+{
+    return lhs | static_cast<uint32_t>(rhs);
+}
 
 enum class PBRType
 {

@@ -210,7 +210,7 @@ public:
 
 private:
 
-	std::unique_ptr<Technique>                   getSingleTechnique(const PassType);
+    std::unique_ptr<Technique>                   getSingleTechnique(const PassType);
 
     RenderInstance* mRenderInstance;
     RenderDevice* mRenderDevice;
@@ -223,7 +223,7 @@ private:
     BufferBuilder mVertexBuilder;
     BufferBuilder mIndexBuilder;
 
-	ShaderResourceSet mMaterials;
+    ShaderResourceSet mMaterials;
 
     Image mLTCMat;
     ImageView mLTCMatView;
@@ -231,18 +231,18 @@ private:
     ImageView mLTCAmpView;
     bool mInitialisedTLCTextures;
 
-	std::unordered_map < const StaticMesh*, std::pair<uint64_t, uint64_t>> mVertexCache;
+    std::unordered_map < const StaticMesh*, std::pair<uint64_t, uint64_t>> mVertexCache;
     std::unordered_map < const StaticMesh*, std::pair<uint64_t, uint64_t>> mTposeVertexCache;
 
     RenderGraph mCurrentRenderGraph;
     bool mCompileGraph;
     std::vector<std::unique_ptr<Technique>> mTechniques;
     uint64_t mPassesRegisteredThisFrame;
-	uint64_t mCurrentRegistredPasses;
+    uint64_t mCurrentRegistredPasses;
     std::vector<std::string> mShaderPrefix; // Containes defines for currently registered passes.
 
 
-	std::unordered_map<uint64_t, Shader> mShaderCache;
+    std::unordered_map<uint64_t, Shader> mShaderCache;
 
     Buffer mVertexBuffer;
     Buffer mIndexBuffer;
@@ -260,7 +260,7 @@ private:
 
 	// Global uniform buffers
 
-	CameraBuffer mCameraBuffer;
+    CameraBuffer mCameraBuffer;
     PerFrameResource<Buffer> mDeviceCameraBuffer;
 
     PerFrameResource<Buffer> mShadowCastingLight;
