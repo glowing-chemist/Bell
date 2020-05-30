@@ -69,7 +69,7 @@ void main(uint3 globalIndex : SV_DispatchThreadID)
 									float4(0.0f, 0.0f, 0.0f, 0.0f));
 	for(uint i = 0; i < weightsIndexSize.y; ++i)
 	{
-		BoneIndex index = boneWeights[meshInfo.mBoneIndiciesIndex + weightsIndexSize.x + i];
+		BoneIndex index = boneWeights[weightsIndexSize.x + i];
 		Bone bone = bones[meshInfo.mBoneIndex + index.mBone];
 
 		transform += bone.transform * index.mWeight;
