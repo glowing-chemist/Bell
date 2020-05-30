@@ -52,7 +52,7 @@ DebugAABBTechnique::DebugAABBTechnique(Engine* eng, RenderGraph& graph) :
     debugAABBTask.addOutput(kGlobalLighting, AttachmentType::RenderTarget2D, Format::RGBA8UNorm);
     debugAABBTask.addOutput(kGBufferDepth, AttachmentType::Depth, Format::D32Float);
     debugAABBTask.setRecordCommandsCallback(
-                [this](Executor* exec, Engine*, const std::vector<const MeshInstance*>& meshes)
+                [this](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>& meshes)
                 {
                     exec->bindVertexBuffer(this->mVertexBufferView, 0);
                     exec->bindIndexBuffer(this->mIndexBufferView, 0);
@@ -69,6 +69,33 @@ DebugAABBTechnique::DebugAABBTechnique(Engine* eng, RenderGraph& graph) :
 
                             exec->insertPushConsatnt(&AABBtransformation, sizeof(float4x4));
                             exec->indexedDraw(0, 0, 24);
+                        }
+                    }
+
+                    // Check all active animations and draw bone OBBs
+                    const std::vector<Engine::AnimationEntry>& activeAnims = eng->getActiveAnimations();
+                    for(const Engine::AnimationEntry& entry : activeAnims)
+                    {
+                        MeshInstance* inst = eng->getScene()->getMeshInstance(entry.mMesh);
+                        if(inst->getInstanceFlags() & InstanceFlags::DrawAABB)
+                        {
+                            const std::vector<StaticMesh::Bone>& skeleton = inst->mMesh->getSkeleton();
+                            Animation& activeAnim = inst->mMesh->getAnimation(entry.mName);
+                            std::vector<float4x4> boneTransforms = activeAnim.calculateBoneMatracies(*inst->mMesh, entry.mTick);
+                            BELL_ASSERT(boneTransforms.size() == skeleton.size(), "Bone size mismatch")
+
+                            for(uint32_t i = 0; i < skeleton.size(); ++i)
+                            {
+                                const float4x4& boneTransform = boneTransforms[i];
+                                const StaticMesh::Bone& bone = skeleton[i];
+
+                                const float3 sideLenghts = bone.mOBB.getSideLengths();
+                                const float3 centralPoint = bone.mOBB.getCentralPoint();
+
+                                float4x4 OBBTransformation = inst->getTransMatrix() * boneTransform * glm::translate(centralPoint) * glm::scale(float4x4(1.0f), sideLenghts);
+                                exec->insertPushConsatnt(&OBBTransformation, sizeof(float4x4));
+                                exec->indexedDraw(0, 0, 24);
+                            }
                         }
                     }
                 }

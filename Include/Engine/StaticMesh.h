@@ -68,15 +68,15 @@ public:
         return mVertexAttributes;
     }
 
-	uint32_t getVertexStride() const
-	{
-		return mVertexStride;
-	}
+    uint32_t getVertexStride() const
+    {
+	return mVertexStride;
+    }
 
-	uint64_t getVertexCount() const
-	{
-		return mVertexCount;
-	}
+    uint64_t getVertexCount() const
+    {
+	return mVertexCount;
+    }
 
     bool hasAnimations() const
     {
@@ -87,6 +87,7 @@ public:
     {
         std::string mName;
         float4x4 mInverseBindPose;
+	OBB mOBB;
     };
 
     const std::vector<Bone>& getSkeleton() const

@@ -167,40 +167,40 @@ public:
 
     void recordScene();
 
-	void execute(RenderGraph&);
+    void execute(RenderGraph&);
 
-	void startFrame()
-	{
-		mRenderDevice->startFrame();
-		mCurrentRenderGraph.resetBindings();
-	}
+    void startFrame()
+    {
+	mRenderDevice->startFrame();
+	mCurrentRenderGraph.resetBindings();
+    }
 
-	void endFrame()
-	{
-		mRenderDevice->endFrame(); 
-	}
+    void endFrame()
+    {
+	mRenderDevice->endFrame();
+    }
 
     void render();
-	void swap()
-		{ mRenderDevice->swap(); }
+    void swap()
+    { mRenderDevice->swap(); }
 
-	void flushWait()
-	{ mRenderDevice->flushWait(); }
+    void flushWait()
+    { mRenderDevice->flushWait(); }
 
     GLFWwindow* getWindow()
-        { return mWindow; }
+    { return mWindow; }
 
-	RenderDevice* getDevice()
-		{ return mRenderDevice; }
+    RenderDevice* getDevice()
+    { return mRenderDevice; }
 
     struct AnimationEntry
     {
-        std::string mName;
-        InstanceID mMesh;
-        float mSpeedModifier;
-        uint64_t mBoneOffset;
-        double mTick;
-        bool mLoop;
+	std::string mName;
+	InstanceID mMesh;
+	float mSpeedModifier;
+	uint64_t mBoneOffset;
+	double mTick;
+	bool mLoop;
     };
 
     const std::vector<AnimationEntry>& getActiveAnimations() const

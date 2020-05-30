@@ -168,10 +168,19 @@ void StaticMesh::loadSkeleton(const aiMesh* mesh)
             bone.mName = assimpBone->mName.C_Str();
             bone.mInverseBindPose = aiMatrix4x4ToFloat4x4(assimpBone->mOffsetMatrix);
 
+            float4 topLeft{std::numeric_limits<float>::infinity(), std::numeric_limits<float>::infinity(), std::numeric_limits<float>::infinity(), 1.0f};
+            float4 bottumRight{-std::numeric_limits<float>::infinity(), -std::numeric_limits<float>::infinity(), -std::numeric_limits<float>::infinity(), 1.0f};
+
             for(uint32_t j = 0; j < assimpBone->mNumWeights; ++j)
-            {
+            {   
                 const aiVertexWeight& weight = assimpBone->mWeights[j];
                 BELL_ASSERT(weight.mVertexId < bonesPerVertex.size(), "Invalid vertex index")
+
+                // update AABB
+                aiVector3D vertex = mesh->mVertices[weight.mVertexId];
+                topLeft = componentWiseMin(topLeft, float4{vertex.x, vertex.y, vertex.z, 1.0f});
+                bottumRight = componentWiseMax(bottumRight, float4{vertex.x, vertex.y, vertex.z, 1.0f});
+
                 BoneIndicies& indicies = bonesPerVertex[weight.mVertexId];
                 BELL_ASSERT(indicies.mUsedBones < 25, "Only 25 or less bones per vertex are currently supported")
                 const uint8_t index = indicies.mUsedBones++;
@@ -179,6 +188,10 @@ void StaticMesh::loadSkeleton(const aiMesh* mesh)
                 bone.mBone = i;
                 bone.mWeight = weight.mWeight;
             }
+
+            // contruct bone OBB from initial AABB.
+            AABB initialAABB{topLeft, bottumRight};
+            bone.mOBB = OBB{initialAABB.getCube()};
         }
 
         // Now generate bone weights offsets per vertex.

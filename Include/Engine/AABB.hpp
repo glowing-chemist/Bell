@@ -80,4 +80,43 @@ private:
 };
 
 
+class OBB
+{
+public:
+    OBB() = default;
+
+    OBB(const Cube& cube) :
+    mCube{cube} {}
+
+
+    const Cube& getCube()
+    {
+	return mCube;
+    }
+
+    float4 getCentralPoint() const
+    { return mCube.mLower3 + (mCube.mUpper1 - mCube.mLower3) * 0.5f; }
+
+    float3 getSideLengths() const
+    {
+	return float3
+	{
+	    glm::length(mCube.mLower2 - mCube.mLower3),
+	    glm::length(mCube.mLower1 - mCube.mUpper1),
+	    glm::length(mCube.mLower3 - mCube.mLower4)
+	};
+    }
+
+    OBB operator*(const float4x4&) const;
+    OBB operator*(const float4&) const;
+    OBB operator+(const float4&) const;
+    OBB operator-(const float4&) const;
+
+private:
+
+    Cube mCube;
+
+};
+
+
 #endif

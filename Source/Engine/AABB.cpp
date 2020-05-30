@@ -167,3 +167,67 @@ AABB AABB::operator-(const float4& vec) const
 {
 	return AABB{ mMinimum - vec, mMaximum - vec };
 }
+
+
+OBB OBB::operator*(const float4& vec) const
+{
+    Cube newCube = mCube;
+    newCube.mLower1 *= vec;
+    newCube.mUpper2 *= vec;
+    newCube.mUpper3 *= vec;
+    newCube.mUpper4 *= vec;
+    newCube.mLower1 *= vec;
+    newCube.mLower2 *= vec;
+    newCube.mLower3 *= vec;
+    newCube.mLower4 *= vec;
+
+    return newCube;
+}
+
+
+OBB OBB::operator+(const float4& vec) const
+{
+    Cube newCube = mCube;
+    newCube.mLower1 += vec;
+    newCube.mUpper2 += vec;
+    newCube.mUpper3 += vec;
+    newCube.mUpper4 += vec;
+    newCube.mLower1 += vec;
+    newCube.mLower2 += vec;
+    newCube.mLower3 += vec;
+    newCube.mLower4 += vec;
+
+    return newCube;
+}
+
+
+OBB OBB::operator-(const float4& vec) const
+{
+    Cube newCube = mCube;
+    newCube.mLower1 -= vec;
+    newCube.mUpper2 -= vec;
+    newCube.mUpper3 -= vec;
+    newCube.mUpper4 -= vec;
+    newCube.mLower1 -= vec;
+    newCube.mLower2 -= vec;
+    newCube.mLower3 -= vec;
+    newCube.mLower4 -= vec;
+
+    return newCube;
+}
+
+
+OBB OBB::operator*(const float4x4& mat) const
+{
+    Cube newCube = mCube;
+    newCube.mLower1 = mat * newCube.mLower1;
+    newCube.mUpper2 = mat * newCube.mUpper2;
+    newCube.mUpper3 = mat * newCube.mUpper3;
+    newCube.mUpper4 = mat * newCube.mUpper4;
+    newCube.mLower1 = mat * newCube.mLower1;
+    newCube.mLower2 = mat * newCube.mLower2;
+    newCube.mLower3 = mat * newCube.mLower3;
+    newCube.mLower4 = mat * newCube.mLower4;
+
+    return newCube;
+}
