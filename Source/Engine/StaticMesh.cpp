@@ -177,9 +177,12 @@ void StaticMesh::loadSkeleton(const aiMesh* mesh)
                 BELL_ASSERT(weight.mVertexId < bonesPerVertex.size(), "Invalid vertex index")
 
                 // update AABB
-                aiVector3D vertex = mesh->mVertices[weight.mVertexId];
-                topLeft = componentWiseMin(topLeft, float4{vertex.x, vertex.y, vertex.z, 1.0f});
-                bottumRight = componentWiseMax(bottumRight, float4{vertex.x, vertex.y, vertex.z, 1.0f});
+                if(weight.mWeight >= 0.5f)
+                {
+                    aiVector3D vertex = mesh->mVertices[weight.mVertexId];
+                    topLeft = componentWiseMin(topLeft, float4{vertex.x, vertex.y, vertex.z, 1.0f});
+                    bottumRight = componentWiseMax(bottumRight, float4{vertex.x, vertex.y, vertex.z, 1.0f});
+                }
 
                 BoneIndicies& indicies = bonesPerVertex[weight.mVertexId];
                 BELL_ASSERT(indicies.mUsedBones < 25, "Only 25 or less bones per vertex are currently supported")
