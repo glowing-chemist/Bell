@@ -1,5 +1,6 @@
 #include "Engine/AABB.hpp"
 
+#include <cmath>
 #include <limits>
 
 std::array<float4, 8> AABB::getCubeAsVertexArray() const
@@ -169,65 +170,90 @@ AABB AABB::operator-(const float4& vec) const
 }
 
 
+// Helper functions.
+namespace
+{
+    bool getSeparatingPlane(const float3& RPos, const float3& plane, const OBB& box1, const OBB& box2)
+    {
+        const Basis basis1 = box1.getBasisVectors();
+        const float3 size1 = box1.getSideLengths();
+        const float3 halfVector1 = float3{size1.x / 2.0f, size1.y / 2.0f, size1.z / 2.0f};
+
+        const Basis basis2 = box2.getBasisVectors();
+        const float3 size2 = box2.getSideLengths();
+        const float3 halfVector2 = float3{size2.x / 2.0f, size2.y / 2.0f, size2.z / 2.0f};
+
+        return (std::fabs(glm::dot(RPos, plane)) >
+                (std::fabs(glm::dot(basis1.mX * halfVector1.x, plane)) +
+                 std::fabs(glm::dot(basis1.mY * halfVector1.y, plane)) +
+                 std::fabs(glm::dot(basis1.mZ * halfVector1.z, plane)) +
+                 std::fabs(glm::dot(basis2.mX * halfVector2.x, plane))  +
+                 std::fabs(glm::dot(basis2.mY * halfVector2.y, plane)) +
+                 std::fabs(glm::dot(basis2.mZ * halfVector2.z, plane))));
+    }
+
+    bool getCollision(const OBB& box1, const OBB& box2)
+    {
+        float3 RPos;
+        RPos = box2.getCentralPoint() - box1.getCentralPoint();
+
+        const Basis basis1 = box1.getBasisVectors();
+        const Basis basis2 = box2.getBasisVectors();
+
+        return !(getSeparatingPlane(RPos, basis1.mX, box1, box2) ||
+                 getSeparatingPlane(RPos, basis1.mY, box1, box2) ||
+                 getSeparatingPlane(RPos, basis1.mZ, box1, box2) ||
+                 getSeparatingPlane(RPos, basis2.mX, box1, box2) ||
+                 getSeparatingPlane(RPos, basis2.mY, box1, box2) ||
+                 getSeparatingPlane(RPos, basis2.mZ, box1, box2) ||
+                 getSeparatingPlane(RPos, glm::cross(basis1.mX, basis2.mX), box1, box2) ||
+                 getSeparatingPlane(RPos, glm::cross(basis1.mX, basis2.mY), box1, box2) ||
+                 getSeparatingPlane(RPos, glm::cross(basis1.mX, basis2.mZ), box1, box2) ||
+                 getSeparatingPlane(RPos, glm::cross(basis1.mY, basis2.mX), box1, box2) ||
+                 getSeparatingPlane(RPos, glm::cross(basis1.mY, basis2.mY), box1, box2) ||
+                 getSeparatingPlane(RPos, glm::cross(basis1.mY, basis2.mZ), box1, box2) ||
+                 getSeparatingPlane(RPos, glm::cross(basis1.mZ, basis2.mX), box1, box2) ||
+                 getSeparatingPlane(RPos, glm::cross(basis1.mZ, basis2.mY), box1, box2) ||
+                 getSeparatingPlane(RPos, glm::cross(basis1.mZ, basis2.mZ), box1, box2));
+    }
+}
+
+
 OBB OBB::operator*(const float4& vec) const
 {
-    Cube newCube = mCube;
-    newCube.mLower1 *= vec;
-    newCube.mUpper2 *= vec;
-    newCube.mUpper3 *= vec;
-    newCube.mUpper4 *= vec;
-    newCube.mLower1 *= vec;
-    newCube.mLower2 *= vec;
-    newCube.mLower3 *= vec;
-    newCube.mLower4 *= vec;
-
-    return newCube;
+    const float3 newStart = mStart * float3(vec);
+    const float3 newHalf = mHalfSize * float3(vec);
+    return OBB(mBasis, newHalf, newStart);
 }
 
 
 OBB OBB::operator+(const float4& vec) const
 {
-    Cube newCube = mCube;
-    newCube.mLower1 += vec;
-    newCube.mUpper2 += vec;
-    newCube.mUpper3 += vec;
-    newCube.mUpper4 += vec;
-    newCube.mLower1 += vec;
-    newCube.mLower2 += vec;
-    newCube.mLower3 += vec;
-    newCube.mLower4 += vec;
-
-    return newCube;
+    float3 newStart = mStart + float3(vec);
+    return OBB(mBasis, mHalfSize, newStart);
 }
 
 
 OBB OBB::operator-(const float4& vec) const
 {
-    Cube newCube = mCube;
-    newCube.mLower1 -= vec;
-    newCube.mUpper2 -= vec;
-    newCube.mUpper3 -= vec;
-    newCube.mUpper4 -= vec;
-    newCube.mLower1 -= vec;
-    newCube.mLower2 -= vec;
-    newCube.mLower3 -= vec;
-    newCube.mLower4 -= vec;
-
-    return newCube;
+    float3 newStart = mStart - float3(vec);
+    return OBB(mBasis, mHalfSize, newStart);
 }
 
 
 OBB OBB::operator*(const float4x4& mat) const
 {
-    Cube newCube = mCube;
-    newCube.mLower1 = mat * newCube.mLower1;
-    newCube.mUpper2 = mat * newCube.mUpper2;
-    newCube.mUpper3 = mat * newCube.mUpper3;
-    newCube.mUpper4 = mat * newCube.mUpper4;
-    newCube.mLower1 = mat * newCube.mLower1;
-    newCube.mLower2 = mat * newCube.mLower2;
-    newCube.mLower3 = mat * newCube.mLower3;
-    newCube.mLower4 = mat * newCube.mLower4;
+    const float3 newStart = mat * float4(mStart, 1.0f);
+    const float3 newHalf = mat * float4(mHalfSize, 0.0f);
+    const Basis newBasis = Basis{glm::normalize(mat * float4(mBasis.mX, 0.0f)),
+                                 glm::normalize(mat * float4(mBasis.mY, 0.0f)),
+                                 glm::normalize(mat * float4(mBasis.mZ, 0.0f))};
 
-    return newCube;
+    return OBB(newBasis, newHalf, newStart);
+}
+
+
+bool OBB::intersects(const OBB& other) const
+{
+    return getCollision(*this, other);
 }

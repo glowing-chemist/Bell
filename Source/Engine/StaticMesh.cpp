@@ -196,7 +196,9 @@ void StaticMesh::loadSkeleton(const aiMesh* mesh)
 
             // contruct bone OBB from initial AABB.
             AABB initialAABB{topLeft, bottumRight};
-            bone.mOBB = OBB{initialAABB.getCube()};
+            bone.mOBB = OBB{Basis{float3{1.0f, 0.0f, 0.0f}, float3{0.0f, 1.0f, 0.0f}, float3{0.0f, 0.0f, 1.0f}},
+                            float3{initialAABB.getSideLengths() / 2.0f},
+                            float3{initialAABB.getBottom()}};
 
             mSkeleton.push_back(bone);
         }

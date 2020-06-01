@@ -80,32 +80,46 @@ private:
 };
 
 
+struct Basis
+{
+    float3 mX;
+    float3 mY;
+    float3 mZ;
+};
+
+
 class OBB
 {
 public:
     OBB() = default;
 
-    OBB(const Cube& cube) :
-    mCube{cube} {}
-
-
-    const Cube& getCube()
-    {
-	return mCube;
-    }
+    OBB(const Basis& basis, const float3& half, const float3& start) :
+    mBasis{basis}, mHalfSize{half}, mStart{start} {}
 
     float4 getCentralPoint() const
-    { return mCube.mLower3 + (mCube.mUpper1 - mCube.mLower3) * 0.5f; }
+    { return float4(mStart + (mBasis.mX * mHalfSize.x + mBasis.mY * mHalfSize.y  + mBasis.mZ * mHalfSize.z), 1.0f); }
 
     float3 getSideLengths() const
     {
-	return float3
-	{
-	    glm::length(mCube.mLower2 - mCube.mLower3),
-	    glm::length(mCube.mLower1 - mCube.mUpper1),
-	    glm::length(mCube.mLower3 - mCube.mLower4)
-	};
+	return mHalfSize * 2.0f;
     }
+
+    const float3& getHalfSize() const
+    {
+	return mHalfSize;
+    }
+
+    const float3& getStart() const
+    {
+	return mStart;
+    }
+
+    Basis getBasisVectors() const
+    {
+	return mBasis;
+    }
+
+    bool intersects(const OBB&) const;
 
     OBB operator*(const float4x4&) const;
     OBB operator*(const float4&) const;
@@ -114,8 +128,9 @@ public:
 
 private:
 
-    Cube mCube;
-
+    Basis mBasis;
+    float3 mHalfSize;
+    float3 mStart;
 };
 
 
