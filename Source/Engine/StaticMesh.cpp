@@ -155,7 +155,7 @@ void StaticMesh::loadSkeleton(const aiMesh* mesh)
 {
     if(mesh->mNumBones > 0)
     {
-        mSkeleton.resize(mesh->mNumBones);
+        mSkeleton.reserve(mesh->mNumBones);
         std::vector<BoneIndicies> bonesPerVertex;
         bonesPerVertex.resize(mVertexCount);
         mBoneWeightsIndicies.resize(mVertexCount);
@@ -163,8 +163,10 @@ void StaticMesh::loadSkeleton(const aiMesh* mesh)
         for(uint32_t i = 0; i < mesh->mNumBones; ++i)
         {
             const aiBone* assimpBone = mesh->mBones[i];
+            if(assimpBone->mNumWeights == 0)
+                continue;
 
-            Bone& bone = mSkeleton[i];
+            Bone bone{};
             bone.mName = assimpBone->mName.C_Str();
             bone.mInverseBindPose = aiMatrix4x4ToFloat4x4(assimpBone->mOffsetMatrix);
 
@@ -187,14 +189,16 @@ void StaticMesh::loadSkeleton(const aiMesh* mesh)
                 BoneIndicies& indicies = bonesPerVertex[weight.mVertexId];
                 BELL_ASSERT(indicies.mUsedBones < 25, "Only 25 or less bones per vertex are currently supported")
                 const uint8_t index = indicies.mUsedBones++;
-                BoneIndex& bone = indicies.mBoneIndices[index];
-                bone.mBone = i;
-                bone.mWeight = weight.mWeight;
+                BoneIndex& boneIndex = indicies.mBoneIndices[index];
+                boneIndex.mBone = mSkeleton.size();
+                boneIndex.mWeight = weight.mWeight;
             }
 
             // contruct bone OBB from initial AABB.
             AABB initialAABB{topLeft, bottumRight};
             bone.mOBB = OBB{initialAABB.getCube()};
+
+            mSkeleton.push_back(bone);
         }
 
         // Now generate bone weights offsets per vertex.
