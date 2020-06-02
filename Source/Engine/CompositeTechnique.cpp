@@ -92,7 +92,10 @@ CompositeTechnique::CompositeTechnique(Engine* eng, RenderGraph& graph) :
 
             GraphicsTask overlayTask("OverlayComposite", overlayDesc);
             overlayTask.addInput(kNewTAAHistory, AttachmentType::Texture2D);
-            overlayTask.addInput(kOverlay, AttachmentType::Texture2D);
+
+            if(eng->isPassRegistered(PassType::Overlay))
+                overlayTask.addInput(kOverlay, AttachmentType::Texture2D);
+
             overlayTask.addInput(kDefaultSampler, AttachmentType::Sampler);
             overlayTask.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
             if(eng->isPassRegistered(PassType::SSR))

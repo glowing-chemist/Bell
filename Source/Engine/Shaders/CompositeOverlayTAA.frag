@@ -1,20 +1,28 @@
 #include "VertexOutputs.hlsl"
 #include "UniformBuffers.hlsl"
 
+#if defined(Overlay)
+#define USING_OVERLAY 1
+#else
+#define USING_OVERLAY 0
+#endif
+
 [[vk::binding(0)]]
 Texture2D<float4> taaOutput;
 
+#if defined(Overlay)
 [[vk::binding(1)]]
 Texture2D<float4> overlay;
+#endif
 
-[[vk::binding(2)]]
+[[vk::binding(1 + USING_OVERLAY)]]
 SamplerState defaultSampler;
 
-[[vk::binding(3)]]
+[[vk::binding(2 + USING_OVERLAY)]]
 ConstantBuffer<CameraBuffer> camera;
 
 #if defined(Screen_Space_Reflection)
-[[vk::binding(4)]]
+[[vk::binding(3 + USING_OVERLAY)]]
 Texture2D<float4> ReflectionMap;
 #endif
 
@@ -37,7 +45,13 @@ float4 main(PositionAndUVVertOutput vertOutput)
 	colour += ReflectionMap.Sample(defaultSampler, vertOutput.uv);
 #endif
 
+#if USING_OVERLAY
 	const float4 overlay = overlay.Sample(defaultSampler, vertOutput.uv);
 
 	return ((1.0f - overlay.w) * colour) + overlay;
+#else
+
+	return colour;
+
+#endif
 }
