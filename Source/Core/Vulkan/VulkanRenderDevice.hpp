@@ -375,7 +375,6 @@ private:
     DescriptorManager mPermanentDescriptorManager;
 
     std::vector<std::vector<CommandContextBase*>> mCommandContexts;
-    std::vector<std::vector<vk::Semaphore>> mContextSemaphores;
     uint32_t mSubmissionCount;
 };
 

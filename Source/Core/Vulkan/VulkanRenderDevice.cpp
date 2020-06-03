@@ -45,12 +45,10 @@ VulkanRenderDevice::VulkanRenderDevice(vk::Instance instance,
 
     mFrameFinished.reserve(mSwapChain->getNumberOfSwapChainImages());
     mCommandContexts.resize(mSwapChain->getNumberOfSwapChainImages());
-    mContextSemaphores.resize(mSwapChain->getNumberOfSwapChainImages());
     for (uint32_t i = 0; i < mSwapChain->getNumberOfSwapChainImages(); ++i)
     {
         mFrameFinished.push_back(createFence(true));
         mCommandContexts[i].push_back(new VulkanCommandContext(this));
-        mContextSemaphores[i].push_back(createSemaphore(vk::SemaphoreCreateInfo{}));
     }
 
     // Initialise the glsl compiler here rather than in the first compiled shader to avoid
@@ -77,12 +75,6 @@ VulkanRenderDevice::~VulkanRenderDevice()
     {
         for(auto* context : frameContexts)
             delete context;
-    }
-
-    for(auto& frameSemaphores : mContextSemaphores)
-    {
-        for(auto semaphore : frameSemaphores)
-            mDevice.destroySemaphore(semaphore);
     }
 
     // We can ignore lastUsed as we have just waited till all work has finished.
@@ -161,13 +153,10 @@ CommandContextBase* VulkanRenderDevice::getCommandContext(const uint32_t index)
     std::vector<CommandContextBase*>& frameContexts = mCommandContexts[mCurrentFrameIndex];
     if(frameContexts.size() <= index)
     {
-        std::vector<vk::Semaphore>& frameSemaphores = mContextSemaphores[mCurrentFrameIndex];
-        vk::SemaphoreCreateInfo semaphoreInfo{};
         const uint32_t neededContexts = (frameContexts.size() - index) + 1;
         for(uint32_t i = 0; i < neededContexts; ++i)
         {
             frameContexts.push_back(new VulkanCommandContext(this));
-            frameSemaphores.push_back(createSemaphore(semaphoreInfo));
         }
     }
 
@@ -828,15 +817,14 @@ void VulkanRenderDevice::submitContext(CommandContextBase *context, const bool f
     primaryCmdBuffer.end();
 
     const VulkanSwapChain* swapChain = static_cast<VulkanSwapChain*>(mSwapChain);
-    std::vector<vk::Semaphore>& contextSemaphores = mContextSemaphores[mCurrentFrameIndex];
 
     vk::SubmitInfo submitInfo{};
     submitInfo.setCommandBufferCount(1);
     submitInfo.setPCommandBuffers(&primaryCmdBuffer);
-    submitInfo.setWaitSemaphoreCount(1);
-    submitInfo.setPWaitSemaphores(mSubmissionCount == 0 ? swapChain->getImageAquired() : &contextSemaphores[mSubmissionCount - 1]);
-    submitInfo.setPSignalSemaphores(finalSubmission ? swapChain->getImageRendered() : &contextSemaphores[mSubmissionCount]);
-    submitInfo.setSignalSemaphoreCount(1);
+    submitInfo.setPWaitSemaphores(mSubmissionCount == 0 ? swapChain->getImageAquired() : nullptr);
+    submitInfo.setWaitSemaphoreCount(mSubmissionCount == 0 ? 1 : 0);
+    submitInfo.setPSignalSemaphores(finalSubmission ? swapChain->getImageRendered() : nullptr);
+    submitInfo.setSignalSemaphoreCount(finalSubmission ? 1 : 0);
     auto const waitStage = vk::PipelineStageFlags(vk::PipelineStageFlagBits::eColorAttachmentOutput);
     submitInfo.setPWaitDstStageMask(&waitStage);
 
