@@ -16,12 +16,12 @@ struct ImGuiOptions
     bool mSSAO = false;
     bool mShadows = true;
     bool mSSR = false;
-    bool preDepth = false;
+    bool preDepth = true;
 };
 
 static ImGuiOptions graphicsOptions;
 
-bool renderMenu(GLFWwindow* win, const Camera& cam)
+bool renderMenu(GLFWwindow* win, const Camera& cam, Engine* eng)
 {
 	double cursorPosx, cursorPosy;
 	glfwGetCursorPos(win, &cursorPosx, &cursorPosy);
@@ -81,6 +81,24 @@ bool renderMenu(GLFWwindow* win, const Camera& cam)
     ImGui::Text("Camera position: X: %f Y: %f Z: %f", cam.getPosition().x, cam.getPosition().y, cam.getPosition().z);
     ImGui::Text("Camera direction: X: %f Y: %f Z: %f", cam.getDirection().x, cam.getDirection().y, cam.getDirection().z);
     ImGui::Text("Camera up: X: %f Y: %f Z: %f", cam.getUp().x, cam.getUp().y, cam.getUp().z);
+
+    RenderDevice* dev = eng->getDevice();
+    const RenderGraph& graph = eng->getRenderGraph();
+    const std::vector<uint64_t> timeStamps = dev->getAvailableTimestamps();
+    // There is a 3 frame delay on timestamps so graph could have been rebuilt by now.
+    if(timeStamps.size() == graph.taskCount())
+    {
+        float totalGPUTime = 0.0f;
+        for(uint32_t i = 0; i < timeStamps.size(); ++i)
+        {
+            const RenderTask& task = graph.getTask(i);
+            const float taskTime = dev->getTimeStampPeriod() * (float(timeStamps[i]) / 1000000.0f);
+            ImGui::Text("%s : %f ms", task.getName().c_str(), taskTime);
+            totalGPUTime += taskTime;
+        }
+
+        ImGui::Text("Total GPU time %f ms", totalGPUTime);
+    }
 
 	ImGui::End();
 
@@ -198,7 +216,7 @@ int main()
 		if (!firstFrame)
 		{
 			engine.startFrame();
-            unregisterpasses = renderMenu(window, camera);
+            unregisterpasses = renderMenu(window, camera, &engine);
 		}
 
 		if(unregisterpasses)

@@ -19,10 +19,10 @@ public:
 
     virtual void setupState(const RenderGraph&, uint32_t taskIndex, Executor* exec, const uint64_t prefixHash) = 0;
 
-    virtual Executor* allocateExecutor() = 0;
+    virtual Executor* allocateExecutor(const bool timeStamp = false) = 0;
     virtual void      freeExecutor(Executor*) = 0;
 
-
+    virtual const std::vector<uint64_t>& getTimestamps() = 0;
     virtual void      reset() = 0;
 
 protected:

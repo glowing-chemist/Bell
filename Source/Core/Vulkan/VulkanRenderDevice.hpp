@@ -114,6 +114,11 @@ public:
 		return getLimits().minStorageBufferOffsetAlignment;
 	}
 
+    virtual const std::vector<uint64_t>& getAvailableTimestamps() const override
+    {
+        return mFinishedTimeStamps;
+    }
+
 	vk::Image                          createImage(const vk::ImageCreateInfo& info)
 	{
 		return mDevice.createImage(info);
@@ -259,6 +264,43 @@ public:
 
     vulkanResources                                             getTaskResources(const RenderGraph&, const uint32_t taskIndex, const uint64_t prefixHash);
 
+    vk::QueryPool                                               createTimeStampPool(const uint32_t queries)
+    {
+        vk::QueryPoolCreateInfo info{};
+        info.setFlags(vk::QueryPoolCreateFlags{});
+        info.setQueryType(vk::QueryType::eTimestamp);
+        info.setQueryCount(queries);
+        info.setPipelineStatistics(vk::QueryPipelineStatisticFlags{});
+
+        return mDevice.createQueryPool(info);
+    }
+
+    void                                                        destroyTimeStampPool(vk::QueryPool pool)
+    {
+        mDevice.destroyQueryPool(pool);
+    }
+
+    void                                                        resetTimeStampPool(vk::QueryPool pool, const uint32_t queries)
+    {
+        if(queries == 0)
+            return;
+
+        mDevice.resetQueryPool(pool, 0, queries);
+    }
+
+    void                                                        writeTimeStampResults(const vk::QueryPool pool, uint64_t* data, const size_t queryCount)
+    {
+        if(queryCount == 0)
+            return;
+
+        mDevice.getQueryPoolResults(pool, 0, queryCount, sizeof(uint64_t) * queryCount, data, sizeof(uint64_t), vk::QueryResultFlagBits::e64);
+    }
+
+    float                                                       getTimeStampPeriod() const override
+    {
+        return mLimits.timestampPeriod;
+    }
+
 private:
 
 	vk::DescriptorSetLayout				                        generateDescriptorSetLayout(const RenderTask&);
@@ -376,6 +418,8 @@ private:
 
     std::vector<std::vector<CommandContextBase*>> mCommandContexts;
     uint32_t mSubmissionCount;
+
+    std::vector<uint64_t> mFinishedTimeStamps;
 };
 
 #endif

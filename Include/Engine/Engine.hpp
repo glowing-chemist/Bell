@@ -77,6 +77,16 @@ public:
         return mShadowCastingLight.get();
     }
 
+    const RenderGraph& getRenderGraph() const
+    {
+        return mCurrentRenderGraph;
+    }
+
+    RenderGraph& getRenderGraph()
+    {
+        return mCurrentRenderGraph;
+    }
+
     bool isGraphicsTask(const PassType) const;
     bool isComputeTask(const PassType) const;
 

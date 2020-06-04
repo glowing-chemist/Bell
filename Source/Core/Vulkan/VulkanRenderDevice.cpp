@@ -30,7 +30,8 @@ VulkanRenderDevice::VulkanRenderDevice(vk::Instance instance,
 	mSwapChainInitializer(this, surface, window, &mSwapChain),
     mMemoryManager{this},
     mPermanentDescriptorManager{this},
-    mSubmissionCount{0}
+    mSubmissionCount{0},
+    mFinishedTimeStamps{}
 {
     // This is a bit of a hack to work around not being able to tell for the first few frames that
     // the fences we waited on hadn't been submitted (as no work has been done).
@@ -795,8 +796,22 @@ vk::Sampler VulkanRenderDevice::getImmutableSampler(const Sampler& samplerDesc)
 void VulkanRenderDevice::startFrame()
 {
     frameSyncSetup();
+    // update timestampts.
+    mFinishedTimeStamps.clear();
     for(CommandContextBase* context : mCommandContexts[mCurrentFrameIndex])
+    {
+        const std::vector<uint64_t>& timeStamps = context->getTimestamps();
+        uint32_t i = 0;
+        while(i < timeStamps.size())
+        {
+            const uint64_t start = timeStamps[i++];
+            const uint64_t end = timeStamps[i++];
+
+            const uint64_t duration = end - start;
+            mFinishedTimeStamps.push_back(duration);
+        }
         context->reset();
+    }
     clearDeferredResources();
     mPermanentDescriptorManager.reset();
     ++mCurrentSubmission;

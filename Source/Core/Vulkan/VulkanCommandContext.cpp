@@ -7,8 +7,18 @@ VulkanCommandContext::VulkanCommandContext(RenderDevice* dev) :
     CommandContextBase(dev),
     mCommandPool(dev, QueueType::Graphics),
     mDescriptorManager(dev),
+    mTimeStampPool(nullptr),
+    mTimeStamps{},
     mActiveRenderPass(nullptr)
 {
+    VulkanRenderDevice* vkDev = static_cast<VulkanRenderDevice*>(getDevice());
+    mTimeStampPool = vkDev->createTimeStampPool(50);
+}
+
+
+VulkanCommandContext::~VulkanCommandContext()
+{
+    static_cast<VulkanRenderDevice*>(getDevice())->destroyTimeStampPool(mTimeStampPool);
 }
 
 
@@ -76,22 +86,33 @@ void VulkanCommandContext::setupState(const RenderGraph& graph, uint32_t taskInd
 }
 
 
-Executor* VulkanCommandContext::allocateExecutor()
+Executor* VulkanCommandContext::allocateExecutor(const bool timeStamp)
 {
+    mActiveQuery = timeStamp;
+    Executor* exec = nullptr;
+
     if(!mFreeExecutors.empty())
     {
-        Executor* exec = mFreeExecutors.back();
+        exec = mFreeExecutors.back();
         mFreeExecutors.pop_back();
-
-        return exec;
     }
     else
     {
-        const uint32_t neededIndex = mCommandPool.getNumberOfBuffersForQueue();
-        vk::CommandBuffer cmdBuffer = mCommandPool.getBufferForQueue(neededIndex);
+        vk::CommandBuffer cmdBuffer = mCommandPool.getBufferForQueue();
 
-        return new VulkanExecutor(cmdBuffer);
+        exec = new VulkanExecutor(cmdBuffer);
     }
+
+    if(mActiveQuery)
+    {
+        // Write start timestamp.
+        vk::CommandBuffer cmdBuffer = static_cast<VulkanExecutor*>(exec)->getCommandBuffer();
+        cmdBuffer.resetQueryPool(mTimeStampPool, mTimeStamps.size(), 2);
+        cmdBuffer.writeTimestamp(vk::PipelineStageFlagBits::eAllCommands, mTimeStampPool, mTimeStamps.size());
+        mTimeStamps.emplace_back();
+    }
+
+    return exec;
 }
 
 
@@ -106,7 +127,22 @@ void VulkanCommandContext::freeExecutor(Executor* exec)
         mActiveRenderPass = vk::RenderPass{nullptr};
     }
 
+    if(mActiveQuery)
+    {
+        // write finish timestamp.
+        vk::CommandBuffer cmdBuffer = static_cast<VulkanExecutor*>(exec)->getCommandBuffer();
+        cmdBuffer.writeTimestamp(vk::PipelineStageFlagBits::eAllCommands, mTimeStampPool, mTimeStamps.size());
+        mTimeStamps.emplace_back();
+    }
+
     mFreeExecutors.push_back(exec);
+}
+
+
+const std::vector<uint64_t>& VulkanCommandContext::getTimestamps()
+{
+    static_cast<VulkanRenderDevice*>(getDevice())->writeTimeStampResults(mTimeStampPool, mTimeStamps.data(), mTimeStamps.size());
+    return mTimeStamps;
 }
 
 
@@ -114,15 +150,12 @@ void VulkanCommandContext::reset()
 {
     mCommandPool.reset();
     mDescriptorManager.reset();
+
+    mTimeStamps.clear();
 }
 
 
 vk::CommandBuffer VulkanCommandContext::getPrefixCommandBuffer()
 {
-    VulkanExecutor* exec = static_cast<VulkanExecutor*>(allocateExecutor());
-    vk::CommandBuffer cmdBuffer = exec->getCommandBuffer();
-    freeExecutor(exec);
-
-    return cmdBuffer;
-
+    return mCommandPool.getBufferForQueue();
 }

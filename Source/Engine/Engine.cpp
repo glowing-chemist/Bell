@@ -460,7 +460,7 @@ void Engine::execute(RenderGraph& graph)
         RenderTask& task = graph.getTask(taskIndex);
 
         CommandContextBase* context = mRenderDevice->getCommandContext(currentContext);
-        Executor* exec = context->allocateExecutor();
+        Executor* exec = context->allocateExecutor(GPU_PROFILING);
         exec->recordBarriers(*barrier);
         context->setupState(graph, taskIndex, exec, mCurrentRegistredPasses);
 
