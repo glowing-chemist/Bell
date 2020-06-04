@@ -21,7 +21,7 @@ struct ImGuiOptions
 
 static ImGuiOptions graphicsOptions;
 
-bool renderMenu(GLFWwindow* win, const Camera& cam, Engine* eng)
+bool renderMenu(GLFWwindow* win, const Camera& cam, Engine* eng, const float cpuTime)
 {
 	double cursorPosx, cursorPosy;
 	glfwGetCursorPos(win, &cursorPosx, &cursorPosy);
@@ -98,6 +98,7 @@ bool renderMenu(GLFWwindow* win, const Camera& cam, Engine* eng)
         }
 
         ImGui::Text("Total GPU time %f ms", totalGPUTime);
+        ImGui::Text("Total CPU time %f ms", cpuTime);
     }
 
 	ImGui::End();
@@ -184,8 +185,14 @@ int main()
 
     engine.setScene(&testScene);
 
+    auto lastCPUTime = std::chrono::system_clock::now();
+
     while(!glfwWindowShouldClose(window))
     {
+        const auto currentTime = std::chrono::system_clock::now();
+        const std::chrono::duration<float, std::ratio<1, 1000>> diff = currentTime - lastCPUTime;
+        lastCPUTime = currentTime;
+
         glfwPollEvents();
 
         Camera& camera = engine.getCurrentSceneCamera();
@@ -216,7 +223,7 @@ int main()
 		if (!firstFrame)
 		{
 			engine.startFrame();
-            unregisterpasses = renderMenu(window, camera, &engine);
+            unregisterpasses = renderMenu(window, camera, &engine, diff.count());
 		}
 
 		if(unregisterpasses)
