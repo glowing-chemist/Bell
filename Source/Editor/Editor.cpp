@@ -782,6 +782,29 @@ void Editor::drawAssistantWindow()
        }
 
        drawLightMenu();
+
+       if(ImGui::TreeNode("Profiling"))
+       {
+           RenderDevice* dev = mEngine.getDevice();
+           const RenderGraph& graph = mEngine.getRenderGraph();
+           const std::vector<uint64_t> timeStamps = dev->getAvailableTimestamps();
+           // There is a 3 frame delay on timestamps so graph could have been rebuilt by now.
+           if(timeStamps.size() == graph.taskCount())
+           {
+               float totalGPUTime = 0.0f;
+               for(uint32_t i = 0; i < timeStamps.size(); ++i)
+               {
+                   const RenderTask& task = graph.getTask(i);
+                   const float taskTime = dev->getTimeStampPeriod() * (float(timeStamps[i]) / 1000000.0f);
+                   ImGui::Text("%s : %f ms", task.getName().c_str(), taskTime);
+                   totalGPUTime += taskTime;
+               }
+
+               ImGui::Text("Total GPU time %f ms", totalGPUTime);
+           }
+
+           ImGui::TreePop();
+       }
     }
     ImGui::End();
 
