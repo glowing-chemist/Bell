@@ -228,9 +228,9 @@ void ImGuiNodeEditor::generateLinks(const std::shared_ptr<EditorNode>& newNode)
 }
 
 
-std::vector<std::string> ImGuiNodeEditor::getAvailableDebugTextures() const
+std::vector<const char*> ImGuiNodeEditor::getAvailableDebugTextures() const
 {
-    std::vector<std::string> textures;
+    std::vector<const char*> textures;
 
     for(const auto& node : mNodes)
     {
@@ -260,7 +260,7 @@ void PassNode::draw()
 			ax::NodeEditor::PinPivotAlignment(ImVec2(1.0f, 0.5f));
 			ax::NodeEditor::PinPivotSize(ImVec2(0, 0));
 
-            ImGui::TextUnformatted(input.mName.c_str());
+            ImGui::TextUnformatted(input.mName);
 
 			ax::NodeEditor::EndPin();
         }
@@ -275,7 +275,7 @@ void PassNode::draw()
 			ax::NodeEditor::PinPivotAlignment(ImVec2(1.0f, 0.5f));
 			ax::NodeEditor::PinPivotSize(ImVec2(0, 0));
 
-            ImGui::TextUnformatted(input.mName.c_str());
+            ImGui::TextUnformatted(input.mName);
 
             ax::NodeEditor::EndPin();
         }

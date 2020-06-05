@@ -808,7 +808,7 @@ void Editor::drawAssistantWindow()
     }
     ImGui::End();
 
-    std::vector<std::string> textures = mNodeEditor.getAvailableDebugTextures();
+    std::vector<const char*> textures = mNodeEditor.getAvailableDebugTextures();
     if(mShowDebugTexturePicker)
     {
         drawDebugTexturePicker(textures);
@@ -836,7 +836,7 @@ void Editor::drawAssistantWindow()
 }
 
 
-void Editor::drawDebugTexturePicker(const std::vector<std::string>& textures)
+void Editor::drawDebugTexturePicker(const std::vector<const char*>& textures)
 {
     if(ImGui::Begin("Debug texture picker"))
     {
@@ -845,7 +845,7 @@ void Editor::drawDebugTexturePicker(const std::vector<std::string>& textures)
 
         for(size_t i = 0; i < textures.size(); ++i)
         {
-            ImGui::RadioButton(textures[i].c_str(), &mCurrentDebugTexture, i);
+            ImGui::RadioButton(textures[i], &mCurrentDebugTexture, i);
         }
         ImGui::EndGroup();
     }

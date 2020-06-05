@@ -28,18 +28,18 @@ public:
 	uint32_t getSwapChainImageWidth() const;
 	uint32_t getSwapChainImageHeight() const;
 
-	uint32_t getNumberOfSwapChainImages() const;
+	virtual uint32_t getNumberOfSwapChainImages() const;
 
-    ImageView& getImageView(const size_t index)
+    virtual ImageView& getImageView(const size_t index)
         { return mImageViews[index]; }
 
-	const ImageView& getImageView(const size_t index) const
+	virtual const ImageView& getImageView(const size_t index) const
 		{ return mImageViews[index]; }
 
-    Image& getImage(const size_t index)
+	virtual Image& getImage(const size_t index)
         { return mSwapChainImages[index]; }
 
-    const Image& getImage(const size_t index) const
+	virtual const Image& getImage(const size_t index) const
         { return mSwapChainImages[index]; }
 
 	uint32_t getCurrentImageIndex() const { return mCurrentImageIndex; }

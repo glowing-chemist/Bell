@@ -14,7 +14,8 @@ DX_12Image::DX_12Image( RenderDevice* device,
                         const uint32_t levels,
                         const uint32_t samples,
                         const std::string& name) :
-    ImageBase(device, format, usage, x, y, z, mips, levels, samples, name)
+    ImageBase(device, format, usage, x, y, z, mips, levels, samples, name),
+    mIsOwned(true)
 {
     D3D12_RESOURCE_DIMENSION type;
     if (x != 0 && y == 0 && z == 0) type = D3D12_RESOURCE_DIMENSION::D3D12_RESOURCE_DIMENSION_TEXTURE1D;
@@ -42,9 +43,29 @@ DX_12Image::DX_12Image( RenderDevice* device,
 }
 
 
+DX_12Image::DX_12Image(RenderDevice* device,
+    ID3D12Resource* resource,
+    const Format format,
+    const ImageUsage usage,
+    const uint32_t x,
+    const uint32_t y,
+    const uint32_t z,
+    const uint32_t mips,
+    const uint32_t levels,
+    const uint32_t samples,
+    const std::string& name) :
+    ImageBase(device, format, usage, x, y, z, mips, levels, samples, name)
+{
+    mImage = resource;
+    mImageMemory = nullptr;
+    mIsOwned = false;
+}
+
+
 DX_12Image::~DX_12Image()
 {
-    getDevice()->destroyImage(*this);
+    if(mIsOwned)
+        getDevice()->destroyImage(*this);
 }
 
 

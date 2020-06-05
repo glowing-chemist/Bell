@@ -14,10 +14,27 @@ public:
 	virtual uint32_t getNextImageIndex() override final;
 	virtual void present(const QueueType queueIndex) override final;
 
+	virtual uint32_t getNumberOfSwapChainImages() const override
+	{
+		return 3; // For now just always use 3.
+	}
+
+	virtual ImageView& getImageView(const size_t index) override final;
+
+	virtual const ImageView& getImageView(const size_t index) const override final;
+
+	virtual Image& getImage(const size_t index) override final;
+
+	virtual const Image& getImage(const size_t index) const override final;
+
 private:
 
 	IDXGISwapChain* mSwapChain;
 
+	ID3D12Resource* mCurrentResource;
+
+	Image* mCurrentImage;
+	ImageView* mCurrentImageView;
 };
 
 #endif

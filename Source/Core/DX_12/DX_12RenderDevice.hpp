@@ -34,6 +34,9 @@ public:
 
 	virtual size_t					   getMinStorageBufferAlignment() const override;
 
+	virtual const std::vector<uint64_t>& getAvailableTimestamps() const override;
+	virtual float                      getTimeStampPeriod() const override;
+
 	void							   createImage(	const D3D12_RESOURCE_DESC& desc, 
 													const D3D12MA::ALLOCATION_DESC& allocDesc, 
 													ID3D12Resource** outImage, 
@@ -60,6 +63,8 @@ private:
 	ID3D12CommandQueue* mComputeQueue;
 
 	std::vector<ID3D12Fence*> mFrameComplete;
+
+	std::vector<uint64_t> mTimeStamps;
 };
 
 #endif

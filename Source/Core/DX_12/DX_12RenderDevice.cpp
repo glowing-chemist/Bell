@@ -152,6 +152,19 @@ size_t DX_12RenderDevice::getMinStorageBufferAlignment() const
 }
 
 
+const std::vector<uint64_t>& DX_12RenderDevice::getAvailableTimestamps() const
+{
+	return mTimeStamps;
+}
+
+
+float                       DX_12RenderDevice::getTimeStampPeriod() const
+{
+	BELL_TRAP;
+	return 1.0f;
+}
+
+
 void DX_12RenderDevice::createImage(const D3D12_RESOURCE_DESC& desc, const D3D12MA::ALLOCATION_DESC& allocDesc, ID3D12Resource** outImage, D3D12MA::Allocation** outImageMemory, D3D12_CLEAR_VALUE* clearValue)
 {
 	BELL_ASSERT(outImage, "Need to supply a non null image ptr");

@@ -21,6 +21,18 @@ public:
         const uint32_t samples = 1,
         const std::string& = "");
 
+    DX_12Image(RenderDevice*,
+        ID3D12Resource* resource,
+        const Format,
+        const ImageUsage,
+        const uint32_t x,
+        const uint32_t y,
+        const uint32_t z,
+        const uint32_t mips = 1,
+        const uint32_t levels = 1,
+        const uint32_t samples = 1,
+        const std::string & = "");
+
 	~DX_12Image();
 
     virtual void swap(ImageBase&) override final;
@@ -54,6 +66,7 @@ private:
     ID3D12Resource* mImage;
     D3D12MA::Allocation* mImageMemory;
 
+    bool mIsOwned;
 };
 
 #endif

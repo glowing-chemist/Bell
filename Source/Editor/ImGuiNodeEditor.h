@@ -40,7 +40,7 @@ struct Pin
 {
     ax::NodeEditor::PinId       mID;
     std::weak_ptr<EditorNode>   mNode;
-    std::string                 mName;
+    const char*                 mName;
     PinType                     mType;
     PinKind                     mKind;
 
@@ -136,7 +136,7 @@ public:
 
 	void addPasses(Engine&);
 
-    std::vector<std::string> getAvailableDebugTextures() const;
+    std::vector<const char*> getAvailableDebugTextures() const;
 
 private:
 
