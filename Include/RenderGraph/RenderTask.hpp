@@ -53,20 +53,20 @@ public:
     RenderTask(const std::string& name) : mName{name} {}
 	virtual ~RenderTask() = default;
 
-    virtual void addInput(const std::string& name, const AttachmentType attachmentType, const size_t arraySize = 0)
+    virtual void addInput(const char* name, const AttachmentType attachmentType, const size_t arraySize = 0)
     {
        mInputAttachments.push_back({name, attachmentType, arraySize});
     }
 
     // Loadop has no effect on ComputeTasks
-	virtual void addOutput(const std::string& name, const AttachmentType attachmentType, const Format format, const SizeClass size = SizeClass::Custom, const LoadOp op = LoadOp::Preserve)
+    virtual void addOutput(const char* name, const AttachmentType attachmentType, const Format format, const SizeClass size = SizeClass::Custom, const LoadOp op = LoadOp::Preserve)
     {
 	   mOutputAttachments.push_back({name, attachmentType, format, size, op});
     }
 
     struct OutputAttachmentInfo
     {
-		std::string		mName;
+        const char*		mName;
 		AttachmentType	mType;
 		Format			mFormat;
 		SizeClass		mSize;
@@ -75,7 +75,7 @@ public:
 
 	struct InputAttachmentInfo
 	{
-		std::string mName;
+        const char* mName;
 		AttachmentType mType;
         size_t mArraySize;
 	};
@@ -111,10 +111,5 @@ protected:
     CommandCallbackFunc mRecordCommandsCallback;
 };
 
-
-inline bool operator<(const RenderTask::OutputAttachmentInfo& lhs, const RenderTask::OutputAttachmentInfo& rhs)
-{
-    return lhs.mName < rhs.mName && lhs.mType < rhs.mType && lhs.mLoadOp < rhs.mLoadOp;
-}
 
 #endif

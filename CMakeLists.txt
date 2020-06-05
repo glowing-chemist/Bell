@@ -151,6 +151,7 @@ set(BELL_SOURCE
     Source/Engine/GeomUtils.cpp
     Source/Engine/Scene.cpp
     Source/Engine/Animation.cpp
+    Source/Engine/DefaultResourceSlots.cpp
 
     # Techniques
     Source/Engine/SSAOTechnique.cpp

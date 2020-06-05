@@ -2,6 +2,11 @@
 #include "Engine/Engine.hpp"
 #include "Core/Executor.hpp"
 
+
+constexpr const char* slots[] = { "convolved0", "convolved1", "convolved2", "convolved3", "convolved4", "convolved5", "convolved6", "convolved7", "convolved8", "convolved9" };
+constexpr const char* diffuseSkybox = "DiffuseSkybox";
+
+
 ConvolveSkyBoxTechnique::ConvolveSkyBoxTechnique(Engine* eng, RenderGraph& graph) :
 	Technique("convolveskybox", eng->getDevice()),
 	mPipelineDesc{eng->getShader("./Shaders/SkyBoxConvolve.comp")},
@@ -24,12 +29,11 @@ ConvolveSkyBoxTechnique::ConvolveSkyBoxTechnique(Engine* eng, RenderGraph& graph
 	convolveTask.addInput(kSkyBox, AttachmentType::Texture2D);
 	convolveTask.addInput(kDefaultSampler, AttachmentType::Sampler);
 
-	const char* slots[] = { "convolved0", "convolved1", "convolved2", "convolved3", "convolved4", "convolved5", "convolved6", "convolved7", "convolved8", "convolved9" };
 	for (uint32_t i = 0; i < 10; ++i)
 	{
 		convolveTask.addInput(slots[i], AttachmentType::Image2D);
 	}
-    convolveTask.addInput("diffuseSkybox", AttachmentType::Image2D);
+    convolveTask.addInput(diffuseSkybox, AttachmentType::Image2D);
     convolveTask.addInput(kConvolvedSpecularSkyBox, AttachmentType::Image2D);
     convolveTask.addInput(kConvolvedDiffuseSkyBox, AttachmentType::Image2D);
 
@@ -39,7 +43,7 @@ ConvolveSkyBoxTechnique::ConvolveSkyBoxTechnique(Engine* eng, RenderGraph& graph
 	{
 		graph.bindImage(slots[i], convolvedMips[i]);
 	}
-    graph.bindImage("diffuseSkybox", diffuseskybox);
+    graph.bindImage(diffuseSkybox, diffuseskybox);
 }
 
 

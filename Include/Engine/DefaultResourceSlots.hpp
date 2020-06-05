@@ -2,57 +2,57 @@
 #define DEFAULTRESOURCESLOTS_HPP
 
 
-constexpr const char* kGBufferDepth	    = "GbufferDepth";
-constexpr const char* kGBufferNormals   = "GBufferNormals";
-constexpr const char* kGBufferDiffuse	    = "GBufferDiffuse";
-constexpr const char* kGBufferSpecular   = "GBufferSpecular";
-constexpr const char* kGBufferMaterialID = "GBUfferMaterialID";
-constexpr const char* kGBufferUV	    = "GBUfferUV";
-constexpr const char* kGBufferSpecularRoughness = "GBufferSpecularRoughness";
-constexpr const char* kGBufferVelocity = "GBufferVelocity";
-constexpr const char* kGBufferEmissiveOcclusion = "EmissiveOcclusion";
-constexpr const char* kSSAO		    = "SSAO";
-constexpr const char* kSSAOBuffer		= "SSAOBuf";
-constexpr const char* kDefaultSampler    = "defaultSampler";
-constexpr const char* kBlinnPhongLighting= "BlinnPhongLight";
-constexpr const char* kMaterials		 = "Materials";
-constexpr const char* kSkyBox			 = "SkyBox";
-constexpr const char* kConvolvedSpecularSkyBox   = "ConvolvedSpecSB";
-constexpr const char* kConvolvedDiffuseSkyBox   = "ConvolvedDiffSB";
-constexpr const char* kActiveFroxels	 = "ActiveFroxels";
-constexpr const char* kActiveFroxelBuffer = "ActiveFroxelBuffer";
-constexpr const char* kShadowMap          = "ShadowMap";
-constexpr const char* kShadowingLights    = "ShadowingLights";
-constexpr const char* kCompositeOutput = "CompositeOutput";
-constexpr const char* kTAAHistory		= "TAAHistory";
-constexpr const char* kNewTAAHistory		= "NewTAAHistory";
-constexpr const char* kLinearDepth		= "LinearDepth";
-constexpr const char* kReflectionMap = "ReflectionMap";
-constexpr const char* kDiffuseVoxelMap = "DiffuseVoxelMap";
-constexpr const char* kDebugVoxels = "DebugVoxels";
-constexpr const char* kVoxelDimmensions = "VoxelDimm";
+extern const char kGBufferDepth[];
+extern const char kGBufferNormals[];
+extern const char kGBufferDiffuse[];
+extern const char kGBufferSpecular[];
+extern const char kGBufferMaterialID[];
+extern const char kGBufferUV[];
+extern const char kGBufferSpecularRoughness[];
+extern const char kGBufferVelocity[];;
+extern const char kGBufferEmissiveOcclusion[];
+extern const char kSSAO[];
+extern const char kSSAOBuffer[];
+extern const char kDefaultSampler[];
+extern const char kBlinnPhongLighting[];
+extern const char kMaterials[];
+extern const char kSkyBox[];
+extern const char kConvolvedSpecularSkyBox[];
+extern const char kConvolvedDiffuseSkyBox[];
+extern const char kActiveFroxels[];
+extern const char kActiveFroxelBuffer[];
+extern const char kShadowMap[];
+extern const char kShadowingLights[];
+extern const char kCompositeOutput[];
+extern const char kTAAHistory[];
+extern const char kNewTAAHistory[];
+extern const char kLinearDepth[];
+extern const char kReflectionMap[];
+extern const char kDiffuseVoxelMap[];
+extern const char kDebugVoxels[];
+extern const char kVoxelDimmensions[];
 
-constexpr const char* kCameraBuffer	    = "CameraBuffer";
-constexpr const char* kLightBuffer	    = "LightBuffer";
-constexpr const char* kMaterialMappings = "MaterialMappings";
-constexpr const char* kSparseFroxels    = "SparseFroxles";
-constexpr const char* kLightIndicies    = "LightIndicies";
-constexpr const char* kSceneVertexBuffer = "SceneVertexBuffer";
-constexpr const char* kSceneIndexBuffer  = "SceneIndexBuffer";
-constexpr const char* kTPoseVertexBuffer = "TPoseBuffer";
-constexpr const char* kBoneWeighntsIndiciesBuffer = "BoneWeightsIndicies";
-constexpr const char* kBonesWeights      = "BoneWeights";
-constexpr const char* kBonesBuffer        = "BonesBuffer";
+extern const char kCameraBuffer[];
+extern const char kLightBuffer[];
+extern const char kMaterialMappings[];
+extern const char kSparseFroxels[];
+extern const char kLightIndicies[];
+extern const char kSceneVertexBuffer[];
+extern const char kSceneIndexBuffer[];
+extern const char kTPoseVertexBuffer[];
+extern const char kBoneWeighntsIndiciesBuffer[];
+extern const char kBonesWeights[];
+extern const char kBonesBuffer[];
 
-constexpr const char* kFrameBufer        = "FrameBuffer";
-constexpr const char* kGlobalLighting	 = "GlobalLighting";
-constexpr const char* kAnalyticLighting  = "AnalyticLighting";
-constexpr const char* kOverlay			 = "Overlay";
+extern const char kFrameBufer[];
+extern const char kGlobalLighting[];
+extern const char kAnalyticLighting[];
+extern const char kOverlay[];
 
-constexpr const char* kDFGLUT			= "DFG";
-constexpr const char* kLTCMat           = "LTCMat";
-constexpr const char* kLTCAmp           = "LTCAmp";
+extern const char kDFGLUT[];
+extern const char kLTCMat[];
+extern const char kLTCAmp[];
 
-constexpr const char* kDefaultFontTexture = "Fonts";
+extern const char kDefaultFontTexture[];
 
 #endif

@@ -101,7 +101,7 @@ public:
         mCompileGraph = true;
 	}
 
-    void enableDebugTexture(const std::string& slot)
+    void enableDebugTexture(const char* slot)
     {
         mShowDebugTexture = true;
         mDebugTextureName = slot;
@@ -113,7 +113,7 @@ public:
         mDebugTextureName = "";
     }
 
-    const std::string& getDebugTextureSlot() const
+    const char* getDebugTextureSlot() const
     {
         return mDebugTextureName;
     }
@@ -138,15 +138,6 @@ public:
         mVertexCache.clear();
         mTposeVertexCache.clear();
     }
-
-    void   setImageInScene(const std::string& name, const ImageView& image)
-		{ mCurrentRenderGraph.bindImage(name, image); }
-
-	void   setBufferInScene( const std::string& name , const BufferView& buffer)
-		{ mCurrentRenderGraph.bindBuffer(name, buffer); }
-
-	void setSamperInScene(const std::string& name, const Sampler sampler)
-		{ mCurrentRenderGraph.bindSampler(name, sampler); }
 
 	void setVertexBufferforScene(const Buffer& vertBuf)
         { mVertexBuffer = vertBuf; }
@@ -266,7 +257,7 @@ private:
 
     // Debug helpers
     bool mShowDebugTexture;
-    std::string mDebugTextureName;
+    const char* mDebugTextureName;
 
 	// Global uniform buffers
 

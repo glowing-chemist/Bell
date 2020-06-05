@@ -46,7 +46,6 @@ public:
 
 	TaskID addTask(const GraphicsTask&);
 	TaskID addTask(const ComputeTask&);
-	RenderTask& getTask(const TaskID);
 
 	void addDependancy(const RenderTask& dependancy, const RenderTask& dependant);
     void addDependancy(const std::string& dependancy, const std::string& dependant);
@@ -54,13 +53,13 @@ public:
 	void compile(RenderDevice* dev);
 
     // Bind persistent resourcers.
-    void bindImage(const std::string&, const ImageView &);
-	void bindImageArray(const std::string&, const ImageViewArray&);
-	void bindBuffer(const std::string&, const BufferView &);
-    void bindVertexBuffer(const std::string&, const BufferView &);
-    void bindIndexBuffer(const std::string&, const BufferView &);
-    void bindSampler(const std::string&, const Sampler&);
-	void bindShaderResourceSet(const std::string&, const ShaderResourceSet&);
+    void bindImage(const char* name, const ImageView &);
+    void bindImageArray(const char* name, const ImageViewArray&);
+    void bindBuffer(const char* name, const BufferView &);
+    void bindVertexBuffer(const char* name, const BufferView &);
+    void bindIndexBuffer(const char* name, const BufferView &);
+    void bindSampler(const char* name, const Sampler&);
+    void bindShaderResourceSet(const char* name, const ShaderResourceSet&);
 
 	void bindInternalResources();
 
@@ -68,10 +67,11 @@ public:
     const RenderTask& getTask(const uint32_t) const;
 	RenderTask& getTask(TaskType, uint32_t);
 	const RenderTask& getTask(TaskType, uint32_t) const;
+    RenderTask& getTask(const TaskID);
 
-	const BufferView& getBoundBuffer(const std::string&) const;
-    const ImageView&  getBoundImageView(const std::string&) const;
-	const ShaderResourceSet& getBoundShaderResourceSet(const std::string& slot) const;
+    const BufferView& getBoundBuffer(const char*) const;
+    const ImageView&  getBoundImageView(const char*) const;
+    const ShaderResourceSet& getBoundShaderResourceSet(const char*) const;
 
 	std::vector<BarrierRecorder> generateBarriers(RenderDevice*);
 
@@ -129,7 +129,7 @@ public:
 
 	struct ResourceBindingInfo
 	{
-        std::string mName;
+        const char* mName;
 		ResourceType mResourcetype;
 		uint32_t mResourceIndex;
 		uint32_t mResourceBinding;
@@ -149,9 +149,9 @@ private:
 	// Selecets the best task to execuet next based on some heuristics.
 	uint32_t selectNextTask(const std::vector<uint8_t>& dependancies, const TaskType) const;
 
-    void bindResource(const std::string&, const uint32_t, const ResourceType);
+    void bindResource(const char* name, const uint32_t, const ResourceType);
 
-	void createInternalResource(RenderDevice*, const std::string& name, const Format, const ImageUsage, const SizeClass);
+    void createInternalResource(RenderDevice*, const char *name, const Format, const ImageUsage, const SizeClass);
 
     std::vector<GraphicsTask> mGraphicsTasks;
 	std::vector<ComputeTask>  mComputeTasks;
@@ -180,18 +180,18 @@ private:
     std::vector<std::vector<ResourceBindingInfo>> mInputResources;
     std::vector<std::vector<ResourceBindingInfo>> mOutputResources;
 
-    std::vector<std::pair<std::string, ImageView>> mImageViews;
-	std::vector<std::pair<std::string, ImageViewArray>> mImageViewArrays;
-	std::vector<std::pair<std::string, BufferView>> mBufferViews;
-    std::vector<std::pair<std::string, Sampler>> mSamplers;
-	std::vector<std::pair<std::string, ShaderResourceSet>> mSRS;
+    std::vector<std::pair<const char*, ImageView>> mImageViews;
+    std::vector<std::pair<const char*, ImageViewArray>> mImageViewArrays;
+    std::vector<std::pair<const char*, BufferView>> mBufferViews;
+    std::vector<std::pair<const char*, Sampler>> mSamplers;
+    std::vector<std::pair<const char*, ShaderResourceSet>> mSRS;
 
 	struct InternalResourceEntry
 	{
-		InternalResourceEntry(const std::string slot, PerFrameResource<Image>& image, PerFrameResource<ImageView>& view) :
+        InternalResourceEntry(const char* slot, PerFrameResource<Image>& image, PerFrameResource<ImageView>& view) :
 			mSlot{ slot }, mResource{ image }, mResourceView{ view } {}
 
-		std::string mSlot;
+        const char* mSlot;
 		PerFrameResource<Image> mResource;
 		PerFrameResource<ImageView> mResourceView;
 	};

@@ -288,7 +288,7 @@ void RenderGraph::compileDependancies()
 }
 
 
-void RenderGraph::bindResource(const std::string& name, const uint32_t index, const ResourceType resourcetype)
+void RenderGraph::bindResource(const char* name, const uint32_t index, const ResourceType resourcetype)
 {
     uint32_t taskOrderIndex = 0;
 	for(const auto& [taskType, taskIndex] : mTaskOrder)
@@ -327,7 +327,7 @@ void RenderGraph::bindResource(const std::string& name, const uint32_t index, co
 }
 
 
-void RenderGraph::bindImage(const std::string& name, const ImageView &image)
+void RenderGraph::bindImage(const char *name, const ImageView &image)
 {
     const uint32_t currentImageIndex = static_cast<uint32_t>(mImageViews.size());
     mImageViews.emplace_back(name, image);
@@ -336,7 +336,7 @@ void RenderGraph::bindImage(const std::string& name, const ImageView &image)
 }
 
 
-void RenderGraph::bindImageArray(const std::string& name, const ImageViewArray& imageArray)
+void RenderGraph::bindImageArray(const char *name, const ImageViewArray& imageArray)
 {
 	const uint32_t currentImageArrayIndex = static_cast<uint32_t>(mImageViewArrays.size());
 	mImageViewArrays.emplace_back(name, imageArray);	
@@ -345,7 +345,7 @@ void RenderGraph::bindImageArray(const std::string& name, const ImageViewArray& 
 }
 
 
-void RenderGraph::bindBuffer(const std::string& name , const BufferView& buffer)
+void RenderGraph::bindBuffer(const char *name , const BufferView& buffer)
 {
 	const uint32_t currentBufferIndex = static_cast<uint32_t>(mBufferViews.size());
 	mBufferViews.emplace_back(name, buffer);
@@ -354,7 +354,7 @@ void RenderGraph::bindBuffer(const std::string& name , const BufferView& buffer)
 }
 
 
-void RenderGraph::bindVertexBuffer(const std::string& name, const BufferView& buffer)
+void RenderGraph::bindVertexBuffer(const char *name, const BufferView& buffer)
 {
     const uint32_t currentBufferIndex = static_cast<uint32_t>(mBufferViews.size());
     mBufferViews.emplace_back(name, buffer);
@@ -363,7 +363,7 @@ void RenderGraph::bindVertexBuffer(const std::string& name, const BufferView& bu
 }
 
 
-void RenderGraph::bindIndexBuffer(const std::string& name, const BufferView& buffer)
+void RenderGraph::bindIndexBuffer(const char *name, const BufferView& buffer)
 {
     const uint32_t currentBufferIndex = static_cast<uint32_t>(mBufferViews.size());
     mBufferViews.emplace_back(name, buffer);
@@ -372,7 +372,7 @@ void RenderGraph::bindIndexBuffer(const std::string& name, const BufferView& buf
 }
 
 
-void RenderGraph::bindSampler(const std::string& name, const Sampler& type)
+void RenderGraph::bindSampler(const char *name, const Sampler& type)
 {
     const uint32_t samplerIndex = static_cast<uint32_t>(mSamplers.size());
     mSamplers.emplace_back(name, type);
@@ -381,7 +381,7 @@ void RenderGraph::bindSampler(const std::string& name, const Sampler& type)
 }
 
 
-void RenderGraph::bindShaderResourceSet(const std::string& name, const ShaderResourceSet& set)
+void RenderGraph::bindShaderResourceSet(const char *name, const ShaderResourceSet& set)
 {
 	mSRS.emplace_back(name, set);
 }
@@ -415,7 +415,7 @@ for(auto& outputBinding : mInputResources)
 }
 
 
-void RenderGraph::createInternalResource(RenderDevice* dev, const std::string& name, const Format format, const ImageUsage usage, const SizeClass size)
+void RenderGraph::createInternalResource(RenderDevice* dev, const char* name, const Format format, const ImageUsage usage, const SizeClass size)
 {
 	const auto [width, height] = [=]() -> std::pair<uint32_t, uint32_t>
 	{
@@ -717,9 +717,9 @@ const BufferView& RenderGraph::getBuffer(const uint32_t index) const
 }
 
 
-const BufferView& RenderGraph::getBoundBuffer(const std::string& name) const
+const BufferView& RenderGraph::getBoundBuffer(const char *name) const
 {
-	const auto it = std::find_if(mBufferViews.begin(), mBufferViews.end(), [&name](const std::pair<std::string, BufferView>& entry) { return name == entry.first; });
+    const auto it = std::find_if(mBufferViews.begin(), mBufferViews.end(), [name](const std::pair<const char*, BufferView>& entry) { return name == entry.first; });
 
 	BELL_ASSERT(it != mBufferViews.end(), "Buffer not found")
 
@@ -727,9 +727,9 @@ const BufferView& RenderGraph::getBoundBuffer(const std::string& name) const
 }
 
 
-const ImageView& RenderGraph::getBoundImageView(const std::string& name) const
+const ImageView& RenderGraph::getBoundImageView(const char* name) const
 {
-    const auto it = std::find_if(mImageViews.begin(), mImageViews.end(), [&name](const std::pair<std::string, ImageView>& entry) { return name == entry.first; });
+    const auto it = std::find_if(mImageViews.begin(), mImageViews.end(), [name](const std::pair<const char*, ImageView>& entry) { return name == entry.first; });
 
     BELL_ASSERT(it != mImageViews.end(), "Image not found")
 
@@ -737,10 +737,10 @@ const ImageView& RenderGraph::getBoundImageView(const std::string& name) const
 }
 
 
-const ShaderResourceSet& RenderGraph::getBoundShaderResourceSet(const std::string& slot) const
+const ShaderResourceSet& RenderGraph::getBoundShaderResourceSet(const char* name) const
 {
-	const auto it = std::find_if(mSRS.begin(), mSRS.end(), [&slot](const auto& s) {
-		return s.first == slot;
+    const auto it = std::find_if(mSRS.begin(), mSRS.end(), [name](const auto& s) {
+        return s.first == name;
 		});
 
 	BELL_ASSERT(it != mSRS.end(), "SRS not found")
@@ -774,7 +774,7 @@ std::vector<BarrierRecorder> RenderGraph::generateBarriers(RenderDevice* dev)
 	};
 
 	std::map<uint32_t, ResourceUsageEntries> resourceEntries;
-	std::unordered_map<std::string, uint32_t> resourceIndicies;
+    std::unordered_map<const char*, uint32_t> resourceIndicies;
 	uint32_t nextResourceIndex = 0;
 
 	// Gather when all resources are used/how.

@@ -34,12 +34,12 @@ namespace std
 class ComputeTask : public RenderTask 
 {
 public:
-    ComputeTask(const std::string& name, ComputePipelineDescription desc) : RenderTask{ name }, mPipelineDescription{ desc } {}
+    ComputeTask(const char* name, ComputePipelineDescription desc) : RenderTask{ name }, mPipelineDescription{ desc } {}
 
     ComputePipelineDescription getPipelineDescription() const
         { return mPipelineDescription; }
 
-    void addOutput(const std::string& name, const AttachmentType attachmentType, const Format, const SizeClass = SizeClass::Custom, const LoadOp = LoadOp::Preserve) override final
+    void addOutput(const char* name, const AttachmentType attachmentType, const Format, const SizeClass = SizeClass::Custom, const LoadOp = LoadOp::Preserve) override final
     {
         // All outputs needs to be part of the descriptor set for compute pipelies
         // as compuite shaders writes don't go to the framebuffer.
