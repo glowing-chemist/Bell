@@ -1,3 +1,5 @@
+#define VBEC_TYPE float
+
 #include "GaussianBlur.hlsl"
 
 [[vk::binding(0)]]

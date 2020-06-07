@@ -245,6 +245,8 @@ set(SHADERS
 	ResolveVarianceShadowMap.comp
 	blurXrg32f.comp
 	blurYrg32f.comp
+	blurXr32f.comp
+	blurYr32f.comp
 	AlphaTestDepthOnly.frag
 	MeshAttributes.hlsl
 	VertexOutputs.hlsl
