@@ -56,7 +56,7 @@ Engine::Engine(GLFWwindow* windowPtr) :
     mBoneWeightBuilder(),
     mVertexBuilder(),
     mIndexBuilder(),
-    mMaterials{getDevice()},
+    mMaterials{getDevice(), 200},
     mLTCMat(getDevice(), Format::RGBA32Float, ImageUsage::Sampled | ImageUsage::TransferDest, 64, 64, 1, 1, 1, 1, "LTC Mat"),
     mLTCMatView(mLTCMat, ImageViewType::Colour),
     mLTCAmp(getDevice(), Format::RG32Float, ImageUsage::Sampled | ImageUsage::TransferDest, 64, 64, 1, 1, 1, 1, "LTC Amp"),
@@ -83,7 +83,7 @@ Engine::Engine(GLFWwindow* windowPtr) :
     mLightBuffer(getDevice(), BufferUsage::DataBuffer | BufferUsage::TransferDest, (sizeof(Scene::Light) * 1000) + sizeof(uint32_t), (sizeof(Scene::Light) * 1000) + sizeof(uint32_t), "LightBuffer"),
     mLightBufferView(mLightBuffer, sizeof(uint4)),
     mLightCountView(mLightBuffer, 0, sizeof(uint4)),
-    mLightsSRS(getDevice()),
+    mLightsSRS(getDevice(), 2),
     mMaxCommandThreads(1),
     mWindow(windowPtr)
 {
@@ -149,7 +149,7 @@ void Engine::setScene(Scene* scene)
     }
     else // We're clearing the scene so need to destroy the materials.
     {
-        mMaterials.reset(mRenderDevice);
+        mMaterials.reset(mRenderDevice, 200);
         mActiveAnimations.clear();
         // need to invalidate render pipelines as the number of materials could change.
         mRenderDevice->invalidatePipelines();

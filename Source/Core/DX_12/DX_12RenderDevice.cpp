@@ -141,7 +141,7 @@ void DX_12RenderDevice::submitContext(CommandContextBase*, const bool finalSubmi
 
 void DX_12RenderDevice::swap()
 {
-
+	mSwapChain->present(QueueType::Graphics);
 }
 
 
@@ -162,6 +162,21 @@ float                       DX_12RenderDevice::getTimeStampPeriod() const
 {
 	BELL_TRAP;
 	return 1.0f;
+}
+
+
+ID3D12DescriptorHeap* DX_12RenderDevice::createShaderInputDescriptorHeap(const uint32_t numDescriptors)
+{
+	D3D12_DESCRIPTOR_HEAP_DESC desc{};
+	desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+	desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+	desc.NumDescriptors = numDescriptors;
+
+	ID3D12DescriptorHeap* heap;
+	HRESULT result = mDevice->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&heap));
+	BELL_ASSERT(result == S_OK, "Failed to create descriptor heap")
+
+	return heap;
 }
 
 

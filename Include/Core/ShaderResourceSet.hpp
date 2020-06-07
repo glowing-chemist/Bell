@@ -3,27 +3,26 @@
 
 #include "Core/DeviceChild.hpp"
 #include "Core/GPUResource.hpp"
+#include "Core/Sampler.hpp"
+#include "Core/BufferView.hpp"
 #include "Engine/PassTypes.hpp"
 
 #include <memory>
 #include <vector>
 
 class ImageView;
-class BufferView;
-class Sampler;
 using ImageViewArray = std::vector<ImageView>;
 
 
 class ShaderResourceSetBase : public DeviceChild, public GPUResource
 {
 public:
-	ShaderResourceSetBase(RenderDevice* dev);
+	ShaderResourceSetBase(RenderDevice* dev, const uint32_t maxDescriptors);
 	virtual ~ShaderResourceSetBase() = default;
 
 	void addSampledImage(const ImageView&);
 	void addStorageImage(const ImageView&);
 	void addSampledImageArray(const ImageViewArray&);
-	void addSampler(const Sampler&);
 	void addUniformBuffer(const BufferView&);
     void addDataBufferRO(const BufferView&);
     void addDataBufferRW(const BufferView&);
@@ -42,9 +41,10 @@ public:
 
 protected:
 
+	uint32_t mMaxDescriptors;
+
 	std::vector<ImageView> mImageViews;
 	std::vector<BufferView> mBufferViews;
-	std::vector<Sampler>   mSamplers;
 	std::vector<ImageViewArray> mImageArrays;
 
 	std::vector<ResourceInfo> mResources;
@@ -55,7 +55,7 @@ class ShaderResourceSet
 {
 public:
 
-	ShaderResourceSet(RenderDevice* dev);
+	ShaderResourceSet(RenderDevice* dev, const uint32_t maxDescriptors);
 	~ShaderResourceSet() = default;
 
 
@@ -79,7 +79,7 @@ public:
 		return getBase();
 	}
 
-    void reset(RenderDevice* dev);
+    void reset(RenderDevice* dev, const uint32_t maxDescriptors);
 
 private:
 

@@ -6,8 +6,8 @@
 #include "Core/Sampler.hpp"
 
 
-VulkanShaderResourceSet::VulkanShaderResourceSet(RenderDevice* dev) :
-	ShaderResourceSetBase(dev),
+VulkanShaderResourceSet::VulkanShaderResourceSet(RenderDevice* dev, const uint32_t maxDescriptors) :
+	ShaderResourceSetBase(dev, maxDescriptors),
 	mLayout{nullptr},
 	mDescSet{nullptr},
 	mPool{nullptr} {}
@@ -45,12 +45,6 @@ void VulkanShaderResourceSet::finalise()
 		case AttachmentType::TextureArray:
 		{
 			writes.emplace_back(resource.mType, binding, mImageArrays[resource.mIndex].size(), mImageArrays[resource.mIndex].data(), nullptr, nullptr);
-			break;
-		}
-
-		case AttachmentType::Sampler:
-		{
-			writes.emplace_back(resource.mType, binding, 0, nullptr, nullptr, &mSamplers[resource.mIndex]);
 			break;
 		}
 

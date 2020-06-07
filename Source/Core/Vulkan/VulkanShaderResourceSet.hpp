@@ -13,7 +13,7 @@
 class VulkanShaderResourceSet : public ShaderResourceSetBase
 {
 public:
-	VulkanShaderResourceSet(RenderDevice* dev);
+	VulkanShaderResourceSet(RenderDevice* dev, const uint32_t maxDescriptors);
 	~VulkanShaderResourceSet();
 
 	virtual void finalise() override;

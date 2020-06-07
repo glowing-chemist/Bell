@@ -9,9 +9,15 @@
 #include "Core/Vulkan/VulkanShaderResourceSet.hpp"
 #endif
 
-ShaderResourceSetBase::ShaderResourceSetBase(RenderDevice* dev) :
+#ifdef DX_12
+#include "Core/DX_12/DX_12ShaderResourceSet.hpp"
+#endif
+
+ShaderResourceSetBase::ShaderResourceSetBase(RenderDevice* dev, const uint32_t maxDescriptors) :
 	DeviceChild(dev),
-	GPUResource(getDevice()->getCurrentSubmissionIndex()) {}
+	GPUResource(getDevice()->getCurrentSubmissionIndex()),
+    mMaxDescriptors{maxDescriptors}
+{}
 
 
 void ShaderResourceSetBase::addSampledImage(const ImageView& view)
@@ -38,15 +44,6 @@ void ShaderResourceSetBase::addSampledImageArray(const ImageViewArray& views)
 	mImageArrays.push_back(views);
 
     mResources.push_back({ index, AttachmentType::TextureArray, views.size() });
-}
-
-
-void ShaderResourceSetBase::addSampler(const Sampler& sampler)
-{
-	const auto index = mSamplers.size();
-	mSamplers.push_back(sampler);
-
-    mResources.push_back({ index, AttachmentType::Sampler, 0 });
 }
 
 
@@ -99,19 +96,27 @@ void ShaderResourceSetBase::updateLastAccessed()
 }
 
 
-ShaderResourceSet::ShaderResourceSet(RenderDevice* dev)
+ShaderResourceSet::ShaderResourceSet(RenderDevice* dev, const uint32_t maxDescriptors)
 {
 #ifdef VULKAN
-	mBase = std::make_shared<VulkanShaderResourceSet>(dev);
+	mBase = std::make_shared<VulkanShaderResourceSet>(dev, maxDescriptors);
+#endif
+
+#ifdef DX_12
+    mBase = std::make_shared<DX_12ShaderResourceSet>(dev, maxDescriptors);
 #endif
 }
 
 
-void ShaderResourceSet::reset(RenderDevice* dev)
+void ShaderResourceSet::reset(RenderDevice* dev, const uint32_t maxDescriptors)
 {
     mBase.reset();
 
 #ifdef VULKAN
-    mBase = std::make_shared<VulkanShaderResourceSet>(dev);
+    mBase = std::make_shared<VulkanShaderResourceSet>(dev, maxDescriptors);
+#endif
+
+#ifdef DX_12
+    mBase = std::make_shared<DX_12ShaderResourceSet>(dev, maxDescriptors);
 #endif
 }

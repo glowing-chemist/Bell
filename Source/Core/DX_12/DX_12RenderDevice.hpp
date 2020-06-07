@@ -43,6 +43,8 @@ public:
 													D3D12MA::Allocation** outImageMemory,
 													D3D12_CLEAR_VALUE* clearValue = nullptr);
 
+	ID3D12DescriptorHeap*			   createShaderInputDescriptorHeap(const uint32_t numDescriptors);
+
 	D3D12MA::ALLOCATION_DESC		   getResourceAllocationDescription(const ImageUsage);
 	D3D12MA::ALLOCATION_DESC		   getResourceAllocationDescription(const BufferUsage);
 
