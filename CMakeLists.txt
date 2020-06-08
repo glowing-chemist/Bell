@@ -127,9 +127,15 @@ endif(WIN32)
 
 if(VULKAN)
     if(WIN32)
-	set(SHADERC "$ENV{VULKAN_SDK}/Lib/shaderc_combined.lib")
+
+		if(${CMAKE_BUILD_TYPE} STREQUAL Debug)
+			set(SHADERC "$ENV{VULKAN_SDK}/LibDebug/shaderc_combinedd.lib")
+		else()
+			set(SHADERC "$ENV{VULKAN_SDK}/Lib/shaderc_combined.lib")
+		endif()
+
     else()
-	set(SHADERC shaderc_combined glslang SPIRV SPIRV-Tools SPIRV-Tools-opt)
+		set(SHADERC shaderc_combined glslang SPIRV SPIRV-Tools SPIRV-Tools-opt)
     endif()
 
     list(APPEND BELL_BASE_DEPENDANCIES ${Vulkan_LIBRARIES} ${SHADERC} )
