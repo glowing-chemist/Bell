@@ -1,4 +1,4 @@
-#define VBEC_TYPE float
+#define VEC_TYPE float
 
 #include "GaussianBlur.hlsl"
 
