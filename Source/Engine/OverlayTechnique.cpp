@@ -4,6 +4,9 @@
 
 #include "imgui.h"
 
+constexpr const char kOverlayOBU[] = "OverlayUBO";
+constexpr const char kOverlayVertex[] = "OverlayVertex";
+constexpr const char kOverlayIndex[] = "OverlayIndex";
 
 OverlayTechnique::OverlayTechnique(Engine* eng, RenderGraph& graph) :
 	Technique{"Overlay", eng->getDevice()},
@@ -38,11 +41,11 @@ OverlayTechnique::OverlayTechnique(Engine* eng, RenderGraph& graph) :
 
 	GraphicsTask task("ImGuiOverlay", mPipelineDescription);
 	task.setVertexAttributes(VertexAttributes::Position2 | VertexAttributes::TextureCoordinates | VertexAttributes::Albedo);
-	task.addInput("OverlayUBO", AttachmentType::UniformBuffer);
+	task.addInput(kOverlayOBU, AttachmentType::UniformBuffer);
 	task.addInput(kDefaultFontTexture, AttachmentType::Texture2D);
 	task.addInput(kDefaultSampler, AttachmentType::Sampler);
-	task.addInput("OverlayVertex", AttachmentType::VertexBuffer);
-	task.addInput("OverlayIndex", AttachmentType::IndexBuffer);
+	task.addInput(kOverlayVertex, AttachmentType::VertexBuffer);
+	task.addInput(kOverlayIndex, AttachmentType::IndexBuffer);
 	task.addOutput(kOverlay, AttachmentType::RenderTarget2D, eng->getSwapChainImage()->getFormat(), SizeClass::Swapchain, LoadOp::Clear_Black);
 
 	mTaskID = graph.addTask(task);
@@ -136,7 +139,7 @@ void OverlayTechnique::render(RenderGraph& graph, Engine*)
 void OverlayTechnique::bindResources(RenderGraph& graph)
 {
 	graph.bindImage(kDefaultFontTexture, mFontImageView);
-	graph.bindBuffer("OverlayUBO", *mOverlayerBufferView);
-	graph.bindVertexBuffer("OverlayVertex", mOverlayerVertexBufferView.get());
-	graph.bindIndexBuffer("OverlayIndex", mOverlayerIndexBufferView.get());
+	graph.bindBuffer(kOverlayOBU, *mOverlayerBufferView);
+	graph.bindVertexBuffer(kOverlayVertex, mOverlayerVertexBufferView.get());
+	graph.bindIndexBuffer(kOverlayIndex, mOverlayerIndexBufferView.get());
 }
