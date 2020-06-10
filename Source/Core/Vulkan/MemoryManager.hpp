@@ -82,7 +82,9 @@ private:
     void findPoolIndicies();
 
     uint32_t mDeviceLocalPoolIndex;
+    uint32_t mDeviceLocalHeapindex;
     uint32_t mHostMappablePoolIndex;
+    uint32_t mHostMapableHeapindex;
 	bool mHasHostCoherent;
 
 	struct MappableMemoryInfo

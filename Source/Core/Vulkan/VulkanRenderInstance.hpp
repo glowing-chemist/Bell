@@ -1,6 +1,8 @@
 #ifndef VK_INSTANCE_HPP
 #define VK_INSTANCE_HPP
 
+#define VK_ENABLE_BETA_EXTENSIONS
+
 #include <vulkan/vulkan.h>
 #include <vulkan/vulkan.hpp> // use vulkan hpp for erganomics
 #include <GLFW/glfw3.h>

@@ -72,7 +72,7 @@ void MemoryManager::Destroy()
 
 void MemoryManager::findPoolIndicies()
 {
-    vk::PhysicalDeviceMemoryProperties memProps = static_cast<VulkanRenderDevice*>(getDevice())->getMemoryProperties();
+    const vk::PhysicalDeviceMemoryProperties& memProps = static_cast<VulkanRenderDevice*>(getDevice())->getMemoryProperties();
 
     bool poolFound = false;
 	for(uint32_t i = 0; i < memProps.memoryTypeCount; ++i)
@@ -81,6 +81,7 @@ void MemoryManager::findPoolIndicies()
            && !(memProps.memoryTypes[i].propertyFlags & vk::MemoryPropertyFlagBits::eHostCoherent))
         {
             mDeviceLocalPoolIndex = i; // just find the find pool that is device local
+            mDeviceLocalHeapindex = memProps.memoryTypes[i].heapIndex;
             poolFound = true;
             break;
         }
@@ -94,6 +95,7 @@ void MemoryManager::findPoolIndicies()
                 BELL_LOG("having to use host coherint memory, probably a integrated GPU")
 
                 mDeviceLocalPoolIndex = i; // just find the first pool that is device local
+                mDeviceLocalHeapindex = memProps.memoryTypes[i].heapIndex;
                 break;
             }
         }
@@ -105,16 +107,19 @@ void MemoryManager::findPoolIndicies()
            && (memProps.memoryTypes[i]).propertyFlags & vk::MemoryPropertyFlagBits::eHostVisible)
         {
 			mHostMappablePoolIndex = i;
+            mHostMapableHeapindex = memProps.memoryTypes[i].heapIndex;
 			mHasHostCoherent = true;
+
+            // Prefer coherent memory.
+            break;
         }
 
 		if((memProps.memoryTypes[i].propertyFlags & vk::MemoryPropertyFlagBits::eDeviceLocal)
 		   && (memProps.memoryTypes[i]).propertyFlags & vk::MemoryPropertyFlagBits::eHostVisible)
 		{
 			mHostMappablePoolIndex = i;
+            mHostMapableHeapindex = memProps.memoryTypes[i].heapIndex;
 			mHasHostCoherent = false;
-			// Prefer explicit memory flushing so break here if we have it
-			break;
 		}
     }
 
@@ -149,10 +154,11 @@ void MemoryManager::AllocateDevicePool()
 
 void MemoryManager::AllocateHostMappablePool()
 {
-	constexpr vk::DeviceSize poolSize = 256 * 1024 * 1024;
-	vk::MemoryAllocateInfo allocInfo{poolSize, static_cast<uint32_t>(mHostMappablePoolIndex)};
+    VulkanRenderDevice* device = static_cast<VulkanRenderDevice*>(getDevice());
 
-	VulkanRenderDevice* device = static_cast<VulkanRenderDevice*>(getDevice());
+    const vk::PhysicalDeviceMemoryProperties& memProps = device->getMemoryProperties();
+	const vk::DeviceSize poolSize = std::min(256ULL * 1024ULL * 1024ULL, memProps.memoryHeaps[mHostMapableHeapindex].size);
+	vk::MemoryAllocateInfo allocInfo{poolSize, static_cast<uint32_t>(mHostMappablePoolIndex)};
 
 	// Map the entire allocation on creation for persistent mapping.
 	const vk::DeviceMemory backingMemory = device->allocateMemory(allocInfo);

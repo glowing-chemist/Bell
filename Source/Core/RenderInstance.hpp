@@ -10,7 +10,8 @@ enum class DeviceFeaturesFlags {
     Tessalation = 1 << 1,
     Discrete = 1 << 2,
     Compute = 1 << 3,
-	Subgroup = 1 << 4 
+	Subgroup = 1 << 4,
+    RayTracing = 1 << 5
 };
 
 int operator|(DeviceFeaturesFlags, DeviceFeaturesFlags);

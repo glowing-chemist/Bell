@@ -12,8 +12,6 @@
 
 // system includes
 #include <GLFW/glfw3.h>
-#include <vulkan/vulkan.hpp>
-#include <vulkan/vulkan.h>
 
 #define DUMP_API 0
 
@@ -137,6 +135,7 @@ std::pair<vk::PhysicalDevice, vk::Device> VulkanRenderInstance::findSuitableDevi
     const bool discreteWanted = DeviceFeatureFlags & DeviceFeaturesFlags::Discrete;
     const bool computeWanted  = DeviceFeatureFlags & DeviceFeaturesFlags::Compute;
 	const bool subgroupWanted = DeviceFeatureFlags & DeviceFeaturesFlags::Subgroup;
+    const bool rayTracingWanted = DeviceFeatureFlags & DeviceFeaturesFlags::RayTracing;
 
     auto availableDevices = mInstance.enumeratePhysicalDevices();
 
@@ -196,7 +195,14 @@ std::pair<vk::PhysicalDevice, vk::Device> VulkanRenderInstance::findSuitableDevi
 															  VK_KHR_MAINTENANCE3_EXTENSION_NAME
 															 };
 
-    const std::vector<const char*> optionalDeviceExtensions = {/* used to contain a retired extension but left in incase I need it in the future */};
+    std::vector<const char*> optionalDeviceExtensions = {};
+    if (rayTracingWanted)
+    {
+        optionalDeviceExtensions.push_back(VK_KHR_RAY_TRACING_EXTENSION_NAME);
+        optionalDeviceExtensions.push_back(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME);
+        optionalDeviceExtensions.push_back(VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME);
+        optionalDeviceExtensions.push_back(VK_KHR_PIPELINE_LIBRARY_EXTENSION_NAME);
+    }
 
 	std::vector<const char*> extensionsToEnable{};
 
@@ -204,6 +210,7 @@ std::pair<vk::PhysicalDevice, vk::Device> VulkanRenderInstance::findSuitableDevi
 
     for(const auto& availableExtensions : deviceExtensionproperties)
 	{
+        BELL_LOG_ARGS("Device extension Found %s", availableExtensions.extensionName);
 		for(const auto* extension : requireDeviceExtensions)
 		{
 			if(strcmp(extension, availableExtensions.extensionName) == 0)
