@@ -10,7 +10,6 @@
 #include "Core/BufferView.hpp"
 #include "Core/Sampler.hpp"
 #include "Core/ShaderResourceSet.hpp"
-#include "Core/PerFrameResource.hpp"
 
 #include <iterator>
 #include <string>
@@ -188,12 +187,12 @@ private:
 
 	struct InternalResourceEntry
 	{
-        InternalResourceEntry(const char* slot, PerFrameResource<Image>& image, PerFrameResource<ImageView>& view) :
+        InternalResourceEntry(const char* slot, Image& image, ImageView& view) :
 			mSlot{ slot }, mResource{ image }, mResourceView{ view } {}
 
         const char* mSlot;
-		PerFrameResource<Image> mResource;
-		PerFrameResource<ImageView> mResourceView;
+        Image mResource;
+        ImageView mResourceView;
 	};
 	std::vector<InternalResourceEntry> mInternalResources;
 };

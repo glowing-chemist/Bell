@@ -157,7 +157,7 @@ void MemoryManager::AllocateHostMappablePool()
     VulkanRenderDevice* device = static_cast<VulkanRenderDevice*>(getDevice());
 
     const vk::PhysicalDeviceMemoryProperties& memProps = device->getMemoryProperties();
-	const vk::DeviceSize poolSize = std::min(256ULL * 1024ULL * 1024ULL, memProps.memoryHeaps[mHostMapableHeapindex].size);
+    const vk::DeviceSize poolSize = std::min(256ULL * 1024ULL * 1024ULL, static_cast<unsigned long long>(memProps.memoryHeaps[mHostMapableHeapindex].size));
 	vk::MemoryAllocateInfo allocInfo{poolSize, static_cast<uint32_t>(mHostMappablePoolIndex)};
 
 	// Map the entire allocation on creation for persistent mapping.

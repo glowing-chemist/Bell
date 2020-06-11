@@ -20,13 +20,13 @@ public:
 
 	virtual void render(RenderGraph& graph, Engine*) override final
 	{
-		mAnalyticalLighting.get()->updateLastAccessed();
-		mAnalyticalLightingView.get()->updateLastAccessed();
+        mAnalyticalLighting->updateLastAccessed();
+        mAnalyticalLightingView->updateLastAccessed();
 	}
 
     virtual void bindResources(RenderGraph& graph) override final
 	{
-		graph.bindImage(kAnalyticLighting, *mAnalyticalLightingView);
+        graph.bindImage(kAnalyticLighting, mAnalyticalLightingView);
 		graph.bindSampler("PointSampler", mPointSampler);
 	}
 
@@ -35,8 +35,8 @@ private:
 	ComputePipelineDescription mPipelineDesc;
 	TaskID mTaskID;
 
-	PerFrameResource<Image> mAnalyticalLighting;
-	PerFrameResource<ImageView> mAnalyticalLightingView;
+    Image mAnalyticalLighting;
+    ImageView mAnalyticalLightingView;
 
 	Sampler mPointSampler;
 };

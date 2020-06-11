@@ -107,10 +107,10 @@ SSAOTechnique::SSAOTechnique(Engine* eng, RenderGraph& graph) :
 
 void SSAOTechnique::render(RenderGraph&, Engine*)
 {
-    (*mSSAO)->updateLastAccessed();
-    (*mSSAOView)->updateLastAccessed();
-    (*mSSAOIntermediate)->updateLastAccessed();
-    (*mSSAOIntermediateView)->updateLastAccessed();
+    (mSSAO)->updateLastAccessed();
+    (mSSAOView)->updateLastAccessed();
+    (mSSAOIntermediate)->updateLastAccessed();
+    (mSSAOIntermediateView)->updateLastAccessed();
 
     SSAOBuffer ssaoBuffer;
     const auto offsets = generateSphericalOffsets<16>();
@@ -189,10 +189,10 @@ SSAOImprovedTechnique::SSAOImprovedTechnique(Engine* eng, RenderGraph& graph) :
 
 void SSAOImprovedTechnique::render(RenderGraph&, Engine*)
 {
-    (*mSSAO)->updateLastAccessed();
-    (*mSSAOView)->updateLastAccessed();
-    (*mSSAOIntermediate)->updateLastAccessed();
-    (*mSSAOIntermediateView)->updateLastAccessed();
+    (mSSAO)->updateLastAccessed();
+    (mSSAOView)->updateLastAccessed();
+    (mSSAOIntermediate)->updateLastAccessed();
+    (mSSAOIntermediateView)->updateLastAccessed();
 
     SSAOBuffer ssaoBuffer;
     const auto offsets = generateSphericalOffsets<16>();

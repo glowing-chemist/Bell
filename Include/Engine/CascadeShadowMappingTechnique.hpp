@@ -4,6 +4,7 @@
 #include "Engine/Technique.hpp"
 #include "RenderGraph/GraphicsTask.hpp"
 #include "Engine/DefaultResourceSlots.hpp"
+#include "Core/PerFrameResource.hpp"
 
 static constexpr char kCascadeShadowMapRaw0[] = "CascadeShadowMapRaw0";
 static constexpr char kCascadeShadowMapRaw1[] = "CascadeShadowMapRaw1";
@@ -35,19 +36,19 @@ public:
 
     virtual void bindResources(RenderGraph& graph) override
     {
-        graph.bindImage(kCascadeShadowMapRaw0, *mCascadeShaowMapsViewMip0);
-        graph.bindImage(kCascadeShadowMapRaw1, *mCascadeShaowMapsViewMip1);
-        graph.bindImage(kCascadeShadowMapRaw2, *mCascadeShaowMapsViewMip2);
+        graph.bindImage(kCascadeShadowMapRaw0, mCascadeShaowMapsViewMip0);
+        graph.bindImage(kCascadeShadowMapRaw1, mCascadeShaowMapsViewMip1);
+        graph.bindImage(kCascadeShadowMapRaw2, mCascadeShaowMapsViewMip2);
 
-        graph.bindImage(kShadowMap, *mResolvedShadowMapView);
+        graph.bindImage(kShadowMap, mResolvedShadowMapView);
 
-        graph.bindImage(kCascadeShadowMapBlurIntermediate0, *mIntermediateShadowMapViewMip0);
-        graph.bindImage(kCascadeShadowMapBlurIntermediate1, *mIntermediateShadowMapViewMip1);
-        graph.bindImage(kCascadeShadowMapBlurIntermediate2, *mIntermediateShadowMapViewMip2);
+        graph.bindImage(kCascadeShadowMapBlurIntermediate0, mIntermediateShadowMapViewMip0);
+        graph.bindImage(kCascadeShadowMapBlurIntermediate1, mIntermediateShadowMapViewMip1);
+        graph.bindImage(kCascadeShadowMapBlurIntermediate2, mIntermediateShadowMapViewMip2);
 
-        graph.bindImage(kCascadeShadowMapBlured0, *mBluredShadowMapViewMip0);
-        graph.bindImage(kCascadeShadowMapBlured1, *mBluredShadowMapViewMip1);
-        graph.bindImage(kCascadeShadowMapBlured2, *mBluredShadowMapViewMip2);
+        graph.bindImage(kCascadeShadowMapBlured0, mBluredShadowMapViewMip0);
+        graph.bindImage(kCascadeShadowMapBlured1, mBluredShadowMapViewMip1);
+        graph.bindImage(kCascadeShadowMapBlured2, mBluredShadowMapViewMip2);
 
         graph.bindBuffer(kCascadesInfo, *mCascadesBuffer);
     }
@@ -63,23 +64,23 @@ private:
     TaskID mRenderCascade1;
     TaskID mRenderCascade2;
 
-    PerFrameResource<Image> mCascadeShadowMaps;
-    PerFrameResource<ImageView> mCascadeShaowMapsViewMip0;
-    PerFrameResource<ImageView> mCascadeShaowMapsViewMip1;
-    PerFrameResource<ImageView> mCascadeShaowMapsViewMip2;
+    Image mCascadeShadowMaps;
+    ImageView mCascadeShaowMapsViewMip0;
+    ImageView mCascadeShaowMapsViewMip1;
+    ImageView mCascadeShaowMapsViewMip2;
 
-    PerFrameResource<Image> mResolvedShadowMap;
-    PerFrameResource<ImageView> mResolvedShadowMapView;
+    Image mResolvedShadowMap;
+    ImageView mResolvedShadowMapView;
 
-    PerFrameResource<Image> mIntermediateShadowMap;
-    PerFrameResource<ImageView> mIntermediateShadowMapViewMip0;
-    PerFrameResource<ImageView> mIntermediateShadowMapViewMip1;
-    PerFrameResource<ImageView> mIntermediateShadowMapViewMip2;
+    Image mIntermediateShadowMap;
+    ImageView mIntermediateShadowMapViewMip0;
+    ImageView mIntermediateShadowMapViewMip1;
+    ImageView mIntermediateShadowMapViewMip2;
 
-    PerFrameResource<Image> mBluredShadowMap;
-    PerFrameResource<ImageView> mBluredShadowMapViewMip0;
-    PerFrameResource<ImageView> mBluredShadowMapViewMip1;
-    PerFrameResource<ImageView> mBluredShadowMapViewMip2;
+    Image mBluredShadowMap;
+    ImageView mBluredShadowMapViewMip0;
+    ImageView mBluredShadowMapViewMip1;
+    ImageView mBluredShadowMapViewMip2;
 
     PerFrameResource<Buffer> mCascadesBuffer;
     PerFrameResource<BufferView> mCascadesBufferView;

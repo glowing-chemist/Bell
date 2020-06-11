@@ -67,12 +67,12 @@ ShadowMappingTechnique::ShadowMappingTechnique(Engine* eng, RenderGraph& graph) 
 
 void ShadowMappingTechnique::render(RenderGraph& graph, Engine*)
 {
-    (*mShadowMap)->updateLastAccessed();
-    (*mShadowMapView)->updateLastAccessed();
-    (*mShadowMapIntermediate)->updateLastAccessed();
-    (*mShadowMapIntermediateView)->updateLastAccessed();
-    (*mShadowMapBlured)->updateLastAccessed();
-    (*mShadowMapBluredView)->updateLastAccessed();
+    (mShadowMap)->updateLastAccessed();
+    (mShadowMapView)->updateLastAccessed();
+    (mShadowMapIntermediate)->updateLastAccessed();
+    (mShadowMapIntermediateView)->updateLastAccessed();
+    (mShadowMapBlured)->updateLastAccessed();
+    (mShadowMapBluredView)->updateLastAccessed();
 
     GraphicsTask& shadowTask = static_cast<GraphicsTask&>(graph.getTask(mShadowTask));
     ComputeTask& blurXTask = static_cast<ComputeTask&>(graph.getTask(mBlurXTaskID));

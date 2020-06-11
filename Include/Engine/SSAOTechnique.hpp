@@ -28,8 +28,8 @@ public:
 	{
 		graph.bindBuffer(kSSAOBuffer, *mSSAOBufferView);
 
-        graph.bindImage(kSSAO, *mSSAOView);
-        graph.bindImage(kSSAOBlurIntermidiate, *mSSAOIntermediateView);
+        graph.bindImage(kSSAO, mSSAOView);
+        graph.bindImage(kSSAOBlurIntermidiate, mSSAOIntermediateView);
 
 	}
 
@@ -48,11 +48,11 @@ private:
 	PerFrameResource<Buffer> mSSAOBuffer;
 	PerFrameResource<BufferView> mSSAOBufferView;
 
-    PerFrameResource<Image> mSSAO;
-    PerFrameResource<ImageView> mSSAOView;
+    Image mSSAO;
+    ImageView mSSAOView;
 
-    PerFrameResource<Image> mSSAOIntermediate;
-    PerFrameResource<ImageView> mSSAOIntermediateView;
+    Image mSSAOIntermediate;
+    ImageView mSSAOIntermediateView;
 };
 
 
@@ -71,8 +71,8 @@ public:
 	{
 		graph.bindBuffer(kSSAOBuffer, *mSSAOBufferView);
 
-        graph.bindImage(kSSAO, *mSSAOView);
-        graph.bindImage(kSSAOBlurIntermidiate, *mSSAOIntermediateView);
+        graph.bindImage(kSSAO, mSSAOView);
+        graph.bindImage(kSSAOBlurIntermidiate, mSSAOIntermediateView);
 	}
 
 	virtual void render(RenderGraph& graph, Engine*) override final;
@@ -90,11 +90,11 @@ private:
 	PerFrameResource<Buffer> mSSAOBuffer;
 	PerFrameResource<BufferView> mSSAOBufferView;
 
-    PerFrameResource<Image> mSSAO;
-    PerFrameResource<ImageView> mSSAOView;
+    Image mSSAO;
+    ImageView mSSAOView;
 
-    PerFrameResource<Image> mSSAOIntermediate;
-    PerFrameResource<ImageView> mSSAOIntermediateView;
+    Image mSSAOIntermediate;
+    ImageView mSSAOIntermediateView;
 };
 
 

@@ -40,22 +40,22 @@ private:
     uint32_t mXTiles;
     uint32_t mYTiles;
 
-    PerFrameResource<Image>         mActiveFroxelsImage;
-    PerFrameResource<ImageView>     mActiveFroxelsImageView;
+    Image         mActiveFroxelsImage;
+    ImageView     mActiveFroxelsImageView;
 
-    PerFrameResource<Buffer>        mActiveFroxlesBuffer;
-    PerFrameResource<BufferView>    mActiveFroxlesBufferView;
-    PerFrameResource<BufferView>	mActiveFroxelsCounter;
+    Buffer        mActiveFroxlesBuffer;
+    BufferView    mActiveFroxlesBufferView;
+    BufferView	mActiveFroxelsCounter;
 
-    PerFrameResource<Buffer>		mIndirectArgsBuffer;
-    PerFrameResource<BufferView>	mIndirectArgsView;
+    Buffer		mIndirectArgsBuffer;
+    BufferView	mIndirectArgsView;
 
-    PerFrameResource<Buffer>        mSparseFroxelBuffer;
-    PerFrameResource<BufferView>    mSparseFroxelBufferView;
+    Buffer        mSparseFroxelBuffer;
+    BufferView    mSparseFroxelBufferView;
 
-    PerFrameResource<Buffer>        mLightIndexBuffer;
-    PerFrameResource<BufferView>    mLightIndexBufferView;
-    PerFrameResource<BufferView>    mLightIndexCounterView;
+    Buffer        mLightIndexBuffer;
+    BufferView    mLightIndexBufferView;
+    BufferView    mLightIndexCounterView;
 };
 
 #endif

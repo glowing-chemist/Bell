@@ -226,20 +226,20 @@ CascadeShadowMappingTechnique::CascadeShadowMappingTechnique(Engine* eng, Render
 
 void CascadeShadowMappingTechnique::render(RenderGraph& graph, Engine* eng)
 {
-    (*mCascadeShadowMaps)->updateLastAccessed();
-    (*mCascadeShaowMapsViewMip0)->updateLastAccessed();
-    (*mCascadeShaowMapsViewMip1)->updateLastAccessed();
-    (*mCascadeShaowMapsViewMip2)->updateLastAccessed();
-    (*mResolvedShadowMap)->updateLastAccessed();
-    (*mResolvedShadowMapView)->updateLastAccessed();
-    (*mIntermediateShadowMap)->updateLastAccessed();
-    (*mIntermediateShadowMapViewMip0)->updateLastAccessed();
-    (*mIntermediateShadowMapViewMip1)->updateLastAccessed();
-    (*mIntermediateShadowMapViewMip2)->updateLastAccessed();
-    (*mBluredShadowMap)->updateLastAccessed();
-    (*mBluredShadowMapViewMip0)->updateLastAccessed();
-    (*mBluredShadowMapViewMip1)->updateLastAccessed();
-    (*mBluredShadowMapViewMip2)->updateLastAccessed();
+    (mCascadeShadowMaps)->updateLastAccessed();
+    (mCascadeShaowMapsViewMip0)->updateLastAccessed();
+    (mCascadeShaowMapsViewMip1)->updateLastAccessed();
+    (mCascadeShaowMapsViewMip2)->updateLastAccessed();
+    (mResolvedShadowMap)->updateLastAccessed();
+    (mResolvedShadowMapView)->updateLastAccessed();
+    (mIntermediateShadowMap)->updateLastAccessed();
+    (mIntermediateShadowMapViewMip0)->updateLastAccessed();
+    (mIntermediateShadowMapViewMip1)->updateLastAccessed();
+    (mIntermediateShadowMapViewMip2)->updateLastAccessed();
+    (mBluredShadowMap)->updateLastAccessed();
+    (mBluredShadowMapViewMip0)->updateLastAccessed();
+    (mBluredShadowMapViewMip1)->updateLastAccessed();
+    (mBluredShadowMapViewMip2)->updateLastAccessed();
     (*mCascadesBuffer)->updateLastAccessed();
 
     const Scene::ShadowCascades& cascades = eng->getScene()->getShadowCascades();

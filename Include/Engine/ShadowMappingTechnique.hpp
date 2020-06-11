@@ -24,9 +24,9 @@ public:
 
     virtual void bindResources(RenderGraph& graph) override 
     {
-        graph.bindImage(kShadowMap, *mShadowMapView);
-        graph.bindImage(kShadowMapBlurIntermediate, *mShadowMapIntermediateView);
-        graph.bindImage(kShadowMapBlured, *mShadowMapBluredView);
+        graph.bindImage(kShadowMap, mShadowMapView);
+        graph.bindImage(kShadowMapBlurIntermediate, mShadowMapIntermediateView);
+        graph.bindImage(kShadowMapBlured, mShadowMapBluredView);
     }
 
 private:
@@ -42,14 +42,14 @@ private:
     ComputePipelineDescription mResolveDesc;
     TaskID                     mResolveTaskID;
 
-    PerFrameResource<Image>    mShadowMap;
-    PerFrameResource<ImageView> mShadowMapView;
+    Image    mShadowMap;
+    ImageView mShadowMapView;
 
-    PerFrameResource<Image>    mShadowMapIntermediate;
-    PerFrameResource<ImageView> mShadowMapIntermediateView;
+    Image    mShadowMapIntermediate;
+    ImageView mShadowMapIntermediateView;
 
-    PerFrameResource<Image>    mShadowMapBlured;
-    PerFrameResource<ImageView> mShadowMapBluredView;
+    Image    mShadowMapBlured;
+    ImageView mShadowMapBluredView;
 
 };
 

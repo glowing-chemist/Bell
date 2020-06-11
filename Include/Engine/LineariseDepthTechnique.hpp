@@ -27,12 +27,12 @@ private:
 	ComputePipelineDescription mPipelienDesc;
 	TaskID mTaskID;
 
-	PerFrameResource<Image> mLinearDepth;
-	PerFrameResource<ImageView> mLinearDepthView;
-    PerFrameResource<ImageView> mLinearDepthViewMip1;
-    PerFrameResource<ImageView> mLinearDepthViewMip2;
-    PerFrameResource<ImageView> mLinearDepthViewMip3;
-    PerFrameResource<ImageView> mLinearDepthViewMip4;
+    Image mLinearDepth;
+    ImageView mLinearDepthView;
+    ImageView mLinearDepthViewMip1;
+    ImageView mLinearDepthViewMip2;
+    ImageView mLinearDepthViewMip3;
+    ImageView mLinearDepthViewMip4;
 };
 
 #endif

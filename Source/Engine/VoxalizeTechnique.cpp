@@ -99,7 +99,7 @@ VoxalizeTechnique::VoxalizeTechnique(Engine* eng, RenderGraph& graph) :
 void VoxalizeTechnique::render(RenderGraph& graph, Engine* eng)
 {
     // Need to manually clear this as load/store ops don't work on uavs :(.
-    (*mVoxelMap)->clear();
+    mVoxelMap->clear();
 
     const Camera& camera = eng->getCurrentSceneCamera();
     const ImageExtent extent = eng->getSwapChainImage()->getExtent(0, 0);

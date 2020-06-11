@@ -81,7 +81,7 @@ LightFroxelationTechnique::LightFroxelationTechnique(Engine* eng, RenderGraph& g
     lightListAsignmentTask.setRecordCommandsCallback(
         [this](Executor* exec, Engine*, const std::vector<const MeshInstance*>&)
         {
-            exec->dispatchIndirect(*this->mIndirectArgsView);
+            exec->dispatchIndirect(this->mIndirectArgsView);
         }
     );
     mLightListAsignment = graph.addTask(lightListAsignmentTask);
@@ -100,22 +100,22 @@ void LightFroxelationTechnique::render(RenderGraph& graph, Engine* eng)
         }
     );
 
-    mActiveFroxelsImageView.get()->updateLastAccessed();
-    mActiveFroxelsImage.get()->updateLastAccessed();
-    mActiveFroxlesBuffer.get()->updateLastAccessed();
-    mSparseFroxelBuffer.get()->updateLastAccessed();
-    mLightIndexBuffer.get()->updateLastAccessed();
-    mIndirectArgsBuffer.get()->updateLastAccessed();
+    mActiveFroxelsImageView->updateLastAccessed();
+    mActiveFroxelsImage->updateLastAccessed();
+    mActiveFroxlesBuffer->updateLastAccessed();
+    mSparseFroxelBuffer->updateLastAccessed();
+    mLightIndexBuffer->updateLastAccessed();
+    mIndirectArgsBuffer->updateLastAccessed();
 }
 
 
 void LightFroxelationTechnique::bindResources(RenderGraph& graph)
 {
-    graph.bindImage(kActiveFroxels, *mActiveFroxelsImageView);
-    graph.bindBuffer(kActiveFroxelBuffer, *mActiveFroxlesBufferView);
-    graph.bindBuffer(kSparseFroxels, *mSparseFroxelBufferView);
-    graph.bindBuffer(kLightIndicies, *mLightIndexBufferView);
-    graph.bindBuffer(kActiveFroxelsCounter, *mActiveFroxelsCounter);
-    graph.bindBuffer(kFroxelIndirectArgs, *mIndirectArgsView);
-    graph.bindBuffer(kLightIndexCounter, *mLightIndexCounterView);
+    graph.bindImage(kActiveFroxels, mActiveFroxelsImageView);
+    graph.bindBuffer(kActiveFroxelBuffer, mActiveFroxlesBufferView);
+    graph.bindBuffer(kSparseFroxels, mSparseFroxelBufferView);
+    graph.bindBuffer(kLightIndicies, mLightIndexBufferView);
+    graph.bindBuffer(kActiveFroxelsCounter, mActiveFroxelsCounter);
+    graph.bindBuffer(kFroxelIndirectArgs, mIndirectArgsView);
+    graph.bindBuffer(kLightIndexCounter, mLightIndexCounterView);
 }

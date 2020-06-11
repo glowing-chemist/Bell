@@ -391,7 +391,7 @@ void RenderGraph::bindInternalResources()
 {
 	for (const auto& resourceEntry : mInternalResources)
 	{
-		bindImage(resourceEntry.mSlot, *resourceEntry.mResourceView);
+        bindImage(resourceEntry.mSlot, resourceEntry.mResourceView);
 	}
 
     // Now sort all resource bindings based on binding index.
@@ -445,10 +445,10 @@ void RenderGraph::createInternalResource(RenderDevice* dev, const char* name, co
 		}
 	}();
 
-	PerFrameResource<Image> generatedImage(dev, format, usage,
+    Image generatedImage(dev, format, usage,
 		width, height, 1, 1, 1, 1, name);
 
-	PerFrameResource<ImageView> view{ generatedImage, usage & ImageUsage::DepthStencil ?
+    ImageView view{ generatedImage, usage & ImageUsage::DepthStencil ?
 										ImageViewType::Depth : ImageViewType::Colour };
 
 	mInternalResources.emplace_back(name, generatedImage, view);

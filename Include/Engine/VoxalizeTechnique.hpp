@@ -7,8 +7,10 @@
 #include "Core/ImageView.hpp"
 #include "Core/Buffer.hpp"
 #include "Core/BufferView.hpp"
+#include "Core/PerFrameResource.hpp"
 
-#define DEBUG_VOXEL_GENERATION 1
+
+#define DEBUG_VOXEL_GENERATION 0
 
 class VoxalizeTechnique : public Technique
 {
@@ -25,7 +27,7 @@ public:
 
     virtual void bindResources(RenderGraph& graph) override final
     {
-        graph.bindImage(kDiffuseVoxelMap, *mVoxelMapView);
+        graph.bindImage(kDiffuseVoxelMap, mVoxelMapView);
         graph.bindBuffer(kVoxelDimmensions, *mVoxelDimmensionsView);
 
 #if DEBUG_VOXEL_GENERATION
@@ -43,8 +45,8 @@ private:
         float4 voxelVolumeSize;
     };
 
-    PerFrameResource<Image> mVoxelMap;
-    PerFrameResource<ImageView> mVoxelMapView;
+    Image mVoxelMap;
+    ImageView mVoxelMapView;
 
     PerFrameResource<Buffer> mVoxelDimmensions;
     PerFrameResource<BufferView> mVoxelDimmensionsView;
@@ -53,8 +55,8 @@ private:
     TaskID mTaskID;
 
 #if DEBUG_VOXEL_GENERATION
-    PerFrameResource<Image> mVoxelDebug;
-    PerFrameResource<ImageView> mVoxelDebugView;
+    Image mVoxelDebug;
+    ImageView mVoxelDebugView;
 
     ComputePipelineDescription mDebugVoxelPipeline;
 #endif
