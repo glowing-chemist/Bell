@@ -968,7 +968,7 @@ void Editor::drawLightMenu()
         {
             float4x4 lightTransformation(1.0f);
 
-            if (mEditShadowingLight == ImGuizmo::OPERATION::TRANSLATE)
+            if (mLightOperationMode == ImGuizmo::OPERATION::TRANSLATE)
                 lightTransformation = glm::translate(lightTransformation, float3(shadowingLight.mPosition.x, shadowingLight.mPosition.y, shadowingLight.mPosition.z));
 
             drawGuizmo(lightTransformation, viewMatrix, projectionMatrix, mLightOperationMode);
