@@ -65,6 +65,23 @@ RenderTask& RenderGraph::getTask(const TaskID id)
 }
 
 
+const RenderTask& RenderGraph::getTask(const TaskID id) const
+{
+    BELL_ASSERT(id != 0, "0 is an invalid task ID");
+
+    if (id > 0)
+    {
+        BELL_ASSERT(id - 1 < mGraphicsTasks.size(), "Invalid graphics task ID");
+        return mGraphicsTasks[id - 1];
+    }
+    else
+    {
+        BELL_ASSERT(-id - 1 < mComputeTasks.size(), "Invalid compute task ID");
+        return mComputeTasks[-id - 1];
+    }
+}
+
+
 void RenderGraph::addDependancy(const RenderTask& dependancy, const RenderTask& dependant)
 {
 	addDependancy(dependancy.getName(), dependant.getName());

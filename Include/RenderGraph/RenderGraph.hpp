@@ -62,11 +62,13 @@ public:
 
 	void bindInternalResources();
 
+    //get Task by index.
     RenderTask& getTask(const uint32_t);
     const RenderTask& getTask(const uint32_t) const;
-	RenderTask& getTask(TaskType, uint32_t);
-	const RenderTask& getTask(TaskType, uint32_t) const;
+
+    // Get Task by ID.
     RenderTask& getTask(const TaskID);
+    const RenderTask& getTask(const TaskID) const;
 
     const BufferView& getBoundBuffer(const char*) const;
     const ImageView&  getBoundImageView(const char*) const;
@@ -144,6 +146,9 @@ private:
 	void reorderTasks();
 
     void sortResourceBindings();
+
+    RenderTask& getTask(TaskType, uint32_t);
+    const RenderTask& getTask(TaskType, uint32_t) const;
 
 	// Selecets the best task to execuet next based on some heuristics.
 	uint32_t selectNextTask(const std::vector<uint8_t>& dependancies, const TaskType) const;
