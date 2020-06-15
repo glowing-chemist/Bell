@@ -280,14 +280,6 @@ public:
         mDevice.destroyQueryPool(pool);
     }
 
-    void                                                        resetTimeStampPool(vk::QueryPool pool, const uint32_t queries)
-    {
-        if(queries == 0)
-            return;
-
-        mDevice.resetQueryPool(pool, 0, queries);
-    }
-
     void                                                        writeTimeStampResults(const vk::QueryPool pool, uint64_t* data, const size_t queryCount)
     {
         if(queryCount == 0)
