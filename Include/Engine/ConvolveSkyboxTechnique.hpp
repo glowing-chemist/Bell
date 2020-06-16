@@ -22,11 +22,7 @@ public:
 	// default empty implementations as most classes won't need to do anything for one of these.
 	virtual void render(RenderGraph&, Engine*) override final;
 
-    virtual void bindResources(RenderGraph& graph) override final
-	{
-        graph.bindImage(kConvolvedSpecularSkyBox, mConvolvedSpecularView);
-        graph.bindImage(kConvolvedDiffuseSkyBox, mConvolvedDiffuseView);
-	}
+    virtual void bindResources(RenderGraph& graph) override final;
 
 private:
 	ComputePipelineDescription mPipelineDesc;
@@ -35,6 +31,10 @@ private:
     ImageView mConvolvedSpecularView;
     Image mConvolvedDiffuseSkybox;
     ImageView mConvolvedDiffuseView;
+    ImageView mDiffuseSkybox;
+
+    std::vector<ImageView> mConvolvedMips;
+
 	bool mFirstFrame;
 };
 

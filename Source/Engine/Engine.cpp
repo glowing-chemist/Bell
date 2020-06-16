@@ -428,6 +428,39 @@ void Engine::execute(RenderGraph& graph)
         mCompileGraph = false;
     }
 
+    for(const auto& tech : mTechniques)
+    {
+        tech->bindResources(mCurrentRenderGraph);
+    }
+
+    updateGlobalBuffers();
+
+    mMaterials->updateLastAccessed();
+    mCurrentRenderGraph.bindShaderResourceSet(kMaterials, mMaterials);
+    mCurrentRenderGraph.bindBuffer(kCameraBuffer, *mDeviceCameraBuffer);
+    mCurrentRenderGraph.bindBuffer(kShadowingLights, *mShadowCastingLight);
+    mCurrentRenderGraph.bindShaderResourceSet(kLightBuffer, *mLightsSRS);
+    mCurrentRenderGraph.bindImage(kLTCMat, mLTCMatView);
+    mCurrentRenderGraph.bindImage(kLTCAmp, mLTCAmpView);
+    mCurrentRenderGraph.bindSampler(kDefaultSampler, mDefaultSampler);
+    mCurrentRenderGraph.bindVertexBuffer(kSceneVertexBuffer, mVertexBuffer);
+    mCurrentRenderGraph.bindIndexBuffer(kSceneIndexBuffer, mIndexBuffer);
+
+    if(!mActiveAnimations.empty())
+    {
+        mCurrentRenderGraph.bindBuffer(kTPoseVertexBuffer, mTposeVertexBuffer);
+        mCurrentRenderGraph.bindBuffer(kBonesWeights, mBonesWeightsBuffer);
+        mCurrentRenderGraph.bindBuffer(kBoneWeighntsIndiciesBuffer, mBoneWeightsIndexBuffer);
+        mCurrentRenderGraph.bindBuffer(kBonesBuffer, *mBoneBuffer);
+    }
+
+
+    if(mCurrentScene && mCurrentScene->getSkybox())
+    {
+        mCurrentRenderGraph.bindImage(kSkyBox, *mCurrentScene->getSkybox());
+        (*mCurrentScene->getSkybox())->updateLastAccessed();
+    }
+
     mCurrentRenderGraph.bindInternalResources();
 
     std::vector<const MeshInstance*> meshes{};
@@ -570,39 +603,6 @@ void Engine::recordScene()
 	{
 		tech->render(mCurrentRenderGraph, this);
 	}
-
-	for(const auto& tech : mTechniques)
-	{
-		tech->bindResources(mCurrentRenderGraph);
-	}
-
-    updateGlobalBuffers();
-
-    mMaterials->updateLastAccessed();
-	mCurrentRenderGraph.bindShaderResourceSet(kMaterials, mMaterials);
-    mCurrentRenderGraph.bindBuffer(kCameraBuffer, *mDeviceCameraBuffer);
-	mCurrentRenderGraph.bindBuffer(kShadowingLights, *mShadowCastingLight);
-    mCurrentRenderGraph.bindShaderResourceSet(kLightBuffer, *mLightsSRS);
-    mCurrentRenderGraph.bindImage(kLTCMat, mLTCMatView);
-    mCurrentRenderGraph.bindImage(kLTCAmp, mLTCAmpView);
-    mCurrentRenderGraph.bindSampler(kDefaultSampler, mDefaultSampler);
-    mCurrentRenderGraph.bindVertexBuffer(kSceneVertexBuffer, mVertexBuffer);
-    mCurrentRenderGraph.bindIndexBuffer(kSceneIndexBuffer, mIndexBuffer);
-
-    if(!mActiveAnimations.empty())
-    {
-        mCurrentRenderGraph.bindBuffer(kTPoseVertexBuffer, mTposeVertexBuffer);
-        mCurrentRenderGraph.bindBuffer(kBonesWeights, mBonesWeightsBuffer);
-        mCurrentRenderGraph.bindBuffer(kBoneWeighntsIndiciesBuffer, mBoneWeightsIndexBuffer);
-        mCurrentRenderGraph.bindBuffer(kBonesBuffer, *mBoneBuffer);
-    }
-
-
-    if(mCurrentScene && mCurrentScene->getSkybox())
-    {
-        mCurrentRenderGraph.bindImage(kSkyBox, *mCurrentScene->getSkybox());
-        (*mCurrentScene->getSkybox())->updateLastAccessed();
-    }
 }
 
 

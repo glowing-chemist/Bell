@@ -22,23 +22,12 @@ class DescriptorManager;
 class TaskIterator;
 class VulkanRenderDevice;
 
-enum class BindingIteratorType
-{
-	Input,
-	Output
-};
-
-template<BindingIteratorType>
-class BindingIterator;
-
 using TaskID = int32_t;
 
 class RenderGraph
 {
 	friend VulkanRenderDevice;
 	friend TaskIterator;
-	friend BindingIterator<BindingIteratorType::Input>;
-	friend BindingIterator<BindingIteratorType::Output>;
 public:
 
     RenderGraph() = default;
@@ -51,6 +40,8 @@ public:
 
 	void compile(RenderDevice* dev);
 
+    void bindInternalResources();
+
     // Bind persistent resourcers.
     void bindImage(const char* name, const ImageView &);
     void bindImageArray(const char* name, const ImageViewArray&);
@@ -59,8 +50,7 @@ public:
     void bindIndexBuffer(const char* name, const BufferView &);
     void bindSampler(const char* name, const Sampler&);
     void bindShaderResourceSet(const char* name, const ShaderResourceSet&);
-
-	void bindInternalResources();
+    bool isResourceSlotBound(const char* name) const;
 
     //get Task by index.
     RenderTask& getTask(const uint32_t);
@@ -74,7 +64,7 @@ public:
     const ImageView&  getBoundImageView(const char*) const;
     const ShaderResourceSet& getBoundShaderResourceSet(const char*) const;
 
-	std::vector<BarrierRecorder> generateBarriers(RenderDevice*);
+    std::vector<BarrierRecorder> generateBarriers(RenderDevice *dev);
 
 	void reset();
 	void resetBindings();
@@ -83,17 +73,8 @@ public:
     uint64_t graphicsTaskCount() const { return mGraphicsTasks.size(); }
     uint64_t computeTaskCount() const { return mComputeTasks.size(); }
 
-    const BufferView &getVertexBuffer(const uint32_t taskIndex) const;
-    const BufferView& getIndexBuffer(const uint32_t taskIndex) const;
-
-	TaskIterator taskBegin();
-	TaskIterator taskEnd();
-
-    BindingIterator<BindingIteratorType::Input> inputBindingBegin() const;
-    BindingIterator<BindingIteratorType::Input> inputBindingEnd() const;
-
-    BindingIterator< BindingIteratorType::Output> outputBindingBegin() const;
-    BindingIterator< BindingIteratorType::Output> outputBindingEnd() const;
+    TaskIterator taskBegin() const;
+    TaskIterator taskEnd() const;
 
 	const std::vector<bool>& getDescriptorsNeedUpdating() const
 	{
@@ -117,35 +98,29 @@ public:
         IndexBuffer,
 		SRS
     };
-	ImageView&		getImageView(const uint32_t index);
-	ImageViewArray& getImageArrayViews(const uint32_t index);
-	BufferView&		getBuffer(const uint32_t index);
-	Sampler&		getSampler(const uint32_t index);
+    ImageView&		getImageView(const char* name);
+    ImageViewArray& getImageArrayViews(const char* mName);
+    BufferView&		getBuffer(const char* mName);
+    Sampler&		getSampler(const char* mName);
 
-    const ImageView&		getImageView(const uint32_t index) const;
-    const ImageViewArray& getImageArrayViews(const uint32_t index) const;
-    const BufferView&		getBuffer(const uint32_t index) const;
-    const Sampler&		getSampler(const uint32_t index) const;
+    const ImageView&		getImageView(const char* name) const;
+    const ImageViewArray& getImageArrayViews(const char* name) const;
+    const BufferView&		getBuffer(const char* name) const;
+    const Sampler&		getSampler(const char* name) const;
 
-
-	struct ResourceBindingInfo
-	{
-        const char* mName;
-		ResourceType mResourcetype;
-		uint32_t mResourceIndex;
-		uint32_t mResourceBinding;
-	};
+    struct ResourceInfo
+    {
+        AttachmentType mType;
+        uint32_t mTaskIndex;
+    };
 
 private:
 
 	// compiles the dependancy graph based on slots (assuming resources are finished writing to by their first read from)
 	void compileDependancies();
 	void generateInternalResources(RenderDevice*);
-    void compileBarrierInfo();
 
 	void reorderTasks();
-
-    void sortResourceBindings();
 
     RenderTask& getTask(TaskType, uint32_t);
     const RenderTask& getTask(TaskType, uint32_t) const;
@@ -153,7 +128,7 @@ private:
 	// Selecets the best task to execuet next based on some heuristics.
 	uint32_t selectNextTask(const std::vector<uint8_t>& dependancies, const TaskType) const;
 
-    void bindResource(const char* name, const uint32_t, const ResourceType);
+    void bindResource(const char* name);
 
     void createInternalResource(RenderDevice*, const char *name, const Format, const ImageUsage, const SizeClass);
 
@@ -181,14 +156,13 @@ private:
 	// Dependancy, Dependant
     std::vector<std::pair<uint32_t, uint32_t>> mTaskDependancies;
 
-    std::vector<std::vector<ResourceBindingInfo>> mInputResources;
-    std::vector<std::vector<ResourceBindingInfo>> mOutputResources;
+    std::unordered_map<const char*, std::vector<ResourceInfo>> mResourceInfo;
 
-    std::vector<std::pair<const char*, ImageView>> mImageViews;
-    std::vector<std::pair<const char*, ImageViewArray>> mImageViewArrays;
-    std::vector<std::pair<const char*, BufferView>> mBufferViews;
-    std::vector<std::pair<const char*, Sampler>> mSamplers;
-    std::vector<std::pair<const char*, ShaderResourceSet>> mSRS;
+    std::unordered_map<const char*, ImageView> mImageViews;
+    std::unordered_map<const char*, ImageViewArray> mImageViewArrays;
+    std::unordered_map<const char*, BufferView> mBufferViews;
+    std::unordered_map<const char*, Sampler> mSamplers;
+    std::unordered_map<const char*, ShaderResourceSet> mSRS;
 
 	struct InternalResourceEntry
 	{
@@ -213,32 +187,12 @@ class TaskIterator : public std::iterator<std::forward_iterator_tag,
 
 public:
 
-	TaskIterator(RenderGraph& graph, uint64_t startingIndex = 0) : mCurrentIndex{ startingIndex }, mGraph{ graph } {}
+    TaskIterator(const RenderGraph& graph, uint64_t startingIndex = 0) : mCurrentIndex{ startingIndex }, mGraph{ graph } {}
 
 	const RenderTask& operator*() const;
     TaskIterator& operator++() { ++mCurrentIndex; return *this; }
 	bool operator==(const TaskIterator& rhs) { return mCurrentIndex == rhs.mCurrentIndex; }
 	bool operator!=(const TaskIterator& rhs) { return !(*this == rhs); }
-};
-
-
-template<BindingIteratorType>
-class BindingIterator : public std::iterator<std::forward_iterator_tag,
-	std::vector<RenderGraph::ResourceBindingInfo>>
-{
-    const std::vector<std::vector<RenderGraph::ResourceBindingInfo>>& mBindings;
-	uint64_t mCurrentIndex;
-	const RenderGraph& mGraph;
-
-public:
-
-    BindingIterator(const std::vector<std::vector<RenderGraph::ResourceBindingInfo>>& bindings, const RenderGraph& graph, uint64_t startingIndex = 0) : mBindings{ bindings }, mCurrentIndex{ startingIndex }, mGraph{ graph } {}
-
-    const std::vector<RenderGraph::ResourceBindingInfo>& operator*() const  { return mBindings[mCurrentIndex];  }
-	BindingIterator& operator++() { ++mCurrentIndex; return *this; }
-    BindingIterator  operator+(const uint32_t i) {mCurrentIndex += i; return *this; }
-	bool operator==(const BindingIterator& rhs) { return mCurrentIndex == rhs.mCurrentIndex; }
-	bool operator!=(const BindingIterator& rhs) { return !(*this == rhs); }
 };
 
 #endif

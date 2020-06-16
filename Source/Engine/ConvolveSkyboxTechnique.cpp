@@ -16,14 +16,14 @@ ConvolveSkyBoxTechnique::ConvolveSkyBoxTechnique(Engine* eng, RenderGraph& graph
     mConvolvedDiffuseSkybox(eng->getDevice(), Format::RGBA8UNorm, ImageUsage::CubeMap | ImageUsage::Sampled | ImageUsage::Storage,
                      512, 512, 1, 1, 6, 1, "convolved skybox diffuse"),
     mConvolvedDiffuseView(mConvolvedDiffuseSkybox, ImageViewType::CubeMap, 0, 6),
+    mDiffuseSkybox(mConvolvedDiffuseSkybox, ImageViewType::Colour, 0, 6),
+    mConvolvedMips{},
 	mFirstFrame(true)
 {
-	std::vector<ImageView> convolvedMips{};
 	for (uint32_t i = 0; i < 10; ++i)
 	{
-        convolvedMips.push_back(ImageView{ mConvolvedSpecularSkybox, ImageViewType::Colour, 0, 6, i });
+        mConvolvedMips.push_back(ImageView{ mConvolvedSpecularSkybox, ImageViewType::Colour, 0, 6, i });
 	}
-    ImageView diffuseskybox{mConvolvedDiffuseSkybox, ImageViewType::Colour, 0, 6};
 
 	ComputeTask convolveTask("skybox convolve", mPipelineDesc);
 	convolveTask.addInput(kSkyBox, AttachmentType::Texture2D);
@@ -38,12 +38,6 @@ ConvolveSkyBoxTechnique::ConvolveSkyBoxTechnique(Engine* eng, RenderGraph& graph
     convolveTask.addInput(kConvolvedDiffuseSkyBox, AttachmentType::Image2D);
 
 	mTaskID = graph.addTask(convolveTask);
-
-	for (uint32_t i = 0; i < 10; ++i)
-	{
-		graph.bindImage(slots[i], convolvedMips[i]);
-	}
-    graph.bindImage(diffuseSkybox, diffuseskybox);
 }
 
 
@@ -76,4 +70,17 @@ void ConvolveSkyBoxTechnique::render(RenderGraph& graph, Engine*)
 			}
 		);
 	}
+}
+
+
+void ConvolveSkyBoxTechnique::bindResources(RenderGraph &graph)
+{
+    for (uint32_t i = 0; i < 10; ++i)
+    {
+        graph.bindImage(slots[i], mConvolvedMips[i]);
+    }
+
+    graph.bindImage(kConvolvedSpecularSkyBox, mConvolvedSpecularView);
+    graph.bindImage(kConvolvedDiffuseSkyBox, mConvolvedDiffuseView);
+    graph.bindImage(diffuseSkybox, mDiffuseSkybox);
 }

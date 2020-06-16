@@ -22,8 +22,6 @@ TaskID RenderGraph::addTask(const GraphicsTask& task)
 
     mTaskOrder.push_back({TaskType::Graphics, taskIndex});
     // Also add a vulkan resources and inputs/outputs for each task, zero initialised
-    mInputResources.emplace_back();
-    mOutputResources.emplace_back();
     mFrameBuffersNeedUpdating.push_back(false);
     mDescriptorsNeedUpdating.push_back(false);
 
@@ -39,8 +37,6 @@ TaskID RenderGraph::addTask(const ComputeTask& task)
     mTaskOrder.push_back({TaskType::Compute, taskIndex});
 
     // Also add a vulkan resources and inputs/outputs for each task, zero initialised
-    mInputResources.emplace_back();
-    mOutputResources.emplace_back();
     mFrameBuffersNeedUpdating.push_back(false);
     mDescriptorsNeedUpdating.push_back(false);
 
@@ -170,7 +166,6 @@ void RenderGraph::compile(RenderDevice* dev)
 	compileDependancies();
 	generateInternalResources(dev);
 	reorderTasks();
-    compileBarrierInfo();
 }
 
 
@@ -305,7 +300,7 @@ void RenderGraph::compileDependancies()
 }
 
 
-void RenderGraph::bindResource(const char* name, const uint32_t index, const ResourceType resourcetype)
+void RenderGraph::bindResource(const char* name)
 {
     uint32_t taskOrderIndex = 0;
 	for(const auto& [taskType, taskIndex] : mTaskOrder)
@@ -317,7 +312,7 @@ void RenderGraph::bindResource(const char* name, const uint32_t index, const Res
         {
             if(input.mName == name)
             {
-                mInputResources[taskOrderIndex].push_back({name, resourcetype, index, inputAttachmentIndex});
+                mResourceInfo[name].push_back({input.mType, taskOrderIndex});
                 mDescriptorsNeedUpdating[taskOrderIndex] = true;
                 break; // Assume a resource is only bound once per task.
             }
@@ -332,7 +327,7 @@ void RenderGraph::bindResource(const char* name, const uint32_t index, const Res
         {
             if(input.mName == name)
             {
-                mOutputResources[taskOrderIndex].push_back({name, resourcetype, index, outputAttachmentIndex});
+                mResourceInfo[name].push_back({input.mType, taskOrderIndex});
                 mFrameBuffersNeedUpdating[taskOrderIndex] = true;
                 break;
             }
@@ -346,61 +341,65 @@ void RenderGraph::bindResource(const char* name, const uint32_t index, const Res
 
 void RenderGraph::bindImage(const char *name, const ImageView &image)
 {
-    const uint32_t currentImageIndex = static_cast<uint32_t>(mImageViews.size());
-    mImageViews.emplace_back(name, image);
+    mImageViews.insert({name, image});
 
-    bindResource(name, currentImageIndex, ResourceType::Image);
+    bindResource(name);
 }
 
 
 void RenderGraph::bindImageArray(const char *name, const ImageViewArray& imageArray)
 {
-	const uint32_t currentImageArrayIndex = static_cast<uint32_t>(mImageViewArrays.size());
-	mImageViewArrays.emplace_back(name, imageArray);	
+    mImageViewArrays.insert({name, imageArray});
 
-	bindResource(name, currentImageArrayIndex, ResourceType::ImageArray);
+    bindResource(name);
 }
 
 
 void RenderGraph::bindBuffer(const char *name , const BufferView& buffer)
 {
-	const uint32_t currentBufferIndex = static_cast<uint32_t>(mBufferViews.size());
-	mBufferViews.emplace_back(name, buffer);
+    mBufferViews.insert({name, buffer});
 
-    bindResource(name, currentBufferIndex, ResourceType::Buffer);
+    bindResource(name);
 }
 
 
 void RenderGraph::bindVertexBuffer(const char *name, const BufferView& buffer)
 {
-    const uint32_t currentBufferIndex = static_cast<uint32_t>(mBufferViews.size());
-    mBufferViews.emplace_back(name, buffer);
+    mBufferViews.insert({name, buffer});
 
-    bindResource(name, currentBufferIndex, ResourceType::VertexBuffer);
+    bindResource(name);
 }
 
 
 void RenderGraph::bindIndexBuffer(const char *name, const BufferView& buffer)
 {
-    const uint32_t currentBufferIndex = static_cast<uint32_t>(mBufferViews.size());
-    mBufferViews.emplace_back(name, buffer);
+    mBufferViews.insert({name, buffer});
 
-    bindResource(name, currentBufferIndex, ResourceType::IndexBuffer);
+    bindResource(name);
 }
 
 
-void RenderGraph::bindSampler(const char *name, const Sampler& type)
+void RenderGraph::bindSampler(const char *name, const Sampler& sampler)
 {
-    const uint32_t samplerIndex = static_cast<uint32_t>(mSamplers.size());
-    mSamplers.emplace_back(name, type);
+    mSamplers.insert({name, sampler});
 
-    bindResource(name, samplerIndex, ResourceType::Sampler);
+    bindResource(name);
 }
 
 
 void RenderGraph::bindShaderResourceSet(const char *name, const ShaderResourceSet& set)
 {
-	mSRS.emplace_back(name, set);
+    mSRS.insert({name, set});
+}
+
+
+bool RenderGraph::isResourceSlotBound(const char* name) const
+{
+    return mImageViews.find(name) != mImageViews.end() ||
+            mBufferViews.find(name) != mBufferViews.end() ||
+            mImageViewArrays.find(name) != mImageViewArrays.end() ||
+            mSamplers.find(name) != mSamplers.end() ||
+            mSRS.find(name) != mSRS.end();
 }
 
 
@@ -410,25 +409,6 @@ void RenderGraph::bindInternalResources()
 	{
         bindImage(resourceEntry.mSlot, resourceEntry.mResourceView);
 	}
-
-    // Now sort all resource bindings based on binding index.
-    sortResourceBindings();
-}
-
-
-void RenderGraph::sortResourceBindings()
-{
-for(auto& outputBinding : mOutputResources)
-    std::sort(outputBinding.begin(), outputBinding.end(), [](const ResourceBindingInfo& lhs, const ResourceBindingInfo& rhs)
-    {
-        return lhs.mResourceBinding < rhs.mResourceBinding;
-    });
-
-for(auto& outputBinding : mInputResources)
-    std::sort(outputBinding.begin(), outputBinding.end(), [](const ResourceBindingInfo& lhs, const ResourceBindingInfo& rhs)
-    {
-        return lhs.mResourceBinding < rhs.mResourceBinding;
-    });
 }
 
 
@@ -502,15 +482,11 @@ void RenderGraph::reorderTasks()
 		return;
 
 	std::vector<std::pair<TaskType, uint32_t>> newTaskOrder{};
-    std::vector<std::vector<ResourceBindingInfo>> newInputBindings{};
-    std::vector<std::vector<ResourceBindingInfo>> newOutputBindings{};
     std::vector<bool> newFrameBuffersNeedUpdating{};
     std::vector<bool> newDescriptorsNeedUpdating{};
 	TaskType previousTaskType = TaskType::Compute;
 
     newTaskOrder.reserve(mTaskOrder.size());
-    newInputBindings.reserve(mTaskOrder.size());
-    newOutputBindings.reserve(mTaskOrder.size());
 
     const uint32_t taskCount = static_cast<uint32_t>(mTaskOrder.size());
 
@@ -537,8 +513,6 @@ void RenderGraph::reorderTasks()
 		usedDependants[taskIndexToAdd] = 1;
 
 		newTaskOrder.push_back(mTaskOrder[taskIndexToAdd]);
-        newInputBindings.push_back(std::move(mInputResources[taskIndexToAdd]));
-        newOutputBindings.push_back((std::move(mOutputResources[taskIndexToAdd])));
         newFrameBuffersNeedUpdating.push_back(mFrameBuffersNeedUpdating[taskIndexToAdd]);
         newDescriptorsNeedUpdating.push_back(mDescriptorsNeedUpdating[taskIndexToAdd]);
 		
@@ -549,8 +523,6 @@ void RenderGraph::reorderTasks()
 	}
 
 	mTaskOrder.swap(newTaskOrder);
-    mInputResources.swap(newInputBindings);
-    mOutputResources.swap(newOutputBindings);
     mFrameBuffersNeedUpdating.swap(newFrameBuffersNeedUpdating);
     mDescriptorsNeedUpdating.swap(newDescriptorsNeedUpdating);
 
@@ -670,235 +642,144 @@ const RenderTask& RenderGraph::getTask(TaskType taskType, uint32_t taskIndex) co
 }
 
 
-Sampler& RenderGraph::getSampler(const uint32_t index)
+Sampler& RenderGraph::getSampler(const char* name)
 {
-    BELL_ASSERT(index < mSamplers.size(), " Attempting to fetch non sampler resource")
+    BELL_ASSERT(mSamplers.find(name) != mSamplers.end(), " Attempting to fetch non sampler resource")
 
-    return mSamplers[index].second;
+    return mSamplers.find(name)->second;
 }
 
 
-ImageView& RenderGraph::getImageView(const uint32_t index)
+ImageView& RenderGraph::getImageView(const char *name)
 {
-    BELL_ASSERT(index < mImageViews.size(), " Attempting to fetch non imageView resource")
+    BELL_ASSERT(mImageViews.find(name) != mImageViews.end(), " Attempting to fetch non imageView resource")
 
-    return mImageViews[index].second;
+    return mImageViews.find(name)->second;
 }
 
 
-ImageViewArray& RenderGraph::getImageArrayViews(const uint32_t index)
+ImageViewArray& RenderGraph::getImageArrayViews(const char* name)
 {
-	BELL_ASSERT(index < mImageViewArrays.size(), "Attempting to fetch non imageViewArray resource")
+    BELL_ASSERT(mImageViewArrays.find(name) != mImageViewArrays.end(), "Attempting to fetch non imageViewArray resource")
 
-	return mImageViewArrays[index].second;
+    return mImageViewArrays.find(name)->second;
 }
 
 
-BufferView& RenderGraph::getBuffer(const uint32_t index)
+BufferView& RenderGraph::getBuffer(const char* name)
 {
-	BELL_ASSERT(index < mBufferViews.size(), " Attempting to fetch non buffer resource")
+    BELL_ASSERT(mBufferViews.find(name) != mBufferViews.end(), " Attempting to fetch non buffer resource")
 
-	return mBufferViews[index].second;
+    return mBufferViews.find(name)->second;
 }
 
 
-const Sampler& RenderGraph::getSampler(const uint32_t index) const
+const Sampler& RenderGraph::getSampler(const char* name) const
 {
-    BELL_ASSERT(index < mSamplers.size(), " Attempting to fetch non sampler resource")
+    BELL_ASSERT(mSamplers.find(name) != mSamplers.end(), " Attempting to fetch non sampler resource")
 
-    return mSamplers[index].second;
+    return mSamplers.find(name)->second;
 }
 
 
-const ImageView& RenderGraph::getImageView(const uint32_t index) const
+const ImageView& RenderGraph::getImageView(const char* name) const
 {
-    BELL_ASSERT(index < mImageViews.size(), " Attempting to fetch non imageView resource")
+    BELL_ASSERT(mImageViews.find(name) != mImageViews.end(), " Attempting to fetch non imageView resource")
 
-    return mImageViews[index].second;
+    return mImageViews.find(name)->second;
 }
 
 
-const ImageViewArray& RenderGraph::getImageArrayViews(const uint32_t index) const
+const ImageViewArray& RenderGraph::getImageArrayViews(const char* name) const
 {
-    BELL_ASSERT(index < mImageViewArrays.size(), "Attempting to fetch non imageViewArray resource")
+    BELL_ASSERT(mImageViewArrays.find(name) != mImageViewArrays.end(), "Attempting to fetch non imageViewArray resource")
 
-    return mImageViewArrays[index].second;
+    return mImageViewArrays.find(name)->second;
 }
 
 
-const BufferView& RenderGraph::getBuffer(const uint32_t index) const
+const BufferView& RenderGraph::getBuffer(const char* name) const
 {
-    BELL_ASSERT(index < mBufferViews.size(), " Attempting to fetch non buffer resource")
+    BELL_ASSERT(mBufferViews.find(name) != mBufferViews.end(), " Attempting to fetch non buffer resource")
 
-    return mBufferViews[index].second;
-}
-
-
-const BufferView& RenderGraph::getBoundBuffer(const char *name) const
-{
-    const auto it = std::find_if(mBufferViews.begin(), mBufferViews.end(), [name](const std::pair<const char*, BufferView>& entry) { return name == entry.first; });
-
-	BELL_ASSERT(it != mBufferViews.end(), "Buffer not found")
-
-    return (*it).second;
-}
-
-
-const ImageView& RenderGraph::getBoundImageView(const char* name) const
-{
-    const auto it = std::find_if(mImageViews.begin(), mImageViews.end(), [name](const std::pair<const char*, ImageView>& entry) { return name == entry.first; });
-
-    BELL_ASSERT(it != mImageViews.end(), "Image not found")
-
-    return (*it).second;
+    return mBufferViews.find(name)->second;
 }
 
 
 const ShaderResourceSet& RenderGraph::getBoundShaderResourceSet(const char* name) const
 {
-    const auto it = std::find_if(mSRS.begin(), mSRS.end(), [name](const auto& s) {
-        return s.first == name;
-		});
+    BELL_ASSERT(mSRS.find(name) != mSRS.end(), "Attempting to fetch non imageViewArray resource")
 
-	BELL_ASSERT(it != mSRS.end(), "SRS not found")
-
-	return (*it).second;
-}
-
-
-void RenderGraph::compileBarrierInfo()
-{
-
+    return mSRS.find(name)->second;
 }
 
 
 std::vector<BarrierRecorder> RenderGraph::generateBarriers(RenderDevice* dev)
-{
+{    
 	std::vector<BarrierRecorder> barriers{};
-	barriers.reserve(mTaskOrder.size());
+    for(uint32_t i = 0; i < mTaskOrder.size(); ++i)
+        barriers.emplace_back(dev);
 
-	struct ResourceUsageEntries
-	{
-		ImageView* mImage;
-		BufferView* mBuffer;
+    auto isImage = [](const AttachmentType type) -> bool
+    {
+        switch(type)
+        {
+        case AttachmentType::RenderTarget1D:
+        case AttachmentType::RenderTarget2D:
+        case AttachmentType::Image1D:
+        case AttachmentType::Image2D:
+        case AttachmentType::Image3D:
+        case AttachmentType::Texture1D:
+        case AttachmentType::Texture2D:
+        case AttachmentType::Texture3D:
+        case AttachmentType::Depth:
+            return true;
 
-		struct taskIndex
-		{
-			uint32_t mTaskIndex;
-			AttachmentType mStateRequired;
-		};
-		std::vector<taskIndex> mRequiredStates;
-	};
+        default:
+            return false;
+        }
+    };
 
-	std::map<uint32_t, ResourceUsageEntries> resourceEntries;
-    std::unordered_map<const char*, uint32_t> resourceIndicies;
-	uint32_t nextResourceIndex = 0;
+    auto isBuffer = [](const AttachmentType type) -> bool
+    {
+        switch(type)
+        {
+        case AttachmentType::IndexBuffer:
+        case AttachmentType::VertexBuffer:
+        case AttachmentType::UniformBuffer:
+        case AttachmentType::DataBufferRO:
+        case AttachmentType::DataBufferWO:
+        case AttachmentType::DataBufferRW:
+        case AttachmentType::IndirectBuffer:
+            return true;
 
-	// Gather when all resources are used/how.
-	for (uint32_t i = 0; i < mTaskOrder.size(); ++i)
-	{
-		barriers.emplace_back(dev);
+        default:
+            return false;
+        }
+    };
 
-		const auto& inputResources = mInputResources[i];
-		const auto& outputResources = mOutputResources[i];
-		const auto& [type, index] = mTaskOrder[i];
-		const auto& task = getTask(type, index);
-
-		for (auto j = 0u; j < std::max(inputResources.size(), outputResources.size()); ++j)
-		{
-			if (j < inputResources.size())
-			{
-				const auto& resource = inputResources[j];
-
-				uint32_t resourceIndex = ~0u;
-
-				if (resource.mResourcetype == RenderGraph::ResourceType::Image)
-				{
-					if (resourceIndicies.find(resource.mName) == resourceIndicies.end())
-					{
-						resourceIndex = nextResourceIndex++;
-						resourceIndicies[resource.mName] = resourceIndex;
-						ImageView& imageView = getImageView(resource.mResourceIndex);
-						resourceEntries[resourceIndex].mImage = &imageView;
-					}
-					else
-						resourceIndex = resourceIndicies[resource.mName];
-
-				}
-				else if (resource.mResourcetype == RenderGraph::ResourceType::Buffer)
-				{
-					if (resourceIndicies.find(resource.mName) == resourceIndicies.end())
-					{
-						resourceIndex = nextResourceIndex++;
-						resourceIndicies[resource.mName] = resourceIndex;
-						BufferView& bufView = getBuffer(resource.mResourceIndex);
-						resourceEntries[resourceIndex].mBuffer = &bufView;
-					}
-					else
-						resourceIndex = resourceIndicies[resource.mName];
-				}
-
-				resourceEntries[resourceIndex].mRequiredStates.push_back({ i, task.getInputAttachments()[resource.mResourceBinding].mType });
-			}
-
-			if (j < outputResources.size())
-			{
-				const auto& resource = outputResources[j];
-
-				if (resource.mResourcetype == RenderGraph::ResourceType::Image)
-				{
-					uint32_t resourceIndex;
-
-					if (resourceIndicies.find(resource.mName) == resourceIndicies.end())
-					{
-						resourceIndex = nextResourceIndex++;
-						resourceIndicies[resource.mName] = resourceIndex;
-						ImageView & imageView = getImageView(resource.mResourceIndex);
-						resourceEntries[resourceIndex].mImage = &imageView;
-					}
-					else
-						resourceIndex = resourceIndicies[resource.mName];
-
-					resourceEntries[resourceIndex].mRequiredStates.push_back({ i, task.getOuputAttachments()[resource.mResourceBinding].mType });
-				}
-			}
-		}
-	}
-
-// Enable for barrier summary
-#if 0
-	for (const auto& [name, index] : resourceIndicies)
-	{
-		BELL_LOG_ARGS("Resource %s", name.c_str());
-
-		for (const auto& entry : resourceEntries[index].mRequiredStates)
-		{
-			BELL_LOG_ARGS("Needed as %s in task %d", getAttachmentName(entry.mStateRequired), entry.mTaskIndex);
-		}
-	}
-#endif
-
-	for (const auto& [index, entries] : resourceEntries)
+    for (const auto& [name, entries] : mResourceInfo)
 	{
 		// intended overflow.
-		ResourceUsageEntries::taskIndex previous{~0u, AttachmentType::PushConstants};
+        ResourceInfo previous{AttachmentType::PushConstants, ~0u};
 
-		if (entries.mImage)
+        if (isImage(entries[0].mType))
 		{
-			const auto layout = (*entries.mImage)->getImageLayout((*entries.mImage)->getBaseLevel(), (*entries.mImage)->getBaseMip());
-			previous.mStateRequired = getAttachmentType(layout);
+            const ImageView& view = getImageView(name);
+            const auto layout = view->getImageLayout(view->getBaseLevel(), view->getBaseMip());
+            previous.mType = getAttachmentType(layout);
 		}
 		else
-			previous.mStateRequired = entries.mRequiredStates[0].mStateRequired;
+            previous.mType = entries[0].mType;
 
-		for (const auto& entry : entries.mRequiredStates)
+        for (const auto& entry : entries)
 		{
-			if (entry.mStateRequired != previous.mStateRequired)
+            if (entry.mType != previous.mType)
 			{
-				if (entries.mBuffer)
+                if (isBuffer(entry.mType))
 				{
 					Hazard hazard;
-					switch (entry.mStateRequired)
+                    switch (entry.mType)
 					{
 					case AttachmentType::DataBufferRO:
 					case AttachmentType::DataBufferRW:
@@ -928,21 +809,21 @@ std::vector<BarrierRecorder> RenderGraph::generateBarriers(RenderDevice* dev)
 
 					const auto& [type, index] = mTaskOrder[entry.mTaskIndex];
 
-					if (entry.mStateRequired == AttachmentType::IndirectBuffer)
+                    if (entry.mType == AttachmentType::IndirectBuffer)
 						dst = SyncPoint::IndirectArgs;
 					else if (type == TaskType::Compute)
 						dst = SyncPoint::ComputeShader;
 					else
 						dst = SyncPoint::VertexShader;
 
-					barriers[previous.mTaskIndex + 1]->memoryBarrier(*entries.mBuffer, hazard, src, dst);
+                    barriers[previous.mTaskIndex + 1]->memoryBarrier(getBuffer(name), hazard, src, dst);
 
 				}
 
-				if (entries.mImage)
+                if (isImage(entry.mType))
 				{
 					Hazard hazard;
-					switch (entry.mStateRequired)
+                    switch (entry.mType)
 					{
 					case AttachmentType::Texture1D:
 					case AttachmentType::Texture2D:
@@ -955,14 +836,15 @@ std::vector<BarrierRecorder> RenderGraph::generateBarriers(RenderDevice* dev)
 						break;
 					}
 
-					const SyncPoint src = getSyncPoint(previous.mStateRequired);
-					const SyncPoint dst = getSyncPoint(entry.mStateRequired);
+                    const SyncPoint src = getSyncPoint(previous.mType);
+                    const SyncPoint dst = getSyncPoint(entry.mType);
 
-					const ImageLayout layout = (*entries.mImage)->getImageUsage() & ImageUsage::DepthStencil ?
-						entry.mStateRequired == AttachmentType::Depth ? ImageLayout::DepthStencil : ImageLayout::DepthStencilRO
-						: getImageLayout(entry.mStateRequired);
+                    ImageView& view = getImageView(name);
+                    const ImageLayout layout = view->getImageUsage() & ImageUsage::DepthStencil ?
+                        entry.mType == AttachmentType::Depth ? ImageLayout::DepthStencil : ImageLayout::DepthStencilRO
+                        : getImageLayout(entry.mType);
 
-					barriers[previous.mTaskIndex + 1]->transitionLayout(*entries.mImage, layout, hazard, src, dst);
+                    barriers[previous.mTaskIndex + 1]->transitionLayout(view, layout, hazard, src, dst);
 				}
 			}
 
@@ -980,8 +862,7 @@ void RenderGraph::reset()
 
 	mInternalResources.clear();
 
-	mInputResources.clear();
-	mOutputResources.clear();
+    mResourceInfo.clear();
 
 	mFrameBuffersNeedUpdating.clear();
 	mDescriptorsNeedUpdating.clear();
@@ -1003,71 +884,19 @@ void RenderGraph::resetBindings()
 	mSamplers.clear();
 	mSRS.clear();
 
-	for (auto& resourceSet : mInputResources)
-		resourceSet.clear();
-
-	for (auto& resourceSet : mOutputResources)
-		resourceSet.clear();
+    mResourceInfo.clear();
 }
 
 
-const BufferView& RenderGraph::getVertexBuffer(const uint32_t taskIndex) const
-{
-    const auto input = std::find_if(mInputResources[taskIndex].begin(), mInputResources[taskIndex].end(), [](const auto& inputAttachment)
-    {
-        return inputAttachment.mResourcetype == ResourceType::VertexBuffer;
-    });
-    BELL_ASSERT(input != mInputResources[taskIndex].end(), "Task doesn't bind a vertex buffer")
-
-    return mBufferViews[input->mResourceIndex].second;
-}
-
-
-const BufferView& RenderGraph::getIndexBuffer(const uint32_t taskIndex) const
-{
-    const auto input = std::find_if(mInputResources[taskIndex].begin(), mInputResources[taskIndex].end(), [](const auto& inputAttachment)
-    {
-        return inputAttachment.mResourcetype == ResourceType::IndexBuffer;
-    });
-    BELL_ASSERT(input != mInputResources[taskIndex].end(), "Task doesn't bind a index buffer")
-
-    return mBufferViews[input->mResourceIndex].second;
-}
-
-
-TaskIterator RenderGraph::taskBegin()
+TaskIterator RenderGraph::taskBegin() const
 {
 	return TaskIterator{*this};
 }
 
 
-TaskIterator RenderGraph::taskEnd()
+TaskIterator RenderGraph::taskEnd() const
 {
 	return TaskIterator{*this, mTaskOrder.size()};
-}
-
-
-BindingIterator<BindingIteratorType::Input> RenderGraph::inputBindingBegin() const
-{
-	return BindingIterator<BindingIteratorType::Input>{mInputResources, *this};
-}
-
-
-BindingIterator<BindingIteratorType::Input> RenderGraph::inputBindingEnd() const
-{
-	return BindingIterator<BindingIteratorType::Input>{mInputResources, *this, mInputResources.size()};
-}
-
-
-BindingIterator< BindingIteratorType::Output> RenderGraph::outputBindingBegin() const
-{
-    return BindingIterator<BindingIteratorType::Output>{mOutputResources, *this};
-}
-
-
-BindingIterator< BindingIteratorType::Output> RenderGraph::outputBindingEnd() const
-{
-    return BindingIterator<BindingIteratorType::Output>{mOutputResources, *this, mOutputResources.size()};
 }
 
 

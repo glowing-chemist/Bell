@@ -679,14 +679,14 @@ vulkanResources VulkanRenderDevice::generateVulkanResources(const RenderGraph& g
 
 vk::Framebuffer VulkanRenderDevice::createFrameBuffer(const RenderGraph& graph, const uint32_t taskIndex, const vk::RenderPass renderPass)
 {
-    const auto& outputBindings = *(graph.outputBindingBegin() + taskIndex);
+    const auto& outputBindings = graph.getTask(taskIndex).getOuputAttachments();
 
     std::vector<vk::ImageView> imageViews{};
     ImageExtent imageExtent;
 
     for(const auto& bindingInfo : outputBindings)
     {
-            const auto& imageView = graph.getImageView(bindingInfo.mResourceIndex);
+            const auto& imageView = graph.getImageView(bindingInfo.mName);
             imageExtent = imageView->getImageExtent();
             imageViews.push_back(static_cast<const VulkanImageView&>(*imageView.getBase()).getImageView());
     }

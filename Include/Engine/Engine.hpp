@@ -172,8 +172,8 @@ public:
 
     void startFrame()
     {
-	mRenderDevice->startFrame();
-	mCurrentRenderGraph.resetBindings();
+    mRenderDevice->startFrame();
+    mCurrentRenderGraph.resetBindings();
     }
 
     void endFrame()

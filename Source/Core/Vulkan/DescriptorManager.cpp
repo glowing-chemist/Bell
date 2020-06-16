@@ -69,39 +69,37 @@ void DescriptorManager::writeDescriptors(const RenderGraph& graph, const uint32_
     std::vector<vk::DescriptorImageInfo> imageInfos;
     std::vector<vk::DescriptorBufferInfo> bufferInfos;
 
-	const uint64_t maxDescWrites = std::accumulate(graph.inputBindingBegin(), graph.inputBindingEnd(), 0ull,
-                    [&](uint64_t accu, const auto& vec) {return accu + std::accumulate(vec.begin(), vec.end(), 0ull, [&]
-																					  (uint64_t accu, const RenderGraph::ResourceBindingInfo& info)
+    const uint64_t maxDescWrites = std::accumulate(graph.taskBegin(), graph.taskEnd(), 0ull,
+                    [&](uint64_t accu, const auto& task) {return accu + std::accumulate(task.getInputAttachments().begin(), task.getInputAttachments().end(), 0ull, [&]
+                                                                                      (uint64_t accu, const RenderTask::InputAttachmentInfo& info)
 		{
-            return accu + (info.mResourcetype == RenderGraph::ResourceType::ImageArray ? graph.getImageArrayViews(info.mResourceIndex).size() : 1ull);
+            return accu + (info.mType == AttachmentType::TextureArray ? graph.getImageArrayViews(info.mName).size() : 1ull);
 		});
 	});
 
     imageInfos.reserve(maxDescWrites);
     bufferInfos.reserve(maxDescWrites);
 
-    auto inputBindings  = graph.inputBindingBegin() + taskIndex;
     const RenderTask& task           = graph.getTask(taskIndex);
+    const auto& inputBindings = task.getInputAttachments();
 
-    const auto& bindings = task.getInputAttachments();
-
-    for(const auto& bindingInfo : *inputBindings)
+    uint32_t bindingIndex = 0;
+    for(const auto& bindingInfo : inputBindings)
     {
-        const AttachmentType attachmentType = bindings[bindingInfo.mResourceBinding].mType;
-
-        if(attachmentType == AttachmentType::VertexBuffer ||
-                attachmentType == AttachmentType::IndexBuffer)
-        {
-            continue;
-        }
+        const AttachmentType attachmentType = bindingInfo.mType;
 
         vk::WriteDescriptorSet descWrite{};
         descWrite.setDstSet(descSet);
-        descWrite.setDstBinding(bindingInfo.mResourceBinding);
+        descWrite.setDstBinding(bindingIndex);
 
-        switch(bindingInfo.mResourcetype)
+        switch(attachmentType)
         {
-        case RenderGraph::ResourceType::Image:
+        case AttachmentType::Image1D:
+        case AttachmentType::Image2D:
+        case AttachmentType::Image3D:
+        case AttachmentType::Texture1D:
+        case AttachmentType::Texture2D:
+        case AttachmentType::Texture3D:
         {
             // We assume that no sampling happens from the swapchain image.
             const vk::DescriptorType type = [attachmentType]()
@@ -124,7 +122,7 @@ void DescriptorManager::writeDescriptors(const RenderGraph& graph, const uint32_
                 }
             }();
 
-            auto& imageView = graph.getImageView(bindingInfo.mResourceIndex);
+            auto& imageView = graph.getImageView(bindingInfo.mName);
 
             vk::ImageLayout adjustedLayout = imageView->getType() == ImageViewType::Depth ? vk::ImageLayout::eDepthStencilReadOnlyOptimal : getVulkanImageLayout(attachmentType);
 
@@ -138,10 +136,10 @@ void DescriptorManager::writeDescriptors(const RenderGraph& graph, const uint32_
             break;
         }
 
-            // Image arrays can only be sampled in this renderer (at least for now).
-        case RenderGraph::ResourceType::ImageArray:
+        // Image arrays can only be sampled in this renderer (at least for now).
+        case AttachmentType::TextureArray:
         {
-            const auto& imageViews = graph.getImageArrayViews(bindingInfo.mResourceIndex);
+            const auto& imageViews = graph.getImageArrayViews(bindingInfo.mName);
 
             for(auto& view : imageViews)
             {
@@ -154,10 +152,10 @@ void DescriptorManager::writeDescriptors(const RenderGraph& graph, const uint32_
             break;
         }
 
-        case RenderGraph::ResourceType::Sampler:
+        case AttachmentType::Sampler:
         {
             vk::DescriptorImageInfo info{};
-            info.setSampler(static_cast<VulkanRenderDevice*>(getDevice())->getImmutableSampler(graph.getSampler(bindingInfo.mResourceIndex)));
+            info.setSampler(static_cast<VulkanRenderDevice*>(getDevice())->getImmutableSampler(graph.getSampler(bindingInfo.mName)));
 
             imageInfos.push_back(info);
 
@@ -168,11 +166,13 @@ void DescriptorManager::writeDescriptors(const RenderGraph& graph, const uint32_
             break;
         }
 
-        case RenderGraph::ResourceType::Buffer:
-        case RenderGraph::ResourceType::VertexBuffer:
-        case RenderGraph::ResourceType::IndexBuffer:
+        case AttachmentType::UniformBuffer:
+        case AttachmentType::DataBufferRO:
+        case AttachmentType::DataBufferWO:
+        case AttachmentType::DataBufferRW:
+        case AttachmentType::IndirectBuffer:
         {
-            auto& bufferView = graph.getBuffer(bindingInfo.mResourceIndex);
+            auto& bufferView = graph.getBuffer(bindingInfo.mName);
             vk::DescriptorBufferInfo info = generateDescriptorBufferInfo(bufferView);
             bufferInfos.push_back(info);
 
@@ -189,12 +189,12 @@ void DescriptorManager::writeDescriptors(const RenderGraph& graph, const uint32_
             break;
         }
 
-        case RenderGraph::ResourceType::SRS:
-            BELL_TRAP;
-            break;
+        default:
+            continue; // catch all for push constants, vertex/index buffers and shader resource sets.
         }
 
         descSetWrites.push_back(descWrite);
+        ++bindingIndex;
     }
 
 	static_cast<VulkanRenderDevice*>(getDevice())->writeDescriptorSets(descSetWrites);
