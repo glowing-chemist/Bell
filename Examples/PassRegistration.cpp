@@ -177,7 +177,7 @@ int main()
                     const float g = float(rand()) / float((RAND_MAX));
                     const float b = float(rand()) / float((RAND_MAX));
 
-                    testScene.addLight(Scene::Light::pointLight(float4(x, y, z, 1.0f), float4(r, g, b, 1.0f), 20000.0f, 300.0f));
+                    testScene.addLight(Scene::Light::pointLight(float4(x, y, z, 1.0f), float4(r, g, b, 1.0f), 4000.0f, 150.0f));
                 }
             }
         }
