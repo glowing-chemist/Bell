@@ -36,19 +36,22 @@ public:
 
     virtual void bindResources(RenderGraph& graph) override
     {
-        graph.bindImage(kCascadeShadowMapRaw0, mCascadeShaowMapsViewMip0);
-        graph.bindImage(kCascadeShadowMapRaw1, mCascadeShaowMapsViewMip1);
-        graph.bindImage(kCascadeShadowMapRaw2, mCascadeShaowMapsViewMip2);
+        if(!graph.isResourceSlotBound(kShadowMap))
+        {
+            graph.bindImage(kCascadeShadowMapRaw0, mCascadeShaowMapsViewMip0);
+            graph.bindImage(kCascadeShadowMapRaw1, mCascadeShaowMapsViewMip1);
+            graph.bindImage(kCascadeShadowMapRaw2, mCascadeShaowMapsViewMip2);
 
-        graph.bindImage(kShadowMap, mResolvedShadowMapView);
+            graph.bindImage(kShadowMap, mResolvedShadowMapView);
 
-        graph.bindImage(kCascadeShadowMapBlurIntermediate0, mIntermediateShadowMapViewMip0);
-        graph.bindImage(kCascadeShadowMapBlurIntermediate1, mIntermediateShadowMapViewMip1);
-        graph.bindImage(kCascadeShadowMapBlurIntermediate2, mIntermediateShadowMapViewMip2);
+            graph.bindImage(kCascadeShadowMapBlurIntermediate0, mIntermediateShadowMapViewMip0);
+            graph.bindImage(kCascadeShadowMapBlurIntermediate1, mIntermediateShadowMapViewMip1);
+            graph.bindImage(kCascadeShadowMapBlurIntermediate2, mIntermediateShadowMapViewMip2);
 
-        graph.bindImage(kCascadeShadowMapBlured0, mBluredShadowMapViewMip0);
-        graph.bindImage(kCascadeShadowMapBlured1, mBluredShadowMapViewMip1);
-        graph.bindImage(kCascadeShadowMapBlured2, mBluredShadowMapViewMip2);
+            graph.bindImage(kCascadeShadowMapBlured0, mBluredShadowMapViewMip0);
+            graph.bindImage(kCascadeShadowMapBlured1, mBluredShadowMapViewMip1);
+            graph.bindImage(kCascadeShadowMapBlured2, mBluredShadowMapViewMip2);
+        }
 
         graph.bindBuffer(kCascadesInfo, *mCascadesBuffer);
     }

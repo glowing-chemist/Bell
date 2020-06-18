@@ -173,7 +173,6 @@ public:
     void startFrame()
     {
     mRenderDevice->startFrame();
-    mCurrentRenderGraph.resetBindings();
     }
 
     void endFrame()

@@ -86,9 +86,11 @@ VulkanRenderDevice::~VulkanRenderDevice()
     }
     mImagesPendingDestruction.clear();
 
-	for (const auto& [lastyUSed, view] : mImageViewsPendingDestruction)
+    for (const auto& [lastyUSed, view, cubeView] : mImageViewsPendingDestruction)
 	{
 		mDevice.destroyImageView(view);
+        if(cubeView != vk::ImageView{nullptr})
+            mDevice.destroyImageView(cubeView);
 	}
 	mImageViewsPendingDestruction.clear();
 
@@ -510,6 +512,7 @@ vk::DescriptorSetLayout VulkanRenderDevice::generateDescriptorSetLayoutBindings(
 			case AttachmentType::Texture1D:
 			case AttachmentType::Texture2D:
 			case AttachmentType::Texture3D:
+            case AttachmentType::CubeMap:
 			case AttachmentType::TextureArray:
 				return vk::DescriptorType::eSampledImage;
 
@@ -897,11 +900,13 @@ void VulkanRenderDevice::clearDeferredResources()
 
 	for (uint32_t i = 0; i < mImageViewsPendingDestruction.size(); ++i)
 	{
-		const auto& [submission, view] = mImageViewsPendingDestruction.front();
+        const auto& [submission, view, cubeView] = mImageViewsPendingDestruction.front();
 
 		if (submission <= mFinishedSubmission)
 		{
 			mDevice.destroyImageView(view);
+            if(cubeView != vk::ImageView{nullptr})
+                mDevice.destroyImageView(cubeView);
 			mImageViewsPendingDestruction.pop_front();
 		}
 		else

@@ -16,7 +16,7 @@ SkyboxTechnique::SkyboxTechnique(Engine* eng, RenderGraph& graph) :
 {
 	GraphicsTask task{ "skybox", mPipelineDesc };
 	task.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
-	task.addInput(kSkyBox, AttachmentType::Texture2D);
+    task.addInput(kSkyBox, AttachmentType::CubeMap);
 	task.addInput(kDefaultSampler, AttachmentType::Sampler);
 
 	task.addOutput(kGlobalLighting, AttachmentType::RenderTarget2D, Format::RGBA8UNorm);

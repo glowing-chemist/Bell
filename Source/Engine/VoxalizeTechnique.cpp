@@ -51,7 +51,7 @@ VoxalizeTechnique::VoxalizeTechnique(Engine* eng, RenderGraph& graph) :
     task.addInput(kLTCMat, AttachmentType::Texture2D);
     task.addInput(kLTCAmp, AttachmentType::Texture2D);
     task.addInput(kDefaultSampler, AttachmentType::Sampler);
-    task.addInput(kConvolvedDiffuseSkyBox, AttachmentType::Texture2D);
+    task.addInput(kConvolvedDiffuseSkyBox, AttachmentType::CubeMap);
 
     if(eng->isPassRegistered(PassType::LightFroxelation))
     {

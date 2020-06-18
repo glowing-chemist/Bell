@@ -24,9 +24,12 @@ public:
 
     virtual void bindResources(RenderGraph& graph) override 
     {
-        graph.bindImage(kShadowMap, mShadowMapView);
-        graph.bindImage(kShadowMapBlurIntermediate, mShadowMapIntermediateView);
-        graph.bindImage(kShadowMapBlured, mShadowMapBluredView);
+        if(!graph.isResourceSlotBound(kShadowMap))
+        {
+            graph.bindImage(kShadowMap, mShadowMapView);
+            graph.bindImage(kShadowMapBlurIntermediate, mShadowMapIntermediateView);
+            graph.bindImage(kShadowMapBlured, mShadowMapBluredView);
+        }
     }
 
 private:

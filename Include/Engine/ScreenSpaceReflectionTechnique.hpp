@@ -26,8 +26,11 @@ public:
 
     virtual void bindResources(RenderGraph& graph) override final
 	{
-        graph.bindImage(kReflectionMap, mReflectionMapView);
-        graph.bindSampler("SSRSampler", mClampedSampler);
+        if(!graph.isResourceSlotBound(kReflectionMap))
+        {
+            graph.bindImage(kReflectionMap, mReflectionMapView);
+            graph.bindSampler("SSRSampler", mClampedSampler);
+        }
 	}
 
 private:

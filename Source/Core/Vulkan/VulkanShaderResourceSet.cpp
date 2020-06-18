@@ -34,6 +34,7 @@ void VulkanShaderResourceSet::finalise()
 		case AttachmentType::Texture1D:
 		case AttachmentType::Texture2D:
 		case AttachmentType::Texture3D:
+        case AttachmentType::CubeMap:
 		case AttachmentType::Image1D:
 		case AttachmentType::Image2D:
 		case AttachmentType::Image3D:

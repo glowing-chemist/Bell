@@ -24,8 +24,11 @@ public:
 
     virtual void bindResources(RenderGraph& graph) override final
 	{
-		graph.bindImage(kDFGLUT, mDFGLUTView);
-	}
+        if(!graph.isResourceSlotBound(kDFGLUT))
+        {
+            graph.bindImage(kDFGLUT, mDFGLUTView);
+        }
+    }
 
 private:
 

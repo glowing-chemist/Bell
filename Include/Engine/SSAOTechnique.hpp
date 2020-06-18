@@ -28,9 +28,11 @@ public:
 	{
 		graph.bindBuffer(kSSAOBuffer, *mSSAOBufferView);
 
-        graph.bindImage(kSSAO, mSSAOView);
-        graph.bindImage(kSSAOBlurIntermidiate, mSSAOIntermediateView);
-
+        if(!graph.isResourceSlotBound(kSSAO))
+        {
+            graph.bindImage(kSSAO, mSSAOView);
+            graph.bindImage(kSSAOBlurIntermidiate, mSSAOIntermediateView);
+        }
 	}
 
 	virtual void render(RenderGraph& graph, Engine*) override final;
@@ -71,8 +73,11 @@ public:
 	{
 		graph.bindBuffer(kSSAOBuffer, *mSSAOBufferView);
 
-        graph.bindImage(kSSAO, mSSAOView);
-        graph.bindImage(kSSAOBlurIntermidiate, mSSAOIntermediateView);
+        if(!graph.isResourceSlotBound(kSSAO))
+        {
+            graph.bindImage(kSSAO, mSSAOView);
+            graph.bindImage(kSSAOBlurIntermidiate, mSSAOIntermediateView);
+        }
 	}
 
 	virtual void render(RenderGraph& graph, Engine*) override final;

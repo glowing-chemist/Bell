@@ -425,6 +425,22 @@ void Engine::execute(RenderGraph& graph)
     {
         graph.compile(mRenderDevice);
 
+        mCurrentRenderGraph.bindShaderResourceSet(kMaterials, mMaterials);
+        mCurrentRenderGraph.bindImage(kLTCMat, mLTCMatView);
+        mCurrentRenderGraph.bindImage(kLTCAmp, mLTCAmpView);
+        mCurrentRenderGraph.bindSampler(kDefaultSampler, mDefaultSampler);
+        mCurrentRenderGraph.bindVertexBuffer(kSceneVertexBuffer, mVertexBuffer);
+        mCurrentRenderGraph.bindIndexBuffer(kSceneIndexBuffer, mIndexBuffer);
+
+        if(mCurrentScene && mCurrentScene->getSkybox())
+        {
+            mCurrentRenderGraph.bindImage(kSkyBox, *mCurrentScene->getSkybox());
+            (*mCurrentScene->getSkybox())->updateLastAccessed();
+        }
+
+        if(mCurrentScene && mCurrentScene->getSkybox())
+            mCurrentRenderGraph.bindImage(kSkyBox, *mCurrentScene->getSkybox());
+
         mCompileGraph = false;
     }
 
@@ -436,15 +452,9 @@ void Engine::execute(RenderGraph& graph)
     updateGlobalBuffers();
 
     mMaterials->updateLastAccessed();
-    mCurrentRenderGraph.bindShaderResourceSet(kMaterials, mMaterials);
     mCurrentRenderGraph.bindBuffer(kCameraBuffer, *mDeviceCameraBuffer);
     mCurrentRenderGraph.bindBuffer(kShadowingLights, *mShadowCastingLight);
     mCurrentRenderGraph.bindShaderResourceSet(kLightBuffer, *mLightsSRS);
-    mCurrentRenderGraph.bindImage(kLTCMat, mLTCMatView);
-    mCurrentRenderGraph.bindImage(kLTCAmp, mLTCAmpView);
-    mCurrentRenderGraph.bindSampler(kDefaultSampler, mDefaultSampler);
-    mCurrentRenderGraph.bindVertexBuffer(kSceneVertexBuffer, mVertexBuffer);
-    mCurrentRenderGraph.bindIndexBuffer(kSceneIndexBuffer, mIndexBuffer);
 
     if(!mActiveAnimations.empty())
     {
@@ -454,14 +464,8 @@ void Engine::execute(RenderGraph& graph)
         mCurrentRenderGraph.bindBuffer(kBonesBuffer, *mBoneBuffer);
     }
 
-
     if(mCurrentScene && mCurrentScene->getSkybox())
-    {
-        mCurrentRenderGraph.bindImage(kSkyBox, *mCurrentScene->getSkybox());
         (*mCurrentScene->getSkybox())->updateLastAccessed();
-    }
-
-    mCurrentRenderGraph.bindInternalResources();
 
     std::vector<const MeshInstance*> meshes{};
 

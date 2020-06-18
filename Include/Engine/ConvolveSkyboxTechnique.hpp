@@ -31,7 +31,6 @@ private:
     ImageView mConvolvedSpecularView;
     Image mConvolvedDiffuseSkybox;
     ImageView mConvolvedDiffuseView;
-    ImageView mDiffuseSkybox;
 
     std::vector<ImageView> mConvolvedMips;
 

@@ -57,9 +57,12 @@ void LineariseDepthTechnique::render(RenderGraph& graph, Engine*)
 
 void LineariseDepthTechnique::bindResources(RenderGraph& graph)
 {
-    graph.bindImage(kLinearDepth, mLinearDepthView);
-    graph.bindImage(kLinearDepthMip1, mLinearDepthViewMip1);
-    graph.bindImage(kLinearDepthMip2, mLinearDepthViewMip2);
-    graph.bindImage(kLinearDepthMip3, mLinearDepthViewMip3);
-    graph.bindImage(kLinearDepthMip4, mLinearDepthViewMip4);
+    if(!graph.isResourceSlotBound(kLinearDepth))
+    {
+        graph.bindImage(kLinearDepth, mLinearDepthView);
+        graph.bindImage(kLinearDepthMip1, mLinearDepthViewMip1);
+        graph.bindImage(kLinearDepthMip2, mLinearDepthViewMip2);
+        graph.bindImage(kLinearDepthMip3, mLinearDepthViewMip3);
+        graph.bindImage(kLinearDepthMip4, mLinearDepthViewMip4);
+    }
 }

@@ -47,9 +47,6 @@ VulkanImageView::VulkanImageView(Image& parentImage,
     if(extent.depth > 1)
         type = vk::ImageViewType::e3D;
 
-	if(parentImage->getUsage() & ImageUsage::CubeMap && mType == ImageViewType::CubeMap)
-		type = vk::ImageViewType::eCube;
-
 
     vk::ImageViewCreateInfo createInfo{};
     createInfo.setImage(mImage);
@@ -58,6 +55,12 @@ VulkanImageView::VulkanImageView(Image& parentImage,
     createInfo.setViewType(type);
 
     mView = static_cast<VulkanRenderDevice*>(getDevice())->createImageView(createInfo);
+
+    if(mType == ImageViewType::CubeMap)
+    {
+        createInfo.setViewType(vk::ImageViewType::eCube);
+        mCubeMapView = static_cast<VulkanRenderDevice*>(getDevice())->createImageView(createInfo);
+    }
 }
 
 

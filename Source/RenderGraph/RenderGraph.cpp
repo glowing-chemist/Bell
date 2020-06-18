@@ -166,6 +166,7 @@ void RenderGraph::compile(RenderDevice* dev)
 	compileDependancies();
 	generateInternalResources(dev);
 	reorderTasks();
+    bindInternalResources();
 }
 
 
@@ -300,7 +301,7 @@ void RenderGraph::compileDependancies()
 }
 
 
-void RenderGraph::bindResource(const char* name)
+void RenderGraph::bindResource(const char* name, const uint32_t flags)
 {
     uint32_t taskOrderIndex = 0;
 	for(const auto& [taskType, taskIndex] : mTaskOrder)
@@ -312,7 +313,8 @@ void RenderGraph::bindResource(const char* name)
         {
             if(input.mName == name)
             {
-                mResourceInfo[name].push_back({input.mType, taskOrderIndex});
+                mResourceInfo[name].mFlags = flags;
+                mResourceInfo[name].mUsages.push_back({input.mType, taskOrderIndex});
                 mDescriptorsNeedUpdating[taskOrderIndex] = true;
                 break; // Assume a resource is only bound once per task.
             }
@@ -327,7 +329,8 @@ void RenderGraph::bindResource(const char* name)
         {
             if(input.mName == name)
             {
-                mResourceInfo[name].push_back({input.mType, taskOrderIndex});
+                mResourceInfo[name].mFlags = flags;
+                mResourceInfo[name].mUsages.push_back({input.mType, taskOrderIndex});
                 mFrameBuffersNeedUpdating[taskOrderIndex] = true;
                 break;
             }
@@ -339,63 +342,70 @@ void RenderGraph::bindResource(const char* name)
 }
 
 
-void RenderGraph::bindImage(const char *name, const ImageView &image)
+void RenderGraph::bindImage(const char *name, const ImageView &image, const uint32_t flags)
 {
-    mImageViews.insert({name, image});
+    mImageViews.insert_or_assign(name, image);
+    mResourceInfo[name].mUsages.clear();
 
-    bindResource(name);
+    bindResource(name, flags);
 }
 
 
-void RenderGraph::bindImageArray(const char *name, const ImageViewArray& imageArray)
+void RenderGraph::bindImageArray(const char *name, const ImageViewArray& imageArray, const uint32_t flags)
 {
-    mImageViewArrays.insert({name, imageArray});
+    mImageViewArrays.insert_or_assign(name, imageArray);
+    mResourceInfo[name].mUsages.clear();
 
-    bindResource(name);
+    bindResource(name, flags);
 }
 
 
-void RenderGraph::bindBuffer(const char *name , const BufferView& buffer)
+void RenderGraph::bindBuffer(const char *name , const BufferView& buffer, const uint32_t flags)
 {
-    mBufferViews.insert({name, buffer});
+    mBufferViews.insert_or_assign(name, buffer);
+    mResourceInfo[name].mUsages.clear();
 
-    bindResource(name);
+    bindResource(name, flags);
 }
 
 
-void RenderGraph::bindVertexBuffer(const char *name, const BufferView& buffer)
+void RenderGraph::bindVertexBuffer(const char *name, const BufferView& buffer, const uint32_t flags)
 {
-    mBufferViews.insert({name, buffer});
+    mBufferViews.insert_or_assign(name, buffer);
+    mResourceInfo[name].mUsages.clear();
 
-    bindResource(name);
+    bindResource(name, flags);
 }
 
 
-void RenderGraph::bindIndexBuffer(const char *name, const BufferView& buffer)
+void RenderGraph::bindIndexBuffer(const char *name, const BufferView& buffer, const uint32_t flags)
 {
-    mBufferViews.insert({name, buffer});
+    mBufferViews.insert_or_assign(name, buffer);
+    mResourceInfo[name].mUsages.clear();
 
-    bindResource(name);
+    bindResource(name, flags);
 }
 
 
 void RenderGraph::bindSampler(const char *name, const Sampler& sampler)
 {
-    mSamplers.insert({name, sampler});
+    mSamplers.insert_or_assign(name, sampler);
+    mResourceInfo[name].mUsages.clear();
 
-    bindResource(name);
+    bindResource(name, 0);
 }
 
 
 void RenderGraph::bindShaderResourceSet(const char *name, const ShaderResourceSet& set)
 {
-    mSRS.insert({name, set});
+    mSRS.insert_or_assign(name, set);
+    mResourceInfo[name].mUsages.clear();
 }
 
 
 bool RenderGraph::isResourceSlotBound(const char* name) const
 {
-    return mImageViews.find(name) != mImageViews.end() ||
+    return  mImageViews.find(name) != mImageViews.end() ||
             mBufferViews.find(name) != mBufferViews.end() ||
             mImageViewArrays.find(name) != mImageViewArrays.end() ||
             mSamplers.find(name) != mSamplers.end() ||
@@ -732,6 +742,7 @@ std::vector<BarrierRecorder> RenderGraph::generateBarriers(RenderDevice* dev)
         case AttachmentType::Texture1D:
         case AttachmentType::Texture2D:
         case AttachmentType::Texture3D:
+        case AttachmentType::CubeMap:
         case AttachmentType::Depth:
             return true;
 
@@ -758,8 +769,13 @@ std::vector<BarrierRecorder> RenderGraph::generateBarriers(RenderDevice* dev)
         }
     };
 
-    for (const auto& [name, entries] : mResourceInfo)
+    for (const auto& [name, usageInfo] : mResourceInfo)
 	{
+        const auto& entries = usageInfo.mUsages;
+
+        if(entries.empty() || (usageInfo.mFlags & BindingFlags::ManualBarriers)) // Resource isn't used by any tasks or is a SRS.
+            continue;
+
 		// intended overflow.
         ResourceInfo previous{AttachmentType::PushConstants, ~0u};
 
@@ -828,6 +844,7 @@ std::vector<BarrierRecorder> RenderGraph::generateBarriers(RenderDevice* dev)
 					case AttachmentType::Texture1D:
 					case AttachmentType::Texture2D:
 					case AttachmentType::Texture3D:
+                    case AttachmentType::CubeMap:
 						hazard = Hazard::ReadAfterWrite;
 						break;
 
@@ -883,8 +900,6 @@ void RenderGraph::resetBindings()
 	mBufferViews.clear();
 	mSamplers.clear();
 	mSRS.clear();
-
-    mResourceInfo.clear();
 }
 
 

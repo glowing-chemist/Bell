@@ -22,32 +22,35 @@ class DescriptorManager;
 class TaskIterator;
 class VulkanRenderDevice;
 
+enum BindingFlags : uint32_t
+{
+    ManualBarriers = 1
+};
+
 using TaskID = int32_t;
 
 class RenderGraph
 {
-	friend VulkanRenderDevice;
-	friend TaskIterator;
+    friend VulkanRenderDevice;
+    friend TaskIterator;
 public:
 
     RenderGraph() = default;
 
-	TaskID addTask(const GraphicsTask&);
-	TaskID addTask(const ComputeTask&);
+    TaskID addTask(const GraphicsTask&);
+    TaskID addTask(const ComputeTask&);
 
-	void addDependancy(const RenderTask& dependancy, const RenderTask& dependant);
+    void addDependancy(const RenderTask& dependancy, const RenderTask& dependant);
     void addDependancy(const std::string& dependancy, const std::string& dependant);
 
-	void compile(RenderDevice* dev);
-
-    void bindInternalResources();
+    void compile(RenderDevice* dev);
 
     // Bind persistent resourcers.
-    void bindImage(const char* name, const ImageView &);
-    void bindImageArray(const char* name, const ImageViewArray&);
-    void bindBuffer(const char* name, const BufferView &);
-    void bindVertexBuffer(const char* name, const BufferView &);
-    void bindIndexBuffer(const char* name, const BufferView &);
+    void bindImage(const char* name, const ImageView&, const uint32_t flags = 0);
+    void bindImageArray(const char* name, const ImageViewArray&, const uint32_t flags = 0);
+    void bindBuffer(const char* name, const BufferView&, const uint32_t flags = 0);
+    void bindVertexBuffer(const char* name, const BufferView&, const uint32_t flags = 0);
+    void bindIndexBuffer(const char* name, const BufferView&, const uint32_t flags = 0);
     void bindSampler(const char* name, const Sampler&);
     void bindShaderResourceSet(const char* name, const ShaderResourceSet&);
     bool isResourceSlotBound(const char* name) const;
@@ -116,47 +119,40 @@ public:
 
 private:
 
-	// compiles the dependancy graph based on slots (assuming resources are finished writing to by their first read from)
-	void compileDependancies();
-	void generateInternalResources(RenderDevice*);
+    // compiles the dependancy graph based on slots (assuming resources are finished writing to by their first read from)
+    void compileDependancies();
+    void generateInternalResources(RenderDevice*);
 
-	void reorderTasks();
+    void reorderTasks();
+    void bindInternalResources();
 
     RenderTask& getTask(TaskType, uint32_t);
     const RenderTask& getTask(TaskType, uint32_t) const;
 
-	// Selecets the best task to execuet next based on some heuristics.
-	uint32_t selectNextTask(const std::vector<uint8_t>& dependancies, const TaskType) const;
+    // Selecets the best task to execuet next based on some heuristics.
+    uint32_t selectNextTask(const std::vector<uint8_t>& dependancies, const TaskType) const;
 
-    void bindResource(const char* name);
+    void bindResource(const char* name, const uint32_t flags);
 
     void createInternalResource(RenderDevice*, const char *name, const Format, const ImageUsage, const SizeClass);
 
     std::vector<GraphicsTask> mGraphicsTasks;
-	std::vector<ComputeTask>  mComputeTasks;
+    std::vector<ComputeTask>  mComputeTasks;
 
-	// The index in to the coresponding task array
+    // The index in to the coresponding task array
     std::vector<std::pair<TaskType, uint32_t>> mTaskOrder;
-	std::vector<bool> mDescriptorsNeedUpdating;
-	std::vector<bool> mFrameBuffersNeedUpdating;
+    std::vector<bool> mDescriptorsNeedUpdating;
+    std::vector<bool> mFrameBuffersNeedUpdating;
 
-    // Hazard tracking info.
-    struct HazardTrackingInfo
-    {
-        uint32_t mResourceBinding;
-        Hazard mHazard;
-        SyncPoint mSrc;
-        SyncPoint mDst;
-        AttachmentType mNeededtype;
-        bool mImagetransition;
-        bool mInputResource;
-    };
-    std::vector<std::vector<HazardTrackingInfo>> mHazardInfo;
-
-	// Dependancy, Dependant
+    // Dependancy, Dependant
     std::vector<std::pair<uint32_t, uint32_t>> mTaskDependancies;
 
-    std::unordered_map<const char*, std::vector<ResourceInfo>> mResourceInfo;
+    struct ResourceUsageEntries
+    {
+        uint32_t mFlags;
+        std::vector<ResourceInfo> mUsages;
+    };
+    std::unordered_map<const char*, ResourceUsageEntries> mResourceInfo;
 
     std::unordered_map<const char*, ImageView> mImageViews;
     std::unordered_map<const char*, ImageViewArray> mImageViewArrays;

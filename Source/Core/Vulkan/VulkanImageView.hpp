@@ -24,6 +24,11 @@ public:
 		return mView;
 	}
 
+    vk::ImageView getCubeMapImageView() const
+    {
+        return mCubeMapView;
+    }
+
 	vk::Image getImage() const
 	{
 		return mImage;
@@ -32,6 +37,7 @@ public:
 private:
 	vk::Image mImage;
 	vk::ImageView mView;
+    vk::ImageView mCubeMapView;
 	Allocation mImageMemory;
 };
 

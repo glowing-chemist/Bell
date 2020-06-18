@@ -54,7 +54,7 @@ public:
 
 private:
 
-	vk::DescriptorImageInfo     generateDescriptorImageInfo(const ImageView &imageView, const vk::ImageLayout) const;
+    vk::DescriptorImageInfo     generateDescriptorImageInfo(const ImageView &imageView, const vk::ImageLayout, const AttachmentType) const;
 	vk::DescriptorBufferInfo    generateDescriptorBufferInfo(const BufferView &) const;
 
     vk::DescriptorSet			allocateDescriptorSet(const RenderTask&, const vk::DescriptorSetLayout);

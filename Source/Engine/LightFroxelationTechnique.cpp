@@ -111,11 +111,14 @@ void LightFroxelationTechnique::render(RenderGraph& graph, Engine* eng)
 
 void LightFroxelationTechnique::bindResources(RenderGraph& graph)
 {
-    graph.bindImage(kActiveFroxels, mActiveFroxelsImageView);
-    graph.bindBuffer(kActiveFroxelBuffer, mActiveFroxlesBufferView);
-    graph.bindBuffer(kSparseFroxels, mSparseFroxelBufferView);
-    graph.bindBuffer(kLightIndicies, mLightIndexBufferView);
-    graph.bindBuffer(kActiveFroxelsCounter, mActiveFroxelsCounter);
-    graph.bindBuffer(kFroxelIndirectArgs, mIndirectArgsView);
-    graph.bindBuffer(kLightIndexCounter, mLightIndexCounterView);
+    if(!graph.isResourceSlotBound(kActiveFroxels))
+    {
+        graph.bindImage(kActiveFroxels, mActiveFroxelsImageView);
+        graph.bindBuffer(kActiveFroxelBuffer, mActiveFroxlesBufferView);
+        graph.bindBuffer(kSparseFroxels, mSparseFroxelBufferView);
+        graph.bindBuffer(kLightIndicies, mLightIndexBufferView);
+        graph.bindBuffer(kActiveFroxelsCounter, mActiveFroxelsCounter);
+        graph.bindBuffer(kFroxelIndirectArgs, mIndirectArgsView);
+        graph.bindBuffer(kLightIndexCounter, mLightIndexCounterView);
+    }
 }

@@ -18,6 +18,7 @@ vk::ImageLayout getVulkanImageLayout(const AttachmentType type)
 		case AttachmentType::Texture1D:
 		case AttachmentType::Texture2D:
 		case AttachmentType::Texture3D:
+        case AttachmentType::CubeMap:
 			return vk::ImageLayout::eShaderReadOnlyOptimal;
 
 		case AttachmentType::Depth:
@@ -503,6 +504,7 @@ ImageLayout getImageLayout(const AttachmentType type)
 	case AttachmentType::Texture1D:
 	case AttachmentType::Texture2D:
 	case AttachmentType::Texture3D:
+    case AttachmentType::CubeMap:
 		return  ImageLayout::Sampled;
 
 	case AttachmentType::Depth:
@@ -586,6 +588,7 @@ SyncPoint getSyncPoint(const AttachmentType type)
 	case AttachmentType::Texture1D:
 	case AttachmentType::Texture2D:
 	case AttachmentType::Texture3D:
+    case AttachmentType::CubeMap:
 		return  SyncPoint::VertexShader;
 
 	case AttachmentType::DataBufferRO:
@@ -651,6 +654,7 @@ const char* getAttachmentName(const AttachmentType type)
 	case AttachmentType::Texture1D:
 	case AttachmentType::Texture2D:
 	case AttachmentType::Texture3D:
+    case AttachmentType::CubeMap:
 		return  "Sampled Image";
 
 	case AttachmentType::Depth:

@@ -143,6 +143,7 @@ enum class AttachmentType
 	Texture1D = 0,
 	Texture2D,
 	Texture3D,
+    CubeMap,
 	TextureArray,
 	Sampler,
 	Image1D,

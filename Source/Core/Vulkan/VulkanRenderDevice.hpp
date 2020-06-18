@@ -83,7 +83,7 @@ public:
     virtual void                       destroyImageView(ImageViewBase& view) override
 	{
 		VulkanImageView& vkView = static_cast<VulkanImageView&>(view);
-		mImageViewsPendingDestruction.push_back({view.getLastAccessed(), vkView.getImageView()});
+        mImageViewsPendingDestruction.push_back({view.getLastAccessed(), vkView.getImageView(), vkView.getCubeMapImageView()});
 	}
 
     vk::ImageView                      createImageView(const vk::ImageViewCreateInfo& info)
@@ -350,6 +350,7 @@ private:
 	{
 		uint64_t mLastUsed;
 		vk::ImageView mView;
+        vk::ImageView mCubeMapView;
 	};
 	std::deque<ImageViewDestructionInfo> mImageViewsPendingDestruction;
 

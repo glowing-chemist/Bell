@@ -100,6 +100,7 @@ void DescriptorManager::writeDescriptors(const RenderGraph& graph, const uint32_
         case AttachmentType::Texture1D:
         case AttachmentType::Texture2D:
         case AttachmentType::Texture3D:
+        case AttachmentType::CubeMap:
         {
             // We assume that no sampling happens from the swapchain image.
             const vk::DescriptorType type = [attachmentType]()
@@ -114,6 +115,7 @@ void DescriptorManager::writeDescriptors(const RenderGraph& graph, const uint32_
                 case AttachmentType::Texture1D:
                 case AttachmentType::Texture2D:
                 case AttachmentType::Texture3D:
+                case AttachmentType::CubeMap:
                     return vk::DescriptorType::eSampledImage;
 
                 default:
@@ -126,7 +128,7 @@ void DescriptorManager::writeDescriptors(const RenderGraph& graph, const uint32_
 
             vk::ImageLayout adjustedLayout = imageView->getType() == ImageViewType::Depth ? vk::ImageLayout::eDepthStencilReadOnlyOptimal : getVulkanImageLayout(attachmentType);
 
-            vk::DescriptorImageInfo info = generateDescriptorImageInfo(imageView, adjustedLayout);
+            vk::DescriptorImageInfo info = generateDescriptorImageInfo(imageView, adjustedLayout, attachmentType);
 
             imageInfos.push_back(info);
 
@@ -143,7 +145,7 @@ void DescriptorManager::writeDescriptors(const RenderGraph& graph, const uint32_
 
             for(auto& view : imageViews)
             {
-                imageInfos.push_back(generateDescriptorImageInfo(view, vk::ImageLayout::eShaderReadOnlyOptimal));
+                imageInfos.push_back(generateDescriptorImageInfo(view, vk::ImageLayout::eShaderReadOnlyOptimal, attachmentType));
             }
 
             descWrite.setPImageInfo(&imageInfos[imageInfos.size() - imageViews.size()]);
@@ -239,7 +241,7 @@ vk::DescriptorSet DescriptorManager::writeShaderResourceSet(const vk::Descriptor
 
 			vk::ImageLayout adjustedLayout = imageView->getType() == ImageViewType::Depth ? vk::ImageLayout::eDepthStencilReadOnlyOptimal : getVulkanImageLayout(attachmentType);
 
-			vk::DescriptorImageInfo info = generateDescriptorImageInfo(imageView, adjustedLayout);
+            vk::DescriptorImageInfo info = generateDescriptorImageInfo(imageView, adjustedLayout, attachmentType);
 
 			imageInfos.push_back(info);
 
@@ -252,13 +254,14 @@ vk::DescriptorSet DescriptorManager::writeShaderResourceSet(const vk::Descriptor
 		case AttachmentType::Texture1D:
 		case AttachmentType::Texture2D:
 		case AttachmentType::Texture3D:
+        case AttachmentType::CubeMap:
 		{
             BELL_ASSERT(writes[i].mImage, "Attachment type set incorrectly")
 			const auto& imageView = *writes[i].mImage;
 
 			vk::ImageLayout adjustedLayout = imageView->getType() == ImageViewType::Depth ? vk::ImageLayout::eDepthStencilReadOnlyOptimal : getVulkanImageLayout(attachmentType);
 
-			vk::DescriptorImageInfo info = generateDescriptorImageInfo(imageView, adjustedLayout);
+            vk::DescriptorImageInfo info = generateDescriptorImageInfo(imageView, adjustedLayout, attachmentType);
 
 			imageInfos.push_back(info);
 
@@ -276,7 +279,7 @@ vk::DescriptorSet DescriptorManager::writeShaderResourceSet(const vk::Descriptor
 
 			for(uint32_t k = 0; k < writes[i].mArraySize; ++k)
 			{
-				imageInfos.push_back(generateDescriptorImageInfo(imageViews[k], vk::ImageLayout::eShaderReadOnlyOptimal));
+                imageInfos.push_back(generateDescriptorImageInfo(imageViews[k], vk::ImageLayout::eShaderReadOnlyOptimal, attachmentType));
 			}
 
 			descWrite.setPImageInfo(&imageInfos[imageInfos.size() - writes[i].mArraySize]);
@@ -430,10 +433,10 @@ DescriptorManager::DescriptorPool DescriptorManager::createDescriptorPool(const 
 }
 
 
-vk::DescriptorImageInfo DescriptorManager::generateDescriptorImageInfo(const ImageView& imageView, const vk::ImageLayout layout) const
+vk::DescriptorImageInfo DescriptorManager::generateDescriptorImageInfo(const ImageView& imageView, const vk::ImageLayout layout, const AttachmentType type) const
 {
     vk::DescriptorImageInfo imageInfo{};
-    imageInfo.setImageView(static_cast<const VulkanImageView&>(*imageView.getBase()).getImageView());
+    imageInfo.setImageView(type == AttachmentType::CubeMap ? static_cast<const VulkanImageView&>(*imageView.getBase()).getCubeMapImageView() : static_cast<const VulkanImageView&>(*imageView.getBase()).getImageView());
 	imageInfo.setImageLayout(layout);
 
     return imageInfo;
@@ -496,6 +499,7 @@ DescriptorManager::DescriptorPool& DescriptorManager::findSuitablePool(const std
 		case AttachmentType::Texture1D:
 		case AttachmentType::Texture2D:
 		case AttachmentType::Texture3D:
+        case AttachmentType::CubeMap:
 			requiredSampledImageDescriptors++;
 			break;
 
@@ -582,6 +586,7 @@ DescriptorManager::DescriptorPool& DescriptorManager::findSuitablePool(const std
         case AttachmentType::Texture1D:
         case AttachmentType::Texture2D:
         case AttachmentType::Texture3D:
+        case AttachmentType::CubeMap:
             requiredSampledImageDescriptors++;
             break;
 

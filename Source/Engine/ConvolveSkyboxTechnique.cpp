@@ -4,7 +4,6 @@
 
 
 constexpr const char* slots[] = { "convolved0", "convolved1", "convolved2", "convolved3", "convolved4", "convolved5", "convolved6", "convolved7", "convolved8", "convolved9" };
-constexpr const char* diffuseSkybox = "DiffuseSkybox";
 
 
 ConvolveSkyBoxTechnique::ConvolveSkyBoxTechnique(Engine* eng, RenderGraph& graph) :
@@ -16,7 +15,6 @@ ConvolveSkyBoxTechnique::ConvolveSkyBoxTechnique(Engine* eng, RenderGraph& graph
     mConvolvedDiffuseSkybox(eng->getDevice(), Format::RGBA8UNorm, ImageUsage::CubeMap | ImageUsage::Sampled | ImageUsage::Storage,
                      512, 512, 1, 1, 6, 1, "convolved skybox diffuse"),
     mConvolvedDiffuseView(mConvolvedDiffuseSkybox, ImageViewType::CubeMap, 0, 6),
-    mDiffuseSkybox(mConvolvedDiffuseSkybox, ImageViewType::Colour, 0, 6),
     mConvolvedMips{},
 	mFirstFrame(true)
 {
@@ -26,16 +24,15 @@ ConvolveSkyBoxTechnique::ConvolveSkyBoxTechnique(Engine* eng, RenderGraph& graph
 	}
 
 	ComputeTask convolveTask("skybox convolve", mPipelineDesc);
-	convolveTask.addInput(kSkyBox, AttachmentType::Texture2D);
+    convolveTask.addInput(kSkyBox, AttachmentType::CubeMap);
 	convolveTask.addInput(kDefaultSampler, AttachmentType::Sampler);
 
 	for (uint32_t i = 0; i < 10; ++i)
 	{
-		convolveTask.addInput(slots[i], AttachmentType::Image2D);
+        convolveTask.addInput(slots[i], AttachmentType::Image2D);
 	}
-    convolveTask.addInput(diffuseSkybox, AttachmentType::Image2D);
-    convolveTask.addInput(kConvolvedSpecularSkyBox, AttachmentType::Image2D);
     convolveTask.addInput(kConvolvedDiffuseSkyBox, AttachmentType::Image2D);
+    convolveTask.addInput(kConvolvedSpecularSkyBox, AttachmentType::Image2D);
 
 	mTaskID = graph.addTask(convolveTask);
 }
@@ -75,12 +72,14 @@ void ConvolveSkyBoxTechnique::render(RenderGraph& graph, Engine*)
 
 void ConvolveSkyBoxTechnique::bindResources(RenderGraph &graph)
 {
-    for (uint32_t i = 0; i < 10; ++i)
+    if(!graph.isResourceSlotBound(kConvolvedSpecularSkyBox))
     {
-        graph.bindImage(slots[i], mConvolvedMips[i]);
-    }
+        for (uint32_t i = 0; i < 10; ++i)
+        {
+            graph.bindImage(slots[i], mConvolvedMips[i], BindingFlags::ManualBarriers);
+        }
 
-    graph.bindImage(kConvolvedSpecularSkyBox, mConvolvedSpecularView);
-    graph.bindImage(kConvolvedDiffuseSkyBox, mConvolvedDiffuseView);
-    graph.bindImage(diffuseSkybox, mDiffuseSkybox);
+        graph.bindImage(kConvolvedSpecularSkyBox, mConvolvedSpecularView);
+        graph.bindImage(kConvolvedDiffuseSkyBox, mConvolvedDiffuseView);
+    }
 }
