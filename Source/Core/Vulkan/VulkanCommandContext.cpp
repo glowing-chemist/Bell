@@ -71,9 +71,6 @@ void VulkanCommandContext::setupState(const RenderGraph& graph, uint32_t taskInd
         cmdBuffer.beginRenderPass(passBegin, vk::SubpassContents::eInline);
 
         bindPoint = vk::PipelineBindPoint::eGraphics;
-
-        // Destruction on the device is deferred.
-        device->destroyFrameBuffer(frameBuffer, device->getCurrentSubmissionIndex());
     }
 
     //allocate and write descriptor sets.

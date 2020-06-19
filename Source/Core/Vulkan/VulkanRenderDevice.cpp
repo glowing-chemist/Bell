@@ -101,12 +101,10 @@ VulkanRenderDevice::~VulkanRenderDevice()
     }
     mBuffersPendingDestruction.clear();
 
-    // TODO
-    /*for(auto& resources : mVulkanResources)
+    for(auto& [imageViews, frameBuffer] : mFrameBufferCache)
     {
-        if(resources.mFrameBuffer)
-            mFramebuffersPendingDestruction.push_back({0, *resources.mFrameBuffer});
-    }*/
+            mDevice.destroyFramebuffer(frameBuffer);
+    }
 
 	for(const auto& [lastUsed, frameBuffer] : mFramebuffersPendingDestruction)
     {
@@ -694,6 +692,11 @@ vk::Framebuffer VulkanRenderDevice::createFrameBuffer(const RenderGraph& graph, 
             imageViews.push_back(static_cast<const VulkanImageView&>(*imageView.getBase()).getImageView());
     }
 
+    if(mFrameBufferCache.find(imageViews) != mFrameBufferCache.end())
+    {
+        return mFrameBufferCache[imageViews];
+    }
+
     vk::FramebufferCreateInfo info{};
     info.setRenderPass(renderPass);
     info.setAttachmentCount(static_cast<uint32_t>(imageViews.size()));
@@ -702,7 +705,11 @@ vk::Framebuffer VulkanRenderDevice::createFrameBuffer(const RenderGraph& graph, 
     info.setHeight(imageExtent.height);
     info.setLayers(imageExtent.depth);
 
-    return mDevice.createFramebuffer(info);
+    vk::Framebuffer newFrameBuffer =  mDevice.createFramebuffer(info);
+
+    mFrameBufferCache.insert({imageViews, newFrameBuffer});
+
+    return newFrameBuffer;
 }
 
 
@@ -981,6 +988,11 @@ void VulkanRenderDevice::invalidatePipelines()
         mDevice.destroyDescriptorSetLayout(computeHandles.mDescriptorSetLayout[0]);
     }
     mComputePipelineCache.clear();
+
+    for(auto& [imageViews, frameBuffer] : mFrameBufferCache)
+    {
+        destroyFrameBuffer(frameBuffer, mCurrentSubmission);
+    }
 
     mVulkanResources.clear();
 }

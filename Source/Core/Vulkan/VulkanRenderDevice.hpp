@@ -374,6 +374,8 @@ private:
     std::shared_mutex mResourcesLock;
     std::unordered_map<uint64_t, vulkanResources> mVulkanResources;
 
+    std::map<std::vector<vk::ImageView>, vk::Framebuffer> mFrameBufferCache;
+
     // underlying devices
     vk::Device mDevice;
     vk::PhysicalDevice mPhysicalDevice;
