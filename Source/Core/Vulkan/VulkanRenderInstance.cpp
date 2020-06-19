@@ -80,7 +80,6 @@ VulkanRenderInstance::VulkanRenderInstance(GLFWwindow* window) :
 #if BELL_ENABLE_LOGGING
     const auto availableLayers = vk::enumerateInstanceLayerProperties();
     std::vector<const char*> validationLayers = {"VK_LAYER_KHRONOS_validation",
-                                                 "VK_LAYER_LUNARG_standard_validation"
 #if DUMP_API
                                                  ,"VK_LAYER_LUNARG_api_dump"
 #endif
@@ -246,7 +245,7 @@ std::pair<vk::PhysicalDevice, vk::Device> VulkanRenderInstance::findSuitableDevi
     deviceInfo.setPEnabledFeatures(&physicalFeatures);
 	deviceInfo.setPNext(&descriptorIndexingInfo);
 #if BELL_ENABLE_LOGGING
-    const char* validationLayers = "VK_LAYER_LUNARG_standard_validation";
+    const char* validationLayers = "VK_LAYER_KHRONOS_validation";
     deviceInfo.setEnabledLayerCount(1);
     deviceInfo.setPpEnabledLayerNames(&validationLayers);
 #endif

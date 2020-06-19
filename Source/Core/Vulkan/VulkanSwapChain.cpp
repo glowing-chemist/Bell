@@ -123,12 +123,14 @@ void VulkanSwapChain::present(const QueueType queue)
 
 	VkPresentInfoKHR info{};
 	info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+	info.pNext = nullptr;
     info.pSwapchains = &tempSwapchain;
 	info.swapchainCount = 1;
     info.pWaitSemaphores = &waitSemaphore;
     info.waitSemaphoreCount = 1;
 	info.pImageIndices = &mCurrentImageIndex;
-
+	info.pResults = nullptr;
+	
 	const VkQueue presentQueue = static_cast<VulkanRenderDevice*>(getDevice())->getQueue(queue);
 
 	VkResult result = vkQueuePresentKHR(presentQueue, &info);
