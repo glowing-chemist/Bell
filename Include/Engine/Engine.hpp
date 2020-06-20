@@ -101,6 +101,11 @@ public:
         mCompileGraph = true;
 	}
 
+    void registerCustomPass(std::unique_ptr<Technique>& technique)
+    {
+        mTechniques.push_back(std::move(technique));
+    }
+
     void enableDebugTexture(const char* slot)
     {
         mShowDebugTexture = true;
