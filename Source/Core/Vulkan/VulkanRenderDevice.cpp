@@ -105,6 +105,7 @@ VulkanRenderDevice::~VulkanRenderDevice()
     {
             mDevice.destroyFramebuffer(frameBuffer);
     }
+    mFrameBufferCache.clear();
 
 	for(const auto& [lastUsed, frameBuffer] : mFramebuffersPendingDestruction)
     {
@@ -992,6 +993,7 @@ void VulkanRenderDevice::invalidatePipelines()
     for(auto& [imageViews, frameBuffer] : mFrameBufferCache)
     {
         destroyFrameBuffer(frameBuffer, mCurrentSubmission);
+        mFrameBufferCache.erase(imageViews);
     }
 
     mVulkanResources.clear();
