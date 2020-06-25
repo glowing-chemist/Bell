@@ -298,7 +298,7 @@ vk::RenderPass	VulkanRenderDevice::generateRenderPass(const GraphicsTask& task)
     std::vector<vk::AttachmentReference> depthAttachmentRef{};
     uint32_t outputAttatchmentCounter = 0;
 
-	for(const auto& [name, type, format, size, loadop] : outputAttachments)
+    for(const auto& [name, type, format, size, loadop, storeOp] : outputAttachments)
     {
         // We only care about images here.
         if(type == AttachmentType::DataBufferRO ||
@@ -331,7 +331,8 @@ vk::RenderPass	VulkanRenderDevice::generateRenderPass(const GraphicsTask& task)
         attachmentDesc.setInitialLayout((layout));
 		attachmentDesc.setFinalLayout(layout);
 
-		vk::AttachmentLoadOp op = [loadType = loadop](){
+        vk::AttachmentLoadOp lop = [loadType = loadop]()
+        {
 			switch(loadType)
 			{
 				case LoadOp::Preserve:
@@ -343,11 +344,22 @@ vk::RenderPass	VulkanRenderDevice::generateRenderPass(const GraphicsTask& task)
 			}
 		}();
 
-		attachmentDesc.setLoadOp(op);
+        vk::AttachmentStoreOp sop = [storeType = storeOp]()
+        {
+            switch(storeType)
+            {
+                case StoreOp::Store:
+                    return vk::AttachmentStoreOp::eStore;
 
-        attachmentDesc.setStoreOp(vk::AttachmentStoreOp::eStore);
-		attachmentDesc.setStencilLoadOp(op);
-        attachmentDesc.setStencilStoreOp(vk::AttachmentStoreOp::eStore);
+                case StoreOp::Discard:
+                    return vk::AttachmentStoreOp::eDontCare;
+            }
+        }();
+
+        attachmentDesc.setLoadOp(lop);
+        attachmentDesc.setStoreOp(sop);
+        attachmentDesc.setStencilLoadOp(lop);
+        attachmentDesc.setStencilStoreOp(sop);
         attachmentDesc.setSamples(vk::SampleCountFlagBits::e1); // TODO respect multisample images.
 
         attachmentDescriptions.push_back((attachmentDesc));

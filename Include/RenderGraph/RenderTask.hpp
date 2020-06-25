@@ -27,6 +27,12 @@ enum class LoadOp
     Clear_Float_Max
 };
 
+enum class StoreOp
+{
+    Store,
+    Discard
+};
+
 enum class SizeClass
 {
     QuadrupleSwapChain,
@@ -59,9 +65,9 @@ public:
     }
 
     // Loadop has no effect on ComputeTasks
-    virtual void addOutput(const char* name, const AttachmentType attachmentType, const Format format, const SizeClass size = SizeClass::Custom, const LoadOp op = LoadOp::Preserve)
+    virtual void addOutput(const char* name, const AttachmentType attachmentType, const Format format, const SizeClass size = SizeClass::Custom, const LoadOp loadOp = LoadOp::Preserve, const StoreOp storeOp = StoreOp::Store)
     {
-	   mOutputAttachments.push_back({name, attachmentType, format, size, op});
+       mOutputAttachments.push_back({name, attachmentType, format, size, loadOp, storeOp});
     }
 
     struct OutputAttachmentInfo
@@ -71,6 +77,7 @@ public:
 		Format			mFormat;
 		SizeClass		mSize;
 		LoadOp			mLoadOp;
+        StoreOp         mStoreOp;
     };
 
 	struct InputAttachmentInfo

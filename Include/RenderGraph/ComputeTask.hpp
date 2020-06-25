@@ -39,7 +39,7 @@ public:
     ComputePipelineDescription getPipelineDescription() const
         { return mPipelineDescription; }
 
-    void addOutput(const char* name, const AttachmentType attachmentType, const Format, const SizeClass = SizeClass::Custom, const LoadOp = LoadOp::Preserve) override final
+    void addOutput(const char* name, const AttachmentType attachmentType, const Format, const SizeClass = SizeClass::Custom, const LoadOp = LoadOp::Preserve, const StoreOp = StoreOp::Store) override final
     {
         // All outputs needs to be part of the descriptor set for compute pipelies
         // as compuite shaders writes don't go to the framebuffer.

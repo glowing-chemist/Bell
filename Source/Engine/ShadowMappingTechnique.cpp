@@ -39,7 +39,7 @@ ShadowMappingTechnique::ShadowMappingTechnique(Engine* eng, RenderGraph& graph) 
     shadowTask.addInput(kSceneIndexBuffer, AttachmentType::IndexBuffer);
 
     shadowTask.addOutput(kShadowMapRaw, AttachmentType::RenderTarget2D, Format::RG32Float, SizeClass::DoubleSwapchain, LoadOp::Clear_Float_Max);
-    shadowTask.addOutput("ShadowMapDepth", AttachmentType::Depth, Format::D32Float, SizeClass::DoubleSwapchain, LoadOp::Clear_White);
+    shadowTask.addOutput("ShadowMapDepth", AttachmentType::Depth, Format::D32Float, SizeClass::DoubleSwapchain, LoadOp::Clear_White, StoreOp::Discard);
     mShadowTask = graph.addTask(shadowTask);
 
     ComputeTask blurXTask{ "ShadowMapBlurX", mBlurXDesc };

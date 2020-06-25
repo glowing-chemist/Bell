@@ -61,7 +61,7 @@ CascadeShadowMappingTechnique::CascadeShadowMappingTechnique(Engine* eng, Render
            cascade0Task.addInput(kSceneVertexBuffer, AttachmentType::VertexBuffer);
            cascade0Task.addInput(kSceneIndexBuffer, AttachmentType::IndexBuffer);
            cascade0Task.addOutput(kCascadeShadowMapRaw0, AttachmentType::RenderTarget2D, Format::RG32Float, SizeClass::Custom, LoadOp::Clear_Float_Max);
-           cascade0Task.addOutput("ShadowMapDepth0", AttachmentType::Depth, Format::D32Float, SizeClass::DoubleSwapchain, LoadOp::Clear_White);
+           cascade0Task.addOutput("ShadowMapDepth0", AttachmentType::Depth, Format::D32Float, SizeClass::DoubleSwapchain, LoadOp::Clear_White, StoreOp::Discard);
            mRenderCascade0 = graph.addTask(cascade0Task);
 
            GraphicsPipelineDescription cascade1Desc(eng->getShader("./Shaders/ShadowMap.vert"),
@@ -81,7 +81,7 @@ CascadeShadowMappingTechnique::CascadeShadowMappingTechnique(Engine* eng, Render
            cascade1Task.addInput(kSceneVertexBuffer, AttachmentType::VertexBuffer);
            cascade1Task.addInput(kSceneIndexBuffer, AttachmentType::IndexBuffer);
            cascade1Task.addOutput(kCascadeShadowMapRaw1, AttachmentType::RenderTarget2D, Format::RG32Float, SizeClass::Custom, LoadOp::Clear_Float_Max);
-           cascade1Task.addOutput("ShadowMapDepth1", AttachmentType::Depth, Format::D32Float, SizeClass::Swapchain, LoadOp::Clear_White);
+           cascade1Task.addOutput("ShadowMapDepth1", AttachmentType::Depth, Format::D32Float, SizeClass::Swapchain, LoadOp::Clear_White, StoreOp::Discard);
            mRenderCascade1 = graph.addTask(cascade1Task);
 
            GraphicsPipelineDescription cascade2Desc(eng->getShader("./Shaders/ShadowMap.vert"),
@@ -101,7 +101,7 @@ CascadeShadowMappingTechnique::CascadeShadowMappingTechnique(Engine* eng, Render
            cascade2Task.addInput(kSceneVertexBuffer, AttachmentType::VertexBuffer);
            cascade2Task.addInput(kSceneIndexBuffer, AttachmentType::IndexBuffer);
            cascade2Task.addOutput(kCascadeShadowMapRaw2, AttachmentType::RenderTarget2D, Format::RG32Float, SizeClass::Custom, LoadOp::Clear_Float_Max);
-           cascade2Task.addOutput("ShadowMapDepth2", AttachmentType::Depth, Format::D32Float, SizeClass::HalfSwapchain, LoadOp::Clear_White);
+           cascade2Task.addOutput("ShadowMapDepth2", AttachmentType::Depth, Format::D32Float, SizeClass::HalfSwapchain, LoadOp::Clear_White, StoreOp::Discard);
            mRenderCascade2 = graph.addTask(cascade2Task);
 
     }
