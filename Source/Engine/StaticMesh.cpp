@@ -73,7 +73,7 @@ void StaticMesh::configure(const aiScene* scene, const aiMesh* mesh, const int v
     // relys on float and MaterialID beingn the same size (should always be true).
     static_assert(sizeof(float) == sizeof(uint32_t), "Material ID doesn't match sizeof(float");
     const uint32_t vertexStride =   ((positionNeeded ? primitiveSize : 0) +
-                                    (UVNeeded ? 2 : 0) +
+                                    ((vertAttributes & VertexAttributes::TextureCoordinates) ? 2 : 0) +
                                     (normalsNeeded ? 4 : 0) +
                                     (albedoNeeded ? 4 : 0)) * sizeof(float);
 
@@ -81,16 +81,19 @@ void StaticMesh::configure(const aiScene* scene, const aiMesh* mesh, const int v
 	mVertexCount = mesh->mNumVertices;
 
     // assume triangles atm
-    mIndexData.resize(mesh->mNumFaces * mesh->mFaces[0].mNumIndices);
+    mIndexData.reserve(mesh->mNumFaces * mesh->mFaces[0].mNumIndices);
     mVertexData.resize(mesh->mNumVertices * vertexStride);
 
     // Copy the index data
-    uint32_t currentIndex = 0;
-    for(uint32_t i = 0; i < mesh->mNumFaces; ++i, currentIndex += 3)
+    for(uint32_t i = 0; i < mesh->mNumFaces; ++i)
     {
-        mIndexData[currentIndex] = mesh->mFaces[i].mIndices[0];
-        mIndexData[currentIndex + 1] = mesh->mFaces[i].mIndices[1];
-        mIndexData[currentIndex + 2] = mesh->mFaces[i].mIndices[2];
+        BELL_ASSERT(mesh->mFaces[i].mNumIndices == 3, "Isn't a triangle list")
+
+        for(uint32_t j = 0; j < mesh->mFaces[i].mNumIndices; ++j)
+        {
+            BELL_ASSERT(mesh->mFaces[i].mIndices[j] < mVertexCount, "Index out of bounds")
+            mIndexData.push_back(mesh->mFaces[i].mIndices[j]);
+        }
     }
 
     uint32_t currentOffset = 0;
@@ -120,6 +123,12 @@ void StaticMesh::configure(const aiScene* scene, const aiMesh* mesh, const int v
         {
             writeVertexVector2({mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y}, currentOffset);
             currentOffset += 2 * sizeof(float);
+        }
+        else if(vertAttributes & VertexAttributes::TextureCoordinates) // If the file doesn't contain uv's (and they where requested) write out some placeholder ones.
+        {
+            writeVertexVector2(aiVector2D{0.0f, 0.0f}, currentOffset);
+            currentOffset += 2 * sizeof(float);
+            BELL_LOG("Inserting placeholder UVs")
         }
 
         if(normalsNeeded)
