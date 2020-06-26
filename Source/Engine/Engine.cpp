@@ -295,57 +295,6 @@ std::unique_ptr<Technique> Engine::getSingleTechnique(const PassType passType)
     }
 }
 
-
-bool Engine::isGraphicsTask(const PassType passType) const
-{
-    switch(passType)
-    {
-        case PassType::DepthPre:
-            return true;
-
-        case PassType::GBuffer:
-            return true;
-
-        case PassType::GBufferMaterial:
-            return true;
-
-        case PassType::SSAO:
-            return true;
-
-        case PassType::GBufferPreDepth:
-            return true;
-
-        case PassType::GBUfferMaterialPreDepth:
-            return true;
-
-        default:
-        {
-            return false;
-        }
-    }
-}
-
-
-bool Engine::isComputeTask(const PassType pass) const
-{
-	switch(pass)
-	{
-		case PassType::DFGGeneration:
-			return true;
-
-		case PassType::ConvolveSkybox:
-			return true;
-
-		case PassType::LightFroxelation:
-			return true;
-
-		default:
-
-			return false;
-	}
-}
-
-
 std::pair<uint64_t, uint64_t> Engine::addMeshToBuffer(const StaticMesh* mesh)
 {
 	const auto it = mVertexCache.find(mesh);

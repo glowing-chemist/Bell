@@ -84,7 +84,6 @@ void VulkanBuffer::setContents(const void* data, const uint32_t size, const uint
         // Copy the data in to the command buffer and then perform the copy from there.
         if(size <= 1 << 16)
         {
-
             device->getPrefixCommandBuffer()
                     .updateBuffer(mBuffer, offset, size, data);
         }
@@ -92,14 +91,7 @@ void VulkanBuffer::setContents(const void* data, const uint32_t size, const uint
         {
             VulkanBuffer stagingBuffer(getDevice(), BufferUsage::TransferSrc, size, mStride, "Staging Buffer");
 
-            MapInfo mapInfo{};
-            mapInfo.mOffset = 0;
-            mapInfo.mSize = stagingBuffer.getSize();
-            void* mappedBuffer = stagingBuffer.map(mapInfo);
-
-                std::memcpy(mappedBuffer, data, size);
-
-            stagingBuffer.unmap();
+            stagingBuffer.setContents(data, size);
 
             vk::BufferCopy copyInfo{};
             copyInfo.setSize(size);

@@ -87,9 +87,6 @@ public:
         return mCurrentRenderGraph;
     }
 
-    bool isGraphicsTask(const PassType) const;
-    bool isComputeTask(const PassType) const;
-
 	void registerPass(const PassType);
 	bool isPassRegistered(const PassType) const;
 	void clearRegisteredPasses()
