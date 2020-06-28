@@ -22,7 +22,7 @@ GBufferVertOutput main(Vertex vertex)
 
 	output.position = transformedPosition;
 	output.positionWS = transformedPositionWS;
-	output.normal = float4(mul(vertex.normal.xyz, (float3x3)meshMatrix), 1.0f);
+	output.normal = float4(normalize(mul(vertex.normal.xyz, (float3x3)meshMatrix)), 1.0f);
 	output.materialIndex = model.materialIndex;
 	output.materialFlags = model.materialFlags;
 	output.uv = vertex.uv;
