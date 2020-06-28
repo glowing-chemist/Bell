@@ -11,6 +11,9 @@
 #include <algorithm>
 
 
+#define DEVICE_LOCAL_POOL_SIZE (1024ULL * 1024ULL * 1024ULL)
+#define HOST_MAPPABLE_POOL_SIZE (1024ULL * 1024ULL * 1024ULL)
+
 namespace
 {
 	uint64_t nextAlignedAddress(const uint64_t address, const uint64_t alignment) // Alignemt must be a power of 2!
@@ -129,7 +132,7 @@ void MemoryManager::findPoolIndicies()
 
 void MemoryManager::AllocateDevicePool()
 {
-    constexpr vk::DeviceSize poolSize =  256 * 1024 * 1024;
+    constexpr vk::DeviceSize poolSize =  DEVICE_LOCAL_POOL_SIZE;
     vk::MemoryAllocateInfo allocInfo{ poolSize, static_cast<uint32_t>(mDeviceLocalPoolIndex)};
 
 	mDeviceMemoryBackers.push_back({nullptr, static_cast<VulkanRenderDevice*>(getDevice())->allocateMemory(allocInfo)});
@@ -157,7 +160,7 @@ void MemoryManager::AllocateHostMappablePool()
     VulkanRenderDevice* device = static_cast<VulkanRenderDevice*>(getDevice());
 
     const vk::PhysicalDeviceMemoryProperties& memProps = device->getMemoryProperties();
-    const vk::DeviceSize poolSize = std::min(256ULL * 1024ULL * 1024ULL, static_cast<unsigned long long>(memProps.memoryHeaps[mHostMapableHeapindex].size));
+    const vk::DeviceSize poolSize = std::min(HOST_MAPPABLE_POOL_SIZE, static_cast<unsigned long long>(memProps.memoryHeaps[mHostMapableHeapindex].size));
 	vk::MemoryAllocateInfo allocInfo{poolSize, static_cast<uint32_t>(mHostMappablePoolIndex)};
 
 	// Map the entire allocation on creation for persistent mapping.
