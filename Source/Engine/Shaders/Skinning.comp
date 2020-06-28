@@ -60,6 +60,7 @@ void main(uint3 globalIndex : SV_DispatchThreadID)
 	float4 vertToPosition = asfloat(TPoseBuffer.Load4((meshInfo.mVertexReadIndex + vertexIndex) * meshInfo.mVertexStride));
 	float2 vertToProcessUV = asfloat(TPoseBuffer.Load2(((meshInfo.mVertexReadIndex + vertexIndex) * meshInfo.mVertexStride) + 16));
 	float3 vertToProcessNormal = asfloat(TPoseBuffer.Load4(((meshInfo.mVertexReadIndex + vertexIndex) * meshInfo.mVertexStride) + 24));
+	uint vertexColour = TPoseBuffer.Load(((meshInfo.mVertexReadIndex + vertexIndex) * meshInfo.mVertexStride) + 40);
 
 	uint2 weightsIndexSize = boneIndicies[meshInfo.mVertexReadIndex + vertexIndex];
 
@@ -83,4 +84,5 @@ void main(uint3 globalIndex : SV_DispatchThreadID)
 	outVertex.Store4((meshInfo.mVertexWriteIndex + vertexIndex) * meshInfo.mVertexStride, asuint(transformedVertex.position));
 	outVertex.Store2(((meshInfo.mVertexWriteIndex + vertexIndex) * meshInfo.mVertexStride) + 16, asuint(transformedVertex.uv));
 	outVertex.Store4(((meshInfo.mVertexWriteIndex + vertexIndex) * meshInfo.mVertexStride) + 24, asuint(transformedVertex.normal));
+	outVertex.Store(((meshInfo.mVertexWriteIndex + vertexIndex) * meshInfo.mVertexStride) + 40, vertexColour);
 }

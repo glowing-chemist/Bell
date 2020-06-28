@@ -17,6 +17,7 @@ struct GBufferVertOutput
 	float4 positionWS : POSITION0;
 	float2 uv : TEXCOORD0;
 	float4 normal : NORMAL0;
+	float4 colour : COLOUR0;
 	uint materialIndex : MATERIALID;
 	uint materialFlags : MATERIAL_FLAGS;
 	float2 velocity : VELOCITY;
@@ -66,6 +67,7 @@ struct Vertex
 	float4 position : POSITION;
 	float2 uv : TEXCOORD0;
 	float4 normal : NORMAL0;
+	float4 colour : COLOR0;
 };
 
 struct OverlayVertex

@@ -14,7 +14,7 @@ PreDepthTechnique::PreDepthTechnique(Engine* eng, RenderGraph& graph) :
 {
     GraphicsTask task{ "PreDepth", mPipelineDescription };
 
-    task.setVertexAttributes(VertexAttributes::Position4 | VertexAttributes::Normals | VertexAttributes::TextureCoordinates);
+    task.setVertexAttributes(VertexAttributes::Position4 | VertexAttributes::Normals | VertexAttributes::TextureCoordinates | VertexAttributes::Albedo);
 
     task.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
     task.addInput(kDefaultSampler, AttachmentType::Sampler);

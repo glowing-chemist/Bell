@@ -53,7 +53,7 @@ CascadeShadowMappingTechnique::CascadeShadowMappingTechnique(Engine* eng, Render
             true, BlendMode::None, BlendMode::None, true, DepthTest::LessEqual, Primitive::TriangleList);
 
            GraphicsTask cascade0Task{"cascade0", cascade0Desc};
-           cascade0Task.setVertexAttributes(VertexAttributes::Position4 | VertexAttributes::Normals | VertexAttributes::TextureCoordinates);
+           cascade0Task.setVertexAttributes(VertexAttributes::Position4 | VertexAttributes::Normals | VertexAttributes::TextureCoordinates | VertexAttributes::Albedo);
            cascade0Task.addInput(kShadowingLights, AttachmentType::UniformBuffer);
            cascade0Task.addInput(kDefaultSampler, AttachmentType::Sampler);
            cascade0Task.addInput(kMaterials, AttachmentType::ShaderResourceSet);
@@ -73,7 +73,7 @@ CascadeShadowMappingTechnique::CascadeShadowMappingTechnique(Engine* eng, Render
             true, BlendMode::None, BlendMode::None, true, DepthTest::LessEqual, Primitive::TriangleList);
 
            GraphicsTask cascade1Task{"cascade1", cascade1Desc};
-           cascade1Task.setVertexAttributes(VertexAttributes::Position4 | VertexAttributes::Normals | VertexAttributes::TextureCoordinates);
+           cascade1Task.setVertexAttributes(VertexAttributes::Position4 | VertexAttributes::Normals | VertexAttributes::TextureCoordinates | VertexAttributes::Albedo);
            cascade1Task.addInput(kShadowingLights, AttachmentType::UniformBuffer);
            cascade1Task.addInput(kDefaultSampler, AttachmentType::Sampler);
            cascade1Task.addInput(kMaterials, AttachmentType::ShaderResourceSet);
@@ -93,7 +93,7 @@ CascadeShadowMappingTechnique::CascadeShadowMappingTechnique(Engine* eng, Render
             true, BlendMode::None, BlendMode::None, true, DepthTest::LessEqual, Primitive::TriangleList);
 
            GraphicsTask cascade2Task{"cascade2", cascade2Desc};
-           cascade2Task.setVertexAttributes(VertexAttributes::Position4 | VertexAttributes::Normals | VertexAttributes::TextureCoordinates);
+           cascade2Task.setVertexAttributes(VertexAttributes::Position4 | VertexAttributes::Normals | VertexAttributes::TextureCoordinates | VertexAttributes::Albedo);
            cascade2Task.addInput(kShadowingLights, AttachmentType::UniformBuffer);
            cascade2Task.addInput(kDefaultSampler, AttachmentType::Sampler);
            cascade2Task.addInput(kMaterials, AttachmentType::ShaderResourceSet);

@@ -408,7 +408,7 @@ void Editor::renderOverlay()
         {
             mShowMeshFileBrowser = false;
 
-            StaticMesh mesh(optionalPath->string(), VertexAttributes::Position4 | VertexAttributes::Normals | VertexAttributes::TextureCoordinates);
+            StaticMesh mesh(optionalPath->string(), VertexAttributes::Position4 | VertexAttributes::Normals | VertexAttributes::TextureCoordinates | VertexAttributes::Albedo);
             SceneID id = mInProgressScene->addMesh(std::move(mesh), MeshType::Dynamic);
 
             mStaticMeshEntries.push_back({id, optionalPath->filename().string()});
@@ -1137,7 +1137,7 @@ void Editor::drawPassContextMenu(const PassType passType)
 void Editor::loadScene(const std::string& scene)
 {
     mInProgressScene->setPath(scene);
-    mSceneInstanceIDs = mInProgressScene->loadFromFile(VertexAttributes::Position4 | VertexAttributes::Normals | VertexAttributes::TextureCoordinates, &mEngine);
+    mSceneInstanceIDs = mInProgressScene->loadFromFile(VertexAttributes::Position4 | VertexAttributes::Normals | VertexAttributes::TextureCoordinates | VertexAttributes::Albedo, &mEngine);
     mInProgressScene->uploadData(&mEngine);
     mInProgressScene->computeBounds(MeshType::Static);
     mInProgressScene->computeBounds(MeshType::Dynamic);

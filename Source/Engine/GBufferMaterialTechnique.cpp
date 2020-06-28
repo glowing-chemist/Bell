@@ -16,7 +16,7 @@ GBufferMaterialTechnique::GBufferMaterialTechnique(Engine* eng, RenderGraph& gra
     GraphicsTask task{ "GBufferMaterial", mPipelineDescription };
 
     task.setVertexAttributes(VertexAttributes::Position4 |
-                              VertexAttributes::Normals | VertexAttributes::TextureCoordinates);
+                              VertexAttributes::Normals | VertexAttributes::TextureCoordinates | VertexAttributes::Albedo);
 
     task.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
     task.addInput("ModelMatrix", AttachmentType::PushConstants);
@@ -75,7 +75,7 @@ GBufferMaterialPreDepthTechnique::GBufferMaterialPreDepthTechnique(Engine* eng, 
     GraphicsTask task{ "GBufferMaterial", mPipelineDescription };
 
     task.setVertexAttributes(VertexAttributes::Position4 |
-        VertexAttributes::Normals | VertexAttributes::TextureCoordinates);
+        VertexAttributes::Normals | VertexAttributes::TextureCoordinates | VertexAttributes::Albedo);
 
     task.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
     task.addInput("ModelMatrix", AttachmentType::PushConstants);

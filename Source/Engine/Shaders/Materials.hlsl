@@ -7,14 +7,15 @@ float3 fresnelSchlickRoughness(const float cosTheta, const float3 F0, const floa
 }
 
 
-MaterialInfo calculateMaterialInfo(	const float4 vertexNormal, 
+MaterialInfo calculateMaterialInfo(	const float4 vertexNormal,
+									const float4 vertexColour,
 									const uint materialTypes, 
 									const uint materialIndex, 
 									const float3 view, 
 									const float2 uv)
 {
 	MaterialInfo mat;
-	mat.diffuse = float4(0.5f, 0.5f, 0.5f, 1.0f);
+	mat.diffuse = vertexColour;
 	mat.normal = vertexNormal;
 	mat.specularRoughness = float4(0.0f, 0.0f, 0.0f, 1.0f);
 	mat.emissiveOcclusion = float4(0.0f, 0.0f, 0.0f, 1.0);
@@ -99,7 +100,7 @@ MaterialInfo calculateMaterialInfo(	const float4 vertexNormal,
 	{
 		const float4 albedo = materials[materialIndex].Sample(linearSampler, uv);
 		mat.diffuse = albedo * (1.0 - DIELECTRIC_SPECULAR) * (1.0 - metalness);
-		mat.diffuse.w = albedo.w;// Preserve teh alpha chanle.
+		mat.diffuse.w = albedo.w;// Preserve the alpha chanle.
 
 		const float NoV = dot(mat.normal.xyz, view);
         const float3 F0 = lerp(float3(DIELECTRIC_SPECULAR, DIELECTRIC_SPECULAR, DIELECTRIC_SPECULAR), albedo.xyz, metalness);

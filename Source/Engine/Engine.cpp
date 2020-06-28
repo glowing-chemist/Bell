@@ -126,7 +126,7 @@ Engine::Engine(GLFWwindow* windowPtr) :
 void Engine::setScene(const std::string& path)
 {
     mCurrentScene = new Scene(path);
-    mCurrentScene->loadFromFile(VertexAttributes::Position4 | VertexAttributes::TextureCoordinates | VertexAttributes::Normals, this);
+    mCurrentScene->loadFromFile(VertexAttributes::Position4 | VertexAttributes::TextureCoordinates | VertexAttributes::Normals | VertexAttributes::Albedo, this);
 
     mCurrentScene->uploadData(this);
     mCurrentScene->computeBounds(MeshType::Static);
@@ -381,6 +381,11 @@ void Engine::execute(RenderGraph& graph)
         mCurrentRenderGraph.bindVertexBuffer(kSceneVertexBuffer, mVertexBuffer);
         mCurrentRenderGraph.bindIndexBuffer(kSceneIndexBuffer, mIndexBuffer);
 
+        mCurrentRenderGraph.bindBuffer(kTPoseVertexBuffer, mTposeVertexBuffer);
+        mCurrentRenderGraph.bindBuffer(kBonesWeights, mBonesWeightsBuffer);
+        mCurrentRenderGraph.bindBuffer(kBoneWeighntsIndiciesBuffer, mBoneWeightsIndexBuffer);
+        mCurrentRenderGraph.bindBuffer(kBonesBuffer, *mBoneBuffer);
+
         if(mCurrentScene && mCurrentScene->getSkybox())
         {
             mCurrentRenderGraph.bindImage(kSkyBox, *mCurrentScene->getSkybox());
@@ -407,9 +412,6 @@ void Engine::execute(RenderGraph& graph)
 
     if(!mActiveAnimations.empty())
     {
-        mCurrentRenderGraph.bindBuffer(kTPoseVertexBuffer, mTposeVertexBuffer);
-        mCurrentRenderGraph.bindBuffer(kBonesWeights, mBonesWeightsBuffer);
-        mCurrentRenderGraph.bindBuffer(kBoneWeighntsIndiciesBuffer, mBoneWeightsIndexBuffer);
         mCurrentRenderGraph.bindBuffer(kBonesBuffer, *mBoneBuffer);
     }
 

@@ -15,7 +15,7 @@ TransparentTechnique::TransparentTechnique(Engine* eng, RenderGraph& graph) :
 {
     GraphicsTask task{ "Transparent", mPipelineDescription };
 
-    task.setVertexAttributes(VertexAttributes::Position4 | VertexAttributes::Normals | VertexAttributes::TextureCoordinates);
+    task.setVertexAttributes(VertexAttributes::Position4 | VertexAttributes::Normals | VertexAttributes::TextureCoordinates | VertexAttributes::Albedo);
 
     task.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
     task.addInput(kDFGLUT, AttachmentType::Texture2D);

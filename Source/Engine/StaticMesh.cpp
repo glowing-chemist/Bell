@@ -68,14 +68,14 @@ void StaticMesh::configure(const aiScene* scene, const aiMesh* mesh, const int v
 
     const bool normalsNeeded = mesh->HasNormals() && (vertAttributes & VertexAttributes::Normals);
 
-    const bool albedoNeeded = mesh->HasVertexColors(0) && (vertAttributes & VertexAttributes::Albedo);
+    const bool albedoNeeded = (mesh->GetNumColorChannels() > 0) && (vertAttributes & VertexAttributes::Albedo);
 
     // relys on float and MaterialID beingn the same size (should always be true).
     static_assert(sizeof(float) == sizeof(uint32_t), "Material ID doesn't match sizeof(float");
     const uint32_t vertexStride =   ((positionNeeded ? primitiveSize : 0) +
                                     ((vertAttributes & VertexAttributes::TextureCoordinates) ? 2 : 0) +
                                     (normalsNeeded ? 4 : 0) +
-                                    (albedoNeeded ? 4 : 0)) * sizeof(float);
+                                    ((vertAttributes & VertexAttributes::Albedo) ? 1 : 0)) * sizeof(float);
 
 	mVertexStride = vertexStride;
 	mVertexCount = mesh->mNumVertices;
@@ -139,8 +139,25 @@ void StaticMesh::configure(const aiScene* scene, const aiMesh* mesh, const int v
 
         if(albedoNeeded)
         {
-            writeVertexVector4({mesh->mColors[i]->r, mesh->mColors[i]->g, mesh->mColors[i]->b}, currentOffset);
-            currentOffset += 4 * sizeof(float);
+            uint32_t packedColour = uint32_t(mesh->mColors[0][i].r * 255.0f) | (uint32_t(mesh->mColors[0][i].g * 255.0f) << 8) | (uint32_t(mesh->mColors[0][i].b * 255.0f) << 16) | (uint32_t(mesh->mColors[0][i].a * 255.0f) << 24);
+            WriteVertexInt(packedColour, currentOffset);
+            currentOffset += sizeof(uint32_t);
+        }
+        else if(vertAttributes & VertexAttributes::Albedo) // Default to {0.0f, 0.0f, 0.0f} if no material present.
+        {
+            uint32_t packedDiffuse = 0;
+
+            const uint32_t matIndex = mesh->mMaterialIndex;
+            const aiMaterial* mat = scene->mMaterials[matIndex];
+            aiColor4D diffuse;
+            const aiReturn result = mat->Get(AI_MATKEY_COLOR_DIFFUSE, diffuse);
+            if(result == aiReturn_SUCCESS)
+            {
+                packedDiffuse = uint32_t(diffuse.r * 255.0f) | (uint32_t(diffuse.g * 255.0f) << 8) | (uint32_t(diffuse.b * 255.0f) << 16) | (uint32_t(diffuse.a * 255.0f) << 24);
+            }
+
+            WriteVertexInt(packedDiffuse, currentOffset);
+            currentOffset += sizeof(uint32_t);
         }
     }
 

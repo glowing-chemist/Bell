@@ -32,7 +32,8 @@ GBufferFragOutput main(GBufferVertOutput vertInput)
 {
     const float3 viewDir = normalize(camera.position - vertInput.positionWS.xyz);
 
-    MaterialInfo material = calculateMaterialInfo(  vertInput.normal, 
+    MaterialInfo material = calculateMaterialInfo(  vertInput.normal,
+                                                    vertInput.colour,
                                                     vertInput.materialFlags, 
                                                     vertInput.materialIndex, 
                                                     viewDir, 
