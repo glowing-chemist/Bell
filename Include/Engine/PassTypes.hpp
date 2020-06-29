@@ -132,6 +132,9 @@ inline const char* passToString(const PassType passType)
 
         case PassType::Animation:
             return "Skinning";
+
+        case PassType::Voxelize:
+            return "Voxalize";
     }
 
     return "UNKNOWN PASS TYPE";

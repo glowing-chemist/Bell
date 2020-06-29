@@ -17,7 +17,7 @@ GBufferVertOutput main(Vertex vertex)
 	float4x4 meshMatrix;
 	float4x4 prevMeshMatrix;
 	recreateMeshMatracies(model.meshMatrix, model.prevMeshMatrix, meshMatrix, prevMeshMatrix);
-	float4 transformedPositionWS = mul(vertex.position.xyz, meshMatrix);
+	float4 transformedPositionWS = mul(vertex.position, meshMatrix);
 	float4 transformedPosition = mul(camera.viewProj, transformedPositionWS);
 
 	output.position = transformedPosition;
@@ -25,7 +25,7 @@ GBufferVertOutput main(Vertex vertex)
 	output.normal = float4(mul(vertex.normal.xyz,(float3x3)meshMatrix), 1.0f);
 	output.colour = vertex.colour;
 	output.materialIndex = model.materialIndex;
-	output.materailFlags = model.materailFlags;
+	output.materialFlags = model.materialFlags;
 	output.uv = vertex.uv;
 
 	return output;

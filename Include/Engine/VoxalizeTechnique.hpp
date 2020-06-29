@@ -27,11 +27,12 @@ public:
 
     virtual void bindResources(RenderGraph& graph) override final
     {
-        graph.bindImage(kDiffuseVoxelMap, mVoxelMapView);
+        if(!graph.isResourceSlotBound(kDiffuseVoxelMap))
+            graph.bindImage(kDiffuseVoxelMap, mVoxelMapView);
         graph.bindBuffer(kVoxelDimmensions, *mVoxelDimmensionsView);
 
 #if DEBUG_VOXEL_GENERATION
-        graph.bindImage(kDebugVoxels, *mVoxelDebugView);
+        graph.bindImage(kDebugVoxels, mVoxelDebugView);
 #endif
     }
 

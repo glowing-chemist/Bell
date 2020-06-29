@@ -53,7 +53,9 @@ struct VoxalizeGeometryOutput
 	float2 uv : TEXCOORD0;
 	float3 positionWS : POSITIONWS;
 	float4 normal : NORMAL0;
-	uint materialID : MATERIALID;
+	float4 colour : COLOR0;
+	uint materialIndex;
+	uint materialFlags;
 };
 
 struct PositionOutput

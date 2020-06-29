@@ -253,6 +253,14 @@ namespace
                 std::shared_ptr<EditorNode> newNode = std::make_shared<PassNode>("Skinning", passType);
                 return newNode;
             }
+
+            case NodeTypes::Voxelize:
+            {
+                std::shared_ptr<EditorNode> newNode = std::make_shared<PassNode>("Voxalize", passType);
+                newNode->mOutputs.push_back(Pin{ 0, newNode, kDiffuseVoxelMap, PinType::Texture, PinKind::Output });
+                newNode->mOutputs.push_back(Pin{ 0, newNode, kDebugVoxels, PinType::Texture, PinKind::Output });
+                return newNode;
+            }
         }
     }
 
@@ -653,6 +661,7 @@ void Editor::drawAssistantWindow()
            drawPassContextMenu(PassType::SSR);
            drawPassContextMenu(PassType::Transparent);
            drawPassContextMenu(PassType::Animation);
+           drawPassContextMenu(PassType::Voxelize);
 
            ImGui::TreePop();
        }
