@@ -159,6 +159,7 @@ set(BELL_SOURCE
     Source/Engine/Scene.cpp
     Source/Engine/Animation.cpp
     Source/Engine/DefaultResourceSlots.cpp
+    Source/Engine/RayTracedScene.cpp
 
     # Techniques
     Source/Engine/SSAOTechnique.cpp
@@ -189,6 +190,7 @@ set(BELL_SOURCE
 
     # used for texture loading
     ThirdParty/stb_image/stb_image.cpp
+    ThirdParty/stb_image/stbi_image_write.cpp
     )
 
 

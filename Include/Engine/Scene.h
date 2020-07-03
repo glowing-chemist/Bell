@@ -189,6 +189,16 @@ public:
 
     std::vector<const MeshInstance*> getViewableMeshes(const Frustum&) const;
 
+    const std::vector<MeshInstance>& getStaticMeshInstances() const
+    {
+        return mStaticMeshInstances;
+    }
+
+    const std::vector<MeshInstance>& getDynamicMeshInstances() const
+    {
+        return mDynamicMeshInstances;
+    }
+
     Frustum getShadowingLightFrustum() const;
 
     MeshInstance* getMeshInstance(const InstanceID);

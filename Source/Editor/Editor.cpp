@@ -618,6 +618,11 @@ void Editor::drawMenuBar()
                 mPublishedScene = true;
             }
 
+            if(ImGui::Button("Ray trace"))
+            {
+                mEngine.rayTraceScene();
+            }
+
             ImGui::EndMainMenuBar();
 	}
 }

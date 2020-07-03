@@ -210,6 +210,8 @@ public:
         return mActiveAnimations;
     }
 
+    void rayTraceScene();
+
 private:
 
     std::unique_ptr<Technique>                   getSingleTechnique(const PassType);

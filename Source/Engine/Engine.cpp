@@ -39,6 +39,8 @@
 #include "Engine/CascadeShadowMappingTechnique.hpp"
 #include "Engine/SkinningTechnique.hpp"
 
+#include "Engine/RayTracedScene.hpp"
+
 #include "glm/gtx/transform.hpp"
 
 
@@ -677,4 +679,19 @@ void Engine::registerPass(const PassType pass)
 bool Engine::isPassRegistered(const PassType pass) const
 {
 	return (static_cast<uint64_t>(pass) & mCurrentRegistredPasses) > 0;
+}
+
+
+void Engine::rayTraceScene()
+{
+    if(mCurrentScene)
+    {
+        RayTracingScene rtScene(mCurrentScene);
+
+        rtScene.renderSceneToFile(mCurrentScene->getCamera(), 512, 512, "./RTNormals.jpg");
+    }
+    else
+    {
+        BELL_LOG("No scene currently active")
+    }
 }
