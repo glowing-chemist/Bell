@@ -10,6 +10,7 @@
 #include "Engine/Camera.hpp"
 #include "Engine/StaticMesh.h"
 #include "Engine/Animation.hpp"
+#include "Engine/CPUImage.hpp"
 
 #include <algorithm>
 #include <atomic>
@@ -165,9 +166,7 @@ public:
     struct ShadowingLight;
 
 	Scene(const std::string& name);
-    Scene(Scene&&);
     ~Scene();
-    Scene& operator=(Scene&&);
 
     void setPath(const std::string& path)
     {
@@ -282,6 +281,11 @@ public:
     const std::vector<Material>& getMaterialDescriptions() const
     {
         return mMaterials;
+    }
+
+    const std::vector<CPUImage>& getCPUImageMaterials() const
+    {
+        return mCPUMaterials;
     }
 
     void addMaterial(const Material& mat);
@@ -436,6 +440,8 @@ private:
 
 	std::vector<Material> mMaterials;
 	std::vector<ImageView> mMaterialImageViews;
+
+    std::vector<CPUImage> mCPUMaterials;
 
     std::vector<Light> mLights;
     ShadowingLight mShadowingLight;

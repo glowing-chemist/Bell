@@ -688,7 +688,8 @@ void Engine::rayTraceScene()
     {
         RayTracingScene rtScene(mCurrentScene);
 
-        rtScene.renderSceneToFile(mCurrentScene->getCamera(), 512, 512, "./RTNormals.jpg");
+        const ImageExtent extent = getSwapChainImage()->getExtent(0, 0);
+        rtScene.renderSceneToFile(mCurrentScene->getCamera(), extent.width, extent.height, "./RTNormals.jpg");
     }
     else
     {

@@ -33,48 +33,6 @@ Scene::Scene(const std::string& name) :
 }
 
 
-Scene::Scene(Scene&& scene) :
-    mPath{std::move(scene.mPath)},
-    mSceneMeshes{std::move(scene.mSceneMeshes)},
-    mStaticMeshInstances{std::move(scene.mStaticMeshInstances)},
-    mDynamicMeshInstances{std::move(scene.mDynamicMeshInstances)},
-    mStaticMeshBoundingVolume{std::move(scene.mStaticMeshBoundingVolume)},
-    mDynamicMeshBoundingVolume{std::move(scene.mDynamicMeshBoundingVolume)},
-    mSceneAABB{std::move(scene.mSceneAABB)},
-    mSceneCamera{std::move(scene.mSceneCamera)},
-    mMaterials{std::move(scene.mMaterials)},
-    mMaterialImageViews{std::move(scene.mMaterialImageViews)},
-    mLights{std::move(scene.mLights)},
-    mShadowingLight{std::move(scene.mShadowingLight)},
-    mCascadesInfo{scene.mCascadesInfo},
-    mSkybox{std::move(scene.mSkybox)},
-    mSkyboxView(std::move(scene.mSkyboxView))
-{
-}
-
-
-Scene& Scene::operator=(Scene&& scene)
-{
-    mPath = std::move(scene.mPath);
-    mSceneMeshes = std::move(scene.mSceneMeshes);
-    mStaticMeshInstances = std::move(scene.mStaticMeshInstances);
-    mDynamicMeshInstances = std::move(scene.mDynamicMeshInstances);
-    mStaticMeshBoundingVolume = std::move(scene.mStaticMeshBoundingVolume);
-    mDynamicMeshBoundingVolume = std::move(scene.mDynamicMeshBoundingVolume);
-    mSceneAABB = std::move(scene.mSceneAABB);
-    mSceneCamera = std::move(scene.mSceneCamera);
-	mMaterials = std::move(scene.mMaterials);
-	mMaterialImageViews = std::move(scene.mMaterialImageViews);
-    mLights = std::move(scene.mLights);
-    mShadowingLight = std::move(scene.mShadowingLight);
-    mCascadesInfo = scene.mCascadesInfo;
-	mSkybox = std::move(scene.mSkybox);
-    mSkyboxView = std::move(scene.mSkyboxView);
-
-    return *this;
-}
-
-
 Scene::~Scene()
 {
     for(const auto& mat : mMaterials)
@@ -781,6 +739,8 @@ void Scene::addMaterial(const MaterialPaths& mat, Engine* eng)
         (*diffuseTexture)->generateMips();
 
         newMaterial.mAlbedoorDiffuse = diffuseTexture;
+
+        mCPUMaterials.emplace_back(std::move(diffuseInfo.mData), (*diffuseTexture)->getExtent(0, 0), Format::RGBA8UNorm);
     }
 
     if(materialFlags & static_cast<uint32_t>(MaterialType::Normals))
@@ -791,6 +751,8 @@ void Scene::addMaterial(const MaterialPaths& mat, Engine* eng)
         (*normalsTexture)->setContents(normalsInfo.mData.data(), static_cast<uint32_t>(normalsInfo.width), static_cast<uint32_t>(normalsInfo.height), 1);
         (*normalsTexture)->generateMips();
         newMaterial.mNormals = normalsTexture;
+
+        mCPUMaterials.emplace_back(std::move(normalsInfo.mData), (*normalsTexture)->getExtent(0, 0), Format::RGBA8UNorm);
     }
 
     if(materialFlags & static_cast<uint32_t>(MaterialType::Roughness) || materialFlags & static_cast<uint32_t>(MaterialType::Gloss))
@@ -801,6 +763,8 @@ void Scene::addMaterial(const MaterialPaths& mat, Engine* eng)
         (*roughnessTexture)->setContents(roughnessInfo.mData.data(), static_cast<uint32_t>(roughnessInfo.width), static_cast<uint32_t>(roughnessInfo.height), 1);
         (*roughnessTexture)->generateMips();
         newMaterial.mRoughnessOrGloss = roughnessTexture;
+
+        mCPUMaterials.emplace_back(std::move(roughnessInfo.mData), (*roughnessTexture)->getExtent(0, 0), Format::R8UNorm);
     }
 
     if(materialFlags & static_cast<uint32_t>(MaterialType::Metalness) || materialFlags & static_cast<uint32_t>(MaterialType::Specular) || mat.mMaterialTypes & static_cast<uint32_t>(MaterialType::CombinedSpecularGloss))
@@ -811,6 +775,8 @@ void Scene::addMaterial(const MaterialPaths& mat, Engine* eng)
         (*metalnessTexture)->setContents(metalnessInfo.mData.data(), static_cast<uint32_t>(metalnessInfo.width), static_cast<uint32_t>(metalnessInfo.height), 1);
         (*metalnessTexture)->generateMips();
         newMaterial.mMetalnessOrSpecular = metalnessTexture;
+
+        mCPUMaterials.emplace_back(std::move(metalnessInfo.mData), (*metalnessTexture)->getExtent(0, 0), materialFlags & static_cast<uint32_t>(MaterialType::Metalness) ? Format::R8UNorm : Format::RGBA8UNorm);
     }
 
     if(materialFlags & static_cast<uint32_t>(MaterialType::CombinedMetalnessRoughness))
@@ -821,6 +787,9 @@ void Scene::addMaterial(const MaterialPaths& mat, Engine* eng)
         (*metalnessRoughnessTexture)->setContents(metalnessRoughnessInfo.mData.data(), static_cast<uint32_t>(metalnessRoughnessInfo.width), static_cast<uint32_t>(metalnessRoughnessInfo.height), 1);
         (*metalnessRoughnessTexture)->generateMips();
         newMaterial.mRoughnessOrGloss = metalnessRoughnessTexture;
+
+        mCPUMaterials.emplace_back(std::move(metalnessRoughnessInfo.mData), (*metalnessRoughnessTexture)->getExtent(0, 0), Format::RGBA8UNorm);
+
     }
 
     if(materialFlags & static_cast<uint32_t>(MaterialType::Emisive))
@@ -831,6 +800,8 @@ void Scene::addMaterial(const MaterialPaths& mat, Engine* eng)
         (*emissiveTexture)->setContents(emissiveInfo.mData.data(), static_cast<uint32_t>(emissiveInfo.width), static_cast<uint32_t>(emissiveInfo.height), 1);
         (*emissiveTexture)->generateMips();
         newMaterial.mEmissive = emissiveTexture;
+
+        mCPUMaterials.emplace_back(std::move(emissiveInfo.mData), (*emissiveTexture)->getExtent(0, 0), Format::RGBA8UNorm);
     }
 
     if(materialFlags & static_cast<uint32_t>(MaterialType::AmbientOcclusion))
@@ -841,6 +812,8 @@ void Scene::addMaterial(const MaterialPaths& mat, Engine* eng)
         (*occlusionTexture)->setContents(occlusionInfo.mData.data(), static_cast<uint32_t>(occlusionInfo.width), static_cast<uint32_t>(occlusionInfo.height), 1);
         (*occlusionTexture)->generateMips();
         newMaterial.mAmbientOcclusion = occlusionTexture;
+
+        mCPUMaterials.emplace_back(std::move(occlusionInfo.mData), (*occlusionTexture)->getExtent(0, 0), Format::R8UNorm);
     }
 
     addMaterial(newMaterial);

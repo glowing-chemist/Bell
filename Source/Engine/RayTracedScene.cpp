@@ -1,8 +1,10 @@
 #include "Engine/RayTracedScene.hpp"
 
 #include "Engine/Scene.h"
+#include "Core/ConversionUtils.hpp"
 
 #include <algorithm>
+#include <thread>
 
 #include "stbi_image_write.h"
 
@@ -12,7 +14,7 @@ RayTracingScene::RayTracingScene(const Scene* scene)
     uint64_t vertexOffset = 0;
     for(const auto& instance : scene->getStaticMeshInstances())
     {
-        mVertexStride = instance.mMesh->getVertexStride();
+        const uint32_t vertexStride = instance.mMesh->getVertexStride();
 
         // add Index data.
         const auto& indexBuffer = instance.mMesh->getIndexData();
@@ -21,11 +23,15 @@ RayTracingScene::RayTracingScene(const Scene* scene)
             return vertexOffset + index;
         });
 
+        // add material mappings
+        for(uint32_t i = 0; i < indexBuffer.size(); i += 3)
+        {
+            mPrimitiveMaterialID.push_back({instance.getmaterialIndex(), instance.getMaterialFlags()});
+        }
+
         // Transform and add vertex data.
         const auto& vertexData = instance.mMesh->getVertexData();
-        const size_t oldVertexBufferSize = mVertexBuffer.size();
-        mVertexBuffer.resize(oldVertexBufferSize + vertexData.size());
-        for(uint32_t i = 0; i < vertexData.size(); i += mVertexStride)
+        for(uint32_t i = 0; i < vertexData.size(); i += vertexStride)
         {
             const unsigned char* vert = &vertexData[i];
             const float* positionPtr = reinterpret_cast<const float*>(vert);
@@ -35,84 +41,114 @@ RayTracingScene::RayTracingScene(const Scene* scene)
             const float4 transformedPosition = instance.getTransMatrix() * position;
             BELL_ASSERT(transformedPosition.w == 1.0f, "Non afine transform")
 
-            *reinterpret_cast<float*>(&mVertexBuffer[oldVertexBufferSize] + i) = transformedPosition.x;
-            *reinterpret_cast<float*>(&mVertexBuffer[oldVertexBufferSize] + i + sizeof(float)) = transformedPosition.y;
-            *reinterpret_cast<float*>(&mVertexBuffer[oldVertexBufferSize] + i + 2 * sizeof(float)) = transformedPosition.z;
-            *reinterpret_cast<float*>(&mVertexBuffer[oldVertexBufferSize] + i + 3 * sizeof(float)) = 1.0f;
+            mPositions.emplace_back(transformedPosition.x, transformedPosition.y, transformedPosition.z);
 
-            std::memcpy(&mVertexBuffer[oldVertexBufferSize] + i + sizeof(float) * 4, vert + (sizeof(float) * 4), mVertexStride - (sizeof(float) * 4));
+            const float2 uv = float2{positionPtr[4], positionPtr[5]};
+            mUVs.push_back(uv);
+
+            const float4 normal = float4{positionPtr[6], positionPtr[7], positionPtr[8], positionPtr[9]};
+            mNormals.push_back(normal);
+
+            const float4 colour = unpackColour(*reinterpret_cast<const uint32_t*>(&positionPtr[10]));
+            mVertexColours.push_back(colour);
         }
-        //mVertexBuffer.insert(mVertexBuffer.end(), vertexData.begin(), vertexData.end());
 
         vertexOffset += instance.mMesh->getVertexCount();
     }
 
-    mMeshes = std::make_unique<nanort::TriangleMesh<float>>(reinterpret_cast<float*>(mVertexBuffer.data()), mIndexBuffer.data(), mVertexStride);
-    mPred = std::make_unique<nanort::TriangleSAHPred<float>>(reinterpret_cast<float*>(mVertexBuffer.data()), mIndexBuffer.data(), mVertexStride);
+    mMeshes = std::make_unique<nanort::TriangleMesh<float>>(reinterpret_cast<float*>(mPositions.data()), mIndexBuffer.data(), sizeof(float3));
+    mPred = std::make_unique<nanort::TriangleSAHPred<float>>(reinterpret_cast<float*>(mPositions.data()), mIndexBuffer.data(), sizeof(float3));
 
     BELL_ASSERT((mIndexBuffer.size() % 3) == 0, "Invalid index buffer size")
     bool success = mAccelerationStructure.Build(mIndexBuffer.size() / 3, *mMeshes, *mPred);
     BELL_ASSERT(success, "Failed to build BVH")
-}
 
-#pragma pack(1)
-struct PackedVertex
-{
-    float4 position;
-    float2 uv;
-    float4 normals;
-    uint albedo;
-};
-#pragma pack()
+    mMaterials = scene->getCPUImageMaterials();
+}
 
 void RayTracingScene::renderSceneToMemory(const Camera& camera, const uint32_t x, const uint32_t y, uint8_t* memory)
 {
-    float3 forward = camera.getDirection();
-    float3 up = camera.getUp();
-    float3 right = camera.getRight();
+    const float3 forward = camera.getDirection();
+    const float3 up = camera.getUp();
+    const float3 right = camera.getRight();
 
-    float3 origin = camera.getPosition();
-    float far = camera.getFarPlane();
+    const float3 origin = camera.getPosition();
+    const float far = camera.getFarPlane();
+    const float aspect = camera.getAspect();
 
-    for(uint32_t i = 0; i < x; ++i)
+    auto trace_ray = [&](const uint32_t pix, const uint32_t piy)
     {
-        for(uint32_t j = 0; j < y; ++j)
+        float3 dir = {((float(pix) / float(x)) - 0.5f) * aspect, (float(piy) / float(y)) - 0.5f, 1.0f};
+        dir = glm::normalize((dir.z * forward) + (dir.y * up) + (dir.x * right));
+
+        nanort::Ray<float> ray;
+        ray.dir[0] = dir.x;
+        ray.dir[1] = dir.y;
+        ray.dir[2] = dir.z;
+
+        ray.org[0] = origin.x;
+        ray.org[1] = origin.y;
+        ray.org[2] = origin.z;
+
+        ray.min_t = 0.0f;
+        ray.max_t = far;
+        //ray.type = nanort::RAY_TYPE_PRIMARY;
+
+        nanort::TriangleIntersector triangle_intersecter(reinterpret_cast<float*>(mPositions.data()), mIndexBuffer.data(), sizeof(float3));
+        nanort::TriangleIntersection intersection;
+        const bool hit = mAccelerationStructure.Traverse(ray, triangle_intersecter, &intersection);
+        if(hit)
         {
-            float3 dir = {(float(i) / float(x)) - 0.5f, (float(j) / float(y)) - 0.5f, 1.0f};
-            dir = glm::normalize((dir.z * forward) + (dir.y * up) + (dir.x * right));
+            // interpolate uvs.
+            InterpolatedVertex frag = interpolateFragment(intersection.prim_id, intersection.u, intersection.v);
+            MaterialInfo& matInfo = mPrimitiveMaterialID[intersection.prim_id];
 
-            nanort::Ray<float> ray;
-            ray.dir[0] = dir.x;
-            ray.dir[1] = dir.y;
-            ray.dir[2] = dir.z;
-
-            ray.org[0] = origin.x;
-            ray.org[1] = origin.y;
-            ray.org[2] = origin.z;
-
-            ray.min_t = 0.0f;
-            ray.max_t = far;
-            //ray.type = nanort::RAY_TYPE_PRIMARY;
-
-            nanort::TriangleIntersector triangle_intersecter(reinterpret_cast<float*>(mVertexBuffer.data()), mIndexBuffer.data(), mVertexStride);
-            nanort::TriangleIntersection intersection;
-            const bool hit = mAccelerationStructure.Traverse(ray, triangle_intersecter, &intersection);
-            if(hit)
+            uint32_t diffuse = packColour(frag.mVertexColour);
+            if(matInfo.materialFlags & MaterialType::Albedo || matInfo.materialFlags & MaterialType::Diffuse)
             {
-                const PackedVertex* first = reinterpret_cast<const PackedVertex*>(mVertexBuffer.data() + (intersection.prim_id * mVertexStride));
-                memory[(i + (j * y)) * 4] = first->normals.x * 255.0f;
-                memory[((i + (j * y)) * 4) + 1] = first->normals.y * 255/.0f;
-                memory[((i + (j * y)) * 4) + 2] = first->normals.z * 255.0f;
-                memory[((i + (j * y)) * 4) + 3] = 255;
+                const CPUImage& diffuseTexture = mMaterials[matInfo.materialIndex];
+                float4 colour = diffuseTexture.sample4(frag.mUV);
+
+                diffuse = packColour(colour);
             }
+
+            memcpy(&memory[(pix + (piy * x)) * 4], &diffuse, sizeof(uint32_t));
         }
+    };
+
+    auto trace_rays = [&](const uint32_t start, const uint32_t stepSize)
+    {
+        uint32_t location = start;
+        while(location < (x * y))
+        {
+            const uint32_t pix = location % x;
+            const uint32_t piy = location / x;
+            trace_ray(pix, piy);
+
+            location += stepSize;
+        }
+    };
+
+    const uint32_t processor_count = std::thread::hardware_concurrency(); // use this many threads for tracing rays.
+    std::vector<std::thread> helperThreads{};
+    for(uint32_t i = 1; i < processor_count; ++i)
+    {
+        helperThreads.push_back(std::thread(trace_rays, i, processor_count));
     }
+
+    trace_rays(0, processor_count);
+
+    for(auto& thread : helperThreads)
+        thread.join();
+
+    return;
 }
 
 
 void RayTracingScene::renderSceneToFile(const Camera& camera, const uint32_t x, const uint32_t y, const char* path)
 {
     uint8_t* memory = new uint8_t[x * y * 4];
+    BELL_ASSERT(memory, "Unable to allocate memory")
     memset(memory, 0, x * y * 4);
 
     renderSceneToMemory(camera, x, y, memory);
@@ -120,4 +156,40 @@ void RayTracingScene::renderSceneToFile(const Camera& camera, const uint32_t x, 
     stbi_write_jpg(path, x, y, 4, memory, 100);
 
     delete[] memory;
+}
+
+
+RayTracingScene::InterpolatedVertex RayTracingScene::interpolateFragment(const uint32_t primID, const float u, const float v)
+{
+    BELL_ASSERT((u + v) <= 1.0f, "Out of bounds")
+
+    const uint32_t baseIndiciesIndex = primID * 3;
+    BELL_ASSERT(primID * 3 < mIndexBuffer.size(), "PrimID out of bounds")
+
+
+    const uint32_t firstIndex = mIndexBuffer[baseIndiciesIndex];
+    const float3& firstPosition = mPositions[firstIndex];
+    const float2& firstuv = mUVs[firstIndex];
+    const float4& firstNormal = mNormals[firstIndex];
+    const float4 firstColour = mVertexColours[firstIndex];
+
+    const uint32_t secondIndex = mIndexBuffer[baseIndiciesIndex + 1];
+    const float3& secondPosition = mPositions[secondIndex];
+    const float2& seconduv = mUVs[secondIndex];
+    const float4& secondNormal = mNormals[secondIndex];
+    const float4& secondColour = mVertexColours[secondIndex];
+
+    const uint32_t thirdIndex = mIndexBuffer[baseIndiciesIndex + 2];
+    const float3& thirdPosition = mPositions[thirdIndex];
+    const float2& thirduv = mUVs[thirdIndex];
+    const float4& thirdNormal = mNormals[thirdIndex];
+    const float4& thirdColour = mVertexColours[thirdIndex];
+
+    InterpolatedVertex frag{};
+    frag.mPosition = float4(((1.0f - v - u) * firstPosition) + (u * secondPosition) + (v * thirdPosition), 1.0f);
+    frag.mUV = ((1.0f - v - u) * firstuv) + (u * seconduv) + (v * thirduv);
+    frag.mNormal = glm::normalize(((1.0f - v - u) * firstNormal) + (u * secondNormal) + (v * thirdNormal));
+    frag.mVertexColour = ((1.0f - v - u) * firstColour) + (u * secondColour) + (v * thirdColour);
+
+    return frag;
 }

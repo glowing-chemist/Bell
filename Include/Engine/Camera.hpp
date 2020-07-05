@@ -90,6 +90,9 @@ public:
     void setAspect(const float aspect)
         { mAspect = aspect; }
 
+    float getAspect() const
+    { return mAspect; }
+
     float4x4 getViewMatrix() const;
     float4x4 getPerspectiveMatrix() const;
     float4x4 getOrthographicsMatrix() const;
