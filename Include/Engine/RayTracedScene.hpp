@@ -29,10 +29,15 @@ public:
         float2 mUV;
         float4 mNormal;
         float4 mVertexColour;
+        uint32_t mPrimID;
     };
     InterpolatedVertex interpolateFragment(const uint32_t primID, const float u, const float v);
 
 private:
+
+    bool traceRay(const nanort::Ray<float>& ray, InterpolatedVertex* result);
+
+    bool traceShadowRay(const InterpolatedVertex& position);
 
     std::vector<float3> mPositions;
     std::vector<float2> mUVs;
@@ -51,7 +56,7 @@ private:
         uint32_t materialFlags;
     };
     std::vector<MaterialInfo> mPrimitiveMaterialID; // maps prim ID to material ID.
-    std::vector<CPUImage> mMaterials;
+    const Scene* mScene;
 };
 
 

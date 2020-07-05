@@ -11,6 +11,7 @@
 
 RayTracingScene::RayTracingScene(const Scene* scene)
 {
+    mScene = scene;
     uint64_t vertexOffset = 0;
     for(const auto& instance : scene->getStaticMeshInstances())
     {
@@ -62,8 +63,6 @@ RayTracingScene::RayTracingScene(const Scene* scene)
     BELL_ASSERT((mIndexBuffer.size() % 3) == 0, "Invalid index buffer size")
     bool success = mAccelerationStructure.Build(mIndexBuffer.size() / 3, *mMeshes, *mPred);
     BELL_ASSERT(success, "Failed to build BVH")
-
-    mMaterials = scene->getCPUImageMaterials();
 }
 
 void RayTracingScene::renderSceneToMemory(const Camera& camera, const uint32_t x, const uint32_t y, uint8_t* memory)
@@ -76,7 +75,9 @@ void RayTracingScene::renderSceneToMemory(const Camera& camera, const uint32_t x
     const float far = camera.getFarPlane();
     const float aspect = camera.getAspect();
 
-    auto trace_ray = [&](const uint32_t pix, const uint32_t piy)
+    const std::vector<CPUImage>& materials = mScene->getCPUImageMaterials();
+
+    auto trace_ray = [&](const uint32_t pix, const uint32_t piy) -> float4
     {
         float3 dir = {((float(pix) / float(x)) - 0.5f) * aspect, (float(piy) / float(y)) - 0.5f, 1.0f};
         dir = glm::normalize((dir.z * forward) + (dir.y * up) + (dir.x * right));
@@ -94,26 +95,28 @@ void RayTracingScene::renderSceneToMemory(const Camera& camera, const uint32_t x
         ray.max_t = far;
         //ray.type = nanort::RAY_TYPE_PRIMARY;
 
-        nanort::TriangleIntersector triangle_intersecter(reinterpret_cast<float*>(mPositions.data()), mIndexBuffer.data(), sizeof(float3));
-        nanort::TriangleIntersection intersection;
-        const bool hit = mAccelerationStructure.Traverse(ray, triangle_intersecter, &intersection);
+        InterpolatedVertex frag;
+        const bool hit = traceRay(ray, &frag);
         if(hit)
         {
             // interpolate uvs.
-            InterpolatedVertex frag = interpolateFragment(intersection.prim_id, intersection.u, intersection.v);
-            MaterialInfo& matInfo = mPrimitiveMaterialID[intersection.prim_id];
+            MaterialInfo& matInfo = mPrimitiveMaterialID[frag.mPrimID];
 
-            uint32_t diffuse = packColour(frag.mVertexColour);
+            float4 diffuse = frag.mVertexColour;
             if(matInfo.materialFlags & MaterialType::Albedo || matInfo.materialFlags & MaterialType::Diffuse)
             {
-                const CPUImage& diffuseTexture = mMaterials[matInfo.materialIndex];
-                float4 colour = diffuseTexture.sample4(frag.mUV);
+                const CPUImage& diffuseTexture = materials[matInfo.materialIndex];
+                const float4 colour = diffuseTexture.sample4(frag.mUV);
 
-                diffuse = packColour(colour);
+                diffuse = colour;
             }
 
-            memcpy(&memory[(pix + (piy * x)) * 4], &diffuse, sizeof(uint32_t));
+            const bool shadowed = traceShadowRay(frag);
+
+            return diffuse * (shadowed ? 0.15f : 1.0f);
         }
+
+        return float4(0.0f, 0.0f, 0.0f, 0.0f);
     };
 
     auto trace_rays = [&](const uint32_t start, const uint32_t stepSize)
@@ -123,7 +126,8 @@ void RayTracingScene::renderSceneToMemory(const Camera& camera, const uint32_t x
         {
             const uint32_t pix = location % x;
             const uint32_t piy = location / x;
-            trace_ray(pix, piy);
+            const uint32_t colour = packColour(trace_ray(pix, piy));
+            memcpy(&memory[(pix + (piy * x)) * 4], &colour, sizeof(uint32_t));
 
             location += stepSize;
         }
@@ -166,7 +170,6 @@ RayTracingScene::InterpolatedVertex RayTracingScene::interpolateFragment(const u
     const uint32_t baseIndiciesIndex = primID * 3;
     BELL_ASSERT(primID * 3 < mIndexBuffer.size(), "PrimID out of bounds")
 
-
     const uint32_t firstIndex = mIndexBuffer[baseIndiciesIndex];
     const float3& firstPosition = mPositions[firstIndex];
     const float2& firstuv = mUVs[firstIndex];
@@ -190,6 +193,68 @@ RayTracingScene::InterpolatedVertex RayTracingScene::interpolateFragment(const u
     frag.mUV = ((1.0f - v - u) * firstuv) + (u * seconduv) + (v * thirduv);
     frag.mNormal = glm::normalize(((1.0f - v - u) * firstNormal) + (u * secondNormal) + (v * thirdNormal));
     frag.mVertexColour = ((1.0f - v - u) * firstColour) + (u * secondColour) + (v * thirdColour);
+    frag.mPrimID = primID;
 
     return frag;
+}
+
+
+bool RayTracingScene::traceRay(const nanort::Ray<float>& ray, InterpolatedVertex *result)
+{
+    nanort::TriangleIntersector triangle_intersecter(reinterpret_cast<float*>(mPositions.data()), mIndexBuffer.data(), sizeof(float3));
+    nanort::TriangleIntersection intersection;
+    bool hit = mAccelerationStructure.Traverse(ray, triangle_intersecter, &intersection);
+
+    if(hit) // check for alpha tested geometry.
+    {
+        *result= interpolateFragment(intersection.prim_id, intersection.u, intersection.v);
+
+        const std::vector<CPUImage>& materials = mScene->getCPUImageMaterials();
+        MaterialInfo& matInfo = mPrimitiveMaterialID[result->mPrimID];
+
+        if(matInfo.materialFlags & MaterialType::Albedo || matInfo.materialFlags & MaterialType::Diffuse)
+        {
+
+            const CPUImage& diffuseTexture = materials[matInfo.materialIndex];
+            const float4 colour = diffuseTexture.sample4(result->mUV);
+
+            if(colour.a == 0.0f) // trace another ray.
+            {
+                nanort::Ray<float> newRay{};
+                newRay.org[0] = result->mPosition.x;
+                newRay.org[1] = result->mPosition.y;
+                newRay.org[2] = result->mPosition.z;
+                newRay.dir[0] = ray.dir[0];
+                newRay.dir[1] = ray.dir[1];
+                newRay.dir[2] = ray.dir[2];
+                newRay.min_t = 0.01f;
+                newRay.max_t = 2000.0f;
+
+                hit = traceRay(newRay, result);
+            }
+        }
+    }
+
+    return hit;
+}
+
+
+bool RayTracingScene::traceShadowRay(const InterpolatedVertex& position)
+{
+    const Scene::ShadowingLight& sun = mScene->getShadowingLight();
+
+    float4 dir = glm::normalize(sun.mPosition - position.mPosition);
+
+    nanort::Ray<float> shadowRay{};
+    shadowRay.dir[0] = dir.x;
+    shadowRay.dir[1] = dir.y;
+    shadowRay.dir[2] = dir.z;
+    shadowRay.org[0] = position.mPosition.x;
+    shadowRay.org[1] = position.mPosition.y;
+    shadowRay.org[2] = position.mPosition.z;
+    shadowRay.min_t = 0.01f;
+    shadowRay.max_t = 2000.0f;
+
+    InterpolatedVertex intersection;
+    return traceRay(shadowRay, &intersection);
 }
