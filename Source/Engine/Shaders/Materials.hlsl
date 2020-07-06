@@ -24,7 +24,7 @@ MaterialInfo calculateMaterialInfo(	const float4 vertexNormal,
 
 	if(materialTypes & kMaterial_Diffuse)
 	{
-		mat.diffuse = materials[materialIndex].Sample(linearSampler, uv);
+		mat.diffuse *= materials[materialIndex].Sample(linearSampler, uv);
 		++nextMaterialSlot;
 	}
 
@@ -99,7 +99,7 @@ MaterialInfo calculateMaterialInfo(	const float4 vertexNormal,
 	if(materialTypes & kMaterial_Albedo)
 	{
 		const float4 albedo = materials[materialIndex].Sample(linearSampler, uv);
-		mat.diffuse = albedo * (1.0 - DIELECTRIC_SPECULAR) * (1.0 - metalness);
+		mat.diffuse *= albedo * (1.0 - DIELECTRIC_SPECULAR) * (1.0 - metalness);
 		mat.diffuse.w = albedo.w;// Preserve the alpha chanle.
 
 		const float NoV = dot(mat.normal.xyz, view);

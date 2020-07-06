@@ -1,6 +1,7 @@
 #include "Engine/RayTracedScene.hpp"
 
 #include "Engine/Scene.h"
+#include "PBR.hpp"
 #include "Core/ConversionUtils.hpp"
 
 #include <algorithm>
@@ -75,8 +76,6 @@ void RayTracingScene::renderSceneToMemory(const Camera& camera, const uint32_t x
     const float far = camera.getFarPlane();
     const float aspect = camera.getAspect();
 
-    const std::vector<CPUImage>& materials = mScene->getCPUImageMaterials();
-
     auto trace_ray = [&](const uint32_t pix, const uint32_t piy) -> float4
     {
         float3 dir = {((float(pix) / float(x)) - 0.5f) * aspect, (float(piy) / float(y)) - 0.5f, 1.0f};
@@ -99,21 +98,11 @@ void RayTracingScene::renderSceneToMemory(const Camera& camera, const uint32_t x
         const bool hit = traceRay(ray, &frag);
         if(hit)
         {
-            // interpolate uvs.
-            MaterialInfo& matInfo = mPrimitiveMaterialID[frag.mPrimID];
-
-            float4 diffuse = frag.mVertexColour;
-            if(matInfo.materialFlags & MaterialType::Albedo || matInfo.materialFlags & MaterialType::Diffuse)
-            {
-                const CPUImage& diffuseTexture = materials[matInfo.materialIndex];
-                const float4 colour = diffuseTexture.sample4(frag.mUV);
-
-                diffuse = colour;
-            }
-
             const bool shadowed = traceShadowRay(frag);
 
-            return diffuse * (shadowed ? 0.15f : 1.0f);
+            const float4 diffuse = traceDiffuseRays(frag, float4(origin, 1.0f), 128, 5);
+
+            return diffuse;// * (shadowed ? 0.15f : 1.0f);
         }
 
         return float4(0.0f, 0.0f, 0.0f, 0.0f);
@@ -257,4 +246,216 @@ bool RayTracingScene::traceShadowRay(const InterpolatedVertex& position)
 
     InterpolatedVertex intersection;
     return traceRay(shadowRay, &intersection);
+}
+
+
+float4 RayTracingScene::traceDiffuseRays(const InterpolatedVertex& frag, const float4& origin, const uint32_t sampleCount, const uint32_t depth)
+{
+    // interpolate uvs.
+    MaterialInfo& matInfo = mPrimitiveMaterialID[frag.mPrimID];
+    Material mat = calculateMaterial(frag, matInfo, frag.mPosition - origin);
+    float4 diffuse = mat.diffuse;
+
+    DiffuseSampler sampler(sampleCount * depth);
+
+    float4 result = float4{0.0f, 0.0f, 0.0f, 0.0f};
+    float distribution = 0.0f;
+    for(uint32_t i = 0; i < sampleCount; ++i)
+    {
+        Sample sample = sampler.generateSample(frag.mNormal);
+        distribution += sample.P;
+
+        nanort::Ray<float> newRay{};
+        newRay.org[0] = frag.mPosition.x;
+        newRay.org[1] = frag.mPosition.y;
+        newRay.org[2] = frag.mPosition.z;
+        newRay.dir[0] = sample.L.x;
+        newRay.dir[1] = sample.L.y;
+        newRay.dir[2] = sample.L.z;
+        newRay.min_t = 0.01f;
+        newRay.max_t = 2000.0f;
+
+        InterpolatedVertex intersection;
+        const bool hit = traceRay(newRay, &intersection);
+        if(hit)
+        {
+            result += traceDiffuseRay(sampler, intersection, frag.mPosition, depth - 1);
+        }
+        else
+        {
+            // TODO sample diffuse skybox.
+            result += float4{0.75f, 0.75f, 0.75f, 1.0f};
+        }
+    }
+
+    diffuse *= result / float(distribution);
+
+    return diffuse;
+}
+
+
+float4 RayTracingScene::traceDiffuseRay(DiffuseSampler& sampler, const InterpolatedVertex& frag, const float4 &origin, const uint32_t depth)
+{
+    if(depth == 0)
+        return float4(0.0f, 0.0f, 0.0f, 0.0f);
+
+    MaterialInfo& matInfo = mPrimitiveMaterialID[frag.mPrimID];
+    Material mat = calculateMaterial(frag, matInfo, frag.mPosition - origin);
+    float4 diffuse = mat.diffuse;
+
+    float4 result = float4{0.0f, 0.0f, 0.0f, 0.0f};
+
+    Sample sample = sampler.generateSample(frag.mNormal);
+
+    nanort::Ray<float> newRay{};
+    newRay.org[0] = frag.mPosition.x;
+    newRay.org[1] = frag.mPosition.y;
+    newRay.org[2] = frag.mPosition.z;
+    newRay.dir[0] = sample.L.x;
+    newRay.dir[1] = sample.L.y;
+    newRay.dir[2] = sample.L.z;
+    newRay.min_t = 0.01f;
+    newRay.max_t = 2000.0f;
+
+    InterpolatedVertex intersection;
+    const bool hit = traceRay(newRay, &intersection);
+    if(hit)
+    {
+        result = traceDiffuseRay(sampler, intersection, frag.mPosition, depth - 1);
+    }
+    else
+    {
+        // TODO sample diffuse skybox.
+        result = float4{0.75f, 0.75f, 0.75f, 1.0f};
+    }
+
+    diffuse *= result / sample.P;
+
+    return diffuse;
+}
+
+
+RayTracingScene::Material RayTracingScene::calculateMaterial(const InterpolatedVertex& frag, const MaterialInfo& info, const float3& view)
+{
+    Material mat;
+    mat.diffuse = frag.mVertexColour;
+    mat.normal = frag.mNormal;
+    mat.specularRoughness = float4(0.0f, 0.0f, 0.0f, 1.0f);
+    mat.emissiveOcclusion = float4(0.0f, 0.0f, 0.0f, 1.0);
+
+    auto fresnelSchlickRoughness = [](const float cosTheta, const float3 F0, const float roughness)
+    {
+        return F0 + (glm::max(float3(1.0f - roughness), F0) - F0) * std::pow(1.0f - cosTheta, 5.0f);
+    };
+
+    uint nextMaterialSlot = 0;
+    const auto& materials = mScene->getCPUImageMaterials();
+
+    if(info.materialFlags & MaterialType::Diffuse)
+    {
+        mat.diffuse *= materials[info.materialIndex].sample4(frag.mUV);
+        ++nextMaterialSlot;
+    }
+
+    if(info.materialFlags & MaterialType::Albedo)
+        ++nextMaterialSlot;
+
+    if(info.materialFlags & MaterialType::Normals)
+    {
+        /*float3 normal = materials[info.materialIndex + nextMaterialSlot].Sample(frag.mUV).xyz;
+        ++nextMaterialSlot;
+
+        // remap normal
+        normal = (normal - 0.5f) * 2.0f;
+        normal = normalize(normal);
+
+        const float2 xDerivities = ddx_fine(uv);
+        const float2 yDerivities = ddy_fine(uv);
+
+        {
+            float3x3 tbv = tangentSpaceMatrix(vertexNormal, view, float4(xDerivities, yDerivities));
+
+            normal = mul(normal, tbv);
+
+            normal = normalize(normal);
+        }
+
+        mat.normal = float4(normal, 1.0f);*/
+        ++nextMaterialSlot; // TODO work out how to do this without derivitives!!.
+    }
+
+    float metalness = 0.0f;
+    if(info.materialFlags & MaterialType::CombinedMetalnessRoughness)
+    {
+        const float4 metalnessRoughness = materials[info.materialIndex + nextMaterialSlot].sample4(frag.mUV);
+        metalness = metalnessRoughness.z;
+        mat.specularRoughness.w = metalnessRoughness.y;
+        ++nextMaterialSlot;
+    }
+    else
+    {
+        if(info.materialFlags & MaterialType::Roughness)
+        {
+            mat.specularRoughness.w = materials[info.materialIndex + nextMaterialSlot].sample(frag.mUV);
+            ++nextMaterialSlot;
+        }
+
+        if(info.materialFlags & MaterialType::Gloss)
+        {
+            mat.specularRoughness.w = 1.0f - materials[info.materialIndex + nextMaterialSlot].sample(frag.mUV);
+            ++nextMaterialSlot;
+        }
+
+        if(info.materialFlags & MaterialType::Specular)
+        {
+            const float3 spec = materials[info.materialIndex + nextMaterialSlot].sample4(frag.mUV);
+            mat.specularRoughness.x = spec.x;
+            mat.specularRoughness.y = spec.y;
+            mat.specularRoughness.z = spec.z;
+            ++nextMaterialSlot;
+        }
+
+        if(info.materialFlags & MaterialType::CombinedSpecularGloss)
+        {
+            mat.specularRoughness = materials[info.materialIndex + nextMaterialSlot].sample4(frag.mUV);
+            mat.specularRoughness.w = 1.0f - mat.specularRoughness.w;
+            ++nextMaterialSlot;
+        }
+
+        if(info.materialFlags & MaterialType::Metalness)
+        {
+            metalness = materials[info.materialIndex + nextMaterialSlot].sample(frag.mUV);
+            ++nextMaterialSlot;
+        }
+    }
+
+    if(info.materialFlags & MaterialType::Albedo)
+    {
+        const float4 albedo = materials[info.materialIndex].sample4(frag.mUV);
+        mat.diffuse *= albedo * (1.0f - 0.04f) * (1.0f - metalness);
+        mat.diffuse.w = albedo.w;// Preserve the alpha chanle.
+
+        const float NoV = dot(float3(mat.normal), view);
+        const float3 F0 = lerp(float3(0.04f, 0.04f, 0.04f), float3(albedo), metalness);
+        const float3 spec = fresnelSchlickRoughness(std::max(NoV, 0.0f), F0, mat.specularRoughness.w);
+        mat.specularRoughness.x = spec.x;
+        mat.specularRoughness.y = spec.y;
+        mat.specularRoughness.z = spec.z;
+    }
+
+    if(info.materialFlags & MaterialType::AmbientOcclusion)
+    {
+        mat.emissiveOcclusion.w = materials[info.materialIndex + nextMaterialSlot].sample(frag.mUV);
+        ++nextMaterialSlot;
+    }
+
+    if(info.materialFlags & MaterialType::Emisive)
+    {
+        const float3 emissive = materials[info.materialIndex + nextMaterialSlot].sample4(frag.mUV);
+        mat.emissiveOcclusion.x = emissive.x;
+        mat.emissiveOcclusion.y = emissive.y;
+        mat.emissiveOcclusion.z = emissive.z;
+    }
+
+    return mat;
 }

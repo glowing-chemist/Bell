@@ -6,6 +6,7 @@
 
 #include "GeomUtils.h"
 #include "CPUImage.hpp"
+#include "Engine/RayTracingSamplers.hpp"
 
 #include <memory>
 #include <vector>
@@ -33,11 +34,29 @@ public:
     };
     InterpolatedVertex interpolateFragment(const uint32_t primID, const float u, const float v);
 
+    struct MaterialInfo
+    {
+        uint32_t materialIndex;
+        uint32_t materialFlags;
+    };
+
+    struct Material
+    {
+        float4 diffuse;
+        float4 specularRoughness; // xyz specular w roughness
+        float4 normal;
+        float4 emissiveOcclusion; // xyz emisive w ambient occlusion.
+    };
+    Material calculateMaterial(const InterpolatedVertex&, const MaterialInfo&, const float3 &view);
+
 private:
 
     bool traceRay(const nanort::Ray<float>& ray, InterpolatedVertex* result);
 
     bool traceShadowRay(const InterpolatedVertex& position);
+
+    float4 traceDiffuseRays(const InterpolatedVertex& frag, const float4 &origin, const uint32_t sampleCount, const uint32_t depth);
+    float4 traceDiffuseRay(DiffuseSampler& sampler, const InterpolatedVertex& frag, const float4 &origin, const uint32_t depth);
 
     std::vector<float3> mPositions;
     std::vector<float2> mUVs;
@@ -50,11 +69,6 @@ private:
 
     nanort::BVHAccel<float> mAccelerationStructure;
 
-    struct MaterialInfo
-    {
-        uint32_t materialIndex;
-        uint32_t materialFlags;
-    };
     std::vector<MaterialInfo> mPrimitiveMaterialID; // maps prim ID to material ID.
     const Scene* mScene;
 };

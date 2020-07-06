@@ -160,7 +160,9 @@ set(BELL_SOURCE
     Source/Engine/Animation.cpp
     Source/Engine/DefaultResourceSlots.cpp
     Source/Engine/RayTracedScene.cpp
+    Source/Engine/RayTracingSamplers.cpp
     Source/Engine/CPUImage.cpp
+    Source/Engine/PBR.cpp
 
     # Techniques
     Source/Engine/SSAOTechnique.cpp

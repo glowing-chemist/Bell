@@ -5,6 +5,8 @@
 #include "GeomUtils.h"
 
 #include "Core/Image.hpp"
+#include "Core/ConversionUtils.hpp"
+
 
 class CPUImage
 {
@@ -12,7 +14,9 @@ public:
     CPUImage(std::vector<unsigned char>&& data, const ImageExtent& extent, const Format format) :
     mData(data),
     mExtent(extent),
-    mFormat(format) {}
+    mFormat(format),
+    mPixelSize(getPixelSize(mFormat))
+    {}
 
     ~CPUImage();
 
@@ -28,10 +32,12 @@ public:
 
 private:
 
+    const unsigned char* getDataPtr(const float2& uv) const;
+
     std::vector<unsigned char> mData;
     ImageExtent mExtent;
     Format mFormat;
-
+    uint32_t mPixelSize;
 };
 
 #endif
