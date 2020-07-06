@@ -206,6 +206,11 @@ public:
 		return mSkyboxView;
 	}
 	
+    const std::unique_ptr<CPUImage>& getCPUSkybox() const
+    {
+        return mCPUSkybox;
+    }
+
     void setCamera(const Camera& camera)
 	{
 		mSceneCamera = camera;
@@ -449,6 +454,7 @@ private:
 
 	std::unique_ptr<Image> mSkybox;
 	std::unique_ptr<ImageView> mSkyboxView;
+    std::unique_ptr<CPUImage> mCPUSkybox;
 };
 
 #endif

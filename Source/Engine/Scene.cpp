@@ -50,6 +50,7 @@ Scene::~Scene()
 void Scene::loadSkybox(const std::array<std::string, 6>& paths, Engine* eng)
 {
 	uint32_t i = 0;
+    std::vector<unsigned char> skyboxData{};
 	for(const std::string& file : paths)
 	{
         TextureUtil::TextureInfo info = TextureUtil::load32BitTexture(file.c_str(), STBI_rgb_alpha);
@@ -63,8 +64,14 @@ void Scene::loadSkybox(const std::array<std::string, 6>& paths, Engine* eng)
 		}
 
 		(*mSkybox)->setContents(info.mData.data(), info.width, info.height, 1, i);
+        skyboxData.insert(skyboxData.end(), info.mData.begin(), info.mData.end());
 		++i;
 	}
+
+    // create CPU skybox.
+    ImageExtent extent = (*mSkybox)->getExtent(0, 0);
+    extent.depth = 6;
+    mCPUSkybox = std::make_unique<CPUImage>(std::move(skyboxData), extent, Format::RGBA8UNorm);
 }
 
 

@@ -100,12 +100,14 @@ void RayTracingScene::renderSceneToMemory(const Camera& camera, const uint32_t x
         {
             const bool shadowed = traceShadowRay(frag);
 
-            const float4 diffuse = traceDiffuseRays(frag, float4(origin, 1.0f), 128, 5);
+            const float4 diffuse = traceDiffuseRays(frag, float4(origin, 1.0f), 50, 5);
 
             return diffuse;// * (shadowed ? 0.15f : 1.0f);
         }
-
-        return float4(0.0f, 0.0f, 0.0f, 0.0f);
+        else
+        {
+            return mScene->getCPUSkybox()->sampleCube4(dir);
+        }
     };
 
     auto trace_rays = [&](const uint32_t start, const uint32_t stepSize)
@@ -283,8 +285,7 @@ float4 RayTracingScene::traceDiffuseRays(const InterpolatedVertex& frag, const f
         }
         else
         {
-            // TODO sample diffuse skybox.
-            result += float4{0.75f, 0.75f, 0.75f, 1.0f};
+            result += mScene->getCPUSkybox()->sampleCube4(sample.L); // miss so sample skybox.
         }
     }
 
@@ -325,8 +326,7 @@ float4 RayTracingScene::traceDiffuseRay(DiffuseSampler& sampler, const Interpola
     }
     else
     {
-        // TODO sample diffuse skybox.
-        result = float4{0.75f, 0.75f, 0.75f, 1.0f};
+        result = mScene->getCPUSkybox()->sampleCube4(sample.L); // miss so sample skybox.
     }
 
     diffuse *= result / sample.P;

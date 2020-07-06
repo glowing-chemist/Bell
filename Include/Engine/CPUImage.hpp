@@ -33,6 +33,9 @@ public:
 private:
 
     const unsigned char* getDataPtr(const float2& uv) const;
+    const unsigned char* getDataPtr(const float2& uv, const uint32_t face) const;
+
+    void resolveCubemapUV(const float3& v, uint32_t& faceIndex, float2& uvOut) const;
 
     std::vector<unsigned char> mData;
     ImageExtent mExtent;
