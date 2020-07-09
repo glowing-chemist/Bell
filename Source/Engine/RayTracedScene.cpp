@@ -66,7 +66,7 @@ RayTracingScene::RayTracingScene(const Scene* scene)
     BELL_ASSERT(success, "Failed to build BVH")
 }
 
-void RayTracingScene::renderSceneToMemory(const Camera& camera, const uint32_t x, const uint32_t y, uint8_t* memory)
+void RayTracingScene::renderSceneToMemory(const Camera& camera, const uint32_t x, const uint32_t y, uint8_t* memory) const
 {
     const float3 forward = camera.getDirection();
     const float3 up = camera.getUp();
@@ -140,11 +140,10 @@ void RayTracingScene::renderSceneToMemory(const Camera& camera, const uint32_t x
 }
 
 
-void RayTracingScene::renderSceneToFile(const Camera& camera, const uint32_t x, const uint32_t y, const char* path)
+void RayTracingScene::renderSceneToFile(const Camera& camera, const uint32_t x, const uint32_t y, const char* path) const
 {
     uint8_t* memory = new uint8_t[x * y * 4];
     BELL_ASSERT(memory, "Unable to allocate memory")
-    memset(memory, 0, x * y * 4);
 
     renderSceneToMemory(camera, x, y, memory);
 
@@ -154,7 +153,7 @@ void RayTracingScene::renderSceneToFile(const Camera& camera, const uint32_t x, 
 }
 
 
-RayTracingScene::InterpolatedVertex RayTracingScene::interpolateFragment(const uint32_t primID, const float u, const float v)
+RayTracingScene::InterpolatedVertex RayTracingScene::interpolateFragment(const uint32_t primID, const float u, const float v) const
 {
     BELL_ASSERT((u + v) <= 1.0f, "Out of bounds")
 
@@ -190,9 +189,9 @@ RayTracingScene::InterpolatedVertex RayTracingScene::interpolateFragment(const u
 }
 
 
-bool RayTracingScene::traceRay(const nanort::Ray<float>& ray, InterpolatedVertex *result)
+bool RayTracingScene::traceRay(const nanort::Ray<float>& ray, InterpolatedVertex *result) const
 {
-    nanort::TriangleIntersector triangle_intersecter(reinterpret_cast<float*>(mPositions.data()), mIndexBuffer.data(), sizeof(float3));
+    nanort::TriangleIntersector triangle_intersecter(reinterpret_cast<const float*>(mPositions.data()), mIndexBuffer.data(), sizeof(float3));
     nanort::TriangleIntersection intersection;
     bool hit = mAccelerationStructure.Traverse(ray, triangle_intersecter, &intersection);
 
@@ -201,7 +200,7 @@ bool RayTracingScene::traceRay(const nanort::Ray<float>& ray, InterpolatedVertex
         *result= interpolateFragment(intersection.prim_id, intersection.u, intersection.v);
 
         const std::vector<CPUImage>& materials = mScene->getCPUImageMaterials();
-        MaterialInfo& matInfo = mPrimitiveMaterialID[result->mPrimID];
+        const MaterialInfo& matInfo = mPrimitiveMaterialID[result->mPrimID];
 
         if(matInfo.materialFlags & MaterialType::Albedo || matInfo.materialFlags & MaterialType::Diffuse)
         {
@@ -230,7 +229,7 @@ bool RayTracingScene::traceRay(const nanort::Ray<float>& ray, InterpolatedVertex
 }
 
 
-bool RayTracingScene::traceShadowRay(const InterpolatedVertex& position)
+bool RayTracingScene::traceShadowRay(const InterpolatedVertex& position) const
 {
     const Scene::ShadowingLight& sun = mScene->getShadowingLight();
 
@@ -251,10 +250,10 @@ bool RayTracingScene::traceShadowRay(const InterpolatedVertex& position)
 }
 
 
-float4 RayTracingScene::traceDiffuseRays(const InterpolatedVertex& frag, const float4& origin, const uint32_t sampleCount, const uint32_t depth)
+float4 RayTracingScene::traceDiffuseRays(const InterpolatedVertex& frag, const float4& origin, const uint32_t sampleCount, const uint32_t depth) const
 {
     // interpolate uvs.
-    MaterialInfo& matInfo = mPrimitiveMaterialID[frag.mPrimID];
+    const MaterialInfo& matInfo = mPrimitiveMaterialID[frag.mPrimID];
     Material mat = calculateMaterial(frag, matInfo, frag.mPosition - origin);
     float4 diffuse = mat.diffuse;
 
@@ -295,12 +294,12 @@ float4 RayTracingScene::traceDiffuseRays(const InterpolatedVertex& frag, const f
 }
 
 
-float4 RayTracingScene::traceDiffuseRay(DiffuseSampler& sampler, const InterpolatedVertex& frag, const float4 &origin, const uint32_t depth)
+float4 RayTracingScene::traceDiffuseRay(DiffuseSampler& sampler, const InterpolatedVertex& frag, const float4 &origin, const uint32_t depth) const
 {
     if(depth == 0)
         return float4(0.0f, 0.0f, 0.0f, 0.0f);
 
-    MaterialInfo& matInfo = mPrimitiveMaterialID[frag.mPrimID];
+    const MaterialInfo& matInfo = mPrimitiveMaterialID[frag.mPrimID];
     Material mat = calculateMaterial(frag, matInfo, frag.mPosition - origin);
     float4 diffuse = mat.diffuse;
 
@@ -335,7 +334,7 @@ float4 RayTracingScene::traceDiffuseRay(DiffuseSampler& sampler, const Interpola
 }
 
 
-RayTracingScene::Material RayTracingScene::calculateMaterial(const InterpolatedVertex& frag, const MaterialInfo& info, const float3& view)
+RayTracingScene::Material RayTracingScene::calculateMaterial(const InterpolatedVertex& frag, const MaterialInfo& info, const float3& view) const
 {
     Material mat;
     mat.diffuse = frag.mVertexColour;

@@ -8,6 +8,7 @@
 #include "RenderGraph/RenderGraph.hpp"
 
 #include "Engine/Scene.h"
+#include "RayTracedScene.hpp"
 #include "Engine/Camera.hpp"
 #include "Engine/Bufferbuilder.h"
 #include "Engine/UniformBuffers.h"
@@ -210,9 +211,30 @@ public:
         return mActiveAnimations;
     }
 
+    void setIrradianceProbeDensity(const float3& density)
+    {
+        mIrradianceProbeDensity = density;
+    }
+
+    const float3 getIrradianceProbeDensity() const
+    {
+        return mIrradianceProbeDensity;
+    }
+
     void rayTraceScene();
 
+    struct SphericalHarmonic
+    {
+        float3 mPosition;
+        float mCoefs[27];
+    };
+
+    std::vector<SphericalHarmonic> generateIrradianceProbes(const std::vector<float3> &positions);
+
 private:
+
+    CPUImage renderDiffuseCubeMap(const RayTracingScene &scene, const float3 &position, const uint32_t x, const uint32_t y);
+    SphericalHarmonic generateSphericalHarmonic(const float3 &position, const CPUImage& cubemap);
 
     std::unique_ptr<Technique>                   getSingleTechnique(const PassType);
 
@@ -284,6 +306,8 @@ private:
 
     uint32_t mMaxCommandThreads;
     std::mutex mSubmissionLock;
+
+    float3 mIrradianceProbeDensity;
 
     GLFWwindow* mWindow;
 };

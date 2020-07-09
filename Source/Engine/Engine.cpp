@@ -87,6 +87,7 @@ Engine::Engine(GLFWwindow* windowPtr) :
     mLightCountView(mLightBuffer, 0, sizeof(uint4)),
     mLightsSRS(getDevice(), 2),
     mMaxCommandThreads(1),
+    mIrradianceProbeDensity(10.0f, 10.0f, 10.0f),
     mWindow(windowPtr)
 {
     for(uint32_t i = 0; i < getDevice()->getSwapChainImageCount(); ++i)
@@ -695,4 +696,151 @@ void Engine::rayTraceScene()
     {
         BELL_LOG("No scene currently active")
     }
+}
+
+
+CPUImage Engine::renderDiffuseCubeMap(const RayTracingScene& scene, const float3 &position, const uint32_t x, const uint32_t y)
+{
+    std::vector<unsigned char> data(x * y * 6 * sizeof(uint32_t));
+
+    // render +x
+    Camera cam{position, float3{1.0f, 0.0f, 0.0f}, 1.0f, 0.1f, 2000.0f};
+    scene.renderSceneToMemory(cam, x, y, data.data());
+
+    // render -x
+    cam.setDirection(float3(-1.0f, 0.0f, 0.0f));
+    scene.renderSceneToMemory(cam, x, y, data.data() + (x * y * sizeof(uint32_t)));
+
+    // render +y
+    cam.setDirection(float3(0.0f, 1.0f, 0.0f));
+    scene.renderSceneToMemory(cam, x, y, data.data() + (x * y * 2 * sizeof(uint32_t)));
+
+    // render -y
+    cam.setDirection(float3(0.0f, -1.0f, 0.0f));
+    scene.renderSceneToMemory(cam, x, y, data.data() + (x * y * 3 * sizeof(uint32_t)));
+
+    // render +z
+    cam.setDirection(float3(0.0f, 0.0f, 1.0f));
+    scene.renderSceneToMemory(cam, x, y, data.data() + (x * y * 4 * sizeof(uint32_t)));
+
+    // render -z
+    cam.setDirection(float3(0.0f, 0.0f, -1.0f));
+    scene.renderSceneToMemory(cam, x, y, data.data() + (x * y * 5 * sizeof(uint32_t)));
+
+
+    return CPUImage(std::move(data), ImageExtent{x, y, 6}, Format::RGBA8UNorm);
+}
+
+
+std::vector<Engine::SphericalHarmonic> Engine::generateIrradianceProbes(const std::vector<float3>& positions)
+{
+    std::vector<Engine::SphericalHarmonic> harmonics{};
+
+    if(mCurrentScene)
+    {
+        RayTracingScene rtScene(mCurrentScene);
+
+        for(const float3& position : positions)
+        {
+            const CPUImage cubeMap = renderDiffuseCubeMap(rtScene, position, 512, 512);
+            const SphericalHarmonic harmonic = generateSphericalHarmonic(position, cubeMap);
+
+            harmonics.push_back(harmonic);
+        }
+    }
+
+    return harmonics;
+}
+
+
+Engine::SphericalHarmonic Engine::generateSphericalHarmonic(const float3& position, const CPUImage& cubemap)
+{
+    SphericalHarmonic harmonic{};
+    harmonic.mPosition = position;
+
+    auto getNormalFromTexel = [](const int3 texelPosition, const float2 size)
+    {
+        float2 position = float2(texelPosition) / size;
+
+        position -= 0.5; // remap 0-1 to -0.5-0.5
+        position *= 2; // remap to -1-1
+
+        const uint cubemapSide = texelPosition.z;
+
+        float3 normal;
+
+        if(cubemapSide == 0)
+        { // facing x-dir
+            normal = float3(1, -position.y, -position.x);
+        }
+        else if(cubemapSide == 1)
+        { // facing -x-dir
+            normal = float3(-1, -position.y, position.x);
+        }
+        else if(cubemapSide == 2)
+        { // facing y-dir
+            normal = float3(position.x, 1, position.y);
+        }
+        else if(cubemapSide == 3)
+        { // facing -y-dir
+            normal = float3(-position.x, -1, position.y);
+        }
+        else if(cubemapSide == 4)
+        { // facing z-dir
+            normal = float3(position.x, -position.y, 1);
+        }
+        else if(cubemapSide == 5)
+        { // facing -z-dir
+            normal = float3(-position.x, -position.y, -1);
+        }
+        return glm::normalize(normal);
+    };
+
+    float3 Y00 = float3(0.0f);
+    float3 Y11 = float3(0.0f);
+    float3 Y10 = float3(0.0f);
+    float3 Y1_1 = float3(0.0f);
+    float3 Y21 = float3(0.0f);
+    float3 Y2_1 = float3(0.0f);
+    float3 Y2_2 = float3(0.0f);
+    float3 Y20 = float3(0.0f);
+    float3 Y22 = float3(0.0f);
+
+    const ImageExtent& extent = cubemap.getExtent();
+    for(uint32_t faceIndex = 0; faceIndex < 6; ++faceIndex)
+    {
+        for(uint32_t x = 0; x < extent.width; ++x)
+        {
+            for(uint32_t y = 0; y < extent.height; ++y)
+            {
+                const float3 normal = getNormalFromTexel(int3(x, y, faceIndex), float2(extent.width, extent.height));
+
+                const float3 L = cubemap.sample3(normal);
+
+                // Constants map to SH basis functions constants.
+                Y00   += L * 0.282095f;
+                Y11   += L * 0.488603f * normal.x;
+                Y10   += L * 0.488603f * normal.y;
+                Y1_1  += L * 0.488603f * normal.z;
+                Y21   += L * 1.092548f * (normal.x * normal.z);
+                Y2_1  += L * 1.092548f * (normal.y * normal.z);
+                Y2_2  += L * 1.092548f * (normal.x * normal.y);
+                Y20   += L * 0.315392f * ((3 * normal.z * normal.z) - 1.0f);
+                Y22   += L * 0.546274f * (normal.x * normal.x - normal.y * normal.y);
+
+            }
+        }
+    }
+
+    memcpy(&harmonic.mCoefs[0], &Y00, sizeof(float3));
+    memcpy(&harmonic.mCoefs[3], &Y11, sizeof(float3));
+    memcpy(&harmonic.mCoefs[6], &Y10, sizeof(float3));
+    memcpy(&harmonic.mCoefs[9], &Y1_1, sizeof(float3));
+    memcpy(&harmonic.mCoefs[12], &Y21, sizeof(float3));
+    memcpy(&harmonic.mCoefs[15], &Y2_1, sizeof(float3));
+    memcpy(&harmonic.mCoefs[18], &Y2_2, sizeof(float3));
+    memcpy(&harmonic.mCoefs[21], &Y20, sizeof(float3));
+    memcpy(&harmonic.mCoefs[24], &Y22, sizeof(float3));
+
+    return harmonic;
 }

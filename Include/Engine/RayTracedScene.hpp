@@ -21,8 +21,8 @@ public:
     RayTracingScene(const Scene*);
     ~RayTracingScene() = default;
 
-    void renderSceneToMemory(const Camera&, const uint32_t x, const uint32_t y, uint8_t *);
-    void renderSceneToFile(const Camera&, const uint32_t x, const uint32_t y, const char*);
+    void renderSceneToMemory(const Camera&, const uint32_t x, const uint32_t y, uint8_t *) const;
+    void renderSceneToFile(const Camera&, const uint32_t x, const uint32_t y, const char*) const;
 
     struct InterpolatedVertex
     {
@@ -32,7 +32,7 @@ public:
         float4 mVertexColour;
         uint32_t mPrimID;
     };
-    InterpolatedVertex interpolateFragment(const uint32_t primID, const float u, const float v);
+    InterpolatedVertex interpolateFragment(const uint32_t primID, const float u, const float v) const;
 
     struct MaterialInfo
     {
@@ -47,16 +47,16 @@ public:
         float4 normal;
         float4 emissiveOcclusion; // xyz emisive w ambient occlusion.
     };
-    Material calculateMaterial(const InterpolatedVertex&, const MaterialInfo&, const float3 &view);
+    Material calculateMaterial(const InterpolatedVertex&, const MaterialInfo&, const float3 &view) const;
 
 private:
 
-    bool traceRay(const nanort::Ray<float>& ray, InterpolatedVertex* result);
+    bool traceRay(const nanort::Ray<float>& ray, InterpolatedVertex* result) const;
 
-    bool traceShadowRay(const InterpolatedVertex& position);
+    bool traceShadowRay(const InterpolatedVertex& position) const;
 
-    float4 traceDiffuseRays(const InterpolatedVertex& frag, const float4 &origin, const uint32_t sampleCount, const uint32_t depth);
-    float4 traceDiffuseRay(DiffuseSampler& sampler, const InterpolatedVertex& frag, const float4 &origin, const uint32_t depth);
+    float4 traceDiffuseRays(const InterpolatedVertex& frag, const float4 &origin, const uint32_t sampleCount, const uint32_t depth) const;
+    float4 traceDiffuseRay(DiffuseSampler& sampler, const InterpolatedVertex& frag, const float4 &origin, const uint32_t depth) const;
 
     std::vector<float3> mPositions;
     std::vector<float2> mUVs;

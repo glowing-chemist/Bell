@@ -30,6 +30,11 @@ public:
     float3 sampleCube3(const float3& uv) const;
     float4 sampleCube4(const float3& uv) const;
 
+    const ImageExtent& getExtent() const
+    {
+        return mExtent;
+    }
+
 private:
 
     const unsigned char* getDataPtr(const float2& uv) const;
