@@ -832,6 +832,17 @@ Engine::SphericalHarmonic Engine::generateSphericalHarmonic(const float3& positi
         }
     }
 
+    const float sampleCount = extent.width * extent.height * 6;
+    Y00  /= sampleCount;
+    Y11  /= sampleCount;
+    Y10  /= sampleCount;
+    Y1_1 /= sampleCount;
+    Y21  /= sampleCount;
+    Y2_1 /= sampleCount;
+    Y2_2 /= sampleCount;
+    Y20  /= sampleCount;
+    Y22  /= sampleCount;
+
     memcpy(&harmonic.mCoefs[0], &Y00, sizeof(float3));
     memcpy(&harmonic.mCoefs[3], &Y11, sizeof(float3));
     memcpy(&harmonic.mCoefs[6], &Y10, sizeof(float3));
