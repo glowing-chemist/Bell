@@ -277,6 +277,7 @@ set(SHADERS
 	ResolveCascadeVarianceShadowMap.comp
 	Skinning.comp
 	RayMarching.hlsl
+	LightProbes.hlsl
     )
 
 foreach(shader ${SHADERS})
