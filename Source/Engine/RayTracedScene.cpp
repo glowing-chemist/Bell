@@ -458,3 +458,32 @@ RayTracingScene::Material RayTracingScene::calculateMaterial(const InterpolatedV
 
     return mat;
 }
+
+
+bool RayTracingScene::isVisibleFrom(const float3& dst, const float3& src) const
+{
+    const float3 direction = dst - src;
+    const float3 normalizedDir = glm::normalize(direction);
+
+    nanort::Ray ray{};
+    ray.dir[0] = normalizedDir.x;
+    ray.dir[1] = normalizedDir.y;
+    ray.dir[2] = normalizedDir.z;
+    ray.org[0] = src.x;
+    ray.org[1] = src.y;
+    ray.org[2] = src.z;
+    ray.min_t = 0.001f;
+    ray.max_t = 200.0f;
+
+    InterpolatedVertex frag;
+    const bool hit = traceRay(ray, &frag);
+    if(hit)
+    {
+        const float dist = glm::length(direction);
+        const float distToHit = glm::length(float3(frag.mPosition) - src);
+
+        return distToHit >= dist;
+    }
+
+    return true;
+}

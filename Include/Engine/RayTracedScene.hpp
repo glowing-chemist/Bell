@@ -49,6 +49,8 @@ public:
     };
     Material calculateMaterial(const InterpolatedVertex&, const MaterialInfo&, const float3 &view) const;
 
+    bool isVisibleFrom(const float3& dst, const float3& src) const;
+
 private:
 
     bool traceRay(const nanort::Ray<float>& ray, InterpolatedVertex* result) const;
