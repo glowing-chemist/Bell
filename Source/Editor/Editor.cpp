@@ -691,7 +691,7 @@ void Editor::drawAssistantWindow()
        {
 
            const Camera& camera = mInProgressScene->getCamera();
-           const float4x4 viewMatrix = glm::lookAt(camera.getPosition(), camera.getPosition() + camera.getDirection(), float3(0.0f, 1.0f, 0.0f));
+           const float4x4 viewMatrix = camera.getViewMatrix();
            const float4x4 projectionMatrix = camera.getPerspectiveMatrix();
 
            for(InstanceID ID : mSceneInstanceIDs)
@@ -870,7 +870,7 @@ void Editor::drawDebugTexturePicker(const std::vector<const char*>& textures)
 void Editor::drawLightMenu()
 {
     const Camera& camera = mInProgressScene->getCamera();
-    const float4x4 viewMatrix = glm::lookAt(camera.getPosition(), camera.getPosition() + camera.getDirection(), float3(0.0f, 1.0f, 0.0f));
+    const float4x4 viewMatrix = camera.getViewMatrix();
     const float4x4 projectionMatrix = camera.getPerspectiveMatrix();
 
     if (ImGui::TreeNode("Lights"))
