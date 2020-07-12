@@ -229,6 +229,21 @@ bool RayTracingScene::traceRay(const nanort::Ray<float>& ray, InterpolatedVertex
 }
 
 
+bool RayTracingScene::traceRayNonAlphaTested(const nanort::Ray<float> &ray, InterpolatedVertex *result) const
+{
+    nanort::TriangleIntersector triangle_intersecter(reinterpret_cast<const float*>(mPositions.data()), mIndexBuffer.data(), sizeof(float3));
+    nanort::TriangleIntersection intersection;
+    const bool hit = mAccelerationStructure.Traverse(ray, triangle_intersecter, &intersection);
+
+    if(hit)
+    {
+        *result = interpolateFragment(intersection.prim_id, intersection.u, intersection.v);
+    }
+
+    return hit;
+}
+
+
 bool RayTracingScene::traceShadowRay(const InterpolatedVertex& position) const
 {
     const Scene::ShadowingLight& sun = mScene->getShadowingLight();

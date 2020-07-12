@@ -53,6 +53,7 @@ Engine::Engine(GLFWwindow* windowPtr) :
 #endif
     mRenderDevice(mRenderInstance->createRenderDevice(DeviceFeaturesFlags::Compute | DeviceFeaturesFlags::Subgroup | DeviceFeaturesFlags::Geometry)),
     mCurrentScene(nullptr),
+    mRayTracedScene(nullptr),
     mAnimationVertexBuilder(),
     mBoneIndexBuilder(),
     mBoneWeightBuilder(),
@@ -157,6 +158,12 @@ void Engine::setScene(Scene* scene)
         // need to invalidate render pipelines as the number of materials could change.
         mRenderDevice->invalidatePipelines();
     }
+}
+
+
+void Engine::setRayTracingScene(RayTracingScene* scene)
+{
+    mRayTracedScene = scene;
 }
 
 
@@ -685,12 +692,10 @@ bool Engine::isPassRegistered(const PassType pass) const
 
 void Engine::rayTraceScene()
 {
-    if(mCurrentScene)
+    if(mRayTracedScene)
     {
-        RayTracingScene rtScene(mCurrentScene);
-
         const ImageExtent extent = getSwapChainImage()->getExtent(0, 0);
-        rtScene.renderSceneToFile(mCurrentScene->getCamera(), extent.width, extent.height, "./RTNormals.jpg");
+        mRayTracedScene->renderSceneToFile(mCurrentScene->getCamera(), extent.width, extent.height, "./RTNormals.jpg");
     }
     else
     {
@@ -736,13 +741,11 @@ std::vector<Engine::SphericalHarmonic> Engine::generateIrradianceProbes(const st
 {
     std::vector<Engine::SphericalHarmonic> harmonics{};
 
-    if(mCurrentScene)
+    if(mRayTracedScene)
     {
-        RayTracingScene rtScene(mCurrentScene);
-
         for(const float3& position : positions)
         {
-            const CPUImage cubeMap = renderDiffuseCubeMap(rtScene, position, 512, 512);
+            const CPUImage cubeMap = renderDiffuseCubeMap(*mRayTracedScene, position, 512, 512);
             const SphericalHarmonic harmonic = generateSphericalHarmonic(position, cubeMap);
 
             harmonics.push_back(harmonic);

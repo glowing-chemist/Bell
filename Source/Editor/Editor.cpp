@@ -287,6 +287,7 @@ Editor::Editor(GLFWwindow* window) :
     mEngine{mWindow},
     mSceneInstanceIDs{},
     mInProgressScene{new Scene("Default")},
+    mRayTracingScene(nullptr),
     mStaticMeshEntries{},
     mShowMeshFileBrowser{false},
     mShowMaterialDialog{false},
@@ -456,6 +457,7 @@ void Editor::swap()
 
     if(mResetSceneAtEndOfFrame)
     {
+        delete mRayTracingScene;
         delete mInProgressScene;
         mInProgressScene = new Scene("InProgress");
 
@@ -1165,6 +1167,8 @@ void Editor::loadScene(const std::string& scene)
     mInProgressScene->loadSkybox(skybox, &mEngine);
 
     mEngine.setScene(mInProgressScene);
+    mRayTracingScene = new RayTracingScene(mInProgressScene);
+    mEngine.setRayTracingScene(mRayTracingScene);
 
     mPublishedScene = true; // Scene has been published to engine.
 }

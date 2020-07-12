@@ -163,6 +163,7 @@ set(BELL_SOURCE
     Source/Engine/RayTracingSamplers.cpp
     Source/Engine/CPUImage.cpp
     Source/Engine/PBR.cpp
+    Source/Engine/NavigationMesh.cpp
 
     # Techniques
     Source/Engine/SSAOTechnique.cpp

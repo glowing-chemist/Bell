@@ -35,6 +35,7 @@ public:
 
     // Set the current Scene, mostly for use by the editor.
     void setScene(Scene*);
+    void setRayTracingScene(RayTracingScene* scene);
 
     Scene* getScene()
     { return mCurrentScene; }
@@ -242,6 +243,7 @@ private:
     RenderDevice* mRenderDevice;
 
     Scene* mCurrentScene;
+    RayTracingScene* mRayTracedScene;
 
     BufferBuilder mAnimationVertexBuilder;
     BufferBuilder mBoneIndexBuilder;

@@ -109,6 +109,7 @@ private:
     std::vector<InstanceID> mSceneInstanceIDs;
 
     Scene* mInProgressScene;
+    RayTracingScene* mRayTracingScene;
     struct StaticMeshEntry
     {
         SceneID mID;

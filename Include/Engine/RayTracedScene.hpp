@@ -51,6 +51,8 @@ public:
 
     bool isVisibleFrom(const float3& dst, const float3& src) const;
 
+    bool traceRayNonAlphaTested(const nanort::Ray<float>& ray, InterpolatedVertex* result) const;
+
 private:
 
     bool traceRay(const nanort::Ray<float>& ray, InterpolatedVertex* result) const;
