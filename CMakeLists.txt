@@ -191,6 +191,7 @@ set(BELL_SOURCE
     Source/Engine/TransparentTechnique.cpp
     Source/Engine/CascadeShadowMappingTechnique.cpp
     Source/Engine/SkinningTechnique.cpp
+    Source/Engine/DeferredProbeGITechnique.cpp
 
     # used for texture loading
     ThirdParty/stb_image/stb_image.cpp
@@ -279,6 +280,7 @@ set(SHADERS
 	Skinning.comp
 	RayMarching.hlsl
 	LightProbes.hlsl
+	DeferredProbeGI.frag
     )
 
 foreach(shader ${SHADERS})

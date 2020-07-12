@@ -1,9 +1,9 @@
-
 #include "PBR.hlsl"
 #include "NormalMapping.hlsl"
 #include "UniformBuffers.hlsl"
 #include "ShadowMapping.hlsl"
 #include "VertexOutputs.hlsl"
+#include "LightProbes.hlsl"
 
 [[vk::binding(0)]]
 ConstantBuffer<CameraBuffer> camera;
@@ -30,15 +30,18 @@ Texture2D<float4> EmissiveOcclusion;
 TextureCube<float4> ConvolvedSkyboxSpecular;
 
 [[vk::binding(8)]]
-TextureCube<float4> ConvolvedSkyboxDiffuse;
-
-[[vk::binding(9)]]
 SamplerState linearSampler;
 
 #if defined(Shadow_Map) || defined(Cascade_Shadow_Map)
-[[vk::binding(10)]]
+[[vk::binding(9)]]
 Texture2D<float> shadowMap;
 #endif
+
+[[vk::binding(0, 1)]]
+StructuredBuffer<SphericalHarmonic> harmonics;
+
+[[vk::binding(1, 1)]]
+Texture3D<int4> ProbeLookupTable;
 
 
 float4 main(UVVertOutput vertInput)
@@ -68,7 +71,17 @@ float4 main(UVVertOutput vertInput)
 
 	float3 radiance = ConvolvedSkyboxSpecular.SampleLevel(linearSampler, lightDir, lodLevel).xyz;
 
-    float3 irradiance = ConvolvedSkyboxDiffuse.Sample(linearSampler, normal).xyz;
+    float3 irradiance;
+    {
+        const float3 lookupSamplePos = worldSpaceFragmentPos.xyz / camera.sceneSize.xyz;
+        const uint4 harmonicsIndicies = ProbeLookupTable.Sample(linearSampler, lookupSamplePos);
+
+        SphericalHarmonic probe1 = harmonics[harmonicsIndicies.x];
+        SphericalHarmonic probe2 = harmonics[harmonicsIndicies.y];
+        SphericalHarmonic probe3 = harmonics[harmonicsIndicies.z];
+
+        irradiance = calculateProbeIrradiance(worldSpaceFragmentPos.xyz, normal, probe1, probe2, probe3);
+    }
 
 #if defined(Shadow_Map) || defined(Cascade_Shadow_Map)
     const float occlusion = shadowMap.Sample(linearSampler, uv);
@@ -85,5 +98,5 @@ float4 main(UVVertOutput vertInput)
     const float3 diffuseLighting = calculateDiffuseDisney(material, irradiance, dfg);
     const float3 specularlighting = calculateSpecular(material, radiance, dfg);
 
-    return float4(specularlighting + diffuseLighting + emissiveOcclusion.xyz, 1.0) * emissiveOcclusion.w;
+    return float4(specularlighting + diffuseLighting + emissiveOcclusion.xyz, 1.0f) * emissiveOcclusion.w;
 }

@@ -13,7 +13,7 @@ CompositeTechnique::CompositeTechnique(Engine* eng, RenderGraph& graph) :
 	const auto viewPortY = eng->getSwapChainImage()->getExtent(0, 0).height;
 
     const bool usingGlobalLighting = eng->isPassRegistered(PassType::ForwardIBL) || eng->isPassRegistered(PassType::DeferredPBRIBL)
-		|| eng->isPassRegistered(PassType::ForwardCombinedLighting);
+        || eng->isPassRegistered(PassType::ForwardCombinedLighting) || eng->isPassRegistered(PassType::LightProbeDeferredGI);
 	const bool usingAnalyticalLighting = eng->isPassRegistered(PassType::DeferredAnalyticalLighting);
 	const bool usingSSAO = eng->isPassRegistered(PassType::SSAO) || eng->isPassRegistered(PassType::SSAOImproved);
 	const bool usingOverlay = eng->isPassRegistered(PassType::Overlay);

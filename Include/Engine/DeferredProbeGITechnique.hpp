@@ -1,20 +1,18 @@
-#ifndef IMAGEBASEDLIGHTING_TECHNIQUE_HPP
-#define IMAGEBASEDLIGHTING_TECHNIQUE_HPP
+#ifndef DEFERRED_PROBE_GI_TECHNIQUE_HPP
+#define DEFERRED_PROBE_GI_TECHNIQUE_HPP
 
-#include "Engine/Technique.hpp"
+#include "Technique.hpp"
 #include "RenderGraph/GraphicsTask.hpp"
 
-
-class DeferredImageBasedLightingTechnique : public Technique
+class DeferredProbeGITechnique : public Technique
 {
 public:
-
-    DeferredImageBasedLightingTechnique(Engine*, RenderGraph&);
-    ~DeferredImageBasedLightingTechnique() = default;
+    DeferredProbeGITechnique(Engine*, RenderGraph&);
+    ~DeferredProbeGITechnique() = default;
 
     virtual PassType getPassType() const override final
     {
-        return PassType::DeferredPBRIBL;
+	return PassType::LightProbeDeferredGI;
     }
 
     virtual void render(RenderGraph&, Engine*) override final
@@ -23,10 +21,8 @@ public:
     virtual void bindResources(RenderGraph&) override final {}
 
 private:
-
     GraphicsPipelineDescription mPipelineDesc;
     TaskID mTaskID;
 };
-
 
 #endif

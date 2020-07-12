@@ -22,6 +22,14 @@ using int2 = glm::vec<2, int32_t>;
 using int3 = glm::vec<3, int32_t>;
 using int4 = glm::vec<4, int32_t>;
 
+using short2 = glm::vec<2, int16_t>;
+using short3 = glm::vec<3, int16_t>;
+using short4 = glm::vec<4, int16_t>;
+
+using ushort2 = glm::vec<2, uint16_t>;
+using ushort3 = glm::vec<3, uint16_t>;
+using ushort4 = glm::vec<4, uint16_t>;
+
 using float4x4 = glm::mat4;
 using float3x3 = glm::mat3;
 using float4x3 = glm::mat4x3;

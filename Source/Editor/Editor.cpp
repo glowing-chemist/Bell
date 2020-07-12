@@ -124,6 +124,22 @@ namespace
                 return newNode;
             }
 
+            case NodeTypes::LightProbeDeferredGI:
+            {
+                std::shared_ptr<EditorNode> newNode = std::make_shared<PassNode>("deferred probe GI", passType);
+                newNode->mInputs.push_back(Pin{ 0, newNode, kDFGLUT, PinType::Texture, PinKind::Input });
+                newNode->mInputs.push_back(Pin{ 0, newNode, kGBufferNormals, PinType::Texture, PinKind::Input });
+                newNode->mInputs.push_back(Pin{ 0, newNode, kGBufferDiffuse, PinType::Texture, PinKind::Input });
+                newNode->mInputs.push_back(Pin{ 0, newNode, kGBufferSpecularRoughness, PinType::Texture, PinKind::Input });
+                newNode->mInputs.push_back(Pin{ 0, newNode, kGBufferEmissiveOcclusion, PinType::Texture, PinKind::Input });
+                newNode->mInputs.push_back(Pin{ 0, newNode, kGBufferDepth, PinType::Texture, PinKind::Input });
+                newNode->mInputs.push_back(Pin{ 0, newNode, kSkyBox, PinType::Texture, PinKind::Input });
+                newNode->mInputs.push_back(Pin{ 0, newNode, kLightProbes, PinType::Texture, PinKind::Input });
+                newNode->mInputs.push_back(Pin{ 0, newNode, kConvolvedSpecularSkyBox, PinType::Texture, PinKind::Input });
+                newNode->mOutputs.push_back(Pin{ 0, newNode, kGlobalLighting, PinType::Texture, PinKind::Output });
+                return newNode;
+            }
+
 			case NodeTypes::ConvolveSkybox:
 			{
 				std::shared_ptr<EditorNode> newNode = std::make_shared<PassNode>("ConvolveSkybox", passType);
@@ -299,6 +315,8 @@ Editor::Editor(GLFWwindow* window) :
     mResetSceneAtEndOfFrame{false},
     mPublishedScene{false},
     mAnimationSpeed(1.0f),
+    mLightProbeDensity(10.0f, 10.0f, 10.0f),
+    mLightProbeLookupSize(64, 64, 64),
     mLightOperationMode{ImGuizmo::OPERATION::TRANSLATE},
     mEditShadowingLight{false}
 {
@@ -654,6 +672,7 @@ void Editor::drawAssistantWindow()
 		   drawPassContextMenu(PassType::InplaceCombine);
 		   drawPassContextMenu(PassType::InplaceCombineSRGB);
            drawPassContextMenu(PassType::DeferredPBRIBL);
+           drawPassContextMenu(PassType::LightProbeDeferredGI);
 		   drawPassContextMenu(PassType::ForwardIBL);
            drawPassContextMenu(PassType::ForwardCombinedLighting);
 		   drawPassContextMenu(PassType::Skybox);
@@ -817,6 +836,22 @@ void Editor::drawAssistantWindow()
                }
 
                ImGui::Text("Total GPU time %f ms", totalGPUTime);
+           }
+
+           ImGui::TreePop();
+       }
+
+       if(ImGui::TreeNode("Light Probes"))
+       {
+           float3 sceneSize = mInProgressScene->getBounds().getSideLengths();
+           ImGui::Text("Scene size X: %f, Y:, %f, Z: %f", sceneSize.x, sceneSize.y, sceneSize.z);
+
+           ImGui::InputFloat3("Light probe denisty", &mLightProbeDensity.x);
+           ImGui::InputInt3("Lookup texture resolution", &mLightProbeLookupSize.x);
+
+           if(ImGui::Button("Bake light probes (EXPENSIVE!)"))
+           {
+               bakeAndSaveLightProbes();
            }
 
            ImGui::TreePop();
@@ -1171,4 +1206,39 @@ void Editor::loadScene(const std::string& scene)
     mEngine.setRayTracingScene(mRayTracingScene);
 
     mPublishedScene = true; // Scene has been published to engine.
+}
+
+
+void Editor::bakeAndSaveLightProbes()
+{
+    const AABB& sceneBounds = mInProgressScene->getBounds();
+
+    const float4& sceneStart = sceneBounds.getBottom();
+    const float4& end = sceneBounds.getTop();
+
+    std::vector<float3> probePositions{};
+    for(float x = sceneStart.x; x < end.x; x += mLightProbeDensity.x)
+    {
+        for(float y = sceneStart.y; y < end.y; y += mLightProbeDensity.y)
+        {
+            for(float z = sceneStart.z; z < end.z; z += mLightProbeDensity.z)
+            {
+                probePositions.push_back({x, y, z});
+            }
+        }
+    }
+
+    std::vector<Engine::SphericalHarmonic> harmonics = mEngine.generateIrradianceProbes(probePositions);
+
+    FILE* harmonicsFile = fopen("./SphericalHarmincs.bin", "wb");
+    BELL_ASSERT(harmonicsFile, "Unabel to create harmonics file")
+    fwrite(harmonics.data(), sizeof(Engine::SphericalHarmonic), harmonics.size(), harmonicsFile);
+    fclose(harmonicsFile);
+
+    std::vector<short4> lookupTextureData = mEngine.generateVoronoiLookupTexture(harmonics, mLightProbeLookupSize);
+
+    FILE* lookupFile = fopen("./VoronoiLookupData.bin", "wb");
+    BELL_ASSERT(lookupFile, "Unabel to create harmonics file")
+    fwrite(lookupTextureData.data(), sizeof(short4), lookupTextureData.size(), lookupFile);
+    fclose(lookupFile);
 }

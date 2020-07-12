@@ -22,6 +22,8 @@ struct CameraBuffer
 
         float2 jitter;
         float2 previousJitter;
+
+        float4 sceneSize;
 };    
 
     

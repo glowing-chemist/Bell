@@ -29,6 +29,7 @@ const char kReflectionMap[] = "ReflectionMap";
 const char kDiffuseVoxelMap[] = "DiffuseVoxelMap";
 const char kDebugVoxels[] = "DebugVoxels";
 const char kVoxelDimmensions[] = "VoxelDimm";
+const char kLightProbes[] = "LightProbes";
 
 const char kCameraBuffer[]	    = "CameraBuffer";
 const char kLightBuffer[]	    = "LightBuffer";

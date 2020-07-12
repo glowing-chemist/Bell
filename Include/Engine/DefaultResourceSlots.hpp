@@ -31,6 +31,7 @@ extern const char kReflectionMap[];
 extern const char kDiffuseVoxelMap[];
 extern const char kDebugVoxels[];
 extern const char kVoxelDimmensions[];
+extern const char kLightProbes[];
 
 extern const char kCameraBuffer[];
 extern const char kLightBuffer[];

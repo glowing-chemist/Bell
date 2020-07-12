@@ -38,10 +38,14 @@
 #include "Engine/TransparentTechnique.hpp"
 #include "Engine/CascadeShadowMappingTechnique.hpp"
 #include "Engine/SkinningTechnique.hpp"
+#include "Engine/DeferredProbeGITechnique.hpp"
 
 #include "Engine/RayTracedScene.hpp"
 
 #include "glm/gtx/transform.hpp"
+
+#include <numeric>
+#include <thread>
 
 
 Engine::Engine(GLFWwindow* windowPtr) :
@@ -88,7 +92,7 @@ Engine::Engine(GLFWwindow* windowPtr) :
     mLightCountView(mLightBuffer, 0, sizeof(uint4)),
     mLightsSRS(getDevice(), 2),
     mMaxCommandThreads(1),
-    mIrradianceProbeDensity(10.0f, 10.0f, 10.0f),
+    mLightProbeResourceSet(mRenderDevice, 3),
     mWindow(windowPtr)
 {
     for(uint32_t i = 0; i < getDevice()->getSwapChainImageCount(); ++i)
@@ -297,6 +301,9 @@ std::unique_ptr<Technique> Engine::getSingleTechnique(const PassType passType)
         case PassType::Animation:
             return std::make_unique<SkinningTechnique>(this, mCurrentRenderGraph);
 
+        case PassType::LightProbeDeferredGI:
+            return std::make_unique<DeferredProbeGITechnique>(this, mCurrentRenderGraph);
+
         default:
         {
             BELL_TRAP;
@@ -404,6 +411,9 @@ void Engine::execute(RenderGraph& graph)
 
         if(mCurrentScene && mCurrentScene->getSkybox())
             mCurrentRenderGraph.bindImage(kSkyBox, *mCurrentScene->getSkybox());
+
+        if(mIrradianceProbeBuffer)
+            mCurrentRenderGraph.bindShaderResourceSet(kLightProbes, mLightProbeResourceSet);
 
         mCompileGraph = false;
     }
@@ -630,6 +640,7 @@ void Engine::updateGlobalBuffers()
             mCameraBuffer.mNeaPlane = currentCamera.getNearPlane();
             mCameraBuffer.mFarPlane = currentCamera.getFarPlane();
             mCameraBuffer.mFOV = currentCamera.getFOV();
+            mCameraBuffer.mSceneSize = float4(mCurrentScene->getBounds().getSideLengths(), 1.0f);
 
             MapInfo mapInfo{};
             mapInfo.mSize = sizeof(CameraBuffer);
@@ -752,6 +763,16 @@ std::vector<Engine::SphericalHarmonic> Engine::generateIrradianceProbes(const st
         }
     }
 
+    if(!harmonics.empty())
+    {
+        mIrradianceProbeBuffer = std::make_unique<Buffer>(mRenderDevice, BufferUsage::TransferDest | BufferUsage::DataBuffer,
+                                                          sizeof(Engine::SphericalHarmonic) * harmonics.size(), sizeof(Engine::SphericalHarmonic) * harmonics.size(),
+                                                          "Irradiance harmonics");
+        mIrradianceProbeBufferView = std::make_unique<BufferView>(*mIrradianceProbeBuffer);
+
+        (*mIrradianceProbeBuffer)->setContents(harmonics.data(), sizeof(Engine::SphericalHarmonic) * harmonics.size());
+    }
+
     return harmonics;
 }
 
@@ -759,7 +780,7 @@ std::vector<Engine::SphericalHarmonic> Engine::generateIrradianceProbes(const st
 Engine::SphericalHarmonic Engine::generateSphericalHarmonic(const float3& position, const CPUImage& cubemap)
 {
     SphericalHarmonic harmonic{};
-    harmonic.mPosition = position;
+    harmonic.mPosition = float4(position, 1.0f);
 
     auto getNormalFromTexel = [](const int3 texelPosition, const float2 size)
     {
@@ -818,7 +839,7 @@ Engine::SphericalHarmonic Engine::generateSphericalHarmonic(const float3& positi
             {
                 const float3 normal = getNormalFromTexel(int3(x, y, faceIndex), float2(extent.width, extent.height));
 
-                const float3 L = cubemap.sample3(normal);
+                const float3 L = cubemap.sample4(normal);
 
                 // Constants map to SH basis functions constants.
                 Y00   += L * 0.282095f;
@@ -828,7 +849,7 @@ Engine::SphericalHarmonic Engine::generateSphericalHarmonic(const float3& positi
                 Y21   += L * 1.092548f * (normal.x * normal.z);
                 Y2_1  += L * 1.092548f * (normal.y * normal.z);
                 Y2_2  += L * 1.092548f * (normal.x * normal.y);
-                Y20   += L * 0.315392f * ((3 * normal.z * normal.z) - 1.0f);
+                Y20   += L * 0.315392f * ((3.0f * normal.z * normal.z) - 1.0f);
                 Y22   += L * 0.546274f * (normal.x * normal.x - normal.y * normal.y);
 
             }
@@ -857,4 +878,103 @@ Engine::SphericalHarmonic Engine::generateSphericalHarmonic(const float3& positi
     memcpy(&harmonic.mCoefs[24], &Y22, sizeof(float3));
 
     return harmonic;
+}
+
+
+std::vector<short4> Engine::generateVoronoiLookupTexture(const std::vector<SphericalHarmonic>& harmonics, const uint3& textureSize)
+{
+    std::vector<short4> textureData{};
+    textureData.resize(textureSize.x * textureSize.y * textureSize.z);
+
+    const AABB& sceneBounds = mCurrentScene->getBounds();
+    const float3 sceneSize = sceneBounds.getSideLengths();
+    const float4& sceneStart = sceneBounds.getBottom();
+
+    auto calculateVoronoiIndices = [&](const uint3& pos, std::vector<uint32_t>& indicies) -> short4
+    {
+        int32_t foundIndicies[3] = {-1, -1, -1};
+        uint8_t indiciesFound = 0;
+
+        const float4 scenePos = ((float4(float3(pos), 1.0f) / float4(float3(textureSize), 1.0f)) * float4(sceneSize, 1.0f)) + sceneStart;
+
+        // Loop through all probes and find closest 3 that are visible from position.
+        uint32_t indexToCheck = 0;
+        while(indexToCheck < harmonics.size())
+        {
+            // Find closest probe.
+            std::nth_element(indicies.begin(), indicies.begin() + indexToCheck, indicies.end(), [&](const uint32_t lhs, const uint32_t rhs)
+            {
+                return glm::distance(scenePos, harmonics[lhs].mPosition) < glm::distance(scenePos, harmonics[rhs].mPosition);
+            });
+
+            float3 probePosition = harmonics[indicies[indexToCheck]].mPosition;
+
+            const bool visible = mRayTracedScene->isVisibleFrom(scenePos, probePosition);
+            if(visible)
+            {
+                foundIndicies[indiciesFound++] = indicies[indexToCheck];
+            }
+
+            ++indexToCheck;
+
+            if(indiciesFound == 3)
+                break;
+        }
+
+        BELL_ASSERT(indiciesFound == 3, "Unable to find enough visible light probes from position") // Non fatal but should investiagate probe placement if hit.
+
+        short4 result{};
+        result.x = foundIndicies[0];
+        result.y = foundIndicies[1];
+        result.z = foundIndicies[2];
+        result.w = 0;
+
+        return result;
+    };
+
+
+    auto calculatePixels = [&](const uint32_t start, const uint32_t stepSize)
+    {
+        std::vector<uint32_t> indicies{};
+        indicies.resize(harmonics.size());
+        std::iota(indicies.begin(), indicies.end(), 0); // create initial indicies.
+
+        uint32_t location = start;
+        while(location < (textureSize.x * textureSize.y * textureSize.z))
+        {
+            const uint32_t x = location % textureSize.x;
+            const uint32_t y = (location / textureSize.x) % textureSize.y;
+            const uint32_t z = location / (textureSize.x * textureSize.y);
+
+            textureData[location] = calculateVoronoiIndices(uint3(x, y, z), indicies);
+
+            location += stepSize;
+        }
+    };
+
+    const uint32_t processor_count = std::thread::hardware_concurrency();
+    std::vector<std::thread> helperThreads{};
+
+    for(uint32_t i = 1; i < processor_count; ++i)
+    {
+        helperThreads.push_back(std::thread(calculatePixels, i, processor_count));
+    }
+
+    calculatePixels(0, processor_count);
+
+    for(auto& thread : helperThreads)
+        thread.join();
+
+    mIrradianceVoronoiIrradianceLookup = std::make_unique<Image>(mRenderDevice, Format::RGBA16Int, ImageUsage::TransferDest | ImageUsage::Sampled,
+                                                                 textureSize.x, textureSize.y, textureSize.z, 1, 1, 1, "Voronoi probe lookup");
+    mIrradianceVoronoiIrradianceLookupView = std::make_unique<ImageView>(*mIrradianceVoronoiIrradianceLookup, ImageViewType::Colour);
+
+    (*mIrradianceVoronoiIrradianceLookup)->setContents(textureData.data(), textureSize.x, textureSize.y, textureSize.z);
+
+    // Set up light probe SRS.
+    mLightProbeResourceSet->addDataBufferRO(*mIrradianceProbeBufferView);
+    mLightProbeResourceSet->addSampledImage(*mIrradianceVoronoiIrradianceLookupView);
+    mLightProbeResourceSet->finalise();
+
+    return textureData;
 }

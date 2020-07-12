@@ -212,25 +212,16 @@ public:
         return mActiveAnimations;
     }
 
-    void setIrradianceProbeDensity(const float3& density)
-    {
-        mIrradianceProbeDensity = density;
-    }
-
-    const float3 getIrradianceProbeDensity() const
-    {
-        return mIrradianceProbeDensity;
-    }
-
     void rayTraceScene();
 
     struct SphericalHarmonic
     {
-        float3 mPosition;
-        float mCoefs[27];
+        float4 mPosition;
+        float mCoefs[28];
     };
 
     std::vector<SphericalHarmonic> generateIrradianceProbes(const std::vector<float3> &positions);
+    std::vector<short4> generateVoronoiLookupTexture(const std::vector<SphericalHarmonic>& harmonics, const uint3& textureSize);
 
 private:
 
@@ -309,7 +300,11 @@ private:
     uint32_t mMaxCommandThreads;
     std::mutex mSubmissionLock;
 
-    float3 mIrradianceProbeDensity;
+    std::unique_ptr<Buffer> mIrradianceProbeBuffer;
+    std::unique_ptr<BufferView> mIrradianceProbeBufferView;
+    std::unique_ptr<Image> mIrradianceVoronoiIrradianceLookup;
+    std::unique_ptr<ImageView> mIrradianceVoronoiIrradianceLookupView;
+    ShaderResourceSet mLightProbeResourceSet;
 
     GLFWwindow* mWindow;
 };

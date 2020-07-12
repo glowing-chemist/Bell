@@ -27,6 +27,8 @@ struct CameraBuffer
 
     float2 mJitter;
     float2 mPreviousJitter;
+
+    float4 mSceneSize;
 };
 
 

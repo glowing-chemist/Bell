@@ -65,6 +65,8 @@ private:
 
     void drawPassContextMenu(const PassType);
 
+    void bakeAndSaveLightProbes();
+
 	void loadScene(const std::string&);
 
     GLFWwindow* mWindow;
@@ -129,6 +131,9 @@ private:
     bool mPublishedScene;
 
     float mAnimationSpeed;
+
+    float3 mLightProbeDensity;
+    int3 mLightProbeLookupSize;
 
     std::vector<EditorLight> mLights;
     EditorLight mShadowingLight;

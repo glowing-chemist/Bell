@@ -118,6 +118,9 @@ vk::Format getVulkanImageFormat(const Format format)
 	case Format::RGBA16UInt:
 		return vk::Format::eR16G16B16A16Uint;
 
+    case Format::RGBA16Int:
+        return vk::Format::eR16G16B16A16Sint;
+
     case Format::RGBA8Uint:
         return vk::Format::eR8G8B8A8Uint;
 
@@ -561,8 +564,13 @@ uint32_t getPixelSize(const Format format)
         result = 8;
         break;
 
+    case Format::RGBA16Int:
+        result = 8;
+        break;
+
 	case Format::R8UNorm:
-		return 1;
+        result = 1;
+        break;
 
 	default:
 		result =  4;

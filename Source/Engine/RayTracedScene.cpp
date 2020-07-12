@@ -135,8 +135,6 @@ void RayTracingScene::renderSceneToMemory(const Camera& camera, const uint32_t x
 
     for(auto& thread : helperThreads)
         thread.join();
-
-    return;
 }
 
 
@@ -155,7 +153,7 @@ void RayTracingScene::renderSceneToFile(const Camera& camera, const uint32_t x, 
 
 RayTracingScene::InterpolatedVertex RayTracingScene::interpolateFragment(const uint32_t primID, const float u, const float v) const
 {
-    BELL_ASSERT((u + v) <= 1.0f, "Out of bounds")
+    BELL_ASSERT((u + v) <= 1.1f, "Out of bounds")
 
     const uint32_t baseIndiciesIndex = primID * 3;
     BELL_ASSERT(primID * 3 < mIndexBuffer.size(), "PrimID out of bounds")

@@ -35,7 +35,8 @@
                     Voxelize = 1ULL << 28, \
                     DebugAABB = 1ULL << 29, \
                     DebugWireFrame = 1ULL << 30, \
-                    Transparent = 1ULL << 31
+                    Transparent = 1ULL << 31, \
+                    LightProbeDeferredGI = 1ULL << 32
 
 // An enum to keep track of which 
 enum class PassType : uint64_t
@@ -135,6 +136,9 @@ inline const char* passToString(const PassType passType)
 
         case PassType::Voxelize:
             return "Voxalize";
+
+        case PassType::LightProbeDeferredGI:
+            return "DeferredProbeLighting";
     }
 
     return "UNKNOWN PASS TYPE";
@@ -191,6 +195,7 @@ enum class Format
 	RGBA32Float,
 	R16UInt,
     RGBA16UInt,
+    RGBA16Int,
     RGBA8Uint
 };
 
