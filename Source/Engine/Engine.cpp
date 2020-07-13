@@ -39,6 +39,7 @@
 #include "Engine/CascadeShadowMappingTechnique.hpp"
 #include "Engine/SkinningTechnique.hpp"
 #include "Engine/DeferredProbeGITechnique.hpp"
+#include "Engine/VisualizeLightProbesTechnique.hpp"
 
 #include "Engine/RayTracedScene.hpp"
 
@@ -126,6 +127,9 @@ Engine::Engine(GLFWwindow* windowPtr) :
     {
         mTAAJitter[i] = (halton_2_3(i) - 0.5f);
     }
+
+    // load default meshes.
+    mUnitSphere = std::make_unique<StaticMesh>("./Assets/unitSphere.fbx", VertexAttributes::Position4 | VertexAttributes::Normals);
 
     mAnimationLastTicked = std::chrono::system_clock::now();
 }
@@ -303,6 +307,9 @@ std::unique_ptr<Technique> Engine::getSingleTechnique(const PassType passType)
 
         case PassType::LightProbeDeferredGI:
             return std::make_unique<DeferredProbeGITechnique>(this, mCurrentRenderGraph);
+
+        case PassType::VisualizeLightProbes:
+            return std::make_unique<ViaualizeLightProbesTechnique>(this, mCurrentRenderGraph);
 
         default:
         {
@@ -565,7 +572,7 @@ void Engine::recordScene()
 
         while (mPassesRegisteredThisFrame > 0)
         {
-            const uint64_t passTypeIndex = __builtin_ctz(mPassesRegisteredThisFrame);
+            const uint64_t passTypeIndex = __builtin_ctzl(mPassesRegisteredThisFrame);
 
             mTechniques.push_back(getSingleTechnique(static_cast<PassType>(1ull << passTypeIndex)));
             mPassesRegisteredThisFrame &= mPassesRegisteredThisFrame - 1;
@@ -881,7 +888,7 @@ Engine::SphericalHarmonic Engine::generateSphericalHarmonic(const float3& positi
 }
 
 
-std::vector<short4> Engine::generateVoronoiLookupTexture(const std::vector<SphericalHarmonic>& harmonics, const uint3& textureSize)
+std::vector<short4> Engine::generateVoronoiLookupTexture(std::vector<SphericalHarmonic>& harmonics, const uint3& textureSize)
 {
     std::vector<short4> textureData{};
     textureData.resize(textureSize.x * textureSize.y * textureSize.z);
@@ -965,6 +972,14 @@ std::vector<short4> Engine::generateVoronoiLookupTexture(const std::vector<Spher
     for(auto& thread : helperThreads)
         thread.join();
 
+    // rebaking to need to flush and reset.
+    if(mIrradianceProbeBuffer)
+    {
+        mRenderDevice->flushWait();
+
+        mLightProbeResourceSet.reset(mRenderDevice, 2);
+    }
+
     mIrradianceVoronoiIrradianceLookup = std::make_unique<Image>(mRenderDevice, Format::RGBA16Int, ImageUsage::TransferDest | ImageUsage::Sampled,
                                                                  textureSize.x, textureSize.y, textureSize.z, 1, 1, 1, "Voronoi probe lookup");
     mIrradianceVoronoiIrradianceLookupView = std::make_unique<ImageView>(*mIrradianceVoronoiIrradianceLookup, ImageViewType::Colour);
@@ -976,5 +991,60 @@ std::vector<short4> Engine::generateVoronoiLookupTexture(const std::vector<Spher
     mLightProbeResourceSet->addSampledImage(*mIrradianceVoronoiIrradianceLookupView);
     mLightProbeResourceSet->finalise();
 
+    mIrradianceProbesHarmonics = std::move(harmonics);
+
     return textureData;
+}
+
+
+void Engine::loadIrradianceProbes(const std::string& probesPath, const std::string& lookupPath)
+{
+    FILE* probeFile = fopen(probesPath.c_str(), "rb");
+    BELL_ASSERT(probeFile, "Unable to find irradiance probe file")
+    fseek(probeFile, 0L, SEEK_END);
+    const uint32_t probeSize = ftell(probeFile);
+    fseek(probeFile, 0L, SEEK_SET);
+
+    BELL_ASSERT(probeSize % sizeof(SphericalHarmonic) == 0, "Invalid sphereical harmonics cache size")
+    mIrradianceProbesHarmonics.resize(probeSize / sizeof(SphericalHarmonic));
+    fread(mIrradianceProbesHarmonics.data(), sizeof(SphericalHarmonic), mIrradianceProbesHarmonics.size(), probeFile);
+    fclose(probeFile);
+
+    mIrradianceProbeBuffer = std::make_unique<Buffer>(mRenderDevice, BufferUsage::TransferDest | BufferUsage::DataBuffer,
+                                                      sizeof(Engine::SphericalHarmonic) * mIrradianceProbesHarmonics.size(), sizeof(Engine::SphericalHarmonic) * mIrradianceProbesHarmonics.size(),
+                                                      "Irradiance harmonics");
+    mIrradianceProbeBufferView = std::make_unique<BufferView>(*mIrradianceProbeBuffer);
+
+    (*mIrradianceProbeBuffer)->setContents(mIrradianceProbesHarmonics.data(), sizeof(Engine::SphericalHarmonic) * mIrradianceProbesHarmonics.size());
+
+    // load lookup texture.
+    FILE* lookupFile = fopen(lookupPath.c_str(), "rb");
+    BELL_ASSERT(lookupFile, "Unable to find irradiance probe file")
+    fseek(lookupFile, 0L, SEEK_END);
+    const uint32_t lookupSize = ftell(lookupFile);
+    fseek(lookupFile, 0L, SEEK_SET);
+
+    BELL_ASSERT((lookupSize % sizeof(short4)) == 0, "Invalid irradiance probe lookup texture cache size")
+    std::vector<short4> textureData{};
+    textureData.resize(lookupSize / sizeof(short4));
+    fread(mIrradianceProbesHarmonics.data(), sizeof(short4), mIrradianceProbesHarmonics.size(), lookupFile);
+    fclose(lookupFile);
+
+    if(mIrradianceVoronoiIrradianceLookup)
+    {
+        mRenderDevice->flushWait();
+
+        mLightProbeResourceSet.reset(mRenderDevice, 2);
+    }
+
+    mIrradianceVoronoiIrradianceLookup = std::make_unique<Image>(mRenderDevice, Format::RGBA16Int, ImageUsage::TransferDest | ImageUsage::Sampled,
+                                                                 64, 64, 64, 1, 1, 1, "Voronoi probe lookup");
+    mIrradianceVoronoiIrradianceLookupView = std::make_unique<ImageView>(*mIrradianceVoronoiIrradianceLookup, ImageViewType::Colour);
+
+    (*mIrradianceVoronoiIrradianceLookup)->setContents(textureData.data(), 64, 64, 64);
+
+    // Set up light probe SRS.
+    mLightProbeResourceSet->addDataBufferRO(*mIrradianceProbeBufferView);
+    mLightProbeResourceSet->addSampledImage(*mIrradianceVoronoiIrradianceLookupView);
+    mLightProbeResourceSet->finalise();
 }

@@ -72,6 +72,12 @@ struct Vertex
 	float4 colour : COLOR0;
 };
 
+struct BasicVertex
+{
+	float4 position : POSITION;
+	float4 normal : NORMAL;
+};
+
 struct OverlayVertex
 {
 	float2 position : POSITION0;

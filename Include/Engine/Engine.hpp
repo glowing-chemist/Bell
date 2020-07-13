@@ -221,7 +221,20 @@ public:
     };
 
     std::vector<SphericalHarmonic> generateIrradianceProbes(const std::vector<float3> &positions);
-    std::vector<short4> generateVoronoiLookupTexture(const std::vector<SphericalHarmonic>& harmonics, const uint3& textureSize);
+    std::vector<short4> generateVoronoiLookupTexture(std::vector<SphericalHarmonic> &harmonics, const uint3& textureSize);
+
+    const std::vector<SphericalHarmonic>& getIrradianceProbes() const
+    {
+        return mIrradianceProbesHarmonics;
+    }
+
+    void loadIrradianceProbes(const std::string& probesPath, const std::string& lookupPath);
+
+    // Default available meshes.
+    const StaticMesh& getUnitSphereMesh() const
+    {
+        return *mUnitSphere;
+    }
 
 private:
 
@@ -300,11 +313,14 @@ private:
     uint32_t mMaxCommandThreads;
     std::mutex mSubmissionLock;
 
+    std::vector<SphericalHarmonic> mIrradianceProbesHarmonics;
     std::unique_ptr<Buffer> mIrradianceProbeBuffer;
     std::unique_ptr<BufferView> mIrradianceProbeBufferView;
     std::unique_ptr<Image> mIrradianceVoronoiIrradianceLookup;
     std::unique_ptr<ImageView> mIrradianceVoronoiIrradianceLookupView;
     ShaderResourceSet mLightProbeResourceSet;
+
+    std::unique_ptr<StaticMesh> mUnitSphere;
 
     GLFWwindow* mWindow;
 };

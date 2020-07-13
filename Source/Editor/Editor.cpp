@@ -277,6 +277,13 @@ namespace
                 newNode->mOutputs.push_back(Pin{ 0, newNode, kDebugVoxels, PinType::Texture, PinKind::Output });
                 return newNode;
             }
+
+            case NodeTypes::VisualizeLightProbes:
+            {
+                std::shared_ptr<EditorNode> newNode = std::make_shared<PassNode>("Visualize light probes", passType);
+                newNode->mInputs.push_back(Pin{ 0, newNode, kGBufferDepth, PinType::Texture, PinKind::Input });
+                return newNode;
+            }
         }
     }
 
@@ -688,6 +695,7 @@ void Editor::drawAssistantWindow()
            drawPassContextMenu(PassType::Transparent);
            drawPassContextMenu(PassType::Animation);
            drawPassContextMenu(PassType::Voxelize);
+           drawPassContextMenu(PassType::VisualizeLightProbes);
 
            ImGui::TreePop();
        }
@@ -789,6 +797,11 @@ void Editor::drawAssistantWindow()
 
        if(ImGui::TreeNode("Camera settings"))
        {
+           Camera& camera = mInProgressScene->getCamera();
+
+           const float3& cameraPos = camera.getPosition();
+           ImGui::Text("Camera position X:%f Y:%f Z:%f", cameraPos.x, cameraPos.y, cameraPos.z);
+
            const bool previouseFlyMode = mCameraInfo.mInFreeFlyMode;
            ImGui::Checkbox("Camera free fly", &mCameraInfo.mInFreeFlyMode);
            ImGui::SliderFloat("Camera speed", &mCameraInfo.mCameraSpeed, 0.01f, 10.0f);
@@ -802,7 +815,6 @@ void Editor::drawAssistantWindow()
            ImGui::TreePop();
 
            // update the current scene camera.
-           Camera& camera = mInProgressScene->getCamera();
            camera.setNearPlane(mCameraInfo.mNearPlaneDistance);
            camera.setFarPlane(mCameraInfo.mFarPlaneDistance);
            camera.setFOVDegrees(mCameraInfo.mFOV);
@@ -1204,6 +1216,13 @@ void Editor::loadScene(const std::string& scene)
     mEngine.setScene(mInProgressScene);
     mRayTracingScene = new RayTracingScene(mInProgressScene);
     mEngine.setRayTracingScene(mRayTracingScene);
+
+    if(std::filesystem::exists(scene + ".irradianceProbes"))
+    {
+        BELL_ASSERT(std::filesystem::exists(scene + ".irradianceLookup"), "Missing loop up texture")
+
+        mEngine.loadIrradianceProbes(scene + ".irradianceProbes", scene + ".irradianceLookup");
+    }
 
     mPublishedScene = true; // Scene has been published to engine.
 }

@@ -69,3 +69,28 @@ float3 calculateProbeIrradiance(float3 positionWS, float3 normal, SphericalHarmo
              + A1*localBasis.Y1_1*L1_1 + A1*localBasis.Y10*L10 + A1*localBasis.Y11*L11 
              + A2*localBasis.Y2_2*L2_2 + A2*localBasis.Y2_1*L2_1 + A2*localBasis.Y20*L20 + A2*localBasis.Y21*L21 + A2*localBasis.Y22*L22);
 }
+
+
+float3 calculateProbeIrradiance(float3 normal, SphericalHarmonic probe)
+{
+	const float A0 = 3.141593f;
+	const float A1 = 2.094395f;
+	const float A2 = 0.785398f;
+
+	const BasisCoefs localBasis = calculateBasis(normal);
+
+	float3 L00 = float3(probe.coefs[0], probe.coefs[1] , probe.coefs[2]);
+	float3 L11 = float3(probe.coefs[3], probe.coefs[4], probe.coefs[5]);
+	float3 L10 = float3(probe.coefs[6], probe.coefs[7], probe.coefs[8]);
+	float3 L1_1 = float3(probe.coefs[9], probe.coefs[10], probe.coefs[11]);
+	float3 L21 = float3(probe.coefs[12], probe.coefs[13], probe.coefs[14]);
+	float3 L2_1 = float3(probe.coefs[15], probe.coefs[16], probe.coefs[17]);
+	float3 L2_2 = float3(probe.coefs[18], probe.coefs[19], probe.coefs[20]);
+	float3 L20 = float3(probe.coefs[21], probe.coefs[22], probe.coefs[23]);
+	float3 L22 = float3(probe.coefs[24], probe.coefs[25], probe.coefs[26]);
+
+	// Reconstruct irradiance at this point.
+	return float3(A0*localBasis.Y00*L00  
+             + A1*localBasis.Y1_1*L1_1 + A1*localBasis.Y10*L10 + A1*localBasis.Y11*L11 
+             + A2*localBasis.Y2_2*L2_2 + A2*localBasis.Y2_1*L2_1 + A2*localBasis.Y20*L20 + A2*localBasis.Y21*L21 + A2*localBasis.Y22*L22);
+}

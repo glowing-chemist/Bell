@@ -36,7 +36,8 @@
                     DebugAABB = 1ULL << 29, \
                     DebugWireFrame = 1ULL << 30, \
                     Transparent = 1ULL << 31, \
-                    LightProbeDeferredGI = 1ULL << 32
+                    LightProbeDeferredGI = 1ULL << 32, \
+                    VisualizeLightProbes = 1ULL << 33
 
 // An enum to keep track of which 
 enum class PassType : uint64_t
@@ -139,6 +140,9 @@ inline const char* passToString(const PassType passType)
 
         case PassType::LightProbeDeferredGI:
             return "DeferredProbeLighting";
+
+        case PassType::VisualizeLightProbes:
+            return "VisulizeLightProbes";
     }
 
     return "UNKNOWN PASS TYPE";
