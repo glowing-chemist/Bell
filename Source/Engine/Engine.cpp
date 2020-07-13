@@ -846,7 +846,7 @@ Engine::SphericalHarmonic Engine::generateSphericalHarmonic(const float3& positi
             {
                 const float3 normal = getNormalFromTexel(int3(x, y, faceIndex), float2(extent.width, extent.height));
 
-                const float3 L = cubemap.sample4(normal);
+                const float3 L = cubemap.sampleCube4(normal);
 
                 // Constants map to SH basis functions constants.
                 Y00   += L * 0.282095f;
@@ -857,7 +857,7 @@ Engine::SphericalHarmonic Engine::generateSphericalHarmonic(const float3& positi
                 Y2_1  += L * 1.092548f * (normal.y * normal.z);
                 Y2_2  += L * 1.092548f * (normal.x * normal.y);
                 Y20   += L * 0.315392f * ((3.0f * normal.z * normal.z) - 1.0f);
-                Y22   += L * 0.546274f * (normal.x * normal.x - normal.y * normal.y);
+                Y22   += L * 0.546274f * ((normal.x * normal.x) - (normal.y * normal.y));
 
             }
         }

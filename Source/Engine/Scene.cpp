@@ -15,7 +15,7 @@
 #include <limits>
 
 
-Scene::Scene(const std::string& name) :
+Scene::Scene(const std::filesystem::path& name) :
     mPath{name},
     mSceneMeshes(),
     mStaticMeshBoundingVolume(),

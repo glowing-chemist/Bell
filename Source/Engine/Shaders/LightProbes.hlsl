@@ -32,7 +32,7 @@ BasisCoefs calculateBasis(float3 normal)
 	basis.Y2_1  = 1.092548f * (normal.y * normal.z);
 	basis.Y2_2  = 1.092548f * (normal.x * normal.y);
 	basis.Y20   = 0.315392f * ((3.0f * normal.z * normal.z) - 1.0f);
-	basis.Y22   = 0.546274f * (normal.x * normal.x - normal.y * normal.y);
+	basis.Y22   = 0.546274f * ((normal.x * normal.x) - (normal.y * normal.y));
 
 	return basis;
 }

@@ -1249,14 +1249,16 @@ void Editor::bakeAndSaveLightProbes()
 
     std::vector<Engine::SphericalHarmonic> harmonics = mEngine.generateIrradianceProbes(probePositions);
 
-    FILE* harmonicsFile = fopen("./SphericalHarmincs.bin", "wb");
+    const std::string harmnonicsFileName = mInProgressScene->getPath().string() + ".irradianceProbes";
+    FILE* harmonicsFile = fopen(harmnonicsFileName.c_str(), "wb");
     BELL_ASSERT(harmonicsFile, "Unabel to create harmonics file")
     fwrite(harmonics.data(), sizeof(Engine::SphericalHarmonic), harmonics.size(), harmonicsFile);
     fclose(harmonicsFile);
 
     std::vector<short4> lookupTextureData = mEngine.generateVoronoiLookupTexture(harmonics, mLightProbeLookupSize);
 
-    FILE* lookupFile = fopen("./VoronoiLookupData.bin", "wb");
+    const std::string lookupTexturePath = mInProgressScene->getPath().string() + ".irradianceLookup";
+    FILE* lookupFile = fopen(lookupTexturePath.c_str(), "wb");
     BELL_ASSERT(lookupFile, "Unabel to create harmonics file")
     fwrite(lookupTextureData.data(), sizeof(short4), lookupTextureData.size(), lookupFile);
     fclose(lookupFile);

@@ -165,12 +165,17 @@ public:
 
     struct ShadowingLight;
 
-	Scene(const std::string& name);
+    Scene(const std::filesystem::path& name);
     ~Scene();
 
-    void setPath(const std::string& path)
+    void setPath(const std::filesystem::path& path)
     {
         mPath = path;
+    }
+
+    const std::filesystem::path& getPath() const
+    {
+        return mPath;
     }
 
     std::vector<InstanceID> loadFromFile(const int vertAttributes, Engine*);
