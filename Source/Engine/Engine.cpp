@@ -827,6 +827,15 @@ Engine::SphericalHarmonic Engine::generateSphericalHarmonic(const float3& positi
         return glm::normalize(normal);
     };
 
+    auto differentialSolidAngle = [&]( const float a_U, const float a_V, const uint32_t a_Size) -> float
+    {
+        const float u = a_U / float(a_Size);
+        const float v = a_V / float(a_Size);
+
+        float fTmp = 1.0f + (u * u) + (v * v);
+        return 4.0f / (sqrt(fTmp)*fTmp);
+    };
+
     float3 Y00 = float3(0.0f);
     float3 Y11 = float3(0.0f);
     float3 Y10 = float3(0.0f);
@@ -845,34 +854,35 @@ Engine::SphericalHarmonic Engine::generateSphericalHarmonic(const float3& positi
             for(uint32_t y = 0; y < extent.height; ++y)
             {
                 const float3 normal = getNormalFromTexel(int3(x, y, faceIndex), float2(extent.width, extent.height));
+                const float solidAngle = differentialSolidAngle(float(x), float(y), extent.width);
 
                 const float3 L = cubemap.sampleCube4(normal);
 
                 // Constants map to SH basis functions constants.
-                Y00   += L * 0.282095f;
-                Y11   += L * 0.488603f * normal.x;
-                Y10   += L * 0.488603f * normal.y;
-                Y1_1  += L * 0.488603f * normal.z;
-                Y21   += L * 1.092548f * (normal.x * normal.z);
-                Y2_1  += L * 1.092548f * (normal.y * normal.z);
-                Y2_2  += L * 1.092548f * (normal.x * normal.y);
-                Y20   += L * 0.315392f * ((3.0f * normal.z * normal.z) - 1.0f);
-                Y22   += L * 0.546274f * ((normal.x * normal.x) - (normal.y * normal.y));
+                Y00   += solidAngle * L * 0.282095f;
+                Y11   += solidAngle * L * 0.488603f * normal.x;
+                Y10   += solidAngle * L * 0.488603f * normal.y;
+                Y1_1  += solidAngle * L * 0.488603f * normal.z;
+                Y21   += solidAngle * L * 1.092548f * (normal.x * normal.z);
+                Y2_1  += solidAngle * L * 1.092548f * (normal.y * normal.z);
+                Y2_2  += solidAngle * L * 1.092548f * (normal.x * normal.y);
+                Y20   += solidAngle * L * 0.315392f * ((3.0f * normal.z * normal.z) - 1.0f);
+                Y22   += solidAngle * L * 0.546274f * ((normal.x * normal.x) - (normal.y * normal.y));
 
             }
         }
     }
 
-    const float sampleCount = extent.width * extent.height * 6;
-    Y00  /= sampleCount;
-    Y11  /= sampleCount;
-    Y10  /= sampleCount;
-    Y1_1 /= sampleCount;
-    Y21  /= sampleCount;
-    Y2_1 /= sampleCount;
-    Y2_2 /= sampleCount;
-    Y20  /= sampleCount;
-    Y22  /= sampleCount;
+    const float sampleCount = 1.0f / float(extent.width * extent.height * 6.0f);
+    Y00  *= sampleCount;
+    Y11  *= sampleCount;
+    Y10  *= sampleCount;
+    Y1_1 *= sampleCount;
+    Y21  *= sampleCount;
+    Y2_1 *= sampleCount;
+    Y2_2 *= sampleCount;
+    Y20  *= sampleCount;
+    Y22  *= sampleCount;
 
     memcpy(&harmonic.mCoefs[0], &Y00, sizeof(float3));
     memcpy(&harmonic.mCoefs[3], &Y11, sizeof(float3));
@@ -1027,7 +1037,7 @@ void Engine::loadIrradianceProbes(const std::string& probesPath, const std::stri
     BELL_ASSERT((lookupSize % sizeof(short4)) == 0, "Invalid irradiance probe lookup texture cache size")
     std::vector<short4> textureData{};
     textureData.resize(lookupSize / sizeof(short4));
-    fread(mIrradianceProbesHarmonics.data(), sizeof(short4), mIrradianceProbesHarmonics.size(), lookupFile);
+    fread(textureData.data(), sizeof(short4), textureData.size(), lookupFile);
     fclose(lookupFile);
 
     if(mIrradianceVoronoiIrradianceLookup)
