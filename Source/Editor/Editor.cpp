@@ -901,9 +901,6 @@ void Editor::drawAssistantWindow()
                             transform[0].x = oldScale.x;
                             transform[1].y = oldScale.y;
                             transform[2].z = oldScale.z;
-                        }else if(mLightOperationMode == ImGuizmo::OPERATION::ROTATE)
-                        {
-
                         }
 
                         drawGuizmo(transform, view, proj, mLightOperationMode);
@@ -924,6 +921,15 @@ void Editor::drawAssistantWindow()
                                                                  glm::normalize(transform * float4(oldBasis.mY, 0.0f)),
                                                                  glm::normalize(transform * float4(oldBasis.mZ, 0.0f))});
                         }
+
+                        // Allow manual setting.
+                        float3 start = volume.mBoundingBox.getStart();
+                        ImGui::InputFloat3("volume Start", &start.x);
+                        volume.mBoundingBox.setStart(start);
+
+                        float3 size = volume.mBoundingBox.getSideLengths();
+                        ImGui::InputFloat3("volume Size", &start.x);
+                        volume.mBoundingBox.setSideLenghts(size);
                     }
 
                    ImGui::TreePop();
