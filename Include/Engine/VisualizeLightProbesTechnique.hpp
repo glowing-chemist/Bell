@@ -26,7 +26,8 @@ public:
 
 private:
 
-    GraphicsPipelineDescription mDesc;
+    GraphicsPipelineDescription mIrradianceProbePipeline;
+    GraphicsPipelineDescription mIrradianceVolumePipeline;
     TaskID mTaskID;
 
     Buffer mVertexBuffer;

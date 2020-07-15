@@ -1,5 +1,6 @@
 #include "Editor/Editor.h"
 #include "Engine/DefaultResourceSlots.hpp"
+#include "Engine/VisualizeLightProbesTechnique.hpp"
 #include "Engine/TextureUtil.hpp"
 
 #include "glm/gtc/matrix_transform.hpp"
@@ -322,7 +323,7 @@ Editor::Editor(GLFWwindow* window) :
     mResetSceneAtEndOfFrame{false},
     mPublishedScene{false},
     mAnimationSpeed(1.0f),
-    mLightProbeDensity(10.0f, 10.0f, 10.0f),
+    mIrradianceVolumes{},
     mLightProbeLookupSize(64, 64, 64),
     mLightOperationMode{ImGuizmo::OPERATION::TRANSLATE},
     mEditShadowingLight{false}
@@ -495,6 +496,7 @@ void Editor::swap()
         mSceneInstanceIDs.clear();
         mStaticMeshEntries.clear();
         mLights.clear();
+        mIrradianceVolumes.clear();
     }
 }
 
@@ -858,12 +860,92 @@ void Editor::drawAssistantWindow()
            float3 sceneSize = mInProgressScene->getBounds().getSideLengths();
            ImGui::Text("Scene size X: %f, Y:, %f, Z: %f", sceneSize.x, sceneSize.y, sceneSize.z);
 
-           ImGui::InputFloat3("Light probe denisty", &mLightProbeDensity.x);
            ImGui::InputInt3("Lookup texture resolution", &mLightProbeLookupSize.x);
+
+           bool volumesHaveChanged = false;
+
+           if(ImGui::Button("Add irradiance volume"))
+           {
+               mIrradianceVolumes.emplace_back();
+               volumesHaveChanged = true;
+           }
+
+           const float4x4 view = mInProgressScene->getCamera().getViewMatrix();
+           const float4x4 proj = mInProgressScene->getCamera().getPerspectiveMatrix();
+
+           for(uint32_t i = 0; i < mIrradianceVolumes.size(); ++i)
+           {
+               char volumeName[26];
+               sprintf(volumeName, "Irradiance volume #%d", i);
+
+               if(ImGui::TreeNode(volumeName))
+               {
+                   Engine::IrradianceProbeVolume& volume = mIrradianceVolumes[i].mVolume;
+                   ImGui::InputFloat3("probe density X Y Z", &volume.mProbeDensity.x);
+
+                    ImGui::Checkbox("Show Guizmo", &mIrradianceVolumes[i].mShowImGuizmo);
+
+                    if(mIrradianceVolumes[i].mShowImGuizmo)
+                    {
+                        volumesHaveChanged = true;
+                        float4x4 transform(1.0f);
+
+                        if(mLightOperationMode == ImGuizmo::OPERATION::TRANSLATE)
+                        {
+                            transform = glm::translate(transform, volume.mBoundingBox.getStart());
+                        }
+                        else if(mLightOperationMode == ImGuizmo::OPERATION::SCALE)
+                        {
+                            const float3& oldScale = volume.mBoundingBox.getSideLengths();
+
+                            transform[0].x = oldScale.x;
+                            transform[1].y = oldScale.y;
+                            transform[2].z = oldScale.z;
+                        }else if(mLightOperationMode == ImGuizmo::OPERATION::ROTATE)
+                        {
+
+                        }
+
+                        drawGuizmo(transform, view, proj, mLightOperationMode);
+
+                        if(mLightOperationMode == ImGuizmo::OPERATION::TRANSLATE)
+                        {
+                            volume.mBoundingBox.setStart(transform[3]);
+                        }
+                        else if(mLightOperationMode == ImGuizmo::OPERATION::SCALE)
+                        {
+                            float3 newScale = {transform[0].x, transform[1].y, transform[2].z};
+                            volume.mBoundingBox.setSideLenghts(newScale);
+                        }
+                        else if(mLightOperationMode == ImGuizmo::OPERATION::ROTATE)
+                        {
+                            const Basis& oldBasis = volume.mBoundingBox.getBasisVectors();
+                            volume.mBoundingBox.setBasisVectors({glm::normalize(transform * float4(oldBasis.mX, 0.0f)),
+                                                                 glm::normalize(transform * float4(oldBasis.mY, 0.0f)),
+                                                                 glm::normalize(transform * float4(oldBasis.mZ, 0.0f))});
+                        }
+                    }
+
+                   ImGui::TreePop();
+               }
+
+           }
 
            if(ImGui::Button("Bake light probes (EXPENSIVE!)"))
            {
                bakeAndSaveLightProbes();
+           }
+
+           // update light probe visualization technique (if being used).
+           if(volumesHaveChanged)
+           {
+               std::vector<Engine::IrradianceProbeVolume> volumes{};
+               std::transform(mIrradianceVolumes.begin(), mIrradianceVolumes.end(), std::back_inserter(volumes), [](const auto& v)
+               {
+                   return v.mVolume;
+               });
+
+               mEngine.setIrradianceVolumes(volumes);
            }
 
            ImGui::TreePop();
@@ -1230,24 +1312,12 @@ void Editor::loadScene(const std::string& scene)
 
 void Editor::bakeAndSaveLightProbes()
 {
-    const AABB& sceneBounds = mInProgressScene->getBounds();
-
-    const float4& sceneStart = sceneBounds.getBottom();
-    const float4& end = sceneBounds.getTop();
-
-    std::vector<float3> probePositions{};
-    for(float x = sceneStart.x; x < end.x; x += mLightProbeDensity.x)
+    std::vector<Engine::IrradianceProbeVolume> volumes{};
+    std::transform(mIrradianceVolumes.begin(), mIrradianceVolumes.end(), std::back_inserter(volumes), [](const auto& v)
     {
-        for(float y = sceneStart.y; y < end.y; y += mLightProbeDensity.y)
-        {
-            for(float z = sceneStart.z; z < end.z; z += mLightProbeDensity.z)
-            {
-                probePositions.push_back({x, y, z});
-            }
-        }
-    }
-
-    std::vector<Engine::SphericalHarmonic> harmonics = mEngine.generateIrradianceProbes(probePositions);
+        return v.mVolume;
+    });
+    std::vector<Engine::SphericalHarmonic> harmonics = mEngine.generateIrradianceProbes(volumes);
 
     const std::string harmnonicsFileName = mInProgressScene->getPath().string() + ".irradianceProbes";
     FILE* harmonicsFile = fopen(harmnonicsFileName.c_str(), "wb");

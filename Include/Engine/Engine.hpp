@@ -212,7 +212,23 @@ public:
         return mActiveAnimations;
     }
 
+    Technique* getRegisteredTechnique(const PassType);
+
     void rayTraceScene();
+
+    struct IrradianceProbeVolume
+    {
+        IrradianceProbeVolume() :
+            mProbeDensity(1.0f, 1.0f, 1.0f),
+            mBoundingBox({float3(1.0f, 0.0f, 0.0f), float3(0.0f, 1.0f, 0.0f), float3(0.0f, 0.0f, 1.0f)},
+                         float3(0.5f, 0.5f, 0.5f),
+                         float3(-0.5f, -0.5f, -0.5f)) {}
+
+        float3 mProbeDensity;
+        OBB mBoundingBox;
+
+        std::vector<float3> getProbePositions() const;
+    };
 
     struct SphericalHarmonic
     {
@@ -220,6 +236,7 @@ public:
         float mCoefs[28];
     };
 
+    std::vector<SphericalHarmonic> generateIrradianceProbes(const std::vector<IrradianceProbeVolume>& positions);
     std::vector<SphericalHarmonic> generateIrradianceProbes(const std::vector<float3> &positions);
     std::vector<short4> generateVoronoiLookupTexture(std::vector<SphericalHarmonic> &harmonics, const uint3& textureSize);
 
@@ -229,6 +246,16 @@ public:
     }
 
     void loadIrradianceProbes(const std::string& probesPath, const std::string& lookupPath);
+
+    const std::vector<IrradianceProbeVolume> getIrradianceVolumes() const
+    {
+        return mIrradianceVolumes;
+    }
+
+    void setIrradianceVolumes(const std::vector<IrradianceProbeVolume>& volumes)
+    {
+        mIrradianceVolumes = volumes;
+    }
 
     // Default available meshes.
     const StaticMesh& getUnitSphereMesh() const
@@ -314,6 +341,7 @@ private:
     std::mutex mSubmissionLock;
 
     std::vector<SphericalHarmonic> mIrradianceProbesHarmonics;
+    std::vector<IrradianceProbeVolume> mIrradianceVolumes;
     std::unique_ptr<Buffer> mIrradianceProbeBuffer;
     std::unique_ptr<BufferView> mIrradianceProbeBufferView;
     std::unique_ptr<Image> mIrradianceVoronoiIrradianceLookup;

@@ -96,27 +96,42 @@ public:
     OBB(const Basis& basis, const float3& half, const float3& start) :
     mBasis{basis}, mHalfSize{half}, mStart{start} {}
 
+    void setStart(const float3& start)
+    {
+        mStart = start;
+    }
+
+    void setSideLenghts(const float3& len)
+    {
+        mHalfSize = len / 2.0f;
+    }
+
+    void setBasisVectors(const Basis& basis)
+    {
+        mBasis = basis;
+    }
+
     float4 getCentralPoint() const
     { return float4(mStart + (mBasis.mX * mHalfSize.x + mBasis.mY * mHalfSize.y  + mBasis.mZ * mHalfSize.z), 1.0f); }
 
     float3 getSideLengths() const
     {
-	return mHalfSize * 2.0f;
+        return mHalfSize * 2.0f;
     }
 
     const float3& getHalfSize() const
     {
-	return mHalfSize;
+        return mHalfSize;
     }
 
     const float3& getStart() const
     {
-	return mStart;
+        return mStart;
     }
 
-    Basis getBasisVectors() const
+    const Basis& getBasisVectors() const
     {
-	return mBasis;
+        return mBasis;
     }
 
     bool intersects(const OBB&) const;

@@ -755,6 +755,19 @@ CPUImage Engine::renderDiffuseCubeMap(const RayTracingScene& scene, const float3
 }
 
 
+std::vector<Engine::SphericalHarmonic> Engine::generateIrradianceProbes(const std::vector<IrradianceProbeVolume>& volumes)
+{
+    std::vector<float3> positions{};
+    for(const auto& volume : volumes)
+    {
+        const auto probePositions = volume.getProbePositions();
+        positions.insert(positions.end(), probePositions.begin(), probePositions.end());
+    }
+
+    return generateIrradianceProbes(positions);
+}
+
+
 std::vector<Engine::SphericalHarmonic> Engine::generateIrradianceProbes(const std::vector<float3>& positions)
 {
     std::vector<Engine::SphericalHarmonic> harmonics{};
@@ -1057,4 +1070,48 @@ void Engine::loadIrradianceProbes(const std::string& probesPath, const std::stri
     mLightProbeResourceSet->addDataBufferRO(*mIrradianceProbeBufferView);
     mLightProbeResourceSet->addSampledImage(*mIrradianceVoronoiIrradianceLookupView);
     mLightProbeResourceSet->finalise();
+}
+
+
+Technique* Engine::getRegisteredTechnique(const PassType pass)
+{
+    if(mCurrentRegistredPasses & static_cast<uint64_t>(pass))
+    {
+        const auto& technique = std::find_if(mTechniques.begin(), mTechniques.end(), [=](const auto& t)
+        {
+            return t->getPassType() == pass;
+        });
+        BELL_ASSERT(technique != mTechniques.end(), "Technique not registered")
+
+        return (*technique).get();
+    }
+    else
+        return nullptr;
+}
+
+
+
+std::vector<float3> Engine::IrradianceProbeVolume::getProbePositions() const
+{
+    std::vector<float3> positions{};
+
+    const Basis& volumeBasis = mBoundingBox.getBasisVectors();
+
+    const float3& start = mBoundingBox.getStart();
+    float3 endx = (mBoundingBox.getSideLengths().x * volumeBasis.mX);
+    float3 endy = (mBoundingBox.getSideLengths().y * volumeBasis.mY);
+    float3 endz = (mBoundingBox.getSideLengths().z * volumeBasis.mZ);
+
+    for(float3 startx = float3(0.0f, 0.0f, 0.0f); glm::length(startx) < glm::length(endx); startx += mProbeDensity.x * volumeBasis.mX)
+    {
+        for(float3 starty = float3(0.0f, 0.0f, 0.0f); glm::length(starty) < glm::length(endy); starty += mProbeDensity.y * volumeBasis.mY)
+        {
+            for(float3 startz = float3(0.0f, 0.0f, 0.0f); glm::length(startz) < glm::length(endz); startz += mProbeDensity.z * volumeBasis.mZ)
+            {
+                positions.push_back(start + startx + starty + startz);
+            }
+        }
+    }
+
+    return positions;
 }

@@ -284,6 +284,7 @@ set(SHADERS
 	DeferredProbeGI.frag
 	LightProbeVis.vert
 	LightProbeVis.frag
+	LightProbeVolumeVis.frag
     )
 
 foreach(shader ${SHADERS})
