@@ -880,6 +880,8 @@ void Editor::drawAssistantWindow()
 
                if(ImGui::TreeNode(volumeName))
                {
+                   volumesHaveChanged = true;
+
                    Engine::IrradianceProbeVolume& volume = mIrradianceVolumes[i].mVolume;
                    ImGui::InputFloat3("probe density X Y Z", &volume.mProbeDensity.x);
 
@@ -887,7 +889,6 @@ void Editor::drawAssistantWindow()
 
                     if(mIrradianceVolumes[i].mShowImGuizmo)
                     {
-                        volumesHaveChanged = true;
                         float4x4 transform(1.0f);
 
                         if(mLightOperationMode == ImGuizmo::OPERATION::TRANSLATE)
