@@ -77,10 +77,10 @@ float4 main(UVVertOutput vertInput)
         const uint4 harmonicsIndicies = ProbeLookupTable.Sample(linearSampler, lookupSamplePos);
 
         SphericalHarmonic probe1 = harmonics[harmonicsIndicies.x];
-        SphericalHarmonic probe2 = harmonics[harmonicsIndicies.y];
-        SphericalHarmonic probe3 = harmonics[harmonicsIndicies.z];
+        //SphericalHarmonic probe2 = harmonics[harmonicsIndicies.y];
+        //SphericalHarmonic probe3 = harmonics[harmonicsIndicies.z];
 
-        irradiance = calculateProbeIrradiance(worldSpaceFragmentPos.xyz, normal, probe1, probe2, probe3);
+        irradiance = calculateProbeIrradiance(normal, probe1);
     }
 
 #if defined(Shadow_Map) || defined(Cascade_Shadow_Map)
