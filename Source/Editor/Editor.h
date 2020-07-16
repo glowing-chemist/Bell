@@ -132,17 +132,12 @@ private:
 
     float mAnimationSpeed;
 
-    struct EditorIrradianceVolume
+    struct EditorIrradianceVolumeOptions
     {
-        EditorIrradianceVolume() :
-            mVolume(),
-            mShowImGuizmo(false) {}
-
-        Engine::IrradianceProbeVolume mVolume;
         bool mShowImGuizmo;
     };
-
-    std::vector<EditorIrradianceVolume> mIrradianceVolumes;
+    std::vector<EditorIrradianceVolumeOptions> mIrradianceVolumesOptions;
+    std::vector<Engine::IrradianceProbeVolume> mIrradianceVolumes;
     int3 mLightProbeLookupSize;
 
     std::vector<EditorLight> mLights;

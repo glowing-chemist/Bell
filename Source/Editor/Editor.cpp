@@ -882,12 +882,12 @@ void Editor::drawAssistantWindow()
                {
                    volumesHaveChanged = true;
 
-                   Engine::IrradianceProbeVolume& volume = mIrradianceVolumes[i].mVolume;
+                   Engine::IrradianceProbeVolume& volume = mIrradianceVolumes[i];
                    ImGui::InputFloat3("probe density X Y Z", &volume.mProbeDensity.x);
 
-                    ImGui::Checkbox("Show Guizmo", &mIrradianceVolumes[i].mShowImGuizmo);
+                    ImGui::Checkbox("Show Guizmo", &mIrradianceVolumesOptions[i].mShowImGuizmo);
 
-                    if(mIrradianceVolumes[i].mShowImGuizmo)
+                    if(mIrradianceVolumesOptions[i].mShowImGuizmo)
                     {
                         float4x4 transform(1.0f);
 
@@ -946,13 +946,7 @@ void Editor::drawAssistantWindow()
            // update light probe visualization technique (if being used).
            if(volumesHaveChanged)
            {
-               std::vector<Engine::IrradianceProbeVolume> volumes{};
-               std::transform(mIrradianceVolumes.begin(), mIrradianceVolumes.end(), std::back_inserter(volumes), [](const auto& v)
-               {
-                   return v.mVolume;
-               });
-
-               mEngine.setIrradianceVolumes(volumes);
+               mEngine.setIrradianceVolumes(mIrradianceVolumes);
            }
 
            ImGui::TreePop();
@@ -1319,12 +1313,7 @@ void Editor::loadScene(const std::string& scene)
 
 void Editor::bakeAndSaveLightProbes()
 {
-    std::vector<Engine::IrradianceProbeVolume> volumes{};
-    std::transform(mIrradianceVolumes.begin(), mIrradianceVolumes.end(), std::back_inserter(volumes), [](const auto& v)
-    {
-        return v.mVolume;
-    });
-    std::vector<Engine::SphericalHarmonic> harmonics = mEngine.generateIrradianceProbes(volumes);
+    std::vector<Engine::SphericalHarmonic> harmonics = mEngine.generateIrradianceProbes(mIrradianceVolumes);
 
     const std::string harmnonicsFileName = mInProgressScene->getPath().string() + ".irradianceProbes";
     FILE* harmonicsFile = fopen(harmnonicsFileName.c_str(), "wb");
