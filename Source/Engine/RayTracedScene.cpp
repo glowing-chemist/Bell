@@ -303,7 +303,7 @@ float4 RayTracingScene::traceDiffuseRays(const InterpolatedVertex& frag, const f
 
     diffuse *= result / float(distribution);
 
-    return diffuse;
+    return diffuse + float4(mat.emissiveOcclusion.x, mat.emissiveOcclusion.y, mat.emissiveOcclusion.z, 1.0f);
 }
 
 
@@ -343,7 +343,7 @@ float4 RayTracingScene::traceDiffuseRay(DiffuseSampler& sampler, const Interpola
 
     diffuse *= result / sample.P;
 
-    return diffuse;
+    return diffuse + float4(mat.emissiveOcclusion.x, mat.emissiveOcclusion.y, mat.emissiveOcclusion.z, 1.0f);
 }
 
 
@@ -365,7 +365,7 @@ RayTracingScene::Material RayTracingScene::calculateMaterial(const InterpolatedV
 
     if(info.materialFlags & MaterialType::Diffuse)
     {
-        mat.diffuse *= materials[info.materialIndex].sample4(frag.mUV);
+        mat.diffuse = materials[info.materialIndex].sample4(frag.mUV);
         ++nextMaterialSlot;
     }
 
@@ -444,7 +444,7 @@ RayTracingScene::Material RayTracingScene::calculateMaterial(const InterpolatedV
     if(info.materialFlags & MaterialType::Albedo)
     {
         const float4 albedo = materials[info.materialIndex].sample4(frag.mUV);
-        mat.diffuse *= albedo * (1.0f - 0.04f) * (1.0f - metalness);
+        mat.diffuse = albedo * (1.0f - 0.04f) * (1.0f - metalness);
         mat.diffuse.w = albedo.w;// Preserve the alpha chanle.
 
         const float NoV = dot(float3(mat.normal), view);
