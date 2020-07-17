@@ -254,7 +254,9 @@ const unsigned char* CPUImage::getDataPtr(const float2& uv) const
     const uint32_t y = uint32_t(uv.y * mExtent.height) % mExtent.height;
 
     const unsigned char* data = mData.data();
-    data += (mPixelSize * y * mExtent.width) + (mPixelSize * x);
+    const uint64_t offset = (mPixelSize * y * mExtent.width) + (mPixelSize * x);
+    BELL_ASSERT(offset < mData.size(), "Read out of bounds")
+    data += offset;
 
     return data;
 }
@@ -266,7 +268,9 @@ const unsigned char* CPUImage::getDataPtr(const float2& uv, const uint32_t face)
     const uint32_t y = uint32_t(uv.y * mExtent.height) % mExtent.height;
 
     const unsigned char* data = mData.data();
-    data += (mPixelSize * y * mExtent.width) + (mPixelSize * x) + (face * mExtent.width * mExtent.height * mPixelSize);
+    const uint64_t offset = (mPixelSize * y * mExtent.width) + (mPixelSize * x) + (face * mExtent.width * mExtent.height * mPixelSize);
+    BELL_ASSERT(offset < mData.size(), "Read out of bounds")
+    data += offset;
 
     return data;
 }

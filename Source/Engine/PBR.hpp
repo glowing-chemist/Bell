@@ -28,4 +28,6 @@ float3 F_Schlick(const float3 f0, const float f90, const float u);
 
 float disneyDiffuse(float  NdotV , float  NdotL , float  LdotH ,float linearRoughness);
 
+float specular_GGX(const float3& N, const float3& V, const float3& L, const float roughness, const float F0);
+
 #endif

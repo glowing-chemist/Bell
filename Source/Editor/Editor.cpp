@@ -866,6 +866,7 @@ void Editor::drawAssistantWindow()
 
            if(ImGui::Button("Add irradiance volume"))
            {
+               mIrradianceVolumesOptions.push_back({false});
                mIrradianceVolumes.emplace_back();
                volumesHaveChanged = true;
            }

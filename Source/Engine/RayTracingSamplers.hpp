@@ -24,4 +24,19 @@ private:
     uint32_t mGeneratedSamples;
 };
 
+
+class SpecularSampler
+{
+public:
+    SpecularSampler(const uint32_t maxSamples) :
+    mMaxSamples(maxSamples),
+    mGeneratedSamples(0) {}
+
+    Sample generateSample(const float3& N, const float3 V, const float R);
+
+private:
+    uint32_t mMaxSamples;
+    uint32_t mGeneratedSamples;
+};
+
 #endif

@@ -26,7 +26,7 @@ RayTracingScene::RayTracingScene(const Scene* scene)
         });
 
         // add material mappings
-        for(uint32_t i = 0; i < indexBuffer.size(); i += 3)
+        for(uint32_t i = 0; i < indexBuffer.size() / 3; ++i)
         {
             mPrimitiveMaterialID.push_back({instance.getmaterialIndex(), instance.getMaterialFlags()});
         }
@@ -101,8 +101,9 @@ void RayTracingScene::renderSceneToMemory(const Camera& camera, const uint32_t x
             const bool shadowed = traceShadowRay(frag);
 
             const float4 diffuse = traceDiffuseRays(frag, float4(origin, 1.0f), 50, 5);
+            const float4 specular = traceSpecularRays(frag, float4(origin, 1.0f), 50, 5);
 
-            return diffuse;// * (shadowed ? 0.15f : 1.0f);
+            return diffuse + specular;// * (shadowed ? 0.15f : 1.0f);
         }
         else
         {
@@ -179,7 +180,7 @@ RayTracingScene::InterpolatedVertex RayTracingScene::interpolateFragment(const u
     InterpolatedVertex frag{};
     frag.mPosition = float4(((1.0f - v - u) * firstPosition) + (u * secondPosition) + (v * thirdPosition), 1.0f);
     frag.mUV = ((1.0f - v - u) * firstuv) + (u * seconduv) + (v * thirduv);
-    frag.mNormal = glm::normalize(((1.0f - v - u) * firstNormal) + (u * secondNormal) + (v * thirdNormal));
+    frag.mNormal = glm::normalize(float3(((1.0f - v - u) * firstNormal) + (u * secondNormal) + (v * thirdNormal)));
     frag.mVertexColour = ((1.0f - v - u) * firstColour) + (u * secondColour) + (v * thirdColour);
     frag.mPrimID = primID;
 
@@ -273,11 +274,11 @@ float4 RayTracingScene::traceDiffuseRays(const InterpolatedVertex& frag, const f
     DiffuseSampler sampler(sampleCount * depth);
 
     float4 result = float4{0.0f, 0.0f, 0.0f, 0.0f};
-    float distribution = 0.0f;
+    float weight = 0.0f;
     for(uint32_t i = 0; i < sampleCount; ++i)
     {
         Sample sample = sampler.generateSample(frag.mNormal);
-        distribution += sample.P;
+        weight += sample.P;
 
         nanort::Ray<float> newRay{};
         newRay.org[0] = frag.mPosition.x;
@@ -301,9 +302,9 @@ float4 RayTracingScene::traceDiffuseRays(const InterpolatedVertex& frag, const f
         }
     }
 
-    diffuse *= result / float(distribution);
+    diffuse *= result / weight;
 
-    return diffuse + float4(mat.emissiveOcclusion.x, mat.emissiveOcclusion.y, mat.emissiveOcclusion.z, 1.0f);
+    return diffuse;// + float4(mat.emissiveOcclusion.x, mat.emissiveOcclusion.y, mat.emissiveOcclusion.z, 1.0f);
 }
 
 
@@ -316,9 +317,18 @@ float4 RayTracingScene::traceDiffuseRay(DiffuseSampler& sampler, const Interpola
     Material mat = calculateMaterial(frag, matInfo, frag.mPosition - origin);
     float4 diffuse = mat.diffuse;
 
-    float4 result = float4{0.0f, 0.0f, 0.0f, 0.0f};
-
     Sample sample = sampler.generateSample(frag.mNormal);
+
+    const float3 V = glm::normalize(origin - frag.mPosition);
+    const float NdotV = glm::clamp(glm::dot(float3(mat.normal), V), 0.0f, 1.0f);
+    const float NdotL = glm::clamp(glm::dot(float3(mat.normal), sample.L), 0.0f, 1.0f);
+    const float3 H = glm::normalize(V + sample.L);
+    const float LdotH  = glm::clamp(glm::dot(sample.L, H), 0.0f, 1.0f);
+
+    const float diffuseFactor = disneyDiffuse(NdotV, NdotL, LdotH, mat.specularRoughness.w);
+    diffuse *= diffuseFactor;
+
+    float4 result = float4{0.0f, 0.0f, 0.0f, 0.0f};
 
     nanort::Ray<float> newRay{};
     newRay.org[0] = frag.mPosition.x;
@@ -334,16 +344,109 @@ float4 RayTracingScene::traceDiffuseRay(DiffuseSampler& sampler, const Interpola
     const bool hit = traceRay(newRay, &intersection);
     if(hit)
     {
-        result = traceDiffuseRay(sampler, intersection, frag.mPosition, depth - 1);
+        result = sample.P * traceDiffuseRay(sampler, intersection, frag.mPosition, depth - 1);
     }
     else
     {
-        result = mScene->getCPUSkybox()->sampleCube4(sample.L); // miss so sample skybox.
+        result = sample.P * mScene->getCPUSkybox()->sampleCube4(sample.L); // miss so sample skybox.
     }
 
-    diffuse *= result / sample.P;
+    diffuse *= result;
 
-    return diffuse + float4(mat.emissiveOcclusion.x, mat.emissiveOcclusion.y, mat.emissiveOcclusion.z, 1.0f);
+    return diffuse;// + float4(mat.emissiveOcclusion.x, mat.emissiveOcclusion.y, mat.emissiveOcclusion.z, 1.0f);
+}
+
+
+float4 RayTracingScene::traceSpecularRays(const InterpolatedVertex& frag, const float4 &origin, const uint32_t sampleCount, const uint32_t depth) const
+{
+    // interpolate uvs.
+    const MaterialInfo& matInfo = mPrimitiveMaterialID[frag.mPrimID];
+    Material mat = calculateMaterial(frag, matInfo, frag.mPosition - origin);
+    float4 specular = float4(mat.specularRoughness.x, mat.specularRoughness.y, mat.specularRoughness.z, 1.0f);
+
+    SpecularSampler sampler(sampleCount * depth);
+
+    const float3 V = glm::normalize(origin - frag.mPosition);
+
+    float4 result = float4{0.0f, 0.0f, 0.0f, 0.0f};
+    float weight = 0.0f;
+    for(uint32_t i = 0; i < sampleCount; ++i)
+    {
+        Sample sample = sampler.generateSample(frag.mNormal, V, mat.specularRoughness.w);
+        weight += sample.P;
+
+        nanort::Ray<float> newRay{};
+        newRay.org[0] = frag.mPosition.x;
+        newRay.org[1] = frag.mPosition.y;
+        newRay.org[2] = frag.mPosition.z;
+        newRay.dir[0] = sample.L.x;
+        newRay.dir[1] = sample.L.y;
+        newRay.dir[2] = sample.L.z;
+        newRay.min_t = 0.01f;
+        newRay.max_t = 2000.0f;
+
+        const float specularFactor = specular_GGX(mat.normal, V, sample.L, mat.specularRoughness.w, 1.0f);
+        BELL_ASSERT(specularFactor >= 0.0f, "")
+
+        InterpolatedVertex intersection;
+        const bool hit = traceRay(newRay, &intersection);
+        if(hit)
+        {
+            result += specularFactor * sample.P * traceSpecularRay(sampler, intersection, frag.mPosition, depth - 1);
+        }
+        else
+        {
+            result += specularFactor * sample.P * mScene->getCPUSkybox()->sampleCube4(sample.L); // miss so sample skybox.
+        }
+    }
+
+    specular *= result / weight;
+
+    return specular;// + float4(mat.emissiveOcclusion.x, mat.emissiveOcclusion.y, mat.emissiveOcclusion.z, 1.0f);
+}
+
+
+float4 RayTracingScene::traceSpecularRay(SpecularSampler& sampler, const InterpolatedVertex& frag, const float4 &origin, const uint32_t depth) const
+{
+    if(depth == 0)
+        return float4(0.0f, 0.0f, 0.0f, 0.0f);
+
+    const MaterialInfo& matInfo = mPrimitiveMaterialID[frag.mPrimID];
+    Material mat = calculateMaterial(frag, matInfo, frag.mPosition - origin);
+    float4 specular = float4(mat.specularRoughness.x, mat.specularRoughness.y, mat.specularRoughness.z, 1.0f);
+
+    const float3 V = glm::normalize(origin - frag.mPosition);
+    Sample sample = sampler.generateSample(frag.mNormal, V, mat.specularRoughness.w);
+
+    const float specularFactor = specular_GGX(mat.normal, V, sample.L, mat.specularRoughness.w, 1.0f);
+    specular *= specularFactor;
+
+    float4 result = float4{0.0f, 0.0f, 0.0f, 0.0f};
+
+    nanort::Ray<float> newRay{};
+    newRay.org[0] = frag.mPosition.x;
+    newRay.org[1] = frag.mPosition.y;
+    newRay.org[2] = frag.mPosition.z;
+    newRay.dir[0] = sample.L.x;
+    newRay.dir[1] = sample.L.y;
+    newRay.dir[2] = sample.L.z;
+    newRay.min_t = 0.01f;
+    newRay.max_t = 2000.0f;
+
+    InterpolatedVertex intersection;
+    const bool hit = traceRay(newRay, &intersection);
+    if(hit)
+    {
+        result = sample.P * traceSpecularRay(sampler, intersection, frag.mPosition, depth - 1);
+    }
+    else
+    {
+        result = sample.P * mScene->getCPUSkybox()->sampleCube4(sample.L); // miss so sample skybox.
+    }
+
+    specular *= result;
+
+    return specular;// + float4(mat.emissiveOcclusion.x, mat.emissiveOcclusion.y, mat.emissiveOcclusion.z, 1.0f);
 }
 
 
@@ -351,7 +454,7 @@ RayTracingScene::Material RayTracingScene::calculateMaterial(const InterpolatedV
 {
     Material mat;
     mat.diffuse = frag.mVertexColour;
-    mat.normal = frag.mNormal;
+    mat.normal = glm::normalize(frag.mNormal);
     mat.specularRoughness = float4(0.0f, 0.0f, 0.0f, 1.0f);
     mat.emissiveOcclusion = float4(0.0f, 0.0f, 0.0f, 1.0);
 
@@ -368,77 +471,52 @@ RayTracingScene::Material RayTracingScene::calculateMaterial(const InterpolatedV
         mat.diffuse = materials[info.materialIndex].sample4(frag.mUV);
         ++nextMaterialSlot;
     }
-
-    if(info.materialFlags & MaterialType::Albedo)
+    else if(info.materialFlags & MaterialType::Albedo)
         ++nextMaterialSlot;
 
     if(info.materialFlags & MaterialType::Normals)
     {
-        /*float3 normal = materials[info.materialIndex + nextMaterialSlot].Sample(frag.mUV).xyz;
-        ++nextMaterialSlot;
-
-        // remap normal
-        normal = (normal - 0.5f) * 2.0f;
-        normal = normalize(normal);
-
-        const float2 xDerivities = ddx_fine(uv);
-        const float2 yDerivities = ddy_fine(uv);
-
-        {
-            float3x3 tbv = tangentSpaceMatrix(vertexNormal, view, float4(xDerivities, yDerivities));
-
-            normal = mul(normal, tbv);
-
-            normal = normalize(normal);
-        }
-
-        mat.normal = float4(normal, 1.0f);*/
         ++nextMaterialSlot; // TODO work out how to do this without derivitives!!.
     }
 
+    if(info.materialFlags & MaterialType::Roughness)
+    {
+        mat.specularRoughness.w = materials[info.materialIndex + nextMaterialSlot].sample(frag.mUV);
+        ++nextMaterialSlot;
+    }
+    else if(info.materialFlags & MaterialType::Gloss)
+    {
+        mat.specularRoughness.w = 1.0f - materials[info.materialIndex + nextMaterialSlot].sample(frag.mUV);
+        ++nextMaterialSlot;
+    }
+
     float metalness = 0.0f;
+    if(info.materialFlags & MaterialType::Specular)
+    {
+        const float3 spec = materials[info.materialIndex + nextMaterialSlot].sample4(frag.mUV);
+        mat.specularRoughness.x = spec.x;
+        mat.specularRoughness.y = spec.y;
+        mat.specularRoughness.z = spec.z;
+        ++nextMaterialSlot;
+    }
+    else if(info.materialFlags & MaterialType::CombinedSpecularGloss)
+    {
+        mat.specularRoughness = materials[info.materialIndex + nextMaterialSlot].sample4(frag.mUV);
+        mat.specularRoughness.w = 1.0f - mat.specularRoughness.w;
+        ++nextMaterialSlot;
+    }
+    else if(info.materialFlags & MaterialType::Metalness)
+    {
+        metalness = materials[info.materialIndex + nextMaterialSlot].sample(frag.mUV);
+        ++nextMaterialSlot;
+    }
+
     if(info.materialFlags & MaterialType::CombinedMetalnessRoughness)
     {
         const float4 metalnessRoughness = materials[info.materialIndex + nextMaterialSlot].sample4(frag.mUV);
         metalness = metalnessRoughness.z;
         mat.specularRoughness.w = metalnessRoughness.y;
         ++nextMaterialSlot;
-    }
-    else
-    {
-        if(info.materialFlags & MaterialType::Roughness)
-        {
-            mat.specularRoughness.w = materials[info.materialIndex + nextMaterialSlot].sample(frag.mUV);
-            ++nextMaterialSlot;
-        }
-
-        if(info.materialFlags & MaterialType::Gloss)
-        {
-            mat.specularRoughness.w = 1.0f - materials[info.materialIndex + nextMaterialSlot].sample(frag.mUV);
-            ++nextMaterialSlot;
-        }
-
-        if(info.materialFlags & MaterialType::Specular)
-        {
-            const float3 spec = materials[info.materialIndex + nextMaterialSlot].sample4(frag.mUV);
-            mat.specularRoughness.x = spec.x;
-            mat.specularRoughness.y = spec.y;
-            mat.specularRoughness.z = spec.z;
-            ++nextMaterialSlot;
-        }
-
-        if(info.materialFlags & MaterialType::CombinedSpecularGloss)
-        {
-            mat.specularRoughness = materials[info.materialIndex + nextMaterialSlot].sample4(frag.mUV);
-            mat.specularRoughness.w = 1.0f - mat.specularRoughness.w;
-            ++nextMaterialSlot;
-        }
-
-        if(info.materialFlags & MaterialType::Metalness)
-        {
-            metalness = materials[info.materialIndex + nextMaterialSlot].sample(frag.mUV);
-            ++nextMaterialSlot;
-        }
     }
 
     if(info.materialFlags & MaterialType::Albedo)
@@ -455,18 +533,18 @@ RayTracingScene::Material RayTracingScene::calculateMaterial(const InterpolatedV
         mat.specularRoughness.z = spec.z;
     }
 
-    if(info.materialFlags & MaterialType::AmbientOcclusion)
-    {
-        mat.emissiveOcclusion.w = materials[info.materialIndex + nextMaterialSlot].sample(frag.mUV);
-        ++nextMaterialSlot;
-    }
-
     if(info.materialFlags & MaterialType::Emisive)
     {
         const float3 emissive = materials[info.materialIndex + nextMaterialSlot].sample4(frag.mUV);
         mat.emissiveOcclusion.x = emissive.x;
         mat.emissiveOcclusion.y = emissive.y;
         mat.emissiveOcclusion.z = emissive.z;
+        ++nextMaterialSlot;
+    }
+
+    if(info.materialFlags & MaterialType::AmbientOcclusion)
+    {
+        mat.emissiveOcclusion.w = materials[info.materialIndex + nextMaterialSlot].sample(frag.mUV);
     }
 
     return mat;

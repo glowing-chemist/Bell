@@ -28,7 +28,7 @@ public:
     {
         float4 mPosition;
         float2 mUV;
-        float4 mNormal;
+        float3 mNormal;
         float4 mVertexColour;
         uint32_t mPrimID;
     };
@@ -44,7 +44,7 @@ public:
     {
         float4 diffuse;
         float4 specularRoughness; // xyz specular w roughness
-        float4 normal;
+        float3 normal;
         float4 emissiveOcclusion; // xyz emisive w ambient occlusion.
     };
     Material calculateMaterial(const InterpolatedVertex&, const MaterialInfo&, const float3 &view) const;
@@ -61,6 +61,9 @@ private:
 
     float4 traceDiffuseRays(const InterpolatedVertex& frag, const float4 &origin, const uint32_t sampleCount, const uint32_t depth) const;
     float4 traceDiffuseRay(DiffuseSampler& sampler, const InterpolatedVertex& frag, const float4 &origin, const uint32_t depth) const;
+
+    float4 traceSpecularRays(const InterpolatedVertex& frag, const float4 &origin, const uint32_t sampleCount, const uint32_t depth) const;
+    float4 traceSpecularRay(SpecularSampler& sampler, const InterpolatedVertex& frag, const float4 &origin, const uint32_t depth) const;
 
     std::vector<float3> mPositions;
     std::vector<float2> mUVs;

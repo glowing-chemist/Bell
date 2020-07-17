@@ -106,3 +106,32 @@ float disneyDiffuse(float  NdotV , float  NdotL , float  LdotH ,float linearRoug
 
     return  lightScatter * viewScatter * energyFactor;
 }
+
+float specular_GGX(const float3& N, const float3& V, const float3& L, const float roughness, const float F0)
+{
+    // remap roughness.
+    const float alpha = roughness * roughness;
+
+    float3 H = glm::normalize(V + L);
+
+    const float NdotL = glm::clamp(glm::dot(N, L), 0.0f, 1.0f);
+    const float NdotV = glm::clamp(glm::dot(N, V), 0.0f, 1.0f);
+    const float NdotH = glm::clamp(glm::dot(N, H), 0.0f, 1.0f);
+    const float LdotH = glm::clamp(glm::dot(L, H), 0.0f, 1.0f);
+
+    const float alpha2 = alpha * alpha;
+    const float denom = NdotH * NdotH * (alpha2 - 1.0f) + 1.0f;
+    const float D = alpha2 / (M_PI * denom * denom);
+
+    const float3 F = F_Schlick(float3(F0, F0, F0), 1.0f, LdotH);
+
+    auto G1v = [](const float NdV, const float k)
+    {
+        return 1.0f / (NdV * (1.0f - k) + k);
+    };
+
+    const float G = G1v(NdotL, alpha / 2.0f) * G1v(NdotV, alpha / 2.0f);
+
+    const float result = NdotL * D * F.x * G;
+    return glm::clamp(result, 0.0f, 1.0f);
+}
