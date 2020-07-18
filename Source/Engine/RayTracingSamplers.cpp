@@ -14,17 +14,19 @@ Sample DiffuseSampler::generateSample(const float3& normal)
 }
 
 
-Sample SpecularSampler::generateSample(const float3& N, const float3 V, const float R)
+Sample SpecularSampler::generateSample(const float3& N, const float3& V, const float R)
 {
     BELL_ASSERT(mGeneratedSamples < mMaxSamples, "Adjust max samples")
     float2 Xi = Hammersley(mGeneratedSamples++, mMaxSamples);
     // Sample microfacet direction
-    float3 H = ImportanceSampleGGX(Xi, R, N);
+    float3 GGX_H = ImportanceSampleGGX(Xi, R, N);
 
     Sample samp{};
     // Get the light direction
-    samp.L = 2.0f * glm::dot(V, H) * H - V;
-    samp.P = glm::clamp(glm::dot(N, samp.L), 0.0f, 1.0f);
+    samp.L = glm::reflect(-V, GGX_H);
+    const float NdotL = glm::dot(N, samp.L);
+    //BELL_ASSERT(NdotL > 0.0f, "too small")
+    samp.P = std::max(NdotL, 0.0f);
 
     return samp;
 }

@@ -19,7 +19,7 @@ void  importanceSampleCosDir(const float2& u, const float3& N, float3& L, float&
     NdotL = dot(L,N);
 }
 
-float3 ImportanceSampleGGX(const float2 Xi, const float roughness, const float3 N)
+float3 ImportanceSampleGGX(const float2& Xi, const float roughness, const float3& N)
 {
     float a = roughness*roughness;
 
@@ -107,31 +107,26 @@ float disneyDiffuse(float  NdotV , float  NdotL , float  LdotH ,float linearRoug
     return  lightScatter * viewScatter * energyFactor;
 }
 
-float specular_GGX(const float3& N, const float3& V, const float3& L, const float roughness, const float F0)
+float specular_GGX(const float3& N, const float3& V, const float3& L, const float roughness, const float3& F0)
 {
-    // remap roughness.
-    const float alpha = roughness * roughness;
-
-    float3 H = glm::normalize(V + L);
+    const float3 H = glm::normalize(V + L);
 
     const float NdotL = glm::clamp(glm::dot(N, L), 0.0f, 1.0f);
     const float NdotV = glm::clamp(glm::dot(N, V), 0.0f, 1.0f);
     const float NdotH = glm::clamp(glm::dot(N, H), 0.0f, 1.0f);
     const float LdotH = glm::clamp(glm::dot(L, H), 0.0f, 1.0f);
 
-    const float alpha2 = alpha * alpha;
-    const float denom = NdotH * NdotH * (alpha2 - 1.0f) + 1.0f;
-    const float D = alpha2 / (M_PI * denom * denom);
+    float a = NdotH * roughness;
+    float k = roughness / (1.0f - NdotH * NdotH + a * a);
+    const float D =  k * k * (1.0f / M_PI);
 
-    const float3 F = F_Schlick(float3(F0, F0, F0), 1.0f, LdotH);
+    const float3 F = F_Schlick(F0, 1.0f, LdotH);
 
-    auto G1v = [](const float NdV, const float k)
-    {
-        return 1.0f / (NdV * (1.0f - k) + k);
-    };
+    float a2 = roughness * roughness;
+    float GGXV = NdotL * sqrt(NdotV * NdotV * (1.0f - a2) + a2);
+    float GGXL = NdotV * sqrt(NdotL * NdotL * (1.0f - a2) + a2);
+    const float G =  0.5f / (GGXV + GGXL);
 
-    const float G = G1v(NdotL, alpha / 2.0f) * G1v(NdotV, alpha / 2.0f);
-
-    const float result = NdotL * D * F.x * G;
-    return glm::clamp(result, 0.0f, 1.0f);
+    const float result = (NdotL * D * F.x * G) / (4.0f * glm::clamp(glm::dot(N, V), 0.0f, 1.0f) * glm::clamp(glm::dot(N, L), 0.0f, 1.0f));
+    return glm::isnan(result) ? 1.0f : glm::clamp(result, 0.0f, 1.0f);
 }

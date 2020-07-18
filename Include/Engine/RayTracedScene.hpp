@@ -47,7 +47,7 @@ public:
         float3 normal;
         float4 emissiveOcclusion; // xyz emisive w ambient occlusion.
     };
-    Material calculateMaterial(const InterpolatedVertex&, const MaterialInfo&, const float3 &view) const;
+    Material calculateMaterial(const InterpolatedVertex&, const MaterialInfo&) const;
 
     bool isVisibleFrom(const float3& dst, const float3& src) const;
 
@@ -60,10 +60,10 @@ private:
     bool traceShadowRay(const InterpolatedVertex& position) const;
 
     float4 traceDiffuseRays(const InterpolatedVertex& frag, const float4 &origin, const uint32_t sampleCount, const uint32_t depth) const;
-    float4 traceDiffuseRay(DiffuseSampler& sampler, const InterpolatedVertex& frag, const float4 &origin, const uint32_t depth) const;
 
     float4 traceSpecularRays(const InterpolatedVertex& frag, const float4 &origin, const uint32_t sampleCount, const uint32_t depth) const;
-    float4 traceSpecularRay(SpecularSampler& sampler, const InterpolatedVertex& frag, const float4 &origin, const uint32_t depth) const;
+
+    float4 shadePoint(const InterpolatedVertex& frag, const float4 &origin, const uint32_t sampleCount, const uint32_t depth) const;
 
     std::vector<float3> mPositions;
     std::vector<float2> mUVs;
