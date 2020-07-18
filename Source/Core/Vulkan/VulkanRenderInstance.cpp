@@ -209,7 +209,7 @@ std::pair<vk::PhysicalDevice, vk::Device> VulkanRenderInstance::findSuitableDevi
 
     for(const auto& availableExtensions : deviceExtensionproperties)
 	{
-        BELL_LOG_ARGS("Device extension Found %s", availableExtensions.extensionName);
+        BELL_LOG_ARGS("Device extension Found %s", &availableExtensions.extensionName[0]);
 		for(const auto* extension : requireDeviceExtensions)
 		{
 			if(strcmp(extension, availableExtensions.extensionName) == 0)
