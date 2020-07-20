@@ -99,7 +99,7 @@ void RayTracingScene::renderSceneToMemory(const Camera& camera, const uint32_t x
         const bool hit = traceRay(ray, &frag);
         if(hit)
         {
-            return shadePoint(frag, float4(origin, 1.0f), 10, 3);
+            return shadePoint(frag, float4(origin, 1.0f), 10, 5);
         }
         else
         {

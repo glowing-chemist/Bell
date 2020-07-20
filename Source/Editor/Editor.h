@@ -138,6 +138,8 @@ private:
     };
     std::vector<EditorIrradianceVolumeOptions> mIrradianceVolumesOptions;
     std::vector<Engine::IrradianceProbeVolume> mIrradianceVolumes;
+    std::vector<Engine::RadianceProbe> mRadianceProbes;
+
     int3 mLightProbeLookupSize;
 
     std::vector<EditorLight> mLights;

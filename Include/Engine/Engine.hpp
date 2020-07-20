@@ -230,6 +230,16 @@ public:
         std::vector<float3> getProbePositions() const;
     };
 
+    struct RadianceProbe
+    {
+        RadianceProbe() :
+            mPosition{0.0f, 0.0f, 0.0f},
+            mRadius(10.0f) {}
+
+        float3 mPosition;
+        float mRadius;
+    };
+
     struct SphericalHarmonic
     {
         float4 mPosition;
@@ -247,7 +257,7 @@ public:
 
     void loadIrradianceProbes(const std::string& probesPath, const std::string& lookupPath);
 
-    const std::vector<IrradianceProbeVolume> getIrradianceVolumes() const
+    const std::vector<IrradianceProbeVolume>& getIrradianceVolumes() const
     {
         return mIrradianceVolumes;
     }
@@ -255,6 +265,16 @@ public:
     void setIrradianceVolumes(const std::vector<IrradianceProbeVolume>& volumes)
     {
         mIrradianceVolumes = volumes;
+    }
+
+    const std::vector<RadianceProbe>& getRadianceProbes() const
+    {
+        return mRadianceProbes;
+    }
+
+    void setRadianceProbes(const std::vector<RadianceProbe>& probes)
+    {
+        mRadianceProbes = probes;
     }
 
     // Default available meshes.
@@ -342,6 +362,7 @@ private:
 
     std::vector<SphericalHarmonic> mIrradianceProbesHarmonics;
     std::vector<IrradianceProbeVolume> mIrradianceVolumes;
+    std::vector<RadianceProbe> mRadianceProbes;
     std::unique_ptr<Buffer> mIrradianceProbeBuffer;
     std::unique_ptr<BufferView> mIrradianceProbeBufferView;
     std::unique_ptr<Image> mIrradianceVoronoiIrradianceLookup;

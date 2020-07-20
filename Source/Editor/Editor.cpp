@@ -864,79 +864,113 @@ void Editor::drawAssistantWindow()
 
            bool volumesHaveChanged = false;
 
-           if(ImGui::Button("Add irradiance volume"))
+           if(ImGui::TreeNode("Irradiance volumes"))
            {
-               mIrradianceVolumesOptions.push_back({false});
-               mIrradianceVolumes.emplace_back();
-               volumesHaveChanged = true;
-           }
 
-           const float4x4 view = mInProgressScene->getCamera().getViewMatrix();
-           const float4x4 proj = mInProgressScene->getCamera().getPerspectiveMatrix();
-
-           for(uint32_t i = 0; i < mIrradianceVolumes.size(); ++i)
-           {
-               char volumeName[26];
-               sprintf(volumeName, "Irradiance volume #%d", i);
-
-               if(ImGui::TreeNode(volumeName))
+               if(ImGui::Button("Add irradiance volume"))
                {
+                   mIrradianceVolumesOptions.push_back({false});
+                   mIrradianceVolumes.emplace_back();
                    volumesHaveChanged = true;
-
-                   Engine::IrradianceProbeVolume& volume = mIrradianceVolumes[i];
-                   ImGui::InputFloat3("probe density X Y Z", &volume.mProbeDensity.x);
-
-                    ImGui::Checkbox("Show Guizmo", &mIrradianceVolumesOptions[i].mShowImGuizmo);
-
-                    if(mIrradianceVolumesOptions[i].mShowImGuizmo)
-                    {
-                        float4x4 transform(1.0f);
-
-                        if(mLightOperationMode == ImGuizmo::OPERATION::TRANSLATE)
-                        {
-                            transform = glm::translate(transform, volume.mBoundingBox.getStart());
-                        }
-                        else if(mLightOperationMode == ImGuizmo::OPERATION::SCALE)
-                        {
-                            const float3& oldScale = volume.mBoundingBox.getSideLengths();
-
-                            transform[0].x = oldScale.x;
-                            transform[1].y = oldScale.y;
-                            transform[2].z = oldScale.z;
-                        }
-
-                        drawGuizmo(transform, view, proj, mLightOperationMode);
-
-                        if(mLightOperationMode == ImGuizmo::OPERATION::TRANSLATE)
-                        {
-                            volume.mBoundingBox.setStart(transform[3]);
-                        }
-                        else if(mLightOperationMode == ImGuizmo::OPERATION::SCALE)
-                        {
-                            float3 newScale = {transform[0].x, transform[1].y, transform[2].z};
-                            volume.mBoundingBox.setSideLenghts(newScale);
-                        }
-                        else if(mLightOperationMode == ImGuizmo::OPERATION::ROTATE)
-                        {
-                            const Basis& oldBasis = volume.mBoundingBox.getBasisVectors();
-                            volume.mBoundingBox.setBasisVectors({glm::normalize(transform * float4(oldBasis.mX, 0.0f)),
-                                                                 glm::normalize(transform * float4(oldBasis.mY, 0.0f)),
-                                                                 glm::normalize(transform * float4(oldBasis.mZ, 0.0f))});
-                        }
-
-                        // Allow manual setting.
-                        float3 start = volume.mBoundingBox.getStart();
-                        ImGui::InputFloat3("volume Start", &start.x);
-                        volume.mBoundingBox.setStart(start);
-
-                        float3 size = volume.mBoundingBox.getSideLengths();
-                        ImGui::InputFloat3("volume Size", &start.x);
-                        volume.mBoundingBox.setSideLenghts(size);
-                    }
-
-                   ImGui::TreePop();
                }
 
+               const float4x4 view = mInProgressScene->getCamera().getViewMatrix();
+               const float4x4 proj = mInProgressScene->getCamera().getPerspectiveMatrix();
+
+               for(uint32_t i = 0; i < mIrradianceVolumes.size(); ++i)
+               {
+                   char volumeName[26];
+                   sprintf(volumeName, "Irradiance volume #%d", i);
+
+                   if(ImGui::TreeNode(volumeName))
+                   {
+                       volumesHaveChanged = true;
+
+                       Engine::IrradianceProbeVolume& volume = mIrradianceVolumes[i];
+                       ImGui::InputFloat3("probe density X Y Z", &volume.mProbeDensity.x);
+
+                       ImGui::Checkbox("Show Guizmo", &mIrradianceVolumesOptions[i].mShowImGuizmo);
+
+                       if(mIrradianceVolumesOptions[i].mShowImGuizmo)
+                       {
+                           float4x4 transform(1.0f);
+
+                           if(mLightOperationMode == ImGuizmo::OPERATION::TRANSLATE)
+                           {
+                               transform = glm::translate(transform, volume.mBoundingBox.getStart());
+                           }
+                           else if(mLightOperationMode == ImGuizmo::OPERATION::SCALE)
+                           {
+                               const float3& oldScale = volume.mBoundingBox.getSideLengths();
+
+                               transform[0].x = oldScale.x;
+                               transform[1].y = oldScale.y;
+                               transform[2].z = oldScale.z;
+                           }
+
+                           drawGuizmo(transform, view, proj, mLightOperationMode);
+
+                           if(mLightOperationMode == ImGuizmo::OPERATION::TRANSLATE)
+                           {
+                               volume.mBoundingBox.setStart(transform[3]);
+                           }
+                           else if(mLightOperationMode == ImGuizmo::OPERATION::SCALE)
+                           {
+                               float3 newScale = {transform[0].x, transform[1].y, transform[2].z};
+                               volume.mBoundingBox.setSideLenghts(newScale);
+                           }
+                           else if(mLightOperationMode == ImGuizmo::OPERATION::ROTATE)
+                           {
+                               const Basis& oldBasis = volume.mBoundingBox.getBasisVectors();
+                               volume.mBoundingBox.setBasisVectors({glm::normalize(transform * float4(oldBasis.mX, 0.0f)),
+                                                                    glm::normalize(transform * float4(oldBasis.mY, 0.0f)),
+                                                                    glm::normalize(transform * float4(oldBasis.mZ, 0.0f))});
+                           }
+                       }
+
+                       // Allow manual setting.
+                       float3 start = volume.mBoundingBox.getStart();
+                       ImGui::InputFloat3("volume Start", &start.x);
+                       volume.mBoundingBox.setStart(start);
+
+                       float3 size = volume.mBoundingBox.getSideLengths();
+                       ImGui::InputFloat3("volume Size", &size.x);
+                       volume.mBoundingBox.setSideLenghts(size);
+
+                       ImGui::TreePop();
+                   }
+
+               }
+
+               ImGui::TreePop();
+           }
+
+           if(ImGui::TreeNode("Radiance probes"))
+           {
+                if(ImGui::Button("add Radiance probe"))
+                {
+                    mRadianceProbes.emplace_back();
+                }
+
+
+                for(uint32_t i = 0; i < mRadianceProbes.size(); ++i)
+                {
+                    char volumeName[26];
+                    sprintf(volumeName, "Radiance probe #%d", i);
+
+                    if(ImGui::TreeNode(volumeName))
+                    {
+                        volumesHaveChanged = true;
+
+                        Engine::RadianceProbe& probe = mRadianceProbes[i];
+                        ImGui::InputFloat("probe raduis", &probe.mRadius);
+
+                        ImGui::InputFloat3("probe location", &probe.mPosition.x);
+                    }
+
+                }
+
+               ImGui::TreePop();
            }
 
            if(ImGui::Button("Bake light probes (EXPENSIVE!)"))
@@ -948,6 +982,7 @@ void Editor::drawAssistantWindow()
            if(volumesHaveChanged)
            {
                mEngine.setIrradianceVolumes(mIrradianceVolumes);
+               mEngine.setRadianceProbes(mRadianceProbes);
            }
 
            ImGui::TreePop();
