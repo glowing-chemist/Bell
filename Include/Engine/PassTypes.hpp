@@ -170,6 +170,7 @@ enum class AttachmentType
 	IndirectBuffer,
     VertexBuffer,
     IndexBuffer,
+    CommandPredicationBuffer,
 	PushConstants,
 	ShaderResourceSet
 };
@@ -235,7 +236,8 @@ enum class BufferUsage : uint32_t
 	DataBuffer = 1 << 3,
 	IndirectArgs = 1 << 4,
 	TransferDest = 1 << 5,
-	TransferSrc = 1 << 6
+    TransferSrc = 1 << 6,
+    CommandPredication = 1 << 7
 };
 
 inline BufferUsage operator|(const BufferUsage& lhs, const BufferUsage& rhs)

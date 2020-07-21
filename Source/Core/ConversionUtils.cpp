@@ -185,6 +185,8 @@ vk::BufferUsageFlags getVulkanBufferUsage(const BufferUsage usage)
 	if (usage & BufferUsage::TransferDest)
 		vulkanFlags |= vk::BufferUsageFlagBits::eTransferDst;
 
+    if(usage & BufferUsage::CommandPredication)
+        vulkanFlags |= vk::BufferUsageFlagBits::eConditionalRenderingEXT;
 
 	return vulkanFlags;
 }
@@ -256,6 +258,9 @@ vk::PipelineStageFlags getVulkanPipelineStage(const SyncPoint syncPoint)
 
 	case SyncPoint::IndirectArgs:
 		return vk::PipelineStageFlagBits::eDrawIndirect;
+
+    case SyncPoint::CommandPredication:
+        return vk::PipelineStageFlagBits::eConditionalRenderingEXT;
 
 	case SyncPoint::TransferSource:
 		return vk::PipelineStageFlagBits::eTransfer;
@@ -606,6 +611,9 @@ SyncPoint getSyncPoint(const AttachmentType type)
 
 	case AttachmentType::Depth:
 		return SyncPoint::FragmentShaderOutput;
+
+    case AttachmentType::CommandPredicationBuffer:
+        return SyncPoint::CommandPredication;
 
 	default:
 		return SyncPoint::TopOfPipe;

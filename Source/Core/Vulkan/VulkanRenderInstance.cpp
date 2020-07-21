@@ -194,7 +194,7 @@ std::pair<vk::PhysicalDevice, vk::Device> VulkanRenderInstance::findSuitableDevi
 															  VK_KHR_MAINTENANCE3_EXTENSION_NAME
 															 };
 
-    std::vector<const char*> optionalDeviceExtensions = {};
+    std::vector<const char*> optionalDeviceExtensions = {VK_EXT_CONDITIONAL_RENDERING_EXTENSION_NAME};
     if (rayTracingWanted)
     {
         optionalDeviceExtensions.push_back(VK_KHR_RAY_TRACING_EXTENSION_NAME);
@@ -202,6 +202,7 @@ std::pair<vk::PhysicalDevice, vk::Device> VulkanRenderInstance::findSuitableDevi
         optionalDeviceExtensions.push_back(VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME);
         optionalDeviceExtensions.push_back(VK_KHR_PIPELINE_LIBRARY_EXTENSION_NAME);
     }
+
 
 	std::vector<const char*> extensionsToEnable{};
 

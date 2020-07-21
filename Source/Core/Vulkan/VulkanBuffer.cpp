@@ -15,13 +15,12 @@ VulkanBuffer::VulkanBuffer(RenderDevice* dev,
 {
 	VulkanRenderDevice * device = static_cast<VulkanRenderDevice*>(dev);
 
-    mAllignment = mUsage & BufferUsage::Uniform ?
-                                   static_cast<uint32_t>(device->getLimits().minUniformBufferOffsetAlignment) : 1u;
-
     mBuffer = device->createBuffer(mSize, getVulkanBufferUsage(mUsage));
     const vk::MemoryRequirements bufferMemReqs = device->getMemoryRequirements(mBuffer);
     mBufferMemory = device->getMemoryManager()->Allocate(bufferMemReqs.size, bufferMemReqs.alignment, isMappable(), mName);
     device->getMemoryManager()->BindBuffer(mBuffer, mBufferMemory);
+
+    mAllignment = bufferMemReqs.alignment;
 
 	if(mName != "")
 	{

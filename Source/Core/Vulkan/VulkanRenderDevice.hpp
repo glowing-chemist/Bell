@@ -114,6 +114,11 @@ public:
 		return getLimits().minStorageBufferOffsetAlignment;
 	}
 
+    virtual bool                        getHasCommandPredicationSupport() const
+    {
+        return mHasConditionalRenderingSupport;
+    }
+
     virtual const std::vector<uint64_t>& getAvailableTimestamps() const override
     {
         return mFinishedTimeStamps;
@@ -394,6 +399,7 @@ private:
 #endif
 
     vk::PhysicalDeviceLimits mLimits;
+    bool mHasConditionalRenderingSupport;
 
     std::unordered_map<uint64_t, GraphicsPipelineHandles> mGraphicsPipelineCache;
     std::unordered_map<uint64_t, ComputePipelineHandles> mComputePipelineCache;

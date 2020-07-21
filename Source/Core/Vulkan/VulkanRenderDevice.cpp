@@ -61,6 +61,14 @@ VulkanRenderDevice::VulkanRenderDevice(vk::Instance instance,
     vk::EventCreateInfo eventInfo{};
     mDebugEvent = mDevice.createEvent(eventInfo);
 #endif
+
+    // Check for conditional rendering support.
+    vk::PhysicalDeviceConditionalRenderingFeaturesEXT conditionalRenderingInfo{};
+    vk::PhysicalDeviceFeatures2 features2{};
+    features2.pNext = &conditionalRenderingInfo;
+    mPhysicalDevice.getFeatures2(&features2);
+    if(conditionalRenderingInfo.conditionalRendering == true)
+        mHasConditionalRenderingSupport = true;
 }
 
 
@@ -306,7 +314,8 @@ vk::RenderPass	VulkanRenderDevice::generateRenderPass(const GraphicsTask& task)
            type == AttachmentType::DataBufferWO ||
            type == AttachmentType::PushConstants ||
            type == AttachmentType::UniformBuffer ||
-           type == AttachmentType::ShaderResourceSet)
+           type == AttachmentType::ShaderResourceSet ||
+           type == AttachmentType::CommandPredicationBuffer)
         {
                 ++outputAttatchmentCounter;
                 continue;

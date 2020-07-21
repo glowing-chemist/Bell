@@ -39,6 +39,10 @@ public:
 
     virtual void recordBarriers(BarrierRecorder&) override;
 
+    virtual void startCommandPredication(const BufferView &buf, const uint32_t index) override;
+
+    virtual void endCommandPredication() override;
+
     virtual uint32_t getRecordedCommandCount() override
     {
         return mRecordedCommands;

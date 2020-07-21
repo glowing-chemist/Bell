@@ -18,14 +18,15 @@ enum class SyncPoint
 {
 	TopOfPipe = 0,
 	IndirectArgs = 1,
-	TransferSource = 2,
-	TransferDestination = 3,
-	VertexInput = 4,
-	VertexShader = 5,
-	FragmentShader = 6,
-	FragmentShaderOutput = 7,
-	ComputeShader = 8,
-	BottomOfPipe = 9
+    CommandPredication = 2,
+    TransferSource = 3,
+    TransferDestination = 4,
+    VertexInput = 5,
+    VertexShader = 6,
+    FragmentShader = 7,
+    FragmentShaderOutput = 8,
+    ComputeShader = 9,
+    BottomOfPipe = 10
 };
 
 

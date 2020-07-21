@@ -106,7 +106,7 @@ void VulkanExecutor::recordBarriers(BarrierRecorder& recorder)
         const auto bufferBarriers = VKRecorder.getBufferBarriers(QueueType::Graphics);
         const auto memoryBarriers = VKRecorder.getMemoryBarriers(QueueType::Graphics);
 
-        if(bufferBarriers.empty() && imageBarriers.empty())
+        if(bufferBarriers.empty() && imageBarriers.empty() && memoryBarriers.empty())
           return;
 
         mCommandBuffer.pipelineBarrier(getVulkanPipelineStage(VKRecorder.getSource()), getVulkanPipelineStage(VKRecorder.getDestination()),
@@ -116,4 +116,20 @@ void VulkanExecutor::recordBarriers(BarrierRecorder& recorder)
         static_cast<uint32_t>(imageBarriers.size()), imageBarriers.data());
     }
     ++mRecordedCommands;
+}
+
+
+void VulkanExecutor::startCommandPredication(const BufferView& buffer, const uint32_t index)
+{
+    vk::ConditionalRenderingBeginInfoEXT beginInfo{};
+    beginInfo.setBuffer(static_cast<const VulkanBufferView&>(*buffer.getBase()).getBuffer());
+    beginInfo.setOffset(index * sizeof(uint32_t));
+
+    mCommandBuffer.beginConditionalRenderingEXT(&beginInfo);
+}
+
+
+void VulkanExecutor::endCommandPredication()
+{
+    mCommandBuffer.endConditionalRenderingEXT();
 }
