@@ -721,7 +721,7 @@ void Editor::drawAssistantWindow()
        if(ImGui::TreeNode("Mesh instances"))
        {
 
-           const Camera& camera = mInProgressScene->getCamera();
+           const Camera& camera = mEngine.getCurrentSceneCamera();
            const float4x4 viewMatrix = camera.getViewMatrix();
            const float4x4 projectionMatrix = camera.getPerspectiveMatrix();
 
@@ -799,11 +799,14 @@ void Editor::drawAssistantWindow()
 
        if(ImGui::TreeNode("Camera settings"))
        {
-           Camera& camera = mInProgressScene->getCamera();
+           Camera& camera = mEngine.getCurrentSceneCamera();
 
            const float3& cameraPos = camera.getPosition();
            ImGui::Text("Camera position X:%f Y:%f Z:%f", cameraPos.x, cameraPos.y, cameraPos.z);
 
+           bool debugCamera = mEngine.getDebugCameraActive();
+           ImGui::Checkbox("Debug camera", &debugCamera);
+           mEngine.setDebugCameraActive(debugCamera);
            const bool previouseFlyMode = mCameraInfo.mInFreeFlyMode;
            ImGui::Checkbox("Camera free fly", &mCameraInfo.mInFreeFlyMode);
            ImGui::SliderFloat("Camera speed", &mCameraInfo.mCameraSpeed, 0.01f, 10.0f);

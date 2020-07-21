@@ -45,6 +45,16 @@ public:
 
     Camera& getCurrentSceneCamera();
 
+    void setDebugCameraActive(const bool debugCam)
+    {
+        mDebugCameraActive = debugCam;
+    }
+
+    bool getDebugCameraActive() const
+    {
+        return mDebugCameraActive;
+    }
+
     BufferBuilder& getVertexBufferBuilder()
     { return mVertexBuilder; }
 
@@ -295,6 +305,9 @@ private:
 
     Scene* mCurrentScene;
     RayTracingScene* mRayTracedScene;
+
+    bool mDebugCameraActive;
+    Camera mDebugCamera;
 
     BufferBuilder mAnimationVertexBuilder;
     BufferBuilder mBoneIndexBuilder;

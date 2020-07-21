@@ -59,6 +59,8 @@ Engine::Engine(GLFWwindow* windowPtr) :
     mRenderDevice(mRenderInstance->createRenderDevice(DeviceFeaturesFlags::Compute | DeviceFeaturesFlags::Subgroup | DeviceFeaturesFlags::Geometry)),
     mCurrentScene(nullptr),
     mRayTracedScene(nullptr),
+    mDebugCameraActive(false),
+    mDebugCamera({0.0f, 0.0f, 0.0f}, {1.0f, 0.0f, 0.0f}, 1.0f, 0.1f, 2000.0f),
     mAnimationVertexBuilder(),
     mBoneIndexBuilder(),
     mBoneWeightBuilder(),
@@ -131,6 +133,11 @@ Engine::Engine(GLFWwindow* windowPtr) :
     // load default meshes.
     mUnitSphere = std::make_unique<StaticMesh>("./Assets/unitSphere.fbx", VertexAttributes::Position4 | VertexAttributes::Normals);
 
+    // initialize debug camera
+    int width, height;
+    glfwGetWindowSize(windowPtr, &width, &height);
+    mDebugCamera.setAspect(float(width) / float(height));
+
     mAnimationLastTicked = std::chrono::system_clock::now();
 }
 
@@ -177,7 +184,7 @@ void Engine::setRayTracingScene(RayTracingScene* scene)
 
 Camera& Engine::getCurrentSceneCamera()
 {
-    return mCurrentScene->getCamera();
+    return mDebugCameraActive ? mDebugCamera : mCurrentScene->getCamera();
 }
 
 
@@ -462,7 +469,7 @@ void Engine::execute(RenderGraph& graph)
         });
     }
 
-    //BELL_LOG_ARGS("Meshes %zu", meshes.size());
+    //printf("Meshes %zu\n", meshes.size());
 
     auto barriers = graph.generateBarriers(mRenderDevice);
 	// process scene.
@@ -612,7 +619,7 @@ void Engine::updateGlobalBuffers()
     if(mCurrentScene)
     {
         {
-            auto& currentCamera = getCurrentSceneCamera();
+            Camera& currentCamera = mDebugCameraActive ? mDebugCamera : getCurrentSceneCamera();
 
             const float swapchainX = getSwapChainImage()->getExtent(0, 0).width;
             const float swapChainY = getSwapChainImage()->getExtent(0, 0).height;
