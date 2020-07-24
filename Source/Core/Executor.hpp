@@ -3,14 +3,17 @@
 
 #include "glm/mat4x4.hpp"
 
+#include "Core/DeviceChild.hpp"
+
 class Buffer;
 class BufferView;
 class BarrierRecorder;
 
-class Executor
+class Executor : public DeviceChild
 {
 public:
-	Executor() = default;
+    Executor(RenderDevice* dev) :
+        DeviceChild(dev) {}
 	virtual ~Executor() = default;
 
 	virtual void draw(const uint32_t vertexOffset, const uint32_t vertexCount) = 0;
@@ -40,6 +43,9 @@ public:
     virtual void startCommandPredication(const BufferView&, const uint32_t index) = 0;
 
     virtual void endCommandPredication() = 0;
+
+    // Commands for updatign resources
+    virtual void copyDataToBuffer(const void*, const size_t size, const size_t offset, Buffer&) = 0;
 
     virtual uint32_t getRecordedCommandCount() = 0;
     virtual void      resetRecordedCommandCount() = 0;

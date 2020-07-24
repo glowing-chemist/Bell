@@ -27,11 +27,14 @@ extern const char kCompositeOutput[];
 extern const char kTAAHistory[];
 extern const char kNewTAAHistory[];
 extern const char kLinearDepth[];
+extern const char kPreviousLinearDepth[];
 extern const char kReflectionMap[];
 extern const char kDiffuseVoxelMap[];
 extern const char kDebugVoxels[];
 extern const char kVoxelDimmensions[];
 extern const char kLightProbes[];
+extern const char kOcclusionPredicationBuffer[];
+extern const char kMeshBoundsBuffer[];
 
 extern const char kCameraBuffer[];
 extern const char kLightBuffer[];

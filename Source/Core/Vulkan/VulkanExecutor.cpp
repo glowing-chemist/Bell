@@ -7,10 +7,14 @@
 #include "Core/ConversionUtils.hpp"
 
 
-VulkanExecutor::VulkanExecutor(vk::CommandBuffer cmdBuffer) :
+VulkanExecutor::VulkanExecutor(RenderDevice *dev, vk::CommandBuffer cmdBuffer) :
+    Executor(dev),
     mCommandBuffer{ cmdBuffer },
     mRecordedCommands{0}
 {
+    vk::Instance inst = static_cast<VulkanRenderDevice*>(getDevice())->getParentInstance();
+    mBeginConditionalRenderingFPtr = reinterpret_cast<PFN_vkCmdBeginConditionalRenderingEXT>(inst.getProcAddr("vkCmdBeginConditionalRenderingEXT"));
+    mEndConditionalRenderingFPtr = reinterpret_cast<PFN_vkCmdEndConditionalRenderingEXT>(inst.getProcAddr("vkCmdEndConditionalRenderingEXT"));
 }
 
 
@@ -121,15 +125,27 @@ void VulkanExecutor::recordBarriers(BarrierRecorder& recorder)
 
 void VulkanExecutor::startCommandPredication(const BufferView& buffer, const uint32_t index)
 {
-    vk::ConditionalRenderingBeginInfoEXT beginInfo{};
-    beginInfo.setBuffer(static_cast<const VulkanBufferView&>(*buffer.getBase()).getBuffer());
-    beginInfo.setOffset(index * sizeof(uint32_t));
+    VkConditionalRenderingBeginInfoEXT beginInfo{};
+    beginInfo.sType = VK_STRUCTURE_TYPE_CONDITIONAL_RENDERING_BEGIN_INFO_EXT;
+    beginInfo.buffer = static_cast<const VulkanBufferView&>(*buffer.getBase()).getBuffer();
+    beginInfo.offset = index * sizeof(uint32_t);
 
-    mCommandBuffer.beginConditionalRenderingEXT(&beginInfo);
+    BELL_ASSERT(mBeginConditionalRenderingFPtr, "Unable to find function ptr")
+    mBeginConditionalRenderingFPtr(mCommandBuffer, &beginInfo);
 }
 
 
 void VulkanExecutor::endCommandPredication()
 {
-    mCommandBuffer.endConditionalRenderingEXT();
+    BELL_ASSERT(mEndConditionalRenderingFPtr, "Unable to find function ptr")
+    mEndConditionalRenderingFPtr(mCommandBuffer);
+}
+
+
+void VulkanExecutor::copyDataToBuffer(const void* data, const size_t size, const size_t offset, Buffer& buf)
+{
+    BELL_ASSERT(size < 1 << 16, "Can't copy this much data inline")
+
+    VulkanBuffer* VKBuf = static_cast<VulkanBuffer*>(buf.getBase());
+    mCommandBuffer.updateBuffer(VKBuf->getBuffer(), offset, size, data);
 }

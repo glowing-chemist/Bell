@@ -193,6 +193,7 @@ set(BELL_SOURCE
     Source/Engine/SkinningTechnique.cpp
     Source/Engine/DeferredProbeGITechnique.cpp
     Source/Engine/VisualizeLightProbesTechnique.cpp
+    Source/Engine/OcclusionCullingTechnique.cpp
 
     # used for texture loading
     ThirdParty/stb_image/stb_image.cpp
@@ -285,6 +286,7 @@ set(SHADERS
 	LightProbeVis.vert
 	LightProbeVis.frag
 	LightProbeVolumeVis.frag
+	OcclusionCulling.comp
     )
 
 foreach(shader ${SHADERS})

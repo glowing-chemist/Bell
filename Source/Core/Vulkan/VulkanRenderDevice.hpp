@@ -298,6 +298,11 @@ public:
         return mLimits.timestampPeriod;
     }
 
+    vk::Instance                                                getParentInstance() const
+    {
+        return mInstance;
+    }
+
 private:
 
 	vk::DescriptorSetLayout				                        generateDescriptorSetLayout(const RenderTask&);

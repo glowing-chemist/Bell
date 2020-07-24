@@ -25,11 +25,14 @@ const char kCompositeOutput[] = "CompositeOutput";
 const char kTAAHistory[]		= "TAAHistory";
 const char kNewTAAHistory[]		= "NewTAAHistory";
 const char kLinearDepth[]		= "LinearDepth";
+const char kPreviousLinearDepth[] = "PrevLinearDepth";
 const char kReflectionMap[] = "ReflectionMap";
 const char kDiffuseVoxelMap[] = "DiffuseVoxelMap";
 const char kDebugVoxels[] = "DebugVoxels";
 const char kVoxelDimmensions[] = "VoxelDimm";
 const char kLightProbes[] = "LightProbes";
+const char kOcclusionPredicationBuffer[] = "OcclusionPredication";
+extern const char kMeshBoundsBuffer[] = "MeshBounds";
 
 const char kCameraBuffer[]	    = "CameraBuffer";
 const char kLightBuffer[]	    = "LightBuffer";

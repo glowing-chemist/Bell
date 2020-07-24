@@ -97,7 +97,7 @@ Executor* VulkanCommandContext::allocateExecutor(const bool timeStamp)
     {
         vk::CommandBuffer cmdBuffer = mCommandPool.getBufferForQueue();
 
-        exec = new VulkanExecutor(cmdBuffer);
+        exec = new VulkanExecutor(getDevice(), cmdBuffer);
     }
 
     if(mActiveQuery)

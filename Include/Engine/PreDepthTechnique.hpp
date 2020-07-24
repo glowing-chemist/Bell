@@ -22,9 +22,9 @@ public:
     std::string getDepthName() const
     { return kGBufferDepth; }
 
-    virtual void bindResources(RenderGraph& graph) override final
-    {}
-	virtual void render(RenderGraph&, Engine*) override final;
+    virtual void bindResources(RenderGraph& graph) override final {}
+
+    virtual void render(RenderGraph&, Engine*) override final {}
 
 
 private:

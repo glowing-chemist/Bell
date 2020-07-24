@@ -17,12 +17,15 @@ RWTexture2D<float> linearDepthBufferMip3;
 RWTexture2D<float> linearDepthBufferMip4;
 
 [[vk::binding(5)]]
-Texture2D<float> gbufferDepth;
+RWTexture2D<float> linearDepthBufferMip5;
 
 [[vk::binding(6)]]
-ConstantBuffer<CameraBuffer> camera;
+Texture2D<float> gbufferDepth;
 
 [[vk::binding(7)]]
+ConstantBuffer<CameraBuffer> camera;
+
+[[vk::binding(8)]]
 SamplerState linearSampler;
 
 groupshared float depthValues[32 * 32];
@@ -58,7 +61,7 @@ void main(uint3 globalIndex : SV_DispatchThreadID,
 		const float bottomLeft = depthValues[(localIndex.x * 2 + (localIndex.y * 2 * 32)) + 32];
 		const float bottomRight = depthValues[(localIndex.x * 2 + (localIndex.y * 2 * 32)) + 32 + 1];
 
-		const float minValue = min(min(topLeft, topRight), min(bottomLeft, bottomRight));
+		const float minValue = max(max(topLeft, topRight), max(bottomLeft, bottomRight));
 
 		uint width, height;
 		linearDepthBufferMip1.GetDimensions(width, height);
@@ -81,7 +84,7 @@ void main(uint3 globalIndex : SV_DispatchThreadID,
 		const float bottomLeft = depthValues[(localIndex.x * 2 + (localIndex.y * 2 * 16)) + 16];
 		const float bottomRight = depthValues[(localIndex.x * 2 + (localIndex.y * 2 * 16)) + 16 + 1];
 
-		const float minValue = min(min(topLeft, topRight), min(bottomLeft, bottomRight));
+		const float minValue = max(max(topLeft, topRight), max(bottomLeft, bottomRight));
 
 		uint width, height;
 		linearDepthBufferMip2.GetDimensions(width, height);
@@ -104,7 +107,7 @@ void main(uint3 globalIndex : SV_DispatchThreadID,
 		const float bottomLeft = depthValues[(localIndex.x * 2 + (localIndex.y * 2 * 8)) + 8];
 		const float bottomRight = depthValues[(localIndex.x * 2 + (localIndex.y * 2 * 8)) + 8 + 1];
 
-		const float minValue = min(min(topLeft, topRight), min(bottomLeft, bottomRight));
+		const float minValue = max(max(topLeft, topRight), max(bottomLeft, bottomRight));
 
 		uint width, height;
 		linearDepthBufferMip3.GetDimensions(width, height);
@@ -127,7 +130,7 @@ void main(uint3 globalIndex : SV_DispatchThreadID,
 		const float bottomLeft = depthValues[(localIndex.x * 2 + (localIndex.y * 2 * 4)) + 4];
 		const float bottomRight = depthValues[(localIndex.x * 2 + (localIndex.y * 2 * 4)) + 4 + 1];
 
-		const float minValue = min(min(topLeft, topRight), min(bottomLeft, bottomRight));
+		const float minValue = max(max(topLeft, topRight), max(bottomLeft, bottomRight));
 
 		uint width, height;
 		linearDepthBufferMip4.GetDimensions(width, height);
@@ -135,8 +138,29 @@ void main(uint3 globalIndex : SV_DispatchThreadID,
 		uint2 index = (groupIndex.xy * 2) + localIndex.xy;
 		if(index.x < width && index.y < height)
 			linearDepthBufferMip4[index] = minValue;
+
+		depthValues[localIndex.x + (localIndex.y * 2)] = minValue;
 	}
 	else
 		return;
+
+	AllMemoryBarrierWithGroupSync();
+
+	if(localIndex.x < 1 && localIndex.y < 1)
+	{
+		const float topLeft = depthValues[localIndex.x * 2 + (localIndex.y * 2 * 2)];
+		const float topRight = depthValues[(localIndex.x * 2 + (localIndex.y * 2 * 2)) + 1];
+		const float bottomLeft = depthValues[(localIndex.x * 2 + (localIndex.y * 2 * 2)) + 2];
+		const float bottomRight = depthValues[(localIndex.x * 2 + (localIndex.y * 2 * 2)) + 2 + 1];
+
+		const float minValue = max(max(topLeft, topRight), max(bottomLeft, bottomRight));
+
+		uint width, height;
+		linearDepthBufferMip5.GetDimensions(width, height);
+
+		uint2 index = groupIndex.xy;
+		if(index.x < width && index.y < height)
+			linearDepthBufferMip5[index] = minValue;
+	}
 
 }

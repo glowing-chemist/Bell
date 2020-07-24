@@ -18,7 +18,7 @@ public:
 		return PassType::ForwardIBL;
 	}
 
-	virtual void render(RenderGraph&, Engine*);
+    virtual void render(RenderGraph&, Engine*) {};
 
     virtual void bindResources(RenderGraph&) {}
 

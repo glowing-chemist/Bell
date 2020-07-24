@@ -13,7 +13,7 @@ struct vulkanResources;
 class VulkanExecutor : public Executor
 {
 public:
-    VulkanExecutor(vk::CommandBuffer cmdBuffer);
+    VulkanExecutor(RenderDevice* dev, vk::CommandBuffer cmdBuffer);
 
 	virtual void draw(const uint32_t vertexOffset, const uint32_t vertexCount) override;
 
@@ -43,6 +43,8 @@ public:
 
     virtual void endCommandPredication() override;
 
+    virtual void copyDataToBuffer(const void*, const size_t size, const size_t offset, Buffer&) override;
+
     virtual uint32_t getRecordedCommandCount() override
     {
         return mRecordedCommands;
@@ -65,6 +67,9 @@ private:
 
 	vk::CommandBuffer mCommandBuffer;
     vk::PipelineLayout mPipelineLayout;
+
+    PFN_vkCmdBeginConditionalRenderingEXT mBeginConditionalRenderingFPtr;
+    PFN_vkCmdEndConditionalRenderingEXT   mEndConditionalRenderingFPtr;
 
     uint32_t mRecordedCommands;
 };

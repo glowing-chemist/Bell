@@ -140,6 +140,7 @@ public:
     // returns an vertex and index buffer offset.
     std::pair<uint64_t, uint64_t> addMeshToBuffer(const StaticMesh*);
     std::pair<uint64_t, uint64_t> addMeshToAnimationBuffer(const StaticMesh*);
+    uint64_t                      getMeshBoundsIndex(const MeshInstance*);
 
 	uint64_t					  addVertexData(const void* ptr, const size_t size)
 		{ return mVertexBuilder.addData(ptr, size); }
@@ -325,6 +326,7 @@ private:
 
     std::unordered_map < const StaticMesh*, std::pair<uint64_t, uint64_t>> mVertexCache;
     std::unordered_map < const StaticMesh*, std::pair<uint64_t, uint64_t>> mTposeVertexCache;
+    std::unordered_map < const MeshInstance*, uint64_t>                    mMeshBoundsCache;
 
     RenderGraph mCurrentRenderGraph;
     bool mCompileGraph;
@@ -343,6 +345,7 @@ private:
     Buffer mBonesWeightsBuffer;
     Buffer mBoneWeightsIndexBuffer;
     PerFrameResource<Buffer> mBoneBuffer;
+    Buffer mMeshBoundsBuffer;
 
     Sampler mDefaultSampler;
 

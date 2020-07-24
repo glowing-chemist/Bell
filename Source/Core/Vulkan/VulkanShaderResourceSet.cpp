@@ -15,7 +15,8 @@ VulkanShaderResourceSet::VulkanShaderResourceSet(RenderDevice* dev, const uint32
 
 VulkanShaderResourceSet::~VulkanShaderResourceSet()
 {
-	getDevice()->destroyShaderResourceSet(*this);
+    if(mDescSet != vk::DescriptorSet{nullptr})
+        getDevice()->destroyShaderResourceSet(*this);
 }
 
 

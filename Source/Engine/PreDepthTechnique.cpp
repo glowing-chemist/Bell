@@ -23,35 +23,66 @@ PreDepthTechnique::PreDepthTechnique(Engine* eng, RenderGraph& graph) :
     task.addInput(kSceneVertexBuffer, AttachmentType::VertexBuffer);
     task.addInput(kSceneIndexBuffer, AttachmentType::IndexBuffer);
 
+    if(eng->isPassRegistered(PassType::OcclusionCulling))
+        task.addInput(kOcclusionPredicationBuffer, AttachmentType::CommandPredicationBuffer);
+
     task.addOutput(kGBufferDepth, AttachmentType::Depth, Format::D32Float, SizeClass::Swapchain, LoadOp::Clear_Black);
 
-    mTaskID = graph.addTask(task);
-}
-
-
-void PreDepthTechnique::render(RenderGraph& graph, Engine*)
-{
-    GraphicsTask& task = static_cast<GraphicsTask&>(graph.getTask(mTaskID));
-
-    task.setRecordCommandsCallback(
-        [](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>& meshes)
-        {
-            exec->bindIndexBuffer(eng->getIndexBuffer(), 0);
-            exec->bindVertexBuffer(eng->getVertexBuffer(), 0);
-
-            for (const auto& mesh : meshes)
+    if(eng->isPassRegistered(PassType::OcclusionCulling))
+    {
+        task.setRecordCommandsCallback(
+            [](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>& meshes)
             {
-                // Don't render transparent geometry.
-                if ((mesh->getMaterialFlags() & MaterialType::Transparent) > 0 || !(mesh->getInstanceFlags() & InstanceFlags::Draw))
-                    continue;
+                exec->bindIndexBuffer(eng->getIndexBuffer(), 0);
+                exec->bindVertexBuffer(eng->getVertexBuffer(), 0);
 
-                const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->mMesh);
+                const BufferView& pred = eng->getRenderGraph().getBuffer(kOcclusionPredicationBuffer);
 
-                const MeshEntry entry = mesh->getMeshShaderEntry();
+                for (uint32_t i = 0; i < meshes.size(); ++i)
+                {
+                    const auto& mesh = meshes[i];
 
-                exec->insertPushConsatnt(&entry, sizeof(MeshEntry));
-                exec->indexedDraw(vertexOffset / mesh->mMesh->getVertexStride(), indexOffset / sizeof(uint32_t), mesh->mMesh->getIndexData().size());
+                    if (mesh->getMaterialFlags() & MaterialType::Transparent || !(mesh->getInstanceFlags() & InstanceFlags::Draw))
+                        continue;
+
+                    const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->mMesh);
+
+                    const MeshEntry entry = mesh->getMeshShaderEntry();
+
+                    exec->startCommandPredication(pred, i);
+
+                    exec->insertPushConsatnt(&entry, sizeof(MeshEntry));
+                    exec->indexedDraw(vertexOffset / mesh->mMesh->getVertexStride(), indexOffset / sizeof(uint32_t), mesh->mMesh->getIndexData().size());
+
+                    exec->endCommandPredication();
+                }
             }
-        }
-    );
+        );
+    }
+    else
+    {
+        task.setRecordCommandsCallback(
+            [](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>& meshes)
+            {
+                exec->bindIndexBuffer(eng->getIndexBuffer(), 0);
+                exec->bindVertexBuffer(eng->getVertexBuffer(), 0);
+
+                for (const auto& mesh : meshes)
+                {
+                    // Don't render transparent geometry.
+                    if ((mesh->getMaterialFlags() & MaterialType::Transparent) > 0 || !(mesh->getInstanceFlags() & InstanceFlags::Draw))
+                        continue;
+
+                    const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->mMesh);
+
+                    const MeshEntry entry = mesh->getMeshShaderEntry();
+
+                    exec->insertPushConsatnt(&entry, sizeof(MeshEntry));
+                    exec->indexedDraw(vertexOffset / mesh->mMesh->getVertexStride(), indexOffset / sizeof(uint32_t), mesh->mMesh->getIndexData().size());
+                }
+            }
+        );
+    }
+
+    mTaskID = graph.addTask(task);
 }

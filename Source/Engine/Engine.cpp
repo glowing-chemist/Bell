@@ -40,6 +40,7 @@
 #include "Engine/SkinningTechnique.hpp"
 #include "Engine/DeferredProbeGITechnique.hpp"
 #include "Engine/VisualizeLightProbesTechnique.hpp"
+#include "Engine/OcclusionCullingTechnique.hpp"
 
 #include "Engine/RayTracedScene.hpp"
 
@@ -84,6 +85,7 @@ Engine::Engine(GLFWwindow* windowPtr) :
     mBonesWeightsBuffer(getDevice(), BufferUsage::DataBuffer | BufferUsage::TransferDest, sizeof(uint2) * 30000, sizeof(uint2) * 30000, "Bone weights"),
     mBoneWeightsIndexBuffer(getDevice(), BufferUsage::DataBuffer | BufferUsage::TransferDest, sizeof(uint2) * 30000, sizeof(uint2) * 30000, "Bone weight indicies"),
     mBoneBuffer(getDevice(), BufferUsage::DataBuffer | BufferUsage::TransferDest, sizeof(float4x4) * 1000, sizeof(float4x4) * 1000, "Bone buffer"),
+    mMeshBoundsBuffer(getDevice(), BufferUsage::DataBuffer | BufferUsage::TransferDest, sizeof(float4) * 1000, sizeof(float4) * 1000, "Bounds buffer"),
     mDefaultSampler(SamplerType::Linear),
     mShowDebugTexture(false),
     mDebugTextureName(""),
@@ -170,6 +172,9 @@ void Engine::setScene(Scene* scene)
     {
         mMaterials.reset(mRenderDevice, 200);
         mActiveAnimations.clear();
+        mVertexCache.clear();
+        mTposeVertexCache.clear();
+        mMeshBoundsCache.clear();
         // need to invalidate render pipelines as the number of materials could change.
         mRenderDevice->invalidatePipelines();
     }
@@ -184,7 +189,7 @@ void Engine::setRayTracingScene(RayTracingScene* scene)
 
 Camera& Engine::getCurrentSceneCamera()
 {
-    return mDebugCameraActive ? mDebugCamera : mCurrentScene->getCamera();
+    return mDebugCameraActive ? mDebugCamera : mCurrentScene ? mCurrentScene->getCamera() : mDebugCamera;
 }
 
 
@@ -318,6 +323,9 @@ std::unique_ptr<Technique> Engine::getSingleTechnique(const PassType passType)
         case PassType::VisualizeLightProbes:
             return std::make_unique<ViaualizeLightProbesTechnique>(this, mCurrentRenderGraph);
 
+        case PassType::OcclusionCulling:
+            return std::make_unique<OcclusionCullingTechnique>(this, mCurrentRenderGraph);
+
         default:
         {
             BELL_TRAP;
@@ -366,6 +374,14 @@ std::pair<uint64_t, uint64_t> Engine::addMeshToAnimationBuffer(const StaticMesh*
 }
 
 
+uint64_t Engine::getMeshBoundsIndex(const MeshInstance* inst)
+{
+    BELL_ASSERT(mMeshBoundsCache.find(inst) != mMeshBoundsCache.end(), "Unable to fin dinstance bounds")
+
+    return mMeshBoundsCache[inst];
+}
+
+
 void Engine::execute(RenderGraph& graph)
 {
     // Upload vertex/index data if required.
@@ -381,6 +397,22 @@ void Engine::execute(RenderGraph& graph)
 
         mVertexBuilder.reset();
         mIndexBuilder.reset();
+
+        // upload mesh instance bounds info.
+        static_assert(sizeof(AABB) == (sizeof(float4) * 2), "Sizes need to match");
+        std::vector<AABB> bounds{};
+        for(const auto& inst : mCurrentScene->getStaticMeshInstances())
+        {
+            mMeshBoundsCache.insert({&inst, bounds.size()});
+            bounds.push_back(inst.mMesh->getAABB() * inst.getTransMatrix());
+        }
+        for(const auto& inst : mCurrentScene->getDynamicMeshInstances())
+        {
+            mMeshBoundsCache.insert({&inst, bounds.size()});
+            bounds.push_back(inst.mMesh->getAABB() * inst.getTransMatrix());
+        }
+
+        mMeshBoundsBuffer->setContents(bounds.data(), sizeof(AABB) * bounds.size());
     }
 
     auto& animationVerticies = mAnimationVertexBuilder.finishRecording();
@@ -416,6 +448,8 @@ void Engine::execute(RenderGraph& graph)
         mCurrentRenderGraph.bindBuffer(kBonesWeights, mBonesWeightsBuffer);
         mCurrentRenderGraph.bindBuffer(kBoneWeighntsIndiciesBuffer, mBoneWeightsIndexBuffer);
         mCurrentRenderGraph.bindBuffer(kBonesBuffer, *mBoneBuffer);
+
+        mCurrentRenderGraph.bindBuffer(kMeshBoundsBuffer, mMeshBoundsBuffer);
 
         if(mCurrentScene && mCurrentScene->getSkybox())
         {

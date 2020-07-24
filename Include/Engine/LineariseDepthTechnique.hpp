@@ -29,10 +29,14 @@ private:
 
     Image mLinearDepth;
     ImageView mLinearDepthView;
-    ImageView mLinearDepthViewMip1;
-    ImageView mLinearDepthViewMip2;
-    ImageView mLinearDepthViewMip3;
-    ImageView mLinearDepthViewMip4;
+    Image mPreviousLinearDepth;
+    ImageView mPreviousLinearDepthView;
+
+    ImageView mLinearDepthViewMip1[2];
+    ImageView mLinearDepthViewMip2[2];
+    ImageView mLinearDepthViewMip3[2];
+    ImageView mLinearDepthViewMip4[2];
+    ImageView mLinearDepthViewMip5[2];
 };
 
 #endif

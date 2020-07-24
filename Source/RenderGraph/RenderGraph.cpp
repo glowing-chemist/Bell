@@ -251,7 +251,8 @@ void RenderGraph::compileDependancies()
                                   (innerResources[innerIndex].mType == AttachmentType::DataBufferRO ||
                                   innerResources[innerIndex].mType == AttachmentType::DataBufferRW ||
                                    innerResources[innerIndex].mType == AttachmentType::VertexBuffer ||
-                                   innerResources[innerIndex].mType == AttachmentType::IndexBuffer)) ||
+                                   innerResources[innerIndex].mType == AttachmentType::IndexBuffer ||
+                                   innerResources[innerIndex].mType == AttachmentType::CommandPredicationBuffer )) ||
                                  // Indirect buffers are readOnly (written as (WO) data buffers)
                                  innerResources[innerIndex].mType == AttachmentType::IndirectBuffer))
                         {

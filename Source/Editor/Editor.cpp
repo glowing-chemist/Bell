@@ -285,6 +285,14 @@ namespace
                 newNode->mInputs.push_back(Pin{ 0, newNode, kGBufferDepth, PinType::Texture, PinKind::Input });
                 return newNode;
             }
+
+            case NodeTypes::OcclusionCulling:
+            {
+                std::shared_ptr<EditorNode> newNode = std::make_shared<PassNode>("Occlusion culling", passType);
+                newNode->mInputs.push_back(Pin{ 0, newNode, kLinearDepth, PinType::Texture, PinKind::Input });
+                newNode->mInputs.push_back(Pin{ 0, newNode, kMeshBoundsBuffer, PinType::Texture, PinKind::Input });
+                return newNode;
+            }
         }
     }
 
@@ -698,6 +706,7 @@ void Editor::drawAssistantWindow()
            drawPassContextMenu(PassType::Animation);
            drawPassContextMenu(PassType::Voxelize);
            drawPassContextMenu(PassType::VisualizeLightProbes);
+           drawPassContextMenu(PassType::OcclusionCulling);
 
            ImGui::TreePop();
        }

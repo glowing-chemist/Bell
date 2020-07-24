@@ -37,7 +37,8 @@
                     DebugWireFrame = 1ULL << 30, \
                     Transparent = 1ULL << 31, \
                     LightProbeDeferredGI = 1ULL << 32, \
-                    VisualizeLightProbes = 1ULL << 33
+                    VisualizeLightProbes = 1ULL << 33, \
+                    OcclusionCulling = 1ULL << 34
 
 // An enum to keep track of which 
 enum class PassType : uint64_t
@@ -143,6 +144,9 @@ inline const char* passToString(const PassType passType)
 
         case PassType::VisualizeLightProbes:
             return "VisulizeLightProbes";
+
+        case PassType::OcclusionCulling:
+            return "OcclusionCulling";
     }
 
     return "UNKNOWN PASS TYPE";
