@@ -1,0 +1,88 @@
+#include "UniformBuffers.hlsl"
+#include "Utilities.hlsl"
+
+struct AABB
+{
+	float4 minimum;
+	float4 maximum;
+};
+
+[[vk::binding(0)]]
+StructuredBuffer<uint> indexBuffer;
+
+[[vk::binding(1)]]
+StructuredBuffer<AABB> boundsBuffer;
+
+[[vk::binding(2)]]
+RWStructuredBuffer<uint> predicationBuffer;
+
+[[vk::binding(3)]]
+ConstantBuffer<CameraBuffer> camera;
+
+[[vk::binding(4)]]
+Texture2D<float> hierarchicalDepth;
+
+[[vk::binding(5)]]
+SamplerState samp;
+
+struct PushConstants
+{
+	uint meshCount;
+};
+[[vk::push_constant]]
+ConstantBuffer<PushConstants> constants;
+
+
+[numthreads(64, 1, 1)]
+void main(uint3 globalIndex : SV_DispatchThreadID)
+{
+	if(globalIndex.x < constants.meshCount)
+	{
+		const uint meshIndex = indexBuffer[globalIndex.x];
+		const AABB bounds = boundsBuffer[meshIndex];
+
+		float4 verticies[8] = 
+		{
+			bounds.minimum,
+			float4(bounds.minimum.x, bounds.minimum.y, bounds.maximum.z, 1.0f),
+			float4(bounds.maximum.x, bounds.minimum.y, bounds.maximum.z, 1.0f),
+			float4(bounds.maximum.x, bounds.minimum.y, bounds.minimum.z, 1.0f),
+			float4(bounds.minimum.x, bounds.maximum.y, bounds.minimum.z, 1.0f),
+			float4(bounds.minimum.x, bounds.maximum.y, bounds.maximum.z, 1.0f),
+			bounds.maximum,
+			float4(bounds.maximum.x, bounds.maximum.y, bounds.minimum.z, 1.0f),
+		};
+
+		float4 clipSPaceMin = float4(10.0f, 10.0f, 10.0f, 10.0f);
+		float4 clipSpaceMax = float4(-10.0f, -10.0f, -10.0f, -10.0f);;
+		for(uint i = 0; i < 8; ++i)
+		{
+			float4 trans = mul(camera.viewProj, verticies[i]);
+			trans /= trans.w;
+
+			clipSPaceMin = min(clipSPaceMin, trans);
+			clipSpaceMax = max(clipSpaceMax, trans);
+		}
+
+		// Use the min and max points as screen space UVs.
+		const float4 AABBuv = float4(clipSPaceMin.xy * 0.5f + 0.5f, clipSpaceMax.xy * 0.5f + 0.5f);
+
+		// Calculate a lod that would cover the AABB with 4 samples.
+		const float2 size = (clipSpaceMax.xy - clipSPaceMin.xy) * camera.frameBufferSize;
+		const float depthLOD = ceil(log2(max(size.x, size.y)));
+
+		const float4 depthTaps = float4(hierarchicalDepth.SampleLevel(samp, AABBuv.xy, depthLOD),
+										hierarchicalDepth.SampleLevel(samp, AABBuv.zy, depthLOD),
+										hierarchicalDepth.SampleLevel(samp, AABBuv.xw, depthLOD),
+										hierarchicalDepth.SampleLevel(samp, AABBuv.zw, depthLOD));
+
+		const float maxDepth = max(max(depthTaps.x, depthTaps.y), max(depthTaps.z, depthTaps.w));
+
+		uint predication = 0;
+
+		if(lineariseReverseDepth(clipSpaceMax.z, camera.nearPlane, camera.farPlane) <= maxDepth)
+			predication = 1;
+
+		predicationBuffer[globalIndex.x] = predication;
+	}
+}

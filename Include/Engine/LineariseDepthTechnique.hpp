@@ -24,6 +24,7 @@ public:
 
 private:
 
+    uint32_t mMipLevels;
 	ComputePipelineDescription mPipelienDesc;
 	TaskID mTaskID;
 
@@ -32,11 +33,9 @@ private:
     Image mPreviousLinearDepth;
     ImageView mPreviousLinearDepthView;
 
-    ImageView mLinearDepthViewMip1[2];
-    ImageView mLinearDepthViewMip2[2];
-    ImageView mLinearDepthViewMip3[2];
-    ImageView mLinearDepthViewMip4[2];
-    ImageView mLinearDepthViewMip5[2];
+    std::vector<ImageView> mMipsViews;
+
+    Sampler mOcclusionSampler;
 };
 
 #endif

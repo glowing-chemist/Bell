@@ -1,0 +1,122 @@
+#include "UniformBuffers.hlsl"
+#include "Utilities.hlsl"
+
+[[vk::binding(0)]]
+globallycoherent RWTexture2D<float> linearDepthBufferMip0;
+
+[[vk::binding(1)]]
+globallycoherent RWTexture2D<float> linearDepthBufferMip1;
+
+[[vk::binding(2)]]
+globallycoherent RWTexture2D<float> linearDepthBufferMip2;
+
+[[vk::binding(3)]]
+globallycoherent RWTexture2D<float> linearDepthBufferMip3;
+
+[[vk::binding(4)]]
+globallycoherent RWTexture2D<float> linearDepthBufferMip4;
+
+[[vk::binding(5)]]
+globallycoherent RWTexture2D<float> linearDepthBufferMip5;
+
+[[vk::binding(6)]]
+globallycoherent RWTexture2D<float> linearDepthBufferMip6;
+
+[[vk::binding(7)]]
+globallycoherent RWTexture2D<float> linearDepthBufferMip7;
+
+[[vk::binding(8)]]
+globallycoherent RWTexture2D<float> linearDepthBufferMip8;
+
+[[vk::binding(9)]]
+globallycoherent RWTexture2D<float> linearDepthBufferMip9;
+
+[[vk::binding(10)]]
+globallycoherent RWTexture2D<float> linearDepthBufferMip10;
+
+[[vk::binding(11)]]
+Texture2D<float> gbufferDepth;
+
+[[vk::binding(12)]]
+ConstantBuffer<CameraBuffer> camera;
+
+[[vk::binding(13)]]
+SamplerState linearSampler;
+
+
+void downSample(uint2 pos, RWTexture2D<float> readMip, RWTexture2D<float> writeMip)
+{
+	uint width, height;
+	writeMip.GetDimensions(width, height);
+	if(pos.x < width && pos.y < height)
+	{
+		const float4 depthTaps = float4(readMip.Load(pos.xy * 2),
+										readMip.Load((pos.xy * 2) + uint2(1, 0)),
+										readMip.Load((pos.xy * 2) + uint2(1, 1)),
+										readMip.Load((pos.xy * 2) + uint2(0, 1)));
+
+		const float maxDepth = max(max(depthTaps.x, depthTaps.y), max(depthTaps.z, depthTaps.w));
+
+		if(pos.x < width && pos.y < height)
+			writeMip[pos.xy] = maxDepth;
+	}
+}
+
+
+[numthreads(16, 16, 1)]
+void main(uint3 globalIndex : SV_DispatchThreadID)
+{
+	const float2 size = camera.frameBufferSize;
+	const float2 uv = float2(globalIndex.xy) / camera.frameBufferSize;
+
+	const float depth = gbufferDepth.Sample(linearSampler, uv);
+	float linearDepth = lineariseReverseDepth(depth, camera.nearPlane, camera.farPlane);
+
+	linearDepth = saturate(linearDepth);
+
+	uint width, height;
+	linearDepthBufferMip0.GetDimensions(width, height);
+
+	if(globalIndex.x < width && globalIndex.y < height)
+		linearDepthBufferMip0[globalIndex.xy] = linearDepth;
+
+	AllMemoryBarrierWithGroupSync();
+
+	downSample(globalIndex.xy, linearDepthBufferMip0, linearDepthBufferMip1);
+
+	AllMemoryBarrierWithGroupSync();
+
+	downSample(globalIndex.xy, linearDepthBufferMip1, linearDepthBufferMip2);
+
+	AllMemoryBarrierWithGroupSync();
+
+	downSample(globalIndex.xy, linearDepthBufferMip2, linearDepthBufferMip3);
+
+	AllMemoryBarrierWithGroupSync();
+
+	downSample(globalIndex.xy, linearDepthBufferMip3, linearDepthBufferMip4);
+
+	AllMemoryBarrierWithGroupSync();
+
+	downSample(globalIndex.xy, linearDepthBufferMip4, linearDepthBufferMip5);
+
+	AllMemoryBarrierWithGroupSync();
+
+	downSample(globalIndex.xy, linearDepthBufferMip5, linearDepthBufferMip6);
+
+	AllMemoryBarrierWithGroupSync();
+
+	downSample(globalIndex.xy, linearDepthBufferMip6, linearDepthBufferMip7);
+
+	AllMemoryBarrierWithGroupSync();
+
+	downSample(globalIndex.xy, linearDepthBufferMip7, linearDepthBufferMip8);
+
+	AllMemoryBarrierWithGroupSync();
+
+	downSample(globalIndex.xy, linearDepthBufferMip8, linearDepthBufferMip9);
+
+	AllMemoryBarrierWithGroupSync();
+
+	downSample(globalIndex.xy, linearDepthBufferMip9, linearDepthBufferMip10);
+}

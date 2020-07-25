@@ -7,34 +7,67 @@ constexpr const char* kLinearDepthMip2 = "linearDepth2";
 constexpr const char* kLinearDepthMip3 = "linearDepth3";
 constexpr const char* kLinearDepthMip4 = "linearDepth4";
 constexpr const char* kLinearDepthMip5 = "linearDepth5";
+constexpr const char* kLinearDepthMip6 = "linearDepth6";
+constexpr const char* kLinearDepthMip7 = "linearDepth7";
+constexpr const char* kLinearDepthMip8 = "linearDepth8";
+constexpr const char* kLinearDepthMip9 = "linearDepth9";
+constexpr const char* kLinearDepthMip10 = "linearDepth10";
+constexpr const char* kLinearDepthMip11 = "linearDepth11";
+
+constexpr const char* mipNames[] = {kLinearDepthMip1, kLinearDepthMip2, kLinearDepthMip3, kLinearDepthMip4, kLinearDepthMip5, kLinearDepthMip6, kLinearDepthMip7,
+                                   kLinearDepthMip8, kLinearDepthMip9, kLinearDepthMip10, kLinearDepthMip11};
+
+constexpr const char* kPrevLinearDepthMip1 = "linearDepth1";
+constexpr const char* kPrevLinearDepthMip2 = "linearDepth2";
+constexpr const char* kPrevLinearDepthMip3 = "linearDepth3";
+constexpr const char* kPrevLinearDepthMip4 = "linearDepth4";
+constexpr const char* kPrevLinearDepthMip5 = "linearDepth5";
+constexpr const char* kPrevLinearDepthMip6 = "linearDepth6";
+constexpr const char* kPrevLinearDepthMip7 = "linearDepth7";
+constexpr const char* kPrevLinearDepthMip8 = "linearDepth8";
+constexpr const char* kPrevLinearDepthMip9 = "linearDepth9";
+constexpr const char* kPrevLinearDepthMip10 = "linearDepth10";
+constexpr const char* kPrevLinearDepthMip11 = "linearDepth11";
+
+constexpr const char* prevMipNames[] = {kPrevLinearDepthMip1, kPrevLinearDepthMip2, kPrevLinearDepthMip3, kPrevLinearDepthMip4, kPrevLinearDepthMip5, kPrevLinearDepthMip6, kPrevLinearDepthMip7,
+                                   kPrevLinearDepthMip8, kPrevLinearDepthMip9, kPrevLinearDepthMip10, kPrevLinearDepthMip11};
+
+
+constexpr const char* kOcclusionSampler = "OcclusionSampler";
 
 
 LineariseDepthTechnique::LineariseDepthTechnique(Engine* eng, RenderGraph& graph) :
 	Technique("linearise depth", eng->getDevice()),
-	mPipelienDesc{eng->getShader("./Shaders/LineariseDepth.comp")},
+    mMipLevels{static_cast<uint32_t>(std::ceil(std::log2(eng->getSwapChainImage()->getExtent(0, 0).height)))},
+    mPipelienDesc{mMipLevels == 10 ? eng->getShader("./Shaders/LineariseDepth10.comp") : eng->getShader("./Shaders/LineariseDepth11.comp")},
 	mTaskID{0},
 	mLinearDepth(eng->getDevice(), Format::R32Float, ImageUsage::Sampled | ImageUsage::Storage, eng->getSwapChainImage()->getExtent(0, 0).width, eng->getSwapChainImage()->getExtent(0, 0).height,
-        1, 6, 1, 1, "Linear Depth"),
-    mLinearDepthView(mLinearDepth, ImageViewType::Colour, 0, 1, 0, 5),
+        1, mMipLevels, 1, 1, "Linear Depth"),
+    mLinearDepthView(mLinearDepth, ImageViewType::Colour, 0, 1, 0, mMipLevels),
     mPreviousLinearDepth(eng->getDevice(), Format::R32Float, ImageUsage::Sampled | ImageUsage::Storage, eng->getSwapChainImage()->getExtent(0, 0).width, eng->getSwapChainImage()->getExtent(0, 0).height,
-        1, 6, 1, 1, "Linear Depth"),
-    mPreviousLinearDepthView(mPreviousLinearDepth, ImageViewType::Colour, 0, 1, 0, 5),
-    mLinearDepthViewMip1{ImageView(mLinearDepth, ImageViewType::Colour, 0, 1, 1, 1), ImageView(mPreviousLinearDepth, ImageViewType::Colour, 0, 1, 1, 1)},
-    mLinearDepthViewMip2{ImageView(mLinearDepth, ImageViewType::Colour, 0, 1, 2, 1), ImageView(mPreviousLinearDepth, ImageViewType::Colour, 0, 1, 2, 1)},
-    mLinearDepthViewMip3{ImageView(mLinearDepth, ImageViewType::Colour, 0, 1, 3, 1), ImageView(mPreviousLinearDepth, ImageViewType::Colour, 0, 1, 3, 1)},
-    mLinearDepthViewMip4{ImageView(mLinearDepth, ImageViewType::Colour, 0, 1, 4, 1), ImageView(mPreviousLinearDepth, ImageViewType::Colour, 0, 1, 4, 1)},
-    mLinearDepthViewMip5{ImageView(mLinearDepth, ImageViewType::Colour, 0, 1, 5, 1), ImageView(mPreviousLinearDepth, ImageViewType::Colour, 0, 1, 5, 1)}
+        1, mMipLevels, 1, 1, "Linear Depth"),
+    mPreviousLinearDepthView(mPreviousLinearDepth, ImageViewType::Colour, 0, 1, 0, mMipLevels),
+    mOcclusionSampler(SamplerType::Point)
 {    
+    mOcclusionSampler.setAddressModeU(AddressMode::Clamp);
+    mOcclusionSampler.setAddressModeV(AddressMode::Clamp);
+
+    BELL_ASSERT(mMipLevels < 12, "Need to add more shader varientas")
+    for(uint32_t i = 1; i < mMipLevels; ++i)
+    {
+        mMipsViews.push_back(ImageView(mLinearDepth, ImageViewType::Colour, 0, 1, i, 1));
+        mMipsViews.push_back(ImageView(mPreviousLinearDepth, ImageViewType::Colour, 0, 1, i, 1));
+    }
+
 	ComputeTask task{ "linearise depth", mPipelienDesc };
 	task.addInput(kLinearDepth, AttachmentType::Image2D);
-    task.addInput(kLinearDepthMip1, AttachmentType::Image2D);
-    task.addInput(kLinearDepthMip2, AttachmentType::Image2D);
-    task.addInput(kLinearDepthMip3, AttachmentType::Image2D);
-    task.addInput(kLinearDepthMip4, AttachmentType::Image2D);
-    task.addInput(kLinearDepthMip5, AttachmentType::Image2D);
-	task.addInput(kGBufferDepth, AttachmentType::Texture2D);
+    for(uint32_t i = 1; i < mMipLevels; ++i)
+    {
+        task.addInput(mipNames[i - 1], AttachmentType::Image2D);
+    }
+    task.addInput(kGBufferDepth, AttachmentType::Texture2D);
 	task.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
-	task.addInput(kDefaultSampler, AttachmentType::Sampler);
+    task.addInput(kOcclusionSampler, AttachmentType::Sampler);
 
 	mTaskID = graph.addTask(task);
 }
@@ -46,22 +79,14 @@ void LineariseDepthTechnique::render(RenderGraph& graph, Engine*)
 
     mLinearDepth->updateLastAccessed();
     mLinearDepthView->updateLastAccessed();
-    mLinearDepthViewMip1[0]->updateLastAccessed();
-    mLinearDepthViewMip2[0]->updateLastAccessed();
-    mLinearDepthViewMip3[0]->updateLastAccessed();
-    mLinearDepthViewMip4[0]->updateLastAccessed();
-    mLinearDepthViewMip5[0]->updateLastAccessed();
-    mLinearDepthViewMip1[1]->updateLastAccessed();
-    mLinearDepthViewMip2[1]->updateLastAccessed();
-    mLinearDepthViewMip3[1]->updateLastAccessed();
-    mLinearDepthViewMip4[1]->updateLastAccessed();
-    mLinearDepthViewMip5[1]->updateLastAccessed();
+    for(auto& mip : mMipsViews)
+        mip->updateLastAccessed();
 
 	task.setRecordCommandsCallback(
 		[](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
 		{
 			const auto extent = eng->getDevice()->getSwapChainImageView()->getImageExtent();
-			exec->dispatch(std::ceil(extent.width / 32.0f), std::ceil(extent.height / 32.0f), 1);
+            exec->dispatch(std::ceil(extent.width / 16.0f), std::ceil(extent.height / 16.0f), 1);
 		}
 	);
 }
@@ -71,11 +96,11 @@ void LineariseDepthTechnique::bindResources(RenderGraph& graph)
 {
     const uint64_t submissionIndex = getDevice()->getCurrentSubmissionIndex();
 
-    graph.bindImage(kLinearDepthMip1, mLinearDepthViewMip1[submissionIndex % 2]);
-    graph.bindImage(kLinearDepthMip2, mLinearDepthViewMip2[submissionIndex % 2]);
-    graph.bindImage(kLinearDepthMip3, mLinearDepthViewMip3[submissionIndex % 2]);
-    graph.bindImage(kLinearDepthMip4, mLinearDepthViewMip4[submissionIndex % 2]);
-    graph.bindImage(kLinearDepthMip5, mLinearDepthViewMip5[submissionIndex % 2]);
+    for(uint32_t i = 0; i < (mMipLevels - 1); ++i)
+    {
+        graph.bindImage(mipNames[i], mMipsViews[(i * 2) + ((submissionIndex + 1) % 2)]);
+        graph.bindImage(prevMipNames[i], mMipsViews[(i * 2) + ((submissionIndex) % 2)]);
+    }
 
     if((submissionIndex % 2) == 0)
     {
@@ -87,4 +112,7 @@ void LineariseDepthTechnique::bindResources(RenderGraph& graph)
         graph.bindImage(kLinearDepth, mPreviousLinearDepthView);
         graph.bindImage(kPreviousLinearDepth, mLinearDepthView);
     }
+
+    if(!graph.isResourceSlotBound(kOcclusionSampler))
+        graph.bindSampler(kOcclusionSampler, mOcclusionSampler);
 }
