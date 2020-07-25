@@ -13,6 +13,7 @@
 #include "Engine/Bufferbuilder.h"
 #include "Engine/UniformBuffers.h"
 #include "Engine/Technique.hpp"
+#include "Engine/ThreadPool.hpp"
 
 #include "imgui.h"
 
@@ -300,6 +301,8 @@ private:
     SphericalHarmonic generateSphericalHarmonic(const float3 &position, const CPUImage& cubemap);
 
     std::unique_ptr<Technique>                   getSingleTechnique(const PassType);
+
+    ThreadPool mThreadPool;
 
     RenderInstance* mRenderInstance;
     RenderDevice* mRenderDevice;

@@ -51,6 +51,7 @@
 
 
 Engine::Engine(GLFWwindow* windowPtr) :
+    mThreadPool(),
 #ifdef VULKAN
     mRenderInstance( new VulkanRenderInstance(windowPtr)),
 #endif
@@ -754,7 +755,7 @@ void Engine::rayTraceScene()
     if(mRayTracedScene)
     {
         const ImageExtent extent = getSwapChainImage()->getExtent(0, 0);
-        mRayTracedScene->renderSceneToFile(mCurrentScene->getCamera(), extent.width, extent.height, "./RTNormals.jpg");
+        mRayTracedScene->renderSceneToFile(mCurrentScene->getCamera(), extent.width, extent.height, "./RTNormals.jpg", mThreadPool);
     }
     else
     {
@@ -769,27 +770,27 @@ CPUImage Engine::renderDiffuseCubeMap(const RayTracingScene& scene, const float3
 
     // render +x
     Camera cam{position, float3{1.0f, 0.0f, 0.0f}, 1.0f, 0.1f, 2000.0f};
-    scene.renderSceneToMemory(cam, x, y, data.data());
+    scene.renderSceneToMemory(cam, x, y, data.data(), mThreadPool);
 
     // render -x
     cam.setDirection(float3(-1.0f, 0.0f, 0.0f));
-    scene.renderSceneToMemory(cam, x, y, data.data() + (x * y * sizeof(uint32_t)));
+    scene.renderSceneToMemory(cam, x, y, data.data() + (x * y * sizeof(uint32_t)), mThreadPool);
 
     // render +y
     cam.setDirection(float3(0.0f, 1.0f, 0.0f));
-    scene.renderSceneToMemory(cam, x, y, data.data() + (x * y * 2 * sizeof(uint32_t)));
+    scene.renderSceneToMemory(cam, x, y, data.data() + (x * y * 2 * sizeof(uint32_t)), mThreadPool);
 
     // render -y
     cam.setDirection(float3(0.0f, -1.0f, 0.0f));
-    scene.renderSceneToMemory(cam, x, y, data.data() + (x * y * 3 * sizeof(uint32_t)));
+    scene.renderSceneToMemory(cam, x, y, data.data() + (x * y * 3 * sizeof(uint32_t)), mThreadPool);
 
     // render +z
     cam.setDirection(float3(0.0f, 0.0f, 1.0f));
-    scene.renderSceneToMemory(cam, x, y, data.data() + (x * y * 4 * sizeof(uint32_t)));
+    scene.renderSceneToMemory(cam, x, y, data.data() + (x * y * 4 * sizeof(uint32_t)), mThreadPool);
 
     // render -z
     cam.setDirection(float3(0.0f, 0.0f, -1.0f));
-    scene.renderSceneToMemory(cam, x, y, data.data() + (x * y * 5 * sizeof(uint32_t)));
+    scene.renderSceneToMemory(cam, x, y, data.data() + (x * y * 5 * sizeof(uint32_t)), mThreadPool);
 
 
     return CPUImage(std::move(data), ImageExtent{x, y, 6}, Format::RGBA8UNorm);
@@ -1023,18 +1024,17 @@ std::vector<short4> Engine::generateVoronoiLookupTexture(std::vector<SphericalHa
         }
     };
 
-    const uint32_t processor_count = std::thread::hardware_concurrency();
-    std::vector<std::thread> helperThreads{};
-
-    for(uint32_t i = 1; i < processor_count; ++i)
+    std::vector<std::future<void>> handles{};
+    const uint32_t threadCount = mThreadPool.getWorkerCount();
+    for(uint32_t i = 1; i < threadCount; ++i)
     {
-        helperThreads.push_back(std::thread(calculatePixels, i, processor_count));
+        handles.push_back(mThreadPool.addTask(calculatePixels, i, threadCount));
     }
 
-    calculatePixels(0, processor_count);
+    calculatePixels(0, threadCount);
 
-    for(auto& thread : helperThreads)
-        thread.join();
+    for(auto& thread : handles)
+        thread.wait();
 
     // rebaking to need to flush and reset.
     if(mIrradianceProbeBuffer)

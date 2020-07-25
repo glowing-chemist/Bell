@@ -67,7 +67,7 @@ RayTracingScene::RayTracingScene(const Scene* scene) :
     BELL_ASSERT(success, "Failed to build BVH")
 }
 
-void RayTracingScene::renderSceneToMemory(const Camera& camera, const uint32_t x, const uint32_t y, uint8_t* memory) const
+void RayTracingScene::renderSceneToMemory(const Camera& camera, const uint32_t x, const uint32_t y, uint8_t* memory, ThreadPool& threadPool) const
 {
     const float3 forward = camera.getDirection();
     const float3 up = camera.getUp();
@@ -121,26 +121,26 @@ void RayTracingScene::renderSceneToMemory(const Camera& camera, const uint32_t x
         }
     };
 
-    const uint32_t processor_count = std::thread::hardware_concurrency(); // use this many threads for tracing rays.
-    std::vector<std::thread> helperThreads{};
+    const uint32_t processor_count = threadPool.getWorkerCount(); // use this many threads for tracing rays.
+    std::vector<std::future<void>> handles{};
     for(uint32_t i = 1; i < processor_count; ++i)
     {
-        helperThreads.push_back(std::thread(trace_rays, i, processor_count));
+        handles.push_back(threadPool.addTask(trace_rays, i, processor_count));
     }
 
     trace_rays(0, processor_count);
 
-    for(auto& thread : helperThreads)
-        thread.join();
+    for(auto& thread : handles)
+        thread.wait();
 }
 
 
-void RayTracingScene::renderSceneToFile(const Camera& camera, const uint32_t x, const uint32_t y, const char* path) const
+void RayTracingScene::renderSceneToFile(const Camera& camera, const uint32_t x, const uint32_t y, const char* path, ThreadPool& threadPool) const
 {
     uint8_t* memory = new uint8_t[x * y * 4];
     BELL_ASSERT(memory, "Unable to allocate memory")
 
-    renderSceneToMemory(camera, x, y, memory);
+    renderSceneToMemory(camera, x, y, memory, threadPool);
 
     stbi_write_jpg(path, x, y, 4, memory, 100);
 

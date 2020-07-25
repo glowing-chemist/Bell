@@ -9,7 +9,7 @@ extern const char kGBufferSpecular[];
 extern const char kGBufferMaterialID[];
 extern const char kGBufferUV[];
 extern const char kGBufferSpecularRoughness[];
-extern const char kGBufferVelocity[];;
+extern const char kGBufferVelocity[];
 extern const char kGBufferEmissiveOcclusion[];
 extern const char kSSAO[];
 extern const char kSSAOBuffer[];

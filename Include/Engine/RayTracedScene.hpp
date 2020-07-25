@@ -7,6 +7,7 @@
 #include "GeomUtils.h"
 #include "CPUImage.hpp"
 #include "Engine/RayTracingSamplers.hpp"
+#include "Engine/ThreadPool.hpp"
 
 #include <memory>
 #include <vector>
@@ -21,8 +22,8 @@ public:
     RayTracingScene(const Scene*);
     ~RayTracingScene() = default;
 
-    void renderSceneToMemory(const Camera&, const uint32_t x, const uint32_t y, uint8_t *) const;
-    void renderSceneToFile(const Camera&, const uint32_t x, const uint32_t y, const char*) const;
+    void renderSceneToMemory(const Camera&, const uint32_t x, const uint32_t y, uint8_t *, ThreadPool&) const;
+    void renderSceneToFile(const Camera&, const uint32_t x, const uint32_t y, const char*, ThreadPool&) const;
 
     struct InterpolatedVertex
     {
