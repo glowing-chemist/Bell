@@ -17,6 +17,7 @@ struct ImGuiOptions
     bool mShadows = true;
     bool mSSR = false;
     bool preDepth = true;
+    bool occlusionCulling = false;
 };
 
 static ImGuiOptions graphicsOptions;
@@ -77,6 +78,7 @@ bool renderMenu(GLFWwindow* win, const Camera& cam, Engine* eng, const float cpu
     ImGui::Checkbox("Enable shadows", &graphicsOptions.mShadows);
     ImGui::Checkbox("Enable Screen space reflection", &graphicsOptions.mSSR);
     ImGui::Checkbox("Enable pre depth", &graphicsOptions.preDepth);
+    ImGui::Checkbox("Occlusion culling (experimental)", &graphicsOptions.occlusionCulling);
 
     ImGui::Text("Camera position: X: %f Y: %f Z: %f", cam.getPosition().x, cam.getPosition().y, cam.getPosition().z);
     ImGui::Text("Camera direction: X: %f Y: %f Z: %f", cam.getDirection().x, cam.getDirection().y, cam.getDirection().z);
@@ -275,6 +277,9 @@ int main()
 
         if (graphicsOptions.mTAA)
             engine.registerPass(PassType::TAA);
+
+        if(graphicsOptions.occlusionCulling)
+            engine.registerPass(PassType::OcclusionCulling);
 
         engine.registerPass(PassType::DFGGeneration);
         engine.registerPass(PassType::Overlay);

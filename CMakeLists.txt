@@ -266,7 +266,8 @@ set(SHADERS
 	AlphaTestDepthOnly.frag
 	MeshAttributes.hlsl
 	VertexOutputs.hlsl
-	LineariseDepth.comp
+	LineariseDepth10.comp
+	LineariseDepth11.comp
 	FinalComposite.frag
 	ScreenSpaceReflection.frag
 	Materials.hlsl

@@ -37,7 +37,7 @@ public:
         { return kGBufferUV; }
 
     virtual void bindResources(RenderGraph&) override final {}
-	virtual void render(RenderGraph&, Engine*) override final;
+    virtual void render(RenderGraph&, Engine*) override final {}
 
 private:
     
@@ -71,8 +71,8 @@ public:
     std::string getUVName() const
         { return kGBufferUV; }
 
-    virtual void bindResources(RenderGraph&) override final {};
-	virtual void render(RenderGraph&, Engine*) override final;
+    virtual void bindResources(RenderGraph&) override final {}
+    virtual void render(RenderGraph&, Engine*) override final {}
 
 private:
 

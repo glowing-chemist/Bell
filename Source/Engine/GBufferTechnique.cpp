@@ -30,34 +30,62 @@ GBufferTechnique::GBufferTechnique(Engine* eng, RenderGraph& graph) :
     task.addOutput(kGBufferEmissiveOcclusion,   AttachmentType::RenderTarget2D, Format::RGBA8UNorm, SizeClass::Swapchain, LoadOp::Clear_ColourBlack_AlphaWhite);
     task.addOutput(kGBufferDepth,      AttachmentType::Depth, Format::D32Float, SizeClass::Swapchain, LoadOp::Clear_Black);
 
-    mTaskID = graph.addTask(task);
-}
-
-
-void GBufferTechnique::render(RenderGraph& graph, Engine*)
-{
-    GraphicsTask& task = static_cast<GraphicsTask&>(graph.getTask(mTaskID));
-
-    task.setRecordCommandsCallback(
-        [](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>& meshes)
-        {
-            exec->bindIndexBuffer(eng->getIndexBuffer(), 0);
-            exec->bindVertexBuffer(eng->getVertexBuffer(), 0);
-
-            for (const auto& mesh : meshes)
+    if(eng->isPassRegistered(PassType::OcclusionCulling))
+    {
+        task.setRecordCommandsCallback(
+            [](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>& meshes)
             {
-                if (mesh->getMaterialFlags() & MaterialType::Transparent || !(mesh->getInstanceFlags() & InstanceFlags::Draw))
-                    continue;
+                exec->bindIndexBuffer(eng->getIndexBuffer(), 0);
+                exec->bindVertexBuffer(eng->getVertexBuffer(), 0);
 
-                const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->mMesh);
+                const BufferView& pred = eng->getRenderGraph().getBuffer(kOcclusionPredicationBuffer);
 
-                const MeshEntry entry = mesh->getMeshShaderEntry();
+                for (uint32_t i = 0; i < meshes.size(); ++i)
+                {
+                    const auto& mesh = meshes[i];
 
-                exec->insertPushConsatnt(&entry, sizeof(MeshEntry));
-                exec->indexedDraw(vertexOffset / mesh->mMesh->getVertexStride(), indexOffset / sizeof(uint32_t), mesh->mMesh->getIndexData().size());
+                    if (mesh->getMaterialFlags() & MaterialType::Transparent || !(mesh->getInstanceFlags() & InstanceFlags::Draw))
+                        continue;
+
+                    const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->mMesh);
+
+                    const MeshEntry entry = mesh->getMeshShaderEntry();
+
+                    exec->startCommandPredication(pred, i);
+
+                    exec->insertPushConsatnt(&entry, sizeof(MeshEntry));
+                    exec->indexedDraw(vertexOffset / mesh->mMesh->getVertexStride(), indexOffset / sizeof(uint32_t), mesh->mMesh->getIndexData().size());
+
+                    exec->endCommandPredication();
+                }
             }
-        }
-    );
+        );
+    }
+    else
+    {
+        task.setRecordCommandsCallback(
+            [](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>& meshes)
+            {
+                exec->bindIndexBuffer(eng->getIndexBuffer(), 0);
+                exec->bindVertexBuffer(eng->getVertexBuffer(), 0);
+
+                for (const auto& mesh : meshes)
+                {
+                    if (mesh->getMaterialFlags() & MaterialType::Transparent || !(mesh->getInstanceFlags() & InstanceFlags::Draw))
+                        continue;
+
+                    const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->mMesh);
+
+                    const MeshEntry entry = mesh->getMeshShaderEntry();
+
+                    exec->insertPushConsatnt(&entry, sizeof(MeshEntry));
+                    exec->indexedDraw(vertexOffset / mesh->mMesh->getVertexStride(), indexOffset / sizeof(uint32_t), mesh->mMesh->getIndexData().size());
+                }
+            }
+        );
+    }
+
+    mTaskID = graph.addTask(task);
 }
 
 
@@ -89,32 +117,60 @@ GBufferPreDepthTechnique::GBufferPreDepthTechnique(Engine* eng, RenderGraph& gra
     task.addOutput(kGBufferEmissiveOcclusion,   AttachmentType::RenderTarget2D, Format::RGBA8UNorm, SizeClass::Swapchain, LoadOp::Clear_ColourBlack_AlphaWhite);
     task.addOutput(kGBufferDepth, AttachmentType::Depth, Format::D32Float, SizeClass::Custom, LoadOp::Preserve);
 
-    mTaskID = graph.addTask(task);
-}
-
-
-void GBufferPreDepthTechnique::render(RenderGraph& graph, Engine*)
-{
-    GraphicsTask& task = static_cast<GraphicsTask&>(graph.getTask(mTaskID));
-
-    task.setRecordCommandsCallback(
-        [](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>& meshes)
-        {
-            exec->bindIndexBuffer(eng->getIndexBuffer(), 0);
-            exec->bindVertexBuffer(eng->getVertexBuffer(), 0);
-
-            for (const auto& mesh : meshes)
+    if(eng->isPassRegistered(PassType::OcclusionCulling))
+    {
+        task.setRecordCommandsCallback(
+            [](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>& meshes)
             {
-                if (mesh->getMaterialFlags() & MaterialType::Transparent || !(mesh->getInstanceFlags() & InstanceFlags::Draw))
-                    continue;
+                exec->bindIndexBuffer(eng->getIndexBuffer(), 0);
+                exec->bindVertexBuffer(eng->getVertexBuffer(), 0);
 
-                const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->mMesh);
+                const BufferView& pred = eng->getRenderGraph().getBuffer(kOcclusionPredicationBuffer);
 
-                const MeshEntry entry = mesh->getMeshShaderEntry();
+                for (uint32_t i = 0; i < meshes.size(); ++i)
+                {
+                    const auto& mesh = meshes[i];
 
-                exec->insertPushConsatnt(&entry, sizeof(MeshEntry));
-                exec->indexedDraw(vertexOffset / mesh->mMesh->getVertexStride(), indexOffset / sizeof(uint32_t), mesh->mMesh->getIndexData().size());
+                    if (mesh->getMaterialFlags() & MaterialType::Transparent || !(mesh->getInstanceFlags() & InstanceFlags::Draw))
+                        continue;
+
+                    const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->mMesh);
+
+                    const MeshEntry entry = mesh->getMeshShaderEntry();
+
+                    exec->startCommandPredication(pred, i);
+
+                    exec->insertPushConsatnt(&entry, sizeof(MeshEntry));
+                    exec->indexedDraw(vertexOffset / mesh->mMesh->getVertexStride(), indexOffset / sizeof(uint32_t), mesh->mMesh->getIndexData().size());
+
+                    exec->endCommandPredication();
+                }
             }
-        }
-    );
+        );
+    }
+    else
+    {
+        task.setRecordCommandsCallback(
+            [](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>& meshes)
+            {
+                exec->bindIndexBuffer(eng->getIndexBuffer(), 0);
+                exec->bindVertexBuffer(eng->getVertexBuffer(), 0);
+
+                for (const auto& mesh : meshes)
+                {
+                    if (mesh->getMaterialFlags() & MaterialType::Transparent || !(mesh->getInstanceFlags() & InstanceFlags::Draw))
+                        continue;
+
+                    const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->mMesh);
+
+                    const MeshEntry entry = mesh->getMeshShaderEntry();
+
+                    exec->insertPushConsatnt(&entry, sizeof(MeshEntry));
+                    exec->indexedDraw(vertexOffset / mesh->mMesh->getVertexStride(), indexOffset / sizeof(uint32_t), mesh->mMesh->getIndexData().size());
+                }
+            }
+        );
+    }
+
+    mTaskID = graph.addTask(task);
 }
