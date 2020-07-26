@@ -614,7 +614,8 @@ void Engine::recordScene()
 
         while (mPassesRegisteredThisFrame > 0)
         {
-            const uint64_t passTypeIndex = __builtin_ctzl(mPassesRegisteredThisFrame);
+            static_assert(sizeof(unsigned long long) == sizeof(uint64_t), "builtin requires sizes be the same ");
+            const uint64_t passTypeIndex = __builtin_ctzll(mPassesRegisteredThisFrame);
 
             mTechniques.push_back(getSingleTechnique(static_cast<PassType>(1ull << passTypeIndex)));
             mPassesRegisteredThisFrame &= mPassesRegisteredThisFrame - 1;
