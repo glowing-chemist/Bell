@@ -18,12 +18,9 @@ public:
 		return PassType::ForwardCombinedLighting;
 	}
 
-    virtual void render(RenderGraph&, Engine*) {};
+    virtual void render(RenderGraph&, Engine*) {}
 
-	virtual void bindResources(RenderGraph& graph)
-	{
-		graph.bindSampler("ForwardPointSampler", mPointSampler);
-	}
+	virtual void bindResources(RenderGraph& graph);
 
 private:
 

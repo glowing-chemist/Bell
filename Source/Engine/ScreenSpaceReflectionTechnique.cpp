@@ -3,6 +3,9 @@
 #include "Core/Executor.hpp"
 
 
+constexpr const char SSRSampler[] = "SSRSampler";
+
+
 ScreenSpaceReflectionTechnique::ScreenSpaceReflectionTechnique(Engine* eng, RenderGraph& graph) :
 	Technique("SSR", eng->getDevice()),
     mReflectionMap(eng->getDevice(), Format::RGBA8UNorm, ImageUsage::ColourAttachment | ImageUsage::Sampled, eng->getSwapChainImage()->getExtent(0, 0).width, eng->getSwapChainImage()->getExtent(0, 0).height, 1, 1, 1, 1, "Reflection map"),
@@ -24,7 +27,7 @@ ScreenSpaceReflectionTechnique::ScreenSpaceReflectionTechnique(Engine* eng, Rend
     task.addInput(kGlobalLighting, AttachmentType::Texture2D);
     task.addInput(kGBufferNormals, AttachmentType::Texture2D);
     task.addInput(kGBufferSpecularRoughness, AttachmentType::Texture2D);
-    task.addInput("SSRSampler", AttachmentType::Sampler);
+    task.addInput(SSRSampler, AttachmentType::Sampler);
     task.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
     if(eng->isPassRegistered(PassType::DeferredAnalyticalLighting))
         task.addInput(kAnalyticLighting, AttachmentType::Texture2D);
@@ -43,4 +46,14 @@ ScreenSpaceReflectionTechnique::ScreenSpaceReflectionTechnique(Engine* eng, Rend
     mClampedSampler.setAddressModeU(AddressMode::Clamp);
     mClampedSampler.setAddressModeV(AddressMode::Clamp);
     mClampedSampler.setAddressModeW(AddressMode::Clamp);
+}
+
+
+void ScreenSpaceReflectionTechnique::bindResources(RenderGraph& graph)
+{
+    if (!graph.isResourceSlotBound(kReflectionMap))
+    {
+        graph.bindImage(kReflectionMap, mReflectionMapView);
+        graph.bindSampler(SSRSampler, mClampedSampler);
+    }
 }

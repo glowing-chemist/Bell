@@ -3,6 +3,9 @@
 #include "Core/Executor.hpp"
 
 
+constexpr const char kPointSampler[] = "PointSampler";
+
+
 DeferredAnalyticalLightingTechnique::DeferredAnalyticalLightingTechnique(Engine* eng, RenderGraph& graph) :
 	Technique("deferred analytical lighting", eng->getDevice()),
 	mPipelineDesc{ eng->getShader("./Shaders/DeferredAnalyticalLighting.comp") },
@@ -21,7 +24,7 @@ DeferredAnalyticalLightingTechnique::DeferredAnalyticalLightingTechnique(Engine*
     task.addInput(kGBufferDiffuse, AttachmentType::Texture2D);
     task.addInput(kGBufferSpecularRoughness, AttachmentType::Texture2D);
 	task.addInput(kDefaultSampler, AttachmentType::Sampler);
-	task.addInput("PointSampler", AttachmentType::Sampler);
+	task.addInput(kPointSampler, AttachmentType::Sampler);
 	task.addInput(kSparseFroxels, AttachmentType::DataBufferRO);
 	task.addInput(kLightIndicies, AttachmentType::DataBufferRO);
 	task.addInput(kActiveFroxels, AttachmentType::Texture2D);
@@ -41,4 +44,11 @@ DeferredAnalyticalLightingTechnique::DeferredAnalyticalLightingTechnique(Engine*
 	);
 
 	mTaskID = graph.addTask(task);
+}
+
+
+void DeferredAnalyticalLightingTechnique::bindResources(RenderGraph& graph)
+{
+	graph.bindImage(kAnalyticLighting, mAnalyticalLightingView);
+	graph.bindSampler(kPointSampler, mPointSampler);
 }

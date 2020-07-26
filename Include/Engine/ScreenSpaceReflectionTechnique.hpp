@@ -24,14 +24,7 @@ public:
 
 	virtual void render(RenderGraph&, Engine*) override final {}
 
-    virtual void bindResources(RenderGraph& graph) override final
-	{
-        if(!graph.isResourceSlotBound(kReflectionMap))
-        {
-            graph.bindImage(kReflectionMap, mReflectionMapView);
-            graph.bindSampler("SSRSampler", mClampedSampler);
-        }
-	}
+	virtual void bindResources(RenderGraph& graph) override final;
 
 private:
     Image mReflectionMap;

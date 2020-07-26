@@ -24,11 +24,7 @@ public:
         mAnalyticalLightingView->updateLastAccessed();
 	}
 
-    virtual void bindResources(RenderGraph& graph) override final
-	{
-        graph.bindImage(kAnalyticLighting, mAnalyticalLightingView);
-		graph.bindSampler("PointSampler", mPointSampler);
-	}
+	virtual void bindResources(RenderGraph& graph) override final;
 
 private:
 

@@ -4,6 +4,8 @@
 #include "Engine/DefaultResourceSlots.hpp"
 #include "Core/Executor.hpp"
 
+constexpr const char kForwardPoitnSampler[] = "ForwardPointSampler";
+
 
 ForwardCombinedLightingTechnique::ForwardCombinedLightingTechnique(Engine* eng, RenderGraph& graph) :
 	Technique("ForwardCombinedLighting", eng->getDevice()),
@@ -28,7 +30,7 @@ ForwardCombinedLightingTechnique::ForwardCombinedLightingTechnique(Engine* eng, 
     task.addInput(kConvolvedSpecularSkyBox, AttachmentType::CubeMap);
     task.addInput(kConvolvedDiffuseSkyBox, AttachmentType::CubeMap);
 	task.addInput(kDefaultSampler, AttachmentType::Sampler);
-	task.addInput("ForwardPointSampler", AttachmentType::Sampler);
+	task.addInput(kForwardPoitnSampler, AttachmentType::Sampler);
 	task.addInput(kSparseFroxels, AttachmentType::DataBufferRO);
 	task.addInput(kLightIndicies, AttachmentType::DataBufferRO);
 
@@ -102,4 +104,10 @@ ForwardCombinedLightingTechnique::ForwardCombinedLightingTechnique(Engine* eng, 
     }
 
 	mTaskID = graph.addTask(task);
+}
+
+
+void ForwardCombinedLightingTechnique::bindResources(RenderGraph& graph)
+{
+    graph.bindSampler(kForwardPoitnSampler, mPointSampler);
 }
