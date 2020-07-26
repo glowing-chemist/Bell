@@ -190,11 +190,18 @@ public:
     void startFrame()
     {
     mRenderDevice->startFrame();
+
+    // Start timestamp after swapchain wait ie don't count waiting for vsync in frametime.
+    mFrameStartTime = std::chrono::system_clock::now();
     }
 
     void endFrame()
     {
 	mRenderDevice->endFrame();
+
+    // Set the frame time.
+    std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
+    mLastFrameTime = std::chrono::duration_cast<std::chrono::microseconds>(now - mFrameStartTime);
     }
 
     void render();
@@ -223,6 +230,11 @@ public:
     const std::vector<AnimationEntry>& getActiveAnimations() const
     {
         return mActiveAnimations;
+    }
+
+    std::chrono::microseconds getLastFrameTime() const
+    {
+        return mLastFrameTime;
     }
 
     Technique* getRegisteredTechnique(const PassType);
@@ -374,6 +386,9 @@ private:
     std::vector<AnimationEntry> mActiveAnimations;
     void tickAnimations();
     std::chrono::system_clock::time_point mAnimationLastTicked;
+
+    std::chrono::system_clock::time_point mFrameStartTime;
+    std::chrono::microseconds mLastFrameTime;
 
     void updateGlobalBuffers();
 

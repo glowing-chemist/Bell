@@ -862,6 +862,7 @@ void Editor::drawAssistantWindow()
                }
 
                ImGui::Text("Total GPU time %f ms", totalGPUTime);
+               ImGui::Text("Total CPU time %f ms", double(mEngine.getLastFrameTime().count()) / 1000.0);
            }
 
            ImGui::TreePop();

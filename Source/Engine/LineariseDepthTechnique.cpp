@@ -98,8 +98,8 @@ void LineariseDepthTechnique::bindResources(RenderGraph& graph)
 
     for(uint32_t i = 0; i < (mMipLevels - 1); ++i)
     {
-        graph.bindImage(mipNames[i], mMipsViews[(i * 2) + ((submissionIndex) % 2)]);
-        graph.bindImage(prevMipNames[i], mMipsViews[(i * 2) + ((submissionIndex + 1) % 2)]);
+        graph.bindImage(mipNames[i], mMipsViews[(i * 2) + ((submissionIndex + 1) % 2)]);
+        graph.bindImage(prevMipNames[i], mMipsViews[(i * 2) + ((submissionIndex) % 2)]);
     }
 
     if((submissionIndex % 2) == 0)
