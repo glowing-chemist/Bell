@@ -163,7 +163,7 @@ CommandContextBase* VulkanRenderDevice::getCommandContext(const uint32_t index)
     std::vector<CommandContextBase*>& frameContexts = mCommandContexts[mCurrentFrameIndex];
     if(frameContexts.size() <= index)
     {
-        const uint32_t neededContexts = (frameContexts.size() - index) + 1;
+        const uint32_t neededContexts = (index - frameContexts.size()) + 1;
         for(uint32_t i = 0; i < neededContexts; ++i)
         {
             frameContexts.push_back(new VulkanCommandContext(this));

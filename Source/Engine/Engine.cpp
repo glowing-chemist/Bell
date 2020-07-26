@@ -551,16 +551,17 @@ void Engine::execute(RenderGraph& graph)
     }
     else // Record tasks asynchronously.
     {
-        // create all the needed contexts.
+        // make sure we have enough contexst.
         mRenderDevice->getCommandContext(mAsyncTaskContextMappings.size() - 1);
 
         auto recordToContext = [&](const ContextMapping& ctxMapping, const uint32_t contextIndex) -> CommandContextBase*
         {
+            // Correct number of contexts will have been created when running tasks sync.
             CommandContextBase* context = mRenderDevice->getCommandContext(contextIndex);
 
-            for (uint32_t i = 0; i < ctxMapping.mTaskCount; ++i)
+            for (uint32_t taskOffset = 0; taskOffset < ctxMapping.mTaskCount; ++taskOffset)
             {
-                const uint32_t taskIndex = ctxMapping.mTaskStartIndex + i;
+                const uint32_t taskIndex = ctxMapping.mTaskStartIndex + taskOffset;
 
                 Executor* exec = context->allocateExecutor(GPU_PROFILING);
                 exec->recordBarriers(barriers[taskIndex]);
