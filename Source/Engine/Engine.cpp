@@ -851,7 +851,7 @@ Engine::SphericalHarmonic Engine::generateSphericalHarmonic(const float3& positi
         position -= 0.5; // remap 0-1 to -0.5-0.5
         position *= 2; // remap to -1-1
 
-        const uint cubemapSide = texelPosition.z;
+        const uint32_t cubemapSide = texelPosition.z;
 
         float3 normal;
 

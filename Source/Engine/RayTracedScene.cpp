@@ -379,7 +379,7 @@ RayTracingScene::Material RayTracingScene::calculateMaterial(const InterpolatedV
         return F0 + (glm::max(float3(1.0f - roughness), F0) - F0) * std::pow(1.0f - cosTheta, 5.0f);
     };
 
-    uint nextMaterialSlot = 0;
+    uint32_t nextMaterialSlot = 0;
     const auto& materials = mScene->getCPUImageMaterials();
 
     if(info.materialFlags & MaterialType::Diffuse)

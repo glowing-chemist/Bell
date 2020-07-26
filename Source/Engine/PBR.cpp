@@ -1,5 +1,9 @@
 #include "PBR.hpp"
 
+#ifndef M_PI
+    #define M_PI           3.14159265358979323846
+#endif
+
 void  importanceSampleCosDir(const float2& u, const float3& N, float3& L, float& NdotL)
 {
     //  Local  referencial
@@ -42,7 +46,7 @@ float3 ImportanceSampleGGX(const float2& Xi, const float roughness, const float3
     return normalize(sampleVec);
 }
 
-float RadicalInverse_VdC(uint bits)
+float RadicalInverse_VdC(uint32_t bits)
 {
     bits = (bits << 16u) | (bits >> 16u);
     bits = ((bits & 0x55555555u) << 1u) | ((bits & 0xAAAAAAAAu) >> 1u);
@@ -71,20 +75,20 @@ float3 hemisphereSample_cos(float u, float v)
 }
 
 
-float2 Hammersley(uint i, uint N)
+float2 Hammersley(uint32_t i, uint32_t N)
 {
     return float2(float(i)/float(N), RadicalInverse_VdC(i));
 }
 
 
-float3 Hamersley_uniform(uint i, uint N)
+float3 Hamersley_uniform(uint32_t i, uint32_t N)
 {
     float2 ham = Hammersley(i, N);
     return hemisphereSample_uniform(ham.x, ham.y);
 }
 
 
-float3 Hamersley_cosine(uint i, uint N)
+float3 Hamersley_cosine(uint32_t i, uint32_t N)
 {
     float2 ham = Hammersley(i, N);
     return hemisphereSample_cos(ham.x, ham.y);

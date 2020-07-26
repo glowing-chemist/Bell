@@ -18,6 +18,8 @@ OcclusionCullingTechnique::OcclusionCullingTechnique(Engine* eng, RenderGraph& g
     mPredicationBufferView(mPredicationBuffer),
     mOcclusionSampler(SamplerType::Point)
 {
+    BELL_ASSERT(getDevice()->getHasCommandPredicationSupport(), "Device does not have conditional rendering support")
+
     mOcclusionSampler.setAddressModeU(AddressMode::Clamp);
     mOcclusionSampler.setAddressModeV(AddressMode::Clamp);
 
