@@ -109,6 +109,7 @@ public:
 		mCurrentRegistredPasses = 0;
         mCurrentRenderGraph.reset();
         mCompileGraph = true;
+        mRecordTasksSync = true; // Need to regenerate async task order info, so record task synchronously once.
 	}
 
     void registerCustomPass(std::unique_ptr<Technique>& technique)
@@ -389,6 +390,15 @@ private:
     ShaderResourceSet mLightProbeResourceSet;
 
     std::unique_ptr<StaticMesh> mUnitSphere;
+
+    // State for trackin g async task recording.
+    bool mRecordTasksSync;
+    struct ContextMapping
+    {
+        uint32_t mTaskStartIndex;
+        uint32_t mTaskCount;
+    };
+    std::vector<ContextMapping> mAsyncTaskContextMappings;
 
     GLFWwindow* mWindow;
 };

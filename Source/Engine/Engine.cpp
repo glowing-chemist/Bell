@@ -99,6 +99,8 @@ Engine::Engine(GLFWwindow* windowPtr) :
     mLightsSRS(getDevice(), 2),
     mMaxCommandThreads(1),
     mLightProbeResourceSet(mRenderDevice, 3),
+    mRecordTasksSync{true},
+    mAsyncTaskContextMappings{},
     mWindow(windowPtr)
 {
     for(uint32_t i = 0; i < getDevice()->getSwapChainImageCount(); ++i)
@@ -507,35 +509,97 @@ void Engine::execute(RenderGraph& graph)
     //printf("Meshes %zu\n", meshes.size());
 
     auto barriers = graph.generateBarriers(mRenderDevice);
-	// process scene.
-    auto barrier = barriers.begin();
-    const uint32_t taskCount = graph.taskCount();
-    uint32_t recordedCommands = 0;
+	
     uint32_t currentContext = 0;
-    for (uint32_t taskIndex = 0; taskIndex < taskCount; ++taskIndex)
-	{
-        RenderTask& task = graph.getTask(taskIndex);
-
-        CommandContextBase* context = mRenderDevice->getCommandContext(currentContext);
-        Executor* exec = context->allocateExecutor(GPU_PROFILING);
-        exec->recordBarriers(*barrier);
-        context->setupState(graph, taskIndex, exec, mCurrentRegistredPasses);
-
-        task.executeRecordCommandsCallback(exec, this, meshes);
-
-        recordedCommands += exec->getRecordedCommandCount();
-        exec->resetRecordedCommandCount();
-
-        context->freeExecutor(exec);
-        ++barrier;
-
-        if(taskIndex < (taskCount - 1) && recordedCommands >= 250) // submit context
+    if (mRecordTasksSync)
+    {
+        auto barrier = barriers.begin();
+        const uint32_t taskCount = graph.taskCount();
+        uint32_t recordedCommands = 0;
+        mAsyncTaskContextMappings.clear();
+        mAsyncTaskContextMappings.push_back({0, 0});
+        for (uint32_t taskIndex = 0; taskIndex < taskCount; ++taskIndex)
         {
-            recordedCommands = 0;
-            ++currentContext;
-            mRenderDevice->submitContext(context);
+            ContextMapping& ctxMapping = mAsyncTaskContextMappings[currentContext];
+            ++ctxMapping.mTaskCount;
+
+            RenderTask& task = graph.getTask(taskIndex);
+
+            CommandContextBase* context = mRenderDevice->getCommandContext(currentContext);
+            Executor* exec = context->allocateExecutor(GPU_PROFILING);
+            exec->recordBarriers(*barrier);
+            context->setupState(graph, taskIndex, exec, mCurrentRegistredPasses);
+
+            task.executeRecordCommandsCallback(exec, this, meshes);
+
+            recordedCommands += exec->getRecordedCommandCount();
+            exec->resetRecordedCommandCount();
+
+            context->freeExecutor(exec);
+            ++barrier;
+
+            if (taskIndex < (taskCount - 1) && recordedCommands >= 250) // submit context
+            {
+                recordedCommands = 0;
+                ++currentContext;
+                mRenderDevice->submitContext(context);
+                mAsyncTaskContextMappings.push_back({taskIndex + 1, 0});
+            }
         }
-	}
+
+        mRecordTasksSync = false;
+    }
+    else // Record tasks asynchronously.
+    {
+        // create all the needed contexts.
+        mRenderDevice->getCommandContext(mAsyncTaskContextMappings.size() - 1);
+
+        auto recordToContext = [&](const ContextMapping& ctxMapping, const uint32_t contextIndex) -> CommandContextBase*
+        {
+            CommandContextBase* context = mRenderDevice->getCommandContext(contextIndex);
+
+            for (uint32_t i = 0; i < ctxMapping.mTaskCount; ++i)
+            {
+                const uint32_t taskIndex = ctxMapping.mTaskStartIndex + i;
+
+                Executor* exec = context->allocateExecutor(GPU_PROFILING);
+                exec->recordBarriers(barriers[taskIndex]);
+                context->setupState(graph, taskIndex, exec, mCurrentRegistredPasses);
+
+                RenderTask& task = graph.getTask(taskIndex);
+                task.executeRecordCommandsCallback(exec, this, meshes);
+
+                exec->resetRecordedCommandCount();
+
+                context->freeExecutor(exec);
+            }
+
+            return context;
+        };
+
+        std::vector<std::future<CommandContextBase*>> resultHandles{};
+        resultHandles.reserve(mAsyncTaskContextMappings.size());
+        for (uint32_t i = 1; i < mAsyncTaskContextMappings.size(); ++i)
+        {
+            resultHandles.push_back(mThreadPool.addTask(recordToContext, mAsyncTaskContextMappings[i], i));
+        }
+
+        CommandContextBase* firstCtx = recordToContext(mAsyncTaskContextMappings[0], 0);
+        mRenderDevice->submitContext(firstCtx);
+
+        for (uint32_t i = 0; i < resultHandles.size(); ++i)
+        {
+            std::future<CommandContextBase*>& result = resultHandles[i];
+
+            CommandContextBase* context = result.get();
+
+            if(&result != &resultHandles.back())
+                mRenderDevice->submitContext(context);
+        }
+
+        currentContext = mAsyncTaskContextMappings.size() - 1;
+    }
+
 
     CommandContextBase* context = mRenderDevice->getCommandContext(currentContext);
     Executor* exec = context->allocateExecutor();
