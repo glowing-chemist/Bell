@@ -41,6 +41,7 @@
 #include "Engine/DeferredProbeGITechnique.hpp"
 #include "Engine/VisualizeLightProbesTechnique.hpp"
 #include "Engine/OcclusionCullingTechnique.hpp"
+#include "Engine/PathTracingTechnique.hpp"
 
 #include "Engine/RayTracedScene.hpp"
 
@@ -58,7 +59,7 @@ Engine::Engine(GLFWwindow* windowPtr) :
 #ifdef DX_12
     mRenderInstance(new DX_12RenderInstance(windowPtr)),
 #endif
-    mRenderDevice(mRenderInstance->createRenderDevice(DeviceFeaturesFlags::Compute | DeviceFeaturesFlags::Subgroup | DeviceFeaturesFlags::Geometry)),
+    mRenderDevice(mRenderInstance->createRenderDevice(DeviceFeaturesFlags::Compute | DeviceFeaturesFlags::Subgroup | DeviceFeaturesFlags::Geometry | DeviceFeaturesFlags::RayTracing)),
     mCurrentScene(nullptr),
     mRayTracedScene(nullptr),
     mDebugCameraActive(false),
@@ -81,7 +82,7 @@ Engine::Engine(GLFWwindow* windowPtr) :
 	mCurrentRegistredPasses{0},
     mShaderPrefix{},
     mVertexBuffer{getDevice(), BufferUsage::Vertex | BufferUsage::TransferDest | BufferUsage::DataBuffer, 10000000, 10000000, "Vertex Buffer"},
-    mIndexBuffer{getDevice(), BufferUsage::Index | BufferUsage::TransferDest, 10000000, 10000000, "Index Buffer"},
+    mIndexBuffer{getDevice(), BufferUsage::Index | BufferUsage::TransferDest | BufferUsage::DataBuffer, 10000000, 10000000, "Index Buffer"},
     mTposeVertexBuffer(getDevice(), BufferUsage::DataBuffer | BufferUsage::TransferDest, 10000000, 10000000, "TPose Vertex Buffer"),
     mBonesWeightsBuffer(getDevice(), BufferUsage::DataBuffer | BufferUsage::TransferDest, sizeof(uint2) * 30000, sizeof(uint2) * 30000, "Bone weights"),
     mBoneWeightsIndexBuffer(getDevice(), BufferUsage::DataBuffer | BufferUsage::TransferDest, sizeof(uint2) * 30000, sizeof(uint2) * 30000, "Bone weight indicies"),
@@ -329,6 +330,9 @@ std::unique_ptr<Technique> Engine::getSingleTechnique(const PassType passType)
         case PassType::OcclusionCulling:
             return std::make_unique<OcclusionCullingTechnique>(this, mCurrentRenderGraph);
 
+        case PassType::PathTracing:
+            return std::make_unique<PathTracingTechnique>(this, mCurrentRenderGraph);
+
         default:
         {
             BELL_TRAP;
@@ -466,6 +470,9 @@ void Engine::execute(RenderGraph& graph)
         if(mIrradianceProbeBuffer)
             mCurrentRenderGraph.bindShaderResourceSet(kLightProbes, mLightProbeResourceSet);
 
+        if(mRayTracedScene)
+            mCurrentRenderGraph.bindShaderResourceSet(kBVH, mRayTracedScene->getGPUBVH());
+
         mCompileGraph = false;
     }
 
@@ -586,7 +593,8 @@ void Engine::execute(RenderGraph& graph)
         }
 
         CommandContextBase* firstCtx = recordToContext(mAsyncTaskContextMappings[0], 0);
-        mRenderDevice->submitContext(firstCtx);
+        if(mAsyncTaskContextMappings.size() > 1) // If this isn't the first and last context submit it now, if not we still need to record the frame buffer transition.
+            mRenderDevice->submitContext(firstCtx);
 
         for (uint32_t i = 0; i < resultHandles.size(); ++i)
         {

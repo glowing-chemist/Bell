@@ -194,6 +194,7 @@ set(BELL_SOURCE
     Source/Engine/DeferredProbeGITechnique.cpp
     Source/Engine/VisualizeLightProbesTechnique.cpp
     Source/Engine/OcclusionCullingTechnique.cpp
+    Source/Engine/PathTracingTechnique.cpp
 
     # used for texture loading
     ThirdParty/stb_image/stb_image.cpp
@@ -288,6 +289,8 @@ set(SHADERS
 	LightProbeVis.frag
 	LightProbeVolumeVis.frag
 	OcclusionCulling.comp
+	RayTracing.hlsl
+	PathTracer.comp
     )
 
 foreach(shader ${SHADERS})

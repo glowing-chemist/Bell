@@ -1,5 +1,6 @@
 #include "Engine/RayTracedScene.hpp"
 
+#include "Engine/Engine.hpp"
 #include "Engine/Scene.h"
 #include "PBR.hpp"
 #include "Core/ConversionUtils.hpp"
@@ -10,8 +11,9 @@
 #include "stbi_image_write.h"
 
 
-RayTracingScene::RayTracingScene(const Scene* scene) :
-    mPrimitiveMaterialID{}
+RayTracingScene::RayTracingScene(Engine* eng, const Scene* scene) :
+    mPrimitiveMaterialID{},
+    mBVH_SRS{eng->getDevice(), 5}
 {
     mScene = scene;
     uint64_t vertexOffset = 0;
@@ -65,6 +67,37 @@ RayTracingScene::RayTracingScene(const Scene* scene) :
     BELL_ASSERT((mIndexBuffer.size() % 3) == 0, "Invalid index buffer size")
     bool success = mAccelerationStructure.Build(mIndexBuffer.size() / 3, *mMeshes, *mPred);
     BELL_ASSERT(success, "Failed to build BVH")
+    nanort::BVHBuildStatistics stats = mAccelerationStructure.GetStatistics();
+    BELL_ASSERT(stats.max_tree_depth <= 32, "Hard coded shader value")
+
+    const auto& nodes = mAccelerationStructure.GetNodes();
+    BELL_ASSERT(!nodes.empty(), "BVH build error")
+    const auto& indicies = mAccelerationStructure.GetIndices();
+    BELL_ASSERT(!indicies.empty(), "BVH build error")
+    mNodesBuffer = std::make_unique<Buffer>(eng->getDevice(), BufferUsage::DataBuffer | BufferUsage::TransferDest, nodes.size() * sizeof(nanort::BVHNode<float>),
+                                            nodes.size() * sizeof(nanort::BVHNode<float>), "BVH nodes");
+    mIndiciesBuffer = std::make_unique<Buffer>(eng->getDevice(), BufferUsage::DataBuffer | BufferUsage::TransferDest, indicies.size() * sizeof(uint32_t),
+                                               indicies.size() * sizeof(uint32_t), "BVH indicies");
+    mPrimToMatIDBuffer = std::make_unique<Buffer>(eng->getDevice(), BufferUsage::DataBuffer | BufferUsage::TransferDest, mPrimitiveMaterialID.size() * sizeof(MaterialInfo),
+                                                  mPrimitiveMaterialID.size() * sizeof(MaterialInfo), "PrimToMatID");
+    mPositionBuffer = std::make_unique<Buffer>(eng->getDevice(), BufferUsage::DataBuffer | BufferUsage::TransferDest, mPositions.size() * sizeof(float3),
+                                               mPositions.size() * sizeof(float3), "Static positions");
+    mPositionIndexBuffer = std::make_unique<Buffer>(eng->getDevice(), BufferUsage::DataBuffer | BufferUsage::TransferDest, mIndexBuffer.size() * sizeof(uint32_t),
+                                               mIndexBuffer.size() * sizeof(uint32_t), "Static positions indicies");
+
+    (*mNodesBuffer)->setContents(nodes.data(), nodes.size() * sizeof(nanort::BVHNode<float>));
+    (*mIndiciesBuffer)->setContents(indicies.data(), indicies.size() * sizeof(uint32_t));
+    (*mPrimToMatIDBuffer)->setContents(mPrimitiveMaterialID.data(), mPrimitiveMaterialID.size() * sizeof(MaterialInfo));
+    (*mPositionBuffer)->setContents(mPositions.data(), mPositions.size() * sizeof(float3));
+    (*mPositionIndexBuffer)->setContents(mIndexBuffer.data(), mIndexBuffer.size() * sizeof(uint32_t));
+
+    mBVH_SRS->addDataBufferRO(*mNodesBuffer);
+    mBVH_SRS->addDataBufferRO(*mIndiciesBuffer);
+    mBVH_SRS->addDataBufferRO(*mPrimToMatIDBuffer);
+    mBVH_SRS->addDataBufferRO(*mPositionBuffer);
+    mBVH_SRS->addDataBufferRO(*mPositionIndexBuffer);
+    mBVH_SRS->finalise();
+
 }
 
 void RayTracingScene::renderSceneToMemory(const Camera& camera, const uint32_t x, const uint32_t y, uint8_t* memory, ThreadPool& threadPool) const

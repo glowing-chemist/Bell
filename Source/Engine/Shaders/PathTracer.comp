@@ -1,0 +1,69 @@
+#include "RayTracing.hlsl"
+#include "UniformBuffers.hlsl"
+
+[[vk::binding(0)]]
+ConstantBuffer<CameraBuffer> camera;
+
+[[vk::binding(1)]]
+SamplerState linearSampler;
+
+[[vk::binding(2)]]
+RWTexture2D<float4> globalLighting;
+
+[[vk::binding(3)]]
+TextureCube<float4> skybox;
+
+[[vk::binding(0, 1)]]
+Texture2D materials[];
+
+
+[[vk::binding(0, 2)]]
+//ByteAddressBuffer bvhNodes;
+StructuredBuffer<BVHNode> bvhNodes;
+
+[[vk::binding(1, 2)]]
+StructuredBuffer<uint> bvhIndicies;
+
+[[vk::binding(2, 2)]]
+StructuredBuffer<MaterialInfo> PrimToMatID;
+
+[[vk::binding(3, 2)]]
+ByteAddressBuffer vertexBuffer;
+
+[[vk::binding(4, 2)]]
+StructuredBuffer<uint> indexBuffer;
+
+[numthreads(16, 16, 1)]
+void main(uint3 globalIndex : SV_DispatchThreadID)
+{
+	float4 lighting = float4(1.0f, 0.0f, 0.0f, 1.0f);
+
+	const float3 right = camera.view[0];
+	const float3 up = camera.view[1];
+	const float3 forward = -camera.view[2];
+
+	float3 dir = {((float(globalIndex.x) / float(camera.frameBufferSize.x)) - 0.5f) /* aspect*/, (float(globalIndex.y) / float(camera.frameBufferSize.y)) - 0.5f, 1.0f};
+    dir = normalize((dir.z * forward) + (dir.y * up) + (dir.x * right));
+
+	Ray cameraRay;
+	cameraRay.position = camera.position;
+	cameraRay.direction = dir;
+	cameraRay.max_t = 2000.0f;
+	cameraRay.min_t = 0.001f;
+
+	TriangleIntersector intersector;
+	TriangleIntersection result;
+	const bool hit = traverseBVH(bvhNodes, bvhIndicies, indexBuffer, vertexBuffer, cameraRay, intersector, result);
+	if(!hit)
+		lighting = skybox.Sample(linearSampler, cameraRay.direction);
+	else // fetch material data.
+	{
+		MaterialInfo matInfo = PrimToMatID[result.prim_id];
+		
+		lighting = materials[matInfo.materialIndex].Sample(linearSampler, float2(0.0f, 0.0f));		
+	}
+
+
+	if(globalIndex.x < camera.frameBufferSize.x && globalIndex.y < camera.frameBufferSize.y)
+		globalLighting[globalIndex.xy] = lighting;
+}

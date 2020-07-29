@@ -9,9 +9,13 @@
 #include "Engine/RayTracingSamplers.hpp"
 #include "Engine/ThreadPool.hpp"
 
+#include "Core/Buffer.hpp"
+#include "Core/ShaderResourceSet.hpp"
+
 #include <memory>
 #include <vector>
 
+class Engine;
 class Scene;
 class Camera;
 
@@ -19,7 +23,7 @@ class RayTracingScene
 {
 public:
 
-    RayTracingScene(const Scene*);
+    RayTracingScene(Engine *eng, const Scene*);
     ~RayTracingScene() = default;
 
     void renderSceneToMemory(const Camera&, const uint32_t x, const uint32_t y, uint8_t *, ThreadPool&) const;
@@ -54,6 +58,11 @@ public:
 
     bool traceRayNonAlphaTested(const nanort::Ray<float>& ray, InterpolatedVertex* result) const;
 
+    const ShaderResourceSet& getGPUBVH() const
+    {
+        return mBVH_SRS;
+    }
+
 private:
 
     bool traceRay(const nanort::Ray<float>& ray, InterpolatedVertex* result) const;
@@ -79,6 +88,14 @@ private:
 
     std::vector<MaterialInfo> mPrimitiveMaterialID; // maps prim ID to material ID.
     const Scene* mScene;
+
+    // Gpu resources.
+    std::unique_ptr<Buffer> mNodesBuffer;
+    std::unique_ptr<Buffer> mIndiciesBuffer;
+    std::unique_ptr<Buffer> mPrimToMatIDBuffer;
+    std::unique_ptr<Buffer> mPositionBuffer;
+    std::unique_ptr<Buffer> mPositionIndexBuffer;
+    ShaderResourceSet mBVH_SRS;
 };
 
 

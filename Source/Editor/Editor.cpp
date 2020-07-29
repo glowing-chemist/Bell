@@ -293,6 +293,14 @@ namespace
                 newNode->mInputs.push_back(Pin{ 0, newNode, kMeshBoundsBuffer, PinType::Texture, PinKind::Input });
                 return newNode;
             }
+
+        case NodeTypes::PathTracing:
+        {
+            std::shared_ptr<EditorNode> newNode = std::make_shared<PassNode>("PathTracing", passType);
+            newNode->mInputs.push_back(Pin{ 0, newNode, kCameraBuffer, PinType::Texture, PinKind::Input });
+            newNode->mOutputs.push_back(Pin{ 0, newNode, kGlobalLighting, PinType::Texture, PinKind::Output });
+            return newNode;
+        }
         }
     }
 
@@ -707,6 +715,7 @@ void Editor::drawAssistantWindow()
            drawPassContextMenu(PassType::Voxelize);
            drawPassContextMenu(PassType::VisualizeLightProbes);
            drawPassContextMenu(PassType::OcclusionCulling);
+           drawPassContextMenu(PassType::PathTracing);
 
            ImGui::TreePop();
        }
@@ -1346,7 +1355,7 @@ void Editor::loadScene(const std::string& scene)
     mInProgressScene->loadSkybox(skybox, &mEngine);
 
     mEngine.setScene(mInProgressScene);
-    mRayTracingScene = new RayTracingScene(mInProgressScene);
+    mRayTracingScene = new RayTracingScene(&mEngine, mInProgressScene);
     mEngine.setRayTracingScene(mRayTracingScene);
 
     if(std::filesystem::exists(scene + ".irradianceProbes"))

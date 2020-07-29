@@ -195,13 +195,13 @@ std::pair<vk::PhysicalDevice, vk::Device> VulkanRenderInstance::findSuitableDevi
 															 };
 
     std::vector<const char*> optionalDeviceExtensions = {VK_EXT_CONDITIONAL_RENDERING_EXTENSION_NAME};
-    if (rayTracingWanted)
+    /*if (rayTracingWanted) // Ray tracing using compute for now.
     {
         optionalDeviceExtensions.push_back(VK_KHR_RAY_TRACING_EXTENSION_NAME);
         optionalDeviceExtensions.push_back(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME);
         optionalDeviceExtensions.push_back(VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME);
         optionalDeviceExtensions.push_back(VK_KHR_PIPELINE_LIBRARY_EXTENSION_NAME);
-    }
+    }*/
 
 
 	std::vector<const char*> extensionsToEnable{};
@@ -233,6 +233,8 @@ std::pair<vk::PhysicalDevice, vk::Device> VulkanRenderInstance::findSuitableDevi
     physicalFeatures.setGeometryShader(geometryWanted);
     physicalFeatures.setFragmentStoresAndAtomics(geometryWanted);
     physicalFeatures.setSamplerAnisotropy(true);
+    if(rayTracingWanted)
+        physicalFeatures.setShaderFloat64(true);
 
 	vk::PhysicalDeviceDescriptorIndexingFeaturesEXT descriptorIndexingInfo{};
 	descriptorIndexingInfo.setShaderSampledImageArrayNonUniformIndexing(true);
