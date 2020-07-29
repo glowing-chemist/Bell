@@ -28,7 +28,7 @@ StructuredBuffer<uint> bvhIndicies;
 StructuredBuffer<MaterialInfo> PrimToMatID;
 
 [[vk::binding(3, 2)]]
-ByteAddressBuffer vertexBuffer;
+ByteAddressBuffer vertexPositionBuffer;
 
 [[vk::binding(4, 2)]]
 StructuredBuffer<uint> indexBuffer;
@@ -42,7 +42,7 @@ void main(uint3 globalIndex : SV_DispatchThreadID)
 	const float3 up = camera.view[1];
 	const float3 forward = -camera.view[2];
 
-	float3 dir = {((float(globalIndex.x) / float(camera.frameBufferSize.x)) - 0.5f) /* aspect*/, (float(globalIndex.y) / float(camera.frameBufferSize.y)) - 0.5f, 1.0f};
+	float3 dir = {((float(globalIndex.x) / float(camera.frameBufferSize.x / 4.0f)) - 0.5f) /* aspect*/, (float(globalIndex.y) / float(camera.frameBufferSize.y / 4.0f)) - 0.5f, 1.0f};
     dir = normalize((dir.z * forward) + (dir.y * up) + (dir.x * right));
 
 	Ray cameraRay;
@@ -53,7 +53,7 @@ void main(uint3 globalIndex : SV_DispatchThreadID)
 
 	TriangleIntersector intersector;
 	TriangleIntersection result;
-	const bool hit = traverseBVH(bvhNodes, bvhIndicies, indexBuffer, vertexBuffer, cameraRay, intersector, result);
+	const bool hit = traverseBVH(bvhNodes, bvhIndicies, indexBuffer, vertexPositionBuffer, cameraRay, intersector, result);
 	if(!hit)
 		lighting = skybox.Sample(linearSampler, cameraRay.direction);
 	else // fetch material data.

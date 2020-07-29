@@ -7,8 +7,8 @@
 
 PathTracingTechnique::PathTracingTechnique(Engine* eng, RenderGraph& graph) :
     Technique("PathTracing", eng->getDevice()),
-    mGloballighting(getDevice(), Format::RGBA8UNorm, ImageUsage::Storage | ImageUsage::Sampled | ImageUsage::ColourAttachment, getDevice()->getSwapChain()->getSwapChainImageWidth(),
-                    getDevice()->getSwapChain()->getSwapChainImageHeight(), 1, 1, 1, 1, "Global lighting"),
+    mGloballighting(getDevice(), Format::RGBA8UNorm, ImageUsage::Storage | ImageUsage::Sampled | ImageUsage::ColourAttachment, getDevice()->getSwapChain()->getSwapChainImageWidth() / 4,
+                    getDevice()->getSwapChain()->getSwapChainImageHeight() / 4, 1, 1, 1, 1, "Global lighting"),
     mGlobalLightingView(mGloballighting, ImageViewType::Colour),
     mPipelineDescription{eng->getShader("./Shaders/PathTracer.comp")}
 {
@@ -23,8 +23,8 @@ PathTracingTechnique::PathTracingTechnique(Engine* eng, RenderGraph& graph) :
     task.setRecordCommandsCallback(
                 [](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
                 {
-                    const uint32_t width =  eng->getDevice()->getSwapChain()->getSwapChainImageWidth();
-                    const uint32_t height =  eng->getDevice()->getSwapChain()->getSwapChainImageHeight();
+                    const uint32_t width =  eng->getDevice()->getSwapChain()->getSwapChainImageWidth() / 4;
+                    const uint32_t height =  eng->getDevice()->getSwapChain()->getSwapChainImageHeight() / 4;
 
                     exec->dispatch(std::ceil(width / 16.0f), std::ceil(height / 16.0f), 1);
                 }
