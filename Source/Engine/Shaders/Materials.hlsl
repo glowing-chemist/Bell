@@ -123,16 +123,16 @@ MaterialInfo calculateMaterialInfo(	const float4 vertexNormal,
 }
 
 
-MaterialInfo calculateMaterialInfoWithouNormalMapping(	const float4 vertexNormal,
-														const float4 vertexColour,
+MaterialInfo calculateMaterialInfoRayTracing(	const float4 vertexColour,
 														const uint materialTypes, 
 														const uint materialIndex, 
 														const float3 view, 
-														const float2 uv)
+														const float2 uv,
+														const float LOD)
 {
 	MaterialInfo mat;
 	mat.diffuse = vertexColour;
-	mat.normal = vertexNormal;
+	mat.normal = float4(0.0f, 1.0f, 0.0f, 0.0f);
 	mat.specularRoughness = float4(0.0f, 0.0f, 0.0f, 1.0f);
 	mat.emissiveOcclusion = float4(0.0f, 0.0f, 0.0f, 1.0);
 
@@ -140,7 +140,7 @@ MaterialInfo calculateMaterialInfoWithouNormalMapping(	const float4 vertexNormal
 
 	if(materialTypes & kMaterial_Diffuse)
 	{
-		mat.diffuse = materials[materialIndex].Sample(linearSampler, uv);
+		mat.diffuse = materials[materialIndex].SampleLevel(linearSampler, uv, LOD);
 		++nextMaterialSlot;
 	}
 
@@ -155,7 +155,7 @@ MaterialInfo calculateMaterialInfoWithouNormalMapping(	const float4 vertexNormal
 	float metalness = 0.0f;
 	if(materialTypes & kMaterial_CombinedMetalnessRoughness)
 	{
-		const float2 metalnessRoughness = materials[materialIndex + nextMaterialSlot].Sample(linearSampler, uv).zy;
+		const float2 metalnessRoughness = materials[materialIndex + nextMaterialSlot].SampleLevel(linearSampler, uv, LOD).zy;
 		metalness = metalnessRoughness.x;
 		mat.specularRoughness.w = metalnessRoughness.y;
 		++nextMaterialSlot;
@@ -164,39 +164,39 @@ MaterialInfo calculateMaterialInfoWithouNormalMapping(	const float4 vertexNormal
 	{
 		if(materialTypes & kMaterial_Roughness)
 		{
-			mat.specularRoughness.w = materials[materialIndex + nextMaterialSlot].Sample(linearSampler, uv).x;
+			mat.specularRoughness.w = materials[materialIndex + nextMaterialSlot].SampleLevel(linearSampler, uv, LOD).x;
 			++nextMaterialSlot;
 		}
 
 		if(materialTypes & kMaterial_Gloss)
 		{
-			mat.specularRoughness.w = 1.0f - materials[materialIndex + nextMaterialSlot].Sample(linearSampler, uv).x;
+			mat.specularRoughness.w = 1.0f - materials[materialIndex + nextMaterialSlot].SampleLevel(linearSampler, uv, LOD).x;
 			++nextMaterialSlot;
 		}
 
 		if(materialTypes & kMaterial_Specular)
 		{
-			mat.specularRoughness.xyz= materials[materialIndex + nextMaterialSlot].Sample(linearSampler, uv).xyz;
+			mat.specularRoughness.xyz= materials[materialIndex + nextMaterialSlot].SampleLevel(linearSampler, uv, LOD).xyz;
 			++nextMaterialSlot;
 		}
 		
 		if(materialTypes & kMaterial_CombinedSpecularGloss)
 		{
-			mat.specularRoughness = materials[materialIndex + nextMaterialSlot].Sample(linearSampler, uv);
+			mat.specularRoughness = materials[materialIndex + nextMaterialSlot].SampleLevel(linearSampler, uv, LOD);
 			mat.specularRoughness.w = 1.0f - mat.specularRoughness.w;
 			++nextMaterialSlot;
 		}
 
 		if(materialTypes & kMaterial_Metalness)
 		{
-			metalness = materials[materialIndex + nextMaterialSlot].Sample(linearSampler, uv).x;
+			metalness = materials[materialIndex + nextMaterialSlot].SampleLevel(linearSampler, uv, LOD).x;
 			++nextMaterialSlot;
 		}
 	}
 
 	if(materialTypes & kMaterial_Albedo)
 	{
-		const float4 albedo = materials[materialIndex].Sample(linearSampler, uv);
+		const float4 albedo = materials[materialIndex].SampleLevel(linearSampler, uv, LOD);
 		mat.diffuse = albedo * (1.0 - DIELECTRIC_SPECULAR) * (1.0 - metalness);
 		mat.diffuse.w = albedo.w;// Preserve the alpha chanle.
 
@@ -207,13 +207,13 @@ MaterialInfo calculateMaterialInfoWithouNormalMapping(	const float4 vertexNormal
 
 	if(materialTypes & kMaterial_AmbientOcclusion)
 	{
-		mat.emissiveOcclusion.w = materials[materialIndex + nextMaterialSlot].Sample(linearSampler, uv).x;
+		mat.emissiveOcclusion.w = materials[materialIndex + nextMaterialSlot].SampleLevel(linearSampler, uv, LOD).x;
 		++nextMaterialSlot;
 	}
 
 	if(materialTypes & kMaterial_Emissive)
 	{
-		mat.emissiveOcclusion.xyz = materials[materialIndex + nextMaterialSlot].Sample(linearSampler, uv).xyz;
+		mat.emissiveOcclusion.xyz = materials[materialIndex + nextMaterialSlot].SampleLevel(linearSampler, uv, LOD).xyz;
 	}
 
 

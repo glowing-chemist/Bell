@@ -11,15 +11,18 @@ ConstantBuffer<CameraBuffer> camera;
 Texture2D<float4> normals;
 
 [[vk::binding(2)]]
-Texture2D<float> depth;
+Texture2D<float4> specularRoughness;
 
 [[vk::binding(3)]]
-SamplerState linearSampler;
+Texture2D<float> depth;
 
 [[vk::binding(4)]]
-RWTexture2D<float4> reflectionBuffer;
+SamplerState linearSampler;
 
 [[vk::binding(5)]]
+RWTexture2D<float4> reflectionBuffer;
+
+[[vk::binding(6)]]
 TextureCube<float4> skybox;
 
 
@@ -65,6 +68,8 @@ void main(uint3 globalIndex : SV_DispatchThreadID)
 
 	float3 normal = normals.Sample(linearSampler, uv);
 	normal = normalize(remapNormals(normal));
+	const float roughness = specularRoughness.Sample(linearSampler, uv).w;
+	const float LOD = roughness * 10.0f;
 
 	float4 worldSpaceFragmentPos = mul(camera.invertedViewProj, float4((uv - 0.5f) * 2.0f, fragmentDepth, 1.0f));
     worldSpaceFragmentPos /= worldSpaceFragmentPos.w;
@@ -82,14 +87,17 @@ void main(uint3 globalIndex : SV_DispatchThreadID)
 	TriangleIntersection result;
 	const bool hit = traverseBVH(bvhNodes, bvhIndicies, indexBuffer, vertexPositionBuffer, reflectionRay, intersector, result);
 	if(!hit)
-		lighting = skybox.Sample(linearSampler, reflectionRay.direction);
+	{
+		lighting = skybox.SampleLevel(linearSampler, reflectionRay.direction, LOD);
+	}
 	else // fetch material data.
 	{
 		MaterialOffsets matInfo = PrimToMatID[result.prim_id];
 	
 		float2 uv = interpolateUV(result, indexBuffer, vertexUVBuffer);
 
-		lighting = materials[matInfo.materialIndex].Sample(linearSampler, uv);		
+		// TODO!!!! add NonUniformResourceIndex once it is supported in shaderc or move over to dxc.
+		lighting = materials[matInfo.materialIndex].SampleLevel(linearSampler, uv, LOD);
 	}
 
 

@@ -71,10 +71,11 @@ RayTracedReflectionTechnique::RayTracedReflectionTechnique(Engine* eng, RenderGr
     ComputeTask task("Ray traced reflections", pipelineDesc);
     task.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
     task.addInput(kGBufferNormals, AttachmentType::Texture2D);
+    task.addInput(kGBufferSpecularRoughness, AttachmentType::Texture2D);
     task.addInput(kGBufferDepth, AttachmentType::Texture2D);
     task.addInput(kDefaultSampler, AttachmentType::Sampler);
     task.addInput(kReflectionMap, AttachmentType::Image2D);
-    task.addInput(kSkyBox, AttachmentType::CubeMap);
+    task.addInput(kConvolvedSpecularSkyBox, AttachmentType::CubeMap);
     task.addInput(kMaterials, AttachmentType::ShaderResourceSet);
     task.addInput(kBVH, AttachmentType::ShaderResourceSet);
 

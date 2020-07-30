@@ -307,6 +307,7 @@ namespace
                 std::shared_ptr<EditorNode> newNode = std::make_shared<PassNode>("RayTraced reflections", passType);
                 newNode->mInputs.push_back(Pin{ 0, newNode, kCameraBuffer, PinType::Texture, PinKind::Input });
                 newNode->mInputs.push_back(Pin{ 0, newNode, kGBufferNormals, PinType::Texture, PinKind::Input });
+                newNode->mInputs.push_back(Pin{ 0, newNode, kGBufferSpecularRoughness, PinType::Texture, PinKind::Input });
                 newNode->mInputs.push_back(Pin{ 0, newNode, kGBufferDepth, PinType::Texture, PinKind::Input });
                 newNode->mOutputs.push_back(Pin{ 0, newNode, kReflectionMap, PinType::Texture, PinKind::Output });
                 return newNode;
