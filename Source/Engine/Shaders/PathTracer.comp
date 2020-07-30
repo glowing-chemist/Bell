@@ -5,12 +5,18 @@
 ConstantBuffer<CameraBuffer> camera;
 
 [[vk::binding(1)]]
-SamplerState linearSampler;
+Texture2D<float4> normals;
 
 [[vk::binding(2)]]
-RWTexture2D<float4> globalLighting;
+Texture2D<float> depth;
 
 [[vk::binding(3)]]
+SamplerState linearSampler;
+
+[[vk::binding(4)]]
+RWTexture2D<float4> globalLighting;
+
+[[vk::binding(5)]]
 TextureCube<float4> skybox;
 
 [[vk::binding(0, 1)]]
@@ -31,18 +37,21 @@ StructuredBuffer<MaterialInfo> PrimToMatID;
 ByteAddressBuffer vertexPositionBuffer;
 
 [[vk::binding(4, 2)]]
+StructuredBuffer<float2> vertexUVBuffer;
+
+[[vk::binding(5, 2)]]
 StructuredBuffer<uint> indexBuffer;
 
 [numthreads(16, 16, 1)]
 void main(uint3 globalIndex : SV_DispatchThreadID)
 {
-	float4 lighting = float4(1.0f, 0.0f, 0.0f, 1.0f);
-
 	const float3 right = camera.view[0];
 	const float3 up = camera.view[1];
 	const float3 forward = -camera.view[2];
 
-	float3 dir = {((float(globalIndex.x) / float(camera.frameBufferSize.x / 4.0f)) - 0.5f) /* aspect*/, (float(globalIndex.y) / float(camera.frameBufferSize.y / 4.0f)) - 0.5f, 1.0f};
+	const float fov = 1.0f / tan(radians(camera.fov) / 2.0f);
+	const float aspect = 1.0f / ((1.0f / fov) * camera.perspective[0].x);
+	float3 dir = {((float(globalIndex.x) / float(camera.frameBufferSize.x / 4.0f)) - 0.5f) * aspect, (float(globalIndex.y) / float(camera.frameBufferSize.y / 4.0f)) - 0.5f, 1.0f};
     dir = normalize((dir.z * forward) + (dir.y * up) + (dir.x * right));
 
 	Ray cameraRay;
@@ -51,6 +60,7 @@ void main(uint3 globalIndex : SV_DispatchThreadID)
 	cameraRay.max_t = 2000.0f;
 	cameraRay.min_t = 0.001f;
 
+	float4 lighting = float4(0.0f, 0.0f, 0.0f, 1.0f);
 	TriangleIntersector intersector;
 	TriangleIntersection result;
 	const bool hit = traverseBVH(bvhNodes, bvhIndicies, indexBuffer, vertexPositionBuffer, cameraRay, intersector, result);
@@ -59,8 +69,10 @@ void main(uint3 globalIndex : SV_DispatchThreadID)
 	else // fetch material data.
 	{
 		MaterialInfo matInfo = PrimToMatID[result.prim_id];
-		
-		lighting = materials[matInfo.materialIndex].Sample(linearSampler, float2(0.0f, 0.0f));		
+	
+		float2 uv = interpolateUV(result, indexBuffer, vertexUVBuffer);
+
+		lighting = materials[matInfo.materialIndex].Sample(linearSampler, uv);		
 	}
 
 

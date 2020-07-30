@@ -294,13 +294,15 @@ namespace
                 return newNode;
             }
 
-        case NodeTypes::PathTracing:
-        {
-            std::shared_ptr<EditorNode> newNode = std::make_shared<PassNode>("PathTracing", passType);
-            newNode->mInputs.push_back(Pin{ 0, newNode, kCameraBuffer, PinType::Texture, PinKind::Input });
-            newNode->mOutputs.push_back(Pin{ 0, newNode, kGlobalLighting, PinType::Texture, PinKind::Output });
-            return newNode;
-        }
+            case NodeTypes::PathTracing:
+            {
+                std::shared_ptr<EditorNode> newNode = std::make_shared<PassNode>("PathTracing", passType);
+                newNode->mInputs.push_back(Pin{ 0, newNode, kCameraBuffer, PinType::Texture, PinKind::Input });
+                newNode->mInputs.push_back(Pin{ 0, newNode, kGBufferNormals, PinType::Texture, PinKind::Input });
+                newNode->mInputs.push_back(Pin{ 0, newNode, kGBufferDepth, PinType::Texture, PinKind::Input });
+                newNode->mOutputs.push_back(Pin{ 0, newNode, kGlobalLighting, PinType::Texture, PinKind::Output });
+                return newNode;
+            }
         }
     }
 

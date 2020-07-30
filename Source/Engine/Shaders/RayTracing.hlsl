@@ -37,6 +37,21 @@ struct TriangleIntersection
   uint prim_id;
 };
 
+float2 interpolateUV(TriangleIntersection intersection, StructuredBuffer<uint> indexBuffer,  StructuredBuffer<float2> uvs)
+{
+	const uint baseIndiciesIndex = intersection.prim_id * 3;
+
+	uint firstIndex = indexBuffer[baseIndiciesIndex];
+	uint secondIndex = indexBuffer[baseIndiciesIndex + 1];
+	uint thirdIndex = indexBuffer[baseIndiciesIndex + 2];
+
+	float2 firstUV = uvs[firstIndex];
+	float2 secondUV = uvs[secondIndex];
+	float2 thirdUV = uvs[thirdIndex];
+
+	return ((1.0f - intersection.u - intersection.v) * firstUV) + (intersection.u * secondUV) + (intersection.v * thirdUV);
+}
+
 struct MaterialInfo
 {
     uint materialIndex;

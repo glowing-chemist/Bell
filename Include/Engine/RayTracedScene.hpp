@@ -94,6 +94,7 @@ private:
     std::unique_ptr<Buffer> mIndiciesBuffer;
     std::unique_ptr<Buffer> mPrimToMatIDBuffer;
     std::unique_ptr<Buffer> mPositionBuffer;
+    std::unique_ptr<Buffer> mUVBuffer;
     std::unique_ptr<Buffer> mPositionIndexBuffer;
     ShaderResourceSet mBVH_SRS;
 };

@@ -14,6 +14,8 @@ PathTracingTechnique::PathTracingTechnique(Engine* eng, RenderGraph& graph) :
 {
     ComputeTask task("PathTracing", mPipelineDescription);
     task.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
+    task.addInput(kGBufferNormals, AttachmentType::Texture2D);
+    task.addInput(kGBufferDepth, AttachmentType::Texture2D);
     task.addInput(kDefaultSampler, AttachmentType::Sampler);
     task.addInput(kGlobalLighting, AttachmentType::Image2D);
     task.addInput(kSkyBox, AttachmentType::CubeMap);

@@ -13,7 +13,7 @@
 
 RayTracingScene::RayTracingScene(Engine* eng, const Scene* scene) :
     mPrimitiveMaterialID{},
-    mBVH_SRS{eng->getDevice(), 5}
+    mBVH_SRS{eng->getDevice(), 6}
 {
     mScene = scene;
     uint64_t vertexOffset = 0;
@@ -82,6 +82,10 @@ RayTracingScene::RayTracingScene(Engine* eng, const Scene* scene) :
                                                   mPrimitiveMaterialID.size() * sizeof(MaterialInfo), "PrimToMatID");
     mPositionBuffer = std::make_unique<Buffer>(eng->getDevice(), BufferUsage::DataBuffer | BufferUsage::TransferDest, mPositions.size() * sizeof(float3),
                                                mPositions.size() * sizeof(float3), "Static positions");
+
+    mUVBuffer = std::make_unique<Buffer>(eng->getDevice(), BufferUsage::DataBuffer | BufferUsage::TransferDest, mUVs.size() * sizeof(float2),
+                                               mUVs.size() * sizeof(float2), "Static uv");
+
     mPositionIndexBuffer = std::make_unique<Buffer>(eng->getDevice(), BufferUsage::DataBuffer | BufferUsage::TransferDest, mIndexBuffer.size() * sizeof(uint32_t),
                                                mIndexBuffer.size() * sizeof(uint32_t), "Static positions indicies");
 
@@ -89,12 +93,14 @@ RayTracingScene::RayTracingScene(Engine* eng, const Scene* scene) :
     (*mIndiciesBuffer)->setContents(indicies.data(), indicies.size() * sizeof(uint32_t));
     (*mPrimToMatIDBuffer)->setContents(mPrimitiveMaterialID.data(), mPrimitiveMaterialID.size() * sizeof(MaterialInfo));
     (*mPositionBuffer)->setContents(mPositions.data(), mPositions.size() * sizeof(float3));
+    (*mUVBuffer)->setContents(mUVs.data(), mUVs.size() * sizeof(float2));
     (*mPositionIndexBuffer)->setContents(mIndexBuffer.data(), mIndexBuffer.size() * sizeof(uint32_t));
 
     mBVH_SRS->addDataBufferRO(*mNodesBuffer);
     mBVH_SRS->addDataBufferRO(*mIndiciesBuffer);
     mBVH_SRS->addDataBufferRO(*mPrimToMatIDBuffer);
     mBVH_SRS->addDataBufferRO(*mPositionBuffer);
+    mBVH_SRS->addDataBufferRO(*mUVBuffer);
     mBVH_SRS->addDataBufferRO(*mPositionIndexBuffer);
     mBVH_SRS->finalise();
 

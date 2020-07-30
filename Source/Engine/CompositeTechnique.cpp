@@ -98,8 +98,6 @@ CompositeTechnique::CompositeTechnique(Engine* eng, RenderGraph& graph) :
 
             overlayTask.addInput(kDefaultSampler, AttachmentType::Sampler);
             overlayTask.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
-            if(eng->isPassRegistered(PassType::SSR))
-                overlayTask.addInput(kReflectionMap, AttachmentType::Texture2D);
             overlayTask.addOutput(kFrameBufer, AttachmentType::RenderTarget2D, eng->getSwapChainImage()->getFormat(), SizeClass::Custom, LoadOp::Clear_Black);
             overlayTask.setRecordCommandsCallback(
                 [](Executor* exec, Engine*, const std::vector<const MeshInstance*>&)
