@@ -21,11 +21,6 @@ SamplerState defaultSampler;
 [[vk::binding(2 + USING_OVERLAY)]]
 ConstantBuffer<CameraBuffer> camera;
 
-#if defined(Screen_Space_Reflection)
-[[vk::binding(3 + USING_OVERLAY)]]
-Texture2D<float4> ReflectionMap;
-#endif
-
 float4 main(PositionAndUVVertOutput vertOutput)
 {
 	// Sharpen the taa output.
@@ -40,10 +35,6 @@ float4 main(PositionAndUVVertOutput vertOutput)
 	colour -= taaOutput.Sample(defaultSampler, vertOutput.uv + float2(0.0f, -pixelSize.y));
 	colour -= taaOutput.Sample(defaultSampler, vertOutput.uv + float2(-pixelSize.x, 0.0f));
 	colour = saturate(colour);
-
-#if defined(Screen_Space_Reflection)
-	colour += ReflectionMap.Sample(defaultSampler, vertOutput.uv);
-#endif
 
 #if USING_OVERLAY
 	const float4 overlay = overlay.Sample(defaultSampler, vertOutput.uv);

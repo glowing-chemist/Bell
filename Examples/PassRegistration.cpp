@@ -156,6 +156,7 @@ int main()
     testScene.uploadData(&engine);
     testScene.computeBounds(MeshType::Static);
     testScene.computeBounds(MeshType::Dynamic);
+    RayTracingScene rtScene(&engine, &testScene);
 
     // set camera aspect ratio.
 
@@ -186,6 +187,7 @@ int main()
     }
 
     engine.setScene(&testScene);
+    engine.setRayTracingScene(&rtScene);
 
     auto lastCPUTime = std::chrono::system_clock::now();
 
