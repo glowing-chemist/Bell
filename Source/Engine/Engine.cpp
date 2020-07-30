@@ -333,6 +333,9 @@ std::unique_ptr<Technique> Engine::getSingleTechnique(const PassType passType)
         case PassType::PathTracing:
             return std::make_unique<PathTracingTechnique>(this, mCurrentRenderGraph);
 
+        case PassType::RayTracedReflections:
+            return std::make_unique<RayTracedReflectionTechnique>(this, mCurrentRenderGraph);
+
         default:
         {
             BELL_TRAP;

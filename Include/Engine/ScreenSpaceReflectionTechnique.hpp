@@ -33,4 +33,28 @@ private:
     Sampler mClampedSampler;
 };
 
+
+class RayTracedReflectionTechnique : public Technique
+{
+public:
+
+    RayTracedReflectionTechnique(Engine*, RenderGraph&);
+    ~RayTracedReflectionTechnique() = default;
+
+    virtual PassType getPassType() const override final
+    {
+        return PassType::RayTracedReflections;
+    }
+
+    virtual void render(RenderGraph&, Engine*) override final {}
+
+    virtual void bindResources(RenderGraph& graph) override final;
+
+private:
+    Image mReflectionMap;
+    ImageView mReflectionMapView;
+
+    TaskID mTaskID;
+};
+
 #endif

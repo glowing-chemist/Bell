@@ -1,5 +1,8 @@
 #include "RayTracing.hlsl"
 #include "UniformBuffers.hlsl"
+#include "PBR.hlsl"
+#include "NormalMapping.hlsl"
+
 
 [[vk::binding(0)]]
 ConstantBuffer<CameraBuffer> camera;
@@ -14,10 +17,11 @@ Texture2D<float> depth;
 SamplerState linearSampler;
 
 [[vk::binding(4)]]
-RWTexture2D<float4> globalLighting;
+RWTexture2D<float4> reflectionBuffer;
 
 [[vk::binding(5)]]
 TextureCube<float4> skybox;
+
 
 [[vk::binding(0, 1)]]
 Texture2D materials[];
@@ -42,33 +46,43 @@ StructuredBuffer<float2> vertexUVBuffer;
 [[vk::binding(5, 2)]]
 StructuredBuffer<uint> indexBuffer;
 
+#include "Materials.hlsl"
+
 [numthreads(16, 16, 1)]
 void main(uint3 globalIndex : SV_DispatchThreadID)
 {
+
 	uint width, height;
-	globalLighting.GetDimensions(width, height);
+	reflectionBuffer.GetDimensions(width, height);
 
-	const float3 right = camera.view[0];
-	const float3 up = camera.view[1];
-	const float3 forward = -camera.view[2];
+	const float2 uv = float2(globalIndex.xy) / float2(width, height);
+	const float fragmentDepth = depth.Sample(linearSampler, uv);
 
-	const float fov = 1.0f / tan(radians(camera.fov) / 2.0f);
-	const float aspect = 1.0f / ((1.0f / fov) * camera.perspective[0].x);
-	float3 dir = {((float(globalIndex.x) / float(width)) - 0.5f) * aspect, (float(globalIndex.y) / float(height)) - 0.5f, 1.0f};
-    dir = normalize((dir.z * forward) + (dir.y * up) + (dir.x * right));
+	if(fragmentDepth == 0.0f) // skybox
+	{
+		return;
+	}
 
-	Ray cameraRay;
-	cameraRay.position = camera.position;
-	cameraRay.direction = dir;
-	cameraRay.max_t = 2000.0f;
-	cameraRay.min_t = 0.001f;
+	float3 normal = normals.Sample(linearSampler, uv);
+	normal = normalize(remapNormals(normal));
+
+	float4 worldSpaceFragmentPos = mul(camera.invertedViewProj, float4((uv - 0.5f) * 2.0f, fragmentDepth, 1.0f));
+    worldSpaceFragmentPos /= worldSpaceFragmentPos.w;
+
+    float3 view = camera.position - worldSpaceFragmentPos.xyz;
+
+	Ray reflectionRay;
+	reflectionRay.position = worldSpaceFragmentPos.xyz;
+	reflectionRay.direction = reflect(normalize(-view), normal);
+	reflectionRay.max_t = 2000.0f;
+	reflectionRay.min_t = 0.001f;
 
 	float4 lighting = float4(0.0f, 0.0f, 0.0f, 1.0f);
 	TriangleIntersector intersector;
 	TriangleIntersection result;
-	const bool hit = traverseBVH(bvhNodes, bvhIndicies, indexBuffer, vertexPositionBuffer, cameraRay, intersector, result);
+	const bool hit = traverseBVH(bvhNodes, bvhIndicies, indexBuffer, vertexPositionBuffer, reflectionRay, intersector, result);
 	if(!hit)
-		lighting = skybox.Sample(linearSampler, cameraRay.direction);
+		lighting = skybox.Sample(linearSampler, reflectionRay.direction);
 	else // fetch material data.
 	{
 		MaterialOffsets matInfo = PrimToMatID[result.prim_id];
@@ -80,5 +94,5 @@ void main(uint3 globalIndex : SV_DispatchThreadID)
 
 
 	if(globalIndex.x < width && globalIndex.y < height)
-		globalLighting[globalIndex.xy] = lighting;
+		reflectionBuffer[globalIndex.xy] = lighting;
 }

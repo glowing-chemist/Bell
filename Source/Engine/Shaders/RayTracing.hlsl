@@ -52,7 +52,7 @@ float2 interpolateUV(TriangleIntersection intersection, StructuredBuffer<uint> i
 	return ((1.0f - intersection.u - intersection.v) * firstUV) + (intersection.u * secondUV) + (intersection.v * thirdUV);
 }
 
-struct MaterialInfo
+struct MaterialOffsets
 {
     uint materialIndex;
     uint materialFlags;

@@ -39,7 +39,8 @@
                     LightProbeDeferredGI = 1ULL << 32, \
                     VisualizeLightProbes = 1ULL << 33, \
                     OcclusionCulling = 1ULL << 34, \
-                    PathTracing = 1ULL << 35
+                    PathTracing = 1ULL << 35, \
+                    RayTracedReflections = 1ULL << 36
 
 // An enum to keep track of which 
 enum class PassType : uint64_t
@@ -151,6 +152,9 @@ inline const char* passToString(const PassType passType)
 
         case PassType::PathTracing:
             return "PathTracing";
+
+        case PassType::RayTracedReflections:
+            return "RayTraced_Reflections";
     }
 
     return "UNKNOWN PASS TYPE";

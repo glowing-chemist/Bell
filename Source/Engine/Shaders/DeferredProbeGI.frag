@@ -26,8 +26,13 @@ Texture2D<float4> SpecularRoughness;
 [[vk::binding(6)]]
 Texture2D<float4> EmissiveOcclusion;
 
+#if defined(Screen_Space_Reflection) || defined(RayTraced_Reflections)
+[[vk::binding(7)]]
+Texture2D<float4> reflectionMap;
+#else
 [[vk::binding(7)]]
 TextureCube<float4> ConvolvedSkyboxSpecular;
+#endif
 
 [[vk::binding(8)]]
 SamplerState linearSampler;
@@ -49,6 +54,9 @@ float4 main(UVVertOutput vertInput)
     const float2 uv = vertInput.uv;
 	const float fragmentDepth = depth.Sample(linearSampler, uv);
 
+    if(fragmentDepth == 0.0f) // skybox
+        return float4(0.0f, 0.0f, 0.0f, 1.0f)
+
 	float4 worldSpaceFragmentPos = mul(camera.invertedViewProj, float4((uv - 0.5f) * 2.0f, fragmentDepth, 1.0f));
     worldSpaceFragmentPos /= worldSpaceFragmentPos.w;
 
@@ -67,9 +75,13 @@ float4 main(UVVertOutput vertInput)
 	const float3 lightDir = reflect(-viewDir, normal);
     const float NoV = dot(normal, viewDir);
 
-	const float lodLevel = roughness * 10.0f;
+#if defined(Screen_Space_Reflection) || defined(RayTraced_Reflections)
+    float3 radiance = reflectionMap.Sample(linearSampler, uv);
+#else
+    const float lodLevel = roughness * 10.0f;
 
-	float3 radiance = ConvolvedSkyboxSpecular.SampleLevel(linearSampler, lightDir, lodLevel).xyz;
+    float3 radiance = ConvolvedSkyboxSpecular.SampleLevel(linearSampler, lightDir, lodLevel).xyz;
+#endif
 
     float3 irradiance;
     {

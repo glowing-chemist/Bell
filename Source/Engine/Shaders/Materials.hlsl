@@ -121,3 +121,101 @@ MaterialInfo calculateMaterialInfo(	const float4 vertexNormal,
 
 	return mat;
 }
+
+
+MaterialInfo calculateMaterialInfoWithouNormalMapping(	const float4 vertexNormal,
+														const float4 vertexColour,
+														const uint materialTypes, 
+														const uint materialIndex, 
+														const float3 view, 
+														const float2 uv)
+{
+	MaterialInfo mat;
+	mat.diffuse = vertexColour;
+	mat.normal = vertexNormal;
+	mat.specularRoughness = float4(0.0f, 0.0f, 0.0f, 1.0f);
+	mat.emissiveOcclusion = float4(0.0f, 0.0f, 0.0f, 1.0);
+
+	uint nextMaterialSlot = 0;
+
+	if(materialTypes & kMaterial_Diffuse)
+	{
+		mat.diffuse = materials[materialIndex].Sample(linearSampler, uv);
+		++nextMaterialSlot;
+	}
+
+	if(materialTypes & kMaterial_Albedo)
+		++nextMaterialSlot;
+
+	if(materialTypes & kMaterial_Normals)
+	{
+		++nextMaterialSlot;
+	}
+
+	float metalness = 0.0f;
+	if(materialTypes & kMaterial_CombinedMetalnessRoughness)
+	{
+		const float2 metalnessRoughness = materials[materialIndex + nextMaterialSlot].Sample(linearSampler, uv).zy;
+		metalness = metalnessRoughness.x;
+		mat.specularRoughness.w = metalnessRoughness.y;
+		++nextMaterialSlot;
+	}
+	else
+	{
+		if(materialTypes & kMaterial_Roughness)
+		{
+			mat.specularRoughness.w = materials[materialIndex + nextMaterialSlot].Sample(linearSampler, uv).x;
+			++nextMaterialSlot;
+		}
+
+		if(materialTypes & kMaterial_Gloss)
+		{
+			mat.specularRoughness.w = 1.0f - materials[materialIndex + nextMaterialSlot].Sample(linearSampler, uv).x;
+			++nextMaterialSlot;
+		}
+
+		if(materialTypes & kMaterial_Specular)
+		{
+			mat.specularRoughness.xyz= materials[materialIndex + nextMaterialSlot].Sample(linearSampler, uv).xyz;
+			++nextMaterialSlot;
+		}
+		
+		if(materialTypes & kMaterial_CombinedSpecularGloss)
+		{
+			mat.specularRoughness = materials[materialIndex + nextMaterialSlot].Sample(linearSampler, uv);
+			mat.specularRoughness.w = 1.0f - mat.specularRoughness.w;
+			++nextMaterialSlot;
+		}
+
+		if(materialTypes & kMaterial_Metalness)
+		{
+			metalness = materials[materialIndex + nextMaterialSlot].Sample(linearSampler, uv).x;
+			++nextMaterialSlot;
+		}
+	}
+
+	if(materialTypes & kMaterial_Albedo)
+	{
+		const float4 albedo = materials[materialIndex].Sample(linearSampler, uv);
+		mat.diffuse = albedo * (1.0 - DIELECTRIC_SPECULAR) * (1.0 - metalness);
+		mat.diffuse.w = albedo.w;// Preserve the alpha chanle.
+
+		const float NoV = dot(mat.normal.xyz, view);
+        const float3 F0 = lerp(float3(DIELECTRIC_SPECULAR, DIELECTRIC_SPECULAR, DIELECTRIC_SPECULAR), albedo.xyz, metalness);
+        mat.specularRoughness.xyz = fresnelSchlickRoughness(max(NoV, 0.0), F0, mat.specularRoughness.w);
+	}
+
+	if(materialTypes & kMaterial_AmbientOcclusion)
+	{
+		mat.emissiveOcclusion.w = materials[materialIndex + nextMaterialSlot].Sample(linearSampler, uv).x;
+		++nextMaterialSlot;
+	}
+
+	if(materialTypes & kMaterial_Emissive)
+	{
+		mat.emissiveOcclusion.xyz = materials[materialIndex + nextMaterialSlot].Sample(linearSampler, uv).xyz;
+	}
+
+
+	return mat;
+}

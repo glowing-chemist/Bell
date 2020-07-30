@@ -271,6 +271,7 @@ set(SHADERS
 	LineariseDepth11.comp
 	FinalComposite.frag
 	ScreenSpaceReflection.frag
+	RayTracedReflections.comp
 	Materials.hlsl
 	Voxalize.vert
 	Voxalize.geom

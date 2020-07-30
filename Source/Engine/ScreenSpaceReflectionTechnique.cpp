@@ -57,3 +57,45 @@ void ScreenSpaceReflectionTechnique::bindResources(RenderGraph& graph)
         graph.bindSampler(SSRSampler, mClampedSampler);
     }
 }
+
+
+RayTracedReflectionTechnique::RayTracedReflectionTechnique(Engine* eng, RenderGraph& graph) :
+    Technique("Ray traced reflections", eng->getDevice()),
+    mReflectionMap(eng->getDevice(), Format::RGBA8UNorm, ImageUsage::Storage | ImageUsage::Sampled,
+                   eng->getSwapChainImage()->getExtent(0, 0).width / 4, eng->getSwapChainImage()->getExtent(0, 0).height / 4,
+                   1, 1, 1, 1, "Reflection map"),
+    mReflectionMapView(mReflectionMap, ImageViewType::Colour)
+{
+    ComputePipelineDescription pipelineDesc{eng->getShader("./Shaders/RayTracedReflections.comp")};
+
+    ComputeTask task("Ray traced reflections", pipelineDesc);
+    task.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
+    task.addInput(kGBufferNormals, AttachmentType::Texture2D);
+    task.addInput(kGBufferDepth, AttachmentType::Texture2D);
+    task.addInput(kDefaultSampler, AttachmentType::Sampler);
+    task.addInput(kReflectionMap, AttachmentType::Image2D);
+    task.addInput(kSkyBox, AttachmentType::CubeMap);
+    task.addInput(kMaterials, AttachmentType::ShaderResourceSet);
+    task.addInput(kBVH, AttachmentType::ShaderResourceSet);
+
+    task.setRecordCommandsCallback(
+                [](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+                {
+                    const uint32_t width =  eng->getDevice()->getSwapChain()->getSwapChainImageWidth() / 4;
+                    const uint32_t height =  eng->getDevice()->getSwapChain()->getSwapChainImageHeight() / 4;
+
+                    exec->dispatch(std::ceil(width / 16.0f), std::ceil(height / 16.0f), 1);
+                }
+    );
+
+    mTaskID = graph.addTask(task);
+}
+
+
+void RayTracedReflectionTechnique::bindResources(RenderGraph& graph)
+{
+    if (!graph.isResourceSlotBound(kReflectionMap))
+    {
+        graph.bindImage(kReflectionMap, mReflectionMapView);
+    }
+}
