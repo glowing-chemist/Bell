@@ -27,7 +27,7 @@ SamplerState linearSampler;
 [[vk::binding(7)]]
 TextureCube<float4> ConvolvedSkyboxDiffuse;
 
-#ifdef Light_froxelation
+#if defined(Light_froxelation)
 [[vk::binding(8)]]
 StructuredBuffer<uint2> sparseFroxelList;
 
@@ -39,7 +39,7 @@ Texture2D<uint> activeFroxels;
 #endif
 
 #if defined(Shadow_Map) || defined(Cascade_Shadow_Map)
-#ifdef Light_froxelation
+#if defined(Light_froxelation)
 [[vk::binding(11)]]
 #else
 [[vk::binding(8)]]
@@ -52,7 +52,7 @@ Texture2D<float> shadowMap;
 Texture2D materials[];
 
 
-#ifdef Light_froxelation
+#if defined(Light_froxelation)
 [[vk::binding(0, 2)]]
 StructuredBuffer<uint4> lightCount;
 

@@ -27,8 +27,6 @@ public:
 	virtual void bindResources(RenderGraph& graph) override final;
 
 private:
-    Image mReflectionMap;
-    ImageView mReflectionMapView;
 
     Sampler mClampedSampler;
 };
@@ -53,6 +51,8 @@ public:
 private:
     Image mReflectionMap;
     ImageView mReflectionMapView;
+
+    uint32_t mSampleNumber;
 
     TaskID mTaskID;
 };

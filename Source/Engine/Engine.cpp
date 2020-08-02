@@ -75,6 +75,8 @@ Engine::Engine(GLFWwindow* windowPtr) :
     mLTCAmp(getDevice(), Format::RG32Float, ImageUsage::Sampled | ImageUsage::TransferDest, 64, 64, 1, 1, 1, 1, "LTC Amp"),
     mLTCAmpView(mLTCAmp, ImageViewType::Colour),
     mInitialisedTLCTextures(false),
+    mBlueNoise(getDevice(), Format::R8UNorm, ImageUsage::Sampled | ImageUsage::TransferDest, 470, 470, 1, 1, 1, 1, "Blue Noise"),
+    mBlueNoiseView(mBlueNoise, ImageViewType::Colour),
     mCurrentRenderGraph(),
     mCompileGraph(true),
 	mTechniques{},
@@ -450,6 +452,7 @@ void Engine::execute(RenderGraph& graph)
         mCurrentRenderGraph.bindShaderResourceSet(kMaterials, mMaterials);
         mCurrentRenderGraph.bindImage(kLTCMat, mLTCMatView);
         mCurrentRenderGraph.bindImage(kLTCAmp, mLTCAmpView);
+        mCurrentRenderGraph.bindImage(kBlueNoise, mBlueNoiseView);
         mCurrentRenderGraph.bindSampler(kDefaultSampler, mDefaultSampler);
         mCurrentRenderGraph.bindVertexBuffer(kSceneVertexBuffer, mVertexBuffer);
         mCurrentRenderGraph.bindIndexBuffer(kSceneIndexBuffer, mIndexBuffer);
@@ -724,6 +727,9 @@ void Engine::updateGlobalBuffers()
         TextureUtil::TextureInfo ampInfo = TextureUtil::load128BitTexture("./Assets/ltc_amp.hdr", 2);
         mLTCAmp->setContents(ampInfo.mData.data(), ampInfo.width, ampInfo.height, 1);
 
+        TextureUtil::TextureInfo noiseInfo = TextureUtil::load32BitTexture("./Assets/BlueNoise.png", 1);
+        mBlueNoise->setContents(noiseInfo.mData.data(), 470, 470, 1);
+
         mInitialisedTLCTextures = true;
     }
 
@@ -759,6 +765,7 @@ void Engine::updateGlobalBuffers()
             mCameraBuffer.mInvertedViewProjMatrix = glm::inverse(mCameraBuffer.mViewProjMatrix);
             mCameraBuffer.mInvertedPerspective = glm::inverse(perspective);
             mCameraBuffer.mViewMatrix = view;
+            mCameraBuffer.mInvertedView = glm::inverse(view);
             mCameraBuffer.mPerspectiveMatrix = perspective;
             mCameraBuffer.mOrthoMatrix = currentCamera.getOrthographicsMatrix();
             mCameraBuffer.mFrameBufferSize = glm::vec2{ swapchainX, swapChainY };

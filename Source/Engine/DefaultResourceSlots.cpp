@@ -55,5 +55,6 @@ const char kOverlay[]			 = "Overlay";
 const char kDFGLUT[]			= "DFG";
 const char kLTCMat[]           = "LTCMat";
 const char kLTCAmp[]           = "LTCAmp";
+const char kBlueNoise[]        = "BlueNoise";
 
 const char kDefaultFontTexture[] = "Fonts";

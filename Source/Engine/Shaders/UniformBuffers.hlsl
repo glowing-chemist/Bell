@@ -7,6 +7,7 @@ struct CameraBuffer
         float4x4 ortho;
         float4x4 viewProj;
             
+        float4x4 invertedView;
         float4x4 invertedViewProj;
         float4x4 invertedPerspective;
 

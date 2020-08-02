@@ -8,30 +8,29 @@ constexpr const char SSRSampler[] = "SSRSampler";
 
 ScreenSpaceReflectionTechnique::ScreenSpaceReflectionTechnique(Engine* eng, RenderGraph& graph) :
 	Technique("SSR", eng->getDevice()),
-    mReflectionMap(eng->getDevice(), Format::RGBA8UNorm, ImageUsage::ColourAttachment | ImageUsage::Sampled, eng->getSwapChainImage()->getExtent(0, 0).width, eng->getSwapChainImage()->getExtent(0, 0).height, 1, 1, 1, 1, "Reflection map"),
-    mReflectionMapView(mReflectionMap, ImageViewType::Colour),
     mClampedSampler(SamplerType::Linear)
 {
-	const auto viewPortX = eng->getSwapChainImage()->getExtent(0, 0).width;
-	const auto viewPortY = eng->getSwapChainImage()->getExtent(0, 0).height;
+    const auto viewPortX = eng->getSwapChainImage()->getExtent(0, 0).width / 2;
+    const auto viewPortY = eng->getSwapChainImage()->getExtent(0, 0).height / 2;
 	GraphicsPipelineDescription desc
 	(
 		eng->getShader("./Shaders/FullScreenTriangle.vert"),
 		eng->getShader("./Shaders/ScreenSpaceReflection.frag"),
-		Rect{ viewPortX, viewPortY },
+        Rect{ viewPortX, viewPortY },
 		Rect{ viewPortX, viewPortY }
 	);
 
     GraphicsTask task("SSR", desc);
     task.addInput(kLinearDepth, AttachmentType::Texture2D);
-    task.addInput(kGlobalLighting, AttachmentType::Texture2D);
+    task.addInput(kGBufferDepth, AttachmentType::Texture2D);
+    task.addInput(kGBufferDiffuse, AttachmentType::Texture2D);
+    task.addInput(kGBufferSpecularRoughness, AttachmentType::Texture2D);
     task.addInput(kGBufferNormals, AttachmentType::Texture2D);
     task.addInput(kGBufferSpecularRoughness, AttachmentType::Texture2D);
+    task.addInput(kConvolvedSpecularSkyBox, AttachmentType::CubeMap);
     task.addInput(SSRSampler, AttachmentType::Sampler);
     task.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
-    if(eng->isPassRegistered(PassType::DeferredAnalyticalLighting))
-        task.addInput(kAnalyticLighting, AttachmentType::Texture2D);
-    task.addOutput(kReflectionMap, AttachmentType::RenderTarget2D, Format::RGBA8UNorm, SizeClass::Custom, LoadOp::Nothing);
+    task.addOutput(kReflectionMap, AttachmentType::RenderTarget2D, Format::RGBA8UNorm, SizeClass::HalfSwapchain, LoadOp::Nothing);
 
     task.setVertexAttributes(0);
     task.setRecordCommandsCallback(
@@ -51,9 +50,8 @@ ScreenSpaceReflectionTechnique::ScreenSpaceReflectionTechnique(Engine* eng, Rend
 
 void ScreenSpaceReflectionTechnique::bindResources(RenderGraph& graph)
 {
-    if (!graph.isResourceSlotBound(kReflectionMap))
+    if (!graph.isResourceSlotBound(SSRSampler))
     {
-        graph.bindImage(kReflectionMap, mReflectionMapView);
         graph.bindSampler(SSRSampler, mClampedSampler);
     }
 }
@@ -64,7 +62,8 @@ RayTracedReflectionTechnique::RayTracedReflectionTechnique(Engine* eng, RenderGr
     mReflectionMap(eng->getDevice(), Format::RGBA8UNorm, ImageUsage::Storage | ImageUsage::Sampled,
                    eng->getSwapChainImage()->getExtent(0, 0).width / 4, eng->getSwapChainImage()->getExtent(0, 0).height / 4,
                    1, 1, 1, 1, "Reflection map"),
-    mReflectionMapView(mReflectionMap, ImageViewType::Colour)
+    mReflectionMapView(mReflectionMap, ImageViewType::Colour),
+    mSampleNumber(0)
 {
     ComputePipelineDescription pipelineDesc{eng->getShader("./Shaders/RayTracedReflections.comp")};
 
@@ -73,18 +72,22 @@ RayTracedReflectionTechnique::RayTracedReflectionTechnique(Engine* eng, RenderGr
     task.addInput(kGBufferNormals, AttachmentType::Texture2D);
     task.addInput(kGBufferSpecularRoughness, AttachmentType::Texture2D);
     task.addInput(kGBufferDepth, AttachmentType::Texture2D);
+    task.addInput(kBlueNoise, AttachmentType::Texture2D);
     task.addInput(kDefaultSampler, AttachmentType::Sampler);
     task.addInput(kReflectionMap, AttachmentType::Image2D);
     task.addInput(kConvolvedSpecularSkyBox, AttachmentType::CubeMap);
+    task.addInput("SampleNumber", AttachmentType::PushConstants);
     task.addInput(kMaterials, AttachmentType::ShaderResourceSet);
     task.addInput(kBVH, AttachmentType::ShaderResourceSet);
 
     task.setRecordCommandsCallback(
-                [](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+                [this](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
                 {
                     const uint32_t width =  eng->getDevice()->getSwapChain()->getSwapChainImageWidth() / 4;
                     const uint32_t height =  eng->getDevice()->getSwapChain()->getSwapChainImageHeight() / 4;
 
+                    exec->insertPushConsatnt(&mSampleNumber, sizeof(uint32_t));
+                    mSampleNumber = (mSampleNumber + 1) % 16;
                     exec->dispatch(std::ceil(width / 16.0f), std::ceil(height / 16.0f), 1);
                 }
     );

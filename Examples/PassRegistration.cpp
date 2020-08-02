@@ -15,7 +15,9 @@ struct ImGuiOptions
     bool mTAA = false;
     bool mSSAO = false;
     bool mShadows = true;
-    bool mSSR = false;
+    int mReflectionsToggle = 0;
+    bool mSSR = true;
+    bool mRayTracedReflections = false;
     bool preDepth = true;
     bool occlusionCulling = false;
 };
@@ -76,7 +78,7 @@ bool renderMenu(GLFWwindow* win, const Camera& cam, Engine* eng, const float cpu
     ImGui::Checkbox("Enable TAA", &graphicsOptions.mTAA);
     ImGui::Checkbox("Enable SSAO", &graphicsOptions.mSSAO);
     ImGui::Checkbox("Enable shadows", &graphicsOptions.mShadows);
-    ImGui::Checkbox("Enable Screen space reflection", &graphicsOptions.mSSR);
+
     ImGui::Checkbox("Enable pre depth", &graphicsOptions.preDepth);
     ImGui::Checkbox("Occlusion culling (experimental)", &graphicsOptions.occlusionCulling);
 
@@ -256,9 +258,6 @@ int main()
                 engine.registerPass(PassType::GBuffer);
 
             engine.registerPass(PassType::DeferredPBRIBL);
-
-            if(graphicsOptions.mSSR)
-                engine.registerPass(PassType::SSR);
 
             if (graphicsOptions.mShowLights)
                 engine.registerPass(PassType::DeferredAnalyticalLighting);

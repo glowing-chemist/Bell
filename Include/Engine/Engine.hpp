@@ -339,6 +339,8 @@ private:
     Image mLTCAmp;
     ImageView mLTCAmpView;
     bool mInitialisedTLCTextures;
+    Image mBlueNoise;
+    ImageView mBlueNoiseView;
 
     std::unordered_map < const StaticMesh*, std::pair<uint64_t, uint64_t>> mVertexCache;
     std::unordered_map < const StaticMesh*, std::pair<uint64_t, uint64_t>> mTposeVertexCache;

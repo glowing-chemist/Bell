@@ -57,6 +57,7 @@ extern const char kOverlay[];
 extern const char kDFGLUT[];
 extern const char kLTCMat[];
 extern const char kLTCAmp[];
+extern const char kBlueNoise[];
 
 extern const char kDefaultFontTexture[];
 

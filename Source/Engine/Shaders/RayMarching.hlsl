@@ -1,9 +1,9 @@
 
 
-float2 marchRay(float3 position, const float3 direction, const uint maxSteps, float2 pixelSize)
+float2 marchRay(float3 position, const float3 direction, const uint maxSteps, float2 pixelSize, uint startLOD)
 {
-	uint currentLOD = 4;
-	const float2 startUV = (position.xy * 0.5f + 0.5f);
+	uint currentLOD = startLOD;
+	const float2 startUV = ((position.xy * 0.5f) + 0.5f);
 	float2 uv = startUV;
 	const float2 xyDir = normalize(direction.xy); 
 
@@ -11,8 +11,8 @@ float2 marchRay(float3 position, const float3 direction, const uint maxSteps, fl
 	{
 		uv += xyDir * pixelSize;
 
-		const float steppedDepth = LinearDepth.SampleLevel(linearSampler, uv, currentLOD);
-		const float rayDepth = position.z + abs((startUV.x - uv.x) / direction.x) * direction.z;
+		const float steppedDepth = LinearDepth.SampleLevel(linearSampler, uv, currentLOD).x;
+		const float rayDepth = position.z + abs(length(startUV - uv) / length(direction.xy)) * direction.z;
 
 		if(rayDepth >= steppedDepth && currentLOD == 0)
 			return uv;
@@ -20,11 +20,7 @@ float2 marchRay(float3 position, const float3 direction, const uint maxSteps, fl
 		{
 			--currentLOD;
 			pixelSize /= float2(2.0f, 2.0f);
-		}
-		else if(currentLOD < 4)
-		{
-			++currentLOD;
-			pixelSize *= float2(2.0f, 2.0f);
+			uv -= xyDir * pixelSize;
 		}
 	}
 

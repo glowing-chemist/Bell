@@ -17,12 +17,15 @@ Texture2D<float4> specularRoughness;
 Texture2D<float> depth;
 
 [[vk::binding(4)]]
-SamplerState linearSampler;
+Texture2D<float> blueNoise;
 
 [[vk::binding(5)]]
-RWTexture2D<float4> reflectionBuffer;
+SamplerState linearSampler;
 
 [[vk::binding(6)]]
+RWTexture2D<float4> reflectionBuffer;
+
+[[vk::binding(7)]]
 TextureCube<float4> skybox;
 
 
@@ -51,6 +54,14 @@ StructuredBuffer<uint> indexBuffer;
 
 #include "Materials.hlsl"
 
+struct PushConstants
+{
+	uint sample;
+};
+[[vk::push_constant]]
+ConstantBuffer<PushConstants> constants;
+
+
 [numthreads(16, 16, 1)]
 void main(uint3 globalIndex : SV_DispatchThreadID)
 {
@@ -74,11 +85,18 @@ void main(uint3 globalIndex : SV_DispatchThreadID)
 	float4 worldSpaceFragmentPos = mul(camera.invertedViewProj, float4((uv - 0.5f) * 2.0f, fragmentDepth, 1.0f));
     worldSpaceFragmentPos /= worldSpaceFragmentPos.w;
 
-    float3 view = camera.position - worldSpaceFragmentPos.xyz;
+    float3 view = normalize(camera.position - worldSpaceFragmentPos.xyz);
+
+    const float blueSample = blueNoise.Sample(linearSampler, float2(globalIndex.xy) / float2(470.0f, 470.0f));
+    uint sample = ((blueSample * 16.0f) /*+ constants.sample*/) % 16;
+
+    float2 Xi = Hammersley(sample, 16);
+	float3 H = ImportanceSampleGGX(Xi, roughness, normal);
+	float3 L = 2.0f * dot(view, H) * H - view;
 
 	Ray reflectionRay;
 	reflectionRay.position = worldSpaceFragmentPos.xyz;
-	reflectionRay.direction = reflect(normalize(-view), normal);
+	reflectionRay.direction = L;//reflect(-view, normal);
 	reflectionRay.max_t = 2000.0f;
 	reflectionRay.min_t = 0.001f;
 

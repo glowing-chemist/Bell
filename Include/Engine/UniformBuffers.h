@@ -11,6 +11,7 @@ struct CameraBuffer
     float4x4 mOrthoMatrix;
     float4x4 mViewProjMatrix;
 
+    float4x4 mInvertedView;
     float4x4 mInvertedViewProjMatrix;
     float4x4 mInvertedPerspective;
 
