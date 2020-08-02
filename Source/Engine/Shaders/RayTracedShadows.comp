@@ -1,0 +1,72 @@
+#include "RayTracing.hlsl"
+#include "UniformBuffers.hlsl"
+#include "PBR.hlsl"
+#include "NormalMapping.hlsl"
+
+
+[[vk::binding(0)]]
+ConstantBuffer<CameraBuffer> camera;
+
+[[vk::binding(1)]]
+Texture2D<float> depth;
+
+[[vk::binding(2)]]
+SamplerState linearSampler;
+
+[[vk::binding(3)]]
+RWTexture2D<float> shadowMap;
+
+[[vk::binding(4)]]
+ConstantBuffer<ShadowingLight> light;
+
+
+[[vk::binding(0, 1)]]
+//ByteAddressBuffer bvhNodes;
+StructuredBuffer<BVHNode> bvhNodes;
+
+[[vk::binding(1, 1)]]
+StructuredBuffer<uint> bvhIndicies;
+
+[[vk::binding(2, 1)]]
+StructuredBuffer<MaterialOffsets> PrimToMatID;
+
+[[vk::binding(3, 1)]]
+ByteAddressBuffer vertexPositionBuffer;
+
+[[vk::binding(4, 1)]]
+StructuredBuffer<float2> vertexUVBuffer;
+
+[[vk::binding(5, 1)]]
+StructuredBuffer<uint> indexBuffer;
+
+
+[numthreads(16, 16, 1)]
+void main(uint3 globalIndex : SV_DispatchThreadID)
+{
+	uint width, height;
+	shadowMap.GetDimensions(width, height);
+
+	const float2 uv = (float2(globalIndex.xy) / float2(width, height)) + camera.jitter;
+	const float fragmentDepth = depth.Sample(linearSampler, uv);
+
+	if(fragmentDepth == 0.0f) // skybox
+	{
+		return;
+	}
+
+	float4 worldSpaceFragmentPos = mul(camera.invertedViewProj, float4((uv - 0.5f) * 2.0f, fragmentDepth, 1.0f));
+    worldSpaceFragmentPos /= worldSpaceFragmentPos.w;
+
+    Ray shadowRay;
+	shadowRay.position = worldSpaceFragmentPos.xyz;
+	shadowRay.direction = normalize(light.position - worldSpaceFragmentPos.xyz);
+	shadowRay.max_t = max(max(camera.sceneSize.x, camera.sceneSize.y), camera.sceneSize.z);
+	shadowRay.min_t = max(max(camera.sceneSize.x, camera.sceneSize.y), camera.sceneSize.z) / 1000.0f;
+
+	TriangleIntersector intersector;
+	TriangleIntersection result;
+	const bool shadowed = traverseBVH(bvhNodes, bvhIndicies, indexBuffer, vertexPositionBuffer, shadowRay, intersector, result);
+
+	if(globalIndex.x < width && globalIndex.y < height)
+		shadowMap[globalIndex.xy] = shadowed ? 0.15f : 1.0f;
+}
