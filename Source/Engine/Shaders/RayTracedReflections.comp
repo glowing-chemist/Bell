@@ -98,7 +98,7 @@ void main(uint3 globalIndex : SV_DispatchThreadID)
 	reflectionRay.position = worldSpaceFragmentPos.xyz;
 	reflectionRay.direction = L;//reflect(-view, normal);
 	reflectionRay.max_t = 2000.0f;
-	reflectionRay.min_t = 0.001f;
+	reflectionRay.min_t = max(max(camera.sceneSize.x, camera.sceneSize.y), camera.sceneSize.z) / 1000.0f;
 
 	float4 lighting = float4(0.0f, 0.0f, 0.0f, 1.0f);
 	TriangleIntersector intersector;

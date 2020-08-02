@@ -146,3 +146,32 @@ void ShadowMappingTechnique::render(RenderGraph& graph, Engine*)
         }
     );
 }
+
+
+RayTracedShadowsTechnique::RayTracedShadowsTechnique(Engine* eng, RenderGraph& graph) :
+                Technique("RayTracedShadows", eng->getDevice()),
+                mShadowMap(getDevice(), Format::R8UNorm, ImageUsage::Storage | ImageUsage::Sampled, getDevice()->getSwapChain()->getSwapChainImageWidth() / 4, getDevice()->getSwapChain()->getSwapChainImageHeight() / 4,
+                           1, 1, 1, 1, "ShadowMap"),
+                mShadowMapView(mShadowMap, ImageViewType::Colour),
+                mPipeline{eng->getShader("./Shaders/RayTracedShadows.comp")}
+{
+    ComputeTask task("RayTracedShadows", mPipeline);
+    task.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
+    task.addInput(kGBufferDepth, AttachmentType::Texture2D);
+    task.addInput(kDefaultSampler, AttachmentType::Sampler);
+    task.addInput(kShadowMap, AttachmentType::Image2D);
+    task.addInput(kShadowingLights, AttachmentType::UniformBuffer);
+    task.addInput(kBVH, AttachmentType::ShaderResourceSet);
+
+    task.setRecordCommandsCallback(
+        [](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+        {
+            const float threadGroupWidth = eng->getSwapChainImageView()->getImageExtent().width / 4;
+            const float threadGroupHeight = eng->getSwapChainImageView()->getImageExtent().height / 4;
+
+            exec->dispatch(std::ceil(threadGroupWidth / 16.0f), std::ceil(threadGroupHeight / 16.0f), 1.0f);
+        }
+    );
+
+    mTaskID = graph.addTask(task);
+}

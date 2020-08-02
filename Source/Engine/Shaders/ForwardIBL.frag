@@ -26,7 +26,7 @@ TextureCube<float4> ConvolvedSkyboxDiffuse;
 [[vk::binding(4)]]
 SamplerState linearSampler;
 
-#if defined(Shadow_Map) || defined(Cascade_Shadow_Map)
+#if defined(Shadow_Map) || defined(Cascade_Shadow_Map) || defined(RayTraced_Shadows)
 [[vk::binding(5)]]
 Texture2D<float> shadowMap;
 #endif
@@ -60,7 +60,7 @@ Output main(GBufferVertOutput vertInput)
 
     float3 irradiance = ConvolvedSkyboxDiffuse.Sample(linearSampler, material.normal.xyz).xyz;
 
-#if defined(Shadow_Map) || defined(Cascade_Shadow_Map)
+#if defined(Shadow_Map) || defined(Cascade_Shadow_Map) || defined(RayTraced_Shadows)
     const float occlusion = shadowMap.Sample(linearSampler, vertInput.position.xy / camera.frameBufferSize);
     radiance *= occlusion;
     irradiance *= occlusion;

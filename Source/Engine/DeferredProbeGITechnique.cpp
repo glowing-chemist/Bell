@@ -25,7 +25,7 @@ DeferredProbeGITechnique::DeferredProbeGITechnique(Engine* eng, RenderGraph& gra
     task.addInput(kDefaultSampler, AttachmentType::Sampler);
     task.addInput(kLightProbes, AttachmentType::ShaderResourceSet);
 
-    if (eng->isPassRegistered(PassType::Shadow) || eng->isPassRegistered(PassType::CascadingShadow))
+    if (eng->isPassRegistered(PassType::Shadow) || eng->isPassRegistered(PassType::CascadingShadow) || eng->isPassRegistered(PassType::RayTracedShadows))
         task.addInput(kShadowMap, AttachmentType::Texture2D);
 
     task.addOutput(kGlobalLighting, AttachmentType::RenderTarget2D, Format::RGBA8UNorm,

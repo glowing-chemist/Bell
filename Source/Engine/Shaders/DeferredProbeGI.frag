@@ -37,7 +37,7 @@ TextureCube<float4> ConvolvedSkyboxSpecular;
 [[vk::binding(8)]]
 SamplerState linearSampler;
 
-#if defined(Shadow_Map) || defined(Cascade_Shadow_Map)
+#if defined(Shadow_Map) || defined(Cascade_Shadow_Map) || defined(RayTraced_Shadows)
 [[vk::binding(9)]]
 Texture2D<float> shadowMap;
 #endif
@@ -95,7 +95,7 @@ float4 main(UVVertOutput vertInput)
         irradiance = calculateProbeIrradiance(normal, probe1);
     }
 
-#if defined(Shadow_Map) || defined(Cascade_Shadow_Map)
+#if defined(Shadow_Map) || defined(Cascade_Shadow_Map) || defined(RayTraced_Shadows)
     const float occlusion = shadowMap.Sample(linearSampler, uv);
     radiance *= occlusion;
     irradiance *= occlusion;

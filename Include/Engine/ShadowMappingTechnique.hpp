@@ -56,4 +56,35 @@ private:
 
 };
 
+
+class RayTracedShadowsTechnique : public Technique
+{
+public:
+    RayTracedShadowsTechnique(Engine*, RenderGraph&);
+    ~RayTracedShadowsTechnique() = default;
+
+    virtual PassType getPassType() const override
+    {
+        return PassType::RayTracedShadows;
+    }
+
+    virtual void render(RenderGraph&, Engine*) override {}
+
+    virtual void bindResources(RenderGraph& graph) override
+    {
+        if(!graph.isResourceSlotBound(kShadowMap))
+        {
+            graph.bindImage(kShadowMap, mShadowMapView);
+        }
+    }
+
+private:
+
+    Image    mShadowMap;
+    ImageView mShadowMapView;
+
+    ComputePipelineDescription mPipeline;
+    TaskID                     mTaskID;;
+};
+
 #endif

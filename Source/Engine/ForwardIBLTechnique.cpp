@@ -25,7 +25,7 @@ ForwardIBLTechnique::ForwardIBLTechnique(Engine* eng, RenderGraph& graph) :
     task.addInput(kConvolvedDiffuseSkyBox, AttachmentType::CubeMap);
 	task.addInput(kDefaultSampler, AttachmentType::Sampler);
 
-    if (eng->isPassRegistered(PassType::Shadow) || eng->isPassRegistered(PassType::CascadingShadow))
+    if (eng->isPassRegistered(PassType::Shadow) || eng->isPassRegistered(PassType::CascadingShadow) || eng->isPassRegistered(PassType::RayTracedShadows))
 		task.addInput(kShadowMap, AttachmentType::Texture2D);
 
 	task.addInput(kMaterials, AttachmentType::ShaderResourceSet);

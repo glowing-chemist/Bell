@@ -292,6 +292,7 @@ set(SHADERS
 	OcclusionCulling.comp
 	RayTracing.hlsl
 	PathTracer.comp
+	RayTracedShadows.comp
     )
 
 foreach(shader ${SHADERS})
