@@ -15,6 +15,9 @@ struct ImGuiOptions
     bool mTAA = false;
     bool mSSAO = false;
     bool mShadows = true;
+    int mShadowToggle = 0;
+    bool mShadowMaps = true;
+    bool mRayTracedShadows = false;
     int mReflectionsToggle = 0;
     bool mSSR = true;
     bool mRayTracedReflections = false;
@@ -78,6 +81,26 @@ bool renderMenu(GLFWwindow* win, const Camera& cam, Engine* eng, const float cpu
     ImGui::Checkbox("Enable TAA", &graphicsOptions.mTAA);
     ImGui::Checkbox("Enable SSAO", &graphicsOptions.mSSAO);
     ImGui::Checkbox("Enable shadows", &graphicsOptions.mShadows);
+    if(graphicsOptions.mShadows)
+    {
+        ImGui::BeginGroup();
+
+            ImGui::RadioButton("Shadow maps", &graphicsOptions.mShadowToggle, 0);
+            ImGui::RadioButton("Ray traced shadows", &graphicsOptions.mShadowToggle, 1);
+
+        ImGui::EndGroup();
+
+        if (graphicsOptions.mShadowToggle == 0)
+        {
+            graphicsOptions.mShadowMaps = true;
+            graphicsOptions.mRayTracedShadows = false;
+        }
+        else
+        {
+            graphicsOptions.mShadowMaps = false;
+            graphicsOptions.mRayTracedShadows = true;
+        }
+    }
 
     ImGui::Checkbox("Enable pre depth", &graphicsOptions.preDepth);
     ImGui::Checkbox("Occlusion culling (experimental)", &graphicsOptions.occlusionCulling);
@@ -244,8 +267,10 @@ int main()
         if (graphicsOptions.mForward || graphicsOptions.preDepth)
             engine.registerPass(PassType::DepthPre);
 
-        if(graphicsOptions.mShadows)
+        if(graphicsOptions.mShadowMaps)
             engine.registerPass(PassType::Shadow);
+        else if(graphicsOptions.mRayTracedShadows)
+               engine.registerPass(PassType::RayTracedShadows);
 
         if (graphicsOptions.mShowLights)
             engine.registerPass(PassType::LightFroxelation);

@@ -312,6 +312,14 @@ namespace
                 newNode->mOutputs.push_back(Pin{ 0, newNode, kReflectionMap, PinType::Texture, PinKind::Output });
                 return newNode;
             }
+
+            case NodeTypes::RayTracedShadows:
+            {
+                std::shared_ptr<EditorNode> newNode = std::make_shared<PassNode>("RayTraced reflections", passType);
+                newNode->mInputs.push_back(Pin{ 0, newNode, kCameraBuffer, PinType::Texture, PinKind::Input });
+                newNode->mOutputs.push_back(Pin{ 0, newNode, kShadowMap, PinType::Texture, PinKind::Output });
+                return newNode;
+            }
         }
     }
 
@@ -718,6 +726,7 @@ void Editor::drawAssistantWindow()
 		   drawPassContextMenu(PassType::DeferredAnalyticalLighting);
            drawPassContextMenu(PassType::Shadow);
            drawPassContextMenu(PassType::CascadingShadow);
+           drawPassContextMenu(PassType::RayTracedShadows);
            drawPassContextMenu(PassType::TAA);
            drawPassContextMenu(PassType::LineariseDepth);
            drawPassContextMenu(PassType::SSR);
@@ -727,7 +736,7 @@ void Editor::drawAssistantWindow()
            drawPassContextMenu(PassType::Voxelize);
            drawPassContextMenu(PassType::VisualizeLightProbes);
            drawPassContextMenu(PassType::OcclusionCulling);
-           drawPassContextMenu(PassType::PathTracing);
+           drawPassContextMenu(PassType::PathTracing); 
 
            ImGui::TreePop();
        }
