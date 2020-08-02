@@ -267,9 +267,9 @@ int main()
         if (graphicsOptions.mForward || graphicsOptions.preDepth)
             engine.registerPass(PassType::DepthPre);
 
-        if(graphicsOptions.mShadowMaps)
+        if(graphicsOptions.mShadows && graphicsOptions.mShadowMaps)
             engine.registerPass(PassType::Shadow);
-        else if(graphicsOptions.mRayTracedShadows)
+        else if(graphicsOptions.mShadows && graphicsOptions.mRayTracedShadows)
                engine.registerPass(PassType::RayTracedShadows);
 
         if (graphicsOptions.mShowLights)
