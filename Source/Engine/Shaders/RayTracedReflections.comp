@@ -88,7 +88,7 @@ void main(uint3 globalIndex : SV_DispatchThreadID)
     float3 view = normalize(camera.position - worldSpaceFragmentPos.xyz);
 
     const float blueSample = blueNoise.Sample(linearSampler, float2(globalIndex.xy) / float2(470.0f, 470.0f));
-    uint sample = ((blueSample * 16.0f) /*+ constants.sample*/) % 16;
+    uint sample = blueSample * 16.0f;
 
     float2 Xi = Hammersley(sample, 16);
 	float3 H = ImportanceSampleGGX(Xi, roughness, normal);
@@ -97,7 +97,7 @@ void main(uint3 globalIndex : SV_DispatchThreadID)
 	Ray reflectionRay;
 	reflectionRay.position = worldSpaceFragmentPos.xyz;
 	reflectionRay.direction = L;//reflect(-view, normal);
-	reflectionRay.max_t = 2000.0f;
+	reflectionRay.max_t = max(max(camera.sceneSize.x, camera.sceneSize.y), camera.sceneSize.z);
 	reflectionRay.min_t = max(max(camera.sceneSize.x, camera.sceneSize.y), camera.sceneSize.z) / 1000.0f;
 
 	float4 lighting = float4(0.0f, 0.0f, 0.0f, 1.0f);
