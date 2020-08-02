@@ -2,34 +2,34 @@
 #include "Utilities.hlsl"
 
 [[vk::binding(0)]]
-globallycoherent RWTexture2D<float> linearDepthBufferMip0;
+globallycoherent RWTexture2D<float2> linearDepthBufferMip0;
 
 [[vk::binding(1)]]
-globallycoherent RWTexture2D<float> linearDepthBufferMip1;
+globallycoherent RWTexture2D<float2> linearDepthBufferMip1;
 
 [[vk::binding(2)]]
-globallycoherent RWTexture2D<float> linearDepthBufferMip2;
+globallycoherent RWTexture2D<float2> linearDepthBufferMip2;
 
 [[vk::binding(3)]]
-globallycoherent RWTexture2D<float> linearDepthBufferMip3;
+globallycoherent RWTexture2D<float2> linearDepthBufferMip3;
 
 [[vk::binding(4)]]
-globallycoherent RWTexture2D<float> linearDepthBufferMip4;
+globallycoherent RWTexture2D<float2> linearDepthBufferMip4;
 
 [[vk::binding(5)]]
-globallycoherent RWTexture2D<float> linearDepthBufferMip5;
+globallycoherent RWTexture2D<float2> linearDepthBufferMip5;
 
 [[vk::binding(6)]]
-globallycoherent RWTexture2D<float> linearDepthBufferMip6;
+globallycoherent RWTexture2D<float2> linearDepthBufferMip6;
 
 [[vk::binding(7)]]
-globallycoherent RWTexture2D<float> linearDepthBufferMip7;
+globallycoherent RWTexture2D<float2> linearDepthBufferMip7;
 
 [[vk::binding(8)]]
-globallycoherent RWTexture2D<float> linearDepthBufferMip8;
+globallycoherent RWTexture2D<float2> linearDepthBufferMip8;
 
 [[vk::binding(9)]]
-globallycoherent RWTexture2D<float> linearDepthBufferMip9;
+globallycoherent RWTexture2D<float2> linearDepthBufferMip9;
 
 [[vk::binding(10)]]
 Texture2D<float> gbufferDepth;
@@ -41,21 +41,27 @@ ConstantBuffer<CameraBuffer> camera;
 SamplerState linearSampler;
 
 
-void downSample(uint2 pos, RWTexture2D<float> readMip, RWTexture2D<float> writeMip)
+void downSample(uint2 pos, RWTexture2D<float2> readMip, RWTexture2D<float2> writeMip)
 {
 	uint width, height;
 	writeMip.GetDimensions(width, height);
 	if(pos.x < width && pos.y < height)
 	{
-		const float4 depthTaps = float4(readMip.Load(pos.xy * 2),
-										readMip.Load((pos.xy * 2) + uint2(1, 0)),
-										readMip.Load((pos.xy * 2) + uint2(1, 1)),
-										readMip.Load((pos.xy * 2) + uint2(0, 1)));
+		const float4 depthTapsMin = 	float4(readMip.Load(pos.xy * 2).x,
+											readMip.Load((pos.xy * 2) + uint2(1, 0)).x,
+											readMip.Load((pos.xy * 2) + uint2(1, 1)).x,
+											readMip.Load((pos.xy * 2) + uint2(0, 1)).x);
 
-		const float maxDepth = max(max(depthTaps.x, depthTaps.y), max(depthTaps.z, depthTaps.w));
+		const float4 depthTapsMax = float4(readMip.Load(pos.xy * 2).y,
+										readMip.Load((pos.xy * 2) + uint2(1, 0)).y,
+										readMip.Load((pos.xy * 2) + uint2(1, 1)).y,
+										readMip.Load((pos.xy * 2) + uint2(0, 1)).y);
+
+		const float maxDepth = max(max(depthTapsMax.x, depthTapsMax.y), max(depthTapsMax.z, depthTapsMax.w));
+		const float minDepth = min(min(depthTapsMin.x, depthTapsMin.y), min(depthTapsMin.z, depthTapsMin.w));
 
 		if(pos.x < width && pos.y < height)
-			writeMip[pos.xy] = maxDepth;
+			writeMip[pos.xy] = float2(minDepth, maxDepth);
 	}
 }
 
@@ -75,7 +81,7 @@ void main(uint3 globalIndex : SV_DispatchThreadID)
 	linearDepthBufferMip0.GetDimensions(width, height);
 
 	if(globalIndex.x < width && globalIndex.y < height)
-		linearDepthBufferMip0[globalIndex.xy] = linearDepth;
+		linearDepthBufferMip0[globalIndex.xy] = float2(linearDepth, linearDepth);
 
 	AllMemoryBarrierWithGroupSync();
 
