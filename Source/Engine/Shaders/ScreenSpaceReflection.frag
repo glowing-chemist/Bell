@@ -77,7 +77,7 @@ float4 main(PositionAndUVVertOutput vertInput)
 		const float2 Xi = Hammersley(i, MAX_SAMPLE_COUNT);
 		const float3 H = ImportanceSampleGGX(Xi, roughness, normal);
 		float3 L = reflect(-view, H);
-		//L.z *= -1.0f; // bring in to same space as position.
+		L.z *= -1.0f; // bring in to same space as position.
 
 		const float NoL = saturate(dot(normal, L));
 		if(NoL > 0.0f)
