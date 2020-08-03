@@ -164,6 +164,7 @@ set(BELL_SOURCE
     Source/Engine/CPUImage.cpp
     Source/Engine/PBR.cpp
     Source/Engine/NavigationMesh.cpp
+    Source/Engine/UtilityTasks.cpp
 
     # Techniques
     Source/Engine/SSAOTechnique.cpp
@@ -293,6 +294,7 @@ set(SHADERS
 	RayTracing.hlsl
 	PathTracer.comp
 	RayTracedShadows.comp
+	BilaterialUpsample.comp
     )
 
 foreach(shader ${SHADERS})

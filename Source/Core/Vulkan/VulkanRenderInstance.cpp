@@ -233,6 +233,7 @@ std::pair<vk::PhysicalDevice, vk::Device> VulkanRenderInstance::findSuitableDevi
     physicalFeatures.setGeometryShader(geometryWanted);
     physicalFeatures.setFragmentStoresAndAtomics(geometryWanted);
     physicalFeatures.setSamplerAnisotropy(true);
+    physicalFeatures.setShaderImageGatherExtended(true);
     if(rayTracingWanted)
         physicalFeatures.setShaderFloat64(true);
 

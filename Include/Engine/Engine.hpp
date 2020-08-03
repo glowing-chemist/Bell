@@ -366,6 +366,7 @@ private:
     Buffer mMeshBoundsBuffer;
 
     Sampler mDefaultSampler;
+    Sampler mDefaultPointSampler;
 
     // Debug helpers
     bool mShowDebugTexture;

@@ -1,0 +1,10 @@
+#ifndef UTILITY_TASKS_HPP
+#define UTILITY_TASKS_HPP
+
+
+#include "RenderGraph/RenderGraph.hpp"
+
+TaskID addDeferredUpsampleTaskR8(const char* input, const char* output, const uint2 outputSize, Engine*, RenderGraph&);
+
+
+#endif

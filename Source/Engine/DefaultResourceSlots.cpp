@@ -12,6 +12,7 @@ const char kGBufferEmissiveOcclusion[] = "EmissiveOcclusion";
 const char kSSAO[]		    = "SSAO";
 const char kSSAOBuffer[]		= "SSAOBuf";
 const char kDefaultSampler[]    = "defaultSampler";
+const char kPointSampler[]    = "defaultPointSampler";
 const char kBlinnPhongLighting[] = "BlinnPhongLight";
 const char kMaterials[]		 = "Materials";
 const char kSkyBox[]			 = "SkyBox";

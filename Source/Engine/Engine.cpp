@@ -91,6 +91,7 @@ Engine::Engine(GLFWwindow* windowPtr) :
     mBoneBuffer(getDevice(), BufferUsage::DataBuffer | BufferUsage::TransferDest, sizeof(float4x4) * 1000, sizeof(float4x4) * 1000, "Bone buffer"),
     mMeshBoundsBuffer(getDevice(), BufferUsage::DataBuffer | BufferUsage::TransferDest, sizeof(float4) * 1000, sizeof(float4) * 1000, "Bounds buffer"),
     mDefaultSampler(SamplerType::Linear),
+    mDefaultPointSampler(SamplerType::Point),
     mShowDebugTexture(false),
     mDebugTextureName(""),
     mCameraBuffer{},
@@ -457,6 +458,7 @@ void Engine::execute(RenderGraph& graph)
         mCurrentRenderGraph.bindImage(kLTCAmp, mLTCAmpView);
         mCurrentRenderGraph.bindImage(kBlueNoise, mBlueNoiseView);
         mCurrentRenderGraph.bindSampler(kDefaultSampler, mDefaultSampler);
+        mCurrentRenderGraph.bindSampler(kPointSampler, mDefaultPointSampler);
         mCurrentRenderGraph.bindVertexBuffer(kSceneVertexBuffer, mVertexBuffer);
         mCurrentRenderGraph.bindIndexBuffer(kSceneIndexBuffer, mIndexBuffer);
 

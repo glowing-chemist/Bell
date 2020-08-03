@@ -1,6 +1,7 @@
 #include "Engine/ShadowMappingTechnique.hpp"
 #include "Engine/Engine.hpp"
 #include "Engine/DefaultResourceSlots.hpp"
+#include "Engine/UtilityTasks.hpp"
 #include "Core/Executor.hpp"
 
 
@@ -150,7 +151,10 @@ void ShadowMappingTechnique::render(RenderGraph& graph, Engine*)
 
 RayTracedShadowsTechnique::RayTracedShadowsTechnique(Engine* eng, RenderGraph& graph) :
                 Technique("RayTracedShadows", eng->getDevice()),
-                mShadowMap(getDevice(), Format::R8UNorm, ImageUsage::Storage | ImageUsage::Sampled, getDevice()->getSwapChain()->getSwapChainImageWidth() / 4, getDevice()->getSwapChain()->getSwapChainImageHeight() / 4,
+                mShadowMapRaw(getDevice(), Format::R8UNorm, ImageUsage::Storage | ImageUsage::Sampled, getDevice()->getSwapChain()->getSwapChainImageWidth() / 4, getDevice()->getSwapChain()->getSwapChainImageHeight() / 4,
+                           1, 1, 1, 1, "ShadowMapRaw"),
+                mShadowMapViewRaw(mShadowMapRaw, ImageViewType::Colour),
+                mShadowMap(getDevice(), Format::R8UNorm, ImageUsage::Storage | ImageUsage::Sampled, getDevice()->getSwapChain()->getSwapChainImageWidth(), getDevice()->getSwapChain()->getSwapChainImageHeight(),
                            1, 1, 1, 1, "ShadowMap"),
                 mShadowMapView(mShadowMap, ImageViewType::Colour),
                 mPipeline{eng->getShader("./Shaders/RayTracedShadows.comp")}
@@ -159,7 +163,7 @@ RayTracedShadowsTechnique::RayTracedShadowsTechnique(Engine* eng, RenderGraph& g
     task.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
     task.addInput(kGBufferDepth, AttachmentType::Texture2D);
     task.addInput(kDefaultSampler, AttachmentType::Sampler);
-    task.addInput(kShadowMap, AttachmentType::Image2D);
+    task.addInput(kShadowMapRaw, AttachmentType::Image2D);
     task.addInput(kShadowingLights, AttachmentType::UniformBuffer);
     task.addInput(kBVH, AttachmentType::ShaderResourceSet);
 
@@ -172,6 +176,11 @@ RayTracedShadowsTechnique::RayTracedShadowsTechnique(Engine* eng, RenderGraph& g
             exec->dispatch(std::ceil(threadGroupWidth / 16.0f), std::ceil(threadGroupHeight / 16.0f), 1.0f);
         }
     );
+
+    // Add a depth aware upsample pass for the quater res shadows.
+    const float outputWidth = eng->getSwapChainImageView()->getImageExtent().width;
+    const float outputHeight = eng->getSwapChainImageView()->getImageExtent().height;
+    addDeferredUpsampleTaskR8(kShadowMapRaw, kShadowMap, uint2(outputWidth, outputHeight), eng, graph);
 
     mTaskID = graph.addTask(task);
 }

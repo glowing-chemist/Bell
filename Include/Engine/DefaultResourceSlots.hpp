@@ -14,6 +14,7 @@ extern const char kGBufferEmissiveOcclusion[];
 extern const char kSSAO[];
 extern const char kSSAOBuffer[];
 extern const char kDefaultSampler[];
+extern const char kPointSampler[];
 extern const char kBlinnPhongLighting[];
 extern const char kMaterials[];
 extern const char kSkyBox[];

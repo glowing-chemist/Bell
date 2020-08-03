@@ -74,11 +74,15 @@ public:
     {
         if(!graph.isResourceSlotBound(kShadowMap))
         {
+            graph.bindImage(kShadowMapRaw, mShadowMapViewRaw);
             graph.bindImage(kShadowMap, mShadowMapView);
         }
     }
 
 private:
+
+    Image    mShadowMapRaw;
+    ImageView mShadowMapViewRaw;
 
     Image    mShadowMap;
     ImageView mShadowMapView;

@@ -1,0 +1,93 @@
+#include "NormalMapping.hlsl"
+
+[[vk::binding(0)]]
+Texture2D<float> Input;
+
+[[vk::binding(1)]]
+RWTexture2D<float> Output;
+
+[[vk::binding(2)]]
+SamplerState linearSampler;
+
+[[vk::binding(3)]]
+SamplerState pointSampler;
+
+[[vk::binding(4)]]
+Texture2D<float2> linearDepth;
+
+[[vk::binding(5)]]
+Texture2D<float3> Normals;
+
+
+float nearestDepthSample(const float2 uv, uint2 outputSize, Texture2D<float> input, Texture2D<float2> depth)
+{
+	uint inputWidth, inputHeight;
+	input.GetDimensions(inputWidth, inputWidth);
+
+	const float minInputSize = min(inputWidth, inputHeight);
+	const float minOutputSize = min(outputSize.x, outputSize.y);
+
+	const float depthMip = log2(minOutputSize) - log2(minInputSize);
+
+	float depthSamples[4] = 
+	{
+		depth.SampleLevel(linearSampler, uv, depthMip, int2(0, 0)).x,
+		depth.SampleLevel(linearSampler, uv, depthMip, int2(0, 1)).x,
+		depth.SampleLevel(linearSampler, uv, depthMip, int2(1, 0)).x,
+		depth.SampleLevel(linearSampler, uv, depthMip, int2(1, 1)).x
+	};
+
+	int2 inputOffsets[4] = 
+	{
+		int2(0, 0),
+		int2(0, 1),
+		int2(1, 0),
+		int2(1, 1)
+	};
+
+	float d0 = depth.SampleLevel(linearSampler, uv, 0.0f).x;
+	float minDist = 1.0f;
+
+	int bestDepthIndex;
+	for (int i = 0; i < 4; i++) {
+		const float dist = abs(d0 - depthSamples[i]);
+
+		if (minDist > dist) {
+			minDist = dist;
+			bestDepthIndex = i;
+		}
+	}
+
+	return input.Sample(pointSampler, uv, inputOffsets[bestDepthIndex]);
+}
+
+
+[numthreads(16, 16, 1)]
+void main(uint3 globalIndex : SV_DispatchThreadID)
+{
+	uint width, height;
+	Output.GetDimensions(width, height);
+
+	if(globalIndex.x >= width || globalIndex.y >= height)
+		return;
+
+	const float2 uv = float2(globalIndex.xy) / float2(width, height);
+
+	// Sample the normal map to detect face discontinuties.
+	float3 n[4] = 
+	{
+		remapNormals(Normals.Sample(linearSampler, uv, int2(0, 0))),
+		remapNormals(Normals.Sample(linearSampler, uv, int2(0, 1))),
+		remapNormals(Normals.Sample(linearSampler, uv, int2(1, 0))),
+		remapNormals(Normals.Sample(linearSampler, uv, int2(1, 1)))
+	};
+
+	float dot01 = dot(n[0], n[1]);
+	float dot02 = dot(n[0], n[2]);
+	float dot03 = dot(n[0], n[3]);
+
+	float minDot = min(dot01, min(dot02, dot03));
+	float s = step(0.997, minDot);
+
+	Output[globalIndex.xy] = lerp(nearestDepthSample(uv, uint2(width, height), Input, linearDepth), Input.Sample(linearSampler, uv), s);
+} 

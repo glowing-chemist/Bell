@@ -2,17 +2,12 @@
 #include "Engine/Engine.hpp"
 #include "Core/Executor.hpp"
 
-
-constexpr const char kPointSampler[] = "PointSampler";
-
-
 DeferredAnalyticalLightingTechnique::DeferredAnalyticalLightingTechnique(Engine* eng, RenderGraph& graph) :
 	Technique("deferred analytical lighting", eng->getDevice()),
 	mPipelineDesc{ eng->getShader("./Shaders/DeferredAnalyticalLighting.comp") },
 	mAnalyticalLighting(eng->getDevice(), Format::RGBA8UNorm, ImageUsage::Sampled | ImageUsage::Storage, eng->getSwapChainImageView()->getImageExtent().width, 
 		eng->getSwapChainImageView()->getImageExtent().height, 1, 1, 1, 1, kAnalyticLighting),
-	mAnalyticalLightingView(mAnalyticalLighting, ImageViewType::Colour),
-	mPointSampler(SamplerType::Point)
+    mAnalyticalLightingView(mAnalyticalLighting, ImageViewType::Colour)
 {
 	ComputeTask task{ "deferred analytical lighting", mPipelineDesc };
 	task.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
@@ -49,6 +44,6 @@ DeferredAnalyticalLightingTechnique::DeferredAnalyticalLightingTechnique(Engine*
 
 void DeferredAnalyticalLightingTechnique::bindResources(RenderGraph& graph)
 {
-	graph.bindImage(kAnalyticLighting, mAnalyticalLightingView);
-	graph.bindSampler(kPointSampler, mPointSampler);
+    if(!graph.isResourceSlotBound(kAnalyticLighting))
+        graph.bindImage(kAnalyticLighting, mAnalyticalLightingView);
 }

@@ -33,8 +33,6 @@ private:
 
     Image mAnalyticalLighting;
     ImageView mAnalyticalLightingView;
-
-	Sampler mPointSampler;
 };
 
 #endif
