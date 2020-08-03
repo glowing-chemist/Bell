@@ -113,7 +113,7 @@ void RayTracingScene::renderSceneToMemory(const Camera& camera, const uint32_t x
     const float3 right = camera.getRight();
 
     const float3 origin = camera.getPosition();
-    const float far = camera.getFarPlane();
+    const float farPlane = camera.getFarPlane();
     const float aspect = camera.getAspect();
 
     auto trace_ray = [&](const uint32_t pix, const uint32_t piy) -> float4
@@ -131,7 +131,7 @@ void RayTracingScene::renderSceneToMemory(const Camera& camera, const uint32_t x
         ray.org[2] = origin.z;
 
         ray.min_t = 0.0f;
-        ray.max_t = far;
+        ray.max_t = farPlane;
         //ray.type = nanort::RAY_TYPE_PRIMARY;
 
         InterpolatedVertex frag;

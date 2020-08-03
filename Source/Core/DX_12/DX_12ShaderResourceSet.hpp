@@ -10,7 +10,7 @@
 class DX_12ShaderResourceSet : public ShaderResourceSetBase
 {
 public:
-	DX_12ShaderResourceSet(RenderDevice*);
+	DX_12ShaderResourceSet(RenderDevice*, const uint32_t maxDescriptors);
 	~DX_12ShaderResourceSet();
 
 	virtual void finalise() override final;
