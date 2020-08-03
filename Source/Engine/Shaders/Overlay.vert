@@ -7,7 +7,7 @@ struct UITranslation
 };
 
 [[vk::binding(0)]]
-ConstantBuffer<UITranslation> trans;
+ConstantBuffer<UITranslation> trans : register(b0);
 
 
 OverlayVertOutput main(OverlayVertex vert)

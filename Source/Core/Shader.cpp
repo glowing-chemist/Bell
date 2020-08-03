@@ -10,6 +10,10 @@
 #include "Core/Vulkan/VulkanShader.hpp"
 #endif
 
+#ifdef DX_12
+#include "Core/DX_12/DX_12Shader.hpp"
+#endif
+
 
 ShaderBase::ShaderBase(RenderDevice* device, const std::string& path) :
     DeviceChild{device},
@@ -31,5 +35,9 @@ Shader::Shader(RenderDevice* dev, const std::string& path)
 {
 #ifdef VULKAN
 	mBase = std::make_shared<VulkanShader>(dev, path);
+#endif
+
+#ifdef DX_12
+    mBase = std::make_shared<DX_12Shader>(dev, path);
 #endif
 }

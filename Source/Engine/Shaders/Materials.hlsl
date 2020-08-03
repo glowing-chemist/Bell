@@ -3,7 +3,7 @@
 
 float3 fresnelSchlickRoughness(const float cosTheta, const float3 F0, const float roughness)
 {
-    return F0 + (max(float3(1.0 - roughness), F0) - F0) * pow(1.0 - cosTheta, 5.0);
+    return F0 + (max(float3(1.0 - roughness, 1.0 - roughness, 1.0 - roughness), F0) - F0) * pow(1.0 - cosTheta, 5.0);
 }
 
 
@@ -44,7 +44,7 @@ MaterialInfo calculateMaterialInfo(	const float4 vertexNormal,
 	    const float2 yDerivities = ddy_fine(uv);
 
 		{
-	    	float3x3 tbv = tangentSpaceMatrix(vertexNormal, view, float4(xDerivities, yDerivities));
+	    	float3x3 tbv = tangentSpaceMatrix(vertexNormal.xyz, view, float4(xDerivities, yDerivities));
 
 	    	normal = mul(normal, tbv);
 
