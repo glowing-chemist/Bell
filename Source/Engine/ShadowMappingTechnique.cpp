@@ -180,7 +180,7 @@ RayTracedShadowsTechnique::RayTracedShadowsTechnique(Engine* eng, RenderGraph& g
     // Add a depth aware upsample pass for the quater res shadows.
     const float outputWidth = eng->getSwapChainImageView()->getImageExtent().width;
     const float outputHeight = eng->getSwapChainImageView()->getImageExtent().height;
-    addDeferredUpsampleTaskR8(kShadowMapRaw, kShadowMap, uint2(outputWidth, outputHeight), eng, graph);
+    addDeferredUpsampleTaskR8("upsample shadows", kShadowMapRaw, kShadowMap, uint2(outputWidth, outputHeight), eng, graph);
 
     mTaskID = graph.addTask(task);
 }

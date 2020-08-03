@@ -1,4 +1,5 @@
 #include "Engine/SSAOTechnique.hpp"
+#include "Engine/UtilityTasks.hpp"
 #include "Core/RenderDevice.hpp"
 #include "Core/Executor.hpp"
 
@@ -72,36 +73,17 @@ SSAOTechnique::SSAOTechnique(Engine* eng, RenderGraph& graph) :
     task.addOutput(kSSAORough, AttachmentType::RenderTarget2D, Format::R8UNorm, SizeClass::HalfSwapchain, LoadOp::Nothing);
 
     task.setRecordCommandsCallback(
-        [](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+        [](Executor* exec, Engine*, const std::vector<const MeshInstance*>&)
         {
             exec->draw(0, 3);
         }
     );
     graph.addTask(task);
 
-    ComputeTask blurXTask{ "SSAOBlurX", mBlurXDesc };
-    blurXTask.addInput(kSSAORough, AttachmentType::Texture2D);
-    blurXTask.addInput(kSSAOBlurIntermidiate, AttachmentType::Image2D);
-    blurXTask.addInput(kDefaultSampler, AttachmentType::Sampler);
-    blurXTask.setRecordCommandsCallback(
-        [](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
-        {
-            exec->dispatch(std::ceil(eng->getDevice()->getSwapChain()->getSwapChainImageWidth() / 512.0f), eng->getDevice()->getSwapChain()->getSwapChainImageHeight() / 2, 1.0f);
-        }
-    );
-    graph.addTask(blurXTask);
-
-    ComputeTask blurYTask{ "SSAOBlurY", mBlurYDesc };
-    blurYTask.addInput(kSSAOBlurIntermidiate, AttachmentType::Texture2D);
-    blurYTask.addInput(kSSAO, AttachmentType::Image2D);
-    blurYTask.addInput(kDefaultSampler, AttachmentType::Sampler);
-    blurYTask.setRecordCommandsCallback(
-        [](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
-        {
-            exec->dispatch(eng->getDevice()->getSwapChain()->getSwapChainImageWidth() / 2, std::ceil(eng->getDevice()->getSwapChain()->getSwapChainImageHeight() / 512.0f), 1.0f);
-        }
-    );
-    graph.addTask(blurYTask);
+    const uint2 ssaoSize{getDevice()->getSwapChain()->getSwapChainImageWidth() / 2,
+                    getDevice()->getSwapChain()->getSwapChainImageHeight() / 2};
+    addBlurXTaskR8("SSAOBlurX", kSSAORough, kSSAOBlurIntermidiate, ssaoSize, eng, graph);
+    addBlurYTaskR8("SSAOBlurY", kSSAOBlurIntermidiate, kSSAO, ssaoSize, eng, graph);
 }
 
 
@@ -161,29 +143,10 @@ SSAOImprovedTechnique::SSAOImprovedTechnique(Engine* eng, RenderGraph& graph) :
     );
     graph.addTask(task);
 
-    ComputeTask blurXTask{ "SSAOBlurX", mBlurXDesc };
-    blurXTask.addInput(kSSAORough, AttachmentType::Texture2D);
-    blurXTask.addInput(kSSAOBlurIntermidiate, AttachmentType::Image2D);
-    blurXTask.addInput(kDefaultSampler, AttachmentType::Sampler);
-    blurXTask.setRecordCommandsCallback(
-        [](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
-        {
-            exec->dispatch(std::ceil(eng->getDevice()->getSwapChain()->getSwapChainImageWidth() / 256.0f), eng->getDevice()->getSwapChain()->getSwapChainImageHeight(), 1.0f);
-        }
-    );
-    graph.addTask(blurXTask);
-
-    ComputeTask blurYTask{ "SSAOBlurY", mBlurYDesc };
-    blurYTask.addInput(kSSAOBlurIntermidiate, AttachmentType::Texture2D);
-    blurYTask.addInput(kSSAO, AttachmentType::Image2D);
-    blurYTask.addInput(kDefaultSampler, AttachmentType::Sampler);
-    blurYTask.setRecordCommandsCallback(
-        [](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
-        {
-            exec->dispatch(eng->getDevice()->getSwapChain()->getSwapChainImageWidth(), std::ceil(eng->getDevice()->getSwapChain()->getSwapChainImageHeight() / 256.0f), 1.0f);
-        }
-    );
-    graph.addTask(blurYTask);
+    const uint2 ssaoSize{getDevice()->getSwapChain()->getSwapChainImageWidth(),
+                    getDevice()->getSwapChain()->getSwapChainImageHeight()};
+    addBlurXTaskR8("SSAOBlurX", kSSAORough, kSSAOBlurIntermidiate, ssaoSize, eng, graph);
+    addBlurYTaskR8("SSAOBlurY", kSSAOBlurIntermidiate, kSSAO, ssaoSize, eng, graph);
 }
 
 
