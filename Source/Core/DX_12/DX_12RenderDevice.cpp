@@ -79,6 +79,7 @@ void DX_12RenderDevice::startFrame()
 	ID3D12Fence* currentFence = mFrameComplete[mCurrentFrameIndex];
 	mGraphicsQueue->Wait(currentFence, 1);
 	currentFence->Signal(0); // Reset.
+	mMemoryManager->SetCurrentFrameIndex(mCurrentSubmission);
 }
 
 

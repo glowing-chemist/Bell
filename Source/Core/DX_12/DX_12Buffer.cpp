@@ -1,6 +1,8 @@
 #include "Core/DX_12/DX_12Buffer.hpp"
 #include "Core/DX_12/DX_12RenderDevice.hpp"
 
+#include "Core/BellLogging.hpp"
+
 
 DX_12Buffer::DX_12Buffer(RenderDevice* dev,
     BufferUsage usage,
@@ -48,12 +50,25 @@ DX_12Buffer::DX_12Buffer(RenderDevice* dev,
 
 DX_12Buffer::~DX_12Buffer()
 {
-
+    getDevice()->destroyBuffer(*this);
 }
 
-void DX_12Buffer::swap(BufferBase&)
+void DX_12Buffer::swap(BufferBase& buf)
 {
+    BufferBase::swap(buf);
 
+    DX_12Buffer& DXBuf = static_cast<DX_12Buffer&>(buf);
+    ID3D12Resource* tmpbuffer = mBuffer;
+    D3D12MA::Allocation* tmpMemory = mBufferMemory;
+    void* tmpPtr = mMappedPtr;
+
+    mBuffer = DXBuf.mBuffer;
+    mBufferMemory = DXBuf.mBufferMemory;
+    mMappedPtr = DXBuf.mMappedPtr;
+
+    DXBuf.mBuffer = tmpbuffer;
+    DXBuf.mBufferMemory = tmpMemory;
+    DXBuf.mMappedPtr = tmpPtr;
 }
 
 bool DX_12Buffer::resize(const uint32_t newSize, const bool preserContents)
@@ -66,7 +81,14 @@ void DX_12Buffer::setContents(const void* data,
     const uint32_t size,
     const uint32_t offset)
 {
-
+    if (mMappedPtr)
+    {
+        std::memcpy(reinterpret_cast<unsigned char*>(mMappedPtr) + offset, data, size);
+    }
+    else
+    {
+        BELL_TRAP;
+    }
 }
 
 // Repeat the data in the range (start + offset, start + offset + size]
@@ -74,7 +96,14 @@ void DX_12Buffer::setContents(const int data,
     const uint32_t size,
     const uint32_t offset)
 {
-
+    if (mMappedPtr)
+    {
+        std::memset(reinterpret_cast<unsigned char*>(mMappedPtr) + offset, data, size);
+    }
+    else
+    {
+        BELL_TRAP;
+    }
 }
 
 
