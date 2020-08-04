@@ -31,7 +31,7 @@ namespace
 
             library->Release();
 
-            return SUCCEEDED(hr);
+            return hr;
         }
 
         //Stub these.

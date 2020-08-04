@@ -17,6 +17,11 @@ public:
 	virtual bool compile(const std::vector<std::string> & prefix = {}) override final;
 	virtual bool reload() override final;
 
+	IDxcBlob* getShaderBlob()
+	{
+		return mBinaryBlob;
+	}
+
 private:
 
 	IDxcBlob* mBinaryBlob;

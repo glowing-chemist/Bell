@@ -180,14 +180,19 @@ ID3D12DescriptorHeap* DX_12RenderDevice::createShaderInputDescriptorHeap(const u
 }
 
 
-void DX_12RenderDevice::createImage(const D3D12_RESOURCE_DESC& desc, const D3D12MA::ALLOCATION_DESC& allocDesc, ID3D12Resource** outImage, D3D12MA::Allocation** outImageMemory, D3D12_CLEAR_VALUE* clearValue)
+void DX_12RenderDevice::createResource(	const D3D12_RESOURCE_DESC& desc, 
+										const D3D12MA::ALLOCATION_DESC& allocDesc, 
+										const D3D12_RESOURCE_STATES initialResourceState, 
+										ID3D12Resource** outResource, 
+										D3D12MA::Allocation** outResourceMemory, 
+										D3D12_CLEAR_VALUE* clearValue)
 {
-	BELL_ASSERT(outImage, "Need to supply a non null image ptr");
-	BELL_ASSERT(outImageMemory, "Need to supply a non null image memory ptr");
+	BELL_ASSERT(outResource, "Need to supply a non null resource ptr");
+	BELL_ASSERT(outResourceMemory, "Need to supply a non null resource memory ptr");
 
-	HRESULT result = mMemoryManager->CreateResource(&allocDesc, &desc, allocDesc.HeapType & D3D12_HEAP_TYPE::D3D12_HEAP_TYPE_UPLOAD ? D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_GENERIC_READ : D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_COMMON, 
-													clearValue, outImageMemory, IID_PPV_ARGS(outImage));
-	BELL_ASSERT(result == S_OK, "Failed to create Image");
+	HRESULT result = mMemoryManager->CreateResource(&allocDesc, &desc, initialResourceState,
+													clearValue, outResourceMemory, IID_PPV_ARGS(outResource));
+	BELL_ASSERT(result == S_OK, "Failed to create resource");
 }
 
 
@@ -207,7 +212,7 @@ D3D12MA::ALLOCATION_DESC DX_12RenderDevice::getResourceAllocationDescription(con
 {
 	D3D12MA::ALLOCATION_DESC desc{};
 	desc.CustomPool = nullptr;
-	desc.HeapType = usage & BufferUsage::TransferSrc ? D3D12_HEAP_TYPE::D3D12_HEAP_TYPE_UPLOAD : D3D12_HEAP_TYPE::D3D12_HEAP_TYPE_DEFAULT;
+	desc.HeapType = (usage & BufferUsage::TransferSrc || usage & BufferUsage::Uniform) ? D3D12_HEAP_TYPE::D3D12_HEAP_TYPE_UPLOAD : D3D12_HEAP_TYPE::D3D12_HEAP_TYPE_DEFAULT;
 	desc.Flags = D3D12MA::ALLOCATION_FLAG_NONE;
 	desc.ExtraHeapFlags = D3D12_HEAP_FLAG_ALLOW_ALL_BUFFERS_AND_TEXTURES;
 

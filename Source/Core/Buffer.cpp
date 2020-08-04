@@ -8,6 +8,10 @@
 #include "Core/Vulkan/VulkanBuffer.hpp"
 #endif
 
+#ifdef DX_12
+#include "Core/DX_12/DX_12Buffer.hpp"
+#endif
+
 BufferBase::BufferBase(RenderDevice* dev,
 	   BufferUsage usage,
 	   const uint32_t size,
@@ -63,5 +67,9 @@ Buffer::Buffer(RenderDevice* dev,
 {
 #ifdef VULKAN
 	mBase = std::make_shared<VulkanBuffer>(dev, usage, size, stride, name);
+#endif
+
+#ifdef DX_12
+	mBase = std::make_shared<DX_12Buffer>(dev, usage, size, stride, name);
 #endif
 }

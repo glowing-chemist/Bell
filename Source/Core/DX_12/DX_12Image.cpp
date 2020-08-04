@@ -30,6 +30,8 @@ DX_12Image::DX_12Image( RenderDevice* device,
     imageDesc.Layout = D3D12_TEXTURE_LAYOUT::D3D12_TEXTURE_LAYOUT_UNKNOWN;
     imageDesc.Format = getDX12ImageFormat(format);
     imageDesc.MipLevels = mips;
+    imageDesc.Alignment = D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT;
+    imageDesc.Flags = getDX12ImageUsage(usage);
 
     DXGI_SAMPLE_DESC sampleDesc{};
     sampleDesc.Count = samples;
@@ -39,7 +41,7 @@ DX_12Image::DX_12Image( RenderDevice* device,
     DX_12RenderDevice* dev = static_cast<DX_12RenderDevice*>(getDevice());
     const D3D12MA::ALLOCATION_DESC allocDesc = dev->getResourceAllocationDescription(usage);
 
-    dev->createImage(imageDesc, allocDesc, &mImage, &mImageMemory);
+    dev->createResource(imageDesc, allocDesc, D3D12_RESOURCE_STATE_COMMON , &mImage, &mImageMemory);
 }
 
 
@@ -96,17 +98,17 @@ void DX_12Image::setContents(   const void* data,
                                 const int32_t offsety,
                                 const int32_t offsetz)
 {
-
+    BELL_TRAP;
 }
 
 
 void DX_12Image::clear()
 {
-
+    BELL_TRAP;
 }
 
 
 void DX_12Image::generateMips()
 {
-
+    BELL_TRAP;
 }

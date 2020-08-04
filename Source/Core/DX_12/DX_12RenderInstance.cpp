@@ -12,14 +12,14 @@ DX_12RenderInstance::DX_12RenderInstance(GLFWwindow* window) :
 	mAdapter{nullptr},
 	mDevice{nullptr}
 {
+	enableDebugCallback();
+
 	uint32_t factoryFlags = 0;
 #ifndef NDEBUG
 	factoryFlags |= DXGI_CREATE_FACTORY_DEBUG;
 #endif
 	HRESULT result = CreateDXGIFactory2(factoryFlags, IID_PPV_ARGS(&mFactory));
 	BELL_ASSERT(result == S_OK, "Failed to create instace factory");
-
-	enableDebugCallback();
 }
 
 
@@ -66,6 +66,12 @@ RenderDevice* DX_12RenderInstance::createRenderDevice(const int DeviceFeatureFla
 	ID3D12Device6* device = nullptr;
 	HRESULT result = D3D12CreateDevice(chosenAdapter, D3D_FEATURE_LEVEL_12_0, IID_PPV_ARGS(&device));
 	BELL_ASSERT(device, "Unable to create device");
+
+#ifndef NDEBUG
+	ID3D12DebugDevice* debugDev;
+	HRESULT debugResult = device->QueryInterface(&debugDev);
+	BELL_ASSERT(SUCCEEDED(debugResult), "Unable to create debug device")
+#endif
 
 	if (subgroupWanted)
 	{

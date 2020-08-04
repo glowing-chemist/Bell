@@ -37,8 +37,9 @@ public:
 	virtual const std::vector<uint64_t>& getAvailableTimestamps() const override;
 	virtual float                      getTimeStampPeriod() const override;
 
-	void							   createImage(	const D3D12_RESOURCE_DESC& desc, 
-													const D3D12MA::ALLOCATION_DESC& allocDesc, 
+	void							   createResource(	const D3D12_RESOURCE_DESC& desc, 
+													const D3D12MA::ALLOCATION_DESC& allocDesc,
+													const D3D12_RESOURCE_STATES initialResourceState,
 													ID3D12Resource** outImage, 
 													D3D12MA::Allocation** outImageMemory,
 													D3D12_CLEAR_VALUE* clearValue = nullptr);
