@@ -20,7 +20,7 @@ RWStructuredBuffer<uint> predicationBuffer;
 ConstantBuffer<CameraBuffer> camera;
 
 [[vk::binding(4)]]
-Texture2D<float> hierarchicalDepth;
+Texture2D<float2> hierarchicalDepth;
 
 [[vk::binding(5)]]
 SamplerState samp;
@@ -71,10 +71,10 @@ void main(uint3 globalIndex : SV_DispatchThreadID)
 		const float2 size = (clipSpaceMax.xy - clipSPaceMin.xy) * camera.frameBufferSize;
 		const float depthLOD = ceil(log2(max(size.x, size.y)));
 
-		const float4 depthTaps = float4(hierarchicalDepth.SampleLevel(samp, AABBuv.xy, depthLOD),
-										hierarchicalDepth.SampleLevel(samp, AABBuv.zy, depthLOD),
-										hierarchicalDepth.SampleLevel(samp, AABBuv.xw, depthLOD),
-										hierarchicalDepth.SampleLevel(samp, AABBuv.zw, depthLOD));
+		const float4 depthTaps = float4(hierarchicalDepth.SampleLevel(samp, AABBuv.xy, depthLOD).y,
+										hierarchicalDepth.SampleLevel(samp, AABBuv.zy, depthLOD).y,
+										hierarchicalDepth.SampleLevel(samp, AABBuv.xw, depthLOD).y,
+										hierarchicalDepth.SampleLevel(samp, AABBuv.zw, depthLOD).y);
 
 		const float maxDepth = max(max(depthTaps.x, depthTaps.y), max(depthTaps.z, depthTaps.w));
 
