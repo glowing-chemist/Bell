@@ -406,9 +406,6 @@ private:
     vk::PhysicalDeviceLimits mLimits;
     bool mHasConditionalRenderingSupport;
 
-    std::unordered_map<uint64_t, GraphicsPipelineHandles> mGraphicsPipelineCache;
-    std::unordered_map<uint64_t, ComputePipelineHandles> mComputePipelineCache;
-
     std::unordered_map<Sampler, vk::Sampler> mImmutableSamplerCache;
 
 	struct SwapChainInitializer

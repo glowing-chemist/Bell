@@ -122,20 +122,16 @@ VulkanRenderDevice::~VulkanRenderDevice()
 
     mMemoryManager.Destroy();
 
-    for(auto& [_, graphicsHandles] : mGraphicsPipelineCache)
+    for(auto& [hash, handles] : mVulkanResources)
     {
-        mDevice.destroyPipeline(graphicsHandles.mGraphicsPipeline->getHandle());
-        mDevice.destroyPipelineLayout(graphicsHandles.mGraphicsPipeline->getLayoutHandle());
-        mDevice.destroyRenderPass(graphicsHandles.mRenderPass);
-        mDevice.destroyDescriptorSetLayout(graphicsHandles.mDescriptorSetLayout[0]); // if there are any more they will get destroyed elsewhere.
-    }
+        mDevice.destroyPipeline(handles.mPipeline->getHandle());
+        mDevice.destroyPipelineLayout(handles.mPipeline->getLayoutHandle());
+        mDevice.destroyDescriptorSetLayout(handles.mDescSetLayout[0]); // if there are any more they will get destroyed elsewhere.
+        if(handles.mRenderPass)
+            mDevice.destroyRenderPass(*handles.mRenderPass);
 
-    for(auto& [_, computeHandles]: mComputePipelineCache)
-    {
-        mDevice.destroyPipeline(computeHandles.mComputePipeline->getHandle());
-        mDevice.destroyPipelineLayout(computeHandles.mComputePipeline->getLayoutHandle());
-        mDevice.destroyDescriptorSetLayout(computeHandles.mDescriptorSetLayout[0]);
     }
+    mVulkanResources.clear();
 
 	for (auto& [submission, pool, layout, set] : mSRSPendingDestruction)
 	{
@@ -222,9 +218,6 @@ GraphicsPipelineHandles VulkanRenderDevice::createPipelineHandles(const Graphics
     uint64_t hash = hasher(task.getPipelineDescription());
     hash += prefixHash;
 
-    if(mGraphicsPipelineCache[hash].mGraphicsPipeline)
-        return mGraphicsPipelineCache[hash];
-
     const vk::RenderPass renderPass = generateRenderPass(task);
 
 	const std::vector<vk::DescriptorSetLayout> SRSLayouts = generateShaderResourceSetLayouts(task, graph);
@@ -234,7 +227,6 @@ GraphicsPipelineHandles VulkanRenderDevice::createPipelineHandles(const Graphics
 											renderPass);
 
     GraphicsPipelineHandles handles{pipeline, renderPass, SRSLayouts };
-    mGraphicsPipelineCache[hash] = handles;
 
     return handles;
 }
@@ -246,15 +238,11 @@ ComputePipelineHandles VulkanRenderDevice::createPipelineHandles(const ComputeTa
     uint64_t hash = hasher(task.getPipelineDescription());
     hash += prefixHash;
 
-	if(mComputePipelineCache[hash].mComputePipeline)
-        return mComputePipelineCache[hash];
-
 	const std::vector<vk::DescriptorSetLayout> SRSLayouts = generateShaderResourceSetLayouts(task, graph);
 
     const auto pipeline = generatePipeline(task, SRSLayouts);
 
     ComputePipelineHandles handles{pipeline, SRSLayouts };
-    mComputePipelineCache[hash] = handles;
 
     return handles;
 }
@@ -664,6 +652,7 @@ vulkanResources VulkanRenderDevice::getTaskResources(const RenderGraph& graph, c
         mResourcesLock.lock(); // need to write to the resource map so need exclusive access.
 
         vulkanResources resources = generateVulkanResources(graph, taskIndex, prefixHash);
+        mVulkanResources.insert({resourceHash, resources});
 
         mResourcesLock.unlock();
 
@@ -994,30 +983,22 @@ void VulkanRenderDevice::invalidatePipelines()
 {
     mDevice.waitIdle();
 
-    for(auto& [_, graphicsHandles] : mGraphicsPipelineCache)
+    for(auto& [hash, handles] : mVulkanResources)
     {
-        mDevice.destroyPipeline(graphicsHandles.mGraphicsPipeline->getHandle());
-        mDevice.destroyPipelineLayout(graphicsHandles.mGraphicsPipeline->getLayoutHandle());
-        mDevice.destroyRenderPass(graphicsHandles.mRenderPass);
-        mDevice.destroyDescriptorSetLayout(graphicsHandles.mDescriptorSetLayout[0]); // if there are any more they will get destroyed elsewhere.
-    }
-    mGraphicsPipelineCache.clear();
+        mDevice.destroyPipeline(handles.mPipeline->getHandle());
+        mDevice.destroyPipelineLayout(handles.mPipeline->getLayoutHandle());
+        mDevice.destroyDescriptorSetLayout(handles.mDescSetLayout[0]); // if there are any more they will get destroyed elsewhere.
+        if(handles.mRenderPass)
+            mDevice.destroyRenderPass(*handles.mRenderPass);
 
-    for(auto& [_, computeHandles]: mComputePipelineCache)
-    {
-        mDevice.destroyPipeline(computeHandles.mComputePipeline->getHandle());
-        mDevice.destroyPipelineLayout(computeHandles.mComputePipeline->getLayoutHandle());
-        mDevice.destroyDescriptorSetLayout(computeHandles.mDescriptorSetLayout[0]);
     }
-    mComputePipelineCache.clear();
+    mVulkanResources.clear();
 
     for(auto& [imageViews, frameBuffer] : mFrameBufferCache)
     {
         destroyFrameBuffer(frameBuffer, mCurrentSubmission);
         mFrameBufferCache.erase(imageViews);
     }
-
-    mVulkanResources.clear();
 }
 
 
