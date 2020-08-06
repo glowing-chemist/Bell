@@ -114,7 +114,7 @@ public:
 		return getLimits().minStorageBufferOffsetAlignment;
 	}
 
-    virtual bool                        getHasCommandPredicationSupport() const
+    virtual bool                        getHasCommandPredicationSupport() const override
     {
         return mHasConditionalRenderingSupport;
     }
