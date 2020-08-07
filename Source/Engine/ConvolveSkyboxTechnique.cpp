@@ -8,7 +8,7 @@ constexpr const char* slots[] = { "convolved0", "convolved1", "convolved2", "con
 
 ConvolveSkyBoxTechnique::ConvolveSkyBoxTechnique(Engine* eng, RenderGraph& graph) :
 	Technique("convolveskybox", eng->getDevice()),
-	mPipelineDesc{eng->getShader("./Shaders/SkyBoxConvolve.comp")},
+    mConvolveSkyboxShader(eng->getShader("./Shaders/SkyBoxConvolve.comp")),
     mConvolvedSpecularSkybox(eng->getDevice(), Format::RGBA8UNorm, ImageUsage::CubeMap | ImageUsage::Sampled | ImageUsage::Storage,
                      512, 512, 1, 10, 6, 1, "convolved skybox specular"),
     mConvolvedSpecularView(mConvolvedSpecularSkybox, ImageViewType::CubeMap, 0, 6, 0, 10),
@@ -23,7 +23,7 @@ ConvolveSkyBoxTechnique::ConvolveSkyBoxTechnique(Engine* eng, RenderGraph& graph
         mConvolvedMips.push_back(ImageView{ mConvolvedSpecularSkybox, ImageViewType::Colour, 0, 6, i });
 	}
 
-	ComputeTask convolveTask("skybox convolve", mPipelineDesc);
+    ComputeTask convolveTask("skybox convolve");
     convolveTask.addInput(kSkyBox, AttachmentType::CubeMap);
 	convolveTask.addInput(kDefaultSampler, AttachmentType::Sampler);
 
@@ -50,8 +50,11 @@ void ConvolveSkyBoxTechnique::render(RenderGraph& graph, Engine*)
 	if(mFirstFrame)
 	{
 		convolveTask.setRecordCommandsCallback(
-            [](Executor* exec, Engine*, const std::vector<const MeshInstance*>&)
+            [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine*, const std::vector<const MeshInstance*>&)
 			{
+                const RenderTask& task = graph.getTask(taskIndex);
+                exec->setComputeShader(static_cast<const ComputeTask&>(task), graph, mConvolveSkyboxShader);
+
 				exec->dispatch(64, 64, 1);
 			}
 		);
@@ -61,7 +64,7 @@ void ConvolveSkyBoxTechnique::render(RenderGraph& graph, Engine*)
 	else
 	{
 		convolveTask.setRecordCommandsCallback(
-            [](Executor*, Engine*, const std::vector<const MeshInstance*>&)
+            [](const RenderGraph&, const uint32_t, Executor*, Engine*, const std::vector<const MeshInstance*>&)
 			{
 				return;
 			}

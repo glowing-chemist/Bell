@@ -108,7 +108,6 @@ set(BELL_BASE_SOURCE
 
 	# RenderGraph files (backend independant)
 	Source/RenderGraph/GraphicsTask.cpp
-	Source/RenderGraph/ComputeTask.cpp
 	Source/RenderGraph/RenderGraph.cpp
 
 	# Utils

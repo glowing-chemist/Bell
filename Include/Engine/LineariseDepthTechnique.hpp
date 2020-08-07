@@ -25,7 +25,7 @@ public:
 private:
 
     uint32_t mMipLevels;
-	ComputePipelineDescription mPipelienDesc;
+    Shader mLineariseDepthShader;
 	TaskID mTaskID;
 
     Image mLinearDepth;

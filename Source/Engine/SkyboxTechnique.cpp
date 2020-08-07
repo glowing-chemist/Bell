@@ -6,13 +6,13 @@
 
 SkyboxTechnique::SkyboxTechnique(Engine* eng, RenderGraph& graph) :
 	Technique("Skybox", eng->getDevice()),
-	mPipelineDesc{eng->getShader("./Shaders/SkyBox.vert"),
-						 eng->getShader("./Shaders/SkyBox.frag"),
-						 Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
-							   getDevice()->getSwapChain()->getSwapChainImageHeight()},
-						 Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
-						 getDevice()->getSwapChain()->getSwapChainImageHeight()},
-                         false, BlendMode::None, BlendMode::None, false, DepthTest::Equal, Primitive::TriangleList}
+    mPipelineDesc{Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
+                  getDevice()->getSwapChain()->getSwapChainImageHeight()},
+                  Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
+                  getDevice()->getSwapChain()->getSwapChainImageHeight()},
+                  false, BlendMode::None, BlendMode::None, false, DepthTest::Equal, Primitive::TriangleList},
+    mSkyboxVertexShader(eng->getShader("./Shaders/SkyBox.vert")),
+    mSkyboxFragmentShader(eng->getShader("./Shaders/SkyBox.frag"))
 {
 	GraphicsTask task{ "skybox", mPipelineDesc };
 	task.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
@@ -23,8 +23,11 @@ SkyboxTechnique::SkyboxTechnique(Engine* eng, RenderGraph& graph) :
 	task.addOutput(kGBufferDepth, AttachmentType::Depth, Format::D32Float);
 
 	task.setRecordCommandsCallback(
-		[](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+        [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine*, const std::vector<const MeshInstance*>&)
 		{
+            const RenderTask& task = graph.getTask(taskIndex);
+            exec->setGraphicsShaders(static_cast<const GraphicsTask&>(task), graph, mSkyboxVertexShader, nullptr, nullptr, nullptr, mSkyboxFragmentShader);
+
 			exec->draw(0, 3);
 		}
 	);

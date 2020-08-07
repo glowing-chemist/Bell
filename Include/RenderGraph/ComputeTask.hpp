@@ -14,30 +14,11 @@ enum class DispatchType
 	Indirect
 };
 
-struct ComputePipelineDescription
-{
-	Shader mComputeShader;
-};
-
-// needed in order to use unordered_map
-namespace std
-{
-	template<>
-	struct hash<ComputePipelineDescription>
-	{
-		size_t operator()(const ComputePipelineDescription&) const noexcept;
-	};
-}
-
-
 // This class describes a compute task (sync and async)
 class ComputeTask : public RenderTask 
 {
 public:
-    ComputeTask(const char* name, ComputePipelineDescription desc) : RenderTask{ name }, mPipelineDescription{ desc } {}
-
-    ComputePipelineDescription getPipelineDescription() const
-        { return mPipelineDescription; }
+    ComputeTask(const char* name) : RenderTask{ name } {}
 
     void addOutput(const char* name, const AttachmentType attachmentType, const Format, const SizeClass = SizeClass::Custom, const LoadOp = LoadOp::Preserve, const StoreOp = StoreOp::Store) override final
     {
@@ -52,11 +33,7 @@ public:
 
 private:
 
-	ComputePipelineDescription mPipelineDescription;
-
 };
 
-
-bool operator==(const ComputePipelineDescription& lhs, const ComputePipelineDescription& rhs);
 
 #endif

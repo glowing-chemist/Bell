@@ -18,12 +18,6 @@ VoxalizeTechnique::VoxalizeTechnique(Engine* eng, RenderGraph& graph) :
     mVoxelDimmensions(eng->getDevice(), BufferUsage::Uniform, sizeof(ConstantBuffer), sizeof(ConstantBuffer), "Voxel Dimmensions"),
     mVoxelDimmensionsView(mVoxelDimmensions),
     mPipelineDesc{
-        eng->getShader("./Shaders/Voxalize.vert"),
-        eng->getShader("./Shaders/Voxalize.frag"),
-        {},
-        eng->getShader("./Shaders/Voxalize.geom"),
-        {},
-        {},
         Rect{VOXEL_SIZE_X, VOXEL_SIZE_Y},
         Rect{VOXEL_SIZE_X, VOXEL_SIZE_Y},
         true,
@@ -32,7 +26,10 @@ VoxalizeTechnique::VoxalizeTechnique(Engine* eng, RenderGraph& graph) :
         false,
         DepthTest::None,
         Primitive::TriangleList
-        }
+        },
+    mVolxalizeVertexShader(eng->getShader("./Shaders/Voxalize.vert")),
+    mVolxalizeGeometryShader(eng->getShader("./Shaders/Voxalize.geom")),
+    mVolxalizeFragmentShader(eng->getShader("./Shaders/Voxalize.frag"))
 #if DEBUG_VOXEL_GENERATION
     ,mVoxelDebug(eng->getDevice(),
                  Format::RGBA8UNorm, ImageUsage::Storage | ImageUsage::Sampled,
@@ -80,7 +77,7 @@ VoxalizeTechnique::VoxalizeTechnique(Engine* eng, RenderGraph& graph) :
     debugTask.addInput(kDebugVoxels, AttachmentType::Image2D);
     debugTask.addInput(kDefaultSampler, AttachmentType::Sampler);
     debugTask.setRecordCommandsCallback(
-                [](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+                [](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
                 {
                     const float threadGroupWidth = eng->getSwapChainImageView()->getImageExtent().width;
                     const float threadGroupHeight = eng->getSwapChainImageView()->getImageExtent().height;
@@ -120,10 +117,12 @@ void VoxalizeTechnique::render(RenderGraph& graph, Engine* eng)
     GraphicsTask& task = static_cast<GraphicsTask&>(graph.getTask(mTaskID));
 
     task.setRecordCommandsCallback(
-        [](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>& meshes)
+        [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>& meshes)
         {
             exec->bindIndexBuffer(eng->getIndexBuffer(), 0);
             exec->bindVertexBuffer(eng->getVertexBuffer(), 0);
+            const RenderTask& task = graph.getTask(taskIndex);
+            exec->setGraphicsShaders(static_cast<const GraphicsTask&>(task), graph, mVolxalizeVertexShader, &mVolxalizeGeometryShader, nullptr, nullptr, mVolxalizeFragmentShader);
 
             for (const auto& mesh : meshes)
             {

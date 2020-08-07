@@ -11,7 +11,7 @@ constexpr const char kOcclusionSampler[] = "OcclusionSampler";
 
 OcclusionCullingTechnique::OcclusionCullingTechnique(Engine* eng, RenderGraph& graph) :
     Technique("Occlusion culling", eng->getDevice()),
-    mPipelineDesc{eng->getShader("./Shaders/OcclusionCulling.comp")},
+    mOcclusionCullingShader(eng->getShader("./Shaders/OcclusionCulling.comp")),
     mBoundsIndexBuffer(getDevice(), BufferUsage::TransferDest | BufferUsage::DataBuffer, sizeof(uint32_t) * 500, sizeof(uint32_t) * 500, "Occlusion index buffer"),
     mBoundsIndexBufferView(mBoundsIndexBuffer),
     mPredicationBuffer(getDevice(), BufferUsage::CommandPredication| BufferUsage::DataBuffer, sizeof(uint32_t) * 500, sizeof(uint32_t) * 500, "Occlusion index buffer"),
@@ -23,7 +23,7 @@ OcclusionCullingTechnique::OcclusionCullingTechnique(Engine* eng, RenderGraph& g
     mOcclusionSampler.setAddressModeU(AddressMode::Clamp);
     mOcclusionSampler.setAddressModeV(AddressMode::Clamp);
 
-    ComputeTask task{"Occlusion culling", mPipelineDesc};
+    ComputeTask task{"Occlusion culling"};
     task.addInput(kOcclusionIndexBuffer, AttachmentType::DataBufferRO);
     task.addInput(kMeshBoundsBuffer, AttachmentType::DataBufferRO);
     task.addInput(kOcclusionPredicationBuffer, AttachmentType::DataBufferWO);
@@ -32,7 +32,7 @@ OcclusionCullingTechnique::OcclusionCullingTechnique(Engine* eng, RenderGraph& g
     task.addInput(kOcclusionSampler, AttachmentType::Sampler);
     task.addInput("MeshCount", AttachmentType::PushConstants);
     task.setRecordCommandsCallback(
-        [this](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>& meshes)
+        [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>& meshes)
         {
             if(!meshes.empty() && !eng->getDebugCameraActive())
             {
@@ -44,6 +44,9 @@ OcclusionCullingTechnique::OcclusionCullingTechnique(Engine* eng, RenderGraph& g
                 }
 
                 exec->copyDataToBuffer(indicies.data(), sizeof(uint32_t) * indicies.size(), 0, *mBoundsIndexBuffer);
+
+                const RenderTask& task = graph.getTask(taskIndex);
+                exec->setComputeShader(static_cast<const ComputeTask&>(task), graph, mOcclusionCullingShader);
 
                 // Make sure uploaded data is visible.
                 BarrierRecorder recorder{eng->getDevice()};

@@ -53,6 +53,11 @@ private:
     PerFrameResource<BufferView> mVoxelDimmensionsView;
 
     GraphicsPipelineDescription mPipelineDesc;
+
+    Shader mVolxalizeVertexShader;
+    Shader mVolxalizeGeometryShader;
+    Shader mVolxalizeFragmentShader;
+
     TaskID mTaskID;
 
 #if DEBUG_VOXEL_GENERATION

@@ -23,9 +23,7 @@ CompositeTechnique::CompositeTechnique(Engine* eng, RenderGraph& graph) :
 	{
 		GraphicsPipelineDescription desc
 		(
-			eng->getShader("./Shaders/FullScreenTriangle.vert"),
-			eng->getShader("./Shaders/CompositeOverlay.frag"),
-			Rect{ viewPortX, viewPortY },
+            Rect{ viewPortX, viewPortY },
 			Rect{ viewPortX, viewPortY }
 		);
 
@@ -37,8 +35,14 @@ CompositeTechnique::CompositeTechnique(Engine* eng, RenderGraph& graph) :
 		compositeTask.addOutput(kFrameBufer, AttachmentType::RenderTarget2D, eng->getSwapChainImage()->getFormat(), SizeClass::Custom, LoadOp::Clear_Black);
 
 		compositeTask.setRecordCommandsCallback(
-            [](Executor* exec, Engine*, const std::vector<const MeshInstance*>&)
+            [](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
 			{
+                Shader vertexShader = eng->getShader("./Shaders/FullScreenTriangle.vert");
+                Shader fragmentShader = eng->getShader("./Shaders/CompositeOverlay.frag");
+
+                const RenderTask& task = graph.getTask(taskIndex);
+                exec->setGraphicsShaders(static_cast<const GraphicsTask&>(task), graph, vertexShader, nullptr, nullptr, nullptr, fragmentShader);
+
 				exec->draw(0, 3);
 			}
 		);
@@ -51,8 +55,6 @@ CompositeTechnique::CompositeTechnique(Engine* eng, RenderGraph& graph) :
         {
             GraphicsPipelineDescription desc
             {
-                eng->getShader("./Shaders/FullScreenTriangle.vert"),
-                eng->getShader("./Shaders/FinalComposite.frag"),
                 Rect{ viewPortX, viewPortY },
                 Rect{ viewPortX, viewPortY }
             };
@@ -70,8 +72,14 @@ CompositeTechnique::CompositeTechnique(Engine* eng, RenderGraph& graph) :
             compositeTask.addOutput(usingTAA ? kCompositeOutput : kFrameBufer, AttachmentType::RenderTarget2D, eng->getSwapChainImage()->getFormat(), usingTAA ? SizeClass::Swapchain : SizeClass::Custom, LoadOp::Nothing);
 
             compositeTask.setRecordCommandsCallback(
-                [](Executor* exec, Engine*, const std::vector<const MeshInstance*>&)
+                [](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
                 {
+                    Shader vertexShader = eng->getShader("./Shaders/FullScreenTriangle.vert");
+                    Shader fragmentShader = eng->getShader("./Shaders/FinalComposite.frag");
+
+                    const RenderTask& task = graph.getTask(taskIndex);
+                    exec->setGraphicsShaders(static_cast<const GraphicsTask&>(task), graph, vertexShader, nullptr, nullptr, nullptr, fragmentShader);
+
                     exec->draw(0, 3);
                 }
             );
@@ -84,8 +92,6 @@ CompositeTechnique::CompositeTechnique(Engine* eng, RenderGraph& graph) :
             // Now add the overlay the final TAA'd result to the framebuffer.
             GraphicsPipelineDescription overlayDesc
             (
-                eng->getShader("./Shaders/FullScreenTriangle.vert"),
-                eng->getShader("./Shaders/CompositeOverlayTAA.frag"),
                 Rect{ viewPortX, viewPortY },
                 Rect{ viewPortX, viewPortY }
             );
@@ -100,8 +106,14 @@ CompositeTechnique::CompositeTechnique(Engine* eng, RenderGraph& graph) :
             overlayTask.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
             overlayTask.addOutput(kFrameBufer, AttachmentType::RenderTarget2D, eng->getSwapChainImage()->getFormat(), SizeClass::Custom, LoadOp::Clear_Black);
             overlayTask.setRecordCommandsCallback(
-                [](Executor* exec, Engine*, const std::vector<const MeshInstance*>&)
+                [](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
                 {
+                    Shader vertexShader = eng->getShader("./Shaders/FullScreenTriangle.vert");
+                    Shader fragmentShader = eng->getShader("./Shaders/CompositeOverlayTAA.frag");
+
+                    const RenderTask& task = graph.getTask(taskIndex);
+                    exec->setGraphicsShaders(static_cast<const GraphicsTask&>(task), graph, vertexShader, nullptr, nullptr, nullptr, fragmentShader);
+
                     exec->draw(0, 3);
                 }
             );
@@ -113,8 +125,6 @@ CompositeTechnique::CompositeTechnique(Engine* eng, RenderGraph& graph) :
         {
             GraphicsPipelineDescription desc
             (
-                eng->getShader("./Shaders/FullScreenTriangle.vert"),
-                eng->getShader("./Shaders/Blit.frag"),
                 Rect{ viewPortX, viewPortY },
                 Rect{ viewPortX, viewPortY }
             );
@@ -126,8 +136,14 @@ CompositeTechnique::CompositeTechnique(Engine* eng, RenderGraph& graph) :
             compositeTask.addOutput(kFrameBufer, AttachmentType::RenderTarget2D, eng->getSwapChainImage()->getFormat(), SizeClass::Custom, LoadOp::Clear_Black);
 
             compositeTask.setRecordCommandsCallback(
-                [](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+                [](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
                 {
+                    Shader vertexShader = eng->getShader("./Shaders/FullScreenTriangle.vert");
+                    Shader fragmentShader = eng->getShader("./Shaders/Blit.frag");
+
+                    const RenderTask& task = graph.getTask(taskIndex);
+                    exec->setGraphicsShaders(static_cast<const GraphicsTask&>(task), graph, vertexShader, nullptr, nullptr, nullptr, fragmentShader);
+
                     exec->draw(0, 3);
                 }
             );

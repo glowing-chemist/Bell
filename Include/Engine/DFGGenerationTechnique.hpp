@@ -32,7 +32,7 @@ public:
 
 private:
 
-	ComputePipelineDescription mPipelineDesc;
+    Shader mDFGGenerationShader;
 	TaskID mTaskID;
 
 	Image mDFGLUT;

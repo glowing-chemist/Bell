@@ -39,7 +39,7 @@ constexpr const char* kOcclusionSampler = "OcclusionSampler";
 LineariseDepthTechnique::LineariseDepthTechnique(Engine* eng, RenderGraph& graph) :
 	Technique("linearise depth", eng->getDevice()),
     mMipLevels{static_cast<uint32_t>(std::ceil(std::log2(eng->getSwapChainImage()->getExtent(0, 0).height)))},
-    mPipelienDesc{mMipLevels == 10 ? eng->getShader("./Shaders/LineariseDepth10.comp") : eng->getShader("./Shaders/LineariseDepth11.comp")},
+    mLineariseDepthShader(mMipLevels == 10 ? eng->getShader("./Shaders/LineariseDepth10.comp") : eng->getShader("./Shaders/LineariseDepth11.comp")),
 	mTaskID{0},
     mLinearDepth(eng->getDevice(), Format::RG32Float, ImageUsage::Sampled | ImageUsage::Storage, eng->getSwapChainImage()->getExtent(0, 0).width, eng->getSwapChainImage()->getExtent(0, 0).height,
         1, mMipLevels, 1, 1, "Linear Depth"),
@@ -59,7 +59,7 @@ LineariseDepthTechnique::LineariseDepthTechnique(Engine* eng, RenderGraph& graph
         mMipsViews.push_back(ImageView(mPreviousLinearDepth, ImageViewType::Colour, 0, 1, i, 1));
     }
 
-	ComputeTask task{ "linearise depth", mPipelienDesc };
+    ComputeTask task{ "linearise depth" };
 	task.addInput(kLinearDepth, AttachmentType::Image2D);
     for(uint32_t i = 1; i < mMipLevels; ++i)
     {
@@ -83,8 +83,11 @@ void LineariseDepthTechnique::render(RenderGraph& graph, Engine*)
         mip->updateLastAccessed();
 
 	task.setRecordCommandsCallback(
-		[](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+        [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
 		{
+            const RenderTask& task = graph.getTask(taskIndex);
+            exec->setComputeShader(static_cast<const ComputeTask&>(task), graph, mLineariseDepthShader);
+
 			const auto extent = eng->getDevice()->getSwapChainImageView()->getImageExtent();
             exec->dispatch(std::ceil(extent.width / 16.0f), std::ceil(extent.height / 16.0f), 1);
 		}

@@ -7,12 +7,12 @@
 
 DeferredImageBasedLightingTechnique::DeferredImageBasedLightingTechnique(Engine* eng, RenderGraph& graph) :
     Technique("GlobalIBL", eng->getDevice()),
-    mPipelineDesc{ eng->getShader("./Shaders/FullScreenTriangle.vert")
-              ,eng->getShader("./Shaders/DeferredDFGIBL.frag"),
-              Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
+    mPipelineDesc{Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
                     getDevice()->getSwapChain()->getSwapChainImageHeight()},
               Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
-              getDevice()->getSwapChain()->getSwapChainImageHeight()} }
+              getDevice()->getSwapChain()->getSwapChainImageHeight()} },
+    mIBLVertexShader(eng->getShader("./Shaders/FullScreenTriangle.vert")),
+    mIBLFragmentShader(eng->getShader("./Shaders/DeferredDFGIBL.frag"))
 {
     GraphicsTask task{ "GlobalIBL", mPipelineDesc };
 
@@ -38,8 +38,11 @@ DeferredImageBasedLightingTechnique::DeferredImageBasedLightingTechnique(Engine*
         SizeClass::Swapchain, LoadOp::Clear_Black);
 
     task.setRecordCommandsCallback(
-        [](Executor* exec, Engine*, const std::vector<const MeshInstance*>&)
+        [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine*, const std::vector<const MeshInstance*>&)
         {
+            const RenderTask& task = graph.getTask(taskIndex);
+            exec->setGraphicsShaders(static_cast<const GraphicsTask&>(task), graph, mIBLVertexShader, nullptr, nullptr, nullptr, mIBLFragmentShader);
+
             exec->draw(0, 3);
         }
     );

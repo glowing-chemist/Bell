@@ -27,6 +27,10 @@ public:
 
 private:
     GraphicsPipelineDescription mPipelineDesc;
+
+    Shader mSkyboxVertexShader;
+    Shader mSkyboxFragmentShader;
+
     TaskID mTaskID;
 };
 

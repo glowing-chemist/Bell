@@ -230,7 +230,7 @@ Shader Engine::getShader(const std::string& path)
 	if(mShaderCache.find(shaderKey) != mShaderCache.end())
 		return (*mShaderCache.find(shaderKey)).second;
 
-    Shader newShader{mRenderDevice, path};
+    Shader newShader{mRenderDevice, path, mCurrentRegistredPasses};
 
 	const bool compiled = newShader->compile(mShaderPrefix);
 
@@ -548,7 +548,7 @@ void Engine::execute(RenderGraph& graph)
             exec->recordBarriers(*barrier);
             context->setupState(graph, taskIndex, exec, mCurrentRegistredPasses);
 
-            task.executeRecordCommandsCallback(exec, this, meshes);
+            task.executeRecordCommandsCallback(graph, taskIndex, exec, this, meshes);
 
             recordedCommands += exec->getRecordedCommandCount();
             exec->resetRecordedCommandCount();
@@ -586,7 +586,7 @@ void Engine::execute(RenderGraph& graph)
                 context->setupState(graph, taskIndex, exec, mCurrentRegistredPasses);
 
                 RenderTask& task = graph.getTask(taskIndex);
-                task.executeRecordCommandsCallback(exec, this, meshes);
+                task.executeRecordCommandsCallback(graph, taskIndex, exec, this, meshes);
 
                 exec->resetRecordedCommandCount();
 

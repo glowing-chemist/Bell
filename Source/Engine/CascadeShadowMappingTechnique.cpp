@@ -5,9 +5,9 @@
 
 CascadeShadowMappingTechnique::CascadeShadowMappingTechnique(Engine* eng, RenderGraph& graph) :
     Technique("Cascade shadow mapping", eng->getDevice()),
-    mBlurXDesc{ eng->getShader("Shaders/blurXrg32f.comp") },
-    mBlurYDesc{ eng->getShader("Shaders/blurYrg32f.comp") },
-    mResolveDesc{eng->getShader("./Shaders/ResolveCascadeVarianceShadowMap.comp")},
+    mBlurXShader( eng->getShader("Shaders/blurXrg32f.comp") ),
+    mBlurYShader( eng->getShader("Shaders/blurYrg32f.comp") ),
+    mResolveShader(eng->getShader("./Shaders/ResolveCascadeVarianceShadowMap.comp")),
 
     mCascadeShadowMaps(eng->getDevice(), Format::RG32Float, ImageUsage::ColourAttachment | ImageUsage::Sampled,
                        getDevice()->getSwapChain()->getSwapChainImageWidth() * 2,
@@ -44,9 +44,7 @@ CascadeShadowMappingTechnique::CascadeShadowMappingTechnique(Engine* eng, Render
 {
     // Render cascades
     {
-           GraphicsPipelineDescription cascade0Desc(eng->getShader("./Shaders/ShadowMap.vert"),
-              eng->getShader("./Shaders/VarianceShadowMap.frag"),
-              Rect{getDevice()->getSwapChain()->getSwapChainImageWidth() * 2,
+           GraphicsPipelineDescription cascade0Desc(Rect{getDevice()->getSwapChain()->getSwapChainImageWidth() * 2,
                     getDevice()->getSwapChain()->getSwapChainImageHeight() * 2},
               Rect{getDevice()->getSwapChain()->getSwapChainImageWidth() * 2,
               getDevice()->getSwapChain()->getSwapChainImageHeight() * 2},
@@ -64,9 +62,7 @@ CascadeShadowMappingTechnique::CascadeShadowMappingTechnique(Engine* eng, Render
            cascade0Task.addOutput("ShadowMapDepth0", AttachmentType::Depth, Format::D32Float, SizeClass::DoubleSwapchain, LoadOp::Clear_White, StoreOp::Discard);
            mRenderCascade0 = graph.addTask(cascade0Task);
 
-           GraphicsPipelineDescription cascade1Desc(eng->getShader("./Shaders/ShadowMap.vert"),
-              eng->getShader("./Shaders/VarianceShadowMap.frag"),
-              Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
+           GraphicsPipelineDescription cascade1Desc(Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
                     getDevice()->getSwapChain()->getSwapChainImageHeight()},
               Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
               getDevice()->getSwapChain()->getSwapChainImageHeight()},
@@ -84,9 +80,7 @@ CascadeShadowMappingTechnique::CascadeShadowMappingTechnique(Engine* eng, Render
            cascade1Task.addOutput("ShadowMapDepth1", AttachmentType::Depth, Format::D32Float, SizeClass::Swapchain, LoadOp::Clear_White, StoreOp::Discard);
            mRenderCascade1 = graph.addTask(cascade1Task);
 
-           GraphicsPipelineDescription cascade2Desc(eng->getShader("./Shaders/ShadowMap.vert"),
-              eng->getShader("./Shaders/VarianceShadowMap.frag"),
-              Rect{getDevice()->getSwapChain()->getSwapChainImageWidth() / 2,
+           GraphicsPipelineDescription cascade2Desc(Rect{getDevice()->getSwapChain()->getSwapChainImageWidth() / 2,
                     getDevice()->getSwapChain()->getSwapChainImageHeight() / 2},
               Rect{getDevice()->getSwapChain()->getSwapChainImageWidth() / 2,
               getDevice()->getSwapChain()->getSwapChainImageHeight() / 2},
@@ -108,13 +102,16 @@ CascadeShadowMappingTechnique::CascadeShadowMappingTechnique(Engine* eng, Render
 
     // Blur + resolve.
     {
-        ComputeTask blurXTask0{ "ShadowMapBlurX0", mBlurXDesc };
+        ComputeTask blurXTask0{ "ShadowMapBlurX0" };
         blurXTask0.addInput(kCascadeShadowMapRaw0, AttachmentType::Texture2D);
         blurXTask0.addInput(kCascadeShadowMapBlurIntermediate0, AttachmentType::Image2D);
         blurXTask0.addInput(kDefaultSampler, AttachmentType::Sampler);
         blurXTask0.setRecordCommandsCallback(
-                    [](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+                    [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
                     {
+                        const RenderTask& task = graph.getTask(taskIndex);
+                        exec->setComputeShader(static_cast<const ComputeTask&>(task), graph, mBlurXShader);
+
                         const float threadGroupWidth = eng->getSwapChainImageView()->getImageExtent().width;
                         const float threadGroupHeight = eng->getSwapChainImageView()->getImageExtent().height;
 
@@ -123,13 +120,16 @@ CascadeShadowMappingTechnique::CascadeShadowMappingTechnique(Engine* eng, Render
         );
         graph.addTask(blurXTask0);
 
-        ComputeTask blurYTask0{ "ShadowMapBlurY0", mBlurYDesc };
+        ComputeTask blurYTask0{ "ShadowMapBlurY0" };
         blurYTask0.addInput(kCascadeShadowMapBlurIntermediate0, AttachmentType::Texture2D);
         blurYTask0.addInput(kCascadeShadowMapBlured0, AttachmentType::Image2D);
         blurYTask0.addInput(kDefaultSampler, AttachmentType::Sampler);
         blurYTask0.setRecordCommandsCallback(
-                    [](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+                    [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
                     {
+                        const RenderTask& task = graph.getTask(taskIndex);
+                        exec->setComputeShader(static_cast<const ComputeTask&>(task), graph, mBlurYShader);
+
                         const float threadGroupWidth = eng->getSwapChainImageView()->getImageExtent().width;
                         const float threadGroupHeight = eng->getSwapChainImageView()->getImageExtent().height;
 
@@ -138,13 +138,16 @@ CascadeShadowMappingTechnique::CascadeShadowMappingTechnique(Engine* eng, Render
         );
         graph.addTask(blurYTask0);
 
-        ComputeTask blurXTask1{ "ShadowMapBlurX1", mBlurXDesc };
+        ComputeTask blurXTask1{ "ShadowMapBlurX1" };
         blurXTask1.addInput(kCascadeShadowMapRaw1, AttachmentType::Texture2D);
         blurXTask1.addInput(kCascadeShadowMapBlurIntermediate1, AttachmentType::Image2D);
         blurXTask1.addInput(kDefaultSampler, AttachmentType::Sampler);
         blurXTask1.setRecordCommandsCallback(
-                    [](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+                    [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
                     {
+                        const RenderTask& task = graph.getTask(taskIndex);
+                        exec->setComputeShader(static_cast<const ComputeTask&>(task), graph, mBlurXShader);
+
                         const float threadGroupWidth = eng->getSwapChainImageView()->getImageExtent().width;
                         const float threadGroupHeight = eng->getSwapChainImageView()->getImageExtent().height;
 
@@ -153,13 +156,16 @@ CascadeShadowMappingTechnique::CascadeShadowMappingTechnique(Engine* eng, Render
         );
         graph.addTask(blurXTask1);
 
-        ComputeTask blurYTask1{ "ShadowMapBlurY1", mBlurYDesc };
+        ComputeTask blurYTask1{ "ShadowMapBlurY1" };
         blurYTask1.addInput(kCascadeShadowMapBlurIntermediate1, AttachmentType::Texture2D);
         blurYTask1.addInput(kCascadeShadowMapBlured1, AttachmentType::Image2D);
         blurYTask1.addInput(kDefaultSampler, AttachmentType::Sampler);
         blurYTask1.setRecordCommandsCallback(
-                    [](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+                    [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
                     {
+                        const RenderTask& task = graph.getTask(taskIndex);
+                        exec->setComputeShader(static_cast<const ComputeTask&>(task), graph, mBlurYShader);
+
                         const float threadGroupWidth = eng->getSwapChainImageView()->getImageExtent().width;
                         const float threadGroupHeight = eng->getSwapChainImageView()->getImageExtent().height;
 
@@ -168,13 +174,16 @@ CascadeShadowMappingTechnique::CascadeShadowMappingTechnique(Engine* eng, Render
         );
         graph.addTask(blurYTask1);
 
-        ComputeTask blurXTask2{ "ShadowMapBlurX2", mBlurXDesc };
+        ComputeTask blurXTask2{ "ShadowMapBlurX2" };
         blurXTask2.addInput(kCascadeShadowMapRaw2, AttachmentType::Texture2D);
         blurXTask2.addInput(kCascadeShadowMapBlurIntermediate2, AttachmentType::Image2D);
         blurXTask2.addInput(kDefaultSampler, AttachmentType::Sampler);
         blurXTask2.setRecordCommandsCallback(
-                    [](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+                    [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
                     {
+                        const RenderTask& task = graph.getTask(taskIndex);
+                        exec->setComputeShader(static_cast<const ComputeTask&>(task), graph, mBlurXShader);
+
                         const float threadGroupWidth = eng->getSwapChainImageView()->getImageExtent().width;
                         const float threadGroupHeight = eng->getSwapChainImageView()->getImageExtent().height;
 
@@ -183,13 +192,16 @@ CascadeShadowMappingTechnique::CascadeShadowMappingTechnique(Engine* eng, Render
         );
         graph.addTask(blurXTask2);
 
-        ComputeTask blurYTask2{ "ShadowMapBlurY2", mBlurYDesc };
+        ComputeTask blurYTask2{ "ShadowMapBlurY2" };
         blurYTask2.addInput(kCascadeShadowMapBlurIntermediate2, AttachmentType::Texture2D);
         blurYTask2.addInput(kCascadeShadowMapBlured2, AttachmentType::Image2D);
         blurYTask2.addInput(kDefaultSampler, AttachmentType::Sampler);
         blurYTask2.setRecordCommandsCallback(
-                    [](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+                    [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
                     {
+                        const RenderTask& task = graph.getTask(taskIndex);
+                        exec->setComputeShader(static_cast<const ComputeTask&>(task), graph, mBlurYShader);
+
                         const float threadGroupWidth = eng->getSwapChainImageView()->getImageExtent().width;
                         const float threadGroupHeight = eng->getSwapChainImageView()->getImageExtent().height;
 
@@ -198,7 +210,7 @@ CascadeShadowMappingTechnique::CascadeShadowMappingTechnique(Engine* eng, Render
         );
         graph.addTask(blurYTask2);
 
-        ComputeTask resolveTask{ "Resolve shadow mapping", mResolveDesc };
+        ComputeTask resolveTask{ "Resolve shadow mapping" };
         resolveTask.addInput(kGBufferDepth, AttachmentType::Texture2D);
         resolveTask.addInput(kCascadeShadowMapBlured0, AttachmentType::Texture2D);
         resolveTask.addInput(kCascadeShadowMapBlured1, AttachmentType::Texture2D);
@@ -209,8 +221,11 @@ CascadeShadowMappingTechnique::CascadeShadowMappingTechnique(Engine* eng, Render
         resolveTask.addInput(kDefaultSampler, AttachmentType::Sampler);
         resolveTask.addInput(kCascadesInfo, AttachmentType::UniformBuffer);
         resolveTask.setRecordCommandsCallback(
-                    [](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+                    [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
                     {
+                        const RenderTask& task = graph.getTask(taskIndex);
+                        exec->setComputeShader(static_cast<const ComputeTask&>(task), graph, mResolveShader);
+
                         const float threadGroupWidth = eng->getSwapChainImageView()->getImageExtent().width;
                         const float threadGroupHeight = eng->getSwapChainImageView()->getImageExtent().height;
 
@@ -289,10 +304,15 @@ void CascadeShadowMappingTechnique::render(RenderGraph& graph, Engine* eng)
 
     GraphicsTask& cascade0Task = static_cast<GraphicsTask&>(graph.getTask(mRenderCascade0));
     cascade0Task.setRecordCommandsCallback(
-                [nearCascadeMeshes](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+                [nearCascadeMeshes](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
                 {
                     exec->bindIndexBuffer(eng->getIndexBuffer(), 0);
                     exec->bindVertexBuffer(eng->getVertexBuffer(), 0);
+
+                    Shader vertexShader = eng->getShader("./Shaders/ShadowMap.vert");
+                    Shader fragmentShader = eng->getShader("./Shaders/VarianceShadowMap.frag");
+                    const RenderTask& task = graph.getTask(taskIndex);
+                    exec->setGraphicsShaders(static_cast<const GraphicsTask&>(task), graph, vertexShader, nullptr, nullptr, nullptr, fragmentShader);
 
                     for (const auto& mesh : nearCascadeMeshes)
                     {
@@ -312,10 +332,15 @@ void CascadeShadowMappingTechnique::render(RenderGraph& graph, Engine* eng)
 
     GraphicsTask& cascade1Task = static_cast<GraphicsTask&>(graph.getTask(mRenderCascade1));
     cascade1Task.setRecordCommandsCallback(
-                [midCascadeMeshes](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+                [midCascadeMeshes](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
                 {
                     exec->bindIndexBuffer(eng->getIndexBuffer(), 0);
                     exec->bindVertexBuffer(eng->getVertexBuffer(), 0);
+
+                    Shader vertexShader = eng->getShader("./Shaders/ShadowMap.vert");
+                    Shader fragmentShader = eng->getShader("./Shaders/VarianceShadowMap.frag");
+                    const RenderTask& task = graph.getTask(taskIndex);
+                    exec->setGraphicsShaders(static_cast<const GraphicsTask&>(task), graph, vertexShader, nullptr, nullptr, nullptr, fragmentShader);
 
                     for (const auto& mesh : midCascadeMeshes)
                     {
@@ -335,10 +360,15 @@ void CascadeShadowMappingTechnique::render(RenderGraph& graph, Engine* eng)
 
     GraphicsTask& cascade2Task = static_cast<GraphicsTask&>(graph.getTask(mRenderCascade2));
     cascade2Task.setRecordCommandsCallback(
-                [farCascadeMeshes](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+                [farCascadeMeshes](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
                 {
                     exec->bindIndexBuffer(eng->getIndexBuffer(), 0);
                     exec->bindVertexBuffer(eng->getVertexBuffer(), 0);
+
+                    Shader vertexShader = eng->getShader("./Shaders/ShadowMap.vert");
+                    Shader fragmentShader = eng->getShader("./Shaders/VarianceShadowMap.frag");
+                    const RenderTask& task = graph.getTask(taskIndex);
+                    exec->setGraphicsShaders(static_cast<const GraphicsTask&>(task), graph, vertexShader, nullptr, nullptr, nullptr, fragmentShader);
 
                     for (const auto& mesh : farCascadeMeshes)
                     {

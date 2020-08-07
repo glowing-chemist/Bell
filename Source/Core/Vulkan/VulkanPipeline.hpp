@@ -15,8 +15,6 @@
 #include <optional>
 
 
-class RenderDevice;
-
 class Pipeline : public DeviceChild
 {
 public:
@@ -48,19 +46,47 @@ protected:
 };
 
 
+class PipelineTemplate : public DeviceChild
+{
+public:
+    PipelineTemplate(RenderDevice*, const GraphicsPipelineDescription*, const vk::PipelineLayout layout);
+
+    std::shared_ptr<Pipeline> instanciateGraphicsPipeline(const GraphicsTask&, const uint64_t hashPrefix,
+                                                          const vk::RenderPass rp,
+                                                          const Shader& vertexShader, const Shader* geometryShader, const Shader* tessControl, const Shader* tessEval, const Shader& fragmentShader);
+
+    std::shared_ptr<Pipeline> instanciateComputePipeline(const ComputeTask &task, const uint64_t hashPrefix, const Shader& computeShader);
+
+    void invalidatePipelineCache();
+
+    vk::PipelineLayout getLayoutHandle() const
+    {
+        return mPipelineLayout;
+    }
+
+private:
+    bool mGraphicsPipeline;
+    GraphicsPipelineDescription mDesc;
+    vk::PipelineLayout mPipelineLayout;
+
+    std::unordered_map<uint64_t, std::shared_ptr<Pipeline>> mPipelineCache;
+
+};
+
+
 class ComputePipeline : public Pipeline
 {
 public:
-	ComputePipeline(RenderDevice* dev, const ComputePipelineDescription& desc) :
-		Pipeline{dev},
-		mPipelineDescription{ desc } {}
+    ComputePipeline(RenderDevice* dev, const Shader& computeShader) :
+        Pipeline{dev},
+        mComputeShader(computeShader) {}
 
 	 virtual bool compile(const RenderTask&) override final;
 
 
 private:
 
-	ComputePipelineDescription mPipelineDescription;
+    Shader mComputeShader;
 
 };
 
@@ -69,9 +95,21 @@ class GraphicsPipeline : public Pipeline
 {
 public:
 
-	GraphicsPipeline(RenderDevice* dev, const GraphicsPipelineDescription& desc) :
+    GraphicsPipeline(RenderDevice* dev, const GraphicsPipelineDescription& desc,
+                     const Shader& vertexShader,
+                     const Shader* geometryShader,
+                     const Shader* tessControl,
+                     const Shader* tessEval,
+                     const Shader& fragmentShader) :
 		Pipeline{dev},
-		mPipelineDescription{ desc } {}
+        mPipelineDescription{ desc },
+        mVertexShader(vertexShader),
+        mGeometryShader(geometryShader ? *geometryShader : std::optional<Shader>{}),
+        mTessControlShader(tessControl ? *tessControl : std::optional<Shader>{}),
+        mTessEvalShader(tessEval ? *tessEval : std::optional<Shader>{}),
+        mFragmentShader(fragmentShader) {}
+
+    std::vector<vk::PipelineShaderStageCreateInfo> generateShaderStagesInfo();
 
 	virtual bool compile(const RenderTask&) override final;
 
@@ -86,24 +124,20 @@ public:
 		mDescSetLayout = layout;
 	}
 
-	vk::Pipeline getInstancedVariant() const
-	{
-		return mInstancedVariant;
-	}
-
 private:
 
 	GraphicsPipelineDescription mPipelineDescription;
+    Shader mVertexShader;
+    std::optional<Shader> mGeometryShader;
+    std::optional<Shader> mTessControlShader;
+    std::optional<Shader> mTessEvalShader;
+    Shader mFragmentShader;
 
 	std::vector< vk::DescriptorSetLayout> mDescSetLayout;
 	vk::VertexInputBindingDescription mVertexDescription;
 	std::vector<vk::VertexInputAttributeDescription> mVertexAttribs;
 	vk::RenderPass mRenderPass;
-	std::vector<vk::PipelineColorBlendAttachmentState> mBlendStates;
-
-
-
-	vk::Pipeline mInstancedVariant;
+    std::vector<vk::PipelineColorBlendAttachmentState> mBlendStates;
 };
 
 #endif

@@ -8,6 +8,11 @@
 class Buffer;
 class BufferView;
 class BarrierRecorder;
+class Shader;
+class GraphicsTask;
+class ComputeTask;
+class RenderGraph;
+
 
 class Executor : public DeviceChild
 {
@@ -43,6 +48,18 @@ public:
     virtual void startCommandPredication(const BufferView&, const uint32_t index) = 0;
 
     virtual void endCommandPredication() = 0;
+
+    virtual void setGraphicsShaders(const GraphicsTask &task,
+                                    const RenderGraph& graph,
+                                    const Shader& vertexShader,
+                                    const Shader* geometryShader,
+                                    const Shader* tessControl,
+                                    const Shader* tessEval,
+                                    const Shader& fragmentShader) = 0;
+
+    virtual void setComputeShader(const ComputeTask& task,
+                                  const RenderGraph& graph,
+                                  const Shader&) = 0;
 
     // Commands for updatign resources
     virtual void copyDataToBuffer(const void*, const size_t size, const size_t offset, Buffer&) = 0;

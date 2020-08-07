@@ -27,6 +27,10 @@ public:
 private:
 
 	GraphicsPipelineDescription mPipelineDescription;
+
+    Shader mGbufferVertexShader;
+    Shader mGbufferFragmentShader;
+
 	TaskID mTaskID;
 };
 
@@ -47,6 +51,10 @@ public:
 private:
 
     GraphicsPipelineDescription mPipelineDescription;
+
+    Shader mGbufferVertexShader;
+    Shader mGbufferFragmentShader;
+
 	TaskID mTaskID;
 };
 

@@ -4,12 +4,12 @@
 
 DeferredAnalyticalLightingTechnique::DeferredAnalyticalLightingTechnique(Engine* eng, RenderGraph& graph) :
 	Technique("deferred analytical lighting", eng->getDevice()),
-	mPipelineDesc{ eng->getShader("./Shaders/DeferredAnalyticalLighting.comp") },
+    mDeferredAnalitucalLightingShader( eng->getShader("./Shaders/DeferredAnalyticalLighting.comp") ),
 	mAnalyticalLighting(eng->getDevice(), Format::RGBA8UNorm, ImageUsage::Sampled | ImageUsage::Storage, eng->getSwapChainImageView()->getImageExtent().width, 
 		eng->getSwapChainImageView()->getImageExtent().height, 1, 1, 1, 1, kAnalyticLighting),
     mAnalyticalLightingView(mAnalyticalLighting, ImageViewType::Colour)
 {
-	ComputeTask task{ "deferred analytical lighting", mPipelineDesc };
+    ComputeTask task{ "deferred analytical lighting" };
 	task.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
 	task.addInput(kDFGLUT, AttachmentType::Texture2D);
 	task.addInput(kLTCMat, AttachmentType::Texture2D);
@@ -27,8 +27,11 @@ DeferredAnalyticalLightingTechnique::DeferredAnalyticalLightingTechnique(Engine*
 	task.addInput(kLightBuffer, AttachmentType::ShaderResourceSet);
 
 	task.setRecordCommandsCallback(
-		[](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+        [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
 		{
+            const RenderTask& task = graph.getTask(taskIndex);
+            exec->setComputeShader(static_cast<const ComputeTask&>(task), graph, mDeferredAnalitucalLightingShader);
+
 			const float threadGroupWidth = eng->getSwapChainImageView()->getImageExtent().width;
 			const float threadGroupHeight = eng->getSwapChainImageView()->getImageExtent().height;
 

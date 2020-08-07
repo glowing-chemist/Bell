@@ -4,13 +4,13 @@
 
 PreDepthTechnique::PreDepthTechnique(Engine* eng, RenderGraph& graph) :
     Technique{"PreDepth", eng->getDevice()},
-    mPipelineDescription{eng->getShader("./Shaders/DepthOnly.vert"),
-                         eng->getShader("./Shaders/AlphaTestDepthOnly.frag"),
-                         Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
+    mPipelineDescription{Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
                                getDevice()->getSwapChain()->getSwapChainImageHeight()},
                          Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
                          getDevice()->getSwapChain()->getSwapChainImageHeight()},
-                         true, BlendMode::None, BlendMode::None, true, DepthTest::GreaterEqual, Primitive::TriangleList}
+                         true, BlendMode::None, BlendMode::None, true, DepthTest::GreaterEqual, Primitive::TriangleList},
+    mPreDepthVertexShader(eng->getShader("./Shaders/DepthOnly.vert")),
+    mPreDepthFragmentShader(eng->getShader("./Shaders/AlphaTestDepthOnly.frag"))
 {
     GraphicsTask task{ "PreDepth", mPipelineDescription };
 
@@ -31,10 +31,13 @@ PreDepthTechnique::PreDepthTechnique(Engine* eng, RenderGraph& graph) :
     if(eng->isPassRegistered(PassType::OcclusionCulling))
     {
         task.setRecordCommandsCallback(
-            [](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>& meshes)
+            [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>& meshes)
             {
                 exec->bindIndexBuffer(eng->getIndexBuffer(), 0);
                 exec->bindVertexBuffer(eng->getVertexBuffer(), 0);
+
+                const RenderTask& task = graph.getTask(taskIndex);
+                exec->setGraphicsShaders(static_cast<const GraphicsTask&>(task), graph, mPreDepthVertexShader, nullptr, nullptr, nullptr, mPreDepthFragmentShader);
 
                 const BufferView& pred = eng->getRenderGraph().getBuffer(kOcclusionPredicationBuffer);
 
@@ -62,10 +65,13 @@ PreDepthTechnique::PreDepthTechnique(Engine* eng, RenderGraph& graph) :
     else
     {
         task.setRecordCommandsCallback(
-            [](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>& meshes)
+            [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>& meshes)
             {
                 exec->bindIndexBuffer(eng->getIndexBuffer(), 0);
                 exec->bindVertexBuffer(eng->getVertexBuffer(), 0);
+
+                const RenderTask& task = graph.getTask(taskIndex);
+                exec->setGraphicsShaders(static_cast<const GraphicsTask&>(task), graph, mPreDepthVertexShader, nullptr, nullptr, nullptr, mPreDepthFragmentShader);
 
                 for (const auto& mesh : meshes)
                 {

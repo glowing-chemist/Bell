@@ -124,9 +124,9 @@ VulkanRenderDevice::~VulkanRenderDevice()
 
     for(auto& [hash, handles] : mVulkanResources)
     {
-        mDevice.destroyPipeline(handles.mPipeline->getHandle());
-        mDevice.destroyPipelineLayout(handles.mPipeline->getLayoutHandle());
         mDevice.destroyDescriptorSetLayout(handles.mDescSetLayout[0]); // if there are any more they will get destroyed elsewhere.
+        mDevice.destroyPipelineLayout(handles.mPipelineTemplate->getLayoutHandle());
+        handles.mPipelineTemplate->invalidatePipelineCache();
         if(handles.mRenderPass)
             mDevice.destroyRenderPass(*handles.mRenderPass);
 
@@ -212,73 +212,28 @@ uint32_t VulkanRenderDevice::getQueueFamilyIndex(const QueueType type) const
 }
 
 
-GraphicsPipelineHandles VulkanRenderDevice::createPipelineHandles(const GraphicsTask& task, const RenderGraph& graph, const uint64_t prefixHash)
+GraphicsPipelineHandles VulkanRenderDevice::createPipelineHandles(const GraphicsTask& task, const RenderGraph& graph)
 {
-    std::hash<GraphicsPipelineDescription> hasher{};
-    uint64_t hash = hasher(task.getPipelineDescription());
-    hash += prefixHash;
-
     const vk::RenderPass renderPass = generateRenderPass(task);
 
 	const std::vector<vk::DescriptorSetLayout> SRSLayouts = generateShaderResourceSetLayouts(task, graph);
+    const vk::PipelineLayout layout = generatePipelineLayout(SRSLayouts, task);
 
-    const auto pipeline = generatePipeline( task,
-											SRSLayouts,
-											renderPass);
-
-    GraphicsPipelineHandles handles{pipeline, renderPass, SRSLayouts };
+    GraphicsPipelineDescription desc = task.getPipelineDescription();
+    GraphicsPipelineHandles handles{ std::make_shared<PipelineTemplate>(this, &desc, layout), renderPass, SRSLayouts };
 
     return handles;
 }
 
 
-ComputePipelineHandles VulkanRenderDevice::createPipelineHandles(const ComputeTask& task, const RenderGraph& graph, const uint64_t prefixHash)
+ComputePipelineHandles VulkanRenderDevice::createPipelineHandles(const ComputeTask& task, const RenderGraph& graph)
 {
-    std::hash<ComputePipelineDescription> hasher{};
-    uint64_t hash = hasher(task.getPipelineDescription());
-    hash += prefixHash;
-
 	const std::vector<vk::DescriptorSetLayout> SRSLayouts = generateShaderResourceSetLayouts(task, graph);
+    const vk::PipelineLayout layout = generatePipelineLayout(SRSLayouts, task);
 
-    const auto pipeline = generatePipeline(task, SRSLayouts);
-
-    ComputePipelineHandles handles{pipeline, SRSLayouts };
+    ComputePipelineHandles handles{ std::make_shared<PipelineTemplate>(this, nullptr, layout), SRSLayouts };
 
     return handles;
-}
-
-
-std::shared_ptr<GraphicsPipeline> VulkanRenderDevice::generatePipeline(const GraphicsTask& task,
-																 const std::vector< vk::DescriptorSetLayout>& descSetLayout,
-																 const vk::RenderPass &renderPass)
-{
-    const GraphicsPipelineDescription& pipelineDesc = task.getPipelineDescription();
-	const vk::PipelineLayout pipelineLayout = generatePipelineLayout(descSetLayout, task);
-
-	std::shared_ptr<GraphicsPipeline> pipeline = std::make_shared<GraphicsPipeline>(this, pipelineDesc);
-	pipeline->setLayout(pipelineLayout);
-	pipeline->setDescriptorLayouts(descSetLayout);
-	pipeline->setFrameBufferBlendStates(task);
-	pipeline->setRenderPass(renderPass);
-	pipeline->setVertexAttributes(task.getVertexAttributes());
-
-	pipeline->compile(task);
-
-	return pipeline;
-}
-
-
-std::shared_ptr<ComputePipeline> VulkanRenderDevice::generatePipeline(const ComputeTask& task,
-																const std::vector< vk::DescriptorSetLayout>& descriptorSetLayout)
-{
-    const ComputePipelineDescription pipelineDesc = task.getPipelineDescription();
-	const vk::PipelineLayout pipelineLayout = generatePipelineLayout(descriptorSetLayout, task);
-
-	std::shared_ptr<ComputePipeline> pipeline = std::make_unique<ComputePipeline>(this, pipelineDesc);
-	pipeline->setLayout(pipelineLayout);
-	pipeline->compile(task);
-
-	return pipeline;
 }
 
 
@@ -380,125 +335,6 @@ vk::RenderPass	VulkanRenderDevice::generateRenderPass(const GraphicsTask& task)
     renderPassInfo.setPSubpasses(&subpassDesc);
 
     return mDevice.createRenderPass(renderPassInfo);
-}
-
-
-std::vector<vk::PipelineShaderStageCreateInfo> VulkanRenderDevice::generateShaderStagesInfo(GraphicsPipelineDescription& pipelineDesc)
-{
-	// Make sure that all shaders have been compiled by this point.
-	if (!pipelineDesc.mVertexShader->hasBeenCompiled())
-	{
-		pipelineDesc.mVertexShader->compile();
-		pipelineDesc.mFragmentShader->compile();
-	}
-
-    std::vector<vk::PipelineShaderStageCreateInfo> shaderStages;
-
-    vk::PipelineShaderStageCreateInfo vertexStage{};
-    vertexStage.setStage(vk::ShaderStageFlagBits::eVertex);
-    vertexStage.setPName("main"); //entry point of the shader
-    vertexStage.setModule(static_cast<const VulkanShader&>(*pipelineDesc.mVertexShader.getBase()).getShaderModule());
-    shaderStages.push_back(vertexStage);
-
-    if(pipelineDesc.mGeometryShader)
-    {
-		if (!pipelineDesc.mGeometryShader.value()->hasBeenCompiled())
-			pipelineDesc.mGeometryShader.value()->compile();
-
-        vk::PipelineShaderStageCreateInfo geometryStage{};
-        geometryStage.setStage(vk::ShaderStageFlagBits::eGeometry);
-        geometryStage.setPName("main"); //entry point of the shader
-        geometryStage.setModule(static_cast<const VulkanShader&>(*pipelineDesc.mGeometryShader.value().getBase()).getShaderModule());
-        shaderStages.push_back(geometryStage);
-    }
-
-    if(pipelineDesc.mHullShader)
-    {
-		if (!pipelineDesc.mHullShader.value()->hasBeenCompiled())
-			pipelineDesc.mHullShader.value()->compile();
-
-        vk::PipelineShaderStageCreateInfo hullStage{};
-        hullStage.setStage(vk::ShaderStageFlagBits::eTessellationControl);
-        hullStage.setPName("main"); //entry point of the shader
-        hullStage.setModule(static_cast<const VulkanShader&>(*pipelineDesc.mHullShader.value().getBase()).getShaderModule());
-        shaderStages.push_back(hullStage);
-    }
-
-    if(pipelineDesc.mTesselationControlShader)
-    {
-		if (!pipelineDesc.mTesselationControlShader.value()->hasBeenCompiled())
-			pipelineDesc.mTesselationControlShader.value()->compile();
-
-        vk::PipelineShaderStageCreateInfo tesseStage{};
-        tesseStage.setStage(vk::ShaderStageFlagBits::eTessellationEvaluation);
-        tesseStage.setPName("main"); //entry point of the shader
-        tesseStage.setModule(static_cast<const VulkanShader&>(*pipelineDesc.mTesselationControlShader.value().getBase()).getShaderModule());
-        shaderStages.push_back(tesseStage);
-    }
-
-    vk::PipelineShaderStageCreateInfo fragmentStage{};
-    fragmentStage.setStage(vk::ShaderStageFlagBits::eFragment);
-    fragmentStage.setPName("main"); //entry point of the shader
-    fragmentStage.setModule(static_cast<const VulkanShader&>(*pipelineDesc.mFragmentShader.getBase()).getShaderModule());
-    shaderStages.push_back(fragmentStage);
-
-    return shaderStages;
-}
-
-
-std::vector<vk::PipelineShaderStageCreateInfo> VulkanRenderDevice::generateIndexedShaderStagesInfo(GraphicsPipelineDescription& pipelineDesc)
-{
-	std::vector<vk::PipelineShaderStageCreateInfo> shaderStages;
-
-	vk::PipelineShaderStageCreateInfo vertexStage{};
-	vertexStage.setStage(vk::ShaderStageFlagBits::eVertex);
-	vertexStage.setPName("main"); //entry point of the shader
-	vertexStage.setModule(static_cast<const VulkanShader&>(*pipelineDesc.mInstancedVertexShader.value().getBase()).getShaderModule());
-	shaderStages.push_back(vertexStage);
-
-	if (pipelineDesc.mGeometryShader)
-	{
-		if (!pipelineDesc.mGeometryShader.value()->hasBeenCompiled())
-			pipelineDesc.mGeometryShader.value()->compile();
-
-		vk::PipelineShaderStageCreateInfo geometryStage{};
-		geometryStage.setStage(vk::ShaderStageFlagBits::eGeometry);
-		geometryStage.setPName("main"); //entry point of the shader
-		geometryStage.setModule(static_cast<const VulkanShader&>(*pipelineDesc.mGeometryShader.value().getBase()).getShaderModule());
-		shaderStages.push_back(geometryStage);
-	}
-
-	if (pipelineDesc.mHullShader)
-	{
-		if (!pipelineDesc.mHullShader.value()->hasBeenCompiled())
-			pipelineDesc.mHullShader.value()->compile();
-
-		vk::PipelineShaderStageCreateInfo hullStage{};
-		hullStage.setStage(vk::ShaderStageFlagBits::eTessellationControl);
-		hullStage.setPName("main"); //entry point of the shader
-		hullStage.setModule(static_cast<const VulkanShader&>(*pipelineDesc.mHullShader.value().getBase()).getShaderModule());
-		shaderStages.push_back(hullStage);
-	}
-
-	if (pipelineDesc.mTesselationControlShader)
-	{
-		if (!pipelineDesc.mTesselationControlShader.value()->hasBeenCompiled())
-			pipelineDesc.mTesselationControlShader.value()->compile();
-
-		vk::PipelineShaderStageCreateInfo tesseStage{};
-		tesseStage.setStage(vk::ShaderStageFlagBits::eTessellationEvaluation);
-		tesseStage.setPName("main"); //entry point of the shader
-		tesseStage.setModule(static_cast<const VulkanShader&>(*pipelineDesc.mTesselationControlShader.value().getBase()).getShaderModule());
-		shaderStages.push_back(tesseStage);
-	}
-
-	vk::PipelineShaderStageCreateInfo fragmentStage{};
-	fragmentStage.setStage(vk::ShaderStageFlagBits::eFragment);
-	fragmentStage.setPName("main"); //entry point of the shader
-	fragmentStage.setModule(static_cast<const VulkanShader&>(*pipelineDesc.mFragmentShader.getBase()).getShaderModule());
-	shaderStages.push_back(fragmentStage);
-
-	return shaderStages;
 }
 
 
@@ -619,29 +455,19 @@ vk::PipelineLayout VulkanRenderDevice::generatePipelineLayout(const std::vector<
 }
 
 
-vulkanResources VulkanRenderDevice::getTaskResources(const RenderGraph& graph, const uint32_t taskIndex, const uint64_t prefixHash)
+vulkanResources VulkanRenderDevice::getTaskResources(const RenderGraph& graph, const RenderTask& task, const uint64_t prefixHash)
 {
-    const RenderTask& task = graph.getTask(taskIndex);
+    std::hash<std::string> stringHasher{};
 
-    uint64_t resourceHash = prefixHash;
-    if(task.taskType() == TaskType::Graphics)
-    {
-        const GraphicsTask& gTask = static_cast<const GraphicsTask&>(task);
-        std::hash<GraphicsPipelineDescription> hasher;
-        resourceHash += hasher(gTask.getPipelineDescription());
-    }
-    else
-    {
-        const ComputeTask& cTask = static_cast<const ComputeTask&>(task);
-        std::hash<ComputePipelineDescription> hasher;
-        resourceHash += hasher(cTask.getPipelineDescription());
-    }
+    uint64_t hash = prefixHash;
+    hash += stringHasher(task.getName());
 
     mResourcesLock.lock_shared();
 
-    if(mVulkanResources.find(resourceHash) != mVulkanResources.end())
+    auto element = mVulkanResources.find(hash);
+    if(element != mVulkanResources.end())
     {
-        vulkanResources& resources = mVulkanResources[resourceHash];
+        vulkanResources resources = element->second;
         mResourcesLock.unlock_shared();
 
         return resources;
@@ -651,8 +477,8 @@ vulkanResources VulkanRenderDevice::getTaskResources(const RenderGraph& graph, c
         mResourcesLock.unlock_shared();
         mResourcesLock.lock(); // need to write to the resource map so need exclusive access.
 
-        vulkanResources resources = generateVulkanResources(graph, taskIndex, prefixHash);
-        mVulkanResources.insert({resourceHash, resources});
+        vulkanResources resources = generateVulkanResources(graph, task);
+        mVulkanResources.insert({hash, resources});
 
         mResourcesLock.unlock();
 
@@ -661,31 +487,43 @@ vulkanResources VulkanRenderDevice::getTaskResources(const RenderGraph& graph, c
 }
 
 
-vulkanResources VulkanRenderDevice::generateVulkanResources(const RenderGraph& graph, const uint32_t taskIndex, const uint64_t prefixHash)
+vulkanResources VulkanRenderDevice::getTaskResources(const RenderGraph& graph, const uint32_t taskIndex, const uint64_t prefixHash)
 {
     const RenderTask& task = graph.getTask(taskIndex);
-    vulkanResources resources{};
 
+    return getTaskResources(graph, task, prefixHash);
+}
+
+
+vulkanResources VulkanRenderDevice::generateVulkanResources(const RenderGraph& graph, const RenderTask& task)
+{
     if(task.taskType() == TaskType::Graphics)
     {
         const GraphicsTask& graphicsTask = static_cast<const GraphicsTask&>(task);
-        GraphicsPipelineHandles pipelineHandles = createPipelineHandles(graphicsTask, graph, prefixHash);
+        GraphicsPipelineHandles pipelineHandles = createPipelineHandles(graphicsTask, graph);
 
-        resources.mPipeline = pipelineHandles.mGraphicsPipeline;
-        resources.mDescSetLayout = pipelineHandles.mDescriptorSetLayout;
-        resources.mRenderPass = pipelineHandles.mRenderPass;
+        vulkanResources resources{pipelineHandles.mGraphicsPipelineTemplate, pipelineHandles.mDescriptorSetLayout, pipelineHandles.mRenderPass, {}, {}};
         // Frame buffers and descset get created/written in a diferent place.
+
+        return resources;
     }
     else
     {
         const ComputeTask& computeTask = static_cast<const ComputeTask&>(task);
-        ComputePipelineHandles pipelineHandles = createPipelineHandles(computeTask, graph, prefixHash);
+        ComputePipelineHandles pipelineHandles = createPipelineHandles(computeTask, graph);
 
-        resources.mPipeline = pipelineHandles.mComputePipeline;
-        resources.mDescSetLayout = pipelineHandles.mDescriptorSetLayout;
+        vulkanResources resources{pipelineHandles.mComputePipelineTemplate, pipelineHandles.mDescriptorSetLayout, {}, {}, {}};
+
+        return resources;
     }
+}
 
-    return resources;
+
+vulkanResources VulkanRenderDevice::generateVulkanResources(const RenderGraph& graph, const uint32_t taskIndex)
+{
+    const RenderTask& task = graph.getTask(taskIndex);
+
+    return generateVulkanResources(graph, task);
 }
 
 
@@ -985,8 +823,8 @@ void VulkanRenderDevice::invalidatePipelines()
 
     for(auto& [hash, handles] : mVulkanResources)
     {
-        mDevice.destroyPipeline(handles.mPipeline->getHandle());
-        mDevice.destroyPipelineLayout(handles.mPipeline->getLayoutHandle());
+        mDevice.destroyPipelineLayout(handles.mPipelineTemplate->getLayoutHandle());
+        handles.mPipelineTemplate->invalidatePipelineCache();
         mDevice.destroyDescriptorSetLayout(handles.mDescSetLayout[0]); // if there are any more they will get destroyed elsewhere.
         if(handles.mRenderPass)
             mDevice.destroyRenderPass(*handles.mRenderPass);

@@ -28,7 +28,7 @@ public:
     };
 
 private:
-    ComputePipelineDescription mPipelineDesc;
+    Shader mSkinningShader;
     TaskID mTask;
 };
 

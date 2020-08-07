@@ -10,9 +10,9 @@ PathTracingTechnique::PathTracingTechnique(Engine* eng, RenderGraph& graph) :
     mGloballighting(getDevice(), Format::RGBA8UNorm, ImageUsage::Storage | ImageUsage::Sampled | ImageUsage::ColourAttachment, getDevice()->getSwapChain()->getSwapChainImageWidth() / 4,
                     getDevice()->getSwapChain()->getSwapChainImageHeight() / 4, 1, 1, 1, 1, "Global lighting"),
     mGlobalLightingView(mGloballighting, ImageViewType::Colour),
-    mPipelineDescription{eng->getShader("./Shaders/PathTracer.comp")}
+    mPathTracingShader(eng->getShader("./Shaders/PathTracer.comp"))
 {
-    ComputeTask task("PathTracing", mPipelineDescription);
+    ComputeTask task("PathTracing");
     task.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
     task.addInput(kGBufferNormals, AttachmentType::Texture2D);
     task.addInput(kGBufferDepth, AttachmentType::Texture2D);
@@ -23,8 +23,11 @@ PathTracingTechnique::PathTracingTechnique(Engine* eng, RenderGraph& graph) :
     task.addInput(kBVH, AttachmentType::ShaderResourceSet);
 
     task.setRecordCommandsCallback(
-                [](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+                [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
                 {
+                    const RenderTask& task = graph.getTask(taskIndex);
+                    exec->setComputeShader(static_cast<const ComputeTask&>(task), graph, mPathTracingShader);
+
                     const uint32_t width =  eng->getDevice()->getSwapChain()->getSwapChainImageWidth() / 4;
                     const uint32_t height =  eng->getDevice()->getSwapChain()->getSwapChainImageHeight() / 4;
 

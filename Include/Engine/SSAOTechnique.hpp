@@ -43,9 +43,11 @@ private:
 
 	GraphicsPipelineDescription mPipelineDesc;
 
-    ComputePipelineDescription mBlurXDesc;
+    Shader mFulllscreenTriangleShader;
+    Shader mSSAOShader;
 
-    ComputePipelineDescription mBlurYDesc;
+    Shader mBlurXShader;
+    Shader mBlurYShader;
 
 	PerFrameResource<Buffer> mSSAOBuffer;
 	PerFrameResource<BufferView> mSSAOBufferView;
@@ -88,9 +90,11 @@ private:
 
 	GraphicsPipelineDescription mPipelineDesc;
 
-    ComputePipelineDescription mBlurXDesc;
+    Shader mFulllscreenTriangleShader;
+    Shader mSSAOShader;
 
-    ComputePipelineDescription mBlurYDesc;
+    Shader mBlurXShader;
+    Shader mBlurYShader;
 
 	PerFrameResource<Buffer> mSSAOBuffer;
 	PerFrameResource<BufferView> mSSAOBufferView;

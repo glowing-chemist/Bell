@@ -25,16 +25,16 @@ public:
 
 private:
 
-    ComputePipelineDescription      mActiveFroxelsDesc;
+    Shader                          mActiveFroxelsShader;
     TaskID                          mActiveFroxels;
 
-    ComputePipelineDescription      mIndirectArgsDesc;
+    Shader                          mIndirectArgsShader;
     TaskID                          mIndirectArgs;
 
-    ComputePipelineDescription      mClearCountersDesc;
+    Shader                          mClearCoutersShader;
     TaskID                          mClearCounters;
 
-    ComputePipelineDescription      mLightAsignmentDesc;
+    Shader                          mLightAsignmentShader;
     TaskID                          mLightListAsignment;
 
     uint32_t mXTiles;

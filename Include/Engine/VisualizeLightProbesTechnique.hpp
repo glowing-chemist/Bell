@@ -28,6 +28,9 @@ private:
 
     GraphicsPipelineDescription mIrradianceProbePipeline;
     GraphicsPipelineDescription mIrradianceVolumePipeline;
+    Shader mLightProbeVisVertexShader;
+    Shader mLigthProbeVisFragmentShader;
+    Shader mLigthVolumeVisFragmentShader;
     TaskID mTaskID;
 
     Buffer mVertexBuffer;

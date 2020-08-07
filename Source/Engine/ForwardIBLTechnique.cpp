@@ -7,13 +7,13 @@
 
 ForwardIBLTechnique::ForwardIBLTechnique(Engine* eng, RenderGraph& graph) :
 	Technique("ForwardIBL", eng->getDevice()),
-	mDesc{eng->getShader("./Shaders/ForwardMaterial.vert"),
-		  eng->getShader("./Shaders/ForwardIBL.frag"),
-		  Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
+    mDesc{Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
 			   getDevice()->getSwapChain()->getSwapChainImageHeight()},
 		  Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
 			   getDevice()->getSwapChain()->getSwapChainImageHeight()},
-			   true, BlendMode::None, BlendMode::None, false, DepthTest::GreaterEqual, Primitive::TriangleList }
+               true, BlendMode::None, BlendMode::None, false, DepthTest::GreaterEqual, Primitive::TriangleList },
+    mForwardIBLVertexShader(eng->getShader("./Shaders/ForwardMaterial.vert")),
+    mForwardIBLFragmentShader(eng->getShader("./Shaders/ForwardIBL.frag"))
 {
 	GraphicsTask task{ "ForwardIBL", mDesc };
     task.setVertexAttributes(VertexAttributes::Position4 |
@@ -43,10 +43,13 @@ ForwardIBLTechnique::ForwardIBLTechnique(Engine* eng, RenderGraph& graph) :
     if(eng->isPassRegistered(PassType::OcclusionCulling))
     {
         task.setRecordCommandsCallback(
-            [](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>& meshes)
+            [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>& meshes)
             {
                 exec->bindIndexBuffer(eng->getIndexBuffer(), 0);
                 exec->bindVertexBuffer(eng->getVertexBuffer(), 0);
+
+                const RenderTask& task = graph.getTask(taskIndex);
+                exec->setGraphicsShaders(static_cast<const GraphicsTask&>(task), graph, mForwardIBLVertexShader, nullptr, nullptr, nullptr, mForwardIBLFragmentShader);
 
                 const BufferView& pred = eng->getRenderGraph().getBuffer(kOcclusionPredicationBuffer);
 
@@ -74,10 +77,13 @@ ForwardIBLTechnique::ForwardIBLTechnique(Engine* eng, RenderGraph& graph) :
     else
     {
         task.setRecordCommandsCallback(
-            [](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>& meshes)
+            [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>& meshes)
             {
                 exec->bindIndexBuffer(eng->getIndexBuffer(), 0);
                 exec->bindVertexBuffer(eng->getVertexBuffer(), 0);
+
+                const RenderTask& task = graph.getTask(taskIndex);
+                exec->setGraphicsShaders(static_cast<const GraphicsTask&>(task), graph, mForwardIBLVertexShader, nullptr, nullptr, nullptr, mForwardIBLFragmentShader);
 
                 for (const auto& mesh : meshes)
                 {

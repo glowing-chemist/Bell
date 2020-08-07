@@ -55,8 +55,8 @@ namespace
 
 }
 
-VulkanShader::VulkanShader(RenderDevice* device, const std::string& path) :
-    ShaderBase{device, path},
+VulkanShader::VulkanShader(RenderDevice* device, const std::string& path, const uint64_t prefixHash) :
+    ShaderBase{device, path, prefixHash},
 	mShaderStage{getShaderStage(mFilePath.string())}
 {
 }

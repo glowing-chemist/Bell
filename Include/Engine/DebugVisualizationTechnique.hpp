@@ -24,6 +24,8 @@ public:
 private:
     TaskID mTaskID;
     GraphicsPipelineDescription mPipelineDesc;
+    Shader mDebugVisVertexShader;
+    Shader mDebugVisFragmentShader;
 
     Buffer mVertexBuffer;
     BufferView mVertexBufferView;

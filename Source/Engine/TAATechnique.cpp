@@ -17,7 +17,7 @@ TAATechnique::TAATechnique(Engine* eng, RenderGraph& graph) :
 		1, 1, 1, 1, "next TAA history"),
 	mNextHistoryImageView(mNextHistoryImage, ImageViewType::Colour),
     mTAASAmpler(SamplerType::Linear),
-	mPipeline{eng->getShader("./Shaders/TAAResolve.comp")},
+    mTAAShader(eng->getShader("./Shaders/TAAResolve.comp")),
 	mFirstFrame{true}
 {
     mTAASAmpler.setAddressModeU(AddressMode::Clamp);
@@ -25,7 +25,7 @@ TAATechnique::TAATechnique(Engine* eng, RenderGraph& graph) :
     mTAASAmpler.setAddressModeW(AddressMode::Clamp);
 
 
-	ComputeTask resolveTAA{ "Resolve TAA", mPipeline };
+    ComputeTask resolveTAA{ "Resolve TAA" };
 	resolveTAA.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
 	resolveTAA.addInput(kLinearDepth, AttachmentType::Texture2D);
 	resolveTAA.addInput(kGBufferVelocity, AttachmentType::Texture2D);
@@ -49,8 +49,11 @@ void TAATechnique::render(RenderGraph& graph, Engine*)
 	ComputeTask& resolveTAA = static_cast<ComputeTask&>(graph.getTask(mTaskID));
 
 	resolveTAA.setRecordCommandsCallback(
-		[](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+        [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
 		{
+            const RenderTask& task = graph.getTask(taskIndex);
+            exec->setComputeShader(static_cast<const ComputeTask&>(task), graph, mTAAShader);
+
 			const float threadGroupWidth = eng->getSwapChainImageView()->getImageExtent().width;
 			const float threadGroupHeight = eng->getSwapChainImageView()->getImageExtent().height;
 

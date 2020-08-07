@@ -5,13 +5,13 @@
 
 TransparentTechnique::TransparentTechnique(Engine* eng, RenderGraph& graph) :
     Technique{"GBuffer", eng->getDevice()},
-        mPipelineDescription{eng->getShader("./Shaders/ForwardMaterial.vert"),
-                         eng->getShader("./Shaders/Transparent.frag"),
-                         Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
+        mPipelineDescription{Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
                                getDevice()->getSwapChain()->getSwapChainImageHeight()},
                          Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
                          getDevice()->getSwapChain()->getSwapChainImageHeight()},
-                         true, BlendMode::Add, BlendMode::Add, false, DepthTest::GreaterEqual, Primitive::TriangleList}
+                         true, BlendMode::Add, BlendMode::Add, false, DepthTest::GreaterEqual, Primitive::TriangleList},
+        mTransparentVertexShader(eng->getShader("./Shaders/ForwardMaterial.vert")),
+        mTransparentFragmentShader(eng->getShader("./Shaders/Transparent.frag"))
 {
     GraphicsTask task{ "Transparent", mPipelineDescription };
 
@@ -34,10 +34,13 @@ TransparentTechnique::TransparentTechnique(Engine* eng, RenderGraph& graph) :
     task.addOutput(kGBufferDepth, AttachmentType::Depth, Format::D32Float, SizeClass::Custom, LoadOp::Preserve);
 
     task.setRecordCommandsCallback(
-                [](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>& meshes)
+                [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>& meshes)
                 {
                     exec->bindIndexBuffer(eng->getIndexBuffer(), 0);
                     exec->bindVertexBuffer(eng->getVertexBuffer(), 0);
+
+                    const RenderTask& task = graph.getTask(taskIndex);
+                    exec->setGraphicsShaders(static_cast<const GraphicsTask&>(task), graph, mTransparentVertexShader, nullptr, nullptr, nullptr, mTransparentFragmentShader);
 
                     for (const auto& mesh : meshes)
                     {

@@ -15,11 +15,12 @@
 #endif
 
 
-ShaderBase::ShaderBase(RenderDevice* device, const std::string& path) :
+ShaderBase::ShaderBase(RenderDevice* device, const std::string& path, const uint64_t prefixHash) :
     DeviceChild{device},
     mSource{},
     mFilePath{path},
-    mCompiled{false}
+    mCompiled{false},
+    mPrefixHash(prefixHash)
 {
     // Load the hlsl Source from disk in to mSource.
 
@@ -31,13 +32,13 @@ ShaderBase::ShaderBase(RenderDevice* device, const std::string& path) :
 }
 
 
-Shader::Shader(RenderDevice* dev, const std::string& path)
+Shader::Shader(RenderDevice* dev, const std::string& path, const uint64_t prefixHash)
 {
 #ifdef VULKAN
-	mBase = std::make_shared<VulkanShader>(dev, path);
+    mBase = std::make_shared<VulkanShader>(dev, path, prefixHash);
 #endif
 
 #ifdef DX_12
-    mBase = std::make_shared<DX_12Shader>(dev, path);
+    mBase = std::make_shared<DX_12Shader>(dev, path, prefixHash);
 #endif
 }

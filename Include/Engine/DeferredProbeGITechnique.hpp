@@ -22,6 +22,8 @@ public:
 
 private:
     GraphicsPipelineDescription mPipelineDesc;
+    Shader mProbeVertexShader;
+    Shader mProbeFragmentShader;
     TaskID mTaskID;
 };
 

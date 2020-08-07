@@ -41,6 +41,10 @@ private:
     PerFrameResource<BufferView> mOverlayerIndexBufferView;
 
     GraphicsPipelineDescription mPipelineDescription;
+
+    Shader mOverlayVertexShader;
+    Shader mOverlayFragmentShader;
+
     TaskID mTaskID;
 };
 

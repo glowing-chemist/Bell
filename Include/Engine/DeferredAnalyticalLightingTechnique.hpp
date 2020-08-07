@@ -28,7 +28,7 @@ public:
 
 private:
 
-	ComputePipelineDescription mPipelineDesc;
+    Shader mDeferredAnalitucalLightingShader;
 	TaskID mTaskID;
 
     Image mAnalyticalLighting;

@@ -36,13 +36,17 @@ private:
     GraphicsPipelineDescription mDesc;
     TaskID                      mShadowTask;
 
-    ComputePipelineDescription mBlurXDesc;
+    Shader mShadowMapVertexShader;
+    Shader mShadowMapFragmentShader;
+
+
+    Shader                     mBlurXShader;
     TaskID                     mBlurXTaskID;
 
-    ComputePipelineDescription mBlurYDesc;
+    Shader                     mBlurYShader;
     TaskID                     mBlurYTaskID;
 
-    ComputePipelineDescription mResolveDesc;
+    Shader                     mResolveShader;
     TaskID                     mResolveTaskID;
 
     Image    mShadowMap;
@@ -87,7 +91,7 @@ private:
     Image    mShadowMap;
     ImageView mShadowMapView;
 
-    ComputePipelineDescription mPipeline;
+    Shader                     mRayTracedShadowsShader;
     TaskID                     mTaskID;;
 };
 

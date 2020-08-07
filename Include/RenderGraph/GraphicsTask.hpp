@@ -79,13 +79,6 @@ struct ClearValues
 
 struct GraphicsPipelineDescription
 {
-	Shader mVertexShader;
-	std::optional<Shader> mInstancedVertexShader;
-	std::optional<Shader> mGeometryShader;
-	std::optional<Shader> mHullShader;
-	std::optional<Shader> mTesselationControlShader;
-	Shader mFragmentShader;
-
 	Rect mScissorRect;
 	Rect mViewport;
 	bool mUseBackFaceCulling;
@@ -97,14 +90,7 @@ struct GraphicsPipelineDescription
 
 	Primitive mPrimitiveType;
 
-	GraphicsPipelineDescription(const Shader& vert, const Shader& frag,
-		const Rect& scissor, const Rect& viewport) :
-		mVertexShader{ vert },
-		mInstancedVertexShader{},
-		mGeometryShader{},
-		mHullShader{},
-		mTesselationControlShader{},
-		mFragmentShader{ frag },
+    GraphicsPipelineDescription(const Rect& scissor, const Rect& viewport) :
 		mScissorRect{ scissor },
 		mViewport{ viewport },
 		mUseBackFaceCulling{ true },
@@ -115,74 +101,13 @@ struct GraphicsPipelineDescription
 		mPrimitiveType{ Primitive::TriangleList }
 	{}
 
-	GraphicsPipelineDescription(const Shader& vert, const Shader& frag,
-		const Rect& scissor, const Rect& viewport,
+    GraphicsPipelineDescription(const Rect& scissor, const Rect& viewport,
 		const bool useFaceCulling,
 		const BlendMode alphaBlendMode,
 		const BlendMode colourBlendMode,
 		const bool depthWrite,
 		const DepthTest depthTest,
-		const Primitive primitiveType) :
-		mVertexShader{ vert },
-		mInstancedVertexShader{},
-		mGeometryShader{},
-		mHullShader{},
-		mTesselationControlShader{},
-		mFragmentShader{ frag },
-		mScissorRect{ scissor },
-		mViewport{ viewport },
-		mUseBackFaceCulling{ useFaceCulling },
-		mAlphaBlendMode{ alphaBlendMode },
-		mColourBlendMode{ colourBlendMode },
-		mDepthWrite{ depthWrite },
-		mDepthTest{ depthTest },
-		mPrimitiveType{ primitiveType }
-	{}
-
-	GraphicsPipelineDescription(const Shader& vert,
-		const Shader& instancedVert,
-		const Shader& frag,
-		const Rect& scissor, const Rect& viewport,
-		const bool useFaceCulling,
-		const BlendMode alphaBlendMode,
-		const BlendMode colourBlendMode,
-		const bool depthWrite,
-		const DepthTest depthTest,
-		const Primitive primitiveType) :
-		mVertexShader{ vert },
-		mInstancedVertexShader{ instancedVert },
-		mGeometryShader{},
-		mHullShader{},
-		mTesselationControlShader{},
-		mFragmentShader{ frag },
-		mScissorRect{ scissor },
-		mViewport{ viewport },
-		mUseBackFaceCulling{ useFaceCulling },
-		mAlphaBlendMode{ alphaBlendMode },
-		mColourBlendMode{ colourBlendMode },
-		mDepthWrite{ depthWrite },
-		mDepthTest{ depthTest },
-		mPrimitiveType{ primitiveType }
-	{}
-
-	GraphicsPipelineDescription(const Shader& vert, const Shader& frag,
-		const std::optional<Shader>& instancedVert,
-		const std::optional<Shader>& geometryShader,
-		const std::optional<Shader>& hullShaderr, const std::optional<Shader>& tesselationCOntrol,
-		const Rect& scissor, const Rect& viewport,
-		const bool useFaceCulling,
-		const BlendMode alphaBlendMode,
-		const BlendMode colourBlendMode,
-		const bool depthWrite,
-		const DepthTest depthTest,
-		const Primitive primitiveType) :
-
-		mVertexShader{ vert },
-		mInstancedVertexShader{ instancedVert },
-		mGeometryShader{ geometryShader },
-		mHullShader{ hullShaderr },
-		mTesselationControlShader{ tesselationCOntrol },
-		mFragmentShader{ frag },
+        const Primitive primitiveType) :
 		mScissorRect{ scissor },
 		mViewport{ viewport },
 		mUseBackFaceCulling{ useFaceCulling },
@@ -193,17 +118,6 @@ struct GraphicsPipelineDescription
 		mPrimitiveType{ primitiveType }
 	{}
 };
-
-
-// needed in order to use unordered_map
-namespace std
-{
-	template<>
-	struct hash<GraphicsPipelineDescription> 
-	{
-		size_t operator()(const GraphicsPipelineDescription&) const noexcept;
-	};
-}
 
 // This class describes a renderpass with all of it's inputs and
 // outputs.
@@ -241,7 +155,5 @@ private:
 	uint32_t mVertexBufferOffset;
 };
 
-
-bool operator==(const GraphicsPipelineDescription& lhs, const GraphicsPipelineDescription& rhs);
 
 #endif

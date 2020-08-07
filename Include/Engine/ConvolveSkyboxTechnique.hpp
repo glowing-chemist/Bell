@@ -25,7 +25,7 @@ public:
     virtual void bindResources(RenderGraph& graph) override final;
 
 private:
-	ComputePipelineDescription mPipelineDesc;
+    Shader mConvolveSkyboxShader;
 	TaskID mTaskID;
     Image mConvolvedSpecularSkybox;
     ImageView mConvolvedSpecularView;

@@ -57,11 +57,11 @@ public:
     }
 
 private:
-    ComputePipelineDescription mBlurXDesc;
+    Shader mBlurXShader;
 
-    ComputePipelineDescription mBlurYDesc;
+    Shader mBlurYShader;
 
-    ComputePipelineDescription mResolveDesc;
+    Shader mResolveShader;
 
     TaskID mRenderCascade0;
     TaskID mRenderCascade1;

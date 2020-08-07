@@ -20,13 +20,14 @@ public:
 
     virtual void bindResources(RenderGraph& graph) override final
     {
-	if(!graph.isResourceSlotBound(kGlobalLighting))
-	    graph.bindImage(kGlobalLighting, mGlobalLightingView);
+        if(!graph.isResourceSlotBound(kGlobalLighting))
+            graph.bindImage(kGlobalLighting, mGlobalLightingView);
     }
+
     virtual void render(RenderGraph&, Engine*) override final
     {
-	mGloballighting->updateLastAccessed();
-	mGlobalLightingView->updateLastAccessed();
+        mGloballighting->updateLastAccessed();
+        mGlobalLightingView->updateLastAccessed();
     }
 
 private:
@@ -34,7 +35,7 @@ private:
     Image mGloballighting;
     ImageView mGlobalLightingView;
 
-    ComputePipelineDescription mPipelineDescription;
+    Shader mPathTracingShader;
     TaskID mTaskID;
 };
 

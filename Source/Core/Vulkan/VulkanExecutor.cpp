@@ -149,3 +149,35 @@ void VulkanExecutor::copyDataToBuffer(const void* data, const size_t size, const
     VulkanBuffer* VKBuf = static_cast<VulkanBuffer*>(buf.getBase());
     mCommandBuffer.updateBuffer(VKBuf->getBuffer(), offset, size, data);
 }
+
+
+void VulkanExecutor::setGraphicsShaders(const GraphicsTask& task,
+                                        const RenderGraph& graph,
+                                        const Shader& vertexShader,
+                                        const Shader* geometryShader,
+                                        const Shader* tessControl,
+                                        const Shader* tessEval,
+                                        const Shader& fragmentShader)
+{
+    BELL_ASSERT(vertexShader->getPrefixHash() == fragmentShader->getPrefixHash(), "Shaders compiled with different prefix hashes")
+
+    VulkanRenderDevice* device = static_cast<VulkanRenderDevice*>(getDevice());
+    vulkanResources handles = device->getTaskResources(graph, task, vertexShader->getPrefixHash());
+
+    std::shared_ptr<Pipeline> pipeline = handles.mPipelineTemplate->instanciateGraphicsPipeline(task, vertexShader->getPrefixHash(), *handles.mRenderPass, vertexShader, geometryShader, tessControl, tessEval, fragmentShader);
+
+    mCommandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline->getHandle());
+}
+
+
+void VulkanExecutor::setComputeShader(const ComputeTask& task,
+                                      const RenderGraph& graph,
+                                      const Shader& computeShader)
+{
+    VulkanRenderDevice* device = static_cast<VulkanRenderDevice*>(getDevice());
+    vulkanResources handles = device->getTaskResources(graph, task, computeShader->getPrefixHash());
+
+    std::shared_ptr<Pipeline> pipeline = handles.mPipelineTemplate->instanciateComputePipeline(task, computeShader->getPrefixHash(), computeShader);
+
+    mCommandBuffer.bindPipeline(vk::PipelineBindPoint::eCompute, pipeline->getHandle());
+}

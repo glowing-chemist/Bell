@@ -41,7 +41,7 @@ class Pipeline;
 
 struct vulkanResources
 {
-    std::shared_ptr<Pipeline> mPipeline;
+    std::shared_ptr<PipelineTemplate> mPipelineTemplate;
     std::vector<vk::DescriptorSetLayout> mDescSetLayout;
     // Only needed for graphics tasks
     std::optional<vk::RenderPass> mRenderPass;
@@ -52,14 +52,14 @@ struct vulkanResources
 
 struct GraphicsPipelineHandles
 {
-	std::shared_ptr<GraphicsPipeline> mGraphicsPipeline;
+    std::shared_ptr<PipelineTemplate> mGraphicsPipelineTemplate;
     vk::RenderPass mRenderPass;
 	std::vector< vk::DescriptorSetLayout> mDescriptorSetLayout;
 };
 
 struct ComputePipelineHandles
 {
-	std::shared_ptr<ComputePipeline> mComputePipeline;
+    std::shared_ptr<PipelineTemplate> mComputePipelineTemplate;
 	std::vector< vk::DescriptorSetLayout> mDescriptorSetLayout;
 };
 
@@ -108,6 +108,9 @@ public:
 
     void                               destroyFrameBuffer(vk::Framebuffer& frameBuffer, uint64_t frameIndex)
                                             { mFramebuffersPendingDestruction.push_back({frameIndex, frameBuffer}); }
+
+    void                              destroyPipeline(const vk::Pipeline pipeline)
+                                            { mDevice.destroyPipeline(pipeline); }
 
 	virtual size_t					   getMinStorageBufferAlignment() const override
 	{
@@ -215,8 +218,8 @@ public:
 #endif
 	}
 
-    GraphicsPipelineHandles            createPipelineHandles(const GraphicsTask&, const RenderGraph&, const uint64_t prefixHash);
-    ComputePipelineHandles             createPipelineHandles(const ComputeTask&, const RenderGraph&, const uint64_t prefixHash);
+    GraphicsPipelineHandles            createPipelineHandles(const GraphicsTask&, const RenderGraph&);
+    ComputePipelineHandles             createPipelineHandles(const ComputeTask&, const RenderGraph&);
 
     // Accessors
     MemoryManager*                     getMemoryManager() { return &mMemoryManager; }
@@ -259,14 +262,18 @@ public:
     virtual void					   swap() override;
 
 	// non const as can compile uncompiled shaders.
-	std::vector<vk::PipelineShaderStageCreateInfo>              generateShaderStagesInfo(GraphicsPipelineDescription&);
-	std::vector<vk::PipelineShaderStageCreateInfo>              generateIndexedShaderStagesInfo(GraphicsPipelineDescription&);
+    std::vector<vk::PipelineShaderStageCreateInfo>              generateShaderStagesInfo(const Shader& vertexShader,
+                                                                                         const Shader* geometryShader,
+                                                                                         const Shader* tessControl,
+                                                                                         const Shader* tessEval,
+                                                                                         const Shader& fragmentShader);
 
 	vk::PhysicalDeviceLimits									getLimits() const { return mLimits; }
 
 	template<typename B>
 	vk::DescriptorSetLayout										generateDescriptorSetLayoutBindings(const std::vector<B>&, const TaskType type);
 
+    vulkanResources                                             getTaskResources(const RenderGraph&, const RenderTask& task, const uint64_t prefixHash);
     vulkanResources                                             getTaskResources(const RenderGraph&, const uint32_t taskIndex, const uint64_t prefixHash);
 
     vk::QueryPool                                               createTimeStampPool(const uint32_t queries)
@@ -311,14 +318,8 @@ private:
 
     vk::RenderPass                                              generateRenderPass(const GraphicsTask&);
 
-    std::shared_ptr<GraphicsPipeline>                                            generatePipeline(const GraphicsTask&,
-																				 const std::vector< vk::DescriptorSetLayout>& descSetLayout,
-																				 const vk::RenderPass&);
-
-    std::shared_ptr<ComputePipeline>                                             generatePipeline(const ComputeTask&,
-                                                                                 const std::vector< vk::DescriptorSetLayout>&);
-
-    vulkanResources generateVulkanResources(const RenderGraph &, const uint32_t taskIndex, const uint64_t prefixHash);
+    vulkanResources generateVulkanResources(const RenderGraph &, const RenderTask& task);
+    vulkanResources generateVulkanResources(const RenderGraph &, const uint32_t taskIndex);
 
 	std::vector<vk::DescriptorSetLayout>						generateShaderResourceSetLayouts(const RenderTask&, const RenderGraph&);
 

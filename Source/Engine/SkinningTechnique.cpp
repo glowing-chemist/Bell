@@ -6,9 +6,9 @@
 
 SkinningTechnique::SkinningTechnique(Engine* eng, RenderGraph& graph) :
     Technique("Skinning", eng->getDevice()),
-    mPipelineDesc{eng->getShader("./Shaders/Skinning.comp")}
+    mSkinningShader(eng->getShader("./Shaders/Skinning.comp"))
 {
-    ComputeTask task("Skinning", mPipelineDesc);
+    ComputeTask task("Skinning");
     task.addInput(kTPoseVertexBuffer, AttachmentType::DataBufferRO);
     task.addInput(kBoneWeighntsIndiciesBuffer, AttachmentType::DataBufferRO);
     task.addInput(kBonesWeights, AttachmentType::DataBufferRO);
@@ -16,8 +16,11 @@ SkinningTechnique::SkinningTechnique(Engine* eng, RenderGraph& graph) :
     task.addInput(kSceneVertexBuffer, AttachmentType::DataBufferRW);
     task.addInput("meshParams", AttachmentType::PushConstants);
     task.setRecordCommandsCallback(
-                [](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+                [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
                 {
+                    const RenderTask& task = graph.getTask(taskIndex);
+                    exec->setComputeShader(static_cast<const ComputeTask&>(task), graph, mSkinningShader);
+
                     const auto& anims = eng->getActiveAnimations();
                     for(const auto& anim : anims)
                     {

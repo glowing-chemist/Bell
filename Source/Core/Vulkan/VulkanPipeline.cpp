@@ -7,15 +7,93 @@ Pipeline::Pipeline(RenderDevice* dev) :
 	DeviceChild{ dev } {}
 
 
+PipelineTemplate::PipelineTemplate(RenderDevice* dev, const GraphicsPipelineDescription* desc, const vk::PipelineLayout layout) :
+    DeviceChild(dev),
+    mGraphicsPipeline(desc != nullptr),
+    mDesc(mGraphicsPipeline ? *desc : GraphicsPipelineDescription(Rect{0, 0}, Rect{0, 0})),
+    mPipelineLayout(layout) {}
+
+
+std::shared_ptr<Pipeline> PipelineTemplate::instanciateGraphicsPipeline(const GraphicsTask& task,
+                                                      const uint64_t hashPrefix,
+                                                      const vk::RenderPass rp,
+                                                      const Shader& vertexShader,
+                                                      const Shader* geometryShader,
+                                                      const Shader* tessControl,
+                                                      const Shader* tessEval,
+                                                      const Shader& fragmentShader)
+{
+    std::hash<std::string> stringHasher{};
+    uint64_t hash = hashPrefix;
+    hash  += stringHasher(vertexShader->getFilePath());
+    if(geometryShader)
+        hash  += stringHasher((*geometryShader)->getFilePath());
+    if(tessControl)
+        hash  += stringHasher((*tessControl)->getFilePath());
+    if(tessEval)
+        hash  += stringHasher((*tessEval)->getFilePath());
+    hash  += stringHasher(fragmentShader->getFilePath());
+
+    if(mPipelineCache.find(hash) != mPipelineCache.end())
+    {
+        return mPipelineCache[hash];
+    }
+    else
+    {
+        std::shared_ptr<GraphicsPipeline> graphicsPipeline = std::make_shared<GraphicsPipeline>(getDevice(), mDesc,
+                                                                                       vertexShader,
+                                                                                       geometryShader,
+                                                                                       tessControl,
+                                                                                       tessEval,
+                                                                                       fragmentShader);
+        graphicsPipeline->setLayout(mPipelineLayout);
+        graphicsPipeline->setRenderPass(rp);
+        graphicsPipeline->setVertexAttributes(task.getVertexAttributes());
+        graphicsPipeline->setFrameBufferBlendStates(task);
+        graphicsPipeline->compile(task);
+
+        mPipelineCache.insert({hash, graphicsPipeline});
+
+        return graphicsPipeline;
+    }
+}
+
+
+std::shared_ptr<Pipeline> PipelineTemplate::instanciateComputePipeline(const ComputeTask& task, const uint64_t hashPrefix, const Shader& computeShader)
+{
+    std::hash<std::string> stringHasher{};
+    uint64_t hash = hashPrefix;
+    hash  += stringHasher(computeShader->getFilePath());
+
+    if(mPipelineCache.find(hash) != mPipelineCache.end())
+    {
+        return mPipelineCache[hash];
+    }
+    else
+    {
+        std::shared_ptr<Pipeline> computePipeline = std::make_shared<ComputePipeline>(getDevice(), computeShader);
+        computePipeline->setLayout(mPipelineLayout);
+        computePipeline->compile(task);
+
+        mPipelineCache.insert({hash, computePipeline});
+
+        return computePipeline;
+    }
+}
+
+void PipelineTemplate::invalidatePipelineCache()
+{
+    VulkanRenderDevice* device = static_cast<VulkanRenderDevice*>(getDevice());
+    for(auto& [hash, pipeline] : mPipelineCache)
+    {
+        device->destroyPipeline(pipeline->getHandle());
+    }
+    mPipelineCache.clear();
+}
+
 bool ComputePipeline::compile(const RenderTask&)
 {
-	if (!mPipelineDescription.mComputeShader->hasBeenCompiled())
-	{
-		mPipelineDescription.mComputeShader->compile();
-		BELL_LOG("Compiling shaders at pipeline compile time, possible stall")
-	}
-
-	const VulkanShader& VkShader = static_cast<const VulkanShader&>(*mPipelineDescription.mComputeShader.getBase());
+    const VulkanShader& VkShader = static_cast<const VulkanShader&>(*mComputeShader.getBase());
 	vk::PipelineShaderStageCreateInfo computeShaderInfo{};
 	computeShaderInfo.setModule(VkShader.getShaderModule());
 	computeShaderInfo.setPName("main");
@@ -31,17 +109,58 @@ bool ComputePipeline::compile(const RenderTask&)
 }
 
 
+std::vector<vk::PipelineShaderStageCreateInfo> GraphicsPipeline::generateShaderStagesInfo()
+{
+    std::vector<vk::PipelineShaderStageCreateInfo> shaderStages;
+
+    vk::PipelineShaderStageCreateInfo vertexStage{};
+    vertexStage.setStage(vk::ShaderStageFlagBits::eVertex);
+    vertexStage.setPName("main"); //entry point of the shader
+    vertexStage.setModule(static_cast<const VulkanShader*>(mVertexShader.getBase())->getShaderModule());
+    shaderStages.push_back(vertexStage);
+
+    if (mGeometryShader)
+    {
+        vk::PipelineShaderStageCreateInfo geometryStage{};
+        geometryStage.setStage(vk::ShaderStageFlagBits::eGeometry);
+        geometryStage.setPName("main"); //entry point of the shader
+        geometryStage.setModule(static_cast<const VulkanShader*>(mGeometryShader->getBase())->getShaderModule());
+        shaderStages.push_back(geometryStage);
+    }
+
+    if (mTessEvalShader)
+    {
+        vk::PipelineShaderStageCreateInfo hullStage{};
+        hullStage.setStage(vk::ShaderStageFlagBits::eTessellationControl);
+        hullStage.setPName("main"); //entry point of the shader
+        hullStage.setModule(static_cast<const VulkanShader*>(mTessEvalShader->getBase())->getShaderModule());
+        shaderStages.push_back(hullStage);
+    }
+
+    if (mTessControlShader)
+    {
+        vk::PipelineShaderStageCreateInfo tesseStage{};
+        tesseStage.setStage(vk::ShaderStageFlagBits::eTessellationEvaluation);
+        tesseStage.setPName("main"); //entry point of the shader
+        tesseStage.setModule(static_cast<const VulkanShader*>(mTessControlShader->getBase())->getShaderModule());
+        shaderStages.push_back(tesseStage);
+    }
+
+    vk::PipelineShaderStageCreateInfo fragmentStage{};
+    fragmentStage.setStage(vk::ShaderStageFlagBits::eFragment);
+    fragmentStage.setPName("main"); //entry point of the shader
+    fragmentStage.setModule(static_cast<const VulkanShader*>(mFragmentShader.getBase())->getShaderModule());
+    shaderStages.push_back(fragmentStage);
+
+    return shaderStages;
+}
+
+
 bool GraphicsPipeline::compile(const RenderTask&)
 {
 	VulkanRenderDevice* device = static_cast<VulkanRenderDevice*>(getDevice());
 
-	std::vector<vk::PipelineShaderStageCreateInfo> shaderInfo = device->generateShaderStagesInfo(mPipelineDescription);
-
-	std::vector<vk::PipelineShaderStageCreateInfo> indexedShaderInfo;
-	if (mPipelineDescription.mInstancedVertexShader)
-	{
-		indexedShaderInfo = device->generateIndexedShaderStagesInfo(mPipelineDescription);
-	}
+    std::vector<vk::PipelineShaderStageCreateInfo> shaderInfo = generateShaderStagesInfo();
 
 	const vk::PrimitiveTopology topology = [primitiveType = mPipelineDescription.mPrimitiveType]()
 	{
@@ -152,13 +271,6 @@ bool GraphicsPipeline::compile(const RenderTask&)
 
 	mPipeline = device->createPipeline(pipelineCreateInfo);
 
-	if (mPipelineDescription.mInstancedVertexShader)
-	{
-		// Now resuse most of the state to create the index variant
-		pipelineCreateInfo.setStageCount(static_cast<uint32_t>(indexedShaderInfo.size()));
-		pipelineCreateInfo.setPStages(indexedShaderInfo.data());
-		mInstancedVariant = device->createPipeline(pipelineCreateInfo);
-	}
 	return true;
 }
 

@@ -14,20 +14,19 @@ const char kLightProbeIndexBuffer[] = "LightProbeIndex";
 
 ViaualizeLightProbesTechnique::ViaualizeLightProbesTechnique(Engine* eng, RenderGraph& graph) :
     Technique("VisualizeLightProbes", eng->getDevice()),
-    mIrradianceProbePipeline{eng->getShader("./Shaders/LightProbeVis.vert"),
-          eng->getShader("./Shaders/LightProbeVis.frag"),
-          Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
+    mIrradianceProbePipeline{Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
                 getDevice()->getSwapChain()->getSwapChainImageHeight()},
           Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
           getDevice()->getSwapChain()->getSwapChainImageHeight()},
           true, BlendMode::None, BlendMode::None, false, DepthTest::GreaterEqual, Primitive::TriangleList},
-    mIrradianceVolumePipeline{eng->getShader("./Shaders/LightProbeVis.vert"),
-          eng->getShader("./Shaders/LightProbeVolumeVis.frag"),
-          Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
+    mIrradianceVolumePipeline{Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
                 getDevice()->getSwapChain()->getSwapChainImageHeight()},
           Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
           getDevice()->getSwapChain()->getSwapChainImageHeight()},
           true, BlendMode::None, BlendMode::None, false, DepthTest::GreaterEqual, Primitive::TriangleList},
+    mLightProbeVisVertexShader(eng->getShader("./Shaders/LightProbeVis.vert")),
+    mLigthProbeVisFragmentShader(eng->getShader("./Shaders/LightProbeVis.frag")),
+    mLigthVolumeVisFragmentShader(eng->getShader("./Shaders/LightProbeVolumeVis.frag")),
     mTaskID{-1},
     mVertexBuffer(eng->getDevice(), BufferUsage::Vertex | BufferUsage::TransferDest, eng->getUnitSphereMesh().getVertexData().size(),
                   eng->getUnitSphereMesh().getVertexData().size(), "LightProbe vertex buffer"),
@@ -48,7 +47,7 @@ ViaualizeLightProbesTechnique::ViaualizeLightProbesTechnique(Engine* eng, Render
         task.addOutput(kGlobalLighting, AttachmentType::RenderTarget2D, Format::RGBA8UNorm);
         task.addOutput(kGBufferDepth, AttachmentType::Depth, Format::D32Float);
         task.setRecordCommandsCallback(
-                    [this](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+                    [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
                     {
                         struct PushConstants
                         {
@@ -58,6 +57,9 @@ ViaualizeLightProbesTechnique::ViaualizeLightProbesTechnique(Engine* eng, Render
 
                         exec->bindIndexBuffer(mIndexBuffer, 0);
                         exec->bindVertexBuffer(mVertexBuffer, 0);
+
+                        const RenderTask& task = graph.getTask(taskIndex);
+                        exec->setGraphicsShaders(static_cast<const GraphicsTask&>(task), graph, mLightProbeVisVertexShader, nullptr, nullptr, nullptr, mLigthProbeVisFragmentShader);
 
                         const float3 sceneSize = eng->getScene()->getBounds().getSideLengths();
                         float maxScale = 0.01f * std::max(sceneSize.x, std::max(sceneSize.y, sceneSize.z));
@@ -89,7 +91,7 @@ ViaualizeLightProbesTechnique::ViaualizeLightProbesTechnique(Engine* eng, Render
         task.addOutput(kGlobalLighting, AttachmentType::RenderTarget2D, Format::RGBA8UNorm);
         task.addOutput(kGBufferDepth, AttachmentType::Depth, Format::D32Float);
         task.setRecordCommandsCallback(
-                    [this](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+                    [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
                     {
                         struct PushConstants
                         {
@@ -99,6 +101,9 @@ ViaualizeLightProbesTechnique::ViaualizeLightProbesTechnique(Engine* eng, Render
 
                         exec->bindIndexBuffer(mIndexBuffer, 0);
                         exec->bindVertexBuffer(mVertexBuffer, 0);
+
+                        const RenderTask& task = graph.getTask(taskIndex);
+                        exec->setGraphicsShaders(static_cast<const GraphicsTask&>(task), graph, mLightProbeVisVertexShader, nullptr, nullptr, nullptr, mLigthVolumeVisFragmentShader);
 
                         const float3 sceneSize = eng->getScene()->getBounds().getSideLengths();
                         float maxScale = 0.01f * std::max(sceneSize.x, std::max(sceneSize.y, sceneSize.z));

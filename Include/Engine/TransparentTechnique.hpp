@@ -27,6 +27,8 @@ public:
 private:
 
     GraphicsPipelineDescription mPipelineDescription;
+    Shader mTransparentVertexShader;
+    Shader mTransparentFragmentShader;
     TaskID mTaskID;
 };
 

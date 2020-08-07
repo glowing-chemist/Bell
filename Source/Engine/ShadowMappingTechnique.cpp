@@ -7,16 +7,16 @@
 
 ShadowMappingTechnique::ShadowMappingTechnique(Engine* eng, RenderGraph& graph) :
     Technique("ShadowMapping", eng->getDevice()),
-    mDesc(eng->getShader("./Shaders/ShadowMap.vert"),
-          eng->getShader("./Shaders/VarianceShadowMap.frag"),
-          Rect{getDevice()->getSwapChain()->getSwapChainImageWidth() * 2,
+    mDesc(Rect{getDevice()->getSwapChain()->getSwapChainImageWidth() * 2,
                 getDevice()->getSwapChain()->getSwapChainImageHeight() * 2},
           Rect{getDevice()->getSwapChain()->getSwapChainImageWidth() * 2,
           getDevice()->getSwapChain()->getSwapChainImageHeight() * 2},
         true, BlendMode::None, BlendMode::None, true, DepthTest::LessEqual, Primitive::TriangleList),
-    mBlurXDesc{ eng->getShader("Shaders/blurXrg32f.comp") },
-    mBlurYDesc{ eng->getShader("Shaders/blurYrg32f.comp") },
-    mResolveDesc{eng->getShader("./Shaders/ResolveVarianceShadowMap.comp")},
+    mShadowMapVertexShader(eng->getShader("./Shaders/ShadowMap.vert")),
+    mShadowMapFragmentShader(eng->getShader("./Shaders/VarianceShadowMap.frag")),
+    mBlurXShader( eng->getShader("Shaders/blurXrg32f.comp") ),
+    mBlurYShader( eng->getShader("Shaders/blurYrg32f.comp") ),
+    mResolveShader(eng->getShader("./Shaders/ResolveVarianceShadowMap.comp")),
 
     mShadowMap(getDevice(), Format::R8UNorm, ImageUsage::Storage | ImageUsage::Sampled, getDevice()->getSwapChain()->getSwapChainImageWidth(), getDevice()->getSwapChain()->getSwapChainImageHeight(),
                1, 1, 1, 1, "ShadowMap"),
@@ -43,19 +43,19 @@ ShadowMappingTechnique::ShadowMappingTechnique(Engine* eng, RenderGraph& graph) 
     shadowTask.addOutput("ShadowMapDepth", AttachmentType::Depth, Format::D32Float, SizeClass::DoubleSwapchain, LoadOp::Clear_White, StoreOp::Discard);
     mShadowTask = graph.addTask(shadowTask);
 
-    ComputeTask blurXTask{ "ShadowMapBlurX", mBlurXDesc };
+    ComputeTask blurXTask{ "ShadowMapBlurX" };
     blurXTask.addInput(kShadowMapRaw, AttachmentType::Texture2D);
     blurXTask.addInput(kShadowMapBlurIntermediate, AttachmentType::Image2D);
     blurXTask.addInput(kDefaultSampler, AttachmentType::Sampler);
     mBlurXTaskID = graph.addTask(blurXTask);
 
-    ComputeTask blurYTask{ "ShadowMapBlurY", mBlurYDesc };
+    ComputeTask blurYTask{ "ShadowMapBlurY" };
     blurYTask.addInput(kShadowMapBlurIntermediate, AttachmentType::Texture2D);
     blurYTask.addInput(kShadowMapBlured, AttachmentType::Image2D);
     blurYTask.addInput(kDefaultSampler, AttachmentType::Sampler);
     mBlurYTaskID = graph.addTask(blurYTask);
 
-    ComputeTask resolveTask{ "Resolve shadow mapping", mResolveDesc };
+    ComputeTask resolveTask{ "Resolve shadow mapping" };
     resolveTask.addInput(kGBufferDepth, AttachmentType::Texture2D);
     resolveTask.addInput(kShadowMapBlured, AttachmentType::Texture2D);
     resolveTask.addInput(kShadowMap, AttachmentType::Image2D);
@@ -81,7 +81,7 @@ void ShadowMappingTechnique::render(RenderGraph& graph, Engine*)
     ComputeTask& resolveTask = static_cast<ComputeTask&>(graph.getTask(mResolveTaskID));
 
     shadowTask.setRecordCommandsCallback(
-        [](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+        [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
         {
             const Frustum lightFrustum = eng->getScene()->getShadowingLightFrustum();
             std::vector<const MeshInstance*> meshes = eng->getScene()->getViewableMeshes(lightFrustum);
@@ -98,6 +98,9 @@ void ShadowMappingTechnique::render(RenderGraph& graph, Engine*)
 
             exec->bindIndexBuffer(eng->getIndexBuffer(), 0);
             exec->bindVertexBuffer(eng->getVertexBuffer(), 0);
+
+            const RenderTask& task = graph.getTask(taskIndex);
+            exec->setGraphicsShaders(static_cast<const GraphicsTask&>(task), graph, mShadowMapVertexShader, nullptr, nullptr, nullptr, mShadowMapFragmentShader);
 
             for (const auto& mesh : meshes)
             {
@@ -116,8 +119,11 @@ void ShadowMappingTechnique::render(RenderGraph& graph, Engine*)
     );
 
     blurXTask.setRecordCommandsCallback(
-        [](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+        [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
         {
+            const RenderTask& task = graph.getTask(taskIndex);
+            exec->setComputeShader(static_cast<const ComputeTask&>(task), graph, mBlurXShader);
+
             const float threadGroupWidth = eng->getSwapChainImageView()->getImageExtent().width;
             const float threadGroupHeight = eng->getSwapChainImageView()->getImageExtent().height;
 
@@ -126,8 +132,11 @@ void ShadowMappingTechnique::render(RenderGraph& graph, Engine*)
     );
 
     blurYTask.setRecordCommandsCallback(
-        [](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+        [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
         {
+            const RenderTask& task = graph.getTask(taskIndex);
+            exec->setComputeShader(static_cast<const ComputeTask&>(task), graph, mBlurYShader);
+
             const float threadGroupWidth = eng->getSwapChainImageView()->getImageExtent().width;
             const float threadGroupHeight = eng->getSwapChainImageView()->getImageExtent().height;
 
@@ -136,8 +145,11 @@ void ShadowMappingTechnique::render(RenderGraph& graph, Engine*)
     );
 
     resolveTask.setRecordCommandsCallback(
-        [](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+        [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
         {
+            const RenderTask& task = graph.getTask(taskIndex);
+            exec->setComputeShader(static_cast<const ComputeTask&>(task), graph, mResolveShader);
+
             const float threadGroupWidth = eng->getSwapChainImageView()->getImageExtent().width;
             const float threadGroupHeight = eng->getSwapChainImageView()->getImageExtent().height;
 
@@ -157,9 +169,9 @@ RayTracedShadowsTechnique::RayTracedShadowsTechnique(Engine* eng, RenderGraph& g
                 mShadowMap(getDevice(), Format::R8UNorm, ImageUsage::Storage | ImageUsage::Sampled, getDevice()->getSwapChain()->getSwapChainImageWidth(), getDevice()->getSwapChain()->getSwapChainImageHeight(),
                            1, 1, 1, 1, "ShadowMap"),
                 mShadowMapView(mShadowMap, ImageViewType::Colour),
-                mPipeline{eng->getShader("./Shaders/RayTracedShadows.comp")}
+                mRayTracedShadowsShader(eng->getShader("./Shaders/RayTracedShadows.comp"))
 {
-    ComputeTask task("RayTracedShadows", mPipeline);
+    ComputeTask task("RayTracedShadows");
     task.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
     task.addInput(kGBufferDepth, AttachmentType::Texture2D);
     task.addInput(kDefaultSampler, AttachmentType::Sampler);
@@ -168,8 +180,11 @@ RayTracedShadowsTechnique::RayTracedShadowsTechnique(Engine* eng, RenderGraph& g
     task.addInput(kBVH, AttachmentType::ShaderResourceSet);
 
     task.setRecordCommandsCallback(
-        [](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+        [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
         {
+            const RenderTask& task = graph.getTask(taskIndex);
+            exec->setComputeShader(static_cast<const ComputeTask&>(task), graph, mRayTracedShadowsShader);
+
             const float threadGroupWidth = eng->getSwapChainImageView()->getImageExtent().width / 4;
             const float threadGroupHeight = eng->getSwapChainImageView()->getImageExtent().height / 4;
 

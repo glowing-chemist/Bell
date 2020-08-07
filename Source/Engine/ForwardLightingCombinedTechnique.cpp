@@ -9,13 +9,13 @@ constexpr const char kForwardPoitnSampler[] = "ForwardPointSampler";
 
 ForwardCombinedLightingTechnique::ForwardCombinedLightingTechnique(Engine* eng, RenderGraph& graph) :
 	Technique("ForwardCombinedLighting", eng->getDevice()),
-    mDesc{ eng->getShader("./Shaders/ForwardMaterial.vert"),
-		  eng->getShader("./Shaders/ForwardCombinedLighting.frag"),
-		  Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
+    mDesc{Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
 			   getDevice()->getSwapChain()->getSwapChainImageHeight()},
 		  Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
 			   getDevice()->getSwapChain()->getSwapChainImageHeight()},
 			   true, BlendMode::None, BlendMode::None, false, DepthTest::GreaterEqual, Primitive::TriangleList },
+    mForwardCombinedVertexShader(eng->getShader("./Shaders/ForwardMaterial.vert")),
+    mForwardCombinedFragmentShader(eng->getShader("./Shaders/ForwardCombinedLighting.frag")),
 	mPointSampler(SamplerType::Point)
 {
 	GraphicsTask task{ "ForwardCombinedLighting", mDesc };
@@ -51,10 +51,13 @@ ForwardCombinedLightingTechnique::ForwardCombinedLightingTechnique(Engine* eng, 
     if(eng->isPassRegistered(PassType::OcclusionCulling))
     {
         task.setRecordCommandsCallback(
-            [](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>& meshes)
+            [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>& meshes)
             {
                 exec->bindIndexBuffer(eng->getIndexBuffer(), 0);
                 exec->bindVertexBuffer(eng->getVertexBuffer(), 0);
+
+                const RenderTask& task = graph.getTask(taskIndex);
+                exec->setGraphicsShaders(static_cast<const GraphicsTask&>(task), graph, mForwardCombinedVertexShader, nullptr, nullptr, nullptr, mForwardCombinedFragmentShader);
 
                 const BufferView& pred = eng->getRenderGraph().getBuffer(kOcclusionPredicationBuffer);
 
@@ -82,10 +85,13 @@ ForwardCombinedLightingTechnique::ForwardCombinedLightingTechnique(Engine* eng, 
     else
     {
         task.setRecordCommandsCallback(
-            [](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>& meshes)
+            [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>& meshes)
             {
                 exec->bindIndexBuffer(eng->getIndexBuffer(), 0);
                 exec->bindVertexBuffer(eng->getVertexBuffer(), 0);
+
+                const RenderTask& task = graph.getTask(taskIndex);
+                exec->setGraphicsShaders(static_cast<const GraphicsTask&>(task), graph, mForwardCombinedVertexShader, nullptr, nullptr, nullptr, mForwardCombinedFragmentShader);
 
                 for (const auto& mesh : meshes)
                 {

@@ -22,7 +22,7 @@ public:
     std::string getDepthName() const
     { return kGBufferDepth; }
 
-    virtual void bindResources(RenderGraph& graph) override final {}
+    virtual void bindResources(RenderGraph&) override final {}
 
     virtual void render(RenderGraph&, Engine*) override final {}
 
@@ -30,6 +30,10 @@ public:
 private:
 
     GraphicsPipelineDescription mPipelineDescription;
+
+    Shader mPreDepthVertexShader;
+    Shader mPreDepthFragmentShader;
+
     TaskID mTaskID;
 };
 

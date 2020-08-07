@@ -45,6 +45,18 @@ public:
 
     virtual void copyDataToBuffer(const void*, const size_t size, const size_t offset, Buffer&) override;
 
+    virtual void setGraphicsShaders(const GraphicsTask &task,
+                                    const RenderGraph& graph,
+                                    const Shader& vertexShader,
+                                    const Shader* geometryShader,
+                                    const Shader* tessControl,
+                                    const Shader* tessEval,
+                                    const Shader& fragmentShader) override;
+
+    virtual void setComputeShader(const ComputeTask& task,
+                                  const RenderGraph& graph,
+                                  const Shader&) override;
+
     virtual uint32_t getRecordedCommandCount() override
     {
         return mRecordedCommands;

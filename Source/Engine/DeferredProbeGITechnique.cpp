@@ -6,12 +6,12 @@
 
 DeferredProbeGITechnique::DeferredProbeGITechnique(Engine* eng, RenderGraph& graph) :
     Technique("DeferredProbeGI", eng->getDevice()),
-    mPipelineDesc{ eng->getShader("./Shaders/FullScreenTriangle.vert")
-              ,eng->getShader("./Shaders/DeferredProbeGI.frag"),
-              Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
+    mPipelineDesc{Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
                     getDevice()->getSwapChain()->getSwapChainImageHeight()},
               Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
-              getDevice()->getSwapChain()->getSwapChainImageHeight()} }
+              getDevice()->getSwapChain()->getSwapChainImageHeight()} },
+    mProbeVertexShader(eng->getShader("./Shaders/FullScreenTriangle.vert")),
+    mProbeFragmentShader(eng->getShader("./Shaders/DeferredProbeGI.frag"))
 {
     GraphicsTask task{"DeferredProbeGI", mPipelineDesc};
     task.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
@@ -32,8 +32,11 @@ DeferredProbeGITechnique::DeferredProbeGITechnique(Engine* eng, RenderGraph& gra
         SizeClass::Swapchain, LoadOp::Clear_Black);
 
     task.setRecordCommandsCallback(
-        [](Executor* exec, Engine*, const std::vector<const MeshInstance*>&)
+        [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine*, const std::vector<const MeshInstance*>&)
         {
+            const RenderTask& task = graph.getTask(taskIndex);
+            exec->setGraphicsShaders(static_cast<const GraphicsTask&>(task), graph, mProbeVertexShader, nullptr, nullptr, nullptr, mProbeFragmentShader);
+
             exec->draw(0, 3);
         }
     );

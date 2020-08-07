@@ -18,9 +18,7 @@ OverlayTechnique::OverlayTechnique(Engine* eng, RenderGraph& graph) :
     mOverlayerVertexBufferView((mOverlayVertexBuffer)),
     mOverlayIndexBuffer(getDevice(), BufferUsage::Index | BufferUsage::TransferDest, 1024 * 1024, 1024 * 1024, "Overlay Index Buffer"),
     mOverlayerIndexBufferView((mOverlayIndexBuffer)),
-	mPipelineDescription(eng->getShader("./Shaders/Overlay.vert"),
-						 eng->getShader("./Shaders/Overlay.frag"),
-						 Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
+    mPipelineDescription(Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
 							   getDevice()->getSwapChain()->getSwapChainImageHeight()},
 						 Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
 						 getDevice()->getSwapChain()->getSwapChainImageHeight()},
@@ -29,7 +27,9 @@ OverlayTechnique::OverlayTechnique(Engine* eng, RenderGraph& graph) :
 						 BlendMode::None,
 						 false, // no depth writes
 						 DepthTest::None,
-						 Primitive::TriangleList)
+                         Primitive::TriangleList),
+    mOverlayVertexShader(eng->getShader("./Shaders/Overlay.vert")),
+    mOverlayFragmentShader(eng->getShader("./Shaders/Overlay.frag"))
 {
 	ImGuiIO& io = ImGui::GetIO();
 
@@ -48,11 +48,43 @@ OverlayTechnique::OverlayTechnique(Engine* eng, RenderGraph& graph) :
 	task.addInput(kOverlayIndex, AttachmentType::IndexBuffer);
 	task.addOutput(kOverlay, AttachmentType::RenderTarget2D, eng->getSwapChainImage()->getFormat(), SizeClass::Swapchain, LoadOp::Clear_Black);
 
+    task.setRecordCommandsCallback(
+        [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine*, const std::vector<const MeshInstance*>&)
+        {
+            ImDrawData* drawData = ImGui::GetDrawData();
+            if (drawData)
+            {
+                exec->bindIndexBuffer(*this->mOverlayerIndexBufferView, 0);
+                exec->bindVertexBuffer(*this->mOverlayerVertexBufferView, 0);
+
+                const RenderTask& task = graph.getTask(taskIndex);
+                exec->setGraphicsShaders(static_cast<const GraphicsTask&>(task), graph, mOverlayVertexShader, nullptr, nullptr, nullptr, mOverlayFragmentShader);
+
+                // Render command lists
+                uint32_t vertexOffset = 0;
+                uint32_t indexOffset = 0;
+                for (int n = 0; n < drawData->CmdListsCount; n++)
+                {
+                    const ImDrawList* cmd_list = drawData->CmdLists[n];
+                    for (int cmd_i = 0; cmd_i < cmd_list->CmdBuffer.Size; cmd_i++)
+                    {
+                        const ImDrawCmd* pcmd = &cmd_list->CmdBuffer[cmd_i];
+
+                        exec->indexedDraw(vertexOffset, indexOffset, pcmd->ElemCount);
+
+                        indexOffset += pcmd->ElemCount;
+                    }
+                    vertexOffset += cmd_list->VtxBuffer.Size;
+                }
+            }
+        }
+    );
+
 	mTaskID = graph.addTask(task);
 }
 
 
-void OverlayTechnique::render(RenderGraph& graph, Engine*)
+void OverlayTechnique::render(RenderGraph&, Engine*)
 {
 	(*mOverlayUniformBuffer)->updateLastAccessed();
 	mFontTexture->updateLastAccessed();
@@ -103,37 +135,6 @@ void OverlayTechnique::render(RenderGraph& graph, Engine*)
 			mOverlayIndexBuffer.get()->setContents(indexData.data(), indexData.size() * sizeof(uint32_t));
 		}
 	}
-
-	GraphicsTask& task = static_cast<GraphicsTask&>(graph.getTask(mTaskID));
-
-	task.setRecordCommandsCallback(
-		[this](Executor* exec, Engine*, const std::vector<const MeshInstance*>&)
-		{
-			ImDrawData* drawData = ImGui::GetDrawData();
-			if (drawData)
-			{
-				exec->bindIndexBuffer(*this->mOverlayerIndexBufferView, 0);
-				exec->bindVertexBuffer(*this->mOverlayerVertexBufferView, 0);
-
-				// Render command lists
-				uint32_t vertexOffset = 0;
-				uint32_t indexOffset = 0;
-				for (int n = 0; n < drawData->CmdListsCount; n++)
-				{
-					const ImDrawList* cmd_list = drawData->CmdLists[n];
-					for (int cmd_i = 0; cmd_i < cmd_list->CmdBuffer.Size; cmd_i++)
-					{
-						const ImDrawCmd* pcmd = &cmd_list->CmdBuffer[cmd_i];
-
-						exec->indexedDraw(vertexOffset, indexOffset, pcmd->ElemCount);
-
-						indexOffset += pcmd->ElemCount;
-					}
-					vertexOffset += cmd_list->VtxBuffer.Size;
-				}
-			}
-		}
-	);
 }
 
 void OverlayTechnique::bindResources(RenderGraph& graph)

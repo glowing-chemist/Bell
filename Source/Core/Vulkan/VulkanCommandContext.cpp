@@ -29,7 +29,7 @@ void VulkanCommandContext::setupState(const RenderGraph& graph, uint32_t taskInd
     vulkanResources resources = device->getTaskResources(graph, taskIndex, prefixHash);
 
     VulkanExecutor* VKExec = static_cast<VulkanExecutor*>(exec);
-    VKExec->setPipelineLayout(resources.mPipeline->getLayoutHandle());
+    VKExec->setPipelineLayout(resources.mPipelineTemplate->getLayoutHandle());
     vk::CommandBuffer cmdBuffer = VKExec->getCommandBuffer();
 
     vk::PipelineBindPoint bindPoint = vk::PipelineBindPoint::eCompute;
@@ -77,9 +77,7 @@ void VulkanCommandContext::setupState(const RenderGraph& graph, uint32_t taskInd
     std::vector<vk::DescriptorSet> descriptorSets = mDescriptorManager.getDescriptors(graph, taskIndex, resources.mDescSetLayout[0]);
     mDescriptorManager.writeDescriptors(graph, taskIndex, descriptorSets[0]);
 
-    cmdBuffer.bindPipeline(bindPoint, resources.mPipeline->getHandle());
-
-    cmdBuffer.bindDescriptorSets(bindPoint, resources.mPipeline->getLayoutHandle(), 0, descriptorSets.size(), descriptorSets.data(), 0, nullptr);
+    cmdBuffer.bindDescriptorSets(bindPoint, resources.mPipelineTemplate->getLayoutHandle(), 0, descriptorSets.size(), descriptorSets.data(), 0, nullptr);
 }
 
 

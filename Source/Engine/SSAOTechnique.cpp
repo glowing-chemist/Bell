@@ -43,14 +43,14 @@ namespace
 
 SSAOTechnique::SSAOTechnique(Engine* eng, RenderGraph& graph) :
 	Technique{"SSAO", eng->getDevice()},
-    	mPipelineDesc{eng->getShader("Shaders/FullScreenTriangle.vert")
-                  ,eng->getShader("Shaders/SSAO.frag"),
-				  Rect{getDevice()->getSwapChain()->getSwapChainImageWidth() / 2,
+        mPipelineDesc{  Rect{getDevice()->getSwapChain()->getSwapChainImageWidth() / 2,
 						getDevice()->getSwapChain()->getSwapChainImageHeight() / 2},
 				  Rect{getDevice()->getSwapChain()->getSwapChainImageWidth() / 2,
 				  getDevice()->getSwapChain()->getSwapChainImageHeight() / 2}},
-    mBlurXDesc{eng->getShader("Shaders/blurXR8.comp")},
-    mBlurYDesc{eng->getShader("Shaders/blurYR8.comp")},
+    mFulllscreenTriangleShader(eng->getShader("Shaders/FullScreenTriangle.vert")),
+    mSSAOShader(eng->getShader("Shaders/SSAO.frag")),
+    mBlurXShader(eng->getShader("Shaders/blurXR8.comp")),
+    mBlurYShader(eng->getShader("Shaders/blurYR8.comp")),
     mSSAOBuffer(getDevice(), BufferUsage::Uniform, sizeof(SSAOBuffer), sizeof(SSAOBuffer), "SSAO Offsets"),
     mSSAOBufferView(mSSAOBuffer),
     mSSAO(getDevice(), Format::R8UNorm, ImageUsage::Sampled | ImageUsage::Storage, getDevice()->getSwapChain()->getSwapChainImageWidth() / 2,
@@ -73,8 +73,11 @@ SSAOTechnique::SSAOTechnique(Engine* eng, RenderGraph& graph) :
     task.addOutput(kSSAORough, AttachmentType::RenderTarget2D, Format::R8UNorm, SizeClass::HalfSwapchain, LoadOp::Nothing);
 
     task.setRecordCommandsCallback(
-        [](Executor* exec, Engine*, const std::vector<const MeshInstance*>&)
+        [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine*, const std::vector<const MeshInstance*>&)
         {
+            const RenderTask& task = graph.getTask(taskIndex);
+            exec->setGraphicsShaders(static_cast<const GraphicsTask&>(task), graph, mFulllscreenTriangleShader, nullptr, nullptr, nullptr, mSSAOShader);
+
             exec->draw(0, 3);
         }
     );
@@ -106,14 +109,14 @@ void SSAOTechnique::render(RenderGraph&, Engine*)
 
 SSAOImprovedTechnique::SSAOImprovedTechnique(Engine* eng, RenderGraph& graph) :
     Technique{ "SSAO", eng->getDevice() },
-    mPipelineDesc{ eng->getShader("Shaders/FullScreenTriangle.vert")
-              ,eng->getShader("Shaders/SSAOImproved.frag"),
-              Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
+    mPipelineDesc{ Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
                     getDevice()->getSwapChain()->getSwapChainImageHeight()},
               Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
               getDevice()->getSwapChain()->getSwapChainImageHeight()} },
-    mBlurXDesc{eng->getShader("Shaders/blurXR8.comp")},
-    mBlurYDesc{eng->getShader("Shaders/blurYR8.comp")},
+    mFulllscreenTriangleShader(eng->getShader("Shaders/FullScreenTriangle.vert")),
+    mSSAOShader(eng->getShader("Shaders/SSAOImproved.frag")),
+    mBlurXShader(eng->getShader("Shaders/blurXR8.comp")),
+    mBlurYShader(eng->getShader("Shaders/blurYR8.comp")),
     mSSAOBuffer(getDevice(), BufferUsage::Uniform, sizeof(SSAOBuffer), sizeof(SSAOBuffer), "SSAO Offsets"),
     mSSAOBufferView(mSSAOBuffer),
     mSSAO(getDevice(), Format::R8UNorm, ImageUsage::Sampled | ImageUsage::Storage, getDevice()->getSwapChain()->getSwapChainImageWidth(),
@@ -136,8 +139,11 @@ SSAOImprovedTechnique::SSAOImprovedTechnique(Engine* eng, RenderGraph& graph) :
     task.addOutput(kSSAORough, AttachmentType::RenderTarget2D, Format::R8UNorm, SizeClass::Swapchain, LoadOp::Nothing);
 
     task.setRecordCommandsCallback(
-        [](Executor* exec, Engine*, const std::vector<const MeshInstance*>&)
+        [this ](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine*, const std::vector<const MeshInstance*>&)
         {
+            const RenderTask& task = graph.getTask(taskIndex);
+            exec->setGraphicsShaders(static_cast<const GraphicsTask&>(task), graph, mFulllscreenTriangleShader, nullptr, nullptr, nullptr, mSSAOShader);
+
             exec->draw(0, 3);
         }
     );

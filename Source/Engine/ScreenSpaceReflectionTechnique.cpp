@@ -14,8 +14,6 @@ ScreenSpaceReflectionTechnique::ScreenSpaceReflectionTechnique(Engine* eng, Rend
     const auto viewPortY = eng->getSwapChainImage()->getExtent(0, 0).height / 2;
 	GraphicsPipelineDescription desc
 	(
-		eng->getShader("./Shaders/FullScreenTriangle.vert"),
-		eng->getShader("./Shaders/ScreenSpaceReflection.frag"),
         Rect{ viewPortX, viewPortY },
 		Rect{ viewPortX, viewPortY }
 	);
@@ -34,8 +32,13 @@ ScreenSpaceReflectionTechnique::ScreenSpaceReflectionTechnique(Engine* eng, Rend
 
     task.setVertexAttributes(0);
     task.setRecordCommandsCallback(
-      [](Executor* exec, Engine*, const std::vector<const MeshInstance*>&)
+      [](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
         {
+            Shader vertexShader = eng->getShader("./Shaders/FullScreenTriangle.vert");
+            Shader fragmentShader = eng->getShader("./Shaders/FullScreenTriangle.vert");
+            const RenderTask& task = graph.getTask(taskIndex);
+            exec->setGraphicsShaders(static_cast<const GraphicsTask&>(task), graph, vertexShader, nullptr, nullptr, nullptr, fragmentShader);
+
             exec->draw(0, 3);
         }
     );
@@ -65,9 +68,7 @@ RayTracedReflectionTechnique::RayTracedReflectionTechnique(Engine* eng, RenderGr
     mReflectionMapView(mReflectionMap, ImageViewType::Colour),
     mSampleNumber(0)
 {
-    ComputePipelineDescription pipelineDesc{eng->getShader("./Shaders/RayTracedReflections.comp")};
-
-    ComputeTask task("Ray traced reflections", pipelineDesc);
+    ComputeTask task("Ray traced reflections");
     task.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
     task.addInput(kGBufferNormals, AttachmentType::Texture2D);
     task.addInput(kGBufferSpecularRoughness, AttachmentType::Texture2D);
@@ -81,8 +82,12 @@ RayTracedReflectionTechnique::RayTracedReflectionTechnique(Engine* eng, RenderGr
     task.addInput(kBVH, AttachmentType::ShaderResourceSet);
 
     task.setRecordCommandsCallback(
-                [this](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+                [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
                 {
+                    Shader computeShader = eng->getShader("./Shaders/RayTracedReflections.comp");
+                    const RenderTask& task = graph.getTask(taskIndex);
+                    exec->setComputeShader(static_cast<const ComputeTask&>(task), graph, computeShader);
+
                     const uint32_t width =  eng->getDevice()->getSwapChain()->getSwapChainImageWidth() / 4;
                     const uint32_t height =  eng->getDevice()->getSwapChain()->getSwapChainImageHeight() / 4;
 

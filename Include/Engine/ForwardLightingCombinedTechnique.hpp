@@ -25,6 +25,10 @@ public:
 private:
 
 	GraphicsPipelineDescription mDesc;
+
+    Shader mForwardCombinedVertexShader;
+    Shader mForwardCombinedFragmentShader;
+
 	TaskID mTaskID;
 
 	Sampler mPointSampler;

@@ -24,7 +24,7 @@ public:
 
 private:
 
-    ComputePipelineDescription mPipelineDesc;
+    Shader mOcclusionCullingShader;
 
     PerFrameResource<Buffer> mBoundsIndexBuffer;
     PerFrameResource<BufferView> mBoundsIndexBufferView;

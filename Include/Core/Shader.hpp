@@ -19,7 +19,7 @@ class ShaderBase : public DeviceChild
 {
 public:
 
-	ShaderBase(RenderDevice*, const std::string&);
+    ShaderBase(RenderDevice*, const std::string&, const uint64_t prefixHash);
     virtual ~ShaderBase() = default;
 
 	virtual bool compile(const std::vector<std::string>& prefix = {}) = 0;
@@ -32,6 +32,11 @@ public:
 	std::string getFilePath() const
         { return mFilePath.string(); }
 
+    uint64_t getPrefixHash() const
+    {
+        return mPrefixHash;
+    }
+
 protected:
 
     std::vector<char> mSource;
@@ -42,6 +47,8 @@ protected:
     bool mCompiled;
 
 	fs::file_time_type mLastFileAccessTime;
+
+    uint64_t mPrefixHash; // The prefix hash when this shader was compiled.
 };
 
 
@@ -49,7 +56,7 @@ class Shader
 {
 public:
 
-	Shader(RenderDevice*, const std::string&);
+    Shader(RenderDevice*, const std::string&, const uint64_t prefixHash);
 	~Shader() = default;
 
 	ShaderBase* getBase()

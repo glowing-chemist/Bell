@@ -25,6 +25,10 @@ public:
 private:
 
     GraphicsPipelineDescription mPipelineDesc;
+
+    Shader mIBLVertexShader;
+    Shader mIBLFragmentShader;
+
     TaskID mTaskID;
 };
 

@@ -7,8 +7,7 @@
 
 TaskID addDeferredUpsampleTaskR8(const char* name, const char* input, const char* output, const uint2 outputSize, Engine* eng, RenderGraph& graph)
 {
-    ComputePipelineDescription pipeline{eng->getShader("./Shaders/BilaterialUpsample.comp")};
-    ComputeTask task{name, pipeline};
+    ComputeTask task{ name };
     task.addInput(input, AttachmentType::Texture2D);
     task.addInput(output, AttachmentType::Image2D);
     task.addInput(kDefaultSampler, AttachmentType::Sampler);
@@ -17,8 +16,12 @@ TaskID addDeferredUpsampleTaskR8(const char* name, const char* input, const char
     task.addInput(kGBufferNormals, AttachmentType::Texture2D);
 
     task.setRecordCommandsCallback(
-                [=](Executor* exec, Engine*, const std::vector<const MeshInstance*>&)
+                [=](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
                 {
+                    Shader upsampleShader = eng->getShader("./Shaders/BilaterialUpsample.comp");
+                    const RenderTask& task = graph.getTask(taskIndex);
+                    exec->setComputeShader(static_cast<const ComputeTask&>(task), graph, upsampleShader);
+
                     const float threadGroupWidth = outputSize.x;
                     const float threadGroupHeight = outputSize.y;
 
@@ -32,14 +35,17 @@ TaskID addDeferredUpsampleTaskR8(const char* name, const char* input, const char
 
 TaskID addBlurXTaskR8(const char* name, const char* input, const char* output, const uint2 outputSize, Engine* eng, RenderGraph& graph)
 {
-    ComputePipelineDescription pipeline{eng->getShader("./Shaders/blurXR8.comp")};
-    ComputeTask blurXTask{name, pipeline };
+    ComputeTask blurXTask{name};
     blurXTask.addInput(input, AttachmentType::Texture2D);
     blurXTask.addInput(output, AttachmentType::Image2D);
     blurXTask.addInput(kDefaultSampler, AttachmentType::Sampler);
     blurXTask.setRecordCommandsCallback(
-        [=](Executor* exec, Engine*, const std::vector<const MeshInstance*>&)
+        [=](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
         {
+            Shader blurXShader = eng->getShader("./Shaders/blurXR8.comp");
+            const RenderTask& task = graph.getTask(taskIndex);
+            exec->setComputeShader(static_cast<const ComputeTask&>(task), graph, blurXShader);
+
             exec->dispatch(std::ceil(outputSize.x / 256.0f), outputSize.y, 1.0f);
         }
     );
@@ -50,14 +56,17 @@ TaskID addBlurXTaskR8(const char* name, const char* input, const char* output, c
 
 TaskID addBlurYTaskR8(const char* name, const char* input, const char* output, const uint2 outputSize, Engine* eng, RenderGraph& graph)
 {
-    ComputePipelineDescription pipeline{eng->getShader("./Shaders/blurYR8.comp")};
-    ComputeTask blurYTask{ name, pipeline };
+    ComputeTask blurYTask{ name };
     blurYTask.addInput(input, AttachmentType::Texture2D);
     blurYTask.addInput(output, AttachmentType::Image2D);
     blurYTask.addInput(kDefaultSampler, AttachmentType::Sampler);
     blurYTask.setRecordCommandsCallback(
-        [=](Executor* exec, Engine*, const std::vector<const MeshInstance*>&)
+        [=](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine*, const std::vector<const MeshInstance*>&)
         {
+            Shader blurYShader = eng->getShader("./Shaders/blurYR8.comp");
+            const RenderTask& task = graph.getTask(taskIndex);
+            exec->setComputeShader(static_cast<const ComputeTask&>(task), graph, blurYShader);
+
             exec->dispatch(outputSize.x, std::ceil(outputSize.y / 256.0f), 1.0f);
         }
     );

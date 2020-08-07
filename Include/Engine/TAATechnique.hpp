@@ -33,7 +33,7 @@ private:
 
     Sampler mTAASAmpler;
 
-	ComputePipelineDescription mPipeline;
+    Shader                     mTAAShader;
 	TaskID					   mTaskID;
 
 	bool mFirstFrame;// need to perform some setup;

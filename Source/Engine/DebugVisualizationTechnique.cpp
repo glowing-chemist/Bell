@@ -9,13 +9,13 @@
 DebugAABBTechnique::DebugAABBTechnique(Engine* eng, RenderGraph& graph) :
     Technique("DebugAABB", eng->getDevice()),
     mTaskID{0},
-    mPipelineDesc{eng->getShader("./Shaders/DebugAABB.vert"),
-                  eng->getShader("./Shaders/DebugAABB.frag"),
-                  Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
+    mPipelineDesc{Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
                         getDevice()->getSwapChain()->getSwapChainImageHeight()},
                   Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
                   getDevice()->getSwapChain()->getSwapChainImageHeight()},
                   false, BlendMode::None, BlendMode::None, false, DepthTest::GreaterEqual, Primitive::LineList},
+    mDebugVisVertexShader(eng->getShader("./Shaders/DebugAABB.vert")),
+    mDebugVisFragmentShader(eng->getShader("./Shaders/DebugAABB.frag")),
     mVertexBuffer(getDevice(), BufferUsage::TransferDest | BufferUsage::Vertex, sizeof(float4) * 8, sizeof(float4) * 8),
     mVertexBufferView(mVertexBuffer),
     mIndexBuffer(getDevice(), BufferUsage::TransferDest | BufferUsage::Index, sizeof(uint32_t) * 24, sizeof(uint32_t) * 24),
@@ -52,10 +52,12 @@ DebugAABBTechnique::DebugAABBTechnique(Engine* eng, RenderGraph& graph) :
     debugAABBTask.addOutput(kGlobalLighting, AttachmentType::RenderTarget2D, Format::RGBA8UNorm);
     debugAABBTask.addOutput(kGBufferDepth, AttachmentType::Depth, Format::D32Float);
     debugAABBTask.setRecordCommandsCallback(
-                [this](Executor* exec, Engine* eng, const std::vector<const MeshInstance*>& meshes)
+                [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>& meshes)
                 {
                     exec->bindVertexBuffer(this->mVertexBufferView, 0);
                     exec->bindIndexBuffer(this->mIndexBufferView, 0);
+                    const RenderTask& task = graph.getTask(taskIndex);
+                    exec->setGraphicsShaders(static_cast<const GraphicsTask&>(task), graph, mDebugVisVertexShader, nullptr, nullptr, nullptr, mDebugVisFragmentShader);
 
                     for(const auto* mesh : meshes)
                     {

@@ -42,6 +42,10 @@ public:
 private:
     
 	GraphicsPipelineDescription mPipelineDescription;
+
+    Shader mGbufferVertexShader;
+    Shader mGbufferFragmentShader;
+
     TaskID mTaskID;
 };
 
@@ -79,6 +83,10 @@ private:
     std::string mDepthName;
 
     GraphicsPipelineDescription mPipelineDescription;
+
+    Shader mGbufferVertexShader;
+    Shader mGbufferFragmentShader;
+
     TaskID mTaskID;
 };
 
