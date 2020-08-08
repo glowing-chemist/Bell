@@ -51,13 +51,15 @@ ForwardCombinedLightingTechnique::ForwardCombinedLightingTechnique(Engine* eng, 
     if(eng->isPassRegistered(PassType::OcclusionCulling))
     {
         task.setRecordCommandsCallback(
-            [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>& meshes)
+            [](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>& meshes)
             {
                 exec->bindIndexBuffer(eng->getIndexBuffer(), 0);
                 exec->bindVertexBuffer(eng->getVertexBuffer(), 0);
 
+                uint64_t currentMaterialFLags = 0;
+
                 const RenderTask& task = graph.getTask(taskIndex);
-                exec->setGraphicsShaders(static_cast<const GraphicsTask&>(task), graph, mForwardCombinedVertexShader, nullptr, nullptr, nullptr, mForwardCombinedFragmentShader);
+                Shader vertexShader = eng->getShader("./Shaders/ForwardMaterial.vert");
 
                 const BufferView& pred = eng->getRenderGraph().getBuffer(kOcclusionPredicationBuffer);
 
@@ -67,6 +69,16 @@ ForwardCombinedLightingTechnique::ForwardCombinedLightingTechnique(Engine* eng, 
 
                     if (mesh->getMaterialFlags() & MaterialType::Transparent || !(mesh->getInstanceFlags() & InstanceFlags::Draw))
                         continue;
+
+                    //need to set new pipeline.
+                    if(mesh->getMaterialFlags() != currentMaterialFLags)
+                    {
+                        currentMaterialFLags = mesh->getMaterialFlags();
+
+                        ShaderDefine materialDefine("MATERIAL_FLAGS", currentMaterialFLags);
+                        Shader fragmentShader = eng->getShader("./Shaders/ForwardCombinedLighting.frag", materialDefine);
+                        exec->setGraphicsShaders(static_cast<const GraphicsTask&>(task), graph, vertexShader, nullptr, nullptr, nullptr, fragmentShader);
+                    }
 
                     const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->mMesh);
 
@@ -85,18 +97,30 @@ ForwardCombinedLightingTechnique::ForwardCombinedLightingTechnique(Engine* eng, 
     else
     {
         task.setRecordCommandsCallback(
-            [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>& meshes)
+            [](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>& meshes)
             {
                 exec->bindIndexBuffer(eng->getIndexBuffer(), 0);
                 exec->bindVertexBuffer(eng->getVertexBuffer(), 0);
 
+                uint64_t currentMaterialFLags = 0;
+
                 const RenderTask& task = graph.getTask(taskIndex);
-                exec->setGraphicsShaders(static_cast<const GraphicsTask&>(task), graph, mForwardCombinedVertexShader, nullptr, nullptr, nullptr, mForwardCombinedFragmentShader);
+                Shader vertexShader = eng->getShader("./Shaders/ForwardMaterial.vert");
 
                 for (const auto& mesh : meshes)
                 {
                     if (mesh->getMaterialFlags() & MaterialType::Transparent || !(mesh->getInstanceFlags() & InstanceFlags::Draw))
                         continue;
+
+                    //need to set new pipeline.
+                    if(mesh->getMaterialFlags() != currentMaterialFLags)
+                    {
+                        currentMaterialFLags = mesh->getMaterialFlags();
+
+                        ShaderDefine materialDefine("MATERIAL_FLAGS", currentMaterialFLags);
+                        Shader fragmentShader = eng->getShader("./Shaders/ForwardCombinedLighting.frag", materialDefine);
+                        exec->setGraphicsShaders(static_cast<const GraphicsTask&>(task), graph, vertexShader, nullptr, nullptr, nullptr, fragmentShader);
+                    }
 
                     const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->mMesh);
 

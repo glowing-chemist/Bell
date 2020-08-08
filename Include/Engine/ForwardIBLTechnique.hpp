@@ -26,9 +26,6 @@ private:
 
 	GraphicsPipelineDescription mDesc;
 
-    Shader mForwardIBLVertexShader;
-    Shader mForwardIBLFragmentShader;
-
 	TaskID mTaskID;
 };
 

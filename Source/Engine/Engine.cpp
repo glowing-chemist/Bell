@@ -242,6 +242,30 @@ Shader Engine::getShader(const std::string& path)
 }
 
 
+Shader Engine::getShader(const std::string& path, const ShaderDefine& define)
+{
+    std::hash<std::string> pathHasher{};
+    uint64_t hashed = pathHasher(path);
+    hashed += pathHasher(define.getNme());
+    hashed += pathHasher(define.getValue());
+    const uint64_t shaderKey = hashed + mCurrentRegistredPasses;
+    if(mShaderCache.find(shaderKey) != mShaderCache.end())
+        return (*mShaderCache.find(shaderKey)).second;
+
+    Shader newShader{mRenderDevice, path, mCurrentRegistredPasses};
+
+    std::vector<ShaderDefine> allDefines = mShaderPrefix;
+    allDefines.push_back(define);
+    const bool compiled = newShader->compile(allDefines);
+
+    BELL_ASSERT(compiled, "Shader failed to compile")
+
+    mShaderCache.insert({ shaderKey, newShader});
+
+    return newShader;
+}
+
+
 std::unique_ptr<Technique> Engine::getSingleTechnique(const PassType passType)
 {
     switch(passType)
@@ -514,13 +538,21 @@ void Engine::execute(RenderGraph& graph)
         meshes = mCurrentScene ? mCurrentScene->getViewableMeshes(mCurrentScene->getCamera().getFrustum()) : std::vector<const MeshInstance*>{};
         std::sort(meshes.begin(), meshes.end(), [camera = mCurrentScene->getCamera()](const MeshInstance* lhs, const MeshInstance* rhs)
         {
-            const float3 centralLeft = (lhs->mMesh->getAABB() *  lhs->getTransMatrix()).getCentralPoint();
-            const float leftDistance = glm::length(centralLeft - camera.getPosition());
+            // Sort first by material flags and than by disatnce to camera.
+            if(lhs->getMaterialFlags() != rhs->getMaterialFlags())
+            {
+                return lhs->getMaterialFlags() < rhs->getMaterialFlags();
+            }
+            else
+            {
+                const float3 centralLeft = (lhs->mMesh->getAABB() *  lhs->getTransMatrix()).getCentralPoint();
+                const float leftDistance = glm::length(centralLeft - camera.getPosition());
 
-            const float3 centralright = (rhs->mMesh->getAABB() * rhs->getTransMatrix()).getCentralPoint();
-            const float rightDistance = glm::length(centralright - camera.getPosition());
+                const float3 centralright = (rhs->mMesh->getAABB() * rhs->getTransMatrix()).getCentralPoint();
+                const float rightDistance = glm::length(centralright - camera.getPosition());
 
-            return leftDistance < rightDistance;
+                return leftDistance < rightDistance;
+            }
         });
     }
 
@@ -826,7 +858,7 @@ void Engine::registerPass(const PassType pass)
 {
 	if((static_cast<uint64_t>(pass) & mCurrentRegistredPasses) == 0)
 	{
-        mShaderPrefix.push_back(std::string(passToString(pass)));
+        mShaderPrefix.push_back(ShaderDefine(std::string(passToString(pass)), 1));
 
         mPassesRegisteredThisFrame |= static_cast<uint64_t>(pass);
 	}

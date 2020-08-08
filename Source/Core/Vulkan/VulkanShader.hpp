@@ -15,7 +15,7 @@ public:
     VulkanShader(RenderDevice*, const std::string&, const uint64_t prefixHash);
 	~VulkanShader();
 
-	virtual bool compile(const std::vector<std::string>& prefix = {}) override;
+    virtual bool compile(const std::vector<ShaderDefine>& prefix = {}) override;
 	virtual bool reload() override;
 
 	vk::ShaderModule getShaderModule() const

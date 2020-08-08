@@ -34,7 +34,7 @@ GBufferFragOutput main(GBufferVertOutput vertInput)
 
     MaterialInfo material = calculateMaterialInfo(  vertInput.normal,
                                                     vertInput.colour,
-                                                    vertInput.materialFlags, 
+                                                    MATERIAL_FLAGS, // Gets defined task side. 
                                                     vertInput.materialIndex, 
                                                     viewDir, 
                                                     vertInput.uv);

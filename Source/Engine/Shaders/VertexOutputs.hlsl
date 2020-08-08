@@ -19,7 +19,7 @@ struct GBufferVertOutput
 	float4 normal : NORMAL0;
 	float4 colour : COLOUR0;
 	uint materialIndex : MATERIALID;
-	uint materialFlags : MATERIAL_FLAGS;
+	uint materialFlags : MATERIAL_TYPES;
 	float2 velocity : VELOCITY;
 };
 

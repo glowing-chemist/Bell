@@ -68,7 +68,7 @@ VulkanShader::~VulkanShader()
 }
 
 
-bool VulkanShader::compile(const std::vector<std::string>& prefix)
+bool VulkanShader::compile(const std::vector<ShaderDefine> &prefix)
 {
     // glslang currently has a bug when compiling hlsl geometry shaders where inputs are not asigned correctly.
     // Do as a temp workaround I've precompiled all geamotry shaders with dxc and will just load them here.
@@ -99,7 +99,7 @@ bool VulkanShader::compile(const std::vector<std::string>& prefix)
         options.SetOptimizationLevel(shaderc_optimization_level::shaderc_optimization_level_performance);
 #endif
         for (const auto& define : prefix)
-            options.AddMacroDefinition(define);
+            options.AddMacroDefinition(define.getNme(), define.getValue());
         std::unique_ptr<shaderc::CompileOptions::IncluderInterface> includer = std::make_unique<ShaderIncluder>();
         options.SetIncluder(std::move(includer));
         options.SetTargetEnvironment(shaderc_target_env::shaderc_target_env_vulkan, shaderc_env_version_vulkan_1_1);

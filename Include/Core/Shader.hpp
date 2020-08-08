@@ -14,6 +14,28 @@ namespace fs = std::filesystem;
 
 class RenderDevice;
 
+class ShaderDefine
+{
+public:
+    ShaderDefine(const std::string& name, const uint64_t value) :
+        mName(name),
+        mValue(std::to_string(value)) {}
+
+    const std::string& getNme() const
+    {
+        return mName;
+    }
+
+    const std::string& getValue() const
+    {
+        return mValue;
+    }
+
+    private:
+
+    std::string mName;
+    std::string mValue;
+};
 
 class ShaderBase : public DeviceChild
 {
@@ -22,7 +44,7 @@ public:
     ShaderBase(RenderDevice*, const std::string&, const uint64_t prefixHash);
     virtual ~ShaderBase() = default;
 
-	virtual bool compile(const std::vector<std::string>& prefix = {}) = 0;
+    virtual bool compile(const std::vector<ShaderDefine>& prefix = {}) = 0;
     virtual bool reload() = 0;
 	inline bool hasBeenCompiled() const
 	{
