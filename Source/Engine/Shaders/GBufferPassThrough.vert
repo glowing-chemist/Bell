@@ -33,7 +33,7 @@ GBufferVertOutput main(Vertex vertInput)
 	float4 previousPositionWS = mul(vertInput.position, prevMeshMatrix);
 	float4 previousPosition = mul(camera.previousFrameViewProj, previousPositionWS);
 	previousPosition /= previousPosition.w;
-	output.velocity = previousPosition.xy - transformedPosition.xy;
+	output.velocity = transformedPosition.xy - previousPosition.xy;
 
 	return output;
 }

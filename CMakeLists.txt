@@ -294,6 +294,7 @@ set(SHADERS
 	PathTracer.comp
 	RayTracedShadows.comp
 	BilaterialUpsample.comp
+	ResolveRayTracedShadows.comp
     )
 
 foreach(shader ${SHADERS})

@@ -1,0 +1,90 @@
+#include "UniformBuffers.hlsl"
+#include "NormalMapping.hlsl"
+
+[[vk::binding(0)]]
+Texture2D<float> shadowMap;
+
+[[vk::binding(1)]]
+Texture2D<float> shadowMapHistory;
+
+[[vk::binding(2)]]
+Texture2D<float> Depth;
+
+[[vk::binding(3)]]
+Texture2D<float2> velocity;
+
+#if defined(GBuffer_pass) || defined(GBuffer_Pre_Depth)
+[[vk::binding(4)]]
+Texture2D<float3> normals;
+#define HAVE_NORMALS 1
+#else
+#define HAVE_NORMALS 0
+#endif
+
+[[vk::binding(4 + HAVE_NORMALS)]]
+SamplerState linearSampler;
+
+[[vk::binding(5 + HAVE_NORMALS)]]
+RWTexture2D<float> shadowMapRessolved;
+
+[[vk::binding(6 + HAVE_NORMALS)]]
+ConstantBuffer<CameraBuffer> camera;
+
+
+float3 normalsFromDepth(float depth, float2 texcoords)
+{
+  
+  const float2 yoffset = float2(0.0,0.001);
+  const float2 xoffset = float2(0.001,0.0);
+  
+  float depth1 = Depth.Sample(linearSampler, texcoords + yoffset);
+  float depth2 = Depth.Sample(linearSampler, texcoords + xoffset);
+  
+  float3 p1 = float3(yoffset, depth1 - depth);
+  float3 p2 = float3(xoffset, depth2 - depth);
+  
+  float3 normal = cross(p1, p2);
+  
+  return normalize(normal);
+}
+
+
+[numthreads(16, 16, 1)]
+void main(uint3 globalIndex : SV_DispatchThreadID)
+{
+	const float2 gbufferSize = camera.frameBufferSize;
+	const float2 uv = (float2(globalIndex.xy) / gbufferSize);
+
+	float2 currentVelocity = velocity.Sample(linearSampler, uv);
+	currentVelocity = (currentVelocity - 0.5f) * 2.0f;
+
+	const float2 previousUV = uv - currentVelocity;
+
+	const float currentDepth = Depth.SampleLevel(linearSampler, uv, 0.0f).x;
+	const float previousDepth = Depth.SampleLevel(linearSampler, previousUV, 0.0f).x;
+
+	const float currentShadowFactor = shadowMap.Sample(linearSampler, uv);
+
+#if HAVE_NORMALS == 1
+	float3 normalCS = normals.Sample(linearSampler, uv);
+	normalCS = remapNormals(normalCS);
+	normalCS = normalize(mul(float3x3(camera.view), normalCS));
+#else
+	float3 normalCS = normalsFromDepth(currentDepth, uv);
+#endif
+
+	const float C1 = 0.003f;
+	const float C2 = 0.017f; 
+	const float epsilon = C1 + C2 * abs(normalCS.z);
+
+	float shadowTerm = currentShadowFactor;
+	if(abs(1.0f - (currentDepth / previousDepth)) < epsilon)
+	{
+		const float previousShadowTerm = shadowMapHistory.Sample(linearSampler, previousUV);
+		shadowTerm = (0.1f * currentShadowFactor) + (0.9f * previousShadowTerm);
+	}
+
+
+	if(globalIndex.x < gbufferSize.x && globalIndex.y <= gbufferSize.y)
+		shadowMapRessolved[globalIndex.xy] = shadowTerm;
+}

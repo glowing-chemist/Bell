@@ -39,6 +39,40 @@ StructuredBuffer<float2> vertexUVBuffer;
 [[vk::binding(5, 1)]]
 StructuredBuffer<uint> indexBuffer;
 
+struct PushConstants
+{
+	uint sampleCount;
+};
+[[vk::push_constant]]
+ConstantBuffer<PushConstants> constants;
+
+void calculateConeTangentBitangent(const float3 dir, out float3 tangent, out float3 bitangent)
+{
+	float3 c1 = cross(dir, float3(1.0f, 0.0f, 0.0f));
+	float3 c2 = cross(dir, float3(0.0f, 1.0f, 0.0f));
+
+	tangent = normalize(lerp(c1, c2, length(c2) > length(c1)));
+	bitangent = normalize(cross(tangent, dir));
+}
+
+float3x3 calculateConeTransformToWS(const float3 dir, const float3 tangent, const float3 bitangent)
+{
+	float invmax = rsqrt(max(dot(tangent, tangent), dot(bitangent, bitangent)));
+
+	 return float3x3(tangent * invmax, bitangent * invmax, dir);
+}
+
+float3 getRyaDirConeSpace(const float coneAngleRadians, const float2 Xi)
+{
+	const float Nab = sin(coneAngleRadians / 2.0f);
+	const float Nx = ((Xi.x - 0.5f) * 2.0f) * Nab;
+	const float Ny = ((Xi.y - 0.5f) * 2.0f) * Nab;
+
+	return float3( 2.0f * Nx * sqrt(1.0f - (Nx * Nx) - (Ny * Ny)),
+				   2.0f * Ny * sqrt(1.0f - (Nx * Nx) - (Ny * Ny)),
+				   1.0f - 2 * ((Nx * Nx) + (Ny * Ny)));
+}
+
 
 [numthreads(16, 16, 1)]
 void main(uint3 globalIndex : SV_DispatchThreadID)
@@ -57,9 +91,16 @@ void main(uint3 globalIndex : SV_DispatchThreadID)
 	float4 worldSpaceFragmentPos = mul(camera.invertedViewProj, float4((uv - 0.5f) * 2.0f, fragmentDepth, 1.0f));
     worldSpaceFragmentPos /= worldSpaceFragmentPos.w;
 
+    const float3 coneSpaceRay = getRyaDirConeSpace(radians(0.125f), Hammersley(constants.sampleCount, 8));
+    const float3 coneDir = normalize(light.position - worldSpaceFragmentPos.xyz);
+    float3 tangent, bitangent;
+    calculateConeTangentBitangent(coneDir, tangent, bitangent);
+    const float3x3 coneToWS = calculateConeTransformToWS(coneDir, tangent, bitangent);
+    const float3 rayDir = mul(coneSpaceRay, coneToWS);
+
     Ray shadowRay;
 	shadowRay.position = worldSpaceFragmentPos.xyz;
-	shadowRay.direction = normalize(light.position - worldSpaceFragmentPos.xyz);
+	shadowRay.direction = rayDir;
 	shadowRay.max_t = max(max(camera.sceneSize.x, camera.sceneSize.y), camera.sceneSize.z);
 	shadowRay.min_t = max(max(camera.sceneSize.x, camera.sceneSize.y), camera.sceneSize.z) / 1000.0f;
 

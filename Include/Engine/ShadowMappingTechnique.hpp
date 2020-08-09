@@ -5,9 +5,11 @@
 #include "RenderGraph/GraphicsTask.hpp"
 #include "Engine/DefaultResourceSlots.hpp"
 
-static constexpr char kShadowMapRaw[] = "ShadowMapRaw";
-static constexpr char kShadowMapBlurIntermediate[] = "ShadowMapBlurIntermediate";
-static constexpr char kShadowMapBlured[] = "ShadowMapBlured";
+extern const char kShadowMapRaw[];
+extern const char kShadowMapBlurIntermediate[];
+extern const char kShadowMapBlured[];
+extern const char kShadowMapUpsamped[];
+extern const char kShadowMapHistory[];
 
 class ShadowMappingTechnique : public Technique
 {
@@ -74,19 +76,18 @@ public:
 
     virtual void render(RenderGraph&, Engine*) override {}
 
-    virtual void bindResources(RenderGraph& graph) override
-    {
-        if(!graph.isResourceSlotBound(kShadowMap))
-        {
-            graph.bindImage(kShadowMapRaw, mShadowMapViewRaw);
-            graph.bindImage(kShadowMap, mShadowMapView);
-        }
-    }
+    virtual void bindResources(RenderGraph& graph) override;
 
 private:
 
     Image    mShadowMapRaw;
     ImageView mShadowMapViewRaw;
+
+    Image mShadowMapHistory;
+    ImageView mShadowMapHistoryView;
+
+    Image mShadowMapUpsampled;
+    ImageView mShadowMapUpSampledView;
 
     Image    mShadowMap;
     ImageView mShadowMapView;
