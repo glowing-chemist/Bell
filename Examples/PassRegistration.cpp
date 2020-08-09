@@ -19,7 +19,7 @@ struct ImGuiOptions
     bool mShadowMaps = true;
     bool mRayTracedShadows = false;
     int mReflectionsToggle = 0;
-    bool mSSR = true;
+    bool mSSR = false;
     bool mRayTracedReflections = false;
     bool preDepth = true;
     bool occlusionCulling = false;
@@ -306,6 +306,9 @@ int main()
 
         if(graphicsOptions.occlusionCulling)
             engine.registerPass(PassType::OcclusionCulling);
+
+        if (graphicsOptions.mSSR)
+            engine.registerPass(PassType::SSR);
 
         engine.registerPass(PassType::DFGGeneration);
         engine.registerPass(PassType::Overlay);

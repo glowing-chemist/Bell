@@ -35,7 +35,7 @@ ScreenSpaceReflectionTechnique::ScreenSpaceReflectionTechnique(Engine* eng, Rend
       [](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
         {
             Shader vertexShader = eng->getShader("./Shaders/FullScreenTriangle.vert");
-            Shader fragmentShader = eng->getShader("./Shaders/FullScreenTriangle.vert");
+            Shader fragmentShader = eng->getShader("./Shaders/ScreenSpaceReflection.frag");
             const RenderTask& task = graph.getTask(taskIndex);
             exec->setGraphicsShaders(static_cast<const GraphicsTask&>(task), graph, vertexShader, nullptr, nullptr, nullptr, fragmentShader);
 
@@ -44,6 +44,8 @@ ScreenSpaceReflectionTechnique::ScreenSpaceReflectionTechnique(Engine* eng, Rend
     );
 
     graph.addTask(task);
+
+
 
     mClampedSampler.setAddressModeU(AddressMode::Clamp);
     mClampedSampler.setAddressModeV(AddressMode::Clamp);

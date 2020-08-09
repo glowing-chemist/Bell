@@ -2,6 +2,7 @@
 #include "UniformBuffers.hlsl"
 #include "NormalMapping.hlsl"
 #include "PBR.hlsl"
+#include "Utilities.hlsl"
 
 
 [[vk::binding(0)]]
@@ -34,7 +35,9 @@ ConstantBuffer<CameraBuffer> camera;
 
 #define SAMPLE_COUNT 5
 #define MAX_SAMPLE_COUNT 15
+#define START_MIP 7
 
+#define MAX_DISTANCE_WS 1000.0f
 
 #include "RayMarching.hlsl"
 
@@ -54,19 +57,17 @@ float4 main(PositionAndUVVertOutput vertInput)
 	const float3 position = float3((uv - 0.5f) * 2.0f, linDepth);
 
 	float3 view = normalize(-positionCS.xyz);
-	view.z *= -1.0f;
 
 	const float roughness = SpecularRoughness.Sample(linearSampler, uv).w;
 
 	float3 normal = Normals.Sample(linearSampler, uv);
 	normal = normalize(remapNormals(normal));
 	normal = normalize(mul(float3x3(camera.view), normal));
-	normal.z *= 1.0f;
 
 	uint width, height;
 	LinearDepth.GetDimensions(width, height);
-	width >>= 7;
-	height >>= 7;
+	width >>= START_MIP;
+	height >>= START_MIP;
 
 	// camera is at 0.0, 0.0, 0.0 so view vector is just the negative position.
 	float4 reflectedColour = float4(0.0f, 0.0f, 0.0f, 1.0f);
@@ -76,14 +77,20 @@ float4 main(PositionAndUVVertOutput vertInput)
 	{
 		const float2 Xi = Hammersley(i, MAX_SAMPLE_COUNT);
 		const float3 H = ImportanceSampleGGX(Xi, roughness, normal);
-		float3 L = reflect(-view, H);
-		L.z *= -1.0f; // bring in to same space as position.
+		const float3 L = reflect(-view, H);
+
+		float4 rayEnd = float4(positionCS + L * MAX_DISTANCE_WS, 1.0f);
+		rayEnd = mul(camera.perspective, rayEnd);
+		rayEnd /= rayEnd.w;
+		rayEnd.z = lineariseReverseDepth(rayEnd.z, camera.nearPlane, camera.farPlane);
+
+		const float3 rayDirection = rayEnd.xyz - position.xyz;
 
 		const float NoL = saturate(dot(normal, L));
 		if(NoL > 0.0f)
 		{
 			// March the ray.
-			const float2 colourUV = marchRay(position, L, 30, float2(1.0f, 1.0f) / float2(width, height), 7);
+			const float2 colourUV = marchRay(position, rayDirection, 30, float2(1.0f, 1.0f) / float2(width, height), START_MIP);
 			if(all(colourUV >= float2(0.0f, 0.0f)))
 			{
 				reflectedColour += diffuse.Sample(linearSampler, colourUV) * NoL;
