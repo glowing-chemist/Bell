@@ -80,7 +80,7 @@ void main(uint3 globalIndex : SV_DispatchThreadID)
 	uint width, height;
 	shadowMap.GetDimensions(width, height);
 
-	const float2 uv = (float2(globalIndex.xy) / float2(width, height)) + camera.jitter;
+	const float2 uv = float2(globalIndex.xy) / float2(width, height);
 	const float fragmentDepth = depth.Sample(linearSampler, uv);
 
 	if(fragmentDepth == 0.0f) // skybox
