@@ -27,7 +27,7 @@ TAATechnique::TAATechnique(Engine* eng, RenderGraph& graph) :
 
     ComputeTask resolveTAA{ "Resolve TAA" };
 	resolveTAA.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
-	resolveTAA.addInput(kLinearDepth, AttachmentType::Texture2D);
+    resolveTAA.addInput(kGBufferDepth, AttachmentType::Texture2D);
 	resolveTAA.addInput(kGBufferVelocity, AttachmentType::Texture2D);
 	resolveTAA.addInput(kCompositeOutput, AttachmentType::Texture2D);
 	resolveTAA.addInput(kTAAHistory, AttachmentType::Texture2D);
