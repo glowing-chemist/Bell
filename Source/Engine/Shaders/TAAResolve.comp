@@ -2,13 +2,12 @@
 #include "Utilities.hlsl"
 
 #define DEPTH_EPSILON 0.01f
-#define STATIC_BLEND_FACTOR 1
 
 [[vk::binding(0)]]
 ConstantBuffer<CameraBuffer> camera;
 
 [[vk::binding(1)]]
-Texture2D<float> linearDepthBuffer;
+Texture2D<float> depth;
 
 [[vk::binding(2)]]
 Texture2D<float2> velocity;
@@ -55,12 +54,6 @@ void main(uint3 globalIndex : SV_DispatchThreadID)
 	currentVelocity = (currentVelocity - 0.5f) * 2.0f;
 
 	const float2 previousUV = uv - currentVelocity;
-#if !STATIC_BLEND_FACTOR
-	const float linearDepth = linearDepthBuffer.Sample(linearSampler, uv);
-
-	const float previousLinearDepth = linearDepthBuffer.Sample(linearSampler, previousUV);
-	const float depthDif = abs(previousLinearDepth - linearDepth);
-#endif
 
 	float4 currentColour = colour.Sample(linearSampler, uv);
 
@@ -102,14 +95,7 @@ void main(uint3 globalIndex : SV_DispatchThreadID)
 
 	historyColour.xyz = calculateRGB(previousColourYCoCg);
 
-#if STATIC_BLEND_FACTOR
 	const float confidence = 0.9f;
-#else
-	// Check how close (in depth) the two fragments are.
-	float confidence = (1.0f - (depthDif / DEPTH_EPSILON)) * 0.5f;
-	confidence *= 1.0f - (dot(abs(previousColourYCoCg.xy - currentColourYCocg.xy), float2(1.0f)) / 2.0f);
-	confidence *= confidence;
-#endif
 
 	float4 newColour =  ((1.0f - confidence) * currentColour) + (confidence * historyColour);
 
