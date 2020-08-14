@@ -37,8 +37,6 @@ ConstantBuffer<CameraBuffer> camera;
 #define MAX_SAMPLE_COUNT 15
 #define START_MIP 7
 
-#define MAX_DISTANCE_WS 1000.0f
-
 #include "RayMarching.hlsl"
 
 
@@ -50,26 +48,24 @@ float4 main(PositionAndUVVertOutput vertInput)
 	if(fragmentDepth == 0.0f) // skybox.
 		return float4(0.0f, 0.0f, 0.0f, 1.0f);
 
-	float4 positionCS =  mul(camera.invertedPerspective, float4((uv - 0.5f) * 2.0f, fragmentDepth, 1.0f));
-	positionCS /= positionCS.w;
+	float4 positionWS =  mul(camera.invertedViewProj, float4((uv - 0.5f) * 2.0f, fragmentDepth, 1.0f));
+	positionWS /= positionWS.w;
 
-	const float linDepth = LinearDepth.SampleLevel(linearSampler, uv, 0.0f).x;
-	const float3 position = float3((uv - 0.5f) * 2.0f, linDepth);
+	const float linDepth = lineariseReverseDepth(fragmentDepth, camera.nearPlane, camera.farPlane);
+	float3 position = float3((uv - 0.5f) * 2.0f, linDepth);
 
-	float3 view = normalize(-positionCS.xyz);
+	float3 view = normalize(camera.position - positionWS.xyz);
 
-	const float roughness = SpecularRoughness.Sample(linearSampler, uv).w;
+	const float roughness = 0.0f;//SpecularRoughness.Sample(linearSampler, uv).w;
 
 	float3 normal = Normals.Sample(linearSampler, uv);
 	normal = normalize(remapNormals(normal));
-	normal = normalize(mul(float3x3(camera.view), normal));
 
 	uint width, height;
 	LinearDepth.GetDimensions(width, height);
 	width >>= START_MIP;
 	height >>= START_MIP;
 
-	// camera is at 0.0, 0.0, 0.0 so view vector is just the negative position.
 	float4 reflectedColour = float4(0.0f, 0.0f, 0.0f, 1.0f);
 	float totalWeight = 0.0f;
 	uint usedSamples = 0;
@@ -79,12 +75,13 @@ float4 main(PositionAndUVVertOutput vertInput)
 		const float3 H = ImportanceSampleGGX(Xi, roughness, normal);
 		const float3 L = reflect(-view, H);
 
-		float4 rayEnd = float4(positionCS + L * MAX_DISTANCE_WS, 1.0f);
-		rayEnd = mul(camera.perspective, rayEnd);
+		const float max_distance = max(max(camera.sceneSize.x, camera.sceneSize.y), camera.sceneSize.z);
+		float4 rayEnd = float4(positionWS + (L * max_distance), 1.0f);
+		rayEnd = mul(camera.viewProj, rayEnd);
 		rayEnd /= rayEnd.w;
 		rayEnd.z = lineariseReverseDepth(rayEnd.z, camera.nearPlane, camera.farPlane);
 
-		const float3 rayDirection = rayEnd.xyz - position.xyz;
+		const float3 rayDirection = normalize(rayEnd.xyz - position.xyz);
 
 		const float NoL = saturate(dot(normal, L));
 		if(NoL > 0.0f)
@@ -98,8 +95,7 @@ float4 main(PositionAndUVVertOutput vertInput)
 			}
 			else
 			{
-				const float3 LWS = mul(float3x3(camera.invertedView), L);
-				reflectedColour += skybox.SampleLevel(linearSampler, LWS, roughness * 10.0f) * NoL;
+				reflectedColour += skybox.SampleLevel(linearSampler, L, roughness * 10.0f) * NoL;
 			}
 
 			totalWeight += NoL;
