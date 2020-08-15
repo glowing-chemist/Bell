@@ -22,6 +22,7 @@
 #include <cstdint>
 #include <map>
 #include <mutex>
+#include <shared_mutex>
 #include <string>
 #include <variant>
 
@@ -354,7 +355,7 @@ private:
     uint64_t mCurrentRegistredPasses;
     std::vector<ShaderDefine> mShaderPrefix; // Containes defines for currently registered passes.
 
-
+    std::shared_mutex mShaderCacheMutex;
     std::unordered_map<uint64_t, Shader> mShaderCache;
 
     Buffer mVertexBuffer;

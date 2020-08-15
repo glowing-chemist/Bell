@@ -227,8 +227,16 @@ Shader Engine::getShader(const std::string& path)
     std::hash<std::string> pathHasher{};
     const uint64_t hashedPath = pathHasher(path);
     const uint64_t shaderKey = hashedPath + mCurrentRegistredPasses;
+
+    std::shared_lock<std::shared_mutex> readLock{ mShaderCacheMutex };
+
 	if(mShaderCache.find(shaderKey) != mShaderCache.end())
 		return (*mShaderCache.find(shaderKey)).second;
+
+    // Need exclusive write access.
+    readLock.unlock();
+
+    std::unique_lock<std::shared_mutex> writeLock{ mShaderCacheMutex };
 
     Shader newShader{mRenderDevice, path, mCurrentRegistredPasses};
 
@@ -236,6 +244,7 @@ Shader Engine::getShader(const std::string& path)
 
 	BELL_ASSERT(compiled, "Shader failed to compile")
 
+    BELL_ASSERT(mShaderCache.find(shaderKey) == mShaderCache.end(), "threading issue")
 	mShaderCache.insert({ shaderKey, newShader});
 
 	return newShader;
@@ -249,8 +258,15 @@ Shader Engine::getShader(const std::string& path, const ShaderDefine& define)
     hashed += pathHasher(define.getNme());
     hashed += pathHasher(define.getValue());
     const uint64_t shaderKey = hashed + mCurrentRegistredPasses;
+    
+    std::shared_lock<std::shared_mutex> readLock{ mShaderCacheMutex };
+
     if(mShaderCache.find(shaderKey) != mShaderCache.end())
         return (*mShaderCache.find(shaderKey)).second;
+
+    readLock.unlock();
+
+    std::unique_lock<std::shared_mutex> writeLock{ mShaderCacheMutex };
 
     Shader newShader{mRenderDevice, path, mCurrentRegistredPasses};
 
@@ -260,6 +276,7 @@ Shader Engine::getShader(const std::string& path, const ShaderDefine& define)
 
     BELL_ASSERT(compiled, "Shader failed to compile")
 
+    BELL_ASSERT(mShaderCache.find(shaderKey) == mShaderCache.end(), "threading issue")
     mShaderCache.insert({ shaderKey, newShader});
 
     return newShader;
