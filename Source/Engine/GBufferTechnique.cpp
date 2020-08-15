@@ -125,7 +125,7 @@ GBufferPreDepthTechnique::GBufferPreDepthTechnique(Engine* eng, RenderGraph& gra
                          getDevice()->getSwapChain()->getSwapChainImageHeight()},
                          true, BlendMode::None, BlendMode::None, false, DepthTest::GreaterEqual, Primitive::TriangleList}
 {
-    GraphicsTask task{ "GBuffer", mPipelineDescription };
+    GraphicsTask task{ "GBufferPreDepth", mPipelineDescription };
 
     task.setVertexAttributes(VertexAttributes::Position4 | VertexAttributes::Normals | VertexAttributes::TextureCoordinates | VertexAttributes::Albedo);
 
