@@ -6,6 +6,8 @@
 
 #include "Engine/Engine.hpp"
 
+#define USE_RAY_TRACING 0
+
 struct ImGuiOptions
 {
     int mToggleIndex = 0;
@@ -17,10 +19,14 @@ struct ImGuiOptions
     bool mShadows = true;
     int mShadowToggle = 0;
     bool mShadowMaps = true;
+#if USE_RAY_TRACING
     bool mRayTracedShadows = false;
+#endif
     int mReflectionsToggle = 0;
     bool mSSR = false;
-    bool mRayTracedReflections = false;
+#if USE_RAY_TRACING
+    bool mRayTracedReflections = false
+#endif
     bool preDepth = true;
     bool occlusionCulling = false;
 };
@@ -86,19 +92,24 @@ bool renderMenu(GLFWwindow* win, const Camera& cam, Engine* eng, const float cpu
         ImGui::BeginGroup();
 
             ImGui::RadioButton("Shadow maps", &graphicsOptions.mShadowToggle, 0);
+#if USE_RAY_TRACING
             ImGui::RadioButton("Ray traced shadows", &graphicsOptions.mShadowToggle, 1);
-
+#endif
         ImGui::EndGroup();
 
         if (graphicsOptions.mShadowToggle == 0)
         {
             graphicsOptions.mShadowMaps = true;
+#if USE_RAY_TRACING
             graphicsOptions.mRayTracedShadows = false;
+#endif
         }
         else
         {
             graphicsOptions.mShadowMaps = false;
+#if USE_RAY_TRACING
             graphicsOptions.mRayTracedShadows = true;
+#endif
         }
     }
 
@@ -181,7 +192,9 @@ int main()
     testScene.uploadData(&engine);
     testScene.computeBounds(MeshType::Static);
     testScene.computeBounds(MeshType::Dynamic);
+#if USE_RAY_TRACING
     RayTracingScene rtScene(&engine, &testScene);
+#endif
 
     // set camera aspect ratio.
 
@@ -212,7 +225,9 @@ int main()
     }
 
     engine.setScene(&testScene);
+#if USE_RAY_TRACING
     engine.setRayTracingScene(&rtScene);
+#endif
 
     auto lastCPUTime = std::chrono::system_clock::now();
 
@@ -269,9 +284,10 @@ int main()
 
         if(graphicsOptions.mShadows && graphicsOptions.mShadowMaps)
             engine.registerPass(PassType::Shadow);
+#if USE_RAY_TRACING
         else if(graphicsOptions.mShadows && graphicsOptions.mRayTracedShadows)
                engine.registerPass(PassType::RayTracedShadows);
-
+#endif
         if (graphicsOptions.mShowLights)
             engine.registerPass(PassType::LightFroxelation);
 		
