@@ -111,9 +111,9 @@ VulkanRenderInstance::VulkanRenderInstance(GLFWwindow* window) :
     addDebugCallback();
 #endif
 
-
     VkSurfaceKHR surface;
-    glfwCreateWindowSurface(static_cast<vk::Instance>(mInstance), mWindow, nullptr, &surface); // use glfw as is platform agnostic
+    VkResult result = glfwCreateWindowSurface(mInstance, mWindow, nullptr, &surface); // use glfw as is platform agnostic
+    BELL_ASSERT(result == VK_SUCCESS, "Failed to create window surface")
     mWindowSurface = vk::SurfaceKHR(surface);
 }
 

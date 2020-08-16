@@ -36,12 +36,8 @@ SwapChainSupportDetails VulkanSwapChain::querySwapchainSupport(vk::PhysicalDevic
 
 vk::PresentModeKHR choosePresentMode(const std::vector<vk::PresentModeKHR>& presentModes)
 {
-    for(auto& mode : presentModes) {
-        if(mode == vk::PresentModeKHR::eMailbox) { // if availble return mailbox
-            return mode;
-        }
-    }
-    return vk::PresentModeKHR::eFifo; // else Efifo is garenteed to be present
+	BELL_ASSERT(std::find(presentModes.begin(), presentModes.end(), vk::PresentModeKHR::eFifo) != presentModes.end(), "FIFO not present")
+    return vk::PresentModeKHR::eFifo;
 }
 
 
@@ -137,7 +133,7 @@ void VulkanSwapChain::present(const QueueType queue)
 
     mCurrentImageIndex = (mCurrentImageIndex + 1) % mSwapChainImages.size();
 
-	if (result == VK_ERROR_OUT_OF_DATE_KHR)
+	if (result != VK_SUCCESS)
 		recreateSwapchain();
 }
 

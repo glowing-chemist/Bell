@@ -681,7 +681,6 @@ void VulkanRenderDevice::startFrame()
 
 void VulkanRenderDevice::endFrame()
 {
-    mCurrentFrameIndex = (mCurrentFrameIndex + 1) %  getSwapChain()->getNumberOfSwapChainImages();
 }
 
 
@@ -716,7 +715,7 @@ void VulkanRenderDevice::swap()
 
 void VulkanRenderDevice::frameSyncSetup()
 {
-	mSwapChain->getNextImageIndex();
+	mCurrentFrameIndex = mSwapChain->getNextImageIndex();
 
     // wait for the previous frame using this swapchain image to be finished.
     auto& fence = mFrameFinished[getCurrentFrameIndex()];

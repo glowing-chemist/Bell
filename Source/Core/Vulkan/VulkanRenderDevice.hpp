@@ -192,7 +192,10 @@ public:
                                                                 uint64_t timout,
                                                                 vk::Semaphore semaphore,
                                                                 uint32_t& imageIndex)
-                                            { mDevice.acquireNextImageKHR(swap, timout, semaphore, nullptr, &imageIndex); }
+                                            { 
+                                                vk::Result result =  mDevice.acquireNextImageKHR(swap, timout, semaphore, nullptr, &imageIndex);
+                                                BELL_ASSERT(result == vk::Result::eSuccess, "Add error handling here TODO")
+                                            }
 
 	vk::Pipeline						createPipeline(const vk::ComputePipelineCreateInfo& info)
 	{
