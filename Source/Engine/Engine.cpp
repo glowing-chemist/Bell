@@ -98,7 +98,7 @@ Engine::Engine(GLFWwindow* windowPtr) :
 	mDeviceCameraBuffer{getDevice(), BufferUsage::Uniform, sizeof(CameraBuffer), sizeof(CameraBuffer), "Camera Buffer"},
     mShadowCastingLight(getDevice(), BufferUsage::Uniform, sizeof(Scene::ShadowingLight), sizeof(Scene::ShadowingLight), "ShadowingLight"),
     mLightBuffer(getDevice(), BufferUsage::DataBuffer | BufferUsage::TransferDest, (sizeof(Scene::Light) * 1000) + std::max(sizeof(uint4), mRenderDevice->getMinStorageBufferAlignment()), (sizeof(Scene::Light) * 1000) + std::max(sizeof(uint4), mRenderDevice->getMinStorageBufferAlignment()), "LightBuffer"),
-    mLightBufferView(mLightBuffer, mRenderDevice->getMinStorageBufferAlignment()),
+    mLightBufferView(mLightBuffer, std::max(sizeof(uint4), mRenderDevice->getMinStorageBufferAlignment())),
     mLightCountView(mLightBuffer, 0, sizeof(uint4)),
     mLightsSRS(getDevice(), 2),
     mMaxCommandThreads(1),
