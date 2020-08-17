@@ -17,17 +17,17 @@ constexpr const char* kLinearDepthMip11 = "linearDepth11";
 constexpr const char* mipNames[] = {kLinearDepthMip1, kLinearDepthMip2, kLinearDepthMip3, kLinearDepthMip4, kLinearDepthMip5, kLinearDepthMip6, kLinearDepthMip7,
                                    kLinearDepthMip8, kLinearDepthMip9, kLinearDepthMip10, kLinearDepthMip11};
 
-constexpr const char* kPrevLinearDepthMip1 = "linearDepth1";
-constexpr const char* kPrevLinearDepthMip2 = "linearDepth2";
-constexpr const char* kPrevLinearDepthMip3 = "linearDepth3";
-constexpr const char* kPrevLinearDepthMip4 = "linearDepth4";
-constexpr const char* kPrevLinearDepthMip5 = "linearDepth5";
-constexpr const char* kPrevLinearDepthMip6 = "linearDepth6";
-constexpr const char* kPrevLinearDepthMip7 = "linearDepth7";
-constexpr const char* kPrevLinearDepthMip8 = "linearDepth8";
-constexpr const char* kPrevLinearDepthMip9 = "linearDepth9";
-constexpr const char* kPrevLinearDepthMip10 = "linearDepth10";
-constexpr const char* kPrevLinearDepthMip11 = "linearDepth11";
+constexpr const char* kPrevLinearDepthMip1 = "prevLinearDepth1";
+constexpr const char* kPrevLinearDepthMip2 = "prevLinearDepth2";
+constexpr const char* kPrevLinearDepthMip3 = "prevLinearDepth3";
+constexpr const char* kPrevLinearDepthMip4 = "prevLinearDepth4";
+constexpr const char* kPrevLinearDepthMip5 = "prevLinearDepth5";
+constexpr const char* kPrevLinearDepthMip6 = "prevLinearDepth6";
+constexpr const char* kPrevLinearDepthMip7 = "prevLinearDepth7";
+constexpr const char* kPrevLinearDepthMip8 = "prevLinearDepth8";
+constexpr const char* kPrevLinearDepthMip9 = "prevLinearDepth9";
+constexpr const char* kPrevLinearDepthMip10 = "prevLinearDepth10";
+constexpr const char* kPrevLinearDepthMip11 = "prevLinearDepth11";
 
 constexpr const char* prevMipNames[] = {kPrevLinearDepthMip1, kPrevLinearDepthMip2, kPrevLinearDepthMip3, kPrevLinearDepthMip4, kPrevLinearDepthMip5, kPrevLinearDepthMip6, kPrevLinearDepthMip7,
                                    kPrevLinearDepthMip8, kPrevLinearDepthMip9, kPrevLinearDepthMip10, kPrevLinearDepthMip11};
