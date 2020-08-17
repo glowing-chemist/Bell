@@ -1,6 +1,6 @@
 
 
-float2 marchRay(float3 position, const float3 direction, const uint maxSteps, float2 pixelSize, uint startLOD)
+float2 marchRay(float3 position, const float3 direction, const uint maxSteps, float2 pixelSize, uint startLOD, const float near, const float far, float4x4 invProj)
 {
 	uint currentLOD = startLOD;
 	float3 currentPosition = position.xyz;
@@ -11,12 +11,16 @@ float2 marchRay(float3 position, const float3 direction, const uint maxSteps, fl
 		currentPosition += direction * maxPizelSize;
 
 		float2 uv = (currentPosition.xy * 0.5f) + 0.5f;
-		uv.y = 1.0f - uv.y;
-		const float steppedDepth = LinearDepth.SampleLevel(linearSampler, uv, currentLOD).x;
+		const float steppedDepth = (LinearDepth.SampleLevel(linearSampler, uv, currentLOD).x * far) + near;
 
-		if(currentPosition.z > steppedDepth && currentLOD == 0)
+		// No need for a full matrix mul here.
+		float cameraSpaceDepth = dot(invProj[2], float4(currentPosition, 1.0f));
+		const float cameraW = dot(invProj[3], float4(currentPosition, 1.0f));
+		cameraSpaceDepth = -(cameraSpaceDepth / cameraW);
+
+		if(cameraSpaceDepth > steppedDepth && currentLOD == 0)
 			return uv;
-		else if(currentPosition.z >= steppedDepth)
+		else if(cameraSpaceDepth >= steppedDepth)
 		{
 			--currentLOD;
 			maxPizelSize /= 2.0f;

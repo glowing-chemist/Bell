@@ -51,12 +51,11 @@ float4 main(PositionAndUVVertOutput vertInput)
 	float4 positionWS =  mul(camera.invertedViewProj, float4((uv - 0.5f) * 2.0f, fragmentDepth, 1.0f));
 	positionWS /= positionWS.w;
 
-	const float linDepth = lineariseReverseDepth(fragmentDepth, camera.nearPlane, camera.farPlane);
-	float3 position = float3((uv - 0.5f) * 2.0f, linDepth);
+	float3 position = float3((uv - 0.5f) * 2.0f, fragmentDepth);
 
 	float3 view = normalize(camera.position - positionWS.xyz);
 
-	const float roughness = 0.0f;//SpecularRoughness.Sample(linearSampler, uv).w;
+	const float roughness = SpecularRoughness.Sample(linearSampler, uv).w;
 
 	float3 normal = Normals.Sample(linearSampler, uv);
 	normal = normalize(remapNormals(normal));
@@ -65,6 +64,8 @@ float4 main(PositionAndUVVertOutput vertInput)
 	LinearDepth.GetDimensions(width, height);
 	width >>= START_MIP;
 	height >>= START_MIP;
+
+	const uint roughnessSampleCount = ceil(SAMPLE_COUNT * roughness);
 
 	float4 reflectedColour = float4(0.0f, 0.0f, 0.0f, 1.0f);
 	float totalWeight = 0.0f;
@@ -79,7 +80,6 @@ float4 main(PositionAndUVVertOutput vertInput)
 		float4 rayEnd = float4(positionWS + (L * max_distance), 1.0f);
 		rayEnd = mul(camera.viewProj, rayEnd);
 		rayEnd /= rayEnd.w;
-		rayEnd.z = lineariseReverseDepth(rayEnd.z, camera.nearPlane, camera.farPlane);
 
 		const float3 rayDirection = normalize(rayEnd.xyz - position.xyz);
 
@@ -87,7 +87,7 @@ float4 main(PositionAndUVVertOutput vertInput)
 		if(NoL > 0.0f)
 		{
 			// March the ray.
-			const float2 colourUV = marchRay(position, rayDirection, 30, float2(1.0f, 1.0f) / float2(width, height), START_MIP);
+			const float2 colourUV = marchRay(position, rayDirection, 30, float2(1.0f, 1.0f) / float2(width, height), START_MIP, camera.nearPlane, camera.farPlane, camera.invertedPerspective);
 			if(all(colourUV >= float2(0.0f, 0.0f)))
 			{
 				reflectedColour += diffuse.Sample(linearSampler, colourUV) * NoL;
@@ -102,7 +102,7 @@ float4 main(PositionAndUVVertOutput vertInput)
 			++usedSamples;
 		}
 
-		if(usedSamples >= SAMPLE_COUNT)
+		if(usedSamples >= roughnessSampleCount)
 			break;
 	}
 
