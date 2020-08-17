@@ -519,6 +519,7 @@ void Editor::swap()
     if(mResetSceneAtEndOfFrame)
     {
         delete mRayTracingScene;
+        mRayTracingScene = nullptr;
         delete mInProgressScene;
         mInProgressScene = new Scene("InProgress");
 
