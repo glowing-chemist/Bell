@@ -77,6 +77,8 @@ Engine::Engine(GLFWwindow* windowPtr) :
     mInitialisedTLCTextures(false),
     mBlueNoise(getDevice(), Format::R8UNorm, ImageUsage::Sampled | ImageUsage::TransferDest, 470, 470, 1, 1, 1, 1, "Blue Noise"),
     mBlueNoiseView(mBlueNoise, ImageViewType::Colour),
+    mDefaultDiffuseTexture(getDevice(), Format::RGBA8UNorm, ImageUsage::Sampled | ImageUsage::TransferDest, 4, 4, 1, 1, 1, 1, "Default Diffuse"),
+    mDefaultDiffuseView(mDefaultDiffuseTexture, ImageViewType::Colour),
     mCurrentRenderGraph(),
     mCompileGraph(true),
 	mTechniques{},
@@ -171,7 +173,8 @@ void Engine::setScene(Scene* scene)
     if(scene)
     {
         // Set up the SRS for the materials.
-        const auto& materials = mCurrentScene->getMaterials();
+        auto& materials = mCurrentScene->getMaterials();
+        materials.push_back(mDefaultDiffuseView);
         mMaterials->addSampledImageArray(materials);
         mMaterials->finalise();
     }
@@ -775,14 +778,25 @@ void Engine::updateGlobalBuffers()
     if(!mInitialisedTLCTextures)
     {
         // Load textures for LTC.
-        TextureUtil::TextureInfo matInfo = TextureUtil::load128BitTexture("./Assets/ltc_mat.hdr", 4);
-        mLTCMat->setContents(matInfo.mData.data(), matInfo.width, matInfo.height, 1);
+        {
+            TextureUtil::TextureInfo matInfo = TextureUtil::load128BitTexture("./Assets/ltc_mat.hdr", 4);
+            mLTCMat->setContents(matInfo.mData.data(), matInfo.width, matInfo.height, 1);
+        }
 
-        TextureUtil::TextureInfo ampInfo = TextureUtil::load128BitTexture("./Assets/ltc_amp.hdr", 2);
-        mLTCAmp->setContents(ampInfo.mData.data(), ampInfo.width, ampInfo.height, 1);
+        {
+            TextureUtil::TextureInfo ampInfo = TextureUtil::load128BitTexture("./Assets/ltc_amp.hdr", 2);
+            mLTCAmp->setContents(ampInfo.mData.data(), ampInfo.width, ampInfo.height, 1);
+        }
 
-        TextureUtil::TextureInfo noiseInfo = TextureUtil::load32BitTexture("./Assets/BlueNoise.png", 1);
-        mBlueNoise->setContents(noiseInfo.mData.data(), 470, 470, 1);
+        {
+            TextureUtil::TextureInfo noiseInfo = TextureUtil::load32BitTexture("./Assets/BlueNoise.png", 1);
+            mBlueNoise->setContents(noiseInfo.mData.data(), 470, 470, 1);
+        }
+
+        {
+            TextureUtil::TextureInfo defaultInfo = TextureUtil::load32BitTexture("./Assets/DefaultDiffuse.png", 4);
+            mDefaultDiffuseTexture->setContents(defaultInfo.mData.data(), 4, 4, 1);
+        }
 
         mInitialisedTLCTextures = true;
     }

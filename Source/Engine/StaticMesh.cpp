@@ -1,5 +1,6 @@
 #include "Engine/StaticMesh.h"
 #include "Core/BellLogging.hpp"
+#include "Core/ConversionUtils.hpp"
 
 #include "assimp/Importer.hpp"
 #include "assimp/postprocess.h"
@@ -143,9 +144,9 @@ void StaticMesh::configure(const aiScene* scene, const aiMesh* mesh, const int v
             WriteVertexInt(packedColour, currentOffset);
             currentOffset += sizeof(uint32_t);
         }
-        else if(vertAttributes & VertexAttributes::Albedo) // Default to {0.0f, 0.0f, 0.0f} if no material present.
+        else if(vertAttributes & VertexAttributes::Albedo) // Default to {0.65f, 0.65f, 0.65f} if no material present.
         {
-            uint32_t packedDiffuse = 0;
+            uint32_t packedDiffuse = packColour(float4(0.65f, 0.65f, 0.65f, 1.0f));
 
             const uint32_t matIndex = mesh->mMaterialIndex;
             const aiMaterial* mat = scene->mMaterials[matIndex];
@@ -153,7 +154,7 @@ void StaticMesh::configure(const aiScene* scene, const aiMesh* mesh, const int v
             const aiReturn result = mat->Get(AI_MATKEY_COLOR_DIFFUSE, diffuse);
             if(result == aiReturn_SUCCESS)
             {
-                packedDiffuse = uint32_t(diffuse.r * 255.0f) | (uint32_t(diffuse.g * 255.0f) << 8) | (uint32_t(diffuse.b * 255.0f) << 16) | (uint32_t(diffuse.a * 255.0f) << 24);
+                packedDiffuse = packColour(float4(diffuse.r, diffuse.g, diffuse.b, diffuse.a));
             }
 
             WriteVertexInt(packedDiffuse, currentOffset);

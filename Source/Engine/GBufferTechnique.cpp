@@ -36,7 +36,7 @@ GBufferTechnique::GBufferTechnique(Engine* eng, RenderGraph& graph) :
                 exec->bindIndexBuffer(eng->getIndexBuffer(), 0);
                 exec->bindVertexBuffer(eng->getVertexBuffer(), 0);
 
-                uint64_t currentMaterialFLags = 0;
+                uint64_t currentMaterialFLags = ~0;
 
                 const RenderTask& task = graph.getTask(taskIndex);
                 Shader vertexShader = eng->getShader("./Shaders/GBufferPassThrough.vert");
@@ -82,7 +82,7 @@ GBufferTechnique::GBufferTechnique(Engine* eng, RenderGraph& graph) :
                 exec->bindIndexBuffer(eng->getIndexBuffer(), 0);
                 exec->bindVertexBuffer(eng->getVertexBuffer(), 0);
 
-                uint64_t currentMaterialFLags = 0;
+                uint64_t currentMaterialFLags = ~0;
 
                 const RenderTask& task = graph.getTask(taskIndex);
                 Shader vertexShader = eng->getShader("./Shaders/GBufferPassThrough.vert");
@@ -150,7 +150,7 @@ GBufferPreDepthTechnique::GBufferPreDepthTechnique(Engine* eng, RenderGraph& gra
             {
                 exec->bindIndexBuffer(eng->getIndexBuffer(), 0);
                 exec->bindVertexBuffer(eng->getVertexBuffer(), 0);
-                uint64_t currentMaterialFLags = 0;
+                uint64_t currentMaterialFLags = ~0;
 
                 const RenderTask& task = graph.getTask(taskIndex);
                 Shader vertexShader = eng->getShader("./Shaders/GBufferPassThrough.vert");
@@ -196,7 +196,7 @@ GBufferPreDepthTechnique::GBufferPreDepthTechnique(Engine* eng, RenderGraph& gra
                 exec->bindIndexBuffer(eng->getIndexBuffer(), 0);
                 exec->bindVertexBuffer(eng->getVertexBuffer(), 0);
 
-                uint64_t currentMaterialFLags = 0;
+                uint64_t currentMaterialFLags = ~0;
 
                 const RenderTask& task = graph.getTask(taskIndex);
                 Shader vertexShader = eng->getShader("./Shaders/GBufferPassThrough.vert");

@@ -46,7 +46,7 @@ ForwardIBLTechnique::ForwardIBLTechnique(Engine* eng, RenderGraph& graph) :
                 exec->bindIndexBuffer(eng->getIndexBuffer(), 0);
                 exec->bindVertexBuffer(eng->getVertexBuffer(), 0);
 
-                uint64_t currentMaterialFLags = 0;
+                uint64_t currentMaterialFLags = ~0;
 
                 const RenderTask& task = graph.getTask(taskIndex);
                 Shader vertexShader = eng->getShader("./Shaders/ForwardMaterial.vert");
@@ -92,7 +92,7 @@ ForwardIBLTechnique::ForwardIBLTechnique(Engine* eng, RenderGraph& graph) :
                 exec->bindIndexBuffer(eng->getIndexBuffer(), 0);
                 exec->bindVertexBuffer(eng->getVertexBuffer(), 0);
 
-                uint64_t currentMaterialFLags = 0;
+                uint64_t currentMaterialFLags = ~0;
 
                 const RenderTask& task = graph.getTask(taskIndex);
                 Shader vertexShader = eng->getShader("./Shaders/ForwardMaterial.vert");

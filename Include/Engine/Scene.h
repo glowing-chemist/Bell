@@ -165,7 +165,7 @@ public:
 
     struct ShadowingLight;
 
-    Scene(const std::filesystem::path& name);
+    Scene(const std::filesystem::path& path);
     ~Scene();
 
     void setPath(const std::filesystem::path& path)
@@ -247,6 +247,11 @@ public:
 	{
 		return mMaterialImageViews;
 	}
+
+    std::vector<ImageView>& getMaterials()
+    {
+        return mMaterialImageViews;
+    }
 
 	struct Material
 	{

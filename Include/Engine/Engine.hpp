@@ -343,6 +343,8 @@ private:
     bool mInitialisedTLCTextures;
     Image mBlueNoise;
     ImageView mBlueNoiseView;
+    Image mDefaultDiffuseTexture;
+    ImageView mDefaultDiffuseView;
 
     std::unordered_map < const StaticMesh*, std::pair<uint64_t, uint64_t>> mVertexCache;
     std::unordered_map < const StaticMesh*, std::pair<uint64_t, uint64_t>> mTposeVertexCache;
