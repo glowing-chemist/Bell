@@ -4,7 +4,7 @@ float2 marchRay(float3 position, const float3 direction, const uint maxSteps, fl
 {
 	uint currentLOD = startLOD;
 	float3 currentPosition = position.xyz;
-	float maxPizelSize = max(pixelSize.x, pixelSize.y);
+	float3 maxPizelSize = max(pixelSize.x, pixelSize.y);
 
 	for(uint i = 0; i < maxSteps; ++i)
 	{
@@ -28,5 +28,5 @@ float2 marchRay(float3 position, const float3 direction, const uint maxSteps, fl
 		}
 	}
 
-	return float2(-1.0f, -1.0f);
+	return float2(-1.0f, -1.0f);;
 }

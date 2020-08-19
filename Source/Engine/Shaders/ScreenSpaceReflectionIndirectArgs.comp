@@ -1,0 +1,19 @@
+
+[[vk::binding(1)]]
+RWStructuredBuffer<uint3> roughIndirectArgs;
+
+[[vk::binding(2)]]
+RWStructuredBuffer<uint3> smoothIndirectArgs;
+
+[[vk::binding(4)]]
+RWStructuredBuffer<uint> roughTileCount;
+
+[[vk::binding(6)]]
+RWStructuredBuffer<uint> smoothTileCount;
+
+
+void main()
+{
+	roughIndirectArgs[0] = uint3(roughTileCount[0], 1, 1);
+	smoothIndirectArgs[0] = uint3(smoothTileCount[0], 1, 1);
+}

@@ -19,7 +19,7 @@ CompositeTechnique::CompositeTechnique(Engine* eng, RenderGraph& graph) :
 	const bool usingOverlay = eng->isPassRegistered(PassType::Overlay);
 	const bool usingTAA = eng->isPassRegistered(PassType::TAA);
 
-    if (eng->debugTextureEnabled())
+    if (true)//eng->debugTextureEnabled())
 	{
 		GraphicsPipelineDescription desc
 		(
@@ -28,7 +28,7 @@ CompositeTechnique::CompositeTechnique(Engine* eng, RenderGraph& graph) :
 		);
 
 		GraphicsTask compositeTask("Composite", desc);
-        compositeTask.addInput(eng->getDebugTextureSlot(), AttachmentType::Texture2D);
+        compositeTask.addInput(/*eng->getDebugTextureSlot()*/ kReflectionMap, AttachmentType::Texture2D);
 		compositeTask.addInput(kOverlay, AttachmentType::Texture2D);
 		compositeTask.addInput(kDefaultSampler, AttachmentType::Sampler);
 

@@ -241,9 +241,14 @@ void RenderGraph::compileDependancies()
                     {
 						if(outResources[outerIndex].mName == innerResources[innerIndex].mName &&
                                 // Assumes ImageND are used as read write or read Only.
-                                (outResources[outerIndex].mType == AttachmentType::Image1D ||
+                                (((outResources[outerIndex].mType == AttachmentType::Image1D ||
                                  outResources[outerIndex].mType == AttachmentType::Image2D ||
-                                 outResources[outerIndex].mType == AttachmentType::Image3D ||
+                                 outResources[outerIndex].mType == AttachmentType::Image3D) &&
+                                  (innerResources[innerIndex].mType == AttachmentType::Texture1D ||
+                                   innerResources[innerIndex].mType == AttachmentType::Texture2D ||
+                                   innerResources[innerIndex].mType == AttachmentType::Texture3D ||
+                                   innerResources[innerIndex].mType == AttachmentType::CubeMap)
+                                  ) ||
                                  // If the outer task writes to the buffer and the inner reads we need
                                  // to emit a dependancy to enforce writing before reading.
                                  ((outResources[outerIndex].mType == AttachmentType::DataBufferWO ||

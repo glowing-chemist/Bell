@@ -23,9 +23,9 @@ struct ImGuiOptions
     bool mRayTracedShadows = false;
 #endif
     int mReflectionsToggle = 0;
-    bool mSSR = false;
+    bool mSSR = true;
 #if USE_RAY_TRACING
-    bool mRayTracedReflections = false
+    bool mRayTracedReflections = false;
 #endif
     bool preDepth = true;
     bool occlusionCulling = false;

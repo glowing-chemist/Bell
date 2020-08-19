@@ -27,6 +27,20 @@ public:
 	virtual void bindResources(RenderGraph& graph) override final;
 
 private:
+    uint2 mTileCount;
+    // Buffers for tracking
+    Buffer mIndirectArgs;
+    BufferView mSmoothIdirectArgsView;
+    BufferView mRoughIndirectArgs;
+    Buffer mSmoothTileList;
+    BufferView mSmoothTileListView;
+    BufferView mSmoothTileCountView;
+    Buffer mRoughTileList;
+    BufferView mRoughTileListView;
+    BufferView mRoughTileCountView;
+
+    Image mReflectionMap;
+    ImageView mReflectionMapView;
 
     Sampler mClampedSampler;
 };

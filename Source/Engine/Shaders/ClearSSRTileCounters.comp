@@ -1,0 +1,13 @@
+
+[[vk::binding(4)]]
+RWStructuredBuffer<uint> roughTileCount;
+
+[[vk::binding(6)]]
+RWStructuredBuffer<uint> smoothTileCount;
+
+
+void main()
+{
+	roughTileCount[0] = 0;
+	smoothTileCount[0] = 0;
+}

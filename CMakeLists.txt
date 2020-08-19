@@ -270,7 +270,11 @@ set(SHADERS
 	LineariseDepth10.comp
 	LineariseDepth11.comp
 	FinalComposite.frag
-	ScreenSpaceReflection.frag
+	ClearSSRTileCounters.comp
+	ScreenSpaceReflectionAllocateTiles.comp
+	ScreenSpaceReflectionIndirectArgs.comp
+	ScreenSpaceReflectionRough.comp
+	ScreenSpaceReflectionSmooth.comp
 	RayTracedReflections.comp
 	Materials.hlsl
 	Voxalize.vert
