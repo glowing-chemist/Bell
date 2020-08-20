@@ -25,11 +25,12 @@ Scene::Scene(const std::filesystem::path& path) :
 	mMaterials{},
 	mMaterialImageViews{},
     mLights{},
+    mShadowLightCamera(Camera({0.0f, 0.0f, 0.0f}, {1.0f, 0.0f, 0.0f}, 0.0f)),
     mShadowingLight{},
     mCascadesInfo{mSceneCamera.getFarPlane() * 0.3f, mSceneCamera.getFarPlane() * 0.7f, mSceneCamera.getFarPlane()},
 	mSkybox{nullptr}
 {
-    setShadowingLight({0.0f, 0.0f, 0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, -1.0f, 0.0f});
+    setShadowingLight(Camera({0.0f, 0.0f, 0.0f}, {1.0f, 0.0f, 0.0f}, 0.0f));
 }
 
 
@@ -667,12 +668,14 @@ void Scene::generateSceneAABB(const bool includeStatic)
 }
 
 
-void Scene::setShadowingLight(const float3 &position, const float3 &direction, const float3 &up)
+void Scene::setShadowingLight(const Camera& cam)
 {
-    const float4x4 view = glm::lookAt(position, position + direction, up);
-    const float4x4 proj = glm::perspective(glm::radians(90.0f), 1920.0f / 1080.0f, 0.1f, 2000.0f);
+    mShadowLightCamera = cam;
 
-    ShadowingLight light{view, glm::inverse(view), proj * view, float4(position, 1.0f), float4(direction, 0.0f), float4(up, 1.0f)};
+    const float4x4 view = mShadowLightCamera.getViewMatrix();
+    const float4x4 proj = mShadowLightCamera.getProjectionMatrix();
+
+    ShadowingLight light{view, glm::inverse(view), proj * view, float4(mShadowLightCamera.getPosition(), 1.0f), float4(mShadowLightCamera.getDirection(), 0.0f), float4(mShadowLightCamera.getUp(), 1.0f)};
     mShadowingLight = light;
 }
 

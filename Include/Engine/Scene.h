@@ -231,7 +231,12 @@ public:
         return mSceneCamera;
     }
 
-    void setShadowingLight(const float3& position, const float3& direction, const float3& up);
+    void setShadowingLight(const Camera&);
+
+    Camera& getShadowLightCamera()
+    {
+        return mShadowLightCamera;
+    }
 
     const ShadowingLight& getShadowingLight() const
     {
@@ -459,6 +464,7 @@ private:
     std::vector<CPUImage> mCPUMaterials;
 
     std::vector<Light> mLights;
+    Camera mShadowLightCamera;
     ShadowingLight mShadowingLight;
     ShadowCascades mCascadesInfo;
 

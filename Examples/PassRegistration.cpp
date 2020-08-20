@@ -197,13 +197,16 @@ int main()
 #endif
 
     // set camera aspect ratio.
-
     Camera& camera = testScene.getCamera();
     camera.setAspect(float(windowWidth) / float(windowHeight));
 
-    const float3 lightDirection = glm::normalize(float3(0.22f, -0.68f, -0.69f));
-    testScene.setShadowingLight(float3(-395.0f, 1475.0f, 120.0f), lightDirection, float3(-0.83f, -0.5f, 0.22f));
-
+    const float3 lightDirection = glm::normalize(float3(0.0f, -1.0f, 0.0f));
+    const float3 ligthUp = float3(0.0f, 0.0f, 1.0f);
+    Camera ShadowCamera(float3(0.0f, 1500.0f, 0.0f), lightDirection, float(windowWidth) / float(windowHeight), 50.0f, 1600.0f);
+    ShadowCamera.setUp(ligthUp);
+    ShadowCamera.setCameraMode(CameraMode::Orthographic);
+    ShadowCamera.setFrameBufferSizeOrthographic({2000.0f, 500.0f});
+    testScene.setShadowingLight(ShadowCamera);
     
     {
         const AABB sceneBounds = testScene.getBounds();

@@ -29,6 +29,14 @@ private:
 };
 
 
+enum class CameraMode
+{
+    ReversePerspective,
+    Perspective,
+    Orthographic
+};
+
+
 class Camera
 {
 public:
@@ -38,8 +46,11 @@ public:
         const float aspect,
         float nearPlaneDistance = 0.1f,
         float farPlaneDistance = 10.0f,
-        float fieldOfView = 90.0f)
-        :   mPosition{ position },
+        float fieldOfView = 90.0f,
+        const CameraMode mode = CameraMode::ReversePerspective)
+        :   mMode(mode),
+            mFrameBufferSize{1920.0f, 1080.0f},
+            mPosition{ position },
             mDirection{ direction },
             mUp{ 0.0f, -1.0f, 0.0f },
             mAspect{ aspect },
@@ -59,6 +70,14 @@ public:
     void rotateYaw(const float);
     void rotateWorldUp(const float);
 
+    void setCameraMode(const CameraMode mode)
+    {
+        mMode = mode;
+    }
+
+    void setFrameBufferSizeOrthographic(const float2 size)
+        { mFrameBufferSize = size; }
+
     const float3& getPosition() const
         { return mPosition; }
 
@@ -70,6 +89,9 @@ public:
 
 	void setDirection(const float3& dir)
 		{ mDirection = dir; }
+
+    void setUp(const float3& up)
+        { mUp = up; }
 
     const float3 getUp() const
         { return mUp; }
@@ -94,8 +116,7 @@ public:
     { return mAspect; }
 
     float4x4 getViewMatrix() const;
-    float4x4 getPerspectiveMatrix() const;
-    float4x4 getOrthographicsMatrix() const;
+    float4x4 getProjectionMatrix() const;
 
 	float getNearPlane() const
 	{ return mNearPlaneDistance; }
@@ -109,6 +130,9 @@ public:
     Frustum getFrustum() const;
 
 private:
+
+    CameraMode mMode;
+    float2 mFrameBufferSize; // framebufer size for orthographic cameras.
 
     float3 mPosition;
     float3 mDirection;

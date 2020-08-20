@@ -819,13 +819,13 @@ void Engine::updateGlobalBuffers()
                 const uint32_t index = mRenderDevice->getCurrentSubmissionIndex() % 16;
                 const float2& jitter = mTAAJitter[index];
 
-                perspective = glm::translate(float3(jitter / mCameraBuffer.mFrameBufferSize, 0.0f)) * currentCamera.getPerspectiveMatrix();
+                perspective = glm::translate(float3(jitter / mCameraBuffer.mFrameBufferSize, 0.0f)) * currentCamera.getProjectionMatrix();
                 mCameraBuffer.mPreviousJitter = mCameraBuffer.mJitter;
                 mCameraBuffer.mJitter = jitter / mCameraBuffer.mFrameBufferSize;
             }
             else
             {
-                perspective = currentCamera.getPerspectiveMatrix();
+                perspective = currentCamera.getProjectionMatrix();
                 mCameraBuffer.mPreviousJitter = mCameraBuffer.mJitter;
                 mCameraBuffer.mJitter = float2(0.0f, 0.0f);
             }
@@ -835,7 +835,6 @@ void Engine::updateGlobalBuffers()
             mCameraBuffer.mViewMatrix = view;
             mCameraBuffer.mInvertedView = glm::inverse(view);
             mCameraBuffer.mPerspectiveMatrix = perspective;
-            mCameraBuffer.mOrthoMatrix = currentCamera.getOrthographicsMatrix();
             mCameraBuffer.mFrameBufferSize = glm::vec2{ swapchainX, swapChainY };
             mCameraBuffer.mPosition = currentCamera.getPosition();
             mCameraBuffer.mNeaPlane = currentCamera.getNearPlane();

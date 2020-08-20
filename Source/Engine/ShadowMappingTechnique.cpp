@@ -73,7 +73,7 @@ ShadowMappingTechnique::ShadowMappingTechnique(Engine* eng, RenderGraph& graph) 
 }
 
 
-void ShadowMappingTechnique::render(RenderGraph& graph, Engine*)
+void ShadowMappingTechnique::render(RenderGraph& graph, Engine* eng)
 {
     (mShadowMap)->updateLastAccessed();
     (mShadowMapView)->updateLastAccessed();

@@ -68,7 +68,7 @@ if(VULKAN)
 		Source/Core/Vulkan/VulkanBarrierManager.cpp
 		Source/Core/Vulkan/VulkanCommandContext.cpp)
 
-	add_definitions(-DVULKAN -DGLM_DEPTH_ZERO_TO_ONE)
+	add_definitions(-DVULKAN -DGLM_FORCE_DEPTH_ZERO_TO_ONE)
 elseif(DX_12)
 	set(BACKEND_SOURCE
 		Source/Core/DX_12/DX_12RenderInstance.cpp
@@ -84,7 +84,7 @@ elseif(DX_12)
 		ThirdParty/D3D12MemoryAllocator/src/D3D12MemAlloc.cpp
 		)
 
-		add_definitions(-DDX_12 -DGLM_DEPTH_ZERO_TO_ONE)
+	    add_definitions(-DDX_12 -DGLM_FORCE_DEPTH_ZERO_TO_ONE)
 else()
 message(FATAL_ERROR "no rendering back-end selected select VULKAN or DX_12")
 endif()

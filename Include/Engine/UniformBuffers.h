@@ -8,7 +8,6 @@ struct CameraBuffer
 {
     float4x4 mViewMatrix;
     float4x4 mPerspectiveMatrix;
-    float4x4 mOrthoMatrix;
     float4x4 mViewProjMatrix;
 
     float4x4 mInvertedView;

@@ -763,7 +763,7 @@ void Editor::drawAssistantWindow()
 
            const Camera& camera = mEngine.getCurrentSceneCamera();
            const float4x4 viewMatrix = camera.getViewMatrix();
-           const float4x4 projectionMatrix = camera.getPerspectiveMatrix();
+           const float4x4 projectionMatrix = camera.getProjectionMatrix();
 
            for(InstanceID ID : mSceneInstanceIDs)
            {
@@ -919,7 +919,7 @@ void Editor::drawAssistantWindow()
                }
 
                const float4x4 view = mInProgressScene->getCamera().getViewMatrix();
-               const float4x4 proj = mInProgressScene->getCamera().getPerspectiveMatrix();
+               const float4x4 proj = mInProgressScene->getCamera().getProjectionMatrix();
 
                for(uint32_t i = 0; i < mIrradianceVolumes.size(); ++i)
                {
@@ -1083,7 +1083,7 @@ void Editor::drawLightMenu()
 {
     const Camera& camera = mInProgressScene->getCamera();
     const float4x4 viewMatrix = camera.getViewMatrix();
-    const float4x4 projectionMatrix = camera.getPerspectiveMatrix();
+    const float4x4 projectionMatrix = camera.getProjectionMatrix();
 
     if (ImGui::TreeNode("Lights"))
     {

@@ -125,24 +125,32 @@ float4x4 Camera::getViewMatrix() const
 }
 
 
-float4x4 Camera::getPerspectiveMatrix() const
+float4x4 Camera::getProjectionMatrix() const
 {
-    float fov = 1.0f / tan(glm::radians(mFieldOfView) / 2.0f);
-    return glm::mat4(
-        fov / mAspect, 0.0f, 0.0f, 0.0f,
-        0.0f, fov, 0.0f, 0.0f,
-        0.0f, 0.0f, 0.0f, -1.0f,
-        0.0f, 0.0f, mNearPlaneDistance, 0.0f);
-}
+    if(mMode == CameraMode::ReversePerspective)
+    {
+        float fov = 1.0f / tan(glm::radians(mFieldOfView) / 2.0f);
+        return glm::mat4(
+            fov / mAspect, 0.0f, 0.0f, 0.0f,
+            0.0f, fov, 0.0f, 0.0f,
+            0.0f, 0.0f, 0.0f, -1.0f,
+            0.0f, 0.0f, mNearPlaneDistance, 0.0f);
+    }
+    else if(mMode == CameraMode::Perspective)
+    {
+        return glm::perspective(glm::radians(mFieldOfView), mAspect, mNearPlaneDistance, mFarPlaneDistance);
+    }
+    else if(mMode == CameraMode::Orthographic)
+    {
+        return glm::ortho(-mFrameBufferSize.x / 2.0f, mFrameBufferSize.x / 2.0f,
+                          -mFrameBufferSize.y / 2.0f, mFrameBufferSize.y / 2.0f, mNearPlaneDistance, mFarPlaneDistance);
+    }
 
-
-float4x4 Camera::getOrthographicsMatrix() const
-{
-    return glm::ortho(0.0f, 500.0f, 0.0f, 500.0f, 1.0f, -1.0f);
+    BELL_TRAP;
 }
 
 
 Frustum Camera::getFrustum() const
 {
-    return Frustum{ getPerspectiveMatrix() * getViewMatrix() };
+    return Frustum{ getProjectionMatrix() * getViewMatrix() };
 }
