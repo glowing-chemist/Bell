@@ -103,6 +103,7 @@ Engine::Engine(GLFWwindow* windowPtr) :
     mLightBufferView(mLightBuffer, std::max(sizeof(uint4), mRenderDevice->getMinStorageBufferAlignment())),
     mLightCountView(mLightBuffer, 0, sizeof(uint4)),
     mLightsSRS(getDevice(), 2),
+    mAccumilatedFrameUpdates(0),
     mMaxCommandThreads(1),
     mLightProbeResourceSet(mRenderDevice, 3),
     mRecordTasksSync{true},
@@ -148,8 +149,6 @@ Engine::Engine(GLFWwindow* windowPtr) :
     int width, height;
     glfwGetWindowSize(windowPtr, &width, &height);
     mDebugCamera.setAspect(float(width) / float(height));
-
-    mAnimationLastTicked = std::chrono::system_clock::now();
 }
 
 
@@ -704,11 +703,8 @@ void Engine::terimateAnimation(const InstanceID id, const std::string& name)
 
 void Engine::tickAnimations()
 {
-    const std::chrono::system_clock::time_point currentTime = std::chrono::system_clock::now();
-    const std::chrono::nanoseconds elapsed = currentTime - mAnimationLastTicked;
-    double elapsedTime = elapsed.count();
-    elapsedTime /= 1000000000.0;
-    mAnimationLastTicked = currentTime;
+    double elapsedTime = mFrameUpdateDelta.count();
+    elapsedTime /= 1000000.0;
     uint64_t boneOffset = 0;
     std::vector<float4x4> boneMatracies{};
 
@@ -878,8 +874,6 @@ void Engine::updateGlobalBuffers()
         {
             tickAnimations();
         }
-        else
-            mAnimationLastTicked = std::chrono::system_clock::now();
     }
 }
 

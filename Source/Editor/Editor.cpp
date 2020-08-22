@@ -402,12 +402,16 @@ Editor::~Editor()
 void Editor::run()
 {
 	int previousMode = 0;
+    auto frameStartTime = std::chrono::system_clock::now();
 
     while(!glfwWindowShouldClose(mWindow))
     {
         pumpInputQueue();
 
-		startFrame();
+        const auto currentTime = std::chrono::system_clock::now();
+        std::chrono::microseconds frameDelta = std::chrono::duration_cast<std::chrono::microseconds>(currentTime - frameStartTime);
+        frameStartTime = currentTime;
+        startFrame(frameDelta);
 
         if (mRecompileGraph)
         {
@@ -1207,7 +1211,9 @@ void Editor::drawLightMenu()
                 shadowingLight.mUp = lightTransformation * shadowingLight.mUp;
             }
 
-            mInProgressScene->setShadowingLight(shadowingLight.mPosition, shadowingLight.mDirection, shadowingLight.mUp );
+            Camera shadowCam(shadowingLight.mPosition, shadowingLight.mDirection, 1920.0f / 1080.0f);
+            shadowCam.setUp(shadowingLight.mUp);
+            mInProgressScene->setShadowingLight(shadowCam);
         }
 
 

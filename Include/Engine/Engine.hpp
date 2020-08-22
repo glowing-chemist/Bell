@@ -189,10 +189,11 @@ public:
 
     void execute(RenderGraph&);
 
-    void startFrame()
+    void startFrame(const std::chrono::microseconds& frameDelta)
     {
     mRenderDevice->startFrame();
 
+    mFrameUpdateDelta = frameDelta;
     // Start timestamp after swapchain wait ie don't count waiting for vsync in frametime.
     mFrameStartTime = std::chrono::system_clock::now();
     }
@@ -202,6 +203,7 @@ public:
 	mRenderDevice->endFrame();
 
     // Set the frame time.
+    mAccumilatedFrameUpdates += mFrameUpdateDelta;
     std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
     mLastFrameTime = std::chrono::duration_cast<std::chrono::microseconds>(now - mFrameStartTime);
     }
@@ -392,10 +394,12 @@ private:
 
     std::vector<AnimationEntry> mActiveAnimations;
     void tickAnimations();
-    std::chrono::system_clock::time_point mAnimationLastTicked;
 
     std::chrono::system_clock::time_point mFrameStartTime;
     std::chrono::microseconds mLastFrameTime;
+
+    std::chrono::microseconds mFrameUpdateDelta;
+    std::chrono::microseconds mAccumilatedFrameUpdates;
 
     void updateGlobalBuffers();
 

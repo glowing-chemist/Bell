@@ -41,8 +41,8 @@ public:
 
 private:
 
-	void startFrame()
-	{ mEngine.startFrame(); }
+    void startFrame(const std::chrono::microseconds deltaFrameTime)
+    { mEngine.startFrame(deltaFrameTime); }
 
 	void endFrame()
 	{ mEngine.endFrame(); }

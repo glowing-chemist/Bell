@@ -177,7 +177,7 @@ int main()
 
     Engine engine{window};
 
-    engine.startFrame();
+    engine.startFrame(std::chrono::microseconds(0));
 
     std::array<std::string, 6> skybox{"./Assets/skybox/px.png",
                                       "./Assets/skybox/nx.png",
@@ -269,7 +269,7 @@ int main()
 
 		if (!firstFrame)
 		{
-			engine.startFrame();
+            engine.startFrame(std::chrono::duration_cast<std::chrono::microseconds>(diff));
             unregisterpasses = renderMenu(window, camera, &engine, diff.count());
 		}
 
