@@ -299,6 +299,7 @@ set(SHADERS
 	RayTracedShadows.comp
 	BilaterialUpsample.comp
 	ResolveRayTracedShadows.comp
+	KdTree.hlsl
     )
 
 foreach(shader ${SHADERS})

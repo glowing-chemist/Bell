@@ -4,6 +4,7 @@
 #include "ShadowMapping.hlsl"
 #include "VertexOutputs.hlsl"
 #include "LightProbes.hlsl"
+#include "KdTree.hlsl"
 
 [[vk::binding(0)]]
 ConstantBuffer<CameraBuffer> camera;
@@ -46,7 +47,7 @@ Texture2D<float> shadowMap;
 StructuredBuffer<SphericalHarmonic> harmonics;
 
 [[vk::binding(1, 1)]]
-Texture3D<int4> ProbeLookupTable;
+StructuredBuffer<KdNode> irradianceProbeTree;
 
 
 float4 main(UVVertOutput vertInput)
@@ -55,7 +56,7 @@ float4 main(UVVertOutput vertInput)
 	const float fragmentDepth = depth.Sample(linearSampler, uv);
 
     if(fragmentDepth == 0.0f) // skybox
-        return float4(0.0f, 0.0f, 0.0f, 1.0f)
+        return float4(0.0f, 0.0f, 0.0f, 1.0f);
 
 	float4 worldSpaceFragmentPos = mul(camera.invertedViewProj, float4((uv - 0.5f) * 2.0f, fragmentDepth, 1.0f));
     worldSpaceFragmentPos /= worldSpaceFragmentPos.w;
@@ -85,12 +86,11 @@ float4 main(UVVertOutput vertInput)
 
     float3 irradiance;
     {
+        // TODO extend to lookup multiple probes and interpolate.
         const float3 lookupSamplePos = worldSpaceFragmentPos.xyz / camera.sceneSize.xyz;
-        const uint4 harmonicsIndicies = ProbeLookupTable.Sample(linearSampler, lookupSamplePos);
+        const uint harmonicsIndicies = findNearestPoint(irradianceProbeTree, lookupSamplePos);
 
-        SphericalHarmonic probe1 = harmonics[harmonicsIndicies.x];
-        //SphericalHarmonic probe2 = harmonics[harmonicsIndicies.y];
-        //SphericalHarmonic probe3 = harmonics[harmonicsIndicies.z];
+        SphericalHarmonic probe1 = harmonics[harmonicsIndicies];
 
         irradiance = calculateProbeIrradiance(normal, probe1);
     }

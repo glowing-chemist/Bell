@@ -275,9 +275,18 @@ public:
         float mCoefs[28];
     };
 
+    struct KdNode
+    {
+        float4 mPivotPoint;
+        uint32_t mPivotIndex;
+        int32_t mLeftIndex;
+        int32_t mRightIndex;
+        uint2 m_padding;
+    };
+
     std::vector<SphericalHarmonic> generateIrradianceProbes(const std::vector<IrradianceProbeVolume>& positions);
     std::vector<SphericalHarmonic> generateIrradianceProbes(const std::vector<float3> &positions);
-    std::vector<short4> generateVoronoiLookupTexture(std::vector<SphericalHarmonic> &harmonics, const uint3& textureSize);
+    std::vector<KdNode> generateProbeKdTree(std::vector<SphericalHarmonic> &harmonics);
 
     const std::vector<SphericalHarmonic>& getIrradianceProbes() const
     {
@@ -411,8 +420,8 @@ private:
     std::vector<RadianceProbe> mRadianceProbes;
     std::unique_ptr<Buffer> mIrradianceProbeBuffer;
     std::unique_ptr<BufferView> mIrradianceProbeBufferView;
-    std::unique_ptr<Image> mIrradianceVoronoiIrradianceLookup;
-    std::unique_ptr<ImageView> mIrradianceVoronoiIrradianceLookupView;
+    std::unique_ptr<Buffer> mIrradianceKdTreeBuffer;
+    std::unique_ptr<BufferView> mIrradianceKdTreeBufferView;
     ShaderResourceSet mLightProbeResourceSet;
 
     std::unique_ptr<StaticMesh> mUnitSphere;

@@ -1098,88 +1098,44 @@ Engine::SphericalHarmonic Engine::generateSphericalHarmonic(const float3& positi
 }
 
 
-std::vector<short4> Engine::generateVoronoiLookupTexture(std::vector<SphericalHarmonic>& harmonics, const uint3& textureSize)
+std::vector<Engine::KdNode> Engine::generateProbeKdTree(std::vector<SphericalHarmonic> &harmonics)
 {
-    std::vector<short4> textureData{};
-    textureData.resize(textureSize.x * textureSize.y * textureSize.z);
+    std::vector<Engine::KdNode> treeNodes{};
 
-    const AABB& sceneBounds = mCurrentScene->getBounds();
-    const float3 sceneSize = sceneBounds.getSideLengths();
-    const float4& sceneStart = sceneBounds.getBottom();
-
-    auto calculateVoronoiIndices = [&](const uint3& pos, std::vector<uint32_t>& indicies) -> short4
+    std::function<int32_t(const uint32_t, std::vector<uint32_t>&, std::vector<Engine::KdNode>&)> buildKdTreeRecurse =
+            [&](const uint32_t depth, std::vector<uint32_t>& nodeHarmonicsindicies, std::vector<Engine::KdNode>& results) -> int32_t
     {
-        int32_t foundIndicies[3] = {-1, -1, -1};
-        uint8_t indiciesFound = 0;
+        if(nodeHarmonicsindicies.empty())
+            return -1;
 
-        const float4 scenePos = ((float4(float3(pos), 1.0f) / float4(float3(textureSize), 1.0f)) * float4(sceneSize, 1.0f)) + sceneStart;
-
-        // Loop through all probes and find closest 3 that are visible from position.
-        uint32_t indexToCheck = 0;
-        while(indexToCheck < harmonics.size())
+        const uint32_t axis = depth % 3u;
+        const uint32_t halfIndex = nodeHarmonicsindicies.size() / 2u;
+        std::nth_element(nodeHarmonicsindicies.begin(), nodeHarmonicsindicies.begin() + halfIndex, nodeHarmonicsindicies.end(), [&](const uint32_t lhs, const uint32_t rhs)
         {
-            // Find closest probe.
-            std::nth_element(indicies.begin(), indicies.begin() + indexToCheck, indicies.end(), [&](const uint32_t lhs, const uint32_t rhs)
-            {
-                return glm::distance(scenePos, harmonics[lhs].mPosition) < glm::distance(scenePos, harmonics[rhs].mPosition);
-            });
+            return harmonics[lhs].mPosition[axis] < harmonics[rhs].mPosition[axis];
+        });
 
-            float3 probePosition = harmonics[indicies[indexToCheck]].mPosition;
+        std::vector<uint32_t> leftChildren{nodeHarmonicsindicies.begin(), nodeHarmonicsindicies.begin() + halfIndex};
+        std::vector<uint32_t> rightChildren{nodeHarmonicsindicies.begin() + halfIndex + 1u, nodeHarmonicsindicies.end()};
 
-            const bool visible = mRayTracedScene->isVisibleFrom(scenePos, probePosition);
-            if(visible)
-            {
-                foundIndicies[indiciesFound++] = indicies[indexToCheck];
-            }
+        const uint32_t newNodeIndex = results.size();
+        uint32_t& pivot = nodeHarmonicsindicies[halfIndex];
+        results.push_back(KdNode{harmonics[pivot].mPosition, pivot, -1, -1, {}});
+        KdNode& newNode = results[newNodeIndex];
 
-            ++indexToCheck;
+        uint32_t leftChildrenIndex = buildKdTreeRecurse(depth + 1u, leftChildren, results);
+        newNode.mLeftIndex = leftChildrenIndex;
+        uint32_t rightChildrenIndex = buildKdTreeRecurse(depth + 1u, rightChildren, results);
+        newNode.mRightIndex = rightChildrenIndex;
 
-            if(indiciesFound == 3)
-                break;
-        }
+        return newNodeIndex;
 
-        BELL_ASSERT(indiciesFound == 3, "Unable to find enough visible light probes from position") // Non fatal but should investiagate probe placement if hit.
-
-        short4 result{};
-        result.x = foundIndicies[0];
-        result.y = foundIndicies[1];
-        result.z = foundIndicies[2];
-        result.w = 0;
-
-        return result;
     };
 
-
-    auto calculatePixels = [&](const uint32_t start, const uint32_t stepSize)
-    {
-        std::vector<uint32_t> indicies{};
-        indicies.resize(harmonics.size());
-        std::iota(indicies.begin(), indicies.end(), 0); // create initial indicies.
-
-        uint32_t location = start;
-        while(location < (textureSize.x * textureSize.y * textureSize.z))
-        {
-            const uint32_t x = location % textureSize.x;
-            const uint32_t y = (location / textureSize.x) % textureSize.y;
-            const uint32_t z = location / (textureSize.x * textureSize.y);
-
-            textureData[location] = calculateVoronoiIndices(uint3(x, y, z), indicies);
-
-            location += stepSize;
-        }
-    };
-
-    std::vector<std::future<void>> handles{};
-    const uint32_t threadCount = mThreadPool.getWorkerCount();
-    for(uint32_t i = 1; i < threadCount; ++i)
-    {
-        handles.push_back(mThreadPool.addTask(calculatePixels, i, threadCount));
-    }
-
-    calculatePixels(0, threadCount);
-
-    for(auto& thread : handles)
-        thread.wait();
+    std::vector<uint32_t> harmonicIndicies{};
+    harmonicIndicies.resize(harmonics.size());
+    std::iota(harmonicIndicies.begin(), harmonicIndicies.end(), 0);
+    buildKdTreeRecurse(0u, harmonicIndicies, treeNodes);
 
     // rebaking to need to flush and reset.
     if(mIrradianceProbeBuffer)
@@ -1189,20 +1145,21 @@ std::vector<short4> Engine::generateVoronoiLookupTexture(std::vector<SphericalHa
         mLightProbeResourceSet.reset(mRenderDevice, 2);
     }
 
-    mIrradianceVoronoiIrradianceLookup = std::make_unique<Image>(mRenderDevice, Format::RGBA16Int, ImageUsage::TransferDest | ImageUsage::Sampled,
-                                                                 textureSize.x, textureSize.y, textureSize.z, 1, 1, 1, "Voronoi probe lookup");
-    mIrradianceVoronoiIrradianceLookupView = std::make_unique<ImageView>(*mIrradianceVoronoiIrradianceLookup, ImageViewType::Colour);
+    mIrradianceKdTreeBuffer = std::make_unique<Buffer>(mRenderDevice, BufferUsage::DataBuffer,
+                                                                 sizeof(KdNode) * treeNodes.size(), sizeof(KdNode) * treeNodes.size(), "Irradiance probe KdTree");
 
-    (*mIrradianceVoronoiIrradianceLookup)->setContents(textureData.data(), textureSize.x, textureSize.y, textureSize.z);
+    mIrradianceKdTreeBufferView = std::make_unique<BufferView>(*mIrradianceKdTreeBuffer);
+
+    (*mIrradianceKdTreeBuffer)->setContents(treeNodes.data(), treeNodes.size() * sizeof(KdNode));
 
     // Set up light probe SRS.
     mLightProbeResourceSet->addDataBufferRO(*mIrradianceProbeBufferView);
-    mLightProbeResourceSet->addSampledImage(*mIrradianceVoronoiIrradianceLookupView);
+    mLightProbeResourceSet->addDataBufferRO(*mIrradianceKdTreeBufferView);
     mLightProbeResourceSet->finalise();
 
     mIrradianceProbesHarmonics = std::move(harmonics);
 
-    return textureData;
+    return treeNodes;
 }
 
 
@@ -1233,28 +1190,28 @@ void Engine::loadIrradianceProbes(const std::string& probesPath, const std::stri
     const uint32_t lookupSize = ftell(lookupFile);
     fseek(lookupFile, 0L, SEEK_SET);
 
-    BELL_ASSERT((lookupSize % sizeof(short4)) == 0, "Invalid irradiance probe lookup texture cache size")
-    std::vector<short4> textureData{};
-    textureData.resize(lookupSize / sizeof(short4));
-    fread(textureData.data(), sizeof(short4), textureData.size(), lookupFile);
+    BELL_ASSERT((lookupSize % sizeof(KdNode)) == 0, "Invalid irradiance probe lookup tree cache size")
+    std::vector<KdNode> treeData{};
+    treeData.resize(lookupSize / sizeof(KdNode));
+    fread(treeData.data(), sizeof(KdNode), treeData.size(), lookupFile);
     fclose(lookupFile);
 
-    if(mIrradianceVoronoiIrradianceLookup)
+    if(mIrradianceKdTreeBuffer)
     {
         mRenderDevice->flushWait();
 
         mLightProbeResourceSet.reset(mRenderDevice, 2);
     }
 
-    mIrradianceVoronoiIrradianceLookup = std::make_unique<Image>(mRenderDevice, Format::RGBA16Int, ImageUsage::TransferDest | ImageUsage::Sampled,
-                                                                 64, 64, 64, 1, 1, 1, "Voronoi probe lookup");
-    mIrradianceVoronoiIrradianceLookupView = std::make_unique<ImageView>(*mIrradianceVoronoiIrradianceLookup, ImageViewType::Colour);
+    mIrradianceKdTreeBuffer = std::make_unique<Buffer>(mRenderDevice, BufferUsage::DataBuffer,
+                                                                 treeData.size() * sizeof(KdNode), treeData.size() * sizeof(KdNode), "Voronoi probe lookup");
+    mIrradianceKdTreeBufferView = std::make_unique<BufferView>(*mIrradianceKdTreeBuffer);
 
-    (*mIrradianceVoronoiIrradianceLookup)->setContents(textureData.data(), 64, 64, 64);
+    (*mIrradianceKdTreeBuffer)->setContents(treeData.data(), treeData.size() * sizeof(KdNode));
 
     // Set up light probe SRS.
     mLightProbeResourceSet->addDataBufferRO(*mIrradianceProbeBufferView);
-    mLightProbeResourceSet->addSampledImage(*mIrradianceVoronoiIrradianceLookupView);
+    mLightProbeResourceSet->addDataBufferRO(*mIrradianceKdTreeBufferView);
     mLightProbeResourceSet->finalise();
 }
 

@@ -359,7 +359,6 @@ Editor::Editor(GLFWwindow* window) :
     mPublishedScene{false},
     mAnimationSpeed(1.0f),
     mIrradianceVolumes{},
-    mLightProbeLookupSize(64, 64, 64),
     mLightOperationMode{ImGuizmo::OPERATION::TRANSLATE},
     mEditShadowingLight{false}
 {
@@ -908,8 +907,6 @@ void Editor::drawAssistantWindow()
            float3 sceneSize = mInProgressScene->getBounds().getSideLengths();
            ImGui::Text("Scene size X: %f, Y:, %f, Z: %f", sceneSize.x, sceneSize.y, sceneSize.z);
 
-           ImGui::InputInt3("Lookup texture resolution", &mLightProbeLookupSize.x);
-
            bool volumesHaveChanged = false;
 
            if(ImGui::TreeNode("Irradiance volumes"))
@@ -1407,11 +1404,11 @@ void Editor::bakeAndSaveLightProbes()
     fwrite(harmonics.data(), sizeof(Engine::SphericalHarmonic), harmonics.size(), harmonicsFile);
     fclose(harmonicsFile);
 
-    std::vector<short4> lookupTextureData = mEngine.generateVoronoiLookupTexture(harmonics, mLightProbeLookupSize);
+    std::vector<Engine::KdNode> lookupData = mEngine.generateProbeKdTree(harmonics);
 
     const std::string lookupTexturePath = mInProgressScene->getPath().string() + ".irradianceLookup";
     FILE* lookupFile = fopen(lookupTexturePath.c_str(), "wb");
     BELL_ASSERT(lookupFile, "Unabel to create harmonics file")
-    fwrite(lookupTextureData.data(), sizeof(short4), lookupTextureData.size(), lookupFile);
+    fwrite(lookupData.data(), sizeof(Engine::KdNode), lookupData.size(), lookupFile);
     fclose(lookupFile);
 }
