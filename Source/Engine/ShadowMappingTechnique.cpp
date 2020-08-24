@@ -14,10 +14,10 @@ extern const char kShadowMapHistory[] = "ShadowMapHistory";
 
 ShadowMappingTechnique::ShadowMappingTechnique(Engine* eng, RenderGraph& graph) :
     Technique("ShadowMapping", eng->getDevice()),
-    mDesc(Rect{getDevice()->getSwapChain()->getSwapChainImageWidth() * 2,
-                getDevice()->getSwapChain()->getSwapChainImageHeight() * 2},
-          Rect{getDevice()->getSwapChain()->getSwapChainImageWidth() * 2,
-          getDevice()->getSwapChain()->getSwapChainImageHeight() * 2},
+    mDesc(Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
+                getDevice()->getSwapChain()->getSwapChainImageHeight()},
+          Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
+          getDevice()->getSwapChain()->getSwapChainImageHeight()},
         true, BlendMode::None, BlendMode::None, true, DepthTest::LessEqual, Primitive::TriangleList),
     mShadowMapVertexShader(eng->getShader("./Shaders/ShadowMap.vert")),
     mShadowMapFragmentShader(eng->getShader("./Shaders/VarianceShadowMap.frag")),
@@ -28,10 +28,10 @@ ShadowMappingTechnique::ShadowMappingTechnique(Engine* eng, RenderGraph& graph) 
     mShadowMap(getDevice(), Format::R8UNorm, ImageUsage::Storage | ImageUsage::Sampled, getDevice()->getSwapChain()->getSwapChainImageWidth(), getDevice()->getSwapChain()->getSwapChainImageHeight(),
                1, 1, 1, 1, "ShadowMap"),
     mShadowMapView(mShadowMap, ImageViewType::Colour),
-    mShadowMapIntermediate(getDevice(), Format::RG32Float, ImageUsage::Storage | ImageUsage::Sampled, getDevice()->getSwapChain()->getSwapChainImageWidth() * 2, getDevice()->getSwapChain()->getSwapChainImageHeight() * 2,
+    mShadowMapIntermediate(getDevice(), Format::RG32Float, ImageUsage::Storage | ImageUsage::Sampled, getDevice()->getSwapChain()->getSwapChainImageWidth(), getDevice()->getSwapChain()->getSwapChainImageHeight(),
                1, 1, 1, 1, "ShadowMapIntermediate"),
     mShadowMapIntermediateView(mShadowMapIntermediate, ImageViewType::Colour),
-    mShadowMapBlured(getDevice(), Format::RG32Float, ImageUsage::Storage | ImageUsage::Sampled, getDevice()->getSwapChain()->getSwapChainImageWidth() * 2, getDevice()->getSwapChain()->getSwapChainImageHeight() * 2,
+    mShadowMapBlured(getDevice(), Format::RG32Float, ImageUsage::Storage | ImageUsage::Sampled, getDevice()->getSwapChain()->getSwapChainImageWidth(), getDevice()->getSwapChain()->getSwapChainImageHeight(),
                1, 1, 1, 1, "ShadowMapBlured"),
     mShadowMapBluredView(mShadowMapBlured, ImageViewType::Colour)
 {
@@ -134,7 +134,7 @@ void ShadowMappingTechnique::render(RenderGraph& graph, Engine* eng)
             const float threadGroupWidth = eng->getSwapChainImageView()->getImageExtent().width;
             const float threadGroupHeight = eng->getSwapChainImageView()->getImageExtent().height;
 
-            exec->dispatch(std::ceil(threadGroupWidth / 128.0f), threadGroupHeight * 2, 1.0f);
+            exec->dispatch(std::ceil(threadGroupWidth / 128.0f), threadGroupHeight, 1.0f);
         }
     );
 
@@ -147,7 +147,7 @@ void ShadowMappingTechnique::render(RenderGraph& graph, Engine* eng)
             const float threadGroupWidth = eng->getSwapChainImageView()->getImageExtent().width;
             const float threadGroupHeight = eng->getSwapChainImageView()->getImageExtent().height;
 
-            exec->dispatch(threadGroupWidth * 2, std::ceil(threadGroupHeight / 128.0f), 1.0f);
+            exec->dispatch(threadGroupWidth, std::ceil(threadGroupHeight / 128.0f), 1.0f);
         }
     );
 
