@@ -72,4 +72,10 @@ inline float4 unpackColour(const uint32_t colour)
     return float4{(colour & 0xFF) / 255.0f, ((colour & 0xFF00) >> 8) / 255.0f, ((colour & 0xFF0000) >> 16) / 255.0f, ((colour & 0xFF000000) >> 24) / 255.0f};
 }
 
+inline char4 packNormal(const float4& normal)
+{
+    return char4(normal.x * 127.0f, normal.y * 127.0f, normal.z * 127.0f, normal.w * 127.0f);
+}
+
+
 #endif

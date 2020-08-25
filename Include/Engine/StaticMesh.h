@@ -147,6 +147,7 @@ private:
     void writeVertexVector2(const aiVector2D&, const uint32_t);
     void writeVertexFloat(const float, const uint32_t);
     void WriteVertexInt(const uint32_t, const uint32_t);
+    void WriteVertexChar4(const char4&, const uint32_t);
 
     uint32_t getPrimitiveSize(const aiPrimitiveType) const;
 

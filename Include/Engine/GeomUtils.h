@@ -30,6 +30,14 @@ using ushort2 = glm::vec<2, uint16_t>;
 using ushort3 = glm::vec<3, uint16_t>;
 using ushort4 = glm::vec<4, uint16_t>;
 
+using char2 = glm::vec<2, int8_t>;
+using char3 = glm::vec<3, int8_t>;
+using char4 = glm::vec<4, int8_t>;
+
+using uchar2 = glm::vec<2, uint8_t>;
+using uchar3 = glm::vec<3, uint8_t>;
+using uchar4 = glm::vec<4, uint8_t>;
+
 using float4x4 = glm::mat4;
 using float3x3 = glm::mat3;
 using float4x3 = glm::mat4x3;

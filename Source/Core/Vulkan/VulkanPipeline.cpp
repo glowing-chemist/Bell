@@ -292,7 +292,7 @@ void GraphicsPipeline::setVertexAttributes(const int vertexInputs)
 	else if (hasPosition4)
 		positionSize = 16;
 
-    const uint32_t vertexStride = positionSize + (hasTextureCoords ? 8 : 0) + (hasNormals ? 16 : 0) + (hasAlbedo ? 4 : 0);
+    const uint32_t vertexStride = positionSize + (hasTextureCoords ? 8 : 0) + (hasNormals ? 4 : 0) + (hasAlbedo ? 4 : 0);
 
 	vk::VertexInputBindingDescription bindingDesc{};
 	bindingDesc.setStride(vertexStride);
@@ -360,11 +360,11 @@ void GraphicsPipeline::setVertexAttributes(const int vertexInputs)
 		vk::VertexInputAttributeDescription attribDescNormal{};
 		attribDescNormal.setBinding(0);
 		attribDescNormal.setLocation(currentLocation);
-		attribDescNormal.setFormat(vk::Format::eR32G32B32A32Sfloat);
+        attribDescNormal.setFormat(vk::Format::eR8G8B8A8Snorm);
 		attribDescNormal.setOffset(currentOffset);
 
 		attribs.push_back(attribDescNormal);
-		currentOffset += 16;
+        currentOffset += 4;
 		++currentLocation;
 	}
 

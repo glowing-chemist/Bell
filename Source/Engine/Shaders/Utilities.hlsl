@@ -39,3 +39,16 @@ float3 calculateRGB(const float3 YCoCg)
 
 	return mul(YCoCg, YCoCgToRGB);
 }
+
+uint packNormals(const float4 normal)
+{
+    int4 Packed = int4(round(clamp(normal, -1.0, 1.0) * 127.0)) & 0xff;
+    return uint(Packed.x | (Packed.y << 8) | (Packed.z << 16) | (Packed.w << 24));
+}
+
+float4 unpackNormals(const uint packedNormal)
+{
+    int SignedValue = int(packedNormal);
+    int4 Packed = int4(SignedValue << 24, SignedValue << 16, SignedValue << 8, SignedValue) >> 24;
+    return clamp(float4(Packed) / 127.0, -1.0, 1.0);
+}

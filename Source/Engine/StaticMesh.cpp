@@ -75,7 +75,7 @@ void StaticMesh::configure(const aiScene* scene, const aiMesh* mesh, const int v
     static_assert(sizeof(float) == sizeof(uint32_t), "Material ID doesn't match sizeof(float");
     const uint32_t vertexStride =   ((positionNeeded ? primitiveSize : 0) +
                                     ((vertAttributes & VertexAttributes::TextureCoordinates) ? 2 : 0) +
-                                    (normalsNeeded ? 4 : 0) +
+                                    (normalsNeeded ? 1 : 0) +
                                     ((vertAttributes & VertexAttributes::Albedo) ? 1 : 0)) * sizeof(float);
 
 	mVertexStride = vertexStride;
@@ -134,8 +134,11 @@ void StaticMesh::configure(const aiScene* scene, const aiMesh* mesh, const int v
 
         if(normalsNeeded)
         {
-            writeVertexVector4(mesh->mNormals[i], currentOffset);
-            currentOffset += 4 * sizeof(float);
+            static_assert(sizeof(char4) == sizeof(uint32_t), "char4 must match 32 bit int in size");
+            float4 normal = float4(mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z, 1.0f);
+            const char4 packednormals = packNormal(normal);
+            WriteVertexChar4(packednormals, currentOffset);
+            currentOffset += sizeof(char4);
         }
 
         if(albedoNeeded)
@@ -294,4 +297,13 @@ void StaticMesh::WriteVertexInt(const uint32_t value, const uint32_t startOffset
 {
 	*reinterpret_cast<uint32_t*>(&mVertexData[startOffset]) = value;
 }
+
+void StaticMesh::WriteVertexChar4(const char4& value, const uint32_t startOffset)
+{
+    *reinterpret_cast<int8_t*>(&mVertexData[startOffset]) = value.x;
+    *reinterpret_cast<int8_t*>(&mVertexData[startOffset] + 1) = value.y;
+    *reinterpret_cast<int8_t*>(&mVertexData[startOffset] + 2) = value.z;
+    *reinterpret_cast<int8_t*>(&mVertexData[startOffset] + 3) = value.w;
+}
+
 
