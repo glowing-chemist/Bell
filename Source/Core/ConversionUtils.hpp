@@ -77,5 +77,14 @@ inline char4 packNormal(const float4& normal)
     return char4(normal.x * 127.0f, normal.y * 127.0f, normal.z * 127.0f, normal.w * 127.0f);
 }
 
+inline float4 unpackNormal(const uint32_t normal)
+{
+    const uint8_t x = normal & 0xFF;
+    const uint8_t y = (normal >> 8) & 0xFF;
+    const uint8_t z = (normal >> 16) & 0xFF;
+
+    return float4(*reinterpret_cast<const int8_t*>(&x) / 127.0f, *reinterpret_cast<const int8_t*>(&y) / 127.0f, *reinterpret_cast<const int8_t*>(&z) / 127.0f, 1.0f);
+}
+
 
 #endif

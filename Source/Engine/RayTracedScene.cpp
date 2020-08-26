@@ -51,10 +51,10 @@ RayTracingScene::RayTracingScene(Engine* eng, const Scene* scene) :
             const float2 uv = float2{positionPtr[4], positionPtr[5]};
             mUVs.push_back(uv);
 
-            const float4 normal = float4{positionPtr[6], positionPtr[7], positionPtr[8], positionPtr[9]};
+            const float4 normal = unpackNormal(*reinterpret_cast<const uint32_t*>(&positionPtr[6]));
             mNormals.push_back(normal);
 
-            const float4 colour = unpackColour(*reinterpret_cast<const uint32_t*>(&positionPtr[10]));
+            const float4 colour = unpackColour(*reinterpret_cast<const uint32_t*>(&positionPtr[7]));
             mVertexColours.push_back(colour);
         }
 
