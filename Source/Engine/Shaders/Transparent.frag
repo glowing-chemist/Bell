@@ -42,7 +42,6 @@ Output main(GBufferVertOutput vertInput)
 
     MaterialInfo material = calculateMaterialInfo(  vertInput.normal,
                                                     vertInput.colour, 
-                                                    vertInput.materialFlags, 
                                                     vertInput.materialIndex, 
                                                     viewDir, 
                                                     vertInput.uv);

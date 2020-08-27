@@ -9,7 +9,6 @@ float3 fresnelSchlickRoughness(const float cosTheta, const float3 F0, const floa
 
 MaterialInfo calculateMaterialInfo(	const float4 vertexNormal,
 									const float4 vertexColour,
-									const uint materialTypes, 
 									const uint materialIndex, 
 									const float3 view, 
 									const float2 uv)
@@ -22,16 +21,18 @@ MaterialInfo calculateMaterialInfo(	const float4 vertexNormal,
 
 	uint nextMaterialSlot = 0;
 
-	if(materialTypes & kMaterial_Diffuse)
+#if MATERIAL_FLAGS & kMaterial_Diffuse
 	{
 		mat.diffuse = materials[materialIndex].Sample(linearSampler, uv);
 		++nextMaterialSlot;
 	}
+#endif
 
-	if(materialTypes & kMaterial_Albedo)
+# if MATERIAL_FLAGS & kMaterial_Albedo
 		++nextMaterialSlot;
+#endif
 
-	if(materialTypes & kMaterial_Normals)
+#if MATERIAL_FLAGS & kMaterial_Normals
 	{
 		float3 normal = materials[materialIndex + nextMaterialSlot].Sample(linearSampler, uv).xyz;
 		++nextMaterialSlot;
@@ -53,50 +54,57 @@ MaterialInfo calculateMaterialInfo(	const float4 vertexNormal,
 
 	    mat.normal = float4(normal, 1.0f);
 	}
+#endif
 
 	float metalness = 0.0f;
-	if(materialTypes & kMaterial_CombinedMetalnessRoughness)
+#if MATERIAL_FLAGS & kMaterial_CombinedMetalnessRoughness
 	{
 		const float2 metalnessRoughness = materials[materialIndex + nextMaterialSlot].Sample(linearSampler, uv).zy;
 		metalness = metalnessRoughness.x;
 		mat.specularRoughness.w = metalnessRoughness.y;
 		++nextMaterialSlot;
 	}
-	else
+#else
 	{
-		if(materialTypes & kMaterial_Roughness)
+#if 	MATERIAL_FLAGS & kMaterial_Roughness
 		{
 			mat.specularRoughness.w = materials[materialIndex + nextMaterialSlot].Sample(linearSampler, uv).x;
 			++nextMaterialSlot;
 		}
+#endif
 
-		if(materialTypes & kMaterial_Gloss)
+#if MATERIAL_FLAGS & kMaterial_Gloss
 		{
 			mat.specularRoughness.w = 1.0f - materials[materialIndex + nextMaterialSlot].Sample(linearSampler, uv).x;
 			++nextMaterialSlot;
 		}
+#endif
 
-		if(materialTypes & kMaterial_Specular)
+#if MATERIAL_FLAGS & kMaterial_Specular
 		{
 			mat.specularRoughness.xyz= materials[materialIndex + nextMaterialSlot].Sample(linearSampler, uv).xyz;
 			++nextMaterialSlot;
 		}
+#endif
 		
-		if(materialTypes & kMaterial_CombinedSpecularGloss)
+#if MATERIAL_FLAGS & kMaterial_CombinedSpecularGloss
 		{
 			mat.specularRoughness = materials[materialIndex + nextMaterialSlot].Sample(linearSampler, uv);
 			mat.specularRoughness.w = 1.0f - mat.specularRoughness.w;
 			++nextMaterialSlot;
 		}
+#endif
 
-		if(materialTypes & kMaterial_Metalness)
+#if MATERIAL_FLAGS & kMaterial_Metalness
 		{
 			metalness = materials[materialIndex + nextMaterialSlot].Sample(linearSampler, uv).x;
 			++nextMaterialSlot;
 		}
+#endif
 	}
+#endif
 
-	if(materialTypes & kMaterial_Albedo)
+#if MATERIAL_FLAGS & kMaterial_Albedo
 	{
 		const float4 albedo = materials[materialIndex].Sample(linearSampler, uv);
 		mat.diffuse = albedo * (1.0 - DIELECTRIC_SPECULAR) * (1.0 - metalness);
@@ -106,17 +114,20 @@ MaterialInfo calculateMaterialInfo(	const float4 vertexNormal,
         const float3 F0 = lerp(float3(DIELECTRIC_SPECULAR, DIELECTRIC_SPECULAR, DIELECTRIC_SPECULAR), albedo.xyz, metalness);
         mat.specularRoughness.xyz = fresnelSchlickRoughness(max(NoV, 0.0), F0, mat.specularRoughness.w);
 	}
+#endif
 
-	if(materialTypes & kMaterial_AmbientOcclusion)
+#if MATERIAL_FLAGS & kMaterial_AmbientOcclusion
 	{
 		mat.emissiveOcclusion.w = materials[materialIndex + nextMaterialSlot].Sample(linearSampler, uv).x;
 		++nextMaterialSlot;
 	}
+#endif
 
-	if(materialTypes & kMaterial_Emissive)
+#if MATERIAL_FLAGS & kMaterial_Emissive
 	{
 		mat.emissiveOcclusion.xyz = materials[materialIndex + nextMaterialSlot].Sample(linearSampler, uv).xyz;
 	}
+#endif
 
 
 	return mat;
