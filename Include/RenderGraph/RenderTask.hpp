@@ -48,6 +48,7 @@ enum class TaskType
 {
 	Graphics,
 	Compute,
+    AsyncCompute,
 	All
 };
 

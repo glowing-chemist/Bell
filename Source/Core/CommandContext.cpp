@@ -2,8 +2,9 @@
 #include "Executor.hpp"
 #include "RenderDevice.hpp"
 
-CommandContextBase::CommandContextBase(RenderDevice* dev) :
-    DeviceChild(dev)
+CommandContextBase::CommandContextBase(RenderDevice* dev, const QueueType type) :
+    DeviceChild(dev),
+    mQueueType(type)
 {
 }
 

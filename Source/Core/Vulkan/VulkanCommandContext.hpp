@@ -10,7 +10,7 @@ class VulkanCommandContext : public CommandContextBase
 {
 public:
 
-    VulkanCommandContext(RenderDevice* dev);
+    VulkanCommandContext(RenderDevice* dev, const QueueType);
     ~VulkanCommandContext();
 
     virtual void      setupState(const RenderGraph&, uint32_t taskIndex, Executor*, const uint64_t prefixHash) override final;

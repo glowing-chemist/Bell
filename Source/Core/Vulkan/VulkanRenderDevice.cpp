@@ -45,11 +45,11 @@ VulkanRenderDevice::VulkanRenderDevice(vk::Instance instance,
     mLimits = mPhysicalDevice.getProperties().limits;
 
     mFrameFinished.reserve(mSwapChain->getNumberOfSwapChainImages());
-    mCommandContexts.resize(mSwapChain->getNumberOfSwapChainImages());
+    mGraphicsCommandContexts.resize(mSwapChain->getNumberOfSwapChainImages());
+    mAsyncComputeCommandContexts.resize(mSwapChain->getNumberOfSwapChainImages());
     for (uint32_t i = 0; i < mSwapChain->getNumberOfSwapChainImages(); ++i)
     {
         mFrameFinished.push_back(createFence(true));
-        mCommandContexts[i].push_back(new VulkanCommandContext(this));
     }
 
     // Initialise the glsl compiler here rather than in the first compiled shader to avoid
@@ -80,9 +80,15 @@ VulkanRenderDevice::~VulkanRenderDevice()
     mSwapChain->destroy();
 	delete mSwapChain;
 
-    for(auto& frameContexts : mCommandContexts)
+    for(auto& frameContexts : mGraphicsCommandContexts)
     {
         for(auto* context : frameContexts)
+            delete context;
+    }
+
+    for (auto& frameContexts : mAsyncComputeCommandContexts)
+    {
+        for (auto* context : frameContexts)
             delete context;
     }
 
@@ -154,15 +160,15 @@ VulkanRenderDevice::~VulkanRenderDevice()
 }
 
 
-CommandContextBase* VulkanRenderDevice::getCommandContext(const uint32_t index)
+CommandContextBase* VulkanRenderDevice::getCommandContext(const uint32_t index, const QueueType queue)
 {
-    std::vector<CommandContextBase*>& frameContexts = mCommandContexts[mCurrentFrameIndex];
+    std::vector<CommandContextBase*>& frameContexts = queue == QueueType::Compute ? mAsyncComputeCommandContexts[mCurrentFrameIndex] : mGraphicsCommandContexts[mCurrentFrameIndex];
     if(frameContexts.size() <= index)
     {
         const uint32_t neededContexts = (index - frameContexts.size()) + 1;
         for(uint32_t i = 0; i < neededContexts; ++i)
         {
-            frameContexts.push_back(new VulkanCommandContext(this));
+            frameContexts.push_back(new VulkanCommandContext(this, queue));
         }
     }
 
@@ -400,6 +406,7 @@ vk::DescriptorSetLayout VulkanRenderDevice::generateDescriptorSetLayoutBindings(
 				return vk::ShaderStageFlagBits::eAllGraphics;
 			
 			case TaskType::Compute:
+            case TaskType::AsyncCompute:
 				return vk::ShaderStageFlagBits::eCompute;
 
 			case TaskType::All:
@@ -572,7 +579,7 @@ std::vector<vk::DescriptorSetLayout> VulkanRenderDevice::generateShaderResourceS
 	{
 		if (type == AttachmentType::ShaderResourceSet)
 		{
-			layouts.push_back(static_cast<const VulkanShaderResourceSet&>(*graph.getBoundShaderResourceSet(slot).getBase()).getLayout());
+			layouts.push_back(static_cast<const VulkanShaderResourceSet&>(*graph.getShaderResourceSet(slot).getBase()).getLayout());
 		}
 	}
 
@@ -657,7 +664,7 @@ void VulkanRenderDevice::startFrame()
     frameSyncSetup();
     // update timestampts.
     mFinishedTimeStamps.clear();
-    for(CommandContextBase* context : mCommandContexts[mCurrentFrameIndex])
+    for(CommandContextBase* context : mGraphicsCommandContexts[mCurrentFrameIndex])
     {
         const std::vector<uint64_t>& timeStamps = context->getTimestamps();
         uint32_t i = 0;
@@ -669,6 +676,10 @@ void VulkanRenderDevice::startFrame()
             const uint64_t duration = end - start;
             mFinishedTimeStamps.push_back(duration);
         }
+        context->reset();
+    }
+    for (CommandContextBase* context : mAsyncComputeCommandContexts[mCurrentFrameIndex])
+    {
         context->reset();
     }
     clearDeferredResources();
@@ -701,7 +712,10 @@ void VulkanRenderDevice::submitContext(CommandContextBase *context, const bool f
     auto const waitStage = vk::PipelineStageFlags(vk::PipelineStageFlagBits::eColorAttachmentOutput);
     submitInfo.setPWaitDstStageMask(&waitStage);
 
-    mGraphicsQueue.submit(submitInfo, finalSubmission ? mFrameFinished[getCurrentFrameIndex()] : vk::Fence{nullptr});
+    if (context->getQueueType() == QueueType::Compute)
+        mComputeQueue.submit(submitInfo, vk::Fence{ nullptr });
+    else
+        mGraphicsQueue.submit(submitInfo, finalSubmission ? mFrameFinished[getCurrentFrameIndex()] : vk::Fence{nullptr});
 
     ++mSubmissionCount;
 }
@@ -841,7 +855,7 @@ void VulkanRenderDevice::invalidatePipelines()
 
 vk::CommandBuffer VulkanRenderDevice::getPrefixCommandBuffer()
 {
-    VulkanCommandContext* VKCmdContext = static_cast<VulkanCommandContext*>(getCommandContext(0));
+    VulkanCommandContext* VKCmdContext = static_cast<VulkanCommandContext*>(getCommandContext(0, QueueType::Graphics));
     return VKCmdContext->getPrefixCommandBuffer();
 }
 

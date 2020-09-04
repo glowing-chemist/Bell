@@ -3,9 +3,9 @@
 #include "VulkanRenderDevice.hpp"
 
 
-VulkanCommandContext::VulkanCommandContext(RenderDevice* dev) :
-    CommandContextBase(dev),
-    mCommandPool(dev, QueueType::Graphics),
+VulkanCommandContext::VulkanCommandContext(RenderDevice* dev, const QueueType queue) :
+    CommandContextBase(dev, queue),
+    mCommandPool(dev, queue),
     mDescriptorManager(dev),
     mTimeStampPool(nullptr),
     mTimeStamps{},

@@ -14,7 +14,7 @@ enum class DispatchType
 	Indirect
 };
 
-// This class describes a compute task (sync and async)
+// This class describes a compute task (sync)
 class ComputeTask : public RenderTask 
 {
 public:
@@ -28,11 +28,23 @@ public:
     }
 
 	TaskType taskType() const override final { return TaskType::Compute; }
+};
 
-    friend bool operator==(const ComputeTask& lhs, const ComputeTask& rhs);
 
-private:
+// This class describes a compute task (async)
+class AsyncComputeTask : public RenderTask
+{
+public:
+    AsyncComputeTask(const char* name) : RenderTask{ name } {}
 
+    void addOutput(const char* name, const AttachmentType attachmentType, const Format, const SizeClass = SizeClass::Custom, const LoadOp = LoadOp::Preserve, const StoreOp = StoreOp::Store) override final
+    {
+        // All outputs needs to be part of the descriptor set for compute pipelies
+        // as compuite shaders writes don't go to the framebuffer.
+        mInputAttachments.push_back({ name, attachmentType, 0 });
+    }
+
+    TaskType taskType() const override final { return TaskType::AsyncCompute; }
 };
 
 

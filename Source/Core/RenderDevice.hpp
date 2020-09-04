@@ -34,7 +34,7 @@ public:
 
     virtual ~RenderDevice() = default;
 
-    virtual CommandContextBase*        getCommandContext(const uint32_t index) = 0;
+    virtual CommandContextBase*        getCommandContext(const uint32_t index, const QueueType) = 0;
 
 	virtual void                       startFrame() = 0;
 	virtual void                       endFrame() = 0;

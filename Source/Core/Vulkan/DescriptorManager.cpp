@@ -55,7 +55,7 @@ std::vector<vk::DescriptorSet> DescriptorManager::getDescriptors(const RenderGra
     {
         if (type == AttachmentType::ShaderResourceSet)
         {
-            descSets.push_back(static_cast<const VulkanShaderResourceSet&>(*graph.getBoundShaderResourceSet(slot).getBase()).getDescriptorSet());
+            descSets.push_back(static_cast<const VulkanShaderResourceSet&>(*graph.getShaderResourceSet(slot).getBase()).getDescriptorSet());
         }
     }
 

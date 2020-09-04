@@ -37,17 +37,26 @@ const QueueIndicies getAvailableQueues(vk::SurfaceKHR windowSurface, vk::Physica
     int compute  = -1;
 
     std::vector<vk::QueueFamilyProperties> queueProperties = dev.getQueueFamilyProperties();
-    for(uint32_t i = 0; i < queueProperties.size(); i++) {
-        if(queueProperties[i].queueFlags & vk::QueueFlagBits::eGraphics) graphics = i;
-        //check for compute a compute queue that can we can present on.
-        if((queueProperties[i].queueFlags & vk::QueueFlagBits::eCompute) && dev.getSurfaceSupportKHR(i, windowSurface)) compute = i;
+    for(uint32_t i = 0; i < queueProperties.size(); i++) 
+    {
+        // Check for graphics queue to present from.
+        if((queueProperties[i].queueFlags & vk::QueueFlagBits::eGraphics) && dev.getSurfaceSupportKHR(i, windowSurface))
+            graphics = i;
+
+        //check for compute a dedicated compute queue
+        if((queueProperties[i].queueFlags & vk::QueueFlagBits::eCompute) && !(queueProperties[i].queueFlags & vk::QueueFlagBits::eGraphics)) 
+            compute = i;
+
+        // Just pick any transfer queue for now.
         if(queueProperties[i].queueFlags & vk::QueueFlagBits::eTransfer) transfer = i;
-        // Check for a compute only queue, this will override the previous compute queue.
-        if((queueProperties[i].queueFlags & vk::QueueFlagBits::eCompute) &&
-                dev.getSurfaceSupportKHR(i, windowSurface) &&
-                !(queueProperties[i].queueFlags & vk::QueueFlagBits::eGraphics)) compute = i;
-        if(graphics != -1 && transfer != -1 && compute != -1) return {graphics, transfer, compute};
+
+        if(graphics != -1 && transfer != -1 && compute != -1) 
+            return {graphics, transfer, compute};
     }
+
+    BELL_ASSERT(graphics != -1, "Unable to find valid graphics queue")
+    if (compute == -1)
+        compute = graphics;
     return {graphics, transfer, compute};
 }
 
@@ -138,7 +147,7 @@ std::pair<vk::PhysicalDevice, vk::Device> VulkanRenderInstance::findSuitableDevi
 
     auto availableDevices = mInstance.enumeratePhysicalDevices();
 
-	int physDeviceIndex = -1;
+	int physDeviceIndex = 1;
     for(uint32_t i = 0; i < availableDevices.size(); i++) {
         const vk::PhysicalDeviceProperties properties = availableDevices[i].getProperties();
         const vk::PhysicalDeviceFeatures   features   = availableDevices[i].getFeatures();

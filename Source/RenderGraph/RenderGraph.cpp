@@ -25,7 +25,7 @@ TaskID RenderGraph::addTask(const GraphicsTask& task)
     mFrameBuffersNeedUpdating.push_back(false);
     mDescriptorsNeedUpdating.push_back(false);
 
-	return taskIndex + 1;
+    return { taskIndex, TaskType::Graphics };
 }
 
 
@@ -40,41 +40,58 @@ TaskID RenderGraph::addTask(const ComputeTask& task)
     mFrameBuffersNeedUpdating.push_back(false);
     mDescriptorsNeedUpdating.push_back(false);
 
-	return -static_cast<TaskID>(taskIndex) - 1;
+    return { taskIndex, TaskType::Compute };
+}
+
+
+TaskID RenderGraph::addTask(const AsyncComputeTask& task)
+{
+    const uint32_t taskIndex = static_cast<uint32_t>(mAsyncComputeTasks.size());
+    mAsyncComputeTasks.push_back(task);
+
+    mTaskOrder.push_back({ TaskType::AsyncCompute, taskIndex });
+
+    // Also add a vulkan resources and inputs/outputs for each task, zero initialised
+    mFrameBuffersNeedUpdating.push_back(false);
+    mDescriptorsNeedUpdating.push_back(false);
+
+    return { taskIndex, TaskType::AsyncCompute };
 }
 
 
 RenderTask& RenderGraph::getTask(const TaskID id)
 {
-	BELL_ASSERT(id != 0, "0 is an invalid task ID");
+    switch (id.mTaskType)
+    {
+    case TaskType::Graphics:
+        return mGraphicsTasks[id.mTaskIndex];
 
-	if (id > 0)
-	{
-		BELL_ASSERT(id - 1 < mGraphicsTasks.size(), "Invalid graphics task ID");
-		return mGraphicsTasks[id - 1];
-	}
-	else
-	{
-		BELL_ASSERT(-id - 1 < mComputeTasks.size(), "Invalid compute task ID");
-		return mComputeTasks[-id - 1];
-	}
+    case TaskType::Compute:
+        return mComputeTasks[id.mTaskIndex];
+
+    case TaskType::AsyncCompute:
+        return mAsyncComputeTasks[id.mTaskIndex];
+    }
+
+    BELL_TRAP;
 }
 
 
 const RenderTask& RenderGraph::getTask(const TaskID id) const
 {
-    BELL_ASSERT(id != 0, "0 is an invalid task ID");
+    switch (id.mTaskType)
+    {
+    case TaskType::Graphics:
+        return mGraphicsTasks[id.mTaskIndex];
 
-    if (id > 0)
-    {
-        BELL_ASSERT(id - 1 < mGraphicsTasks.size(), "Invalid graphics task ID");
-        return mGraphicsTasks[id - 1];
+    case TaskType::Compute:
+        return mComputeTasks[id.mTaskIndex];
+
+    case TaskType::AsyncCompute:
+        return mAsyncComputeTasks[id.mTaskIndex];
     }
-    else
-    {
-        BELL_ASSERT(-id - 1 < mComputeTasks.size(), "Invalid compute task ID");
-        return mComputeTasks[-id - 1];
-    }
+
+    BELL_TRAP;
 }
 
 
@@ -630,6 +647,8 @@ RenderTask& RenderGraph::getTask(TaskType taskType, uint32_t taskIndex)
                 return mGraphicsTasks[taskIndex];
             case TaskType::Compute:
 				return mComputeTasks[taskIndex];
+            case TaskType::AsyncCompute:
+                return mAsyncComputeTasks[taskIndex];
             case TaskType::All:
                 return mGraphicsTasks[taskIndex];
         }
@@ -649,6 +668,8 @@ const RenderTask& RenderGraph::getTask(TaskType taskType, uint32_t taskIndex) co
                 return mGraphicsTasks[taskIndex];
             case TaskType::Compute:
 				return mComputeTasks[taskIndex];
+            case TaskType::AsyncCompute:
+                return mAsyncComputeTasks[taskIndex];
             case TaskType::All:
                 return mGraphicsTasks[taskIndex];
         }
@@ -722,7 +743,7 @@ const BufferView& RenderGraph::getBuffer(const char* name) const
 }
 
 
-const ShaderResourceSet& RenderGraph::getBoundShaderResourceSet(const char* name) const
+const ShaderResourceSet& RenderGraph::getShaderResourceSet(const char* name) const
 {
     BELL_ASSERT(mSRS.find(name) != mSRS.end(), "Attempting to fetch non imageViewArray resource")
 

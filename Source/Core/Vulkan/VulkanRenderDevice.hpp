@@ -70,7 +70,7 @@ public:
 	VulkanRenderDevice(vk::Instance, vk::PhysicalDevice, vk::Device, vk::SurfaceKHR, GLFWwindow*);
     ~VulkanRenderDevice();
 
-    virtual CommandContextBase*        getCommandContext(const uint32_t index) override;
+    virtual CommandContextBase*        getCommandContext(const uint32_t index, const QueueType) override;
 
     virtual void                       startFrame() override;
     virtual void                       endFrame() override;
@@ -256,13 +256,6 @@ public:
     virtual void					   submitContext(CommandContextBase*, const bool finalSubmission = false) override;
     virtual void					   swap() override;
 
-	// non const as can compile uncompiled shaders.
-    std::vector<vk::PipelineShaderStageCreateInfo>              generateShaderStagesInfo(const Shader& vertexShader,
-                                                                                         const Shader* geometryShader,
-                                                                                         const Shader* tessControl,
-                                                                                         const Shader* tessEval,
-                                                                                         const Shader& fragmentShader);
-
 	vk::PhysicalDeviceLimits									getLimits() const { return mLimits; }
 
 	template<typename B>
@@ -415,7 +408,8 @@ private:
     MemoryManager mMemoryManager;
     DescriptorManager mPermanentDescriptorManager;
 
-    std::vector<std::vector<CommandContextBase*>> mCommandContexts;
+    std::vector<std::vector<CommandContextBase*>> mGraphicsCommandContexts;
+    std::vector<std::vector<CommandContextBase*>> mAsyncComputeCommandContexts;
     uint32_t mSubmissionCount;
 
     std::vector<uint64_t> mFinishedTimeStamps;

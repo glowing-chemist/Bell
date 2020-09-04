@@ -27,7 +27,6 @@ ViaualizeLightProbesTechnique::ViaualizeLightProbesTechnique(Engine* eng, Render
     mLightProbeVisVertexShader(eng->getShader("./Shaders/LightProbeVis.vert")),
     mLigthProbeVisFragmentShader(eng->getShader("./Shaders/LightProbeVis.frag")),
     mLigthVolumeVisFragmentShader(eng->getShader("./Shaders/LightProbeVolumeVis.frag")),
-    mTaskID{-1},
     mVertexBuffer(eng->getDevice(), BufferUsage::Vertex | BufferUsage::TransferDest, eng->getUnitSphereMesh().getVertexData().size(),
                   eng->getUnitSphereMesh().getVertexData().size(), "LightProbe vertex buffer"),
     mIndexBuffer(eng->getDevice(), BufferUsage::Index | BufferUsage::TransferDest, eng->getUnitSphereMesh().getIndexData().size() * sizeof(uint32_t),

@@ -14,7 +14,7 @@ class CommandContextBase : public DeviceChild
 {
 public:
 
-    CommandContextBase(RenderDevice* dev);
+    CommandContextBase(RenderDevice* dev, const QueueType);
     virtual ~CommandContextBase();
 
     virtual void setupState(const RenderGraph&, uint32_t taskIndex, Executor* exec, const uint64_t prefixHash) = 0;
@@ -25,9 +25,15 @@ public:
     virtual const std::vector<uint64_t>& getTimestamps() = 0;
     virtual void      reset() = 0;
 
+    QueueType getQueueType() const
+    {
+        return mQueueType;
+    }
+
 protected:
 
     std::vector<Executor*> mFreeExecutors;
+    QueueType mQueueType;
 
 };
 

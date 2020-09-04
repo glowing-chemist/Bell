@@ -27,7 +27,11 @@ enum BindingFlags : uint32_t
     ManualBarriers = 1
 };
 
-using TaskID = int32_t;
+struct TaskID
+{
+    uint32_t mTaskIndex;
+    TaskType mTaskType;
+};
 
 class RenderGraph
 {
@@ -39,6 +43,7 @@ public:
 
     TaskID addTask(const GraphicsTask&);
     TaskID addTask(const ComputeTask&);
+    TaskID addTask(const AsyncComputeTask&);
 
     void addDependancy(const RenderTask& dependancy, const RenderTask& dependant);
     void addDependancy(const std::string& dependancy, const std::string& dependant);
@@ -65,7 +70,7 @@ public:
 
     const BufferView& getBoundBuffer(const char*) const;
     const ImageView&  getBoundImageView(const char*) const;
-    const ShaderResourceSet& getBoundShaderResourceSet(const char*) const;
+    const ShaderResourceSet& getShaderResourceSet(const char*) const;
 
     std::vector<BarrierRecorder> generateBarriers(RenderDevice *dev);
 
@@ -138,6 +143,7 @@ private:
 
     std::vector<GraphicsTask> mGraphicsTasks;
     std::vector<ComputeTask>  mComputeTasks;
+    std::vector<AsyncComputeTask> mAsyncComputeTasks;
 
     // The index in to the coresponding task array
     std::vector<std::pair<TaskType, uint32_t>> mTaskOrder;
