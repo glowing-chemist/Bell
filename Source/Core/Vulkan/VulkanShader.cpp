@@ -98,8 +98,12 @@ bool VulkanShader::compile(const std::vector<ShaderDefine> &prefix)
 #else
         options.SetOptimizationLevel(shaderc_optimization_level::shaderc_optimization_level_performance);
 #endif
+        std::hash<std::string> stringHasher;
         for (const auto& define : prefix)
-            options.AddMacroDefinition(define.getNme(), define.getValue());
+        {
+            options.AddMacroDefinition(define.getName(), define.getValue());
+            mCompileDefinesHash += stringHasher(define.getName()) ^ stringHasher(define.getValue());
+        }
         std::unique_ptr<shaderc::CompileOptions::IncluderInterface> includer = std::make_unique<ShaderIncluder>();
         options.SetIncluder(std::move(includer));
         options.SetTargetEnvironment(shaderc_target_env::shaderc_target_env_vulkan, shaderc_env_version_vulkan_1_1);

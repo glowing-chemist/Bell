@@ -21,7 +21,7 @@ public:
         mName(name),
         mValue(std::to_string(value)) {}
 
-    const std::string& getNme() const
+    const std::string& getName() const
     {
         return mName;
     }
@@ -59,6 +59,11 @@ public:
         return mPrefixHash;
     }
 
+    uint64_t getCompiledDefinesHash() const
+    {
+        return mCompileDefinesHash;
+    }
+
 protected:
 
     std::vector<char> mSource;
@@ -71,6 +76,7 @@ protected:
 	fs::file_time_type mLastFileAccessTime;
 
     uint64_t mPrefixHash; // The prefix hash when this shader was compiled.
+    uint64_t mCompileDefinesHash;
 };
 
 

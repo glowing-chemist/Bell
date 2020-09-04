@@ -149,8 +149,10 @@ Output main(GBufferVertOutput vertInput)
         }
     }
 
+#if MATERIAL_FLAGS & kMaterial_AlphaTested
     if(material.diffuse.w == 0.0f)
         discard;
+#endif
 
     Output output;
 

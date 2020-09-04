@@ -257,7 +257,7 @@ Shader Engine::getShader(const std::string& path, const ShaderDefine& define)
 {
     std::hash<std::string> pathHasher{};
     uint64_t hashed = pathHasher(path);
-    hashed += pathHasher(define.getNme());
+    hashed += pathHasher(define.getName());
     hashed += pathHasher(define.getValue());
     const uint64_t shaderKey = hashed + mCurrentRegistredPasses;
     

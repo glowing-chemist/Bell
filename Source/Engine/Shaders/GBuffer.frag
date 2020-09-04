@@ -38,8 +38,10 @@ GBufferFragOutput main(GBufferVertOutput vertInput)
                                                     viewDir, 
                                                     vertInput.uv);
 
+#if MATERIAL_FLAGS & kMaterial_AlphaTested
     if(material.diffuse.w == 0.0f)
         discard;
+#endif
 
     GBufferFragOutput output;
 	output.diffuse = material.diffuse;

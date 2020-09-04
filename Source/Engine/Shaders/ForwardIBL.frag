@@ -68,8 +68,10 @@ Output main(GBufferVertOutput vertInput)
 	const float NoV = dot(material.normal.xyz, viewDir);
     const float3 dfg = DFG.Sample(linearSampler, float2(NoV, roughness * roughness));
 
+#if MATERIAL_FLAGS & kMaterial_AlphaTested
     if(material.diffuse.w == 0.0f)
         discard;
+#endif
 
     const float3 diffuse = calculateDiffuseDisney(material, irradiance, dfg);
     const float3 specular = calculateSpecular(  material,

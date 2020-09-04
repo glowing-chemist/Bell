@@ -20,7 +20,8 @@ ShaderBase::ShaderBase(RenderDevice* device, const std::string& path, const uint
     mSource{},
     mFilePath{path},
     mCompiled{false},
-    mPrefixHash(prefixHash)
+    mPrefixHash(prefixHash),
+    mCompileDefinesHash(0)
 {
     // Load the hlsl Source from disk in to mSource.
 
