@@ -18,7 +18,8 @@ class Executor : public DeviceChild
 {
 public:
     Executor(RenderDevice* dev) :
-        DeviceChild(dev) {}
+        DeviceChild(dev),
+        mSubmitFlag(false ){}
 	virtual ~Executor() = default;
 
 	virtual void draw(const uint32_t vertexOffset, const uint32_t vertexCount) = 0;
@@ -66,6 +67,25 @@ public:
 
     virtual uint32_t getRecordedCommandCount() = 0;
     virtual void      resetRecordedCommandCount() = 0;
+
+    void setSubmitFlag()
+    {
+        mSubmitFlag = true;
+    }
+
+    void clearSubmitFlag()
+    {
+        mSubmitFlag = false;
+    }
+
+    bool getSubmitFlag() const
+    {
+        return mSubmitFlag;
+    }
+
+private:
+
+    bool mSubmitFlag;
 };
 
 #endif

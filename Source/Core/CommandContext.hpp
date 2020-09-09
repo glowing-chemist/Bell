@@ -25,6 +25,11 @@ public:
     virtual const std::vector<uint64_t>& getTimestamps() = 0;
     virtual void      reset() = 0;
 
+    bool getSubmitFlag() const
+    {
+        return mShouldSubmit;
+    }
+
     QueueType getQueueType() const
     {
         return mQueueType;
@@ -35,6 +40,7 @@ protected:
     std::vector<Executor*> mFreeExecutors;
     QueueType mQueueType;
 
+    bool mShouldSubmit;
 };
 
 #endif

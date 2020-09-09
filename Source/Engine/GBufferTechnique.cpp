@@ -71,6 +71,8 @@ GBufferTechnique::GBufferTechnique(Engine* eng, RenderGraph& graph) :
 
                     exec->endCommandPredication();
                 }
+
+                exec->setSubmitFlag();
             }
         );
     }
@@ -109,6 +111,8 @@ GBufferTechnique::GBufferTechnique(Engine* eng, RenderGraph& graph) :
                     exec->insertPushConsatnt(&entry, sizeof(MeshEntry));
                     exec->indexedDraw(vertexOffset / mesh->mMesh->getVertexStride(), indexOffset / sizeof(uint32_t), mesh->mMesh->getIndexData().size());
                 }
+
+                exec->setSubmitFlag();
             }
         );
     }
@@ -185,6 +189,8 @@ GBufferPreDepthTechnique::GBufferPreDepthTechnique(Engine* eng, RenderGraph& gra
 
                     exec->endCommandPredication();
                 }
+
+                exec->setSubmitFlag();
             }
         );
     }
@@ -223,6 +229,8 @@ GBufferPreDepthTechnique::GBufferPreDepthTechnique(Engine* eng, RenderGraph& gra
                     exec->insertPushConsatnt(&entry, sizeof(MeshEntry));
                     exec->indexedDraw(vertexOffset / mesh->mMesh->getVertexStride(), indexOffset / sizeof(uint32_t), mesh->mMesh->getIndexData().size());
                 }
+
+                exec->setSubmitFlag();
             }
         );
     }

@@ -4,7 +4,8 @@
 
 CommandContextBase::CommandContextBase(RenderDevice* dev, const QueueType type) :
     DeviceChild(dev),
-    mQueueType(type)
+    mQueueType(type),
+    mShouldSubmit(false)
 {
 }
 

@@ -580,20 +580,29 @@ void Engine::execute(RenderGraph& graph)
     auto barriers = graph.generateBarriers(mRenderDevice);
 	
     uint32_t currentContext[static_cast<uint32_t>(QueueType::MaxQueues)] = { 0 };
+    uint32_t submittedContexts[static_cast<uint32_t>(QueueType::MaxQueues)] = { 0 };
     if (mRecordTasksSync)
     {
         auto barrier = barriers.begin();
         const uint32_t taskCount = graph.taskCount();
-        uint32_t recordedCommands = 0;
         mAsyncTaskContextMappings.clear();
-        mAsyncTaskContextMappings.push_back({0, 0});
+        mSyncTaskContextMappings.clear();
+
         for (uint32_t taskIndex = 0; taskIndex < taskCount; ++taskIndex)
         {
             RenderTask& task = graph.getTask(taskIndex);
             const uint32_t queueIndex = task.taskType() == TaskType::AsyncCompute ? 1 : 0;
-            uint32_t& currentContextIndex = currentContext[queueIndex];
-            ContextMapping& ctxMapping = mAsyncTaskContextMappings[currentContextIndex];
-            ++ctxMapping.mTaskCount;
+            uint32_t currentContextIndex = currentContext[queueIndex];
+
+            // Add this task to the correct context mapping entry.
+            {
+                std::vector<ContextMapping>& contexts = queueIndex == 1 ? mAsyncTaskContextMappings : mSyncTaskContextMappings;
+                if(currentContextIndex + 1 > contexts.size())
+                    contexts.resize(currentContextIndex + 1);
+
+                ContextMapping& mapping = contexts[currentContextIndex];
+                mapping.mTaskIndicies.push_back(taskIndex);
+            }
 
             const QueueType queueType = static_cast<QueueType>(queueIndex);
             CommandContextBase* context = mRenderDevice->getCommandContext(currentContextIndex, queueType);
@@ -603,39 +612,42 @@ void Engine::execute(RenderGraph& graph)
 
             task.executeRecordCommandsCallback(graph, taskIndex, exec, this, meshes);
 
-            recordedCommands += exec->getRecordedCommandCount();
-            exec->resetRecordedCommandCount();
-
             context->freeExecutor(exec);
             ++barrier;
 
-            if (taskIndex < (taskCount - 1) && recordedCommands >= 250) // submit context
+            if (context->getSubmitFlag()) // submit context
             {
-                recordedCommands = 0;
-                ++currentContextIndex;
+                ++submittedContexts[queueIndex];
+                ++currentContext[queueIndex];
                 mRenderDevice->submitContext(context);
-                mAsyncTaskContextMappings.push_back({taskIndex + 1, 0});
             }
         }
 
-        //mRecordTasksSync = false;
+        // submit final async context if not already.
+        if(submittedContexts[static_cast<uint32_t>(QueueType::Compute)] < currentContext[static_cast<uint32_t>(QueueType::Compute)])
+        {
+            const uint32_t asyncFinalContext = currentContext[static_cast<uint32_t>(QueueType::Compute)];
+            CommandContextBase* asyncContext = mRenderDevice->getCommandContext(asyncFinalContext, QueueType::Compute);
+            mRenderDevice->submitContext(asyncContext);
+        }
+
+        mRecordTasksSync = false;
     }
-    /*else // Record tasks asynchronously.
+    else // Record tasks asynchronously.
     {
         // make sure we have enough contexst.
-        mRenderDevice->getCommandContext(mAsyncTaskContextMappings.size() - 1);
+        mRenderDevice->getCommandContext(mSyncTaskContextMappings.size() - 1, QueueType::Graphics);
+        if(!mAsyncTaskContextMappings.empty())
+            mRenderDevice->getCommandContext(mAsyncTaskContextMappings.size() - 1, QueueType::Compute);
 
-        auto recordToContext = [&](const ContextMapping& ctxMapping, const uint32_t contextIndex) -> CommandContextBase*
+        auto recordToContext = [&](const ContextMapping& ctxMapping, const uint32_t contextIndex, const QueueType queue) -> CommandContextBase*
         {
             // Correct number of contexts will have been created when running tasks sync.
-            CommandContextBase* context = mRenderDevice->getCommandContext(contextIndex);
+            CommandContextBase* context = mRenderDevice->getCommandContext(contextIndex, queue);
 
-            for (uint32_t taskOffset = 0; taskOffset < ctxMapping.mTaskCount; ++taskOffset)
+            for (uint32_t taskIndex : ctxMapping.mTaskIndicies)
             {
-                const uint32_t taskIndex = ctxMapping.mTaskStartIndex + taskOffset;
                 RenderTask& task = graph.getTask(taskIndex);
-                const uint32_t queueIndex = task.taskType() == TaskType::AsyncCompute ? 1 : 0;
-                uint32_t& currentContextIndex = currentContext[queueIndex];
 
                 Executor* exec = context->allocateExecutor(GPU_PROFILING);
                 exec->recordBarriers(barriers[taskIndex]);
@@ -653,13 +665,26 @@ void Engine::execute(RenderGraph& graph)
 
         std::vector<std::future<CommandContextBase*>> resultHandles{};
         resultHandles.reserve(mAsyncTaskContextMappings.size());
-        for (uint32_t i = 1; i < mAsyncTaskContextMappings.size(); ++i)
+        for (uint32_t i = 1; i < mSyncTaskContextMappings.size(); ++i)
         {
-            resultHandles.push_back(mThreadPool.addTask(recordToContext, mAsyncTaskContextMappings[i], i));
+            resultHandles.push_back(mThreadPool.addTask(recordToContext, mSyncTaskContextMappings[i], i, QueueType::Graphics));
         }
 
-        CommandContextBase* firstCtx = recordToContext(mAsyncTaskContextMappings[0], 0);
-        if(mAsyncTaskContextMappings.size() > 1) // If this isn't the first and last context submit it now, if not we still need to record the frame buffer transition.
+        std::vector<std::future<CommandContextBase*>> asyncResultHandles{};
+        asyncResultHandles.reserve(mAsyncTaskContextMappings.size());
+        for(uint32_t i = 0; i < mAsyncTaskContextMappings.size(); ++i)
+        {
+            asyncResultHandles.push_back(mThreadPool.addTask(recordToContext, mAsyncTaskContextMappings[i], i, QueueType::Compute));
+        }
+
+        for(auto& ctx : asyncResultHandles)
+        {
+            CommandContextBase* context = ctx.get();
+            mRenderDevice->submitContext(context);
+        }
+
+        CommandContextBase* firstCtx = recordToContext(mSyncTaskContextMappings[0], 0, QueueType::Graphics);
+        if(mSyncTaskContextMappings.size() > 1) // If this isn't the first and last context submit it now, if not we still need to record the frame buffer transition.
             mRenderDevice->submitContext(firstCtx);
 
         for (uint32_t i = 0; i < resultHandles.size(); ++i)
@@ -672,10 +697,10 @@ void Engine::execute(RenderGraph& graph)
                 mRenderDevice->submitContext(context);
         }
 
-        currentContext = mAsyncTaskContextMappings.size() - 1;
-    }*/
+        currentContext[static_cast<uint32_t>(QueueType::Graphics)] = mSyncTaskContextMappings.size() - 1;
+    }
 
-    const uint32_t submissionContext = currentContext[0];
+    const uint32_t submissionContext = currentContext[static_cast<uint32_t>(QueueType::Graphics)];
     CommandContextBase* context = mRenderDevice->getCommandContext(submissionContext, QueueType::Graphics);
     Executor* exec = context->allocateExecutor();
 	// Transition the swapchain image to a presentable format.

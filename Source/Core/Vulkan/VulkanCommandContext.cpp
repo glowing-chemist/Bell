@@ -113,6 +113,9 @@ Executor* VulkanCommandContext::allocateExecutor(const bool timeStamp)
 
 void VulkanCommandContext::freeExecutor(Executor* exec)
 {
+    mShouldSubmit = mShouldSubmit || exec->getSubmitFlag();
+    exec->clearSubmitFlag();
+
     if(mActiveRenderPass != vk::RenderPass{nullptr})
     {
         VulkanExecutor* VKexec = static_cast<VulkanExecutor*>(exec);
@@ -147,6 +150,7 @@ void VulkanCommandContext::reset()
     mDescriptorManager.reset();
 
     mTimeStamps.clear();
+    mShouldSubmit = false;
 }
 
 

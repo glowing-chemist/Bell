@@ -4,6 +4,7 @@
 #include "Core/RenderInstance.hpp"
 #include "Core/RenderDevice.hpp"
 #include "Core/PerFrameResource.hpp"
+#include "Core/ContainerUtils.hpp"
 
 #include "RenderGraph/RenderGraph.hpp"
 
@@ -430,10 +431,10 @@ private:
     bool mRecordTasksSync;
     struct ContextMapping
     {
-        uint32_t mTaskStartIndex;
-        uint32_t mTaskCount;
+        StaticGrowableBuffer<uint32_t, 16> mTaskIndicies;
     };
     std::vector<ContextMapping> mAsyncTaskContextMappings;
+    std::vector<ContextMapping> mSyncTaskContextMappings;
 
     GLFWwindow* mWindow;
 };
