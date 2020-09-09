@@ -41,10 +41,10 @@ LineariseDepthTechnique::LineariseDepthTechnique(Engine* eng, RenderGraph& graph
     mMipLevels{static_cast<uint32_t>(std::ceil(std::log2(eng->getSwapChainImage()->getExtent(0, 0).height)))},
     mLineariseDepthShader(mMipLevels == 10 ? eng->getShader("./Shaders/LineariseDepth10.comp") : eng->getShader("./Shaders/LineariseDepth11.comp")),
 	mTaskID{0},
-    mLinearDepth(eng->getDevice(), Format::RG32Float, ImageUsage::Sampled | ImageUsage::Storage, eng->getSwapChainImage()->getExtent(0, 0).width, eng->getSwapChainImage()->getExtent(0, 0).height,
+    mLinearDepth(eng->getDevice(), Format::RG16Float, ImageUsage::Sampled | ImageUsage::Storage, eng->getSwapChainImage()->getExtent(0, 0).width, eng->getSwapChainImage()->getExtent(0, 0).height,
         1, mMipLevels, 1, 1, "Linear Depth"),
     mLinearDepthView(mLinearDepth, ImageViewType::Colour, 0, 1, 0, mMipLevels),
-    mPreviousLinearDepth(eng->getDevice(), Format::RG32Float, ImageUsage::Sampled | ImageUsage::Storage, eng->getSwapChainImage()->getExtent(0, 0).width, eng->getSwapChainImage()->getExtent(0, 0).height,
+    mPreviousLinearDepth(eng->getDevice(), Format::RG16Float, ImageUsage::Sampled | ImageUsage::Storage, eng->getSwapChainImage()->getExtent(0, 0).width, eng->getSwapChainImage()->getExtent(0, 0).height,
         1, mMipLevels, 1, 1, "Linear Depth"),
     mPreviousLinearDepthView(mPreviousLinearDepth, ImageViewType::Colour, 0, 1, 0, mMipLevels),
     mOcclusionSampler(SamplerType::Point)
