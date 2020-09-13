@@ -29,6 +29,16 @@ public:
         mSize = 0;
     }
 
+    T* data()
+    {
+        return &mArray[0];
+    }
+
+    const T* data() const
+    {
+        return &mArray[0];
+    }
+
     T* begin()
     {
         return &mArray[0];

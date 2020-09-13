@@ -250,6 +250,10 @@ std::pair<vk::PhysicalDevice, vk::Device> VulkanRenderInstance::findSuitableDevi
 	descriptorIndexingInfo.setShaderSampledImageArrayNonUniformIndexing(true);
 	descriptorIndexingInfo.setRuntimeDescriptorArray(true);
 
+    vk::PhysicalDeviceTimelineSemaphoreFeatures timeLineSepahmoreFeature{};
+    timeLineSepahmoreFeature.setTimelineSemaphore(true);
+    descriptorIndexingInfo.setPNext(&timeLineSepahmoreFeature);
+
     vk::DeviceCreateInfo deviceInfo{};
 	deviceInfo.setEnabledExtensionCount(extensionsToEnable.size());
 	deviceInfo.setPpEnabledExtensionNames(extensionsToEnable.data());

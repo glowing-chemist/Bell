@@ -55,10 +55,8 @@ public:
     virtual void					   swap() = 0;
 
 	virtual size_t					   getMinStorageBufferAlignment() const = 0;
-    virtual bool                       getHasCommandPredicationSupport() const
-    {
-        return false;
-    }
+    virtual bool                       getHasCommandPredicationSupport() const = 0;
+    virtual bool                       getHasAsyncComputeSupport() const = 0;
 
     virtual const std::vector<uint64_t>& getAvailableTimestamps() const = 0;
     virtual float                      getTimeStampPeriod() const = 0;

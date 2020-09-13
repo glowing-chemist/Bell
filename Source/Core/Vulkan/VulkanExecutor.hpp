@@ -67,6 +67,20 @@ public:
         mRecordedCommands = 0;
     }
 
+    uint64_t getAndClearSemaphoreReadSignalValue()
+    {
+        const uint64_t value = mMaxSemaphoreReadSignal;
+        mMaxSemaphoreReadSignal = ~0ULL;
+        return value;
+    }
+
+    uint64_t getAndClearSemaphoreWriteSignalValue()
+    {
+        const uint64_t value = mMaxSemaphoreWriteSignal;
+        mMaxSemaphoreWriteSignal = ~0ULL;
+        return value;
+    }
+
     void setPipelineLayout(const vk::PipelineLayout layout)
     { mPipelineLayout = layout; }
 
@@ -84,6 +98,8 @@ private:
     PFN_vkCmdEndConditionalRenderingEXT   mEndConditionalRenderingFPtr;
 
     uint32_t mRecordedCommands;
+    uint64_t mMaxSemaphoreReadSignal;
+    uint64_t mMaxSemaphoreWriteSignal;
 };
 
 #endif

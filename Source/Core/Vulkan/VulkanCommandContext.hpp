@@ -23,6 +23,16 @@ public:
 
     vk::CommandBuffer getPrefixCommandBuffer();
 
+    uint64_t getSemaphoreSignalRead() const
+    {
+        return mMaxSemaphoreRead;
+    }
+
+    uint64_t getSemaphoreSignalWrite() const
+    {
+        return mMaxSemaphoreWrite;
+    }
+
 private:
     CommandPool mCommandPool;
     DescriptorManager mDescriptorManager;
@@ -32,6 +42,9 @@ private:
     std::vector<uint64_t> mTimeStamps;
 
     vk::RenderPass mActiveRenderPass;
+
+    uint64_t mMaxSemaphoreRead;
+    uint64_t mMaxSemaphoreWrite;
 };
 
 #endif

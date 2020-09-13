@@ -122,6 +122,11 @@ public:
         return mHasConditionalRenderingSupport;
     }
 
+    virtual bool                       getHasAsyncComputeSupport() const override
+    {
+        return mGraphicsQueue != mComputeQueue;
+    }
+
     virtual const std::vector<uint64_t>& getAvailableTimestamps() const override
     {
         return mFinishedTimeStamps;
@@ -257,6 +262,11 @@ public:
     virtual void					   swap() override;
 
 	vk::PhysicalDeviceLimits									getLimits() const { return mLimits; }
+
+    vk::Semaphore                      getAsyncQueueSemaphore() const
+    {
+        return mAsyncQueueSemaphores[mCurrentFrameIndex];
+    }
 
 	template<typename B>
 	vk::DescriptorSetLayout										generateDescriptorSetLayoutBindings(const std::vector<B>&, const TaskType type);
@@ -411,6 +421,8 @@ private:
     std::vector<std::vector<CommandContextBase*>> mGraphicsCommandContexts;
     std::vector<std::vector<CommandContextBase*>> mAsyncComputeCommandContexts;
     uint32_t mSubmissionCount;
+
+    std::vector<vk::Semaphore> mAsyncQueueSemaphores;
 
     std::vector<uint64_t> mFinishedTimeStamps;
 };

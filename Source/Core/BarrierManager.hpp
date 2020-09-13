@@ -45,14 +45,17 @@ public:
 	virtual void transferResourceToQueue(Image&, const QueueType, const Hazard, const SyncPoint src, const SyncPoint dst) = 0;
 	virtual void transferResourceToQueue(Buffer&, const QueueType, const Hazard, const SyncPoint src, const SyncPoint dst) = 0;
 
-	virtual void memoryBarrier(Image& img, const Hazard, const SyncPoint src, const SyncPoint dst) = 0;
-	virtual void memoryBarrier(ImageView& img, const Hazard, const SyncPoint src, const SyncPoint dst) = 0;
-	virtual void memoryBarrier(Buffer& img, const Hazard, const SyncPoint src, const SyncPoint dst) = 0;
-	virtual void memoryBarrier(BufferView& img, const Hazard, const SyncPoint src, const SyncPoint dst) = 0;
-	virtual void memoryBarrier(const Hazard, const SyncPoint src, const SyncPoint dst) = 0;
+    virtual void memoryBarrier(Image& img, const Hazard, const SyncPoint src, const SyncPoint dst) = 0;
+    virtual void memoryBarrier(ImageView& img, const Hazard, const SyncPoint src, const SyncPoint dst) = 0;
+    virtual void memoryBarrier(Buffer& img, const Hazard, const SyncPoint src, const SyncPoint dst) = 0;
+    virtual void memoryBarrier(BufferView& img, const Hazard, const SyncPoint src, const SyncPoint dst) = 0;
+    virtual void memoryBarrier(const Hazard, const SyncPoint src, const SyncPoint dst) = 0;
 
-	virtual void transitionLayout(Image& img, const ImageLayout, const Hazard, const SyncPoint src, const SyncPoint dst) = 0;
-	virtual void transitionLayout(ImageView& img, const ImageLayout, const Hazard, const SyncPoint src, const SyncPoint dst) = 0;
+    virtual void transitionLayout(Image& img, const ImageLayout, const Hazard, const SyncPoint src, const SyncPoint dst) = 0;
+    virtual void transitionLayout(ImageView& img, const ImageLayout, const Hazard, const SyncPoint src, const SyncPoint dst) = 0;
+
+    virtual void signalAsyncQueueSemaphore(const uint64_t val) = 0;
+    virtual void waitOnAsyncQueueSemaphore(const uint64_t val) = 0;
 
 	SyncPoint getSource() const
 	{ return mSrc; }

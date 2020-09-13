@@ -7,6 +7,7 @@
 #include "VulkanPipeline.hpp"
 #include "VulkanExecutor.hpp"
 #include "VulkanCommandContext.hpp"
+#include "Core/ContainerUtils.hpp"
 
 #include "RenderGraph/RenderGraph.hpp"
 
@@ -69,6 +70,22 @@ VulkanRenderDevice::VulkanRenderDevice(vk::Instance instance,
     mPhysicalDevice.getFeatures2(&features2);
     if(conditionalRenderingInfo.conditionalRendering == true)
         mHasConditionalRenderingSupport = true;
+
+    // Create semaphores for synchronising with ansyn compute queue.
+    if(getHasAsyncComputeSupport())
+    {
+        for(uint32_t i = 0; i < mSwapChain->getNumberOfSwapChainImages(); ++i)
+        {
+            vk::SemaphoreTypeCreateInfo timelineCreateInfo{};
+            timelineCreateInfo.semaphoreType = vk::SemaphoreType::eTimeline;
+            timelineCreateInfo.initialValue = 0;
+
+            vk::SemaphoreCreateInfo createInfo{};
+            createInfo.pNext = &timelineCreateInfo;
+
+            mAsyncQueueSemaphores.push_back(mDevice.createSemaphore(createInfo));
+        }
+    }
 }
 
 
@@ -701,16 +718,51 @@ void VulkanRenderDevice::submitContext(CommandContextBase *context, const bool f
     primaryCmdBuffer.end();
 
     const VulkanSwapChain* swapChain = static_cast<VulkanSwapChain*>(mSwapChain);
+    const uint64_t semaphoreRead = static_cast<VulkanCommandContext*>(context)->getSemaphoreSignalRead();
+    const uint64_t semaphoreWrite = static_cast<VulkanCommandContext*>(context)->getSemaphoreSignalWrite();
+
+    StaticGrowableBuffer<vk::Semaphore, 4> waitSemaphores;
+    StaticGrowableBuffer<uint64_t, 4> waitSemaphoresValues;
+    if(mSubmissionCount == 0)
+    {
+        waitSemaphores.push_back(*swapChain->getImageAquired());
+        waitSemaphoresValues.push_back(0);
+    }
+    if(semaphoreRead != ~0ULL)
+    {
+        waitSemaphores.push_back(getAsyncQueueSemaphore());
+        waitSemaphoresValues.push_back(semaphoreRead);
+    }
+
+    StaticGrowableBuffer<vk::Semaphore, 4> signalSemaphores;
+    StaticGrowableBuffer<uint64_t, 4> signalSemaphoresValues;
+    if(finalSubmission)
+    {
+        signalSemaphores.push_back(*swapChain->getImageRendered());
+        signalSemaphoresValues.push_back(0);
+    }
+    if(semaphoreWrite != ~0ULL)
+    {
+        signalSemaphores.push_back(getAsyncQueueSemaphore());
+        signalSemaphoresValues.push_back(semaphoreWrite);
+    }
 
     vk::SubmitInfo submitInfo{};
     submitInfo.setCommandBufferCount(1);
     submitInfo.setPCommandBuffers(&primaryCmdBuffer);
-    submitInfo.setPWaitSemaphores(mSubmissionCount == 0 ? swapChain->getImageAquired() : nullptr);
-    submitInfo.setWaitSemaphoreCount(mSubmissionCount == 0 ? 1 : 0);
-    submitInfo.setPSignalSemaphores(finalSubmission ? swapChain->getImageRendered() : nullptr);
-    submitInfo.setSignalSemaphoreCount(finalSubmission ? 1 : 0);
-    auto const waitStage = vk::PipelineStageFlags(vk::PipelineStageFlagBits::eColorAttachmentOutput);
+    submitInfo.setPWaitSemaphores(waitSemaphores.data());
+    submitInfo.setWaitSemaphoreCount(waitSemaphores.size());
+    submitInfo.setPSignalSemaphores(signalSemaphores.data());
+    submitInfo.setSignalSemaphoreCount(signalSemaphores.size());
+    const vk::PipelineStageFlags waitStage = waitSemaphores.size() > 1 ? vk::PipelineStageFlagBits::eTopOfPipe : vk::PipelineStageFlagBits::eColorAttachmentOutput;
     submitInfo.setPWaitDstStageMask(&waitStage);
+
+    vk::TimelineSemaphoreSubmitInfo timelineInfo{};
+    timelineInfo.setPWaitSemaphoreValues(waitSemaphoresValues.data());
+    timelineInfo.setWaitSemaphoreValueCount(waitSemaphoresValues.size());
+    timelineInfo.setPSignalSemaphoreValues(signalSemaphoresValues.data());
+    timelineInfo.setSignalSemaphoreValueCount(signalSemaphoresValues.size());
+    submitInfo.setPNext(&timelineInfo);
 
     if (context->getQueueType() == QueueType::Compute)
         mComputeQueue.submit(submitInfo, vk::Fence{ nullptr });
@@ -732,7 +784,7 @@ void VulkanRenderDevice::frameSyncSetup()
 	mCurrentFrameIndex = mSwapChain->getNextImageIndex();
 
     // wait for the previous frame using this swapchain image to be finished.
-    auto& fence = mFrameFinished[getCurrentFrameIndex()];
+    vk::Fence fence = mFrameFinished[getCurrentFrameIndex()];
     mDevice.waitForFences(fence, true, std::numeric_limits<uint64_t>::max());
     mDevice.resetFences(1, &fence);
 }

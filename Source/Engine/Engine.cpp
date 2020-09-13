@@ -677,15 +677,15 @@ void Engine::execute(RenderGraph& graph)
             asyncResultHandles.push_back(mThreadPool.addTask(recordToContext, mAsyncTaskContextMappings[i], i, QueueType::Compute));
         }
 
+        CommandContextBase* firstCtx = recordToContext(mSyncTaskContextMappings[0], 0, QueueType::Graphics);
+        if(mSyncTaskContextMappings.size() > 1) // If this isn't the first and last context submit it now, if not we still need to record the frame buffer transition.
+            mRenderDevice->submitContext(firstCtx);
+
         for(auto& ctx : asyncResultHandles)
         {
             CommandContextBase* context = ctx.get();
             mRenderDevice->submitContext(context);
         }
-
-        CommandContextBase* firstCtx = recordToContext(mSyncTaskContextMappings[0], 0, QueueType::Graphics);
-        if(mSyncTaskContextMappings.size() > 1) // If this isn't the first and last context submit it now, if not we still need to record the frame buffer transition.
-            mRenderDevice->submitContext(firstCtx);
 
         for (uint32_t i = 0; i < resultHandles.size(); ++i)
         {

@@ -10,7 +10,9 @@
 VulkanExecutor::VulkanExecutor(RenderDevice *dev, vk::CommandBuffer cmdBuffer) :
     Executor(dev),
     mCommandBuffer{ cmdBuffer },
-    mRecordedCommands{0}
+    mRecordedCommands{0},
+    mMaxSemaphoreReadSignal{~0u},
+    mMaxSemaphoreWriteSignal{~0u}
 {
     vk::Instance inst = static_cast<VulkanRenderDevice*>(getDevice())->getParentInstance();
     mBeginConditionalRenderingFPtr = reinterpret_cast<PFN_vkCmdBeginConditionalRenderingEXT>(inst.getProcAddr("vkCmdBeginConditionalRenderingEXT"));
@@ -109,9 +111,25 @@ void VulkanExecutor::recordBarriers(BarrierRecorder& recorder)
         const auto imageBarriers = VKRecorder.getImageBarriers(QueueType::Graphics);
         const auto bufferBarriers = VKRecorder.getBufferBarriers(QueueType::Graphics);
         const auto memoryBarriers = VKRecorder.getMemoryBarriers(QueueType::Graphics);
+        const auto& semaphoreSignals = VKRecorder.getSemaphoreSignalInfo();
 
-        if(bufferBarriers.empty() && imageBarriers.empty() && memoryBarriers.empty())
+        if(bufferBarriers.empty() && imageBarriers.empty() && memoryBarriers.empty() && semaphoreSignals.empty())
           return;
+
+        uint64_t maxSemaphoreReadValue = 0;
+        uint64_t maxSemaphoreWriteValue = 0;
+        for(auto& semaphoreSignal : semaphoreSignals)
+        {
+            if(semaphoreSignal.mWriteSemaphore)
+                maxSemaphoreWriteValue = std::max(maxSemaphoreWriteValue, semaphoreSignal.mValue);
+            else
+                maxSemaphoreReadValue = std::max(maxSemaphoreReadValue, semaphoreSignal.mValue);
+        }
+        if(!semaphoreSignals.empty())
+        {
+            mMaxSemaphoreReadSignal = maxSemaphoreReadValue;
+            mMaxSemaphoreWriteSignal = maxSemaphoreWriteValue;
+        }
 
         mCommandBuffer.pipelineBarrier(getVulkanPipelineStage(VKRecorder.getSource()), getVulkanPipelineStage(VKRecorder.getDestination()),
         vk::DependencyFlagBits::eByRegion,

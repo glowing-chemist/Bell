@@ -615,6 +615,17 @@ void VulkanBarrierRecorder::transitionLayout(ImageView& img, const ImageLayout n
 }
 
 
+void VulkanBarrierRecorder::signalAsyncQueueSemaphore(const uint64_t val)
+{
+    mSemaphoreOps.push_back({true, val});
+}
+
+void VulkanBarrierRecorder::waitOnAsyncQueueSemaphore(const uint64_t val)
+{
+    mSemaphoreOps.push_back({false, val});
+}
+
+
 std::vector<vk::ImageMemoryBarrier> VulkanBarrierRecorder::getImageBarriers(const QueueType type) const
 {
 	std::vector<vk::ImageMemoryBarrier> barriers;

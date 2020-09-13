@@ -116,6 +116,14 @@ void VulkanCommandContext::freeExecutor(Executor* exec)
     mShouldSubmit = mShouldSubmit || exec->getSubmitFlag();
     exec->clearSubmitFlag();
 
+    // If a sync with async compute is needed set flush flag.
+    mMaxSemaphoreRead = static_cast<VulkanExecutor*>(exec)->getAndClearSemaphoreReadSignalValue();
+    mMaxSemaphoreWrite = static_cast<VulkanExecutor*>(exec)->getAndClearSemaphoreWriteSignalValue();
+    if(mMaxSemaphoreRead != ~0u || mMaxSemaphoreWrite != ~0u)
+    {
+        mShouldSubmit = true;
+    }
+
     if(mActiveRenderPass != vk::RenderPass{nullptr})
     {
         VulkanExecutor* VKexec = static_cast<VulkanExecutor*>(exec);
@@ -151,6 +159,9 @@ void VulkanCommandContext::reset()
 
     mTimeStamps.clear();
     mShouldSubmit = false;
+
+    mMaxSemaphoreRead = ~0u;
+    mMaxSemaphoreWrite = ~0u;
 }
 
 
