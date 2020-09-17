@@ -3,6 +3,7 @@
 #include "Engine/DefaultResourceSlots.hpp"
 #include "Core/Executor.hpp"
 
+constexpr const char* kTAASAmpler = "TAASampler";
 
 TAATechnique::TAATechnique(Engine* eng, RenderGraph& graph) :
 	Technique("TAA", eng->getDevice()),
@@ -32,7 +33,7 @@ TAATechnique::TAATechnique(Engine* eng, RenderGraph& graph) :
 	resolveTAA.addInput(kCompositeOutput, AttachmentType::Texture2D);
 	resolveTAA.addInput(kTAAHistory, AttachmentType::Texture2D);
 	resolveTAA.addInput(kNewTAAHistory, AttachmentType::Image2D);
-	resolveTAA.addInput("TAASampler", AttachmentType::Sampler);
+	resolveTAA.addInput(kTAASAmpler, AttachmentType::Sampler);
 
 	mTaskID = graph.addTask(resolveTAA);
 }
@@ -85,5 +86,5 @@ void TAATechnique::bindResources(RenderGraph& graph)
 		graph.bindImage(kNewTAAHistory, mHistoryImageView);
 	}
 
-    graph.bindSampler("TAASampler", mTAASAmpler);
+    graph.bindSampler(kTAASAmpler, mTAASAmpler);
 }
