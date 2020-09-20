@@ -11,8 +11,8 @@ VulkanExecutor::VulkanExecutor(RenderDevice *dev, vk::CommandBuffer cmdBuffer) :
     Executor(dev),
     mCommandBuffer{ cmdBuffer },
     mRecordedCommands{0},
-    mMaxSemaphoreReadSignal{~0u},
-    mMaxSemaphoreWriteSignal{~0u}
+    mMaxSemaphoreReadSignal{~0ULL},
+    mMaxSemaphoreWriteSignal{~0ULL}
 {
     vk::Instance inst = static_cast<VulkanRenderDevice*>(getDevice())->getParentInstance();
     mBeginConditionalRenderingFPtr = reinterpret_cast<PFN_vkCmdBeginConditionalRenderingEXT>(inst.getProcAddr("vkCmdBeginConditionalRenderingEXT"));
