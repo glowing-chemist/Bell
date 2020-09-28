@@ -302,12 +302,13 @@ set(SHADERS
 	KdTree.hlsl
     )
 
+message(STATUS "shader directory ${BELL_SHADER_DIR}Shaders")
 foreach(shader ${SHADERS})
-  ADD_CUSTOM_COMMAND(OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/Shaders/${shader}"
-    COMMAND cmake -E copy_if_different "${CMAKE_CURRENT_SOURCE_DIR}/Source/Engine/Shaders/${shader}" "${CMAKE_BINARY_DIR}/Shaders/${shader}"
+  ADD_CUSTOM_COMMAND(OUTPUT "${BELL_SHADER_DIR}Shaders/${shader}"
+    COMMAND cmake -E copy_if_different "${CMAKE_CURRENT_SOURCE_DIR}/Source/Engine/Shaders/${shader}" "${BELL_SHADER_DIR}Shaders/${shader}"
     DEPENDS   "${CMAKE_CURRENT_SOURCE_DIR}/Source/Engine/Shaders/${shader}"
     )
-   list(APPEND shader_dest "${CMAKE_CURRENT_BINARY_DIR}/Shaders/${shader}")
+list(APPEND shader_dest "${BELL_SHADER_DIR}Shaders/${shader}")
  
 endforeach(shader)
 add_custom_target(COPY_SHADERS DEPENDS ${shader_dest})
