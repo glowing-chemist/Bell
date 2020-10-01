@@ -1,7 +1,7 @@
 
 #include "Editor/Editor.h"
 
-int main()
+int main(int argc, char* *argv)
 {
 
     glfwInit();
@@ -22,6 +22,12 @@ int main()
     auto* window = glfwCreateWindow(windowWidth, windowHeight, "Bell Editor", nullptr, nullptr);
 
     Editor editor{window};
+
+    // Open scene from command line.
+    if(argc > 1)
+    {
+        editor.loadSceneOnStartup(argv[1]);
+    }
 
     editor.run();
 

@@ -360,7 +360,8 @@ Editor::Editor(GLFWwindow* window) :
     mAnimationSpeed(1.0f),
     mIrradianceVolumes{},
     mLightOperationMode{ImGuizmo::OPERATION::TRANSLATE},
-    mEditShadowingLight{false}
+    mEditShadowingLight{false},
+    mInitialScene{""}
 {
     ImGui::CreateContext();
 
@@ -411,6 +412,13 @@ void Editor::run()
         std::chrono::microseconds frameDelta = std::chrono::duration_cast<std::chrono::microseconds>(currentTime - frameStartTime);
         frameStartTime = currentTime;
         startFrame(frameDelta);
+
+        // Need to load command line supplied scene.
+        if(mInitialScene != "")
+        {
+            loadScene(mInitialScene);
+            mInitialScene.clear();
+        }
 
         if (mRecompileGraph)
         {
@@ -627,6 +635,12 @@ void Editor::mouseScroll_callback(GLFWwindow*, double, double yoffset)
 void Editor::text_callback(GLFWwindow*, unsigned int codePoint)
 {
     ImGui::GetIO().AddInputCharacter(codePoint);
+}
+
+
+void Editor::loadSceneOnStartup(const std::string& path)
+{
+    mInitialScene = path;
 }
 
 
@@ -1230,7 +1244,7 @@ void Editor::drawGuizmo(EditorLight& light, const float4x4 &view, const float4x4
     ImGuizmo::Manipulate(   glm::value_ptr(view),
                             glm::value_ptr(proj),
                             op,
-                            ImGuizmo::MODE::WORLD,
+                            ImGuizmo::MODE::LOCAL,
                             glm::value_ptr(lightTransformation));
 
     if(op == ImGuizmo::OPERATION::TRANSLATE)
@@ -1248,7 +1262,7 @@ void Editor::drawGuizmo(float4x4& world, const float4x4& view, const float4x4& p
     ImGuizmo::Manipulate(   glm::value_ptr(view),
                             glm::value_ptr(proj),
                             op,
-                            ImGuizmo::MODE::WORLD,
+                            ImGuizmo::MODE::LOCAL,
                             glm::value_ptr(world));
 }
 
@@ -1385,7 +1399,7 @@ void Editor::loadScene(const std::string& scene)
 
     if(std::filesystem::exists(scene + ".irradianceProbes"))
     {
-        BELL_ASSERT(std::filesystem::exists(scene + ".irradianceLookup"), "Missing loop up texture")
+        BELL_ASSERT(std::filesystem::exists(scene + ".irradianceLookup"), "Missing loop up tree")
 
         mEngine.loadIrradianceProbes(scene + ".irradianceProbes", scene + ".irradianceLookup");
     }

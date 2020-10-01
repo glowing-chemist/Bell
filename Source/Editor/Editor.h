@@ -39,6 +39,8 @@ public:
     void mouseScroll_callback(GLFWwindow* window, double xoffset, double yoffset);
     void text_callback(GLFWwindow* window, unsigned int codePoint);
 
+    void loadSceneOnStartup(const std::string& path);
+
 private:
 
     void startFrame(const std::chrono::microseconds deltaFrameTime)
@@ -67,7 +69,7 @@ private:
 
     void bakeAndSaveLightProbes();
 
-	void loadScene(const std::string&);
+    void loadScene(const std::string&);
 
     GLFWwindow* mWindow;
 
@@ -144,6 +146,8 @@ private:
     EditorLight mShadowingLight;
     ImGuizmo::OPERATION mLightOperationMode;
     bool mEditShadowingLight;
+
+    std::string mInitialScene;
 };
 
 #endif
