@@ -779,7 +779,7 @@ void Editor::drawAssistantWindow()
        {
 
            const Camera& camera = mEngine.getCurrentSceneCamera();
-           const float4x4 viewMatrix = camera.getViewMatrix();
+           const float4x4 viewMatrix = glm::lookAt(camera.getPosition(), camera.getPosition() - camera.getDirection(), float3(0.0f, -1.0f, 0.0f));
            const float4x4 projectionMatrix = camera.getProjectionMatrix();
 
            for(InstanceID ID : mSceneInstanceIDs)
@@ -933,8 +933,9 @@ void Editor::drawAssistantWindow()
                    volumesHaveChanged = true;
                }
 
-               const float4x4 view = mInProgressScene->getCamera().getViewMatrix();
-               const float4x4 proj = mInProgressScene->getCamera().getProjectionMatrix();
+               const Camera camera = mInProgressScene->getCamera();
+               const float4x4 view = glm::lookAt(camera.getPosition(), camera.getPosition() - camera.getDirection(), float3(0.0f, -1.0f, 0.0f));
+               const float4x4 proj = camera.getProjectionMatrix();
 
                for(uint32_t i = 0; i < mIrradianceVolumes.size(); ++i)
                {
@@ -1097,7 +1098,7 @@ void Editor::drawDebugTexturePicker(const std::vector<const char*>& textures)
 void Editor::drawLightMenu()
 {
     const Camera& camera = mInProgressScene->getCamera();
-    const float4x4 viewMatrix = camera.getViewMatrix();
+    const float4x4 viewMatrix = glm::lookAt(camera.getPosition(), camera.getPosition() - camera.getDirection(), float3(0.0f, -1.0f, 0.0f));
     const float4x4 projectionMatrix = camera.getProjectionMatrix();
 
     if (ImGui::TreeNode("Lights"))
@@ -1392,6 +1393,7 @@ void Editor::loadScene(const std::string& scene)
                                         "./Assets/skybox/pz.png",
                                         "./Assets/skybox/nz.png" };
     mInProgressScene->loadSkybox(skybox, &mEngine);
+    mInProgressScene->getCamera().setCameraMode(CameraMode::Perspective); // HACK to get guizmos working.
 
     mEngine.setScene(mInProgressScene);
     mRayTracingScene = new RayTracingScene(&mEngine, mInProgressScene);

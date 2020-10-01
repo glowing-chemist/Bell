@@ -138,7 +138,7 @@ float4x4 Camera::getProjectionMatrix() const
     }
     else if(mMode == CameraMode::Perspective)
     {
-        return glm::perspective(glm::radians(mFieldOfView), mAspect, mNearPlaneDistance, mFarPlaneDistance);
+        return glm::perspective(glm::radians(mFieldOfView), mAspect, mFarPlaneDistance, mNearPlaneDistance);
     }
     else if(mMode == CameraMode::Orthographic)
     {
