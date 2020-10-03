@@ -25,6 +25,7 @@ VoxalizeTechnique::VoxalizeTechnique(Engine* eng, RenderGraph& graph) :
         BlendMode::None,
         false,
         DepthTest::None,
+        FillMode::Fill,
         Primitive::TriangleList
         },
     mVolxalizeVertexShader(eng->getShader("./Shaders/Voxalize.vert")),

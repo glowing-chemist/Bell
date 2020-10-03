@@ -187,10 +187,25 @@ bool GraphicsPipeline::compile(const RenderTask&)
 	inputAssemblyInfo.setTopology(topology);
 	inputAssemblyInfo.setPrimitiveRestartEnable(false);
 
+    vk::PolygonMode polygonMode = [fillMode = mPipelineDescription.mFillMode]()
+    {
+        switch(fillMode)
+        {
+            case FillMode::Fill:
+                return vk::PolygonMode::eFill;
+
+            case FillMode::Line:
+                return vk::PolygonMode::eLine;
+
+            case FillMode::Point:
+                return vk::PolygonMode::ePoint;
+        }
+    }();
+
 	vk::PipelineRasterizationStateCreateInfo rasterInfo{};
 	rasterInfo.setRasterizerDiscardEnable(false);
 	rasterInfo.setDepthBiasClamp(false);
-	rasterInfo.setPolygonMode(vk::PolygonMode::eFill); // output filled in fragments
+    rasterInfo.setPolygonMode(polygonMode); // output filled in fragments
 	rasterInfo.setLineWidth(1.0f);
 	if (mPipelineDescription.mUseBackFaceCulling) {
 		rasterInfo.setCullMode(vk::CullModeFlagBits::eBack); // cull fragments from the back

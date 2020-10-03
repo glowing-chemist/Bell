@@ -300,6 +300,7 @@ set(SHADERS
 	BilaterialUpsample.comp
 	ResolveRayTracedShadows.comp
 	KdTree.hlsl
+	BasicVertexTransform.vert
     )
 
 message(STATUS "shader directory ${BELL_SHADER_DIR}Shaders")

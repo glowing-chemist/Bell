@@ -67,6 +67,13 @@ enum class Primitive
 };
 
 
+enum class FillMode
+{
+    Fill,
+    Line,
+    Point
+};
+
 struct ClearValues
 {
     ClearValues(const AttachmentType type, const float red, const float green, const float blue, const float alpha) :
@@ -87,6 +94,7 @@ struct GraphicsPipelineDescription
 	BlendMode mColourBlendMode;
 	bool      mDepthWrite;
 	DepthTest mDepthTest;
+    FillMode mFillMode;
 
 	Primitive mPrimitiveType;
 
@@ -98,6 +106,7 @@ struct GraphicsPipelineDescription
 		mColourBlendMode{ BlendMode::None },
 		mDepthWrite{ false },
 		mDepthTest{ DepthTest::None },
+        mFillMode{ FillMode::Fill },
 		mPrimitiveType{ Primitive::TriangleList }
 	{}
 
@@ -107,6 +116,7 @@ struct GraphicsPipelineDescription
 		const BlendMode colourBlendMode,
 		const bool depthWrite,
 		const DepthTest depthTest,
+        const FillMode fillMode,
         const Primitive primitiveType) :
 		mScissorRect{ scissor },
 		mViewport{ viewport },
@@ -115,6 +125,7 @@ struct GraphicsPipelineDescription
 		mColourBlendMode{ colourBlendMode },
 		mDepthWrite{ depthWrite },
 		mDepthTest{ depthTest },
+        mFillMode{ fillMode },
 		mPrimitiveType{ primitiveType }
 	{}
 };

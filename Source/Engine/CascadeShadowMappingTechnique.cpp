@@ -48,7 +48,7 @@ CascadeShadowMappingTechnique::CascadeShadowMappingTechnique(Engine* eng, Render
                     getDevice()->getSwapChain()->getSwapChainImageHeight() * 2},
               Rect{getDevice()->getSwapChain()->getSwapChainImageWidth() * 2,
               getDevice()->getSwapChain()->getSwapChainImageHeight() * 2},
-            true, BlendMode::None, BlendMode::None, true, DepthTest::LessEqual, Primitive::TriangleList);
+            true, BlendMode::None, BlendMode::None, true, DepthTest::LessEqual, FillMode::Fill, Primitive::TriangleList);
 
            GraphicsTask cascade0Task{"cascade0", cascade0Desc};
            cascade0Task.setVertexAttributes(VertexAttributes::Position4 | VertexAttributes::Normals | VertexAttributes::TextureCoordinates | VertexAttributes::Albedo);
@@ -66,7 +66,7 @@ CascadeShadowMappingTechnique::CascadeShadowMappingTechnique(Engine* eng, Render
                     getDevice()->getSwapChain()->getSwapChainImageHeight()},
               Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
               getDevice()->getSwapChain()->getSwapChainImageHeight()},
-            true, BlendMode::None, BlendMode::None, true, DepthTest::LessEqual, Primitive::TriangleList);
+            true, BlendMode::None, BlendMode::None, true, DepthTest::LessEqual, FillMode::Fill, Primitive::TriangleList);
 
            GraphicsTask cascade1Task{"cascade1", cascade1Desc};
            cascade1Task.setVertexAttributes(VertexAttributes::Position4 | VertexAttributes::Normals | VertexAttributes::TextureCoordinates | VertexAttributes::Albedo);
@@ -84,7 +84,7 @@ CascadeShadowMappingTechnique::CascadeShadowMappingTechnique(Engine* eng, Render
                     getDevice()->getSwapChain()->getSwapChainImageHeight() / 2},
               Rect{getDevice()->getSwapChain()->getSwapChainImageWidth() / 2,
               getDevice()->getSwapChain()->getSwapChainImageHeight() / 2},
-            true, BlendMode::None, BlendMode::None, true, DepthTest::LessEqual, Primitive::TriangleList);
+            true, BlendMode::None, BlendMode::None, true, DepthTest::LessEqual, FillMode::Fill, Primitive::TriangleList);
 
            GraphicsTask cascade2Task{"cascade2", cascade2Desc};
            cascade2Task.setVertexAttributes(VertexAttributes::Position4 | VertexAttributes::Normals | VertexAttributes::TextureCoordinates | VertexAttributes::Albedo);

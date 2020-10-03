@@ -18,7 +18,7 @@ ShadowMappingTechnique::ShadowMappingTechnique(Engine* eng, RenderGraph& graph) 
                 getDevice()->getSwapChain()->getSwapChainImageHeight()},
           Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
           getDevice()->getSwapChain()->getSwapChainImageHeight()},
-        true, BlendMode::None, BlendMode::None, true, DepthTest::LessEqual, Primitive::TriangleList),
+        true, BlendMode::None, BlendMode::None, true, DepthTest::LessEqual, FillMode::Fill, Primitive::TriangleList),
     mShadowMapVertexShader(eng->getShader("./Shaders/ShadowMap.vert")),
     mShadowMapFragmentShader(eng->getShader("./Shaders/VarianceShadowMap.frag")),
     mBlurXShader( eng->getShader("Shaders/blurXrg32f.comp") ),

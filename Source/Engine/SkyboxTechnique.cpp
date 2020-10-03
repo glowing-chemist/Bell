@@ -10,7 +10,7 @@ SkyboxTechnique::SkyboxTechnique(Engine* eng, RenderGraph& graph) :
                   getDevice()->getSwapChain()->getSwapChainImageHeight()},
                   Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
                   getDevice()->getSwapChain()->getSwapChainImageHeight()},
-                  false, BlendMode::None, BlendMode::None, false, DepthTest::Equal, Primitive::TriangleList},
+                  false, BlendMode::None, BlendMode::None, false, DepthTest::Equal, FillMode::Fill, Primitive::TriangleList},
     mSkyboxVertexShader(eng->getShader("./Shaders/SkyBox.vert")),
     mSkyboxFragmentShader(eng->getShader("./Shaders/SkyBox.frag"))
 {

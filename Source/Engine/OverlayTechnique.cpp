@@ -27,6 +27,7 @@ OverlayTechnique::OverlayTechnique(Engine* eng, RenderGraph& graph) :
 						 BlendMode::None,
 						 false, // no depth writes
 						 DepthTest::None,
+                         FillMode::Fill,
                          Primitive::TriangleList),
     mOverlayVertexShader(eng->getShader("./Shaders/Overlay.vert")),
     mOverlayFragmentShader(eng->getShader("./Shaders/Overlay.frag"))

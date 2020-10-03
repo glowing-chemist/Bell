@@ -243,6 +243,7 @@ std::pair<vk::PhysicalDevice, vk::Device> VulkanRenderInstance::findSuitableDevi
     physicalFeatures.setFragmentStoresAndAtomics(geometryWanted);
     physicalFeatures.setSamplerAnisotropy(true);
     physicalFeatures.setShaderImageGatherExtended(true);
+    physicalFeatures.setFillModeNonSolid(true);
     if(rayTracingWanted)
         physicalFeatures.setShaderFloat64(true);
 
@@ -290,7 +291,7 @@ void VulkanRenderInstance::addDebugCallback()
     callbackCreateInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
     callbackCreateInfo.flags = 0;
     callbackCreateInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT;
-    callbackCreateInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT;
+    callbackCreateInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT;
     callbackCreateInfo.pfnUserCallback = debugCallbackFunc;
 
     auto* createMessenger = reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>(mInstance.getProcAddr("vkCreateDebugUtilsMessengerEXT"));

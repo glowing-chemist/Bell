@@ -8,14 +8,19 @@
 
 DebugAABBTechnique::DebugAABBTechnique(Engine* eng, RenderGraph& graph) :
     Technique("DebugAABB", eng->getDevice()),
-    mTaskID{0},
-    mPipelineDesc{Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
+    mAABBPipelineDesc{Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
                         getDevice()->getSwapChain()->getSwapChainImageHeight()},
                   Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
                   getDevice()->getSwapChain()->getSwapChainImageHeight()},
-                  false, BlendMode::None, BlendMode::None, false, DepthTest::GreaterEqual, Primitive::LineList},
-    mDebugVisVertexShader(eng->getShader("./Shaders/DebugAABB.vert")),
-    mDebugVisFragmentShader(eng->getShader("./Shaders/DebugAABB.frag")),
+                  false, BlendMode::None, BlendMode::None, false, DepthTest::GreaterEqual, FillMode::Fill, Primitive::LineList},
+    mAABBDebugVisVertexShader(eng->getShader("./Shaders/DebugAABB.vert")),
+    mAABBDebugVisFragmentShader(eng->getShader("./Shaders/DebugAABB.frag")),
+    mWireFramePipelineDesc{Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
+                        getDevice()->getSwapChain()->getSwapChainImageHeight()},
+                  Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
+                  getDevice()->getSwapChain()->getSwapChainImageHeight()},
+                  false, BlendMode::None, BlendMode::None, false, DepthTest::GreaterEqual, FillMode::Line, Primitive::TriangleList},
+    mSimpleTransformShader(eng->getShader("./Shaders/BasicVertexTransform.vert")),
     mVertexBuffer(getDevice(), BufferUsage::TransferDest | BufferUsage::Vertex, sizeof(float4) * 8, sizeof(float4) * 8),
     mVertexBufferView(mVertexBuffer),
     mIndexBuffer(getDevice(), BufferUsage::TransferDest | BufferUsage::Index, sizeof(uint32_t) * 24, sizeof(uint32_t) * 24),
@@ -45,7 +50,7 @@ DebugAABBTechnique::DebugAABBTechnique(Engine* eng, RenderGraph& graph) :
                              7, 3};
     mIndexBuffer->setContents(&indicies, sizeof(uint32_t) * 24);
 
-    GraphicsTask debugAABBTask("Debug AABB", mPipelineDesc);
+    GraphicsTask debugAABBTask("Debug AABB", mAABBPipelineDesc);
     debugAABBTask.setVertexAttributes(VertexAttributes::Position4);
     debugAABBTask.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
     debugAABBTask.addInput("ABBBMatrix", AttachmentType::PushConstants);
@@ -57,7 +62,7 @@ DebugAABBTechnique::DebugAABBTechnique(Engine* eng, RenderGraph& graph) :
                     exec->bindVertexBuffer(this->mVertexBufferView, 0);
                     exec->bindIndexBuffer(this->mIndexBufferView, 0);
                     const RenderTask& task = graph.getTask(taskIndex);
-                    exec->setGraphicsShaders(static_cast<const GraphicsTask&>(task), graph, mDebugVisVertexShader, nullptr, nullptr, nullptr, mDebugVisFragmentShader);
+                    exec->setGraphicsShaders(static_cast<const GraphicsTask&>(task), graph, mAABBDebugVisVertexShader, nullptr, nullptr, nullptr, mAABBDebugVisFragmentShader);
 
                     for(const auto* mesh : meshes)
                     {
@@ -105,4 +110,33 @@ DebugAABBTechnique::DebugAABBTechnique(Engine* eng, RenderGraph& graph) :
     );
 
     mTaskID = graph.addTask(debugAABBTask);
+
+    GraphicsTask wireFrameTask("WireFrame", mWireFramePipelineDesc);
+    wireFrameTask.setVertexAttributes(VertexAttributes::Position4 | VertexAttributes::Normals | VertexAttributes::TextureCoordinates | VertexAttributes::Albedo);
+    wireFrameTask.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
+    wireFrameTask.addInput("Wireframe transforms", AttachmentType::PushConstants);
+    wireFrameTask.addOutput(kGlobalLighting, AttachmentType::RenderTarget2D, Format::RGBA8UNorm);
+    wireFrameTask.addOutput(kGBufferDepth, AttachmentType::Depth, Format::D32Float);
+    wireFrameTask.setRecordCommandsCallback([this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>& meshes)
+    {
+        exec->bindIndexBuffer(eng->getIndexBuffer(), 0);
+        exec->bindVertexBuffer(eng->getVertexBuffer(), 0);
+
+        const RenderTask& task = graph.getTask(taskIndex);
+        exec->setGraphicsShaders(static_cast<const GraphicsTask&>(task), graph, mAABBDebugVisVertexShader, nullptr, nullptr, nullptr, mAABBDebugVisFragmentShader);
+
+        for(const auto* mesh : meshes)
+        {
+            if(mesh->getInstanceFlags() & InstanceFlags::DrawWireFrame && mesh->getInstanceFlags() & InstanceFlags::Draw)
+            {
+                const float4x4& transform = mesh->getTransMatrix();
+                const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->mMesh);
+
+                exec->insertPushConsatnt(&transform, sizeof(float4x4));
+                exec->indexedDraw(vertexOffset / mesh->mMesh->getVertexStride(), indexOffset / sizeof(uint32_t), mesh->mMesh->getIndexData().size());
+            }
+        }
+    });
+
+    graph.addTask(wireFrameTask);
 }

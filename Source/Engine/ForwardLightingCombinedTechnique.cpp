@@ -13,7 +13,7 @@ ForwardCombinedLightingTechnique::ForwardCombinedLightingTechnique(Engine* eng, 
 			   getDevice()->getSwapChain()->getSwapChainImageHeight()},
 		  Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
 			   getDevice()->getSwapChain()->getSwapChainImageHeight()},
-			   true, BlendMode::None, BlendMode::None, false, DepthTest::GreaterEqual, Primitive::TriangleList },
+               true, BlendMode::None, BlendMode::None, false, DepthTest::GreaterEqual, FillMode::Fill, Primitive::TriangleList },
     mForwardCombinedVertexShader(eng->getShader("./Shaders/ForwardMaterial.vert")),
     mForwardCombinedFragmentShader(eng->getShader("./Shaders/ForwardCombinedLighting.frag")),
 	mPointSampler(SamplerType::Point)

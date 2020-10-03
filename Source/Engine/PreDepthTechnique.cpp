@@ -8,7 +8,7 @@ PreDepthTechnique::PreDepthTechnique(Engine* eng, RenderGraph& graph) :
                                getDevice()->getSwapChain()->getSwapChainImageHeight()},
                          Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
                          getDevice()->getSwapChain()->getSwapChainImageHeight()},
-                         true, BlendMode::None, BlendMode::None, true, DepthTest::GreaterEqual, Primitive::TriangleList},
+                         true, BlendMode::None, BlendMode::None, true, DepthTest::GreaterEqual, FillMode::Fill, Primitive::TriangleList},
     mPreDepthVertexShader(eng->getShader("./Shaders/DepthOnly.vert")),
     mPreDepthFragmentShader(eng->getShader("./Shaders/AlphaTestDepthOnly.frag"))
 {
