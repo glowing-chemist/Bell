@@ -41,6 +41,7 @@ public:
 
     struct MaterialInfo
     {
+        int64_t instanceID;
         uint32_t materialIndex;
         uint32_t materialFlags;
     };
@@ -57,6 +58,8 @@ public:
     bool isVisibleFrom(const float3& dst, const float3& src) const;
 
     bool traceRayNonAlphaTested(const nanort::Ray<float>& ray, InterpolatedVertex* result) const;
+
+    bool intersectsMesh(const nanort::Ray<float>& ray, int64_t* instanceID);
 
     const ShaderResourceSet& getGPUBVH() const
     {

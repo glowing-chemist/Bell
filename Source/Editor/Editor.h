@@ -6,6 +6,7 @@
 #include "imguifilebrowser.h"
 #include "ImGuiNodeEditor.h"
 #include "ImGuizmo.h"
+#include "MeshPicker.hpp"
 
 #include "GLFW/glfw3.h"
 
@@ -70,6 +71,9 @@ private:
     void bakeAndSaveLightProbes();
 
     void loadScene(const std::string&);
+
+    void updateMeshInstancePicker();
+    void drawselectedMeshGuizmo();
 
     GLFWwindow* mWindow;
 
@@ -146,6 +150,9 @@ private:
     EditorLight mShadowingLight;
     ImGuizmo::OPERATION mLightOperationMode;
     bool mEditShadowingLight;
+
+    MeshPicker mMeshPicker;
+    InstanceID mSelectedMesh;
 
     std::string mInitialScene;
 };

@@ -326,6 +326,7 @@ add_dependencies(${PROJECT_NAME} COPY_SHADERS)
 set(BELL_EDITOR_SOURCE
 	Source/Editor/main.cpp
 	Source/Editor/Editor.cpp
+	Source/Editor/MeshPicker.cpp
 	Source/Editor/NodeIMGUI.cpp
 	Source/Editor/MeshesIMGUI.cpp
 	Source/Editor/imguifilebrowser.cpp

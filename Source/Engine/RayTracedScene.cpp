@@ -17,8 +17,10 @@ RayTracingScene::RayTracingScene(Engine* eng, const Scene* scene) :
 {
     mScene = scene;
     uint64_t vertexOffset = 0;
+    InstanceID instanceID = 0;
     for(const auto& instance : scene->getStaticMeshInstances())
     {
+        ++instanceID;
         const uint32_t vertexStride = instance.mMesh->getVertexStride();
 
         // add Index data.
@@ -31,7 +33,7 @@ RayTracingScene::RayTracingScene(Engine* eng, const Scene* scene) :
         // add material mappings
         for(uint32_t i = 0; i < indexBuffer.size() / 3; ++i)
         {
-            mPrimitiveMaterialID.push_back({instance.getmaterialIndex(), instance.getMaterialFlags()});
+            mPrimitiveMaterialID.push_back({instanceID, instance.getmaterialIndex(), instance.getMaterialFlags()});
         }
 
         // Transform and add vertex data.
@@ -276,6 +278,22 @@ bool RayTracingScene::traceRayNonAlphaTested(const nanort::Ray<float> &ray, Inte
     }
 
     return hit;
+}
+
+
+bool RayTracingScene::intersectsMesh(const nanort::Ray<float>& ray, int64_t* instanceID)
+{
+    BELL_ASSERT(instanceID, "Need to supply valid pointer for mesh selection test")
+    InterpolatedVertex vertex;
+    if(traceRay(ray, &vertex))
+    {
+        const MaterialInfo& matInfo = mPrimitiveMaterialID[vertex.mPrimID];
+        *instanceID = matInfo.instanceID;
+
+        return true;
+    }
+
+    return false;
 }
 
 

@@ -361,6 +361,8 @@ Editor::Editor(GLFWwindow* window) :
     mIrradianceVolumes{},
     mLightOperationMode{ImGuizmo::OPERATION::TRANSLATE},
     mEditShadowingLight{false},
+    mMeshPicker(nullptr),
+    mSelectedMesh{~0LL},
     mInitialScene{""}
 {
     ImGui::CreateContext();
@@ -444,6 +446,8 @@ void Editor::run()
 
 void Editor::renderScene()
 {
+    updateMeshInstancePicker();
+
     mInProgressScene->updateMaterialsLastAccess();
     mEngine.registerPass(PassType::DebugAABB);
 	mNodeEditor.addPasses(mEngine);
@@ -465,6 +469,7 @@ void Editor::renderOverlay()
 
     drawMenuBar();
     drawAssistantWindow();
+    drawselectedMeshGuizmo();
 
     // We are on Pass/shader graph mode
     if(mMode == EditorMode::NodeEditor)
@@ -618,11 +623,14 @@ void Editor::pumpInputQueue()
             camera.rotatePitch(mCursorPosDelta.y);
             camera.rotateWorldUp(-mCursorPosDelta.x);
         }
+
+        mMeshPicker.tick(camera);
 	}
     else // Add key presses for text input.
     {
 
     }
+
 }
 
 
@@ -777,18 +785,13 @@ void Editor::drawAssistantWindow()
 
        if(ImGui::TreeNode("Mesh instances"))
        {
-
-           const Camera& camera = mEngine.getCurrentSceneCamera();
-           const float4x4 viewMatrix = glm::lookAt(camera.getPosition(), camera.getPosition() - camera.getDirection(), float3(0.0f, -1.0f, 0.0f));
-           const float4x4 projectionMatrix = camera.getProjectionMatrix();
-
            for(InstanceID ID : mSceneInstanceIDs)
            {
                 MeshInstance* instance = mInProgressScene->getMeshInstance(ID);
+                uint32_t instanceFlags = instance->getInstanceFlags();
 
                 if(ImGui::TreeNode(instance->getName().c_str()))
                 {
-                    uint32_t instanceFlags = instance->getInstanceFlags();
                     bool draw = instanceFlags & InstanceFlags::Draw;
                     ImGui::Checkbox("Draw", &draw);
 
@@ -797,9 +800,6 @@ void Editor::drawAssistantWindow()
 
                     bool aabb = instanceFlags & InstanceFlags::DrawAABB;
                     ImGui::Checkbox("AABB", &aabb);
-
-                    bool guizmo = instanceFlags & InstanceFlags::DrawGuizmo;
-                    ImGui::Checkbox("Guizmo", &guizmo);
 
                     if(instance->mMesh->hasAnimations())
                     {
@@ -819,19 +819,11 @@ void Editor::drawAssistantWindow()
                         }
                     }
 
-                    if(guizmo)
-                    {
-                        float4x4 transMatrix = instance->getTransMatrix();
-                        drawGuizmo(transMatrix, viewMatrix, projectionMatrix, mLightOperationMode);
-
-                        instance->setTransMatrix(transMatrix);
-                    }
-
                     uint32_t newInstanceFlags = 0;
                     newInstanceFlags |= draw ? InstanceFlags::Draw : 0;
                     newInstanceFlags |= wireFrame ? InstanceFlags::DrawWireFrame : 0;
                     newInstanceFlags |= aabb ? InstanceFlags::DrawAABB : 0;
-                    newInstanceFlags |= guizmo ? InstanceFlags::DrawGuizmo : 0;
+                    newInstanceFlags |= (instanceFlags & InstanceFlags::DrawGuizmo);
 
                     instance->setInstanceFlags(newInstanceFlags);
 
@@ -1399,6 +1391,8 @@ void Editor::loadScene(const std::string& scene)
     mRayTracingScene = new RayTracingScene(&mEngine, mInProgressScene);
     mEngine.setRayTracingScene(mRayTracingScene);
 
+    mMeshPicker.setScene(mRayTracingScene);
+
     if(std::filesystem::exists(scene + ".irradianceProbes"))
     {
         BELL_ASSERT(std::filesystem::exists(scene + ".irradianceLookup"), "Missing loop up tree")
@@ -1427,4 +1421,45 @@ void Editor::bakeAndSaveLightProbes()
     BELL_ASSERT(lookupFile, "Unabel to create harmonics file")
     fwrite(lookupData.data(), sizeof(Engine::KdNode), lookupData.size(), lookupFile);
     fclose(lookupFile);
+}
+
+
+void Editor::updateMeshInstancePicker()
+{
+    // update the selected mesh flags.
+    const InstanceID selectedMesh = mMeshPicker.getCurrentlySelectedMesh();
+    if(selectedMesh != ~0LL)
+    {
+       MeshInstance* instance = mInProgressScene->getMeshInstance(selectedMesh);
+       // Need to clear old mesh flags
+       if(mSelectedMesh != selectedMesh)
+       {
+           instance->setInstanceFlags(instance->getInstanceFlags() | InstanceFlags::DrawWireFrame | InstanceFlags::DrawAABB | InstanceFlags::DrawGuizmo);
+
+           if(mSelectedMesh != ~0LL)
+           {
+               MeshInstance* instance = mInProgressScene->getMeshInstance(mSelectedMesh);
+               instance->setInstanceFlags(InstanceFlags::Draw);
+           }
+
+           mSelectedMesh = selectedMesh;
+       }
+    }
+}
+
+
+void Editor::drawselectedMeshGuizmo()
+{
+    if(mSelectedMesh != ~0LL)
+    {
+        MeshInstance* instance = mInProgressScene->getMeshInstance(mSelectedMesh);
+        const Camera& camera = mInProgressScene->getCamera();
+        const float4x4 view = glm::lookAt(camera.getPosition(), camera.getPosition() - camera.getDirection(), float3(0.0f, -1.0f, 0.0f));
+        const float4x4 proj = camera.getProjectionMatrix();
+        float4x4 trans = instance->getTransMatrix();
+
+        drawGuizmo(trans, view, proj, mLightOperationMode);
+
+        instance->setTransMatrix(trans);
+    }
 }
