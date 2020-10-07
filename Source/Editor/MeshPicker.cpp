@@ -34,9 +34,11 @@ void MeshPicker::tick(const Camera& cam)
         ray.max_t = cam.getFarPlane();
 
         int64_t instanceID;
-        if(mRayTracedScene->intersectsMesh(ray, &instanceID))
+        if (mRayTracedScene->intersectsMesh(ray, &instanceID))
         {
             mSelectedMeshInstance = instanceID;
         }
+        else
+            mSelectedMeshInstance = ~0ULL;
     }
 }

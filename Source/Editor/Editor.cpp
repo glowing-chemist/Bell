@@ -1445,6 +1445,12 @@ void Editor::updateMeshInstancePicker()
            mSelectedMesh = selectedMesh;
        }
     }
+    else if (mSelectedMesh != ~0ULL)
+    {
+        MeshInstance* instance = mInProgressScene->getMeshInstance(mSelectedMesh);
+        instance->setInstanceFlags(InstanceFlags::Draw);
+        mSelectedMesh = ~0ULL;
+    }
 }
 
 
