@@ -3,46 +3,105 @@
 #include "Engine/DefaultResourceSlots.hpp"
 #include "Core/Executor.hpp"
 
+constexpr const char kBlendShapesScratchBuffer[] = "BlendShapes";
+constexpr uint32_t kScratchBufferSize = 5u * 1024u * 1024u;
+
 
 SkinningTechnique::SkinningTechnique(Engine* eng, RenderGraph& graph) :
     Technique("Skinning", eng->getDevice()),
-    mSkinningShader(eng->getShader("./Shaders/Skinning.comp"))
+    mSkinningShader(eng->getShader("./Shaders/Skinning.comp")),
+    mBlendShapeShader(eng->getShader("./Shaders/BlendShapes.comp")),
+    mBlendShapeScratchBuffer(getDevice(), BufferUsage::DataBuffer | BufferUsage::TransferDest, kScratchBufferSize, kScratchBufferSize, "BlendShape Scratch buffer"),
+    mBlendShapeScratchBufferView(mBlendShapeScratchBuffer)
 {
-    ComputeTask task("Skinning");
-    task.addInput(kTPoseVertexBuffer, AttachmentType::DataBufferRO);
-    task.addInput(kBoneWeighntsIndiciesBuffer, AttachmentType::DataBufferRO);
-    task.addInput(kBonesWeights, AttachmentType::DataBufferRO);
-    task.addInput(kBonesBuffer, AttachmentType::DataBufferRO);
-    task.addInput(kSceneVertexBuffer, AttachmentType::DataBufferRW);
-    task.addInput("meshParams", AttachmentType::PushConstants);
-    task.setRecordCommandsCallback(
+    ComputeTask skinningTask("Skinning");
+    skinningTask.addInput(kTPoseVertexBuffer, AttachmentType::DataBufferRO);
+    skinningTask.addInput(kBoneWeighntsIndiciesBuffer, AttachmentType::DataBufferRO);
+    skinningTask.addInput(kBonesWeights, AttachmentType::DataBufferRO);
+    skinningTask.addInput(kBonesBuffer, AttachmentType::DataBufferRO);
+    skinningTask.addInput(kSceneVertexBuffer, AttachmentType::DataBufferRW);
+    skinningTask.addInput(kBlendShapesScratchBuffer, AttachmentType::DataBufferRO);
+    skinningTask.addInput("meshParams", AttachmentType::PushConstants);
+    skinningTask.setRecordCommandsCallback(
                 [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
                 {
-                    const RenderTask& task = graph.getTask(taskIndex);
-                    exec->setComputeShader(static_cast<const ComputeTask&>(task), graph, mSkinningShader);
-
-                    const auto& anims = eng->getActiveAnimations();
-                    for(const auto& anim : anims)
                     {
-                        MeshInstance* inst = eng->getScene()->getMeshInstance(anim.mMesh);
-                        auto [vertexReadOffset, boneIndexOffset] = eng->addMeshToAnimationBuffer(inst->mMesh);
-                        auto [vertexWriteOffset, indexOffset] = eng->addMeshToBuffer(inst->mMesh);
+                        const RenderTask& task = graph.getTask(taskIndex);
+                        exec->setComputeShader(static_cast<const ComputeTask&>(task), graph, mSkinningShader);
 
-                        const uint32_t vertexCount = inst->mMesh->getVertexCount();
-                        const uint32_t vertesStride = inst->mMesh->getVertexStride();
-                        PushConstant pushConstants{};
-                        pushConstants.mVertexCount = vertexCount;
-                        pushConstants.mVertexReadIndex = vertexReadOffset / vertesStride;
-                        pushConstants.mVertexWriteIndex = vertexWriteOffset / vertesStride;
-                        pushConstants.mBoneIndex = anim.mBoneOffset;
-                        pushConstants.mBoneIndiciesIndex = boneIndexOffset;
-                        pushConstants.mVertexStride = vertesStride;
+                        const auto& anims = eng->getActiveSkeletalAnimations();
+                        for (const auto& anim : anims)
+                        {
+                            MeshInstance* inst = eng->getScene()->getMeshInstance(anim.mMesh);
+                            auto [vertexReadOffset, boneIndexOffset] = eng->addMeshToAnimationBuffer(inst->mMesh);
+                            auto [vertexWriteOffset, indexOffset] = eng->addMeshToBuffer(inst->mMesh);
 
-                        exec->insertPushConsatnt(&pushConstants, sizeof(PushConstant));
-                        exec->dispatch(std::ceil(vertexCount / 32.0f), 1, 1);
+                            const uint32_t vertexCount = inst->mMesh->getVertexCount();
+                            const uint32_t vertesStride = inst->mMesh->getVertexStride();
+                            PushConstant pushConstants{};
+                            pushConstants.mVertexCount = vertexCount;
+                            pushConstants.mVertexReadIndex = vertexReadOffset / vertesStride;
+                            pushConstants.mVertexWriteIndex = vertexWriteOffset / vertesStride;
+                            pushConstants.mBoneIndex = anim.mBoneOffset;
+                            pushConstants.mVertexStride = vertesStride;
+
+                            //exec->insertPushConsatnt(&pushConstants, sizeof(PushConstant));
+                            //exec->dispatch(std::ceil(vertexCount / 32.0f), 1, 1);
+                        }
+                    }
+
+                    {
+                        std::vector<PushConstant> constants{};
+                        uint32_t scratchOffset = 0;
+                        std::vector<unsigned char> vertexPatch{};
+                        const auto& anims = eng->getActiveBlendShapesAnimations();
+                        for (const auto& anim : anims)
+                        {
+                            MeshInstance* inst = eng->getScene()->getMeshInstance(anim.mMesh);
+                            const BlendMeshAnimation& animation = inst->mMesh->getBlendMeshAnimation(anim.mName);
+                            const std::vector<unsigned char> newVerticies = animation.getBlendedVerticies(*inst->mMesh, anim.mTick);
+                            vertexPatch.insert(vertexPatch.end(), newVerticies.begin(), newVerticies.end());
+
+                            auto [vertexReadOffset, boneIndexOffset] = eng->addMeshToAnimationBuffer(inst->mMesh);
+                            auto [vertexWriteOffset, indexOffset] = eng->addMeshToBuffer(inst->mMesh);
+
+                            const uint32_t vertexCount = inst->mMesh->getVertexCount();
+                            const uint32_t vertesStride = inst->mMesh->getVertexStride();
+                            PushConstant pushConstants{};
+                            pushConstants.mVertexCount = vertexCount;
+                            pushConstants.mVertexReadIndex = vertexReadOffset / vertesStride;
+                            pushConstants.mVertexWriteIndex = vertexWriteOffset / vertesStride;
+                            pushConstants.mBoneIndex = scratchOffset / vertesStride;
+                            pushConstants.mVertexStride = vertesStride;
+
+                            scratchOffset += newVerticies.size();
+
+                            constants.push_back(pushConstants);
+                        }
+
+                        if (!vertexPatch.empty())
+                        {
+                            exec->copyDataToBuffer(vertexPatch.data(), vertexPatch.size(), 0, mBlendShapeScratchBuffer);
+
+                            const RenderTask& task = graph.getTask(taskIndex);
+                            exec->setComputeShader(static_cast<const ComputeTask&>(task), graph, mBlendShapeShader);
+
+                            for (const auto& constants : constants)
+                            {
+                                exec->insertPushConsatnt(&constants, sizeof(PushConstant));
+                                exec->dispatch(std::ceil(constants.mVertexCount / 32.0f), 1, 1);
+                            }
+                        }
                     }
                 }
     );
 
-    mTask = graph.addTask(task);
+    mTask = graph.addTask(skinningTask);
+}
+
+
+void SkinningTechnique::bindResources(RenderGraph& graph)
+{
+    if(!graph.isResourceSlotBound(kBlendShapesScratchBuffer))
+        graph.bindBuffer(kBlendShapesScratchBuffer, mBlendShapeScratchBufferView);
 }

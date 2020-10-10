@@ -24,6 +24,36 @@ struct MeshEntry
 };
 static_assert (sizeof(MeshEntry) <= 128, "Mesh Entry will no longer fit inside push constants");
 
+class VertexBuffer
+{
+public:
+
+    VertexBuffer() :
+        mCurrentOffset{0},
+        mBuffer{} {}
+
+    void setSize(const size_t size)
+    {
+        mBuffer.resize(size);
+    }
+
+    void writeVertexVector4(const aiVector3D&);
+    void writeVertexVector2(const aiVector2D&);
+    void writeVertexFloat(const float);
+    void WriteVertexInt(const uint32_t);
+    void WriteVertexChar4(const char4&);
+
+    const std::vector<unsigned char>& getVertexBuffer() const
+    {
+        return mBuffer;
+    }
+
+private:
+
+    uint32_t mCurrentOffset;
+    std::vector<unsigned char> mBuffer;
+
+};
 
 class StaticMesh
 {
@@ -45,7 +75,7 @@ public:
 
     const std::vector<unsigned char>& getVertexData() const
     {
-        return mVertexData;
+        return mVertexData.getVertexBuffer();
     }
 
     const std::vector<uint32_t>& getIndexData() const
@@ -80,7 +110,7 @@ public:
 
     bool hasAnimations() const
     {
-        return !mSkeleton.empty();
+        return !mSkeleton.empty() || !mBlendMeshes.empty();
     }
 
     struct Bone
@@ -126,38 +156,63 @@ public:
         return mBoneWeights;
     }
 
-    Animation& getAnimation(const std::string& name)
+    bool isSkeletalAnimation(const std::string& name)
     {
-        BELL_ASSERT(mAnimations.find(name) != mAnimations.end(), "Unable to find animation");
-        auto it = mAnimations.find(name);
+        return mSkeletalAnimations.find(name) != mSkeletalAnimations.end();
+    }
+
+    bool isBlendMeshAnimation(const std::string& name)
+    {
+        return mBlendAnimations.find(name) != mBlendAnimations.end();
+    }
+
+    SkeletalAnimation& getSkeletalAnimation(const std::string& name)
+    {
+        BELL_ASSERT(mSkeletalAnimations.find(name) != mSkeletalAnimations.end(), "Unable to find animation");
+        auto it = mSkeletalAnimations.find(name);
         return it->second;
     }
 
-    const std::map<std::string, Animation>& getAllAnimations() const
+    const std::map<std::string, SkeletalAnimation>& getAllSkeletalAnimations() const
     {
-        return mAnimations;
+        return mSkeletalAnimations;
+    }
+
+    BlendMeshAnimation& getBlendMeshAnimation(const std::string& name)
+    {
+        BELL_ASSERT(mBlendAnimations.find(name) != mBlendAnimations.end(), "Unable to find animation");
+        auto it = mBlendAnimations.find(name);
+        return it->second;
+    }
+
+    const std::map<std::string, BlendMeshAnimation>& getAllBlendMeshAnimations() const
+    {
+        return mBlendAnimations;
+    }
+
+    const std::vector<MeshBlend>& getBlendMeshes() const
+    {
+        return mBlendMeshes;
     }
 
 private:
 
     void configure(const aiScene *scene, const aiMesh* mesh, const int vertexAttributes);
     void loadSkeleton(const aiMesh* mesh);
-
-    void writeVertexVector4(const aiVector3D&, const uint32_t);
-    void writeVertexVector2(const aiVector2D&, const uint32_t);
-    void writeVertexFloat(const float, const uint32_t);
-    void WriteVertexInt(const uint32_t, const uint32_t);
-    void WriteVertexChar4(const char4&, const uint32_t);
+    void loadBlendMeshed(const aiMesh* mesh);
 
     uint32_t getPrimitiveSize(const aiPrimitiveType) const;
 
     std::vector<Bone> mSkeleton;
     std::vector<BoneIndex> mBoneWeights;
     std::vector<uint2> mBoneWeightsIndicies;
-    std::vector<unsigned char> mVertexData;
+    VertexBuffer         mVertexData;
     std::vector<uint32_t> mIndexData;
 
-    std::map<std::string, Animation> mAnimations;
+    std::vector<MeshBlend> mBlendMeshes;
+
+    std::map<std::string, SkeletalAnimation> mSkeletalAnimations;
+    std::map<std::string, BlendMeshAnimation> mBlendAnimations;
 
     AABB mAABB;
 

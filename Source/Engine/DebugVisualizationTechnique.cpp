@@ -80,14 +80,14 @@ DebugAABBTechnique::DebugAABBTechnique(Engine* eng, RenderGraph& graph) :
                     }
 
                     // Check all active animations and draw bone OBBs
-                    const std::vector<Engine::AnimationEntry>& activeAnims = eng->getActiveAnimations();
-                    for(const Engine::AnimationEntry& entry : activeAnims)
+                    const std::vector<Engine::SkeletalAnimationEntry>& activeAnims = eng->getActiveSkeletalAnimations();
+                    for(const Engine::SkeletalAnimationEntry& entry : activeAnims)
                     {
                         MeshInstance* inst = eng->getScene()->getMeshInstance(entry.mMesh);
                         if(inst->getInstanceFlags() & InstanceFlags::DrawAABB)
                         {
                             const std::vector<StaticMesh::Bone>& skeleton = inst->mMesh->getSkeleton();
-                            Animation& activeAnim = inst->mMesh->getAnimation(entry.mName);
+                            SkeletalAnimation& activeAnim = inst->mMesh->getSkeletalAnimation(entry.mName);
                             std::vector<float4x4> boneTransforms = activeAnim.calculateBoneMatracies(*inst->mMesh, entry.mTick);
                             BELL_ASSERT(boneTransforms.size() == skeleton.size(), "Bone size mismatch")
 

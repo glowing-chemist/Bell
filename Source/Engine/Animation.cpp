@@ -1,5 +1,6 @@
 #include "Engine/Animation.hpp"
 #include "Engine/StaticMesh.h"
+#include "Core/ConversionUtils.hpp"
 
 #include "Core/BellLogging.hpp"
 
@@ -24,7 +25,7 @@ namespace
 }
 
 
-Animation::Animation(const StaticMesh& mesh, const aiAnimation* anim, const aiScene* scene) :
+SkeletalAnimation::SkeletalAnimation(const StaticMesh& mesh, const aiAnimation* anim, const aiScene* scene) :
     mName(anim->mName.C_Str()),
     mNumTicks(anim->mDuration),
     mTicksPerSec(anim->mTicksPerSecond),
@@ -40,7 +41,7 @@ Animation::Animation(const StaticMesh& mesh, const aiAnimation* anim, const aiSc
 }
 
 
-std::vector<float4x4> Animation::calculateBoneMatracies(const StaticMesh& mesh, const double tick)
+std::vector<float4x4> SkeletalAnimation::calculateBoneMatracies(const StaticMesh& mesh, const double tick)
 {
     const auto& bones = mesh.getSkeleton();
     std::vector<float4x4> boneTransforms{};
@@ -66,7 +67,7 @@ std::vector<float4x4> Animation::calculateBoneMatracies(const StaticMesh& mesh, 
 }
 
 
-float4x4 Animation::interpolateTick(const Tick& lhs, const Tick& rhs, const double tick) const
+float4x4 SkeletalAnimation::interpolateTick(const Tick& lhs, const Tick& rhs, const double tick) const
 {
     const float lerpFactor = float(tick - lhs.mTick) / float(rhs.mTick - lhs.mTick);
     BELL_ASSERT(lerpFactor >= 0.0 && lerpFactor <= 1.0f, "Lerp factor out of range")
@@ -98,7 +99,7 @@ float4x4 Animation::interpolateTick(const Tick& lhs, const Tick& rhs, const doub
 }
 
 
-void Animation::readNodeHierarchy(const aiAnimation* anim, const aiString& name, const aiNode* rootNode)
+void SkeletalAnimation::readNodeHierarchy(const aiAnimation* anim, const aiString& name, const aiNode* rootNode)
 {
     std::string nodeName(name.data);
 
@@ -142,7 +143,7 @@ void Animation::readNodeHierarchy(const aiAnimation* anim, const aiString& name,
 }
 
 
-float4x4 Animation::getParentTransform(const aiAnimation* anim, const aiNode* parent, const double tick)
+float4x4 SkeletalAnimation::getParentTransform(const aiAnimation* anim, const aiNode* parent, const double tick)
 {
     float4x4 nodeTransformation(aiMatrix4x4ToFloat4x4(parent->mTransformation));
     std::string nodeName(parent->mName.data);
@@ -175,7 +176,7 @@ float4x4 Animation::getParentTransform(const aiAnimation* anim, const aiNode* pa
 }
 
 
-const aiNodeAnim* Animation::findNodeAnim(const aiAnimation* animation, const std::string& nodeName)
+const aiNodeAnim* SkeletalAnimation::findNodeAnim(const aiAnimation* animation, const std::string& nodeName)
 {
     for (uint32_t i = 0; i < animation->mNumChannels; i++)
     {
@@ -189,7 +190,7 @@ const aiNodeAnim* Animation::findNodeAnim(const aiAnimation* animation, const st
 }
 
 
-float4x4 Animation::interpolateScale(double time, const aiNodeAnim* pNodeAnim)
+float4x4 SkeletalAnimation::interpolateScale(double time, const aiNodeAnim* pNodeAnim)
 {
     aiVector3D scale;
 
@@ -227,7 +228,7 @@ float4x4 Animation::interpolateScale(double time, const aiNodeAnim* pNodeAnim)
 }
 
 
-float4x4 Animation::interpolateTranslation(double time, const aiNodeAnim* pNodeAnim)
+float4x4 SkeletalAnimation::interpolateTranslation(double time, const aiNodeAnim* pNodeAnim)
 {
     aiVector3D translation;
 
@@ -265,7 +266,7 @@ float4x4 Animation::interpolateTranslation(double time, const aiNodeAnim* pNodeA
 }
 
 
-float4x4 Animation::interpolateRotation(double time, const aiNodeAnim* pNodeAnim)
+float4x4 SkeletalAnimation::interpolateRotation(double time, const aiNodeAnim* pNodeAnim)
 {
     aiQuaternion rotation;
 
@@ -307,4 +308,156 @@ float4x4 Animation::interpolateRotation(double time, const aiNodeAnim* pNodeAnim
     quat.w = rotation.w;
 
     return glm::toMat4(quat);
+}
+
+
+MeshBlend::MeshBlend(const aiAnimMesh* mesh)
+{
+    mName = mesh->mName.C_Str();
+    mWeight = mesh->mWeight;
+
+    for (uint32_t i = 0; i < mesh->mNumVertices; ++i)
+    {
+        if (mesh->HasPositions())
+        {
+            mPosition.push_back(float3{mesh->mVertices[i].x, mesh->mVertices[i].y , mesh->mVertices[i].z});
+        }
+        else
+        {
+            mPosition.push_back(float3{ 0.0f, 0.0f, 0.0f });
+        }
+
+        if (mesh->HasNormals())
+        {
+            mNormals.push_back(float4{mesh->mNormals[i].x, mesh->mNormals[i].y , mesh->mNormals[i].z , 1.0f});
+        }
+        else
+        {
+            mNormals.push_back(float4{ 0.0f, 0.0f, 0.0f , 1.0f });
+        }
+
+        if (mesh->HasTextureCoords(0))
+        {
+            mUV.push_back(float2{mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y});
+        }
+        else
+        {
+            mUV.push_back(float2{ 0.0f, 0.0f });
+        }
+
+        if (mesh->HasVertexColors(0))
+        {
+            mColours.push_back(packColour(float4(mesh->mColors[0][i].r, mesh->mColors[0][i].g, mesh->mColors[0][i].b, mesh->mColors[0][i].a)));
+        }
+        else
+        {
+            mColours.push_back(0u);
+        }
+    }
+}
+
+
+BlendMeshAnimation::BlendMeshAnimation(const aiAnimation* anim, const aiScene* sceneRoot) :
+    mName{anim->mName.C_Str()},
+    mTicksPerSecond{ anim->mTicksPerSecond },
+    mNumTicks{anim->mDuration},
+    mTicks{}
+{
+    mName = anim->mName.C_Str();
+    BELL_ASSERT(anim->mNumMorphMeshChannels == 1, "Only support single blend mesh animations atm")
+
+    const aiMeshMorphAnim* meshAnim = anim->mMorphMeshChannels[0];
+    for (uint32_t i = 0; i < meshAnim->mNumKeys; ++i)
+    {
+        Tick tick{};
+        tick.mTime = meshAnim->mKeys[i].mTime;
+
+        for (uint32_t j = 0; j < meshAnim->mKeys[i].mNumValuesAndWeights; ++j)
+        {
+            tick.mVertexIndex.push_back(meshAnim->mKeys[i].mValues[j]);
+            tick.mWeight.push_back(meshAnim->mKeys[i].mWeights[j]);
+        }
+
+        mTicks.push_back(std::move(tick));
+    }
+}
+
+
+std::vector<unsigned char> BlendMeshAnimation::getBlendedVerticies(const StaticMesh& mesh, const double tick) const
+{
+    uint32_t frameIndex = 0;
+    if (mTicks.size() > 1)
+    {
+        for (uint32_t i = 0; i < mTicks.size() - 1; i++)
+        {
+            if (tick <= mTicks[i + 1].mTime)
+            {
+                frameIndex = i;
+                break;
+            }
+        }
+    }
+    BELL_ASSERT((frameIndex + 1) < mTicks.size(), "frame index out of bounds")
+
+    const Tick& currentTick = mTicks[frameIndex];
+    const Tick& nextTick = mTicks[(frameIndex + 1) % mTicks.size()];
+    const double currentBlendWeight = (tick - currentTick.mTime) / (nextTick.mTime - currentTick.mTime);
+    const double nextBlendWeight = 1.0 - currentBlendWeight;
+
+    const std::vector<MeshBlend>& shapes = mesh.getBlendMeshes();
+    std::vector<double> blendShapeWeights(shapes.size(), 0.0);
+    
+    for (uint32_t i = 0; i < currentTick.mVertexIndex.size(); ++i)
+    {
+        const uint32_t shapeIndex = currentTick.mVertexIndex[i];
+        const double shapeWeight = currentTick.mWeight[i];
+
+        if (shapeWeight > 0.0)
+        {
+            blendShapeWeights[shapeIndex] += shapeWeight * currentBlendWeight;
+        }
+    }
+
+    for (uint32_t i = 0; i < nextTick.mVertexIndex.size(); ++i)
+    {
+        const uint32_t shapeIndex = nextTick.mVertexIndex[i];
+        const double shapeWeight = nextTick.mWeight[i];
+
+        if (shapeWeight > 0.0)
+        {
+            blendShapeWeights[shapeIndex] += shapeWeight * nextBlendWeight;
+        }
+    }
+
+    VertexBuffer newVertexBuffer{};
+    newVertexBuffer.setSize(mesh.getVertexStride() * shapes[0].mPosition.size());
+    for (uint32_t i = 0; i < shapes[0].mPosition.size(); ++i)
+    {
+        float3 position{0.0f, 0.0f, 0.0f};
+        float4 normal{0.0f, 0.0f, 0.0f, 0.0f};
+        float2 uv{0.0f, 0.0f};
+        uint32_t colour{ 0 };
+
+        for (uint32_t j = 0; j < blendShapeWeights.size(); ++j)
+        {
+            BELL_ASSERT(shapes[j].mPosition.size() == mesh.getVertexCount(), "Incorrect blend shape")
+
+            const double shapeWeight = blendShapeWeights[j];
+            if (shapeWeight > 0.0)
+            {
+                position += static_cast<float>(shapeWeight) * shapes[j].mPosition[i] * shapes[j].mWeight;
+                normal += static_cast<float>(shapeWeight) * shapes[j].mNormals[i] * shapes[j].mWeight;
+                uv += static_cast<float>(shapeWeight) * shapes[j].mUV[i] * shapes[j].mWeight;
+                colour += packColour(static_cast<float>(shapeWeight) * unpackColour(shapes[j].mColours[i]));
+            }
+        }
+
+        newVertexBuffer.writeVertexVector4(aiVector3D{ position.x, position.y, position.z });
+        newVertexBuffer.writeVertexVector2(aiVector2D{ uv.x, uv.y });
+        const char4 packednormals = packNormal(normal);
+        newVertexBuffer.WriteVertexChar4(packednormals);
+        newVertexBuffer.WriteVertexInt(colour);
+    }
+
+    return newVertexBuffer.getVertexBuffer();
 }

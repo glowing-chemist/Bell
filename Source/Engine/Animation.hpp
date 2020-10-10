@@ -11,11 +11,11 @@
 
 class StaticMesh;
 
-class Animation
+class SkeletalAnimation
 {
 public:
-    Animation(const StaticMesh &mesh, const aiAnimation*, const aiScene*);
-    ~Animation() = default;
+    SkeletalAnimation(const StaticMesh &mesh, const aiAnimation*, const aiScene*);
+    ~SkeletalAnimation() = default;
 
     std::vector<float4x4> calculateBoneMatracies(const StaticMesh&, const double tick);
 
@@ -84,6 +84,60 @@ private:
     float4x4 mInverseGlobalTransform;
 
     std::map<std::string, BoneTransform> mBones;
+};
+
+
+struct MeshBlend
+{
+    MeshBlend(const aiAnimMesh*);
+
+    std::vector<float3> mPosition;
+    std::vector<float4> mNormals;
+    std::vector<float2> mUV;
+    std::vector<uint32_t> mColours;
+
+    std::string mName;
+    float mWeight;
+};
+
+
+class BlendMeshAnimation
+{
+public:
+    BlendMeshAnimation(const aiAnimation*, const aiScene*);
+    ~BlendMeshAnimation() = default;
+
+    double getTicksPerSec() const
+    {
+        return mTicksPerSecond;
+    }
+
+    double getTotalTicks() const
+    {
+        return mNumTicks;
+    }
+
+    std::vector<unsigned char> getBlendedVerticies(const StaticMesh&, const double tick) const;
+
+    const std::string& getName() const
+    {
+        return mName;
+    }
+
+private:
+
+    struct Tick
+    {
+        double mTime;
+        
+        std::vector<uint32_t> mVertexIndex;
+        std::vector<double> mWeight;
+    };
+
+    std::string mName;
+    double mTicksPerSecond;
+    double mNumTicks;
+    std::vector<Tick> mTicks;
 };
 
 #endif

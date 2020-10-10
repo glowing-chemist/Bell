@@ -25,25 +25,18 @@ struct Constants
     uint mVertexCount;
     uint mVertexReadIndex;
     uint mVertexWriteIndex;
-    uint mBoneIndex;
+    uint patchIndex;
     uint mVertexStride;
 };
 
 [[vk::binding(0)]]
 ByteAddressBuffer TPoseBuffer;
 
-[[vk::binding(1)]]
-StructuredBuffer<uint2> boneIndicies;
-
-[[vk::binding(2)]]
-StructuredBuffer<BoneIndex> boneWeights;
-
-[[vk::binding(3)]]
-StructuredBuffer<Bone> bones;
-
 [[vk::binding(4)]]
 RWByteAddressBuffer outVertex;
 
+[[vk::binding(5)]]
+ByteAddressBuffer VertexPatchBuffer;
 
 [[vk::push_constant]]
 ConstantBuffer<Constants> meshInfo;
@@ -59,25 +52,13 @@ void main(uint3 globalIndex : SV_DispatchThreadID)
 
 	Vertex vertToProcess = readVertexFromBuffer(TPoseBuffer, (meshInfo.mVertexReadIndex + vertexIndex) * meshInfo.mVertexStride);
 
-	uint2 weightsIndexSize = boneIndicies[meshInfo.mVertexReadIndex + vertexIndex];
-
-	float4x4 transform = float4x4(	float4(0.0f, 0.0f, 0.0f, 0.0f), 
-									float4(0.0f, 0.0f, 0.0f, 0.0f), 
-									float4(0.0f, 0.0f, 0.0f, 0.0f), 
-									float4(0.0f, 0.0f, 0.0f, 0.0f));
-	for(uint i = 0; i < weightsIndexSize.y; ++i)
-	{
-		BoneIndex index = boneWeights[weightsIndexSize.x + i];
-		Bone bone = bones[meshInfo.mBoneIndex + index.mBone];
-
-		transform += bone.transform * index.mWeight;
-	}
+	Vertex vertexPatch = readVertexFromBuffer(VertexPatchBuffer, (meshInfo.patchIndex + vertexIndex) * meshInfo.mVertexStride)
 
 	Vertex transformedVertex;
-	transformedVertex.position = mul(transform, vertToProcess.position);
-	transformedVertex.uv = vertToProcess.uv;
-	transformedVertex.normal = float4(mul((float3x3)transform, vertToProcess.normal.xyz), 1.0f);
-	transformedVertex.colour = vertToProcess.colour;
+	transformedVertex.position = /*vertToProcess.position +*/ vertexPatch.position;
+	transformedVertex.uv = /*vertToProcess.uv +*/ vertexPatch.uv;
+	transformedVertex.normal = /*vertToProcess.normal +*/ vertexPatch.normal;
+	transformedVertex.colour = vertexPatch.colour;
 
 	writeVertexToBuffer(outVertex, (meshInfo.mVertexWriteIndex + vertexIndex) * meshInfo.mVertexStride, transformedVertex);
 }

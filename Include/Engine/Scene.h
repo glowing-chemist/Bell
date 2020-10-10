@@ -408,11 +408,18 @@ public:
             mat.updateLastAccessed();
     }
 
-    Animation& getAnimation(const InstanceID id, const std::string& name)
+    SkeletalAnimation& getSkeletalAnimation(const InstanceID id, const std::string& name)
     {
         MeshInstance* inst = getMeshInstance(id);
         BELL_ASSERT(inst->mMesh->hasAnimations(), "Requesting animation from mesh without animations")
-        return inst->mMesh->getAnimation(name);
+        return inst->mMesh->getSkeletalAnimation(name);
+    }
+
+    BlendMeshAnimation& getBlendMeshAnimation(const InstanceID id, const std::string& name)
+    {
+        MeshInstance* inst = getMeshInstance(id);
+        BELL_ASSERT(inst->mMesh->hasAnimations(), "Requesting animation from mesh without animations")
+            return inst->mMesh->getBlendMeshAnimation(name);
     }
 
 private:

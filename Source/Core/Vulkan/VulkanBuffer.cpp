@@ -58,52 +58,57 @@ void VulkanBuffer::swap(BufferBase& other)
 
 void VulkanBuffer::setContents(const void* data, const uint32_t size, const uint32_t offset)
 {
-	VulkanRenderDevice* device = static_cast<VulkanRenderDevice*>(getDevice());
+    setContents(static_cast<VulkanRenderDevice*>(getDevice())->getPrefixCommandBuffer(), data, size, offset);
+}
+
+void VulkanBuffer::setContents(vk::CommandBuffer cmd,
+                                const void* data,
+                                const uint32_t size,
+                                const uint32_t offset)
+{
+    VulkanRenderDevice* device = static_cast<VulkanRenderDevice*>(getDevice());
 
     BELL_ASSERT(offset + size <= mSize, "Attempting to upload more data than buffer can hold")
 
-    if(isMappable())
-    {
-        BELL_ASSERT(size <= mSize, "Attempting to map a larger range than the buffer supports.")
-
-        MapInfo mapInfo{};
-        mapInfo.mOffset = offset;
-        mapInfo.mSize = size;
-
-        void* mappedBuffer = map(mapInfo);
-
-        std::memcpy(mappedBuffer, data, size);
-
-        unmap();
-    }
-    else
-    {
-        BELL_ASSERT((mUsage & BufferUsage::TransferDest) != 0, "Buffer needs usage transfer dest")
-
-        // Copy the data in to the command buffer and then perform the copy from there.
-        if(size <= 1 << 16)
+        if (isMappable())
         {
-            device->getPrefixCommandBuffer()
-                    .updateBuffer(mBuffer, offset, size, data);
+            BELL_ASSERT(size <= mSize, "Attempting to map a larger range than the buffer supports.")
+
+                MapInfo mapInfo {};
+            mapInfo.mOffset = offset;
+            mapInfo.mSize = size;
+
+            void* mappedBuffer = map(mapInfo);
+
+            std::memcpy(mappedBuffer, data, size);
+
+            unmap();
         }
         else
         {
-            VulkanBuffer stagingBuffer(getDevice(), BufferUsage::TransferSrc, size, mStride, "Staging Buffer");
+            BELL_ASSERT((mUsage & BufferUsage::TransferDest) != 0, "Buffer needs usage transfer dest")
 
-            stagingBuffer.setContents(data, size);
+                // Copy the data in to the command buffer and then perform the copy from there.
+                if (size <= 1 << 16)
+                {
+                    cmd.updateBuffer(mBuffer, offset, size, data);
+                }
+                else
+                {
+                    VulkanBuffer stagingBuffer(getDevice(), BufferUsage::TransferSrc, size, mStride, "Staging Buffer");
 
-            vk::BufferCopy copyInfo{};
-            copyInfo.setSize(size);
-            copyInfo.setSrcOffset(0);
-            copyInfo.setDstOffset(offset);
+                    stagingBuffer.setContents(data, size);
 
-            device->getPrefixCommandBuffer()
-                    .copyBuffer(stagingBuffer.getBuffer(), getBuffer(), copyInfo);
-        }
-    }
+                    vk::BufferCopy copyInfo{};
+                    copyInfo.setSize(size);
+                    copyInfo.setSrcOffset(0);
+                    copyInfo.setDstOffset(offset);
+
+                    cmd.copyBuffer(stagingBuffer.getBuffer(), getBuffer(), copyInfo);
+                }
+       }
     updateLastAccessed();
 }
-
 
 void VulkanBuffer::setContents(const int data,
                  const uint32_t size,

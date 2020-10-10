@@ -37,6 +37,11 @@ public:
 	virtual void* map(MapInfo& mapInfo) override;
 	virtual void    unmap() override;
 
+	void setContents(vk::CommandBuffer cmd,
+		const void* data,
+		const uint32_t size,
+		const uint32_t offset);
+
 	vk::Buffer getBuffer() const
 	{
 		return mBuffer;

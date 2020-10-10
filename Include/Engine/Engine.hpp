@@ -222,19 +222,34 @@ public:
     RenderDevice* getDevice()
     { return mRenderDevice; }
 
-    struct AnimationEntry
+    struct SkeletalAnimationEntry
     {
-	std::string mName;
-	InstanceID mMesh;
-	float mSpeedModifier;
-	uint64_t mBoneOffset;
-	double mTick;
-	bool mLoop;
+	    std::string mName;
+	    InstanceID mMesh;
+	    float mSpeedModifier;
+	    uint64_t mBoneOffset;
+	    double mTick;
+	    bool mLoop;
     };
 
-    const std::vector<AnimationEntry>& getActiveAnimations() const
+    struct BlendShapeAnimationEntry
     {
-        return mActiveAnimations;
+        std::string mName;
+        InstanceID mMesh;
+        float mSpeedModifier;
+        double mTick;
+        bool mLoop;
+
+    };
+
+    const std::vector<SkeletalAnimationEntry>& getActiveSkeletalAnimations() const
+    {
+        return mActiveSkeletalAnimations;
+    }
+
+    const std::vector<BlendShapeAnimationEntry>& getActiveBlendShapesAnimations() const
+    {
+        return mActiveBlendShapeAnimations;
     }
 
     std::chrono::microseconds getLastFrameTime() const
@@ -402,7 +417,8 @@ private:
 
     float2 mTAAJitter[16];
 
-    std::vector<AnimationEntry> mActiveAnimations;
+    std::vector<SkeletalAnimationEntry> mActiveSkeletalAnimations;
+    std::vector<BlendShapeAnimationEntry> mActiveBlendShapeAnimations;
     void tickAnimations();
 
     std::chrono::system_clock::time_point mFrameStartTime;

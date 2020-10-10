@@ -83,7 +83,7 @@ void StaticMesh::configure(const aiScene* scene, const aiMesh* mesh, const int v
 
     // assume triangles atm
     mIndexData.reserve(mesh->mNumFaces * mesh->mFaces[0].mNumIndices);
-    mVertexData.resize(mesh->mNumVertices * vertexStride);
+    mVertexData.setSize(mesh->mNumVertices * vertexStride);
 
     // Copy the index data
     for(uint32_t i = 0; i < mesh->mNumFaces; ++i)
@@ -97,8 +97,6 @@ void StaticMesh::configure(const aiScene* scene, const aiMesh* mesh, const int v
         }
     }
 
-    uint32_t currentOffset = 0;
-
     float4 topLeft{std::numeric_limits<float>::infinity(), std::numeric_limits<float>::infinity(), std::numeric_limits<float>::infinity(), 1.0f};
     float4 bottumRight{-std::numeric_limits<float>::infinity(), -std::numeric_limits<float>::infinity(), -std::numeric_limits<float>::infinity(), 1.0f};
 
@@ -107,8 +105,7 @@ void StaticMesh::configure(const aiScene* scene, const aiMesh* mesh, const int v
     {
         if(positionNeeded)
         {
-            writeVertexVector4(mesh->mVertices[i], currentOffset);
-            currentOffset += 4 * sizeof(float);
+            mVertexData.writeVertexVector4(mesh->mVertices[i]);
 
             // update the AABB positions
             topLeft = componentWiseMin(topLeft, float4{	mesh->mVertices[i].x,
@@ -122,13 +119,11 @@ void StaticMesh::configure(const aiScene* scene, const aiMesh* mesh, const int v
 
         if(UVNeeded)
         {
-            writeVertexVector2({mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y}, currentOffset);
-            currentOffset += 2 * sizeof(float);
+            mVertexData.writeVertexVector2({mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y});
         }
         else if(vertAttributes & VertexAttributes::TextureCoordinates) // If the file doesn't contain uv's (and they where requested) write out some placeholder ones.
         {
-            writeVertexVector2(aiVector2D{0.0f, 0.0f}, currentOffset);
-            currentOffset += 2 * sizeof(float);
+            mVertexData.writeVertexVector2(aiVector2D{0.0f, 0.0f});
             BELL_LOG("Inserting placeholder UVs")
         }
 
@@ -137,15 +132,13 @@ void StaticMesh::configure(const aiScene* scene, const aiMesh* mesh, const int v
             static_assert(sizeof(char4) == sizeof(uint32_t), "char4 must match 32 bit int in size");
             float4 normal = float4(mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z, 1.0f);
             const char4 packednormals = packNormal(normal);
-            WriteVertexChar4(packednormals, currentOffset);
-            currentOffset += sizeof(char4);
+            mVertexData.WriteVertexChar4(packednormals);
         }
 
         if(albedoNeeded)
         {
             uint32_t packedColour = uint32_t(mesh->mColors[0][i].r * 255.0f) | (uint32_t(mesh->mColors[0][i].g * 255.0f) << 8) | (uint32_t(mesh->mColors[0][i].b * 255.0f) << 16) | (uint32_t(mesh->mColors[0][i].a * 255.0f) << 24);
-            WriteVertexInt(packedColour, currentOffset);
-            currentOffset += sizeof(uint32_t);
+            mVertexData.WriteVertexInt(packedColour);
         }
         else if(vertAttributes & VertexAttributes::Albedo) // Default to {0.65f, 0.65f, 0.65f} if no material present.
         {
@@ -160,14 +153,14 @@ void StaticMesh::configure(const aiScene* scene, const aiMesh* mesh, const int v
                 packedDiffuse = packColour(float4(diffuse.r, diffuse.g, diffuse.b, diffuse.a));
             }
 
-            WriteVertexInt(packedDiffuse, currentOffset);
-            currentOffset += sizeof(uint32_t);
+            mVertexData.WriteVertexInt(packedDiffuse);
         }
     }
 
     mAABB = AABB{topLeft, bottumRight};
 
     loadSkeleton(mesh);
+    loadBlendMeshed(mesh);
 
     if(hasAnimations())
     {
@@ -175,7 +168,15 @@ void StaticMesh::configure(const aiScene* scene, const aiMesh* mesh, const int v
         for(uint32_t i = 0; i < scene->mNumAnimations; ++i)
         {
             const aiAnimation* animation = scene->mAnimations[i];
-            mAnimations.insert({std::string(animation->mName.C_Str()), Animation(*this, animation, scene)});
+         
+            if (animation->mNumChannels > 0)
+                mSkeletalAnimations.insert({ std::string(animation->mName.C_Str()), SkeletalAnimation(*this, animation, scene) });
+            if (animation->mNumMorphMeshChannels > 0)
+                mBlendAnimations.insert({ std::string(animation->mName.C_Str()), BlendMeshAnimation(animation, scene) });
+            if (animation->mNumChannels == 0 && animation->mNumMorphMeshChannels == 0)
+            {
+                BELL_LOG_ARGS("Unsupported animation %s not loaded", animation->mName.C_Str())
+            }
         }
     }
 }
@@ -248,6 +249,15 @@ void StaticMesh::loadSkeleton(const aiMesh* mesh)
 }
 
 
+void StaticMesh::loadBlendMeshed(const aiMesh* mesh)
+{
+    for (uint32_t i = 0; i < mesh->mNumAnimMeshes; ++i)
+    {
+        mBlendMeshes.push_back(MeshBlend(mesh->mAnimMeshes[i]));
+    }
+}
+
+
 uint32_t StaticMesh::getPrimitiveSize(const aiPrimitiveType primitiveType) const
 {
 		uint32_t primitiveElementSize = 0;
@@ -271,39 +281,49 @@ uint32_t StaticMesh::getPrimitiveSize(const aiPrimitiveType primitiveType) const
 }
 
 
-void StaticMesh::writeVertexVector4(const aiVector3D& vector, const uint32_t startOffset)
+void VertexBuffer::writeVertexVector4(const aiVector3D& vector)
 {
-    *reinterpret_cast<float*>(&mVertexData[startOffset]) = vector.x;
-	*reinterpret_cast<float*>(&mVertexData[startOffset] + sizeof(float)) = vector.y;
-	*reinterpret_cast<float*>(&mVertexData[startOffset] + 2 * sizeof(float)) = vector.z;
-	*reinterpret_cast<float*>(&mVertexData[startOffset] + 3 * sizeof(float)) = 1.0f;
+    *reinterpret_cast<float*>(&mBuffer[mCurrentOffset]) = vector.x;
+	*reinterpret_cast<float*>(&mBuffer[mCurrentOffset] + sizeof(float)) = vector.y;
+	*reinterpret_cast<float*>(&mBuffer[mCurrentOffset] + 2 * sizeof(float)) = vector.z;
+	*reinterpret_cast<float*>(&mBuffer[mCurrentOffset] + 3 * sizeof(float)) = 1.0f;
+
+    mCurrentOffset += sizeof(float4);
 }
 
 
-void StaticMesh::writeVertexVector2(const aiVector2D& vector, const uint32_t startOffset)
+void VertexBuffer::writeVertexVector2(const aiVector2D& vector)
 {
-    *reinterpret_cast<float*>(&mVertexData[startOffset]) = vector.x;
-	*reinterpret_cast<float*>(&mVertexData[startOffset] + sizeof(float)) = vector.y;
+    *reinterpret_cast<float*>(&mBuffer[mCurrentOffset]) = vector.x;
+	*reinterpret_cast<float*>(&mBuffer[mCurrentOffset] + sizeof(float)) = vector.y;
+
+    mCurrentOffset += sizeof(float2);
 }
 
 
-void StaticMesh::writeVertexFloat(const float value, const uint32_t startOffset)
+void VertexBuffer::writeVertexFloat(const float value)
 {
-	*reinterpret_cast<float*>(&mVertexData[startOffset]) = value;
+	*reinterpret_cast<float*>(&mBuffer[mCurrentOffset]) = value;
+
+    mCurrentOffset += sizeof(float);
 }
 
 
-void StaticMesh::WriteVertexInt(const uint32_t value, const uint32_t startOffset)
+void VertexBuffer::WriteVertexInt(const uint32_t value)
 {
-	*reinterpret_cast<uint32_t*>(&mVertexData[startOffset]) = value;
+	*reinterpret_cast<uint32_t*>(&mBuffer[mCurrentOffset]) = value;
+
+    mCurrentOffset += sizeof(uint32_t);
 }
 
-void StaticMesh::WriteVertexChar4(const char4& value, const uint32_t startOffset)
+void VertexBuffer::WriteVertexChar4(const char4& value)
 {
-    *reinterpret_cast<int8_t*>(&mVertexData[startOffset]) = value.x;
-    *reinterpret_cast<int8_t*>(&mVertexData[startOffset] + 1) = value.y;
-    *reinterpret_cast<int8_t*>(&mVertexData[startOffset] + 2) = value.z;
-    *reinterpret_cast<int8_t*>(&mVertexData[startOffset] + 3) = value.w;
+    *reinterpret_cast<int8_t*>(&mBuffer[mCurrentOffset]) = value.x;
+    *reinterpret_cast<int8_t*>(&mBuffer[mCurrentOffset] + 1) = value.y;
+    *reinterpret_cast<int8_t*>(&mBuffer[mCurrentOffset] + 2) = value.z;
+    *reinterpret_cast<int8_t*>(&mBuffer[mCurrentOffset] + 3) = value.w;
+
+    mCurrentOffset += sizeof(char4);
 }
 
 

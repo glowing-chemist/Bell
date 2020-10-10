@@ -162,10 +162,8 @@ void VulkanExecutor::endCommandPredication()
 
 void VulkanExecutor::copyDataToBuffer(const void* data, const size_t size, const size_t offset, Buffer& buf)
 {
-    BELL_ASSERT(size < 1 << 16, "Can't copy this much data inline")
-
     VulkanBuffer* VKBuf = static_cast<VulkanBuffer*>(buf.getBase());
-    mCommandBuffer.updateBuffer(VKBuf->getBuffer(), offset, size, data);
+    VKBuf->setContents(mCommandBuffer, data, size, offset);
 }
 
 

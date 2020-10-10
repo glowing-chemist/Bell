@@ -14,7 +14,7 @@ public:
     virtual PassType getPassType() const final override
         { return PassType::Animation; }
 
-    virtual void bindResources(RenderGraph&) override final {}
+    virtual void bindResources(RenderGraph&) override final;
     virtual void render(RenderGraph&, Engine*) override final {}
 
     struct PushConstant
@@ -23,12 +23,14 @@ public:
         uint32_t mVertexReadIndex;
         uint32_t mVertexWriteIndex;
         uint32_t mBoneIndex;
-        uint32_t mBoneIndiciesIndex;
         uint32_t mVertexStride;
     };
 
 private:
     Shader mSkinningShader;
+    Shader mBlendShapeShader;
+    Buffer mBlendShapeScratchBuffer;
+    BufferView mBlendShapeScratchBufferView;
     TaskID mTask;
 };
 
