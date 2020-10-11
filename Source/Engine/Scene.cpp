@@ -109,6 +109,7 @@ std::vector<InstanceID> Scene::loadFromFile(const int vertAttributes, Engine* en
     parseNode(scene,
               rootNode,
               aiMatrix4x4{},
+              kInvalidInstanceID,
               vertAttributes,
               meshMaterials,
               meshToSceneIDMapping,
@@ -123,6 +124,7 @@ std::vector<InstanceID> Scene::loadFromFile(const int vertAttributes, Engine* en
 void Scene::parseNode(const aiScene* scene,
                       const aiNode* node,
                       const aiMatrix4x4& parentTransofrmation,
+                      const InstanceID parentID,
                       const int vertAttributes,
                       const MaterialMappings& materialIndexMappings,
                       std::unordered_map<const aiMesh*, SceneID>& meshMappings,
@@ -130,6 +132,7 @@ void Scene::parseNode(const aiScene* scene,
 {
     aiMatrix4x4 transformation = parentTransofrmation * node->mTransformation;
 
+    InstanceID currentInstanceID = parentID;
     for(uint32_t i = 0; i < node->mNumMeshes; ++i)
     {
         const aiMesh* currentMesh = scene->mMeshes[node->mMeshes[i]];
@@ -167,7 +170,8 @@ void Scene::parseNode(const aiScene* scene,
         transformationMatrix[3][0] = transformation.a4; transformationMatrix[3][1] = transformation.b4;  transformationMatrix[3][2] = transformation.c4; transformationMatrix[3][3] = transformation.d4;
 
 
-        InstanceID instanceID = addMeshInstance(meshID, transformationMatrix, materialOffset, materialFlags, currentMesh->mName.C_Str());
+        InstanceID instanceID = addMeshInstance(meshID, parentID, transformationMatrix, materialOffset, materialFlags, currentMesh->mName.C_Str());
+        currentInstanceID = instanceID;
         instanceIds.push_back(instanceID);
     }
 
@@ -176,7 +180,8 @@ void Scene::parseNode(const aiScene* scene,
     {
         parseNode(scene,
                   node->mChildren[i],
-                  transformation,
+                  currentInstanceID == kInvalidInstanceID ? transformation : aiMatrix4x4{},
+                  currentInstanceID,
                   vertAttributes,
                   materialIndexMappings,
                   meshMappings,
@@ -524,6 +529,7 @@ SceneID Scene::addMesh(const StaticMesh& mesh, MeshType meshType)
 // It's invalid to use the InstanceID for a static mesh for anything other than state tracking.
 // As the BVH for them will not be updated.
 InstanceID Scene::addMeshInstance(const SceneID meshID,
+                                  const InstanceID parentInstance,
                                   const float4x4 &transformation,
                                   const uint32_t materialIndex,
                                   const uint32_t materialFlags,
@@ -538,12 +544,18 @@ InstanceID Scene::addMeshInstance(const SceneID meshID,
         id = static_cast<InstanceID>(mStaticMeshInstances.size() + 1);
 
         mStaticMeshInstances.push_back({&mesh, transformation, materialIndex, materialFlags, name});
+
+        if(parentInstance != kInvalidInstanceID)
+            mStaticMeshInstances.back().setParentInstance(getMeshInstance(parentInstance));
     }
     else
     {
         id = -static_cast<InstanceID>(mDynamicMeshInstances.size());
 
         mDynamicMeshInstances.push_back({&mesh, transformation, materialIndex, materialFlags, name});
+
+        if(parentInstance != kInvalidInstanceID)
+            mDynamicMeshInstances.back().setParentInstance(getMeshInstance(parentInstance));
     }
 
     return id;

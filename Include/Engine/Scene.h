@@ -25,6 +25,7 @@ class Engine;
 
 using SceneID = uint64_t;
 using InstanceID = int64_t;
+constexpr InstanceID kInvalidInstanceID = std::numeric_limits<InstanceID>::max();
 
 enum class MeshType
 {
@@ -93,6 +94,7 @@ struct MeshInstance
                  const uint32_t materialFLags,
                  const std::string& name = "") :
         mMesh(mesh),
+        mParent(nullptr),
         mTransformation(trans),
         mPreviousTransformation(trans),
         mName{name},
@@ -102,9 +104,14 @@ struct MeshInstance
 
     StaticMesh* mMesh;
 
-    const float4x4& getTransMatrix() const
+    float4x4 getTransMatrix() const
     {
-        return mTransformation;
+        if(mParent)
+        {
+            return mTransformation * mParent->getTransMatrix();
+        }
+        else
+            return mTransformation;
     }
 
     uint32_t getmaterialIndex() const
@@ -141,15 +148,32 @@ struct MeshInstance
     MeshEntry getMeshShaderEntry() const
     {
         MeshEntry entry{};
-        entry.mTransformation = transpose(float4x3(mTransformation));
-        entry.mPreviousTransformation = transpose(float4x3(mPreviousTransformation));
+        entry.mTransformation = transpose(float4x3(getTransMatrix()));
+        entry.mPreviousTransformation = transpose(float4x3(getPreviousTransMatrix()));
         entry.mMaterialIndex = mMaterialIndex;
         entry.mMaterialFlags = mMaterialFlags;
 
         return entry;
     }
 
+    void setParentInstance(const MeshInstance* parent)
+    {
+        mParent = parent;
+    }
+
 private:
+
+    float4x4 getPreviousTransMatrix() const
+    {
+        if(mParent)
+        {
+            return mPreviousTransformation * mParent->getPreviousTransMatrix();
+        }
+        else
+            return mPreviousTransformation;
+    }
+
+    const MeshInstance* mParent;
     float4x4 mTransformation;
     float4x4 mPreviousTransformation;
     std::string mName;
@@ -183,6 +207,7 @@ public:
 
     SceneID       addMesh(const StaticMesh&, MeshType);
     InstanceID    addMeshInstance(const SceneID,
+                                  const InstanceID parentInstance,
                                   const float4x4&,
                                   const uint32_t materialIndex,
                                   const uint32_t materialFlags,
@@ -444,6 +469,7 @@ private:
     void parseNode(const aiScene* scene,
                    const aiNode* node,
                    const aiMatrix4x4& parentTransofrmation,
+                   const InstanceID parentID,
                    const int vertAttributes,
                    const MaterialMappings& materialIndexMappings,
                    std::unordered_map<const aiMesh *, SceneID> &meshMappings,
