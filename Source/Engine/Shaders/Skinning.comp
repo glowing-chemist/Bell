@@ -26,6 +26,7 @@ struct Constants
     uint mVertexReadIndex;
     uint mVertexWriteIndex;
     uint mBoneIndex;
+    uint Unused;
     uint mVertexStride;
 };
 

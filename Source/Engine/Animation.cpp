@@ -401,7 +401,7 @@ std::vector<unsigned char> BlendMeshAnimation::getBlendedVerticies(const StaticM
 
     const Tick& currentTick = mTicks[frameIndex];
     const Tick& nextTick = mTicks[(frameIndex + 1) % mTicks.size()];
-    const double currentBlendWeight = (tick - currentTick.mTime) / (nextTick.mTime - currentTick.mTime);
+    const double currentBlendWeight = 1.0 - ((tick - currentTick.mTime) / (nextTick.mTime - currentTick.mTime));
     const double nextBlendWeight = 1.0 - currentBlendWeight;
 
     const std::vector<MeshBlend>& shapes = mesh.getBlendMeshes();
@@ -414,6 +414,7 @@ std::vector<unsigned char> BlendMeshAnimation::getBlendedVerticies(const StaticM
 
         if (shapeWeight > 0.0)
         {
+            BELL_ASSERT(shapeIndex < blendShapeWeights.size(), "Invalid index")
             blendShapeWeights[shapeIndex] += shapeWeight * currentBlendWeight;
         }
     }
@@ -425,6 +426,7 @@ std::vector<unsigned char> BlendMeshAnimation::getBlendedVerticies(const StaticM
 
         if (shapeWeight > 0.0)
         {
+            BELL_ASSERT(shapeIndex < blendShapeWeights.size(), "Invalid index")
             blendShapeWeights[shapeIndex] += shapeWeight * nextBlendWeight;
         }
     }
@@ -438,13 +440,16 @@ std::vector<unsigned char> BlendMeshAnimation::getBlendedVerticies(const StaticM
         float2 uv{0.0f, 0.0f};
         uint32_t colour{ 0 };
 
+        float weight = 0.0f;
         for (uint32_t j = 0; j < blendShapeWeights.size(); ++j)
         {
             BELL_ASSERT(shapes[j].mPosition.size() == mesh.getVertexCount(), "Incorrect blend shape")
 
             const double shapeWeight = blendShapeWeights[j];
+            BELL_ASSERT(shapeWeight >= 0.0, "Invalid weight")
             if (shapeWeight > 0.0)
             {
+                weight += shapeWeight * shapes[j].mWeight;
                 position += static_cast<float>(shapeWeight) * shapes[j].mPosition[i] * shapes[j].mWeight;
                 normal += static_cast<float>(shapeWeight) * shapes[j].mNormals[i] * shapes[j].mWeight;
                 uv += static_cast<float>(shapeWeight) * shapes[j].mUV[i] * shapes[j].mWeight;
@@ -452,11 +457,11 @@ std::vector<unsigned char> BlendMeshAnimation::getBlendedVerticies(const StaticM
             }
         }
 
-        newVertexBuffer.writeVertexVector4(aiVector3D{ position.x, position.y, position.z });
-        newVertexBuffer.writeVertexVector2(aiVector2D{ uv.x, uv.y });
-        const char4 packednormals = packNormal(normal);
+        newVertexBuffer.writeVertexVector4(aiVector3D{ position.x, position.y, position.z } / weight);
+        newVertexBuffer.writeVertexVector2(aiVector2D{ uv.x, uv.y } / weight);
+        const char4 packednormals = packNormal(normal / weight);
         newVertexBuffer.WriteVertexChar4(packednormals);
-        newVertexBuffer.WriteVertexInt(colour);
+        newVertexBuffer.WriteVertexInt(colour / weight);
     }
 
     return newVertexBuffer.getVertexBuffer();

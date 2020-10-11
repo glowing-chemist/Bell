@@ -10,7 +10,7 @@ constexpr uint32_t kScratchBufferSize = 5u * 1024u * 1024u;
 SkinningTechnique::SkinningTechnique(Engine* eng, RenderGraph& graph) :
     Technique("Skinning", eng->getDevice()),
     mSkinningShader(eng->getShader("./Shaders/Skinning.comp")),
-    mBlendShapeShader(eng->getShader("./Shaders/BlendShapes.comp")),
+    mSkinningBlendShapesShader(eng->getShader("./Shaders/SkinnedBlendShapes.comp")),
     mBlendShapeScratchBuffer(getDevice(), BufferUsage::DataBuffer | BufferUsage::TransferDest, kScratchBufferSize, kScratchBufferSize, "BlendShape Scratch buffer"),
     mBlendShapeScratchBufferView(mBlendShapeScratchBuffer)
 {
@@ -25,6 +25,9 @@ SkinningTechnique::SkinningTechnique(Engine* eng, RenderGraph& graph) :
     skinningTask.setRecordCommandsCallback(
                 [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
                 {
+
+                    std::unordered_map<std::string, uint32_t> boneOffsets{};
+
                     {
                         const RenderTask& task = graph.getTask(taskIndex);
                         exec->setComputeShader(static_cast<const ComputeTask&>(task), graph, mSkinningShader);
@@ -33,6 +36,13 @@ SkinningTechnique::SkinningTechnique(Engine* eng, RenderGraph& graph) :
                         for (const auto& anim : anims)
                         {
                             MeshInstance* inst = eng->getScene()->getMeshInstance(anim.mMesh);
+
+                            // Will handle in combined shader.
+                            if (inst->mMesh->isBlendMeshAnimation(anim.mName))
+                            {
+                                boneOffsets.insert({anim.mName, anim.mBoneOffset});
+                                continue;
+                            }
                             auto [vertexReadOffset, boneIndexOffset] = eng->addMeshToAnimationBuffer(inst->mMesh);
                             auto [vertexWriteOffset, indexOffset] = eng->addMeshToBuffer(inst->mMesh);
 
@@ -45,8 +55,8 @@ SkinningTechnique::SkinningTechnique(Engine* eng, RenderGraph& graph) :
                             pushConstants.mBoneIndex = anim.mBoneOffset;
                             pushConstants.mVertexStride = vertesStride;
 
-                            //exec->insertPushConsatnt(&pushConstants, sizeof(PushConstant));
-                            //exec->dispatch(std::ceil(vertexCount / 32.0f), 1, 1);
+                            exec->insertPushConsatnt(&pushConstants, sizeof(PushConstant));
+                            exec->dispatch(std::ceil(vertexCount / 32.0f), 1, 1);
                         }
                     }
 
@@ -71,7 +81,9 @@ SkinningTechnique::SkinningTechnique(Engine* eng, RenderGraph& graph) :
                             pushConstants.mVertexCount = vertexCount;
                             pushConstants.mVertexReadIndex = vertexReadOffset / vertesStride;
                             pushConstants.mVertexWriteIndex = vertexWriteOffset / vertesStride;
-                            pushConstants.mBoneIndex = scratchOffset / vertesStride;
+                            pushConstants.mBlendShapeReadIndex = scratchOffset / vertesStride;
+                            BELL_ASSERT(boneOffsets.find(anim.mName) != boneOffsets.end(), "Blendshape animation doesn't have associated skeletal animation")
+                            pushConstants.mBoneIndex = boneOffsets[anim.mName];
                             pushConstants.mVertexStride = vertesStride;
 
                             scratchOffset += newVerticies.size();
@@ -81,10 +93,11 @@ SkinningTechnique::SkinningTechnique(Engine* eng, RenderGraph& graph) :
 
                         if (!vertexPatch.empty())
                         {
+                            BELL_ASSERT(vertexPatch.size() < kScratchBufferSize, "Increase scratch buffer size")
                             exec->copyDataToBuffer(vertexPatch.data(), vertexPatch.size(), 0, mBlendShapeScratchBuffer);
 
                             const RenderTask& task = graph.getTask(taskIndex);
-                            exec->setComputeShader(static_cast<const ComputeTask&>(task), graph, mBlendShapeShader);
+                            exec->setComputeShader(static_cast<const ComputeTask&>(task), graph, mSkinningBlendShapesShader);
 
                             for (const auto& constants : constants)
                             {

@@ -287,7 +287,7 @@ set(SHADERS
 	Transparent.frag
 	ResolveCascadeVarianceShadowMap.comp
 	Skinning.comp
-	BlendShapes.comp
+	SkinnedBlendShapes.comp
 	RayMarching.hlsl
 	LightProbes.hlsl
 	DeferredProbeGI.frag

@@ -23,12 +23,13 @@ public:
         uint32_t mVertexReadIndex;
         uint32_t mVertexWriteIndex;
         uint32_t mBoneIndex;
+        uint32_t mBlendShapeReadIndex;
         uint32_t mVertexStride;
     };
 
 private:
     Shader mSkinningShader;
-    Shader mBlendShapeShader;
+    Shader mSkinningBlendShapesShader;
     Buffer mBlendShapeScratchBuffer;
     BufferView mBlendShapeScratchBufferView;
     TaskID mTask;
