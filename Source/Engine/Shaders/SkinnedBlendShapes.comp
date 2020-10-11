@@ -78,9 +78,9 @@ void main(uint3 globalIndex : SV_DispatchThreadID)
 	}
 
 	Vertex transformedVertex;
-	transformedVertex.position = vertToProcess.position;//mul(transform, vertToProcess.position);
+	transformedVertex.position = mul(transform, vertToProcess.position);
 	transformedVertex.uv = vertToProcess.uv;
-	transformedVertex.normal = vertToProcess.normal;//float4(mul((float3x3)transform, vertToProcess.normal.xyz), 1.0f);
+	transformedVertex.normal = float4(mul((float3x3)transform, vertToProcess.normal.xyz), 1.0f);
 	transformedVertex.colour = vertToProcess.colour;
 
 	writeVertexToBuffer(outVertex, (meshInfo.mVertexWriteIndex + vertexIndex) * meshInfo.mVertexStride, transformedVertex);
