@@ -3,6 +3,8 @@
 
 #include <cstdint>
 
+#include "Engine/Scene.h"
+
 class RayTracingScene;
 class Camera;
 
@@ -13,12 +15,14 @@ public:
 
     MeshPicker(RayTracingScene* rt) :
         mRayTracedScene(rt),
-        mSelectedMeshInstance(~0LL) {}
+        mSelectedMeshInstance(kInvalidInstanceID) {}
 
     ~MeshPicker() = default;
 
     void setScene(RayTracingScene* scene)
     {
+        if(scene == nullptr)
+            mSelectedMeshInstance = kInvalidInstanceID;
         mRayTracedScene = scene;
     }
 

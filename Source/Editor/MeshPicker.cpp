@@ -39,6 +39,6 @@ void MeshPicker::tick(const Camera& cam)
             mSelectedMeshInstance = instanceID;
         }
         else
-            mSelectedMeshInstance = ~0ULL;
+            mSelectedMeshInstance = kInvalidInstanceID;
     }
 }

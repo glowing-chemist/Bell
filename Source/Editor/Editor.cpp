@@ -362,7 +362,7 @@ Editor::Editor(GLFWwindow* window) :
     mLightOperationMode{ImGuizmo::OPERATION::TRANSLATE},
     mEditShadowingLight{false},
     mMeshPicker(nullptr),
-    mSelectedMesh{~0LL},
+    mSelectedMesh{kInvalidInstanceID},
     mInitialScene{""}
 {
     ImGui::CreateContext();
@@ -665,6 +665,8 @@ void Editor::drawMenuBar()
 				if(ImGui::MenuItem("Close current Scene"))
 				{
                     mResetSceneAtEndOfFrame = true;
+                    mMeshPicker.setScene(nullptr);
+                    mSelectedMesh = kInvalidInstanceID;
                 }
                 if(ImGui::MenuItem("Load mesh"))
                 {
@@ -1428,7 +1430,7 @@ void Editor::updateMeshInstancePicker()
 {
     // update the selected mesh flags.
     const InstanceID selectedMesh = mMeshPicker.getCurrentlySelectedMesh();
-    if(selectedMesh != ~0LL)
+    if(selectedMesh != kInvalidInstanceID)
     {
        MeshInstance* instance = mInProgressScene->getMeshInstance(selectedMesh);
        // Need to clear old mesh flags
@@ -1436,7 +1438,7 @@ void Editor::updateMeshInstancePicker()
        {
            instance->setInstanceFlags(instance->getInstanceFlags() | InstanceFlags::DrawWireFrame | InstanceFlags::DrawAABB | InstanceFlags::DrawGuizmo);
 
-           if(mSelectedMesh != ~0LL)
+           if(mSelectedMesh != kInvalidInstanceID)
            {
                MeshInstance* instance = mInProgressScene->getMeshInstance(mSelectedMesh);
                instance->setInstanceFlags(InstanceFlags::Draw);
@@ -1445,18 +1447,18 @@ void Editor::updateMeshInstancePicker()
            mSelectedMesh = selectedMesh;
        }
     }
-    else if (mSelectedMesh != ~0ULL)
+    else if (mSelectedMesh != kInvalidInstanceID)
     {
         MeshInstance* instance = mInProgressScene->getMeshInstance(mSelectedMesh);
         instance->setInstanceFlags(InstanceFlags::Draw);
-        mSelectedMesh = ~0ULL;
+        mSelectedMesh = kInvalidInstanceID;
     }
 }
 
 
 void Editor::drawselectedMeshGuizmo()
 {
-    if(mSelectedMesh != ~0LL)
+    if(mSelectedMesh != kInvalidInstanceID)
     {
         MeshInstance* instance = mInProgressScene->getMeshInstance(mSelectedMesh);
         const Camera& camera = mInProgressScene->getCamera();
