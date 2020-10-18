@@ -11,6 +11,7 @@
 #include "Engine/StaticMesh.h"
 #include "Engine/Animation.hpp"
 #include "Engine/CPUImage.hpp"
+#include "Engine/Instance.hpp"
 
 #include <algorithm>
 #include <atomic>
@@ -24,13 +25,20 @@ class Engine;
 
 
 using SceneID = uint64_t;
-using InstanceID = int64_t;
+using InstanceID = uint64_t;
 constexpr InstanceID kInvalidInstanceID = std::numeric_limits<InstanceID>::max();
 
 enum class MeshType
 {
 	Dynamic,
 	Static
+};
+
+enum class InstanceType
+{
+    StaticMesh,
+    DynamicMesh,
+    Light
 };
 
 enum class LightType : uint32_t
@@ -85,43 +93,30 @@ enum InstanceFlags
     DrawGuizmo = 1 << 3
 };
 
+class Scene;
 
-struct MeshInstance
+class MeshInstance : public Instance
 {
-    MeshInstance(StaticMesh* mesh,
+public:
+    MeshInstance(Scene* scene,
+                 SceneID mesh,
                  const float4x3& trans,
                  const uint32_t materialID,
                  const uint32_t materialFLags,
                  const std::string& name = "") :
+        Instance(trans, name),
+        mScene(scene),
         mMesh(mesh),
-        mParent(nullptr),
-        mTransformation(trans),
-        mPreviousTransformation(trans),
-        mName{name},
         mMaterialIndex{materialID},
         mMaterialFlags{materialFLags},
         mInstanceFlags{InstanceFlags::Draw} {}
 
-    StaticMesh* mMesh;
-
-    float4x4 getTransMatrix() const
-    {
-        if(mParent)
-        {
-            return mTransformation * mParent->getTransMatrix();
-        }
-        else
-            return mTransformation;
-    }
+    StaticMesh* getMesh();
+    const StaticMesh* getMesh() const;
 
     uint32_t getmaterialIndex() const
     {
         return mMaterialIndex;
-    }
-
-    const std::string& getName() const
-    {
-        return mName;
     }
 
     uint32_t getInstanceFlags() const
@@ -132,12 +127,6 @@ struct MeshInstance
     void setInstanceFlags(const uint32_t flags)
     {
         mInstanceFlags = flags;
-    }
-
-    void setTransMatrix(const float4x4& newTrans)
-    {
-        mPreviousTransformation = mTransformation;
-        mTransformation = newTrans;
     }
 
     uint32_t getMaterialFlags() const
@@ -156,27 +145,10 @@ struct MeshInstance
         return entry;
     }
 
-    void setParentInstance(const MeshInstance* parent)
-    {
-        mParent = parent;
-    }
-
 private:
 
-    float4x4 getPreviousTransMatrix() const
-    {
-        if(mParent)
-        {
-            return mPreviousTransformation * mParent->getPreviousTransMatrix();
-        }
-        else
-            return mPreviousTransformation;
-    }
-
-    const MeshInstance* mParent;
-    float4x4 mTransformation;
-    float4x4 mPreviousTransformation;
-    std::string mName;
+    Scene* mScene;
+    SceneID mMesh;
     uint32_t mMaterialIndex;
     uint32_t mMaterialFlags;
     uint32_t mInstanceFlags;
@@ -212,6 +184,7 @@ public:
                                   const uint32_t materialIndex,
                                   const uint32_t materialFlags,
                                   const std::string& name = "");
+    void          removeMeshInstance(const InstanceID);
 
     void          uploadData(Engine*);
     void          computeBounds(const MeshType);
@@ -230,7 +203,9 @@ public:
 
     Frustum getShadowingLightFrustum() const;
 
-    MeshInstance* getMeshInstance(const InstanceID);
+    MeshInstance*       getMeshInstance(const InstanceID);
+    StaticMesh*         getMesh(const SceneID);
+    const StaticMesh*   getMesh(const SceneID) const;
 	const std::unique_ptr<ImageView>& getSkybox() const
 	{
 		return mSkyboxView;
@@ -436,15 +411,15 @@ public:
     SkeletalAnimation& getSkeletalAnimation(const InstanceID id, const std::string& name)
     {
         MeshInstance* inst = getMeshInstance(id);
-        BELL_ASSERT(inst->mMesh->hasAnimations(), "Requesting animation from mesh without animations")
-        return inst->mMesh->getSkeletalAnimation(name);
+        BELL_ASSERT(inst->getMesh()->hasAnimations(), "Requesting animation from mesh without animations")
+        return inst->getMesh()->getSkeletalAnimation(name);
     }
 
     BlendMeshAnimation& getBlendMeshAnimation(const InstanceID id, const std::string& name)
     {
         MeshInstance* inst = getMeshInstance(id);
-        BELL_ASSERT(inst->mMesh->hasAnimations(), "Requesting animation from mesh without animations")
-            return inst->mMesh->getBlendMeshAnimation(name);
+        BELL_ASSERT(inst->getMesh()->hasAnimations(), "Requesting animation from mesh without animations")
+            return inst->getMesh()->getBlendMeshAnimation(name);
     }
 
 private:
@@ -482,7 +457,9 @@ private:
     std::vector<std::pair<StaticMesh, MeshType>> mSceneMeshes;
 
     std::vector<MeshInstance> mStaticMeshInstances;
+    std::vector<uint32_t>     mFreeStaticMeshIndicies;
     std::vector<MeshInstance> mDynamicMeshInstances;
+    std::vector<uint32_t>     mFreeDynamicMeshIndicies;
 
     OctTree<MeshInstance*> mStaticMeshBoundingVolume;
     OctTree<MeshInstance*> mDynamicMeshBoundingVolume;
@@ -500,6 +477,14 @@ private:
     Camera mShadowLightCamera;
     ShadowingLight mShadowingLight;
     ShadowCascades mCascadesInfo;
+
+    struct InstanceInfo
+    {
+        InstanceType mtype;
+        uint64_t mIndex;
+    };
+    uint64_t mNextInstanceID;
+    std::unordered_map<InstanceID, InstanceInfo> mInstanceMap;
 
 	std::unique_ptr<Image> mSkybox;
 	std::unique_ptr<ImageView> mSkyboxView;

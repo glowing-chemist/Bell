@@ -803,9 +803,9 @@ void Editor::drawAssistantWindow()
                     bool aabb = instanceFlags & InstanceFlags::DrawAABB;
                     ImGui::Checkbox("AABB", &aabb);
 
-                    if(instance->mMesh->hasAnimations())
+                    if(instance->getMesh()->hasAnimations())
                     {
-                        const auto animations = instance->mMesh->getAllSkeletalAnimations();
+                        const auto animations = instance->getMesh()->getAllSkeletalAnimations();
                         ImGui::TextUnformatted("Play animation");
                         uint32_t i = 0;
                         for(const auto& [name, _] : animations)

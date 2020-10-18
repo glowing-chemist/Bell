@@ -1,5 +1,5 @@
-#ifndef INSTANCE_HPP
-#define INSTANCE_HPP
+#ifndef RENDER_INSTANCE_HPP
+#define RENDER_INSTANCE_HPP
 
 #include "RenderDevice.hpp"
 

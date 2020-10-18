@@ -15,6 +15,17 @@
 #include <limits>
 
 
+StaticMesh* MeshInstance::getMesh()
+{
+    return mScene->getMesh(mMesh);
+}
+
+const StaticMesh* MeshInstance::getMesh() const
+{
+    return mScene->getMesh(mMesh);
+}
+
+
 Scene::Scene(const std::filesystem::path& path) :
     mPath{path},
     mSceneMeshes(),
@@ -537,28 +548,75 @@ InstanceID Scene::addMeshInstance(const SceneID meshID,
 {
     auto& [mesh, meshType] = mSceneMeshes[meshID];
 
-    InstanceID id = 0;
+    InstanceID id = mNextInstanceID++;
 
     if(meshType == MeshType::Static)
     {
-        id = static_cast<InstanceID>(mStaticMeshInstances.size() + 1);
+        if(!mFreeStaticMeshIndicies.empty())
+        {
+            const uint32_t freeIndex = mFreeStaticMeshIndicies.back();
+            mFreeStaticMeshIndicies.pop_back();
 
-        mStaticMeshInstances.push_back({&mesh, transformation, materialIndex, materialFlags, name});
+            mInstanceMap[id] = {InstanceType::StaticMesh, freeIndex};
+            mStaticMeshInstances[freeIndex] = MeshInstance{this, meshID, transformation, materialIndex, materialFlags, name};
+        }
+        else
+        {
+            mInstanceMap[id] = {InstanceType::StaticMesh, mStaticMeshInstances.size()};
+            mStaticMeshInstances.push_back({this, meshID, transformation, materialIndex, materialFlags, name});
+        }
 
         if(parentInstance != kInvalidInstanceID)
             mStaticMeshInstances.back().setParentInstance(getMeshInstance(parentInstance));
     }
     else
     {
-        id = -static_cast<InstanceID>(mDynamicMeshInstances.size());
+        if(!mFreeDynamicMeshIndicies.empty())
+        {
+            const uint32_t freeIndex = mFreeDynamicMeshIndicies.back();
+            mFreeDynamicMeshIndicies.pop_back();
 
-        mDynamicMeshInstances.push_back({&mesh, transformation, materialIndex, materialFlags, name});
+            mInstanceMap[id] = {InstanceType::DynamicMesh, freeIndex};
+            mDynamicMeshInstances[freeIndex] = MeshInstance{this, meshID, transformation, materialIndex, materialFlags, name};
+        }
+        else
+        {
+            mInstanceMap[id] = {InstanceType::DynamicMesh, mDynamicMeshInstances.size()};
+            mDynamicMeshInstances.push_back({this, meshID, transformation, materialIndex, materialFlags, name});
+        }
 
         if(parentInstance != kInvalidInstanceID)
             mDynamicMeshInstances.back().setParentInstance(getMeshInstance(parentInstance));
     }
 
     return id;
+}
+
+
+void Scene::removeMeshInstance(const InstanceID id)
+{
+    BELL_ASSERT(mInstanceMap.find(id) != mInstanceMap.end(), "Instance doesn't exist")
+
+    const InstanceInfo& entry = mInstanceMap[id];
+    switch(entry.mtype)
+    {
+        case InstanceType::DynamicMesh:
+        {
+            mFreeDynamicMeshIndicies.push_back(entry.mIndex);
+            mDynamicMeshInstances[entry.mIndex].setInstanceFlags(0);
+            break;
+        }
+
+        case InstanceType::StaticMesh:
+        {
+            mFreeStaticMeshIndicies.push_back(entry.mIndex);
+            mStaticMeshInstances[entry.mIndex].setInstanceFlags(0);
+            break;
+        }
+
+        default:
+            BELL_TRAP;
+    }
 }
 
 
@@ -588,7 +646,7 @@ void Scene::computeBounds(const MeshType type)
 
         std::transform(mStaticMeshInstances.begin(), mStaticMeshInstances.end(), std::back_inserter(staticBVHMeshes),
                        [](MeshInstance& instance)
-                        { return OctTreeFactory<MeshInstance*>::BuilderNode{instance.mMesh->getAABB() * instance.getTransMatrix(), &instance}; } );
+                        { return OctTreeFactory<MeshInstance*>::BuilderNode{instance.getMesh()->getAABB() * instance.getTransMatrix(), &instance}; } );
 
         OctTreeFactory<MeshInstance*> staticBVHFactory(mSceneAABB, staticBVHMeshes);
 
@@ -601,7 +659,7 @@ void Scene::computeBounds(const MeshType type)
 
         std::transform(mDynamicMeshInstances.begin(), mDynamicMeshInstances.end(), std::back_inserter(dynamicBVHMeshes),
                        [](MeshInstance& instance)
-                        { return OctTreeFactory<MeshInstance*>::BuilderNode{instance.mMesh->getAABB() * instance.getTransMatrix(), &instance}; } );
+                        { return OctTreeFactory<MeshInstance*>::BuilderNode{instance.getMesh()->getAABB() * instance.getTransMatrix(), &instance}; } );
 
 
          OctTreeFactory<MeshInstance*> dynamicBVHFactory(mSceneAABB, dynamicBVHMeshes);
@@ -633,18 +691,35 @@ Frustum Scene::getShadowingLightFrustum() const
 
 MeshInstance* Scene::getMeshInstance(const InstanceID id)
 {
-	if (id <= 0)
-	{
-		uint64_t meshIndex = -id;
+    BELL_ASSERT(mInstanceMap.find(id) != mInstanceMap.end(), "Invalid instanceID")
 
-		return &mDynamicMeshInstances[meshIndex];
-	}
-	else
-	{
-		uint64_t meshIndex = id - 1;
+    const InstanceInfo&  entry = mInstanceMap[id];
 
-		return &mStaticMeshInstances[meshIndex];
-	}
+    switch(entry.mtype)
+    {
+        case InstanceType::DynamicMesh:
+            return &mDynamicMeshInstances[entry.mIndex];
+
+        case InstanceType::StaticMesh:
+            return&mStaticMeshInstances[entry.mIndex];
+
+        default:
+            BELL_TRAP;
+    }
+
+    return nullptr;
+}
+
+
+StaticMesh* Scene::getMesh(const SceneID id)
+{
+    return &mSceneMeshes[id].first;
+}
+
+
+const StaticMesh* Scene::getMesh(const SceneID id) const
+{
+    return &mSceneMeshes[id].first;
 }
 
 
@@ -657,7 +732,7 @@ void Scene::generateSceneAABB(const bool includeStatic)
     {
         for(const auto& instance : mStaticMeshInstances)
         {
-            AABB meshAABB = instance.mMesh->getAABB() * instance.getTransMatrix();
+            AABB meshAABB = instance.getMesh()->getAABB() * instance.getTransMatrix();
             Cube instanceCube = meshAABB.getCube();
 
             sceneCube.mUpper1 = componentWiseMin(instanceCube.mUpper1, sceneCube.mUpper1);
@@ -668,7 +743,7 @@ void Scene::generateSceneAABB(const bool includeStatic)
 
     for(const auto& instance : mDynamicMeshInstances)
     {
-        AABB meshAABB = instance.mMesh->getAABB() * instance.getTransMatrix();
+        AABB meshAABB = instance.getMesh()->getAABB() * instance.getTransMatrix();
         Cube instanceCube = meshAABB.getCube();
 
         sceneCube.mUpper1 = componentWiseMin(instanceCube.mUpper1, sceneCube.mUpper1);
@@ -848,8 +923,8 @@ std::vector<Scene::Intersection> Scene::getIntersections() const
 
 	for (auto& mesh : mStaticMeshInstances)
 	{
-        const std::vector<MeshInstance*> staticMeshes = mStaticMeshBoundingVolume.getIntersections(mesh.mMesh->getAABB() * mesh.getTransMatrix());
-        const std::vector<MeshInstance*> dynamicMeshes = mDynamicMeshBoundingVolume.getIntersections(mesh.mMesh->getAABB() * mesh.getTransMatrix());
+        const std::vector<MeshInstance*> staticMeshes = mStaticMeshBoundingVolume.getIntersections(mesh.getMesh()->getAABB() * mesh.getTransMatrix());
+        const std::vector<MeshInstance*> dynamicMeshes = mDynamicMeshBoundingVolume.getIntersections(mesh.getMesh()->getAABB() * mesh.getTransMatrix());
 
 		for (auto& m : staticMeshes)
 		{
@@ -864,8 +939,8 @@ std::vector<Scene::Intersection> Scene::getIntersections() const
 
 	for (auto& mesh : mDynamicMeshInstances)
 	{
-        const std::vector<MeshInstance*> staticMeshes = mStaticMeshBoundingVolume.getIntersections(mesh.mMesh->getAABB() * mesh.getTransMatrix());
-        const std::vector<MeshInstance*> dynamicMeshes = mDynamicMeshBoundingVolume.getIntersections(mesh.mMesh->getAABB() * mesh.getTransMatrix());
+        const std::vector<MeshInstance*> staticMeshes = mStaticMeshBoundingVolume.getIntersections(mesh.getMesh()->getAABB() * mesh.getTransMatrix());
+        const std::vector<MeshInstance*> dynamicMeshes = mDynamicMeshBoundingVolume.getIntersections(mesh.getMesh()->getAABB() * mesh.getTransMatrix());
 
 		for (auto& m : staticMeshes)
 		{
@@ -886,8 +961,8 @@ std::vector<Scene::Intersection> Scene::getIntersections(const InstanceID id)
 {
 	const MeshInstance* instanceToTest = getMeshInstance(id);
 
-    const std::vector<MeshInstance*> staticMeshes = mStaticMeshBoundingVolume.getIntersections(instanceToTest->mMesh->getAABB() * instanceToTest->getTransMatrix());
-    const std::vector<MeshInstance*> dynamicMeshes = mDynamicMeshBoundingVolume.getIntersections(instanceToTest->mMesh->getAABB() * instanceToTest->getTransMatrix());
+    const std::vector<MeshInstance*> staticMeshes = mStaticMeshBoundingVolume.getIntersections(instanceToTest->getMesh()->getAABB() * instanceToTest->getTransMatrix());
+    const std::vector<MeshInstance*> dynamicMeshes = mDynamicMeshBoundingVolume.getIntersections(instanceToTest->getMesh()->getAABB() * instanceToTest->getTransMatrix());
 
 	std::vector<Intersection> intersections{};
 	intersections.reserve(staticMeshes.size() + dynamicMeshes.size());

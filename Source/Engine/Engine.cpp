@@ -463,12 +463,12 @@ void Engine::execute(RenderGraph& graph)
         for(const auto& inst : mCurrentScene->getStaticMeshInstances())
         {
             mMeshBoundsCache.insert({&inst, bounds.size()});
-            bounds.push_back(inst.mMesh->getAABB() * inst.getTransMatrix());
+            bounds.push_back(inst.getMesh()->getAABB() * inst.getTransMatrix());
         }
         for(const auto& inst : mCurrentScene->getDynamicMeshInstances())
         {
             mMeshBoundsCache.insert({&inst, bounds.size()});
-            bounds.push_back(inst.mMesh->getAABB() * inst.getTransMatrix());
+            bounds.push_back(inst.getMesh()->getAABB() * inst.getTransMatrix());
         }
 
         mMeshBoundsBuffer->setContents(bounds.data(), sizeof(AABB) * bounds.size());
@@ -564,10 +564,10 @@ void Engine::execute(RenderGraph& graph)
             }
             else
             {
-                const float3 centralLeft = (lhs->mMesh->getAABB() *  lhs->getTransMatrix()).getCentralPoint();
+                const float3 centralLeft = (lhs->getMesh()->getAABB() *  lhs->getTransMatrix()).getCentralPoint();
                 const float leftDistance = glm::length(centralLeft - camera.getPosition());
 
-                const float3 centralright = (rhs->mMesh->getAABB() * rhs->getTransMatrix()).getCentralPoint();
+                const float3 centralright = (rhs->getMesh()->getAABB() * rhs->getTransMatrix()).getCentralPoint();
                 const float rightDistance = glm::length(centralright - camera.getPosition());
 
                 return leftDistance < rightDistance;
@@ -720,10 +720,10 @@ void Engine::startAnimation(const InstanceID id, const std::string& name, const 
     BELL_ASSERT(mCurrentScene, "No scene set")
     const MeshInstance* inst = mCurrentScene->getMeshInstance(id);
 
-    if(inst->mMesh->isSkeletalAnimation(name))
+    if(inst->getMesh()->isSkeletalAnimation(name))
         mActiveSkeletalAnimations.push_back({name, id, speedModifer, 0, 0.0, loop});
 
-    if(inst->mMesh->isBlendMeshAnimation(name))
+    if(inst->getMesh()->isBlendMeshAnimation(name))
         mActiveBlendShapeAnimations.push_back({name, id, speedModifer, 0.0, loop});
 }
 
@@ -752,14 +752,14 @@ void Engine::tickAnimations()
     for(auto& animEntry : mActiveSkeletalAnimations)
     {
         MeshInstance* instance = mCurrentScene->getMeshInstance(animEntry.mMesh);
-        SkeletalAnimation& animation = instance->mMesh->getSkeletalAnimation(animEntry.mName);
+        SkeletalAnimation& animation = instance->getMesh()->getSkeletalAnimation(animEntry.mName);
         double ticksPerSec = animation.getTicksPerSec();
         animEntry.mTick += elapsedTime * ticksPerSec * animEntry.mSpeedModifier;
         animEntry.mBoneOffset = boneOffset;
 
         if((animation.getTotalTicks() - animEntry.mTick) > 0.00001)
         {
-            std::vector<float4x4> matracies  = animation.calculateBoneMatracies(*instance->mMesh, animEntry.mTick);
+            std::vector<float4x4> matracies  = animation.calculateBoneMatracies(*instance->getMesh(), animEntry.mTick);
             boneOffset += matracies.size();
             boneMatracies.insert(boneMatracies.end(), matracies.begin(), matracies.end());
         }
@@ -770,7 +770,7 @@ void Engine::tickAnimations()
     for(auto& animEntry : mActiveBlendShapeAnimations)
     {
         MeshInstance* instance = mCurrentScene->getMeshInstance(animEntry.mMesh);
-        BlendMeshAnimation& animation = instance->mMesh->getBlendMeshAnimation(animEntry.mName);
+        BlendMeshAnimation& animation = instance->getMesh()->getBlendMeshAnimation(animEntry.mName);
         double ticksPerSec = animation.getTicksPerSec();
         animEntry.mTick += elapsedTime * ticksPerSec * animEntry.mSpeedModifier;
 

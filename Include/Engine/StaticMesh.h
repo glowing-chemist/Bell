@@ -156,12 +156,12 @@ public:
         return mBoneWeights;
     }
 
-    bool isSkeletalAnimation(const std::string& name)
+    bool isSkeletalAnimation(const std::string& name) const
     {
         return mSkeletalAnimations.find(name) != mSkeletalAnimations.end();
     }
 
-    bool isBlendMeshAnimation(const std::string& name)
+    bool isBlendMeshAnimation(const std::string& name) const
     {
         return mBlendAnimations.find(name) != mBlendAnimations.end();
     }

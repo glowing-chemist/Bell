@@ -20,8 +20,8 @@ public:
 
     void push_back(const T& val)
     {
-	BELL_ASSERT(mSize < N, "Need to increase buffer size")
-	mArray[mSize++] = val;
+        BELL_ASSERT(mSize < N, "Need to increase buffer size")
+        mArray[mSize++] = val;
     }
 
     void clear()

@@ -447,7 +447,7 @@ private:
     bool mRecordTasksSync;
     struct ContextMapping
     {
-        StaticGrowableBuffer<uint32_t, 16> mTaskIndicies;
+        StaticGrowableBuffer<uint32_t, 32> mTaskIndicies;
     };
     std::vector<ContextMapping> mAsyncTaskContextMappings;
     std::vector<ContextMapping> mSyncTaskContextMappings;

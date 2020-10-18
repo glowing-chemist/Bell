@@ -60,14 +60,14 @@ GBufferTechnique::GBufferTechnique(Engine* eng, RenderGraph& graph) :
                         exec->setGraphicsShaders(static_cast<const GraphicsTask&>(task), graph, vertexShader, nullptr, nullptr, nullptr, fragmentShader);
                     }
 
-                    const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->mMesh);
+                    const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->getMesh());
 
                     const MeshEntry entry = mesh->getMeshShaderEntry();
 
                     exec->startCommandPredication(pred, i);
 
                     exec->insertPushConsatnt(&entry, sizeof(MeshEntry));
-                    exec->indexedDraw(vertexOffset / mesh->mMesh->getVertexStride(), indexOffset / sizeof(uint32_t), mesh->mMesh->getIndexData().size());
+                    exec->indexedDraw(vertexOffset / mesh->getMesh()->getVertexStride(), indexOffset / sizeof(uint32_t), mesh->getMesh()->getIndexData().size());
 
                     exec->endCommandPredication();
                 }
@@ -104,12 +104,12 @@ GBufferTechnique::GBufferTechnique(Engine* eng, RenderGraph& graph) :
                         exec->setGraphicsShaders(static_cast<const GraphicsTask&>(task), graph, vertexShader, nullptr, nullptr, nullptr, fragmentShader);
                     }
 
-                    const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->mMesh);
+                    const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->getMesh());
 
                     const MeshEntry entry = mesh->getMeshShaderEntry();
 
                     exec->insertPushConsatnt(&entry, sizeof(MeshEntry));
-                    exec->indexedDraw(vertexOffset / mesh->mMesh->getVertexStride(), indexOffset / sizeof(uint32_t), mesh->mMesh->getIndexData().size());
+                    exec->indexedDraw(vertexOffset / mesh->getMesh()->getVertexStride(), indexOffset / sizeof(uint32_t), mesh->getMesh()->getIndexData().size());
                 }
 
                 exec->setSubmitFlag();
@@ -178,14 +178,14 @@ GBufferPreDepthTechnique::GBufferPreDepthTechnique(Engine* eng, RenderGraph& gra
                         exec->setGraphicsShaders(static_cast<const GraphicsTask&>(task), graph, vertexShader, nullptr, nullptr, nullptr, fragmentShader);
                     }
 
-                    const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->mMesh);
+                    const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->getMesh());
 
                     const MeshEntry entry = mesh->getMeshShaderEntry();
 
                     exec->startCommandPredication(pred, i);
 
                     exec->insertPushConsatnt(&entry, sizeof(MeshEntry));
-                    exec->indexedDraw(vertexOffset / mesh->mMesh->getVertexStride(), indexOffset / sizeof(uint32_t), mesh->mMesh->getIndexData().size());
+                    exec->indexedDraw(vertexOffset / mesh->getMesh()->getVertexStride(), indexOffset / sizeof(uint32_t), mesh->getMesh()->getIndexData().size());
 
                     exec->endCommandPredication();
                 }
@@ -222,12 +222,12 @@ GBufferPreDepthTechnique::GBufferPreDepthTechnique(Engine* eng, RenderGraph& gra
                         exec->setGraphicsShaders(static_cast<const GraphicsTask&>(task), graph, vertexShader, nullptr, nullptr, nullptr, fragmentShader);
                     }
 
-                    const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->mMesh);
+                    const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->getMesh());
 
                     const MeshEntry entry = mesh->getMeshShaderEntry();
 
                     exec->insertPushConsatnt(&entry, sizeof(MeshEntry));
-                    exec->indexedDraw(vertexOffset / mesh->mMesh->getVertexStride(), indexOffset / sizeof(uint32_t), mesh->mMesh->getIndexData().size());
+                    exec->indexedDraw(vertexOffset / mesh->getMesh()->getVertexStride(), indexOffset / sizeof(uint32_t), mesh->getMesh()->getIndexData().size());
                 }
 
                 exec->setSubmitFlag();

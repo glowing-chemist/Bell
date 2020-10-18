@@ -49,14 +49,14 @@ GBufferMaterialTechnique::GBufferMaterialTechnique(Engine* eng, RenderGraph& gra
                     if (mesh->getMaterialFlags() & MaterialType::Transparent || !(mesh->getInstanceFlags() & InstanceFlags::Draw))
                         continue;
 
-                    const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->mMesh);
+                    const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->getMesh());
 
                     const MeshEntry entry = mesh->getMeshShaderEntry();
 
                     exec->startCommandPredication(pred, i);
 
                     exec->insertPushConsatnt(&entry, sizeof(MeshEntry));
-                    exec->indexedDraw(vertexOffset / mesh->mMesh->getVertexStride(), indexOffset / sizeof(uint32_t), mesh->mMesh->getIndexData().size());
+                    exec->indexedDraw(vertexOffset / mesh->getMesh()->getVertexStride(), indexOffset / sizeof(uint32_t), mesh->getMesh()->getIndexData().size());
 
                     exec->endCommandPredication();
                 }
@@ -79,12 +79,12 @@ GBufferMaterialTechnique::GBufferMaterialTechnique(Engine* eng, RenderGraph& gra
                     if (mesh->getMaterialFlags() & MaterialType::Transparent || !(mesh->getInstanceFlags() & InstanceFlags::Draw))
                         continue;
 
-                    const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->mMesh);
+                    const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->getMesh());
 
                     const MeshEntry entry = mesh->getMeshShaderEntry();
 
                     exec->insertPushConsatnt(&entry, sizeof(MeshEntry));
-                    exec->indexedDraw(vertexOffset / mesh->mMesh->getVertexStride(), indexOffset / sizeof(uint32_t), mesh->mMesh->getIndexData().size());
+                    exec->indexedDraw(vertexOffset / mesh->getMesh()->getVertexStride(), indexOffset / sizeof(uint32_t), mesh->getMesh()->getIndexData().size());
                 }
             }
         );
@@ -142,14 +142,14 @@ GBufferMaterialPreDepthTechnique::GBufferMaterialPreDepthTechnique(Engine* eng, 
                     if (mesh->getMaterialFlags() & MaterialType::Transparent || !(mesh->getInstanceFlags() & InstanceFlags::Draw))
                         continue;
 
-                    const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->mMesh);
+                    const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->getMesh());
 
                     const MeshEntry entry = mesh->getMeshShaderEntry();
 
                     exec->startCommandPredication(pred, i);
 
                     exec->insertPushConsatnt(&entry, sizeof(MeshEntry));
-                    exec->indexedDraw(vertexOffset / mesh->mMesh->getVertexStride(), indexOffset / sizeof(uint32_t), mesh->mMesh->getIndexData().size());
+                    exec->indexedDraw(vertexOffset / mesh->getMesh()->getVertexStride(), indexOffset / sizeof(uint32_t), mesh->getMesh()->getIndexData().size());
 
                     exec->endCommandPredication();
                 }
@@ -172,12 +172,12 @@ GBufferMaterialPreDepthTechnique::GBufferMaterialPreDepthTechnique(Engine* eng, 
                     if (mesh->getMaterialFlags() & MaterialType::Transparent || !(mesh->getInstanceFlags() & InstanceFlags::Draw))
                         continue;
 
-                    const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->mMesh);
+                    const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->getMesh());
 
                     const MeshEntry entry = mesh->getMeshShaderEntry();
 
                     exec->insertPushConsatnt(&entry, sizeof(MeshEntry));
-                    exec->indexedDraw(vertexOffset / mesh->mMesh->getVertexStride(), indexOffset / sizeof(uint32_t), mesh->mMesh->getIndexData().size());
+                    exec->indexedDraw(vertexOffset / mesh->getMesh()->getVertexStride(), indexOffset / sizeof(uint32_t), mesh->getMesh()->getIndexData().size());
                 }
             }
         );

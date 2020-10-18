@@ -130,12 +130,12 @@ void VoxalizeTechnique::render(RenderGraph& graph, Engine* eng)
                 if (mesh->getMaterialFlags() & MaterialType::Transparent)
                     continue;
 
-                const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->mMesh);
+                const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->getMesh());
 
                 const MeshEntry entry = mesh->getMeshShaderEntry();
 
                 exec->insertPushConsatnt(&entry, sizeof(MeshEntry));
-                exec->indexedDraw(vertexOffset / mesh->mMesh->getVertexStride(), indexOffset / sizeof(uint32_t), mesh->mMesh->getIndexData().size());
+                exec->indexedDraw(vertexOffset / mesh->getMesh()->getVertexStride(), indexOffset / sizeof(uint32_t), mesh->getMesh()->getIndexData().size());
             }
         }
     );

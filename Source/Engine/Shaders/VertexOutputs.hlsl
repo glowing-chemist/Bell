@@ -120,3 +120,47 @@ void recreateMeshMatracies(ObjectMatracies objectinfo, out float4x4 mat, out flo
 						float4(objectinfo.prevMeshMatrix[2], 0.0f),
 						float4(objectinfo.prevMeshMatrix[3], 1.0f));
 }
+
+uint packNormals(const float4 normal)
+{
+    int4 Packed = int4(round(clamp(normal, -1.0, 1.0) * 127.0)) & 0xff;
+    return uint(Packed.x | (Packed.y << 8) | (Packed.z << 16) | (Packed.w << 24));
+}
+
+float4 unpackNormals(const uint packedNormal)
+{
+    int SignedValue = int(packedNormal);
+    int4 Packed = int4(SignedValue << 24, SignedValue << 16, SignedValue << 8, SignedValue) >> 24;
+    return clamp(float4(Packed) / 127.0, -1.0, 1.0);
+}
+
+uint packColour(const float4 colour)
+{
+    return uint(colour.x * 255.0f) | (uint(colour.y * 255.0f) << 8) | (uint(colour.z * 255.0f) << 16) | (uint(colour.w * 255.0f) << 24);
+}
+
+float4 unpackColour(const uint colour)
+{
+    return float4((colour & 0xFF) / 255.0f, ((colour & 0xFF00) >> 8) / 255.0f, ((colour & 0xFF0000) >> 16) / 255.0f, ((colour & 0xFF000000) >> 24) / 255.0f);
+}
+
+Vertex readVertexFromBuffer(ByteAddressBuffer vertexBuffer, uint offset)
+{
+	Vertex vert;
+
+	vert.position = asfloat(vertexBuffer.Load4(offset));
+	vert.uv = asfloat(vertexBuffer.Load2(offset + 16));
+	uint vertToProcessPackedNormal = vertexBuffer.Load(offset + 24);
+	vert.normal = unpackNormals(vertToProcessPackedNormal);
+	vert.colour = unpackColour(vertexBuffer.Load(offset + 28));
+
+	return vert;
+}
+
+void writeVertexToBuffer(RWByteAddressBuffer vertexBuffer, uint offset, Vertex vert)
+{
+	vertexBuffer.Store4(offset, asuint(vert.position));
+	vertexBuffer.Store2(offset + 16, asuint(vert.uv));
+	vertexBuffer.Store(offset + 24, packNormals(vert.normal));
+	vertexBuffer.Store(offset + 28, packColour(vert.colour));
+}

@@ -94,10 +94,10 @@ void ShadowMappingTechnique::render(RenderGraph& graph, Engine* eng)
             std::vector<const MeshInstance*> meshes = eng->getScene()->getViewableMeshes(lightFrustum);
             std::sort(meshes.begin(), meshes.end(), [lightPosition = eng->getScene()->getShadowingLight().mPosition](const MeshInstance* lhs, const MeshInstance* rhs)
             {
-                const float3 centralLeft = lhs->mMesh->getAABB().getCentralPoint();
+                const float3 centralLeft = lhs->getMesh()->getAABB().getCentralPoint();
                 const float leftDistance = glm::length(centralLeft - float3(lightPosition));
 
-                const float3 centralright = rhs->mMesh->getAABB().getCentralPoint();
+                const float3 centralright = rhs->getMesh()->getAABB().getCentralPoint();
                 const float rightDistance = glm::length(centralright - float3(lightPosition));
 
                 return leftDistance < rightDistance;
@@ -115,12 +115,12 @@ void ShadowMappingTechnique::render(RenderGraph& graph, Engine* eng)
                 if ((mesh->getMaterialFlags() & MaterialType::Transparent) > 0 || !(mesh->getInstanceFlags() & InstanceFlags::Draw))
                     continue;
 
-                const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->mMesh);
+                const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->getMesh());
 
                 const MeshEntry entry = mesh->getMeshShaderEntry();
 
                 exec->insertPushConsatnt(&entry, sizeof(MeshEntry));
-                exec->indexedDraw(vertexOffset / mesh->mMesh->getVertexStride(), indexOffset / sizeof(uint32_t), mesh->mMesh->getIndexData().size());
+                exec->indexedDraw(vertexOffset / mesh->getMesh()->getVertexStride(), indexOffset / sizeof(uint32_t), mesh->getMesh()->getIndexData().size());
             }
         }
     );

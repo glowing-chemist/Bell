@@ -14,7 +14,7 @@ class RenderGraph;
 class Executor;
 class Engine;
 class RenderTask;
-struct MeshInstance;
+class MeshInstance;
 
 using CommandCallbackFunc = std::function<void(const RenderGraph& graph, const uint32_t taskIndex, Executor*, Engine*, const std::vector<const MeshInstance*>&)>;
 

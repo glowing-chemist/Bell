@@ -68,7 +68,7 @@ DebugAABBTechnique::DebugAABBTechnique(Engine* eng, RenderGraph& graph) :
                     {
                         if(mesh->getInstanceFlags() & InstanceFlags::DrawAABB)
                         {
-                            const AABB& meshAABB = mesh->mMesh->getAABB();
+                            const AABB& meshAABB = mesh->getMesh()->getAABB();
                             const float4x4 meshTransformation = mesh->getTransMatrix();
 
                             AABB transformedAABB = meshAABB * meshTransformation;
@@ -86,9 +86,9 @@ DebugAABBTechnique::DebugAABBTechnique(Engine* eng, RenderGraph& graph) :
                         MeshInstance* inst = eng->getScene()->getMeshInstance(entry.mMesh);
                         if(inst->getInstanceFlags() & InstanceFlags::DrawAABB)
                         {
-                            const std::vector<StaticMesh::Bone>& skeleton = inst->mMesh->getSkeleton();
-                            SkeletalAnimation& activeAnim = inst->mMesh->getSkeletalAnimation(entry.mName);
-                            std::vector<float4x4> boneTransforms = activeAnim.calculateBoneMatracies(*inst->mMesh, entry.mTick);
+                            const std::vector<StaticMesh::Bone>& skeleton = inst->getMesh()->getSkeleton();
+                            SkeletalAnimation& activeAnim = inst->getMesh()->getSkeletalAnimation(entry.mName);
+                            std::vector<float4x4> boneTransforms = activeAnim.calculateBoneMatracies(*inst->getMesh(), entry.mTick);
                             BELL_ASSERT(boneTransforms.size() == skeleton.size(), "Bone size mismatch")
 
                             for(uint32_t i = 0; i < skeleton.size(); ++i)
@@ -130,10 +130,10 @@ DebugAABBTechnique::DebugAABBTechnique(Engine* eng, RenderGraph& graph) :
             if(mesh->getInstanceFlags() & InstanceFlags::DrawWireFrame && mesh->getInstanceFlags() & InstanceFlags::Draw)
             {
                 const float4x4& transform = mesh->getTransMatrix();
-                const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->mMesh);
+                const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->getMesh());
 
                 exec->insertPushConsatnt(&transform, sizeof(float4x4));
-                exec->indexedDraw(vertexOffset / mesh->mMesh->getVertexStride(), indexOffset / sizeof(uint32_t), mesh->mMesh->getIndexData().size());
+                exec->indexedDraw(vertexOffset / mesh->getMesh()->getVertexStride(), indexOffset / sizeof(uint32_t), mesh->getMesh()->getIndexData().size());
             }
         }
     });

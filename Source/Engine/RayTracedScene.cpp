@@ -21,10 +21,10 @@ RayTracingScene::RayTracingScene(Engine* eng, const Scene* scene) :
     for(const auto& instance : scene->getStaticMeshInstances())
     {
         ++instanceID;
-        const uint32_t vertexStride = instance.mMesh->getVertexStride();
+        const uint32_t vertexStride = instance.getMesh()->getVertexStride();
 
         // add Index data.
-        const auto& indexBuffer = instance.mMesh->getIndexData();
+        const auto& indexBuffer = instance.getMesh()->getIndexData();
         std::transform(indexBuffer.begin(), indexBuffer.end(), std::back_inserter(mIndexBuffer), [vertexOffset](const uint32_t index)
         {
             return vertexOffset + index;
@@ -37,7 +37,7 @@ RayTracingScene::RayTracingScene(Engine* eng, const Scene* scene) :
         }
 
         // Transform and add vertex data.
-        const auto& vertexData = instance.mMesh->getVertexData();
+        const auto& vertexData = instance.getMesh()->getVertexData();
         for(uint32_t i = 0; i < vertexData.size(); i += vertexStride)
         {
             const unsigned char* vert = &vertexData[i];
@@ -60,7 +60,7 @@ RayTracingScene::RayTracingScene(Engine* eng, const Scene* scene) :
             mVertexColours.push_back(colour);
         }
 
-        vertexOffset += instance.mMesh->getVertexCount();
+        vertexOffset += instance.getMesh()->getVertexCount();
     }
 
     mMeshes = std::make_unique<nanort::TriangleMesh<float>>(reinterpret_cast<float*>(mPositions.data()), mIndexBuffer.data(), sizeof(float3));

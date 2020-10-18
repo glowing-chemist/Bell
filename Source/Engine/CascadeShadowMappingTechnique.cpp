@@ -266,10 +266,10 @@ void CascadeShadowMappingTechnique::render(RenderGraph& graph, Engine* eng)
 
     std::sort(meshes.begin(), meshes.end(), [lightPosition = eng->getScene()->getShadowingLight().mPosition](const MeshInstance* lhs, const MeshInstance* rhs)
     {
-        const float3 centralLeft = lhs->getTransMatrix() * lhs->mMesh->getAABB().getCentralPoint();
+        const float3 centralLeft = lhs->getTransMatrix() * lhs->getMesh()->getAABB().getCentralPoint();
         const float leftDistance = glm::length(centralLeft - float3(lightPosition));
 
-        const float3 centralright = rhs->getTransMatrix() * rhs->mMesh->getAABB().getCentralPoint();
+        const float3 centralright = rhs->getTransMatrix() * rhs->getMesh()->getAABB().getCentralPoint();
         const float rightDistance = glm::length(centralright - float3(lightPosition));
 
         return leftDistance < rightDistance;
@@ -278,7 +278,7 @@ void CascadeShadowMappingTechnique::render(RenderGraph& graph, Engine* eng)
     std::vector<const MeshInstance*> nearCascadeMeshes;
     std::copy_if(meshes.begin(), meshes.end(), std::back_inserter(nearCascadeMeshes), [cascades, cameraPosition = eng->getScene()->getCamera().getPosition()](const MeshInstance* inst)
     {
-         const float3 central = (inst->mMesh->getAABB() * inst->getTransMatrix()).getCentralPoint();
+         const float3 central = (inst->getMesh()->getAABB() * inst->getTransMatrix()).getCentralPoint();
          const float distance = glm::length(central - cameraPosition);
 
          return distance <= cascades.mNearEnd;
@@ -287,7 +287,7 @@ void CascadeShadowMappingTechnique::render(RenderGraph& graph, Engine* eng)
     std::vector<const MeshInstance*> midCascadeMeshes;
     std::copy_if(meshes.begin(), meshes.end(), std::back_inserter(midCascadeMeshes), [cascades, cameraPosition = eng->getScene()->getCamera().getPosition()](const MeshInstance* inst)
     {
-         const float3 central = (inst->mMesh->getAABB() * inst->getTransMatrix()).getCentralPoint();
+         const float3 central = (inst->getMesh()->getAABB() * inst->getTransMatrix()).getCentralPoint();
          const float distance = glm::length(central - cameraPosition);
 
          return distance <= cascades.mMidEnd && distance >= cascades.mNearEnd;
@@ -296,7 +296,7 @@ void CascadeShadowMappingTechnique::render(RenderGraph& graph, Engine* eng)
     std::vector<const MeshInstance*> farCascadeMeshes;
     std::copy_if(meshes.begin(), meshes.end(), std::back_inserter(farCascadeMeshes), [cascades, cameraPosition = eng->getScene()->getCamera().getPosition()](const MeshInstance* inst)
     {
-         const float3 central = (inst->mMesh->getAABB() * inst->getTransMatrix()).getCentralPoint();
+         const float3 central = (inst->getMesh()->getAABB() * inst->getTransMatrix()).getCentralPoint();
          const float distance = glm::length(central - cameraPosition);
 
          return distance >= cascades.mMidEnd;
@@ -320,12 +320,12 @@ void CascadeShadowMappingTechnique::render(RenderGraph& graph, Engine* eng)
                         if ((mesh->getMaterialFlags() & MaterialType::Transparent) > 0 || !(mesh->getInstanceFlags() & InstanceFlags::Draw))
                             continue;
 
-                        const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->mMesh);
+                        const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->getMesh());
 
                         const MeshEntry entry = mesh->getMeshShaderEntry();
 
                         exec->insertPushConsatnt(&entry, sizeof(MeshEntry));
-                        exec->indexedDraw(vertexOffset / mesh->mMesh->getVertexStride(), indexOffset / sizeof(uint32_t), mesh->mMesh->getIndexData().size());
+                        exec->indexedDraw(vertexOffset / mesh->getMesh()->getVertexStride(), indexOffset / sizeof(uint32_t), mesh->getMesh()->getIndexData().size());
                     }
                 }
     );
@@ -348,12 +348,12 @@ void CascadeShadowMappingTechnique::render(RenderGraph& graph, Engine* eng)
                         if ((mesh->getMaterialFlags() & MaterialType::Transparent) > 0 || !(mesh->getInstanceFlags() & InstanceFlags::Draw))
                             continue;
 
-                        const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->mMesh);
+                        const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->getMesh());
 
                         const MeshEntry entry = mesh->getMeshShaderEntry();
 
                         exec->insertPushConsatnt(&entry, sizeof(MeshEntry));
-                        exec->indexedDraw(vertexOffset / mesh->mMesh->getVertexStride(), indexOffset / sizeof(uint32_t), mesh->mMesh->getIndexData().size());
+                        exec->indexedDraw(vertexOffset / mesh->getMesh()->getVertexStride(), indexOffset / sizeof(uint32_t), mesh->getMesh()->getIndexData().size());
                     }
                 }
     );
@@ -376,12 +376,12 @@ void CascadeShadowMappingTechnique::render(RenderGraph& graph, Engine* eng)
                         if ((mesh->getMaterialFlags() & MaterialType::Transparent) > 0 || !(mesh->getInstanceFlags() & InstanceFlags::Draw))
                             continue;
 
-                        const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->mMesh);
+                        const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->getMesh());
 
                         const MeshEntry entry = mesh->getMeshShaderEntry();
 
                         exec->insertPushConsatnt(&entry, sizeof(MeshEntry));
-                        exec->indexedDraw(vertexOffset / mesh->mMesh->getVertexStride(), indexOffset / sizeof(uint32_t), mesh->mMesh->getIndexData().size());
+                        exec->indexedDraw(vertexOffset / mesh->getMesh()->getVertexStride(), indexOffset / sizeof(uint32_t), mesh->getMesh()->getIndexData().size());
                     }
                 }
     );

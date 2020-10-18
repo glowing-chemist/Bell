@@ -38,16 +38,16 @@ SkinningTechnique::SkinningTechnique(Engine* eng, RenderGraph& graph) :
                             MeshInstance* inst = eng->getScene()->getMeshInstance(anim.mMesh);
 
                             // Will handle in combined shader.
-                            if (inst->mMesh->isBlendMeshAnimation(anim.mName))
+                            if (inst->getMesh()->isBlendMeshAnimation(anim.mName))
                             {
                                 boneOffsets.insert({anim.mName, anim.mBoneOffset});
                                 continue;
                             }
-                            auto [vertexReadOffset, boneIndexOffset] = eng->addMeshToAnimationBuffer(inst->mMesh);
-                            auto [vertexWriteOffset, indexOffset] = eng->addMeshToBuffer(inst->mMesh);
+                            auto [vertexReadOffset, boneIndexOffset] = eng->addMeshToAnimationBuffer(inst->getMesh());
+                            auto [vertexWriteOffset, indexOffset] = eng->addMeshToBuffer(inst->getMesh());
 
-                            const uint32_t vertexCount = inst->mMesh->getVertexCount();
-                            const uint32_t vertesStride = inst->mMesh->getVertexStride();
+                            const uint32_t vertexCount = inst->getMesh()->getVertexCount();
+                            const uint32_t vertesStride = inst->getMesh()->getVertexStride();
                             PushConstant pushConstants{};
                             pushConstants.mVertexCount = vertexCount;
                             pushConstants.mVertexReadIndex = vertexReadOffset / vertesStride;
@@ -68,15 +68,15 @@ SkinningTechnique::SkinningTechnique(Engine* eng, RenderGraph& graph) :
                         for (const auto& anim : anims)
                         {
                             MeshInstance* inst = eng->getScene()->getMeshInstance(anim.mMesh);
-                            const BlendMeshAnimation& animation = inst->mMesh->getBlendMeshAnimation(anim.mName);
-                            const std::vector<unsigned char> newVerticies = animation.getBlendedVerticies(*inst->mMesh, anim.mTick);
+                            const BlendMeshAnimation& animation = inst->getMesh()->getBlendMeshAnimation(anim.mName);
+                            const std::vector<unsigned char> newVerticies = animation.getBlendedVerticies(*inst->getMesh(), anim.mTick);
                             vertexPatch.insert(vertexPatch.end(), newVerticies.begin(), newVerticies.end());
 
-                            auto [vertexReadOffset, boneIndexOffset] = eng->addMeshToAnimationBuffer(inst->mMesh);
-                            auto [vertexWriteOffset, indexOffset] = eng->addMeshToBuffer(inst->mMesh);
+                            auto [vertexReadOffset, boneIndexOffset] = eng->addMeshToAnimationBuffer(inst->getMesh());
+                            auto [vertexWriteOffset, indexOffset] = eng->addMeshToBuffer(inst->getMesh());
 
-                            const uint32_t vertexCount = inst->mMesh->getVertexCount();
-                            const uint32_t vertesStride = inst->mMesh->getVertexStride();
+                            const uint32_t vertexCount = inst->getMesh()->getVertexCount();
+                            const uint32_t vertesStride = inst->getMesh()->getVertexStride();
                             PushConstant pushConstants{};
                             pushConstants.mVertexCount = vertexCount;
                             pushConstants.mVertexReadIndex = vertexReadOffset / vertesStride;
