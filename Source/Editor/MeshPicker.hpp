@@ -33,6 +33,11 @@ public:
         return mSelectedMeshInstance;
     }
 
+    void clearSelected()
+    {
+        mSelectedMeshInstance = kInvalidInstanceID;
+    }
+
 private:
 
     RayTracingScene* mRayTracedScene;

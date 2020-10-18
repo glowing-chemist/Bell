@@ -20,7 +20,6 @@ RayTracingScene::RayTracingScene(Engine* eng, const Scene* scene) :
     InstanceID instanceID = 0;
     for(const auto& instance : scene->getStaticMeshInstances())
     {
-        ++instanceID;
         const uint32_t vertexStride = instance.getMesh()->getVertexStride();
 
         // add Index data.
@@ -61,6 +60,7 @@ RayTracingScene::RayTracingScene(Engine* eng, const Scene* scene) :
         }
 
         vertexOffset += instance.getMesh()->getVertexCount();
+        ++instanceID;
     }
 
     mMeshes = std::make_unique<nanort::TriangleMesh<float>>(reinterpret_cast<float*>(mPositions.data()), mIndexBuffer.data(), sizeof(float3));
@@ -281,7 +281,7 @@ bool RayTracingScene::traceRayNonAlphaTested(const nanort::Ray<float> &ray, Inte
 }
 
 
-bool RayTracingScene::intersectsMesh(const nanort::Ray<float>& ray, int64_t* instanceID)
+bool RayTracingScene::intersectsMesh(const nanort::Ray<float>& ray, uint64_t *instanceID)
 {
     BELL_ASSERT(instanceID, "Need to supply valid pointer for mesh selection test")
     InterpolatedVertex vertex;

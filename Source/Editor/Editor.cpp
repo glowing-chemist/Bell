@@ -611,6 +611,9 @@ void Editor::pumpInputQueue()
         else if(glfwGetKey(mWindow, GLFW_KEY_Y) == GLFW_PRESS)
             mLightOperationMode = ImGuizmo::OPERATION::SCALE;
 
+        if(glfwGetKey(mWindow, GLFW_KEY_DELETE) == GLFW_PRESS)
+            deleteSelectedMesh();
+
         bool pressedEscape = glfwGetKey(mWindow, GLFW_KEY_ESCAPE) == GLFW_PRESS;
         if (pressedEscape)
         {
@@ -1469,5 +1472,17 @@ void Editor::drawselectedMeshGuizmo()
         drawGuizmo(trans, view, proj, mLightOperationMode);
 
         instance->setTransMatrix(trans);
+    }
+}
+
+
+void Editor::deleteSelectedMesh()
+{
+    if(mSelectedMesh != kInvalidInstanceID)
+    {
+        mInProgressScene->removeMeshInstance(mSelectedMesh);
+        mSceneInstanceIDs.erase(std::remove(mSceneInstanceIDs.begin(), mSceneInstanceIDs.end(), mSelectedMesh), mSceneInstanceIDs.end());
+        mSelectedMesh = kInvalidInstanceID;
+        mMeshPicker.clearSelected();
     }
 }

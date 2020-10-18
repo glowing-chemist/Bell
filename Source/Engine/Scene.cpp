@@ -617,6 +617,8 @@ void Scene::removeMeshInstance(const InstanceID id)
         default:
             BELL_TRAP;
     }
+
+    mInstanceMap.erase(id);
 }
 
 

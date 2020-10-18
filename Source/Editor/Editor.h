@@ -75,6 +75,8 @@ private:
     void updateMeshInstancePicker();
     void drawselectedMeshGuizmo();
 
+    void deleteSelectedMesh();
+
     GLFWwindow* mWindow;
 
     struct CursorPosition
