@@ -22,6 +22,11 @@ public:
         mParent = parent;
     }
 
+    const Instance* getParent() const
+    {
+        return mParent;
+    }
+
     float4x4 getTransMatrix() const
     {
         if(mParent)

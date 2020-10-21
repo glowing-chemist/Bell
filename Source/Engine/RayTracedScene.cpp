@@ -32,7 +32,7 @@ RayTracingScene::RayTracingScene(Engine* eng, const Scene* scene) :
         // add material mappings
         for(uint32_t i = 0; i < indexBuffer.size() / 3; ++i)
         {
-            mPrimitiveMaterialID.push_back({instanceID, instance.getmaterialIndex(), instance.getMaterialFlags()});
+            mPrimitiveMaterialID.push_back({instanceID, instance.getMaterialIndex(), instance.getMaterialFlags()});
         }
 
         // Transform and add vertex data.

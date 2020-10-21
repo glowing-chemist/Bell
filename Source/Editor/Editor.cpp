@@ -342,7 +342,7 @@ Editor::Editor(GLFWwindow* window) :
     mShowNodeEditor{false},
     mNodeEditor{"render graph editor", createPassNode},
     mRegisteredNodes{0},
-	mSetupNeeded(true),
+    mImGuiSetupNeeded(true),
     mEngine{mWindow},
     mSceneInstanceIDs{},
     mInProgressScene{new Scene("Default")},
@@ -457,7 +457,7 @@ void Editor::renderScene()
 void Editor::renderOverlay()
 {
 	// Dummy calls so that ImGui builds it's font texture
-	if(mSetupNeeded)
+    if(mImGuiSetupNeeded)
 	{
 		ImGuiIO& io = ImGui::GetIO();
 		unsigned char* pixels;
@@ -470,6 +470,7 @@ void Editor::renderOverlay()
     drawMenuBar();
     drawAssistantWindow();
     drawselectedMeshGuizmo();
+    drawMeshSelctorWindow();
 
     // We are on Pass/shader graph mode
     if(mMode == EditorMode::NodeEditor)
@@ -793,45 +794,9 @@ void Editor::drawAssistantWindow()
            for(InstanceID ID : mSceneInstanceIDs)
            {
                 MeshInstance* instance = mInProgressScene->getMeshInstance(ID);
-                uint32_t instanceFlags = instance->getInstanceFlags();
-
                 if(ImGui::TreeNode(instance->getName().c_str()))
                 {
-                    bool draw = instanceFlags & InstanceFlags::Draw;
-                    ImGui::Checkbox("Draw", &draw);
-
-                    bool wireFrame = instanceFlags & InstanceFlags::DrawWireFrame;
-                    ImGui::Checkbox("WireFrame", &wireFrame);
-
-                    bool aabb = instanceFlags & InstanceFlags::DrawAABB;
-                    ImGui::Checkbox("AABB", &aabb);
-
-                    if(instance->getMesh()->hasAnimations())
-                    {
-                        const auto animations = instance->getMesh()->getAllSkeletalAnimations();
-                        ImGui::TextUnformatted("Play animation");
-                        uint32_t i = 0;
-                        for(const auto& [name, _] : animations)
-                        {
-                            BELL_ASSERT(name.size() < 114, "Increase size of buffer")
-                            char nameBuffer[128];
-                            sprintf(nameBuffer, name.empty() ? "Animation %d\n" : name.c_str(), i);
-                            if(ImGui::Button(nameBuffer))
-                            {
-                                mEngine.startAnimation(ID, name, false, mAnimationSpeed);
-                            }
-                            ++i;
-                        }
-                    }
-
-                    uint32_t newInstanceFlags = 0;
-                    newInstanceFlags |= draw ? InstanceFlags::Draw : 0;
-                    newInstanceFlags |= wireFrame ? InstanceFlags::DrawWireFrame : 0;
-                    newInstanceFlags |= aabb ? InstanceFlags::DrawAABB : 0;
-                    newInstanceFlags |= (instanceFlags & InstanceFlags::DrawGuizmo);
-
-                    instance->setInstanceFlags(newInstanceFlags);
-
+                    mSelectedMesh = ID;
                     ImGui::TreePop();
                 }
            }
@@ -864,9 +829,23 @@ void Editor::drawAssistantWindow()
            const bool previouseFlyMode = mCameraInfo.mInFreeFlyMode;
            ImGui::Checkbox("Camera free fly", &mCameraInfo.mInFreeFlyMode);
            ImGui::SliderFloat("Camera speed", &mCameraInfo.mCameraSpeed, 0.01f, 10.0f);
-           ImGui::SliderFloat("near plane", &mCameraInfo.mNearPlaneDistance, 0.01f, 10.0f);
+           ImGui::SliderFloat("near plane", &mCameraInfo.mNearPlaneDistance, 0.01f, 100.0f);
            ImGui::SliderFloat("far plane", &mCameraInfo.mFarPlaneDistance, 50.0f, 2000.0f);
            ImGui::SliderFloat("field of view", &mCameraInfo.mFOV, 45.0f, 180.0f);
+
+           const char* cameraModes[] = {"Infintie perspective (broken in editor)", "Perspective", "Orthographic"};
+           if(ImGui::BeginCombo("Camera Mode", cameraModes[static_cast<uint32_t>(camera.getMode())]))
+           {
+               for(uint32_t i = 0; i < 3; ++i)
+               {
+                   if(ImGui::Selectable(cameraModes[i]))
+                   {
+                       camera.setMode(static_cast<CameraMode>(i));
+                   }
+               }
+
+               ImGui::EndCombo();
+           }
 
            if(mCameraInfo.mInFreeFlyMode && !previouseFlyMode)
                glfwSetInputMode(mWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
@@ -1071,6 +1050,88 @@ void Editor::drawAssistantWindow()
     else
     {
         mEngine.disableDebugTexture();
+    }
+}
+
+
+void Editor::drawMeshSelctorWindow()
+{
+    if(mSelectedMesh != kInvalidInstanceID && mMode == EditorMode::SceneView)
+    {
+        MeshInstance* instance = mInProgressScene->getMeshInstance(mSelectedMesh);
+        uint32_t instanceFlags = instance->getInstanceFlags();
+
+        if(ImGui::Begin("Instance Assistant"))
+        {
+            ImGui::Text("Name: %s", instance->getName().c_str());
+
+            bool draw = instanceFlags & InstanceFlags::Draw;
+            ImGui::Checkbox("Draw", &draw);
+
+            bool wireFrame = instanceFlags & InstanceFlags::DrawWireFrame;
+            ImGui::Checkbox("WireFrame", &wireFrame);
+
+            bool aabb = instanceFlags & InstanceFlags::DrawAABB;
+            ImGui::Checkbox("AABB", &aabb);
+
+            const Instance* parent = instance->getParent();
+            if(parent)
+            {
+                ImGui::TextUnformatted("Parent:");
+                ImGui::TextUnformatted(parent->getName().c_str());
+            }
+
+            const std::vector<Scene::Material>& materials = mInProgressScene->getMaterialsBase();
+            const uint32_t current_index = instance->getMaterialIndex();
+            const Scene::Material& currentMaterial = *std::find_if(materials.begin(), materials.end(), [current_index](const Scene::Material& mat)
+            {
+                return current_index == mat.mMaterialOffset;
+            });
+
+            if (ImGui::BeginCombo("Material", currentMaterial.mName.c_str()))
+            {
+                for (uint32_t n = 0; n < materials.size(); n++)
+                {
+                    bool is_selected = current_index == materials[n].mMaterialOffset;
+                    if (ImGui::Selectable(materials[n].mName.c_str(), is_selected))
+                    {
+                        instance->setMaterialIndex(materials[n].mMaterialOffset);
+                        instance->setMaterialFlags(materials[n].mMaterialTypes);
+                    }
+                    if (is_selected)
+                        ImGui::SetItemDefaultFocus();
+                }
+                ImGui::EndCombo();
+            }
+
+            if(instance->getMesh()->hasAnimations())
+            {
+                const auto animations = instance->getMesh()->getAllSkeletalAnimations();
+                ImGui::TextUnformatted("Play animation");
+                uint32_t i = 0;
+                for(const auto& [name, _] : animations)
+                {
+                    BELL_ASSERT(name.size() < 114, "Increase size of buffer")
+                    char nameBuffer[128];
+                    sprintf(nameBuffer, name.empty() ? "Animation %d\n" : name.c_str(), i);
+                    if(ImGui::Button(nameBuffer))
+                    {
+                        mEngine.startAnimation(mSelectedMesh, name, false, mAnimationSpeed);
+                    }
+                    ++i;
+                }
+            }
+
+            uint32_t newInstanceFlags = 0;
+            newInstanceFlags |= draw ? InstanceFlags::Draw : 0;
+            newInstanceFlags |= wireFrame ? InstanceFlags::DrawWireFrame : 0;
+            newInstanceFlags |= aabb ? InstanceFlags::DrawAABB : 0;
+            newInstanceFlags |= (instanceFlags & InstanceFlags::DrawGuizmo);
+
+            instance->setInstanceFlags(newInstanceFlags);
+
+            ImGui::End();
+        }
     }
 }
 
@@ -1390,7 +1451,7 @@ void Editor::loadScene(const std::string& scene)
                                         "./Assets/skybox/pz.png",
                                         "./Assets/skybox/nz.png" };
     mInProgressScene->loadSkybox(skybox, &mEngine);
-    mInProgressScene->getCamera().setCameraMode(CameraMode::Perspective); // HACK to get guizmos working.
+    mInProgressScene->getCamera().setMode(CameraMode::Perspective); // HACK to get guizmos working.
 
     mEngine.setScene(mInProgressScene);
     mRayTracingScene = new RayTracingScene(&mEngine, mInProgressScene);

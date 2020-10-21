@@ -114,9 +114,14 @@ public:
     StaticMesh* getMesh();
     const StaticMesh* getMesh() const;
 
-    uint32_t getmaterialIndex() const
+    uint32_t getMaterialIndex() const
     {
         return mMaterialIndex;
+    }
+
+    void setMaterialIndex(const uint32_t i)
+    {
+        mMaterialIndex = i;
     }
 
     uint32_t getInstanceFlags() const
@@ -132,6 +137,11 @@ public:
     uint32_t getMaterialFlags() const
     {
         return mMaterialFlags;
+    }
+
+    void setMaterialFlags(const uint32_t flags)
+    {
+        mMaterialFlags = flags;
     }
 
     MeshEntry getMeshShaderEntry() const
@@ -260,6 +270,7 @@ public:
 
 	struct Material
 	{
+        std::string mName;
         Image* mAlbedoorDiffuse;
         Image* mNormals;
         Image* mRoughnessOrGloss;
@@ -286,8 +297,14 @@ public:
         }
 	};
 
+    const std::vector<Material>& getMaterialsBase() const
+    {
+        return mMaterials;
+    }
+
     struct MaterialPaths
     {
+        std::string mName;
         std::string mAlbedoorDiffusePath;
         std::string mNormalsPath;
         std::string mRoughnessOrGlossPath;

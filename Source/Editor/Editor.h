@@ -29,6 +29,42 @@ enum EditorMode
 	NodeEditor = 1
 };
 
+struct CursorPosition
+{
+    double x;
+    double y;
+};
+
+struct StaticMeshEntry
+{
+    SceneID mID;
+    std::string mName;
+};
+
+class Editor;
+
+class EditorTab
+{
+public:
+    EditorTab(const std::string& name);
+    virtual ~EditorTab() = default;
+
+    // Return true to recompile renderGraph.
+    virtual bool renderTab(Scene* currentScene,
+                           RayTracingScene* rayTracedScene,
+                           RenderGraph& gaph,
+                           Editor* editor) = 0;
+
+    const std::string& getName() const
+    {
+        return mName;
+    }
+
+private:
+
+    std::string mName;
+};
+
 class Editor
 {
 public:
@@ -41,6 +77,23 @@ public:
     void text_callback(GLFWwindow* window, unsigned int codePoint);
 
     void loadSceneOnStartup(const std::string& path);
+
+    void addTab(EditorTab* tab)
+    {
+        mTabExtensions.push_back(tab);
+    }
+
+    EditorTab* getTab(const std::string& name)
+    {
+        auto tab = std::find_if(mTabExtensions.begin(), mTabExtensions.end(), [name](const auto* t)
+        {
+           return t->getName() == name;
+        });
+
+        BELL_ASSERT(tab != mTabExtensions.end(), "Unable to fin dtab by that name")
+
+        return *tab;
+    }
 
 private:
 
@@ -58,6 +111,7 @@ private:
 
     void drawMenuBar();
     void drawAssistantWindow();
+    void drawMeshSelctorWindow();
     void drawDebugTexturePicker(const std::vector<const char*>& textures);
     void drawLightMenu();
     void drawGuizmo(EditorLight&, const float4x4& view, const float4x4& proj, const ImGuizmo::OPERATION mode);
@@ -79,11 +133,6 @@ private:
 
     GLFWwindow* mWindow;
 
-    struct CursorPosition
-    {
-        double x;
-        double y;
-    };
     CursorPosition mCurrentCursorPos;
     CursorPosition mCursorPosDelta;
     std::atomic<double> mMouseScrollAmount;
@@ -112,7 +161,7 @@ private:
     ImGuiNodeEditor mNodeEditor;
     uint64_t mRegisteredNodes;
 
-	bool mSetupNeeded;
+    bool mImGuiSetupNeeded;
 
     Engine mEngine;
 
@@ -120,11 +169,7 @@ private:
 
     Scene* mInProgressScene;
     RayTracingScene* mRayTracingScene;
-    struct StaticMeshEntry
-    {
-        SceneID mID;
-        std::string mName;
-    };
+
     std::vector<StaticMeshEntry> mStaticMeshEntries;
     bool mShowMeshFileBrowser;
 
@@ -157,6 +202,8 @@ private:
     InstanceID mSelectedMesh;
 
     std::string mInitialScene;
+
+    std::vector<EditorTab*> mTabExtensions;
 };
 
 #endif

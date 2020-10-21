@@ -274,7 +274,7 @@ Scene::MaterialMappings Scene::loadMaterialsInternal(Engine* eng)
         materialMappings.insert({aiString(token), materialIndex});
 	}
 
-    MaterialPaths mat{"", "", "", "", "", "", 0, 0};
+    MaterialPaths mat{"", "", "", "", "", "", "", 0, 0};
     std::string albedoOrDiffuseFile;
     std::string normalsFile;
     std::string roughnessOrGlossFile;
@@ -298,6 +298,7 @@ Scene::MaterialMappings Scene::loadMaterialsInternal(Engine* eng)
             mat.mMaterialTypes = 0;
 
 			materialFile >> materialIndex;
+            mat.mName = std::to_string(materialIndex);
 
             std::string materialAttributes;
             while (materialFile >> materialAttributes)
@@ -392,7 +393,10 @@ void Scene::loadMaterialsExternal(Engine* eng, const aiScene* scene)
     for(uint32_t i = 0; i < scene->mNumMaterials; ++i)
     {
         const aiMaterial* material = scene->mMaterials[i];
-        MaterialPaths newMaterial{"", "", "", "", "", "", 0, 0};
+
+        aiString materialName;
+        material->Get(AI_MATKEY_NAME, materialName);
+        MaterialPaths newMaterial{materialName.C_Str(), "", "", "", "", "", "", 0, 0};
 
         if(material->GetTextureCount(aiTextureType_BASE_COLOR) > 0)
         {
@@ -915,6 +919,7 @@ void Scene::addMaterial(const MaterialPaths& mat, Engine* eng)
         mCPUMaterials.emplace_back(std::move(occlusionInfo.mData), (*occlusionTexture)->getExtent(0, 0), Format::R8UNorm);
     }
 
+    newMaterial.mName = mat.mName;
     addMaterial(newMaterial);
 }
 

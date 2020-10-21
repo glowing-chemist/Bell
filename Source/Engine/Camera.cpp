@@ -127,7 +127,7 @@ float4x4 Camera::getViewMatrix() const
 
 float4x4 Camera::getProjectionMatrix() const
 {
-    if(mMode == CameraMode::ReversePerspective)
+    if(mMode == CameraMode::InfinitePerspective)
     {
         float fov = 1.0f / tan(glm::radians(mFieldOfView) / 2.0f);
         return glm::mat4(
@@ -143,10 +143,12 @@ float4x4 Camera::getProjectionMatrix() const
     else if(mMode == CameraMode::Orthographic)
     {
         return glm::ortho(-mFrameBufferSize.x / 2.0f, mFrameBufferSize.x / 2.0f,
-                          -mFrameBufferSize.y / 2.0f, mFrameBufferSize.y / 2.0f, mNearPlaneDistance, mFarPlaneDistance);
+                          -mFrameBufferSize.y / 2.0f, mFrameBufferSize.y / 2.0f, mFarPlaneDistance, mNearPlaneDistance);
     }
 
     BELL_TRAP;
+
+    return float4x4();
 }
 
 

@@ -31,7 +31,7 @@ private:
 
 enum class CameraMode
 {
-    ReversePerspective,
+    InfinitePerspective = 0,
     Perspective,
     Orthographic
 };
@@ -47,7 +47,7 @@ public:
         float nearPlaneDistance = 0.1f,
         float farPlaneDistance = 10.0f,
         float fieldOfView = 90.0f,
-        const CameraMode mode = CameraMode::ReversePerspective)
+        const CameraMode mode = CameraMode::InfinitePerspective)
         :   mMode(mode),
             mFrameBufferSize{1920.0f, 1080.0f},
             mPosition{ position },
@@ -70,9 +70,14 @@ public:
     void rotateYaw(const float);
     void rotateWorldUp(const float);
 
-    void setCameraMode(const CameraMode mode)
+    void setMode(const CameraMode mode)
     {
         mMode = mode;
+    }
+
+    CameraMode getMode() const
+    {
+        return mMode;
     }
 
     void setFrameBufferSizeOrthographic(const float2 size)

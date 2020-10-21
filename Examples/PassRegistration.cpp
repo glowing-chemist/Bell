@@ -204,7 +204,7 @@ int main()
     const float3 ligthUp = float3(0.0f, 0.0f, 1.0f);
     Camera ShadowCamera(float3(0.0f, 1500.0f, 0.0f), lightDirection, float(windowWidth) / float(windowHeight), 50.0f, 1600.0f);
     ShadowCamera.setUp(ligthUp);
-    ShadowCamera.setCameraMode(CameraMode::Orthographic);
+    ShadowCamera.setMode(CameraMode::Orthographic);
     ShadowCamera.setFrameBufferSizeOrthographic({2000.0f, 500.0f});
     testScene.setShadowingLight(ShadowCamera);
     

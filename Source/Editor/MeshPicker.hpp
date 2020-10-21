@@ -13,6 +13,10 @@ class MeshPicker
 {
 public:
 
+    MeshPicker()  :
+        mRayTracedScene(nullptr),
+        mSelectedMeshInstance(kInvalidInstanceID) {}
+
     MeshPicker(RayTracingScene* rt) :
         mRayTracedScene(rt),
         mSelectedMeshInstance(kInvalidInstanceID) {}
