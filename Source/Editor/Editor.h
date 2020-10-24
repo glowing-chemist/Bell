@@ -176,7 +176,6 @@ private:
     bool mShowMaterialDialog;
     char mMeshInstanceScratchBuffer[32];
     ImGuiMaterialDialog mMaterialDialog;
-    std::vector<std::string> mMaterialNames;
     uint32_t mCurrentMaterialIndex;
     SceneID mMeshToInstance;
     bool mShowAddInstanceDialog;

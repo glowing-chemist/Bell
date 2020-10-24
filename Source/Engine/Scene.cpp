@@ -99,8 +99,6 @@ std::vector<InstanceID> Scene::loadFromFile(const int vertAttributes, Engine* en
 
     const aiNode* rootNode = scene->mRootNode;
 
-	// Bit of a hack to avoid use after free when resizing the mesh vector
-	// so just reserve enough sie here.
 	mSceneMeshes.reserve(scene->mNumMeshes);
 
 
@@ -534,10 +532,37 @@ void Scene::loadMaterialsExternal(Engine* eng, const aiScene* scene)
 SceneID Scene::addMesh(const StaticMesh& mesh, MeshType meshType)
 {
     SceneID id = mSceneMeshes.size();
-
     mSceneMeshes.push_back({mesh, meshType});
 
     return id;
+}
+
+
+std::vector<SceneID> Scene::loadFile(const std::string &path, MeshType meshType, Engine* eng)
+{
+    Assimp::Importer importer;
+
+    const aiScene* scene = importer.ReadFile(path.c_str(),
+                                             aiProcess_Triangulate |
+                                             aiProcess_JoinIdenticalVertices |
+                                             aiProcess_GenNormals |
+                                             aiProcess_FlipUVs);
+
+    std::vector<SceneID> ids{};
+    ids.reserve(scene->mNumMeshes);
+    for(uint32_t i = 0; i < scene->mNumMeshes; ++i)
+    {
+        const aiMesh* aimesh = scene->mMeshes[i];
+        StaticMesh mesh(scene, aimesh, VertexAttributes::Position4 | VertexAttributes::Normals | VertexAttributes::TextureCoordinates | VertexAttributes::Albedo);
+
+        ids.push_back(mSceneMeshes.size());
+        mSceneMeshes.push_back({mesh, meshType});
+    }
+
+    mPath = fs::path(path);
+    loadMaterialsExternal(eng, scene);
+
+    return ids;
 }
 
 

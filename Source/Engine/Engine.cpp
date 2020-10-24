@@ -86,7 +86,7 @@ Engine::Engine(GLFWwindow* windowPtr) :
 	mCurrentRegistredPasses{0},
     mShaderPrefix{},
     mVertexBuffer{getDevice(), BufferUsage::Vertex | BufferUsage::TransferDest | BufferUsage::DataBuffer, 10000000, 10000000, "Vertex Buffer"},
-    mIndexBuffer{getDevice(), BufferUsage::Index | BufferUsage::TransferDest | BufferUsage::DataBuffer, 10000000, 10000000, "Index Buffer"},
+    mIndexBuffer{getDevice(), BufferUsage::Index | BufferUsage::TransferDest | BufferUsage::DataBuffer, 100000000, 100000000, "Index Buffer"},
     mTposeVertexBuffer(getDevice(), BufferUsage::DataBuffer | BufferUsage::TransferDest, 10000000, 10000000, "TPose Vertex Buffer"),
     mBonesWeightsBuffer(getDevice(), BufferUsage::DataBuffer | BufferUsage::TransferDest, sizeof(uint2) * 30000, sizeof(uint2) * 30000, "Bone weights"),
     mBoneWeightsIndexBuffer(getDevice(), BufferUsage::DataBuffer | BufferUsage::TransferDest, sizeof(uint2) * 30000, sizeof(uint2) * 30000, "Bone weight indicies"),
@@ -173,9 +173,13 @@ void Engine::setScene(Scene* scene)
     {
         // Set up the SRS for the materials.
         auto& materials = mCurrentScene->getMaterials();
+        const uint32_t offset = materials.size();
         materials.push_back(mDefaultDiffuseView);
         mMaterials->addSampledImageArray(materials);
         mMaterials->finalise();
+
+        std::vector<Scene::Material>& materialDescs = mCurrentScene->getMaterialDescriptions();
+        materialDescs.push_back(Scene::Material{"Default material", nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, offset, static_cast<uint32_t>(MaterialType::Diffuse)});
     }
     else // We're clearing the scene so need to destroy the materials.
     {
@@ -471,7 +475,8 @@ void Engine::execute(RenderGraph& graph)
             bounds.push_back(inst.getMesh()->getAABB() * inst.getTransMatrix());
         }
 
-        mMeshBoundsBuffer->setContents(bounds.data(), sizeof(AABB) * bounds.size());
+        if(!bounds.empty())
+            mMeshBoundsBuffer->setContents(bounds.data(), sizeof(AABB) * bounds.size());
     }
 
     auto& animationVerticies = mAnimationVertexBuilder.finishRecording();
@@ -730,15 +735,21 @@ void Engine::startAnimation(const InstanceID id, const std::string& name, const 
 
 void Engine::terimateAnimation(const InstanceID id, const std::string& name)
 {
-    mActiveSkeletalAnimations.erase(std::remove_if(mActiveSkeletalAnimations.begin(), mActiveSkeletalAnimations.end(), [id, name](const SkeletalAnimationEntry& entry)
+    if(!mActiveSkeletalAnimations.empty())
     {
-        return entry.mName == name && entry.mMesh == id;
-    }));
+        mActiveSkeletalAnimations.erase(std::remove_if(mActiveSkeletalAnimations.begin(), mActiveSkeletalAnimations.end(), [id, name](const SkeletalAnimationEntry& entry)
+        {
+            return entry.mName == name && entry.mMesh == id;
+        }));
+    }
 
-    mActiveBlendShapeAnimations.erase(std::remove_if(mActiveBlendShapeAnimations.begin(), mActiveBlendShapeAnimations.end(), [id, name](const BlendShapeAnimationEntry& entry)
+    if(!mActiveBlendShapeAnimations.empty())
     {
-        return entry.mName == name && entry.mMesh == id;
-    }));
+        mActiveBlendShapeAnimations.erase(std::remove_if(mActiveBlendShapeAnimations.begin(), mActiveBlendShapeAnimations.end(), [id, name](const BlendShapeAnimationEntry& entry)
+        {
+            return entry.mName == name && entry.mMesh == id;
+        }));
+    }
 }
 
 

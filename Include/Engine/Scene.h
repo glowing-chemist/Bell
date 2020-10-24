@@ -187,7 +187,8 @@ public:
     std::vector<InstanceID> loadFromFile(const int vertAttributes, Engine*);
 	void loadSkybox(const std::array<std::string, 6>& path, Engine*);
 
-    SceneID       addMesh(const StaticMesh&, MeshType);
+    SceneID       addMesh(const StaticMesh& mesh, MeshType);
+    std::vector<SceneID> loadFile(const std::string& path, MeshType, Engine *eng);
     InstanceID    addMeshInstance(const SceneID,
                                   const InstanceID parentInstance,
                                   const float4x4&,
@@ -297,11 +298,6 @@ public:
         }
 	};
 
-    const std::vector<Material>& getMaterialsBase() const
-    {
-        return mMaterials;
-    }
-
     struct MaterialPaths
     {
         std::string mName;
@@ -316,6 +312,11 @@ public:
     };
 
     const std::vector<Material>& getMaterialDescriptions() const
+    {
+        return mMaterials;
+    }
+
+    std::vector<Material>& getMaterialDescriptions()
     {
         return mMaterials;
     }

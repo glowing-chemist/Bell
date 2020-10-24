@@ -351,7 +351,6 @@ Editor::Editor(GLFWwindow* window) :
     mShowMeshFileBrowser{false},
     mShowMaterialDialog{false},
     mMaterialDialog{},
-    mMaterialNames{},
     mCurrentMaterialIndex{0},
     mMeshToInstance{0},
     mShowAddInstanceDialog{false},
@@ -392,6 +391,9 @@ Editor::Editor(GLFWwindow* window) :
 
     Camera& camera = mInProgressScene->getCamera();
     camera.setAspect(float(width) / float(height));
+    camera.setMode(CameraMode::Perspective);
+
+    mEngine.setScene(mInProgressScene);
 }
 
 
@@ -495,12 +497,10 @@ void Editor::renderOverlay()
         {
             mShowMeshFileBrowser = false;
 
-            StaticMesh mesh(optionalPath->string(), VertexAttributes::Position4 | VertexAttributes::Normals | VertexAttributes::TextureCoordinates | VertexAttributes::Albedo);
-            SceneID id = mInProgressScene->addMesh(std::move(mesh), MeshType::Dynamic);
+            std::vector<SceneID> ids = mInProgressScene->loadFile(optionalPath->string(), MeshType::Dynamic, &mEngine);
 
-            mStaticMeshEntries.push_back({id, optionalPath->filename().string()});
-
-            mInProgressScene->uploadData(&mEngine);
+            for(SceneID id : ids)
+                mStaticMeshEntries.push_back({id, optionalPath->filename().string()});
         }
     }
 
@@ -780,10 +780,12 @@ void Editor::drawAssistantWindow()
            {
                ImGui::TextUnformatted(entry.mName.c_str());
                ImGui::SameLine();
+               ImGui::PushID(entry.mName.c_str());
                if(ImGui::Button("Add instance"))
                {
                     mShowAddInstanceDialog = true;
                }
+               ImGui::PopID();
            }
 
            ImGui::TreePop();
@@ -806,9 +808,10 @@ void Editor::drawAssistantWindow()
 
        if(ImGui::TreeNode("Materials"))
        {
-           for(const auto& materialName : mMaterialNames)
+           const std::vector<Scene::Material>& materials = mInProgressScene->getMaterialDescriptions();
+           for(const auto& materialName : materials)
            {
-               ImGui::TextUnformatted(materialName.c_str());
+               ImGui::TextUnformatted(materialName.mName.c_str());
            }
 
            ImGui::TreePop();
@@ -1081,7 +1084,7 @@ void Editor::drawMeshSelctorWindow()
                 ImGui::TextUnformatted(parent->getName().c_str());
             }
 
-            const std::vector<Scene::Material>& materials = mInProgressScene->getMaterialsBase();
+            const std::vector<Scene::Material>& materials = mInProgressScene->getMaterialDescriptions();
             const uint32_t current_index = instance->getMaterialIndex();
             const Scene::Material& currentMaterial = *std::find_if(materials.begin(), materials.end(), [current_index](const Scene::Material& mat)
             {
@@ -1374,7 +1377,6 @@ void Editor::addMaterial()
 
     mInProgressScene->addMaterial(newMaterial, &mEngine);
 
-    mMaterialNames.push_back(mMaterialDialog.getMaterialName());
     mMaterialDialog.reset();
 }
 
@@ -1383,11 +1385,13 @@ void Editor::drawAddInstanceDialog()
 {
     if(ImGui::Begin("Add Instance"))
     {
-        if(ImGui::BeginCombo("Material", mMaterialNames[mCurrentMaterialIndex].c_str()))
+        const std::vector<Scene::Material>& materials = mInProgressScene->getMaterialDescriptions();
+
+        if(ImGui::BeginCombo("Material", materials[mCurrentMaterialIndex].mName.c_str()))
         {
-            for(uint32_t i = 0; i < mMaterialNames.size(); ++i)
+            for(uint32_t i = 0; i < materials.size(); ++i)
             {
-                if(ImGui::Selectable(mMaterialNames[i].c_str()), mCurrentMaterialIndex == i)
+                if(ImGui::Selectable(materials[i].mName.c_str(), mCurrentMaterialIndex == i))
                     mCurrentMaterialIndex = i;
             }
 

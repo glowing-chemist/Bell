@@ -66,8 +66,6 @@ void VulkanBuffer::setContents(vk::CommandBuffer cmd,
                                 const uint32_t size,
                                 const uint32_t offset)
 {
-    VulkanRenderDevice* device = static_cast<VulkanRenderDevice*>(getDevice());
-
     BELL_ASSERT(offset + size <= mSize, "Attempting to upload more data than buffer can hold")
 
         if (isMappable())
@@ -105,6 +103,7 @@ void VulkanBuffer::setContents(vk::CommandBuffer cmd,
                     copyInfo.setDstOffset(offset);
 
                     cmd.copyBuffer(stagingBuffer.getBuffer(), getBuffer(), copyInfo);
+                    stagingBuffer.updateLastAccessed();
                 }
        }
     updateLastAccessed();
