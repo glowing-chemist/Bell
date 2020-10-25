@@ -5,6 +5,7 @@
 #include "Core/Executor.hpp"
 
 const char kShadowMapRaw[] = "ShadowMapRaw";
+const char kShadowMapDepth[] = "ShadowMapDepth";
 const char kShadowMapBlurIntermediate[] = "ShadowMapBlurIntermediate";
 const char kShadowMapBlured[] = "ShadowMapBlured";
 extern const char kShadowMapUpsamped[] = "ShaowMapupsampled";
@@ -14,10 +15,10 @@ extern const char kShadowMapHistory[] = "ShadowMapHistory";
 
 ShadowMappingTechnique::ShadowMappingTechnique(Engine* eng, RenderGraph& graph) :
     Technique("ShadowMapping", eng->getDevice()),
-    mDesc(Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
-                getDevice()->getSwapChain()->getSwapChainImageHeight()},
-          Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
-          getDevice()->getSwapChain()->getSwapChainImageHeight()},
+    mDesc(Rect{static_cast<uint32_t>(eng->getScene()->getShadowLightCamera().getOrthographicFrameBufferSize().x),
+          static_cast<uint32_t>(eng->getScene()->getShadowLightCamera().getOrthographicFrameBufferSize().y)},
+          Rect{static_cast<uint32_t>(eng->getScene()->getShadowLightCamera().getOrthographicFrameBufferSize().x),
+          static_cast<uint32_t>(eng->getScene()->getShadowLightCamera().getOrthographicFrameBufferSize().y)},
         true, BlendMode::None, BlendMode::None, true, DepthTest::LessEqual, FillMode::Fill, Primitive::TriangleList),
     mShadowMapVertexShader(eng->getShader("./Shaders/ShadowMap.vert")),
     mShadowMapFragmentShader(eng->getShader("./Shaders/VarianceShadowMap.frag")),
@@ -25,13 +26,26 @@ ShadowMappingTechnique::ShadowMappingTechnique(Engine* eng, RenderGraph& graph) 
     mBlurYShader( eng->getShader("Shaders/blurYrg32f.comp") ),
     mResolveShader(eng->getShader("./Shaders/ResolveVarianceShadowMap.comp")),
 
-    mShadowMap(getDevice(), Format::R8UNorm, ImageUsage::Storage | ImageUsage::Sampled, getDevice()->getSwapChain()->getSwapChainImageWidth(), getDevice()->getSwapChain()->getSwapChainImageHeight(),
+    mShadowMapDepth(getDevice(), Format::D32Float, ImageUsage::DepthStencil, eng->getScene()->getShadowLightCamera().getOrthographicFrameBufferSize().x,
+                                                                                        eng->getScene()->getShadowLightCamera().getOrthographicFrameBufferSize().y,
+               1, 1, 1, 1, "ShadowMapDepth"),
+    mShadowMapDepthView(mShadowMapDepth, ImageViewType::Depth),
+
+    mShadowMapRaw(getDevice(), Format::RG32Float, ImageUsage::ColourAttachment | ImageUsage::Sampled, eng->getScene()->getShadowLightCamera().getOrthographicFrameBufferSize().x,
+                                                                                        eng->getScene()->getShadowLightCamera().getOrthographicFrameBufferSize().y,
+               1, 1, 1, 1, "ShadowMapRaw"),
+    mShadowMapRawView(mShadowMapRaw, ImageViewType::Colour),
+
+    mShadowMap(getDevice(), Format::R8UNorm, ImageUsage::Storage | ImageUsage::Sampled, eng->getScene()->getShadowLightCamera().getOrthographicFrameBufferSize().x,
+                                                                                        eng->getScene()->getShadowLightCamera().getOrthographicFrameBufferSize().y,
                1, 1, 1, 1, "ShadowMap"),
     mShadowMapView(mShadowMap, ImageViewType::Colour),
-    mShadowMapIntermediate(getDevice(), Format::RG32Float, ImageUsage::Storage | ImageUsage::Sampled, getDevice()->getSwapChain()->getSwapChainImageWidth(), getDevice()->getSwapChain()->getSwapChainImageHeight(),
+    mShadowMapIntermediate(getDevice(), Format::RG32Float, ImageUsage::Storage | ImageUsage::Sampled, eng->getScene()->getShadowLightCamera().getOrthographicFrameBufferSize().x,
+                                                                                                      eng->getScene()->getShadowLightCamera().getOrthographicFrameBufferSize().y,
                1, 1, 1, 1, "ShadowMapIntermediate"),
     mShadowMapIntermediateView(mShadowMapIntermediate, ImageViewType::Colour),
-    mShadowMapBlured(getDevice(), Format::RG32Float, ImageUsage::Storage | ImageUsage::Sampled, getDevice()->getSwapChain()->getSwapChainImageWidth(), getDevice()->getSwapChain()->getSwapChainImageHeight(),
+    mShadowMapBlured(getDevice(), Format::RG32Float, ImageUsage::Storage | ImageUsage::Sampled, eng->getScene()->getShadowLightCamera().getOrthographicFrameBufferSize().x,
+                                                                                                    eng->getScene()->getShadowLightCamera().getOrthographicFrameBufferSize().y,
                1, 1, 1, 1, "ShadowMapBlured"),
     mShadowMapBluredView(mShadowMapBlured, ImageViewType::Colour)
 {
@@ -46,8 +60,8 @@ ShadowMappingTechnique::ShadowMappingTechnique(Engine* eng, RenderGraph& graph) 
     shadowTask.addInput(kSceneVertexBuffer, AttachmentType::VertexBuffer);
     shadowTask.addInput(kSceneIndexBuffer, AttachmentType::IndexBuffer);
 
-    shadowTask.addOutput(kShadowMapRaw, AttachmentType::RenderTarget2D, Format::RG32Float, SizeClass::DoubleSwapchain, LoadOp::Clear_Float_Max);
-    shadowTask.addOutput("ShadowMapDepth", AttachmentType::Depth, Format::D32Float, SizeClass::DoubleSwapchain, LoadOp::Clear_White, StoreOp::Discard);
+    shadowTask.addOutput(kShadowMapRaw, AttachmentType::RenderTarget2D, Format::RG32Float, SizeClass::Custom, LoadOp::Clear_Float_Max);
+    shadowTask.addOutput(kShadowMapDepth, AttachmentType::Depth, Format::D32Float, SizeClass::Custom, LoadOp::Clear_White, StoreOp::Discard);
     mShadowTask = graph.addTask(shadowTask);
 
     ComputeTask blurXTask{ "ShadowMapBlurX" };

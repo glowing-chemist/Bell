@@ -205,7 +205,8 @@ int main()
     Camera ShadowCamera(float3(0.0f, 1500.0f, 0.0f), lightDirection, float(windowWidth) / float(windowHeight), 50.0f, 1600.0f);
     ShadowCamera.setUp(ligthUp);
     ShadowCamera.setMode(CameraMode::Orthographic);
-    ShadowCamera.setFrameBufferSizeOrthographic({2000.0f, 500.0f});
+    //ShadowCamera.setFrameBufferSizeOrthographic({2000.0f, 500.0f});
+    ShadowCamera.setFrameBufferSizeOrthographic({3440.0f, 1440.0f});
     testScene.setShadowingLight(ShadowCamera);
     
     {

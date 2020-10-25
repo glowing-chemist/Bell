@@ -6,6 +6,7 @@
 #include "Engine/DefaultResourceSlots.hpp"
 
 extern const char kShadowMapRaw[];
+extern const char kShadowMapDepth[];
 extern const char kShadowMapBlurIntermediate[];
 extern const char kShadowMapBlured[];
 extern const char kShadowMapUpsamped[];
@@ -28,6 +29,8 @@ public:
     {
         if(!graph.isResourceSlotBound(kShadowMap))
         {
+            graph.bindImage(kShadowMapRaw, mShadowMapRawView);
+            graph.bindImage(kShadowMapDepth, mShadowMapDepthView);
             graph.bindImage(kShadowMap, mShadowMapView);
             graph.bindImage(kShadowMapBlurIntermediate, mShadowMapIntermediateView);
             graph.bindImage(kShadowMapBlured, mShadowMapBluredView);
@@ -50,6 +53,12 @@ private:
 
     Shader                     mResolveShader;
     TaskID                     mResolveTaskID;
+
+    Image    mShadowMapDepth;
+    ImageView mShadowMapDepthView;
+
+    Image    mShadowMapRaw;
+    ImageView mShadowMapRawView;
 
     Image    mShadowMap;
     ImageView mShadowMapView;

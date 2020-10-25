@@ -83,6 +83,11 @@ public:
     void setFrameBufferSizeOrthographic(const float2 size)
         { mFrameBufferSize = size; }
 
+    const float2& getOrthographicFrameBufferSize() const
+    {
+        return mFrameBufferSize;
+    }
+
     const float3& getPosition() const
         { return mPosition; }
 
