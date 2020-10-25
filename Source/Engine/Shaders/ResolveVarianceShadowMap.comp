@@ -38,10 +38,7 @@ void main(uint3 globalIndex : SV_DispatchThreadID)
     float4 fragPositionNDC = mul(light.viewProj, worldSpaceFragmentPos);
     fragPositionNDC /= fragPositionNDC.w;
 
-    float2 shadowMapSize;
-    shadowMapRaw.GetDimensions(shadowMapSize.x, shadowMapSize.y);
-
-    const float2 lightSpaceUV = ((fragPositionNDC.xy * 0.5f) + 0.5f);
+    const float2 lightSpaceUV = (fragPositionNDC.xy * 0.5f) + 0.5f;
     float variance = 0.0f;
     if(lightSpaceUV.x >= 0.0f && lightSpaceUV.x <= 1.0f && lightSpaceUV.y >= 0.0f && lightSpaceUV.y <= 1.0f && fragPositionVS.z <= 0.0f)
     {
