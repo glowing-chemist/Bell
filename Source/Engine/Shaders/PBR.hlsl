@@ -12,8 +12,9 @@
 #define    kMaterial_AmbientOcclusion (1 << 8)
 #define    kMaterial_Emissive (1 << 9)
 #define    kMaterial_CombinedSpecularGloss (1 << 10)
-#define    kMaterial_AlphaTested (1 << 11)
-#define    kMaterial_Transparent (1 << 12)
+#define    kMaterial_HeightMap (1 << 11) 
+#define    kMaterial_AlphaTested (1 << 20)
+#define    kMaterial_Transparent (1 << 21)
 
 
 struct MaterialInfo

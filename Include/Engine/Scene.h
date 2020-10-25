@@ -62,9 +62,10 @@ enum class MaterialType
     AmbientOcclusion = 1 << 8,
     Emisive = 1 << 9,
     CombinedSpecularGloss = 1 << 10,
+    HeightMap = 1 << 11,
 
-    AlphaTested = 1 << 11,
-    Transparent = 1 << 12
+    AlphaTested = 1 << 20,
+    Transparent = 1 << 21
 };
 inline uint32_t operator&(const uint32_t lhs, const MaterialType rhs)
 {
@@ -278,6 +279,7 @@ public:
         Image* mMetalnessOrSpecular;
         Image* mEmissive;
         Image* mAmbientOcclusion;
+        Image* mHeightMap;
         uint32_t mMaterialTypes;
         uint32_t mMaterialOffset;
 
@@ -307,6 +309,7 @@ public:
         std::string mMetalnessOrSpecularPath;
         std::string mEmissivePath;
         std::string mAmbientOcclusionPath;
+        std::string mHeightMapPath;
         uint32_t mMaterialTypes;
         uint32_t mMaterialOffset;
     };

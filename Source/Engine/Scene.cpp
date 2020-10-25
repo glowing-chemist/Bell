@@ -272,13 +272,14 @@ Scene::MaterialMappings Scene::loadMaterialsInternal(Engine* eng)
         materialMappings.insert({aiString(token), materialIndex});
 	}
 
-    MaterialPaths mat{"", "", "", "", "", "", "", 0, 0};
+    MaterialPaths mat{"", "", "", "", "", "", "", "", 0, 0};
     std::string albedoOrDiffuseFile;
     std::string normalsFile;
     std::string roughnessOrGlossFile;
     std::string metalnessOrSpecularFile;
     std::string emissiveFile;
     std::string ambientOcclusionFile;
+    std::string heightMapFile;
 	while(materialFile >> token)
 	{
 		if(token == "Material")
@@ -353,6 +354,12 @@ Scene::MaterialMappings Scene::loadMaterialsInternal(Engine* eng)
             mat.mAmbientOcclusionPath = (sceneDirectory / ambientOcclusionFile).string();
             mat.mMaterialTypes |= static_cast<uint32_t>(MaterialType::AmbientOcclusion);
         }
+        else if(token == "HeightMap")
+        {
+            materialFile >> heightMapFile;
+            mat.mHeightMapPath = (sceneDirectory / heightMapFile).string();
+            mat.mMaterialTypes |= static_cast<uint32_t>(MaterialType::HeightMap);
+        }
 		else
 		{
 			BELL_LOG("unrecognised token in material file")
@@ -394,7 +401,7 @@ void Scene::loadMaterialsExternal(Engine* eng, const aiScene* scene)
 
         aiString materialName;
         material->Get(AI_MATKEY_NAME, materialName);
-        MaterialPaths newMaterial{materialName.C_Str(), "", "", "", "", "", "", 0, 0};
+        MaterialPaths newMaterial{materialName.C_Str(), "", "", "", "", "", "", "", 0, 0};
 
         if(material->GetTextureCount(aiTextureType_BASE_COLOR) > 0)
         {
@@ -515,6 +522,16 @@ void Scene::loadMaterialsExternal(Engine* eng, const aiScene* scene)
             fs::path fsPath(path.C_Str());
             newMaterial.mAmbientOcclusionPath = pathMapping(sceneDirectory / fsPath);
             newMaterial.mMaterialTypes |= static_cast<uint32_t>(MaterialType::AmbientOcclusion);
+        }
+
+        if(material->GetTextureCount(aiTextureType_HEIGHT) > 0)
+        {
+            aiString path;
+            material->GetTexture(aiTextureType_HEIGHT, 0, &path);
+
+            fs::path fsPath(path.C_Str());
+            newMaterial.mHeightMapPath = pathMapping(sceneDirectory / fsPath);
+            newMaterial.mMaterialTypes |= static_cast<uint32_t>(MaterialType::HeightMap);
         }
 
         ai_real opacity = 1.0f;
@@ -802,6 +819,11 @@ void Scene::addMaterial(const Scene::Material& mat)
 {
     mMaterials.push_back(mat);
 
+    if(mat.mMaterialTypes & static_cast<uint32_t>(MaterialType::HeightMap))
+    {
+        mMaterialImageViews.emplace_back(*mat.mHeightMap, ImageViewType::Colour);
+    }
+
     if(mat.mMaterialTypes & static_cast<uint32_t>(MaterialType::Albedo) ||
             mat.mMaterialTypes & static_cast<uint32_t>(MaterialType::Diffuse))
     {
@@ -857,6 +879,18 @@ void Scene::addMaterial(const MaterialPaths& mat, Engine* eng)
 
         return std::clamp(logSize, 1u, 8u);
     };
+
+    if(materialFlags & static_cast<uint32_t>(MaterialType::HeightMap))
+    {
+        TextureUtil::TextureInfo heightMapInfo = TextureUtil::load32BitTexture(mat.mHeightMapPath.c_str(), STBI_grey);
+        Image* heightTexture = new Image(eng->getDevice(), Format::R8UNorm, ImageUsage::Sampled | ImageUsage::TransferDest | ImageUsage::TransferSrc,
+                             static_cast<uint32_t>(heightMapInfo.width), static_cast<uint32_t>(heightMapInfo.height), 1, calculateMips(heightMapInfo), 1, 1, mat.mHeightMapPath);
+        (*heightTexture)->setContents(heightMapInfo.mData.data(), static_cast<uint32_t>(heightMapInfo.width), static_cast<uint32_t>(heightMapInfo.height), 1);
+        (*heightTexture)->generateMips();
+        newMaterial.mHeightMap = heightTexture;
+
+        mCPUMaterials.emplace_back(std::move(heightMapInfo.mData), (*heightTexture)->getExtent(0, 0), Format::R8UNorm);
+    }
 
     if(materialFlags & static_cast<uint32_t>(MaterialType::Albedo) || materialFlags & static_cast<uint32_t>(MaterialType::Diffuse))
     {

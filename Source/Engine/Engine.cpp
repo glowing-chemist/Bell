@@ -179,7 +179,7 @@ void Engine::setScene(Scene* scene)
         mMaterials->finalise();
 
         std::vector<Scene::Material>& materialDescs = mCurrentScene->getMaterialDescriptions();
-        materialDescs.push_back(Scene::Material{"Default material", nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, offset, static_cast<uint32_t>(MaterialType::Diffuse)});
+        materialDescs.push_back(Scene::Material{"Default material", nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, offset, static_cast<uint32_t>(MaterialType::Diffuse)});
     }
     else // We're clearing the scene so need to destroy the materials.
     {

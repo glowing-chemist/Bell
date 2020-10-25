@@ -392,8 +392,6 @@ Editor::Editor(GLFWwindow* window) :
     Camera& camera = mInProgressScene->getCamera();
     camera.setAspect(float(width) / float(height));
     camera.setMode(CameraMode::Perspective);
-
-    mEngine.setScene(mInProgressScene);
 }
 
 

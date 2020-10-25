@@ -7,11 +7,36 @@ float3 fresnelSchlickRoughness(const float cosTheta, const float3 F0, const floa
 }
 
 
+float2 parallaxUV(const float2 startUV, const float3 view, Texture2D<float> height, float4 derivitives)
+{
+	uint numSamples = 6;
+	float2 size;
+	height.GetDimensions(size.x, size.y);
+	float2 pixelSize = 1.0f / size;
+
+	float3 position = float3(startUV, 1.0f);
+	float stepSize = 2.0f * max(max(max(derivitives.x, derivitives.y), max(derivitives.z, derivitives.w)), max(pixelSize.x, pixelSize.y));
+
+	for(uint i = 0; i < numSamples; ++i)
+	{
+		const float height = height.SampleLevel(linearSampler, position.xy, 0.0f);
+
+		if(position.z < height)
+			break;
+
+		const float heightDiff = position.z - height;
+		position += 10.0f * heightDiff * view * stepSize;
+	}
+
+	return position.xy;
+}
+
+
 MaterialInfo calculateMaterialInfo(	const float4 vertexNormal,
 									const float4 vertexColour,
 									const uint materialIndex, 
 									const float3 view, 
-									const float2 uv)
+									float2 uv)
 {
 	MaterialInfo mat;
 	mat.diffuse = vertexColour;
@@ -21,9 +46,25 @@ MaterialInfo calculateMaterialInfo(	const float4 vertexNormal,
 
 	uint nextMaterialSlot = 0;
 
+	// calcaulte the tbn matrix used for normalmapping and parralax occlusion mapping.
+	const float2 xDerivities = ddx_fine(uv);
+	const float2 yDerivities = ddy_fine(uv);
+	float3x3 tbv = tangentSpaceMatrix(vertexNormal.xyz, view, float4(xDerivities, yDerivities));
+
+#if MATERIAL_FLAGS & kMaterial_HeightMap
+	{
+		const float3 tangentView = mul(tbv, view);
+		Texture2D<float> heightMap = materials[materialIndex];
+
+		uv = parallaxUV(uv, tangentView, heightMap, float4(xDerivities, yDerivities));
+
+		++nextMaterialSlot;
+	}
+#endif
+
 #if MATERIAL_FLAGS & kMaterial_Diffuse
 	{
-		mat.diffuse = materials[materialIndex].Sample(linearSampler, uv);
+		mat.diffuse = materials[materialIndex + nextMaterialSlot].Sample(linearSampler, uv);
 		++nextMaterialSlot;
 	}
 #endif
@@ -41,12 +82,7 @@ MaterialInfo calculateMaterialInfo(	const float4 vertexNormal,
 	    normal = remapNormals(normal);
 	    normal = normalize(normal);
 
-	    const float2 xDerivities = ddx_fine(uv);
-	    const float2 yDerivities = ddy_fine(uv);
-
 		{
-	    	float3x3 tbv = tangentSpaceMatrix(vertexNormal.xyz, view, float4(xDerivities, yDerivities));
-
 	    	normal = mul(normal, tbv);
 
 	    	normal = normalize(normal);
