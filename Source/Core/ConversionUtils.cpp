@@ -235,7 +235,7 @@ vk::ImageLayout getVulkanImageLayout(const ImageLayout layout)
 {
 	switch (layout)
 	{
-	case ImageLayout::ColorAttachment:
+    case ImageLayout::ColorAttachment:
 		return vk::ImageLayout::eColorAttachmentOptimal;
 
 	case ImageLayout::DepthStencil:
@@ -266,43 +266,42 @@ vk::ImageLayout getVulkanImageLayout(const ImageLayout layout)
 
 vk::PipelineStageFlags getVulkanPipelineStage(const SyncPoint syncPoint)
 {
-	switch (syncPoint)
-	{
-	case SyncPoint::TopOfPipe:
-		return vk::PipelineStageFlagBits::eTopOfPipe;
+    vk::PipelineStageFlags flags = vk::PipelineStageFlags{};
 
-	case SyncPoint::IndirectArgs:
-		return vk::PipelineStageFlagBits::eDrawIndirect;
+    if(syncPoint & SyncPoint::TopOfPipe)
+        flags |= vk::PipelineStageFlagBits::eTopOfPipe;
 
-    case SyncPoint::CommandPredication:
-        return vk::PipelineStageFlagBits::eConditionalRenderingEXT;
+    if(syncPoint & SyncPoint::IndirectArgs)
+        flags |= vk::PipelineStageFlagBits::eDrawIndirect;
 
-	case SyncPoint::TransferSource:
-		return vk::PipelineStageFlagBits::eTransfer;
+    if(syncPoint & SyncPoint::CommandPredication)
+        flags |= vk::PipelineStageFlagBits::eConditionalRenderingEXT;
 
-	case SyncPoint::TransferDestination:
-		return vk::PipelineStageFlagBits::eTransfer;
+    if(syncPoint & SyncPoint::TransferSource)
+        flags |= vk::PipelineStageFlagBits::eTransfer;
 
-	case SyncPoint::VertexInput:
-		return vk::PipelineStageFlagBits::eVertexInput;
+    if(syncPoint & SyncPoint::TransferDestination)
+        flags |= vk::PipelineStageFlagBits::eTransfer;
 
-	case SyncPoint::VertexShader:
-		return vk::PipelineStageFlagBits::eVertexShader;
+    if(syncPoint & SyncPoint::VertexInput)
+        flags |= vk::PipelineStageFlagBits::eVertexInput;
 
-	case SyncPoint::FragmentShader:
-		return vk::PipelineStageFlagBits::eFragmentShader;
+    if(syncPoint & SyncPoint::VertexShader)
+        flags |= vk::PipelineStageFlagBits::eVertexShader;
 
-	case SyncPoint::FragmentShaderOutput:
-		return vk::PipelineStageFlagBits::eColorAttachmentOutput;
+    if(syncPoint & SyncPoint::FragmentShader)
+        flags |= vk::PipelineStageFlagBits::eFragmentShader;
 
-	case SyncPoint::ComputeShader:
-		return vk::PipelineStageFlagBits::eComputeShader;
+    if(syncPoint & SyncPoint::FragmentShaderOutput)
+        flags |= vk::PipelineStageFlagBits::eColorAttachmentOutput;
 
-	case SyncPoint::BottomOfPipe:
-		return vk::PipelineStageFlagBits::eBottomOfPipe;
-	}
+    if(syncPoint & SyncPoint::ComputeShader)
+        flags |= vk::PipelineStageFlagBits::eComputeShader;
 
-	return vk::PipelineStageFlagBits::eTopOfPipe;
+    if(syncPoint & SyncPoint::BottomOfPipe)
+        flags |= vk::PipelineStageFlagBits::eBottomOfPipe;
+
+    return flags;
 }
 #endif
 
@@ -731,6 +730,9 @@ const char* getAttachmentName(const AttachmentType type)
 
 	case AttachmentType::IndexBuffer:
 		return "Index buffer";
+
+       case AttachmentType::Sampler:
+            return "Sampler";
 
 	default:
 		return "Add new conversion!!!!";

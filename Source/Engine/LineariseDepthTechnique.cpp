@@ -40,7 +40,6 @@ LineariseDepthTechnique::LineariseDepthTechnique(Engine* eng, RenderGraph& graph
 	Technique("linearise depth", eng->getDevice()),
     mMipLevels{static_cast<uint32_t>(std::ceil(std::log2(eng->getSwapChainImage()->getExtent(0, 0).height)))},
     mLineariseDepthShader(mMipLevels == 10 ? eng->getShader("./Shaders/LineariseDepth10.comp") : eng->getShader("./Shaders/LineariseDepth11.comp")),
-	mTaskID{0},
     mLinearDepth(eng->getDevice(), Format::RG16Float, ImageUsage::Sampled | ImageUsage::Storage, eng->getSwapChainImage()->getExtent(0, 0).width, eng->getSwapChainImage()->getExtent(0, 0).height,
         1, mMipLevels, 1, 1, "Linear Depth"),
     mLinearDepthView(mLinearDepth, ImageViewType::Colour, 0, 1, 0, mMipLevels),
@@ -101,8 +100,8 @@ void LineariseDepthTechnique::bindResources(RenderGraph& graph)
 
     for(uint32_t i = 0; i < (mMipLevels - 1); ++i)
     {
-        graph.bindImage(mipNames[i], mMipsViews[(i * 2) + ((submissionIndex) % 2)]);
-        graph.bindImage(prevMipNames[i], mMipsViews[(i * 2) + ((submissionIndex + 1) % 2)]);
+        graph.bindImage(mipNames[i], mMipsViews[(i * 2) + ((submissionIndex + 1) % 2)]);
+        graph.bindImage(prevMipNames[i], mMipsViews[(i * 2) + ((submissionIndex) % 2)]);
     }
 
     if((submissionIndex % 2) == 0)

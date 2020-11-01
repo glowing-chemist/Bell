@@ -14,15 +14,15 @@
 
 BarrierRecorderBase::BarrierRecorderBase(RenderDevice* device) :
 	DeviceChild(device),
-	mSrc{SyncPoint::TopOfPipe},
-	mDst{ SyncPoint::BottomOfPipe }
+    mSrc{0},
+    mDst{0}
 {}
 
 
 void BarrierRecorderBase::updateSyncPoints(const SyncPoint src, const SyncPoint dst)
 {
-	mSrc = static_cast<SyncPoint>(std::max(static_cast<uint32_t>(mSrc), static_cast<uint32_t>(src)));
-	mDst = static_cast<SyncPoint>(std::min(static_cast<uint32_t>(mDst), static_cast<uint32_t>(dst)));
+    mSrc = mSrc | src;
+    mDst = mDst | dst;
 }
 
 

@@ -18,8 +18,7 @@ public:
 		return PassType::DownSampleColour;
 	}
 
-	virtual void render(RenderGraph&, Engine*) override final
-	{}
+    virtual void render(RenderGraph&, Engine*) override final;
 
 	virtual void bindResources(RenderGraph& graph) override final;
 

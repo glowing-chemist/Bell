@@ -67,6 +67,18 @@ DownSampleColourTechnique::DownSampleColourTechnique(Engine* eng, RenderGraph& g
 }
 
 
+void DownSampleColourTechnique::render(RenderGraph &, Engine *)
+{
+    mDowmSampledColour->updateLastAccessed();
+    for(auto& view : mDownSampledColourViews)
+        view->updateLastAccessed();
+
+    mDowmSampledColourInternal->updateLastAccessed();
+    for(auto& view : mDownSampledColourInternalViews)
+        view->updateLastAccessed();
+}
+
+
 void DownSampleColourTechnique::bindResources(RenderGraph& graph)
 {
 	if (!graph.isResourceSlotBound(kDownSampledColour))

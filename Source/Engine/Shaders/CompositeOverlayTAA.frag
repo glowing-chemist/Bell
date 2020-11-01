@@ -7,7 +7,7 @@
 #define USING_OVERLAY 0
 #endif
 
-#if (defined(Screen_Space_Reflection) || defined(RayTraced_Reflections)) && !defined(TAA)
+#if defined(Screen_Space_Reflection) || defined(RayTraced_Reflections)
 #define USING_SSR 3
 #else
 #define USING_SSR 0

@@ -80,9 +80,9 @@ CompositeTechnique::CompositeTechnique(Engine* eng, RenderGraph& graph) :
             compositeTask.addInput(kDefaultSampler, AttachmentType::Sampler);
 
             if(usingTAA)
-                compositeTask.addManagedOutput(usingTAA ? kCompositeOutput : kFrameBufer, AttachmentType::RenderTarget2D, eng->getSwapChainImage()->getFormat(), SizeClass::Swapchain, LoadOp::Nothing);
+                compositeTask.addManagedOutput(kCompositeOutput, AttachmentType::RenderTarget2D, eng->getSwapChainImage()->getFormat(), SizeClass::Swapchain, LoadOp::Nothing);
             else
-                compositeTask.addOutput(usingTAA ? kCompositeOutput : kFrameBufer, AttachmentType::RenderTarget2D, eng->getSwapChainImage()->getFormat(), LoadOp::Nothing);
+                compositeTask.addOutput(kFrameBufer, AttachmentType::RenderTarget2D, eng->getSwapChainImage()->getFormat(), LoadOp::Nothing);
 
 
             compositeTask.setRecordCommandsCallback(
@@ -121,7 +121,6 @@ CompositeTechnique::CompositeTechnique(Engine* eng, RenderGraph& graph) :
                 overlayTask.addInput(kReflectionMap, AttachmentType::Texture2D);
                 overlayTask.addInput(kGBufferSpecularRoughness, AttachmentType::Texture2D);
                 overlayTask.addInput(kReflecionUVs, AttachmentType::Texture2D);
-
             }
 
             overlayTask.addInput(kDefaultSampler, AttachmentType::Sampler);

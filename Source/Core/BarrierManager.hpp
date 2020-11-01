@@ -14,21 +14,30 @@ class Buffer;
 class BufferView;
 
 
-enum class SyncPoint
+enum class SyncPoint : uint32_t
 {
-	TopOfPipe = 0,
-	IndirectArgs = 1,
-    CommandPredication = 2,
-    VertexInput = 3,
-    VertexShader = 4,
-    FragmentShader = 5,
-    FragmentShaderOutput = 6,
-    ComputeShader = 7,
-	TransferSource = 8,
-	TransferDestination = 9,
-    BottomOfPipe = 10
+    TopOfPipe = 1,
+    IndirectArgs = 1 << 1,
+    CommandPredication = 1 << 2,
+    VertexInput = 1 << 3,
+    VertexShader = 1 << 4,
+    FragmentShader = 1 << 5,
+    FragmentShaderOutput = 1 << 6,
+    ComputeShader = 1 << 7,
+    TransferSource = 1 << 8,
+    TransferDestination = 1 << 9,
+    BottomOfPipe = 1 << 10
 };
 
+inline SyncPoint operator|(const SyncPoint& lhs, const SyncPoint& rhs)
+{
+    return static_cast<SyncPoint>(static_cast<uint32_t>(lhs) | static_cast<uint32_t>(rhs));
+}
+
+inline uint32_t operator&(const SyncPoint& lhs, const SyncPoint& rhs)
+{
+    return static_cast<uint32_t>(lhs) & static_cast<uint32_t>(rhs);
+}
 
 enum class Hazard
 {
