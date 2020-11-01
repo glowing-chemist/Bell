@@ -73,7 +73,7 @@ CompositeTechnique::CompositeTechnique(Engine* eng, RenderGraph& graph) :
             {
                 compositeTask.addInput(kReflectionMap, AttachmentType::Texture2D);
                 compositeTask.addInput(kGBufferSpecularRoughness, AttachmentType::Texture2D);
-                compositeTask.addInput(kReflectionMap, AttachmentType::Texture2D);
+                compositeTask.addInput(kReflecionUVs, AttachmentType::Texture2D);
 
             }
 
@@ -120,7 +120,7 @@ CompositeTechnique::CompositeTechnique(Engine* eng, RenderGraph& graph) :
             {
                 overlayTask.addInput(kReflectionMap, AttachmentType::Texture2D);
                 overlayTask.addInput(kGBufferSpecularRoughness, AttachmentType::Texture2D);
-                overlayTask.addInput(kReflectionMap, AttachmentType::Texture2D);
+                overlayTask.addInput(kReflecionUVs, AttachmentType::Texture2D);
 
             }
 
