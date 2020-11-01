@@ -46,7 +46,7 @@ ImageBase::ImageBase(RenderDevice* dev,
             subInfo.mLayout = ImageLayout::Undefined;
             subInfo.mExtent = extent;
 
-            extent = ImageExtent{extent.width / 2, extent.height / 2, extent.depth / 2};
+            extent = ImageExtent{extent.width / 2, extent.height / 2, std::max(extent.depth / 2, 1u)};
 
 			mSubResourceInfo->push_back(subInfo);
         }

@@ -28,16 +28,9 @@ public:
 
 private:
     uint2 mTileCount;
-    // Buffers for tracking
-    Buffer mIndirectArgs;
-    BufferView mSmoothIdirectArgsView;
-    BufferView mRoughIndirectArgs;
-    Buffer mSmoothTileList;
-    BufferView mSmoothTileListView;
-    BufferView mSmoothTileCountView;
-    Buffer mRoughTileList;
-    BufferView mRoughTileListView;
-    BufferView mRoughTileCountView;
+
+    Image mReflectionUVs;
+    ImageView mReflectionUVsView;
 
     Image mReflectionMap;
     ImageView mReflectionMapView;

@@ -67,9 +67,6 @@ public:
     // Get Task by ID.
     RenderTask& getTask(const TaskID);
     const RenderTask& getTask(const TaskID) const;
-
-    const BufferView& getBoundBuffer(const char*) const;
-    const ImageView&  getBoundImageView(const char*) const;
     const ShaderResourceSet& getShaderResourceSet(const char*) const;
 
     std::vector<BarrierRecorder> generateBarriers(RenderDevice *dev);

@@ -42,6 +42,7 @@
 #include "Engine/VisualizeLightProbesTechnique.hpp"
 #include "Engine/OcclusionCullingTechnique.hpp"
 #include "Engine/PathTracingTechnique.hpp"
+#include "Engine/DownSampleColourTechnique.hpp"
 
 #include "Engine/RayTracedScene.hpp"
 
@@ -388,6 +389,9 @@ std::unique_ptr<Technique> Engine::getSingleTechnique(const PassType passType)
 
         case PassType::RayTracedShadows:
             return std::make_unique<RayTracedShadowsTechnique>(this, mCurrentRenderGraph);
+
+        case PassType::DownSampleColour:
+            return std::make_unique<DownSampleColourTechnique>(this, mCurrentRenderGraph);
 
         default:
         {

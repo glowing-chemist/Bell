@@ -33,7 +33,9 @@ const char kDebugVoxels[] = "DebugVoxels";
 const char kVoxelDimmensions[] = "VoxelDimm";
 const char kLightProbes[] = "LightProbes";
 const char kOcclusionPredicationBuffer[] = "OcclusionPredication";
-extern const char kMeshBoundsBuffer[] = "MeshBounds";
+const char kMeshBoundsBuffer[] = "MeshBounds";
+const char kDownSampledColour[] = "DownSampledColour";
+const char kReflecionUVs[] = "SSRReflectionUVs";
 
 const char kCameraBuffer[]	    = "CameraBuffer";
 const char kLightBuffer[]	    = "LightBuffer";

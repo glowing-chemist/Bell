@@ -26,13 +26,8 @@ Texture2D<float4> SpecularRoughness;
 [[vk::binding(6)]]
 Texture2D<float4> EmissiveOcclusion;
 
-#if defined(Screen_Space_Reflection) || defined(RayTraced_Reflections)
-[[vk::binding(7)]]
-Texture2D<float4> reflectionMap;
-#else
 [[vk::binding(7)]]
 TextureCube<float4> ConvolvedSkyboxSpecular;
-#endif
 
 [[vk::binding(8)]]
 TextureCube<float4> ConvolvedSkyboxDiffuse;
@@ -72,13 +67,9 @@ float4 main(UVVertOutput vertInput)
 	const float3 lightDir = reflect(-viewDir, normal);
     const float NoV = dot(normal, viewDir);
 
-#if defined(Screen_Space_Reflection) || defined(RayTraced_Reflections)
-    float3 radiance = reflectionMap.Sample(linearSampler, uv);
-#else
 	const float lodLevel = roughness * 10.0f;
 
 	float3 radiance = ConvolvedSkyboxSpecular.SampleLevel(linearSampler, lightDir, lodLevel).xyz;
-#endif
 
     float3 irradiance = ConvolvedSkyboxDiffuse.Sample(linearSampler, normal).xyz;
 

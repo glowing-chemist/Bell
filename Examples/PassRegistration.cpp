@@ -86,6 +86,7 @@ bool renderMenu(GLFWwindow* win, const Camera& cam, Engine* eng, const float cpu
     ImGui::Checkbox("Show lights", &graphicsOptions.mShowLights);
     ImGui::Checkbox("Enable TAA", &graphicsOptions.mTAA);
     ImGui::Checkbox("Enable SSAO", &graphicsOptions.mSSAO);
+    ImGui::Checkbox("Enable SSR", &graphicsOptions.mSSR);
     ImGui::Checkbox("Enable shadows", &graphicsOptions.mShadows);
     if(graphicsOptions.mShadows)
     {
@@ -328,7 +329,10 @@ int main()
             engine.registerPass(PassType::OcclusionCulling);
 
         if (graphicsOptions.mSSR)
+        {
             engine.registerPass(PassType::SSR);
+            engine.registerPass(PassType::DownSampleColour);
+        }
 
         engine.registerPass(PassType::DFGGeneration);
         engine.registerPass(PassType::Overlay);

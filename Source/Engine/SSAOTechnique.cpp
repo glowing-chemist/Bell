@@ -70,7 +70,7 @@ SSAOTechnique::SSAOTechnique(Engine* eng, RenderGraph& graph) :
     task.addInput(kLinearDepth, AttachmentType::Texture2D);
     task.addInput(kDefaultSampler, AttachmentType::Sampler);
 
-    task.addOutput(kSSAORough, AttachmentType::RenderTarget2D, Format::R8UNorm, SizeClass::HalfSwapchain, LoadOp::Nothing);
+    task.addManagedOutput(kSSAORough, AttachmentType::RenderTarget2D, Format::R8UNorm, SizeClass::HalfSwapchain, LoadOp::Nothing);
 
     task.setRecordCommandsCallback(
         [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine*, const std::vector<const MeshInstance*>&)
@@ -136,7 +136,7 @@ SSAOImprovedTechnique::SSAOImprovedTechnique(Engine* eng, RenderGraph& graph) :
     task.addInput(kGBufferNormals, AttachmentType::Texture2D);
     task.addInput(kDefaultSampler, AttachmentType::Sampler);
 
-    task.addOutput(kSSAORough, AttachmentType::RenderTarget2D, Format::R8UNorm, SizeClass::Swapchain, LoadOp::Nothing);
+    task.addManagedOutput(kSSAORough, AttachmentType::RenderTarget2D, Format::R8UNorm, SizeClass::Swapchain, LoadOp::Nothing);
 
     task.setRecordCommandsCallback(
         [this ](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine*, const std::vector<const MeshInstance*>&)

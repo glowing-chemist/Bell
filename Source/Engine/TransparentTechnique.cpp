@@ -30,8 +30,8 @@ TransparentTechnique::TransparentTechnique(Engine* eng, RenderGraph& graph) :
     task.addInput(kSceneVertexBuffer, AttachmentType::VertexBuffer);
     task.addInput(kSceneIndexBuffer, AttachmentType::IndexBuffer);
 
-    task.addOutput(kGlobalLighting, AttachmentType::RenderTarget2D, Format::RGBA8UNorm, SizeClass::Custom, LoadOp::Preserve);
-    task.addOutput(kGBufferDepth, AttachmentType::Depth, Format::D32Float, SizeClass::Custom, LoadOp::Preserve);
+    task.addOutput(kGlobalLighting, AttachmentType::RenderTarget2D, Format::RGBA8UNorm);
+    task.addOutput(kGBufferDepth, AttachmentType::Depth, Format::D32Float);
 
     task.setRecordCommandsCallback(
                 [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>& meshes)

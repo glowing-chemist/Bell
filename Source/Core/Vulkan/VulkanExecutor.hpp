@@ -45,6 +45,8 @@ public:
 
     virtual void copyDataToBuffer(const void*, const size_t size, const size_t offset, Buffer&) override;
 
+    virtual void blitImage(const ImageView& dst, const ImageView& src, const SamplerType) override;
+
     virtual void setGraphicsShaders(const GraphicsTask &task,
                                     const RenderGraph& graph,
                                     const Shader& vertexShader,

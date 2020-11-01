@@ -47,7 +47,7 @@ OverlayTechnique::OverlayTechnique(Engine* eng, RenderGraph& graph) :
 	task.addInput(kDefaultSampler, AttachmentType::Sampler);
 	task.addInput(kOverlayVertex, AttachmentType::VertexBuffer);
 	task.addInput(kOverlayIndex, AttachmentType::IndexBuffer);
-	task.addOutput(kOverlay, AttachmentType::RenderTarget2D, eng->getSwapChainImage()->getFormat(), SizeClass::Swapchain, LoadOp::Clear_Black);
+	task.addManagedOutput(kOverlay, AttachmentType::RenderTarget2D, eng->getSwapChainImage()->getFormat(), SizeClass::Swapchain, LoadOp::Clear_Black);
 
     task.setRecordCommandsCallback(
         [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine*, const std::vector<const MeshInstance*>&)

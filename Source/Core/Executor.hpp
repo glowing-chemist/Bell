@@ -4,9 +4,12 @@
 #include "glm/mat4x4.hpp"
 
 #include "Core/DeviceChild.hpp"
+#include "Core/Sampler.hpp"
+
 
 class Buffer;
 class BufferView;
+class ImageView;
 class BarrierRecorder;
 class Shader;
 class GraphicsTask;
@@ -64,6 +67,8 @@ public:
 
     // Commands for updatign resources
     virtual void copyDataToBuffer(const void*, const size_t size, const size_t offset, Buffer&) = 0;
+
+    virtual void blitImage(const ImageView& dst, const ImageView& src, const SamplerType) = 0;
 
     virtual uint32_t getRecordedCommandCount() = 0;
     virtual void      resetRecordedCommandCount() = 0;

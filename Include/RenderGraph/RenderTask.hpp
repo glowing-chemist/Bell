@@ -67,9 +67,24 @@ public:
     }
 
     // Loadop has no effect on ComputeTasks
-    virtual void addOutput(const char* name, const AttachmentType attachmentType, const Format format, const SizeClass size = SizeClass::Custom, const LoadOp loadOp = LoadOp::Preserve, const StoreOp storeOp = StoreOp::Store)
+    virtual void addOutput( const char* name, 
+                            const AttachmentType attachmentType, 
+                            const Format format, 
+                            const LoadOp loadOp = LoadOp::Preserve, 
+                            const StoreOp storeOp = StoreOp::Store)
     {
-       mOutputAttachments.push_back({name, attachmentType, format, size, loadOp, storeOp});
+       mOutputAttachments.push_back({name, attachmentType, format, SizeClass::Custom, loadOp, storeOp, ImageUsage::ColourAttachment});
+    }
+
+    virtual void addManagedOutput(const char* name,
+        const AttachmentType attachmentType,
+        const Format format,
+        const SizeClass size,
+        const LoadOp loadOp = LoadOp::Preserve,
+        const StoreOp storeOp = StoreOp::Store,
+        const ImageUsage usage = ImageUsage::ColourAttachment | ImageUsage::Sampled)
+    {
+        mOutputAttachments.push_back({ name, attachmentType, format, size, loadOp, storeOp, usage });
     }
 
     struct OutputAttachmentInfo
@@ -80,6 +95,7 @@ public:
 		SizeClass		mSize;
 		LoadOp			mLoadOp;
         StoreOp         mStoreOp;
+        ImageUsage      mUsage;
     };
 
 	struct InputAttachmentInfo

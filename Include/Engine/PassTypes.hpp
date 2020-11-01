@@ -41,7 +41,8 @@
                     OcclusionCulling = 1ULL << 34, \
                     PathTracing = 1ULL << 35, \
                     RayTracedReflections = 1ULL << 36, \
-                    RayTracedShadows = 1ULL << 37
+                    RayTracedShadows = 1ULL << 37, \
+                    DownSampleColour = 1ULL << 38
 
 // An enum to keep track of which 
 enum class PassType : uint64_t
@@ -159,6 +160,9 @@ inline const char* passToString(const PassType passType)
 
         case PassType::RayTracedShadows:
             return "RayTraced_Shadows";
+
+        case PassType::DownSampleColour:
+            return "DownSampled Colour";
     }
 
     return "UNKNOWN PASS TYPE";
@@ -188,7 +192,9 @@ enum class AttachmentType
     IndexBuffer,
     CommandPredicationBuffer,
 	PushConstants,
-	ShaderResourceSet
+	ShaderResourceSet,
+    TransferSource,
+    TransferDestination
 };
 
 

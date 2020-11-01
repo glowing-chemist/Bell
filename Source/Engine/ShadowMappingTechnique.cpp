@@ -60,8 +60,8 @@ ShadowMappingTechnique::ShadowMappingTechnique(Engine* eng, RenderGraph& graph) 
     shadowTask.addInput(kSceneVertexBuffer, AttachmentType::VertexBuffer);
     shadowTask.addInput(kSceneIndexBuffer, AttachmentType::IndexBuffer);
 
-    shadowTask.addOutput(kShadowMapRaw, AttachmentType::RenderTarget2D, Format::RG32Float, SizeClass::Custom, LoadOp::Clear_Float_Max);
-    shadowTask.addOutput(kShadowMapDepth, AttachmentType::Depth, Format::D32Float, SizeClass::Custom, LoadOp::Clear_White, StoreOp::Discard);
+    shadowTask.addOutput(kShadowMapRaw, AttachmentType::RenderTarget2D, Format::RG32Float, LoadOp::Clear_Float_Max);
+    shadowTask.addOutput(kShadowMapDepth, AttachmentType::Depth, Format::D32Float, LoadOp::Clear_White, StoreOp::Discard);
     mShadowTask = graph.addTask(shadowTask);
 
     ComputeTask blurXTask{ "ShadowMapBlurX" };

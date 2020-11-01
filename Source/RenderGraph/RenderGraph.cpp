@@ -260,11 +260,13 @@ void RenderGraph::compileDependancies()
                                 // Assumes ImageND are used as read write or read Only.
                                 (((outResources[outerIndex].mType == AttachmentType::Image1D ||
                                  outResources[outerIndex].mType == AttachmentType::Image2D ||
-                                 outResources[outerIndex].mType == AttachmentType::Image3D) &&
+                                 outResources[outerIndex].mType == AttachmentType::Image3D ||
+                                 outResources[outerIndex].mType == AttachmentType::TransferDestination) &&
                                   (innerResources[innerIndex].mType == AttachmentType::Texture1D ||
                                    innerResources[innerIndex].mType == AttachmentType::Texture2D ||
                                    innerResources[innerIndex].mType == AttachmentType::Texture3D ||
-                                   innerResources[innerIndex].mType == AttachmentType::CubeMap)
+                                   innerResources[innerIndex].mType == AttachmentType::CubeMap ||
+                                   innerResources[innerIndex].mType == AttachmentType::TransferSource)
                                   ) ||
                                  // If the outer task writes to the buffer and the inner reads we need
                                  // to emit a dependancy to enforce writing before reading.
@@ -501,7 +503,7 @@ void RenderGraph::generateInternalResources(RenderDevice* dev)
             createInternalResource(dev,
                                  output.mName,
                                  output.mFormat,
-                                 (output.mType == AttachmentType::Depth ? ImageUsage::DepthStencil :  ImageUsage::ColourAttachment) | ImageUsage::Sampled,
+                                 output.mUsage,
                                  output.mSize);
 		}
 	}
@@ -771,6 +773,8 @@ std::vector<BarrierRecorder> RenderGraph::generateBarriers(RenderDevice* dev)
         case AttachmentType::Texture3D:
         case AttachmentType::CubeMap:
         case AttachmentType::Depth:
+        case AttachmentType::TransferDestination:
+        case AttachmentType::TransferSource:
             return true;
 
         default:
@@ -799,6 +803,15 @@ std::vector<BarrierRecorder> RenderGraph::generateBarriers(RenderDevice* dev)
     for (const auto& [name, usageInfo] : mResourceInfo)
 	{
         const auto& entries = usageInfo.mUsages;
+
+        // Print all resource transitions.
+#if 0 
+        BELL_LOG_ARGS("\nResource Name: %s", name);
+        for (const auto& entry : entries)
+        {
+            BELL_LOG_ARGS("Used in task %s as a %s", getTask(entry.mTaskIndex).getName().c_str(), getAttachmentName(entry.mType));
+        }
+#endif
 
         if(entries.empty() || (usageInfo.mFlags & BindingFlags::ManualBarriers)) // Resource isn't used by any tasks or is a SRS.
             continue;
@@ -872,6 +885,7 @@ std::vector<BarrierRecorder> RenderGraph::generateBarriers(RenderDevice* dev)
 					case AttachmentType::Texture2D:
 					case AttachmentType::Texture3D:
                     case AttachmentType::CubeMap:
+                    case AttachmentType::TransferSource:
 						hazard = Hazard::ReadAfterWrite;
 						break;
 

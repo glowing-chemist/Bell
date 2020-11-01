@@ -12,40 +12,25 @@ Texture2D<float2> LinearDepth;
 Texture2D<float> Depth;
 
 [[vk::binding(2)]]
-Texture2D<float4> diffuse;
-
-[[vk::binding(3)]]
-Texture2D<float4> specular;
-
-[[vk::binding(4)]]
 Texture2D<float3> Normals;
 
-[[vk::binding(5)]]
-StructuredBuffer<uint2> tileList;
-
-[[vk::binding(6)]]
-TextureCube<float4> skybox;
-
-[[vk::binding(7)]]
+[[vk::binding(3)]]
 SamplerState linearSampler;
 
-[[vk::binding(8)]]
+[[vk::binding(4)]]
 ConstantBuffer<CameraBuffer> camera;
 
-[[vk::binding(9)]]
-RWTexture2D<float4> reflectionMap;
+[[vk::binding(5)]]
+RWTexture2D<float2> reflectionUV;
 
 #define START_MIP 7
 
 #include "RayMarching.hlsl"
 
 [numthreads(8, 8, 1)]
-void main(uint3 groupID : SV_GroupID, uint3 groupThreadID : SV_GroupThreadID)
+void main(uint3 globalIndex : SV_DispatchThreadID)
 {
-	const uint flattenedThreadPosition = groupID.x;
-	const uint2 tileIndex = tileList[flattenedThreadPosition];
-	const uint2 threadIndex = (tileIndex * uint2(8, 8)) + groupThreadID.xy;
-	const float2 uv = (float2(threadIndex) / (camera.frameBufferSize / 2.0f)) + camera.jitter;
+	const float2 uv = (float2(globalIndex.xy) / (camera.frameBufferSize / 2.0f)) + camera.jitter;
 
 	const float fragmentDepth = Depth.Sample(linearSampler, uv);
 
@@ -78,20 +63,9 @@ void main(uint3 groupID : SV_GroupID, uint3 groupThreadID : SV_GroupThreadID)
 
 	const float3 rayDirection = normalize(rayEnd.xyz - position.xyz);
 
-	{
-		// March the ray.
-		const float2 colourUV = marchRay(position, rayDirection, 30, float2(1.0f, 1.0f) / float2(width, height), START_MIP, camera.nearPlane, camera.farPlane, camera.invertedPerspective);
-		if(all(colourUV >= float2(0.0f, 0.0f)))
-		{
-			reflectedColour += diffuse.Sample(linearSampler, colourUV);
-			reflectedColour += float4(specular.Sample(linearSampler, colourUV).xyz, 1.0f);
-		}
-		else
-		{
-			reflectedColour = skybox.SampleLevel(linearSampler, L, 0.0f);
-		}
-	}
+	// March the ray.
+	const float2 colourUV = marchRay(position, rayDirection, 30, float2(1.0f, 1.0f) / float2(width, height), START_MIP, camera.nearPlane, camera.farPlane, camera.invertedPerspective);
 
 
-	reflectionMap[threadIndex] = reflectedColour;
+	reflectionUV[globalIndex.xy] = colourUV;
 }

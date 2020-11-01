@@ -19,13 +19,13 @@ enum class SyncPoint
 	TopOfPipe = 0,
 	IndirectArgs = 1,
     CommandPredication = 2,
-    TransferSource = 3,
-    TransferDestination = 4,
-    VertexInput = 5,
-    VertexShader = 6,
-    FragmentShader = 7,
-    FragmentShaderOutput = 8,
-    ComputeShader = 9,
+    VertexInput = 3,
+    VertexShader = 4,
+    FragmentShader = 5,
+    FragmentShaderOutput = 6,
+    ComputeShader = 7,
+	TransferSource = 8,
+	TransferDestination = 9,
     BottomOfPipe = 10
 };
 

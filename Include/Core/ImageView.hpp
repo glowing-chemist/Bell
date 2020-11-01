@@ -59,6 +59,11 @@ public:
 	ImageViewType getType() const
 		{ return mType; }
 
+	uint32_t getTotalSubresourceCount() const
+	{
+		return mTotalLayers * mTotalMips;
+	}
+
 	bool isSwapChain() const
 	{ return mIsSwapchain; }
 

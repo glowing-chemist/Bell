@@ -23,19 +23,15 @@ DeferredImageBasedLightingTechnique::DeferredImageBasedLightingTechnique(Engine*
     task.addInput(kGBufferDiffuse, AttachmentType::Texture2D);
     task.addInput(kGBufferSpecularRoughness, AttachmentType::Texture2D);
     task.addInput(kGBufferEmissiveOcclusion, AttachmentType::Texture2D);
-
-    if(eng->isPassRegistered(PassType::SSR) || eng->isPassRegistered(PassType::RayTracedReflections))
-       task.addInput(kReflectionMap, AttachmentType::Texture2D);
-    else
-        task.addInput(kConvolvedSpecularSkyBox, AttachmentType::CubeMap);
+    task.addInput(kConvolvedSpecularSkyBox, AttachmentType::CubeMap);
     task.addInput(kConvolvedDiffuseSkyBox, AttachmentType::CubeMap);
     task.addInput(kDefaultSampler, AttachmentType::Sampler);
 
     if (eng->isPassRegistered(PassType::Shadow) || eng->isPassRegistered(PassType::CascadingShadow) || eng->isPassRegistered(PassType::RayTracedShadows))
         task.addInput(kShadowMap, AttachmentType::Texture2D);
 
-    task.addOutput(kGlobalLighting, AttachmentType::RenderTarget2D, Format::RGBA8UNorm,
-        SizeClass::Swapchain, LoadOp::Clear_Black);
+    task.addManagedOutput(kGlobalLighting, AttachmentType::RenderTarget2D, Format::RGBA8UNorm,
+        SizeClass::Swapchain, LoadOp::Clear_Black, StoreOp::Store, ImageUsage::ColourAttachment | ImageUsage::Sampled | ImageUsage::TransferSrc);
 
     task.setRecordCommandsCallback(
         [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine*, const std::vector<const MeshInstance*>&)

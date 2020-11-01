@@ -58,8 +58,8 @@ CascadeShadowMappingTechnique::CascadeShadowMappingTechnique(Engine* eng, Render
            cascade0Task.addInput("lightMatrix", AttachmentType::PushConstants);
            cascade0Task.addInput(kSceneVertexBuffer, AttachmentType::VertexBuffer);
            cascade0Task.addInput(kSceneIndexBuffer, AttachmentType::IndexBuffer);
-           cascade0Task.addOutput(kCascadeShadowMapRaw0, AttachmentType::RenderTarget2D, Format::RG32Float, SizeClass::Custom, LoadOp::Clear_Float_Max);
-           cascade0Task.addOutput("ShadowMapDepth0", AttachmentType::Depth, Format::D32Float, SizeClass::DoubleSwapchain, LoadOp::Clear_White, StoreOp::Discard);
+           cascade0Task.addOutput(kCascadeShadowMapRaw0, AttachmentType::RenderTarget2D, Format::RG32Float, LoadOp::Clear_Float_Max);
+           cascade0Task.addManagedOutput("ShadowMapDepth0", AttachmentType::Depth, Format::D32Float, SizeClass::DoubleSwapchain, LoadOp::Clear_White, StoreOp::Discard, ImageUsage::DepthStencil);
            mRenderCascade0 = graph.addTask(cascade0Task);
 
            GraphicsPipelineDescription cascade1Desc(Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
@@ -76,8 +76,8 @@ CascadeShadowMappingTechnique::CascadeShadowMappingTechnique(Engine* eng, Render
            cascade1Task.addInput("lightMatrix", AttachmentType::PushConstants);
            cascade1Task.addInput(kSceneVertexBuffer, AttachmentType::VertexBuffer);
            cascade1Task.addInput(kSceneIndexBuffer, AttachmentType::IndexBuffer);
-           cascade1Task.addOutput(kCascadeShadowMapRaw1, AttachmentType::RenderTarget2D, Format::RG32Float, SizeClass::Custom, LoadOp::Clear_Float_Max);
-           cascade1Task.addOutput("ShadowMapDepth1", AttachmentType::Depth, Format::D32Float, SizeClass::Swapchain, LoadOp::Clear_White, StoreOp::Discard);
+           cascade1Task.addOutput(kCascadeShadowMapRaw1, AttachmentType::RenderTarget2D, Format::RG32Float, LoadOp::Clear_Float_Max);
+           cascade1Task.addManagedOutput("ShadowMapDepth1", AttachmentType::Depth, Format::D32Float, SizeClass::Swapchain, LoadOp::Clear_White, StoreOp::Discard, ImageUsage::DepthStencil);
            mRenderCascade1 = graph.addTask(cascade1Task);
 
            GraphicsPipelineDescription cascade2Desc(Rect{getDevice()->getSwapChain()->getSwapChainImageWidth() / 2,
@@ -94,8 +94,8 @@ CascadeShadowMappingTechnique::CascadeShadowMappingTechnique(Engine* eng, Render
            cascade2Task.addInput("lightMatrix", AttachmentType::PushConstants);
            cascade2Task.addInput(kSceneVertexBuffer, AttachmentType::VertexBuffer);
            cascade2Task.addInput(kSceneIndexBuffer, AttachmentType::IndexBuffer);
-           cascade2Task.addOutput(kCascadeShadowMapRaw2, AttachmentType::RenderTarget2D, Format::RG32Float, SizeClass::Custom, LoadOp::Clear_Float_Max);
-           cascade2Task.addOutput("ShadowMapDepth2", AttachmentType::Depth, Format::D32Float, SizeClass::HalfSwapchain, LoadOp::Clear_White, StoreOp::Discard);
+           cascade2Task.addOutput(kCascadeShadowMapRaw2, AttachmentType::RenderTarget2D, Format::RG32Float, LoadOp::Clear_Float_Max);
+           cascade2Task.addManagedOutput("ShadowMapDepth2", AttachmentType::Depth, Format::D32Float, SizeClass::HalfSwapchain, LoadOp::Clear_White, StoreOp::Discard, ImageUsage::DepthStencil);
            mRenderCascade2 = graph.addTask(cascade2Task);
 
     }

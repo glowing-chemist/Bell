@@ -403,13 +403,17 @@ void VulkanBarrierRecorder::transitionLayout(Image& img, const ImageLayout newLa
 {
 	updateSyncPoints(src, dst);
 
+	std::vector<ImageLayout> oldLayouts{};
+	oldLayouts.resize(img->mNumberOfLevels * img->mNumberOfMips);
 	ImageLayout layout = img->getLayout(0, 0);
 	bool splitBarriers = true;
 	for (uint32_t i = 0; i < img->numberOfLevels(); ++i)
 	{
 		for (uint32_t j = 0; j < img->numberOfMips(); ++j)
 		{
-			splitBarriers = splitBarriers && img->getLayout(i, j) != layout;
+			ImageLayout oldLayout = img->getLayout(i, j);
+			splitBarriers = splitBarriers || oldLayout != layout;
+			oldLayouts[(i * img->numberOfMips()) + j] = oldLayout;
 			(*img->mSubResourceInfo)[(i * img->numberOfMips()) + j].mLayout = newLayout;
 		}
 	}
@@ -467,7 +471,7 @@ void VulkanBarrierRecorder::transitionLayout(Image& img, const ImageLayout newLa
 				vk::ImageMemoryBarrier barrier{};
 				barrier.setSrcAccessMask(srcAccess);
 				barrier.setDstAccessMask(dstAccess);
-				barrier.setOldLayout(getVulkanImageLayout(img->getLayout(i, j)));
+				barrier.setOldLayout(getVulkanImageLayout(oldLayouts[(i * img->numberOfMips()) + j]));
 				barrier.setNewLayout(getVulkanImageLayout(newLayout));
 				if (newLayout == ImageLayout::DepthStencil ||
 					newLayout == ImageLayout::DepthStencilRO)
@@ -479,6 +483,8 @@ void VulkanBarrierRecorder::transitionLayout(Image& img, const ImageLayout newLa
 					barrier.setSubresourceRange({ vk::ImageAspectFlagBits::eColor, j, 1, i, 1 });
 				}
 				barrier.setImage(static_cast<VulkanImage*>(img.getBase())->getImage());
+
+				(*img->mSubResourceInfo)[(i * img->numberOfMips()) + j].mLayout = newLayout;
 
 				mImageMemoryBarriers.push_back({ img->getOwningQueueType(), barrier });
 			}
@@ -511,13 +517,17 @@ void VulkanBarrierRecorder::transitionLayout(ImageView& img, const ImageLayout n
 {
 	updateSyncPoints(src, dst);
 
+	std::vector<ImageLayout> oldLayouts{};
+	oldLayouts.resize(img->getTotalSubresourceCount());
     ImageLayout layout = img->getImageLayout(img->getBaseLevel(), img->getBaseMip());
-	bool splitBarriers = true;
+	bool splitBarriers = false;
 	for (uint32_t i = img->getBaseLevel(); i < img->getBaseLevel() + img->getLevelCount(); ++i)
 	{
 		for (uint32_t j = img->getBaseMip(); j < img->getBaseMip() + img->getMipsCount(); ++j)
 		{
-			splitBarriers = splitBarriers && img->getImageLayout(i, j) != layout;
+			ImageLayout oldLayout = img->getImageLayout(i, j);
+			splitBarriers = splitBarriers || oldLayout != layout;
+			oldLayouts[(i * img->mTotalMips) + j] = oldLayout;
 			img->mSubResourceInfo[(i * img->mTotalMips) + j].mLayout = newLayout;
 		}
 	}
@@ -575,7 +585,7 @@ void VulkanBarrierRecorder::transitionLayout(ImageView& img, const ImageLayout n
 				vk::ImageMemoryBarrier barrier{};
 				barrier.setSrcAccessMask(srcAccess);
 				barrier.setDstAccessMask(dstAccess);
-				barrier.setOldLayout(getVulkanImageLayout(img->getImageLayout(i, j)));
+				barrier.setOldLayout(getVulkanImageLayout(oldLayouts[(i * img->mTotalMips) + j]));
 				barrier.setNewLayout(getVulkanImageLayout(newLayout));
 				if (newLayout == ImageLayout::DepthStencil ||
 					newLayout == ImageLayout::DepthStencilRO)

@@ -195,6 +195,7 @@ set(BELL_SOURCE
     Source/Engine/VisualizeLightProbesTechnique.cpp
     Source/Engine/OcclusionCullingTechnique.cpp
     Source/Engine/PathTracingTechnique.cpp
+	Source/Engine/DownSampleColourTechnique.cpp
 
     # used for texture loading
     ThirdParty/stb_image/stb_image.cpp
@@ -270,11 +271,7 @@ set(SHADERS
 	LineariseDepth10.comp
 	LineariseDepth11.comp
 	FinalComposite.frag
-	ClearSSRTileCounters.comp
-	ScreenSpaceReflectionAllocateTiles.comp
-	ScreenSpaceReflectionIndirectArgs.comp
-	ScreenSpaceReflectionRough.comp
-	ScreenSpaceReflectionSmooth.comp
+	ScreenSpaceReflection.comp
 	RayTracedReflections.comp
 	Materials.hlsl
 	Voxalize.vert
@@ -302,6 +299,7 @@ set(SHADERS
 	ResolveRayTracedShadows.comp
 	KdTree.hlsl
 	BasicVertexTransform.vert
+	RessolveReflections.comp
     )
 
 message(STATUS "shader directory ${BELL_SHADER_DIR}Shaders")

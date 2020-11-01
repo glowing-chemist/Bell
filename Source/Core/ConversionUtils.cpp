@@ -24,6 +24,12 @@ vk::ImageLayout getVulkanImageLayout(const AttachmentType type)
 		case AttachmentType::Depth:
 			return vk::ImageLayout::eDepthStencilAttachmentOptimal;
 
+		case AttachmentType::TransferDestination:
+			return vk::ImageLayout::eTransferDstOptimal;
+
+		case AttachmentType::TransferSource:
+			return vk::ImageLayout::eTransferSrcOptimal;
+
 		default:
 			return vk::ImageLayout::eColorAttachmentOptimal;
 	}
@@ -46,6 +52,12 @@ AttachmentType getAttachmentType(const vk::ImageLayout layout)
 
 	case vk::ImageLayout::eDepthStencilAttachmentOptimal:
 		return AttachmentType::Depth;
+
+	case vk::ImageLayout::eTransferDstOptimal:
+		return AttachmentType::TransferDestination;
+
+	case vk::ImageLayout::eTransferSrcOptimal:
+		return AttachmentType::TransferSource;
 
 	default:
 		return AttachmentType::PushConstants;// to indicate undefined layout.
@@ -521,6 +533,12 @@ ImageLayout getImageLayout(const AttachmentType type)
 	case AttachmentType::Depth:
 		return ImageLayout::DepthStencil;
 
+	case AttachmentType::TransferDestination:
+		return ImageLayout::TransferDst;
+
+	case AttachmentType::TransferSource:
+		return ImageLayout::TransferSrc;
+
 	default:
 		return ImageLayout::ColorAttachment;
 	}
@@ -542,6 +560,12 @@ AttachmentType getAttachmentType(const ImageLayout layout)
 
 	case ImageLayout::DepthStencil:
 		return AttachmentType::Depth;
+
+	case ImageLayout::TransferDst:
+		return AttachmentType::TransferDestination;
+
+	case ImageLayout::TransferSrc:
+		return AttachmentType::TransferSource;
 
 	default:
 		return AttachmentType::PushConstants;// to indicate undefined layout.
@@ -618,6 +642,12 @@ SyncPoint getSyncPoint(const AttachmentType type)
     case AttachmentType::CommandPredicationBuffer:
         return SyncPoint::CommandPredication;
 
+	case AttachmentType::TransferDestination:
+		return SyncPoint::TransferDestination;
+
+	case AttachmentType::TransferSource:
+		return SyncPoint::TransferSource;
+
 	default:
 		return SyncPoint::TopOfPipe;
 	}
@@ -686,6 +716,21 @@ const char* getAttachmentName(const AttachmentType type)
 
 	case AttachmentType::UniformBuffer:
 		return "Uniform Buffer";
+
+	case AttachmentType::TransferDestination:
+		return "Transfer destination";
+
+	case AttachmentType::TransferSource:
+		return "Transfer source";
+
+	case AttachmentType::CommandPredicationBuffer:
+		return "Predication buffer";
+
+	case AttachmentType::VertexBuffer:
+		return "Vertex buffer";
+
+	case AttachmentType::IndexBuffer:
+		return "Index buffer";
 
 	default:
 		return "Add new conversion!!!!";

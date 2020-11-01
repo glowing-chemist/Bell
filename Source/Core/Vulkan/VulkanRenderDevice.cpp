@@ -272,7 +272,7 @@ vk::RenderPass	VulkanRenderDevice::generateRenderPass(const GraphicsTask& task)
     std::vector<vk::AttachmentReference> depthAttachmentRef{};
     uint32_t outputAttatchmentCounter = 0;
 
-    for(const auto& [name, type, format, size, loadop, storeOp] : outputAttachments)
+    for(const auto& [name, type, format, size, loadop, storeOp, usage] : outputAttachments)
     {
         // We only care about images here.
         if(type == AttachmentType::DataBufferRO ||

@@ -1,6 +1,7 @@
 #include "VulkanExecutor.hpp"
 #include "VulkanBuffer.hpp"
 #include "VulkanBufferView.hpp"
+#include "VulkanImageView.hpp"
 #include "VulkanPipeline.hpp"
 #include "VulkanRenderDevice.hpp"
 #include "VulkanBarrierManager.hpp"
@@ -164,6 +165,55 @@ void VulkanExecutor::copyDataToBuffer(const void* data, const size_t size, const
 {
     VulkanBuffer* VKBuf = static_cast<VulkanBuffer*>(buf.getBase());
     VKBuf->setContents(mCommandBuffer, data, size, offset);
+}
+
+
+void VulkanExecutor::blitImage(const ImageView& dst, const ImageView& src, const SamplerType type)
+{
+    vk::Filter filterType = [](const SamplerType samp)
+    {
+        switch (samp)
+        {
+            case SamplerType::Linear:
+                return vk::Filter::eLinear;
+
+            case SamplerType::Point:
+                return vk::Filter::eNearest;
+        }
+    }(type);
+
+    std::vector<vk::ImageBlit> subresourceBlits{};
+    subresourceBlits.reserve(src->getTotalSubresourceCount());
+
+    BELL_ASSERT(src->getLevelCount() == dst->getLevelCount() && src->getMipsCount() == dst->getMipsCount(), "Resources must have smae number of subresources")
+    for (uint32_t i = 0; i < src->getLevelCount(); ++i)
+    {
+        for (uint32_t j = 0; j < src->getMipsCount(); ++j)
+        {
+            ImageExtent srcExtent = src->getImageExtent(src->getBaseLevel() + i, src->getBaseMip() + j);
+            ImageExtent dstExtent = dst->getImageExtent(dst->getBaseLevel() + i, dst->getBaseMip() + j);
+
+            vk::ImageBlit blit{};
+            blit.srcOffsets[0] = vk::Offset3D{ 0, 0, 0 };
+            blit.srcOffsets[1] = vk::Offset3D{ static_cast<int32_t>(srcExtent.width), static_cast<int32_t>(srcExtent.height), static_cast<int32_t>(srcExtent.depth) };
+            blit.srcSubresource.aspectMask = vk::ImageAspectFlagBits::eColor;
+            blit.srcSubresource.mipLevel = src->getBaseMip() + j;
+            blit.srcSubresource.baseArrayLayer = src->getBaseLevel() + i;
+            blit.srcSubresource.layerCount = src->getLevelCount();
+            blit.dstOffsets[0] = vk::Offset3D{ 0, 0, 0 };
+            blit.dstOffsets[1] = vk::Offset3D{ static_cast<int32_t>(dstExtent.width), static_cast<int32_t>(dstExtent.height), static_cast<int32_t>(dstExtent.depth) };
+            blit.dstSubresource.aspectMask = vk::ImageAspectFlagBits::eColor;
+            blit.dstSubresource.mipLevel = dst->getBaseMip() + j;
+            blit.dstSubresource.baseArrayLayer = src->getBaseLevel() + i;
+            blit.dstSubresource.layerCount = dst->getLevelCount();
+
+            subresourceBlits.push_back(blit);
+        }
+    }
+
+    mCommandBuffer.blitImage(static_cast<const VulkanImageView*>(src.getBase())->getImage(), vk::ImageLayout::eTransferSrcOptimal,
+        static_cast<const VulkanImageView*>(dst.getBase())->getImage(), vk::ImageLayout::eTransferDstOptimal,
+        subresourceBlits, filterType);
 }
 
 

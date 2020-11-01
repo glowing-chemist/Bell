@@ -26,7 +26,7 @@ PreDepthTechnique::PreDepthTechnique(Engine* eng, RenderGraph& graph) :
     if(eng->isPassRegistered(PassType::OcclusionCulling))
         task.addInput(kOcclusionPredicationBuffer, AttachmentType::CommandPredicationBuffer);
 
-    task.addOutput(kGBufferDepth, AttachmentType::Depth, Format::D32Float, SizeClass::Swapchain, LoadOp::Clear_Black);
+    task.addManagedOutput(kGBufferDepth, AttachmentType::Depth, Format::D32Float, SizeClass::Swapchain, LoadOp::Clear_Black, StoreOp::Store, ImageUsage::DepthStencil | ImageUsage::Sampled);
 
     if(eng->isPassRegistered(PassType::OcclusionCulling))
     {

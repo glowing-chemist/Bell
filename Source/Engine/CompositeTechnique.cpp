@@ -18,6 +18,7 @@ CompositeTechnique::CompositeTechnique(Engine* eng, RenderGraph& graph) :
 	const bool usingSSAO = eng->isPassRegistered(PassType::SSAO) || eng->isPassRegistered(PassType::SSAOImproved);
 	const bool usingOverlay = eng->isPassRegistered(PassType::Overlay);
 	const bool usingTAA = eng->isPassRegistered(PassType::TAA);
+    const bool usingSSR = eng->isPassRegistered(PassType::SSR) || eng->isPassRegistered(PassType::RayTracedReflections);
 
     if (eng->debugTextureEnabled())
 	{
@@ -32,7 +33,7 @@ CompositeTechnique::CompositeTechnique(Engine* eng, RenderGraph& graph) :
 		compositeTask.addInput(kOverlay, AttachmentType::Texture2D);
 		compositeTask.addInput(kDefaultSampler, AttachmentType::Sampler);
 
-		compositeTask.addOutput(kFrameBufer, AttachmentType::RenderTarget2D, eng->getSwapChainImage()->getFormat(), SizeClass::Custom, LoadOp::Clear_Black);
+		compositeTask.addOutput(kFrameBufer, AttachmentType::RenderTarget2D, eng->getSwapChainImage()->getFormat(), LoadOp::Clear_Black);
 
 		compositeTask.setRecordCommandsCallback(
             [](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
@@ -67,9 +68,22 @@ CompositeTechnique::CompositeTechnique(Engine* eng, RenderGraph& graph) :
                 compositeTask.addInput(kOverlay, AttachmentType::Texture2D);
             if (usingSSAO)
                 compositeTask.addInput(kSSAO, AttachmentType::Texture2D);
+
+            if (usingSSR && !usingTAA)
+            {
+                compositeTask.addInput(kReflectionMap, AttachmentType::Texture2D);
+                compositeTask.addInput(kGBufferSpecularRoughness, AttachmentType::Texture2D);
+                compositeTask.addInput(kReflectionMap, AttachmentType::Texture2D);
+
+            }
+
             compositeTask.addInput(kDefaultSampler, AttachmentType::Sampler);
 
-            compositeTask.addOutput(usingTAA ? kCompositeOutput : kFrameBufer, AttachmentType::RenderTarget2D, eng->getSwapChainImage()->getFormat(), usingTAA ? SizeClass::Swapchain : SizeClass::Custom, LoadOp::Nothing);
+            if(usingTAA)
+                compositeTask.addManagedOutput(usingTAA ? kCompositeOutput : kFrameBufer, AttachmentType::RenderTarget2D, eng->getSwapChainImage()->getFormat(), SizeClass::Swapchain, LoadOp::Nothing);
+            else
+                compositeTask.addOutput(usingTAA ? kCompositeOutput : kFrameBufer, AttachmentType::RenderTarget2D, eng->getSwapChainImage()->getFormat(), LoadOp::Nothing);
+
 
             compositeTask.setRecordCommandsCallback(
                 [](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
@@ -102,9 +116,17 @@ CompositeTechnique::CompositeTechnique(Engine* eng, RenderGraph& graph) :
             if(eng->isPassRegistered(PassType::Overlay))
                 overlayTask.addInput(kOverlay, AttachmentType::Texture2D);
 
+            if (usingSSR)
+            {
+                overlayTask.addInput(kReflectionMap, AttachmentType::Texture2D);
+                overlayTask.addInput(kGBufferSpecularRoughness, AttachmentType::Texture2D);
+                overlayTask.addInput(kReflectionMap, AttachmentType::Texture2D);
+
+            }
+
             overlayTask.addInput(kDefaultSampler, AttachmentType::Sampler);
             overlayTask.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
-            overlayTask.addOutput(kFrameBufer, AttachmentType::RenderTarget2D, eng->getSwapChainImage()->getFormat(), SizeClass::Custom, LoadOp::Clear_Black);
+            overlayTask.addOutput(kFrameBufer, AttachmentType::RenderTarget2D, eng->getSwapChainImage()->getFormat(), LoadOp::Clear_Black);
             overlayTask.setRecordCommandsCallback(
                 [](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
                 {
@@ -133,7 +155,7 @@ CompositeTechnique::CompositeTechnique(Engine* eng, RenderGraph& graph) :
             compositeTask.addInput(kOverlay, AttachmentType::Texture2D);
             compositeTask.addInput(kDefaultSampler, AttachmentType::Sampler);
 
-            compositeTask.addOutput(kFrameBufer, AttachmentType::RenderTarget2D, eng->getSwapChainImage()->getFormat(), SizeClass::Custom, LoadOp::Clear_Black);
+            compositeTask.addOutput(kFrameBufer, AttachmentType::RenderTarget2D, eng->getSwapChainImage()->getFormat(), LoadOp::Clear_Black);
 
             compositeTask.setRecordCommandsCallback(
                 [](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)

@@ -7,18 +7,35 @@
 #define USING_OVERLAY 0
 #endif
 
+#if (defined(Screen_Space_Reflection) || defined(RayTraced_Reflections)) && !defined(TAA)
+#define USING_SSR 3
+#else
+#define USING_SSR 0
+#endif
+
 [[vk::binding(0)]]
 Texture2D<float4> taaOutput;
 
-#if defined(Overlay)
+#if USING_OVERLAY
 [[vk::binding(1)]]
 Texture2D<float4> overlay;
 #endif
 
-[[vk::binding(1 + USING_OVERLAY)]]
+#if USING_SSR
+[[vk::binding(USING_OVERLAY  + 1)]]
+Texture2D<float4> reflectionMap;
+
+[[vk::binding(USING_OVERLAY + 2)]]
+Texture2D<float4> specularRoughness;
+
+[[vk::binding(USING_OVERLAY + 3)]]
+Texture2D<float2> reflectionUVs;
+#endif
+
+[[vk::binding(1 + USING_OVERLAY + USING_SSR)]]
 SamplerState defaultSampler;
 
-[[vk::binding(2 + USING_OVERLAY)]]
+[[vk::binding(2 + USING_OVERLAY + USING_SSR)]]
 ConstantBuffer<CameraBuffer> camera;
 
 float4 main(PositionAndUVVertOutput vertOutput)
@@ -35,6 +52,16 @@ float4 main(PositionAndUVVertOutput vertOutput)
 	colour -= taaOutput.Sample(defaultSampler, vertOutput.uv + float2(0.0f, -pixelSize.y));
 	colour -= taaOutput.Sample(defaultSampler, vertOutput.uv + float2(-pixelSize.x, 0.0f));
 	colour = saturate(colour);
+
+#if USING_SSR
+	const float2 reflectionUV = reflectionUVs.Sample(defaultSampler, vertOutput.uv);
+	if(all(reflectionUV != -1.0f))
+	{
+		const float3 specular = specularRoughness.Sample(defaultSampler, vertOutput.uv);
+		const float3 relflection = reflectionMap.Sample(defaultSampler, vertOutput.uv).xyz;
+		colour.xyz = lerp(colour.xyz, relflection * specular, specular);
+	}
+#endif
 
 #if USING_OVERLAY
 	const float4 overlay = overlay.Sample(defaultSampler, vertOutput.uv);
