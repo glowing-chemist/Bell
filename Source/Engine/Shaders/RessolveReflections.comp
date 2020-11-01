@@ -1,0 +1,35 @@
+#include "UniformBuffers.hlsl"
+
+
+[[vk::binding(0)]]
+Texture2D<float4> specularRoughness;
+
+[[vk::binding(1)]]
+Texture2D<float4> globalLighting;
+
+[[vk::binding(2)]]
+Texture2D<float2> reflectionUV;
+
+[[vk::binding(3)]]
+SamplerState linearSampler;
+
+[[vk::binding(4)]]
+ConstantBuffer<CameraBuffer> camera;
+
+[[vk::binding(5)]]
+RWTexture2D<float4> reflectionMap;
+
+[numthreads(8, 8, 1)]
+void main(uint3 globalIndex : SV_DispatchThreadID)
+{
+	const float2 size = camera.frameBufferSize / float2(2.0f, 2.0f);
+	const float2 uv = (float2(globalIndex.xy) / size) + camera.jitter;
+
+	const float roughness = specularRoughness.Sample(linearSampler, uv).w;
+	const float2 reflectedUV = reflectionUV.Sample(linearSampler, uv);
+	const float mip = roughness * 5.0f;
+
+	const float4 ressolvedColour = globalLighting.SampleLevel(linearSampler, reflectedUV, mip);
+
+	reflectionMap[globalIndex.xy] = ressolvedColour;
+}
