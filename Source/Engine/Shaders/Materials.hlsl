@@ -35,7 +35,8 @@ float2 parallaxUV(const float2 startUV, const float3 view, Texture2D<float> heig
 MaterialInfo calculateMaterialInfo(	const float4 vertexNormal,
 									const float4 vertexColour,
 									const uint materialIndex, 
-									const float3 view, 
+									const float4 tangent,
+									const float3 view,
 									float2 uv)
 {
 	MaterialInfo mat;
@@ -47,9 +48,7 @@ MaterialInfo calculateMaterialInfo(	const float4 vertexNormal,
 	uint nextMaterialSlot = 0;
 
 	// calcaulte the tbn matrix used for normalmapping and parralax occlusion mapping.
-	const float2 xDerivities = ddx_fine(uv);
-	const float2 yDerivities = ddy_fine(uv);
-	float3x3 tbv = tangentSpaceMatrix(vertexNormal.xyz, view, float4(xDerivities, yDerivities));
+	float3x3 tbv = tangentSpaceMatrix(vertexNormal, tangent);
 
 #if MATERIAL_FLAGS & kMaterial_HeightMap
 	{

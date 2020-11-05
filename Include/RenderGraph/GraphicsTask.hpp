@@ -34,7 +34,8 @@ enum VertexAttributes
 	Position4 = 1 << 3,
 	TextureCoordinates = 1 << 4,
 	Normals = 1 << 5,
-    Albedo = 1 << 6
+	Tangents = 1 << 6, 
+    Albedo = 1 << 7
 };
 
 enum class BlendMode

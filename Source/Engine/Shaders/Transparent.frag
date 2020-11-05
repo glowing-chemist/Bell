@@ -43,7 +43,8 @@ Output main(GBufferVertOutput vertInput)
     MaterialInfo material = calculateMaterialInfo(  vertInput.normal,
                                                     vertInput.colour, 
                                                     vertInput.materialIndex, 
-                                                    viewDir, 
+                                                    vertInput.tangent,
+                                                    viewDir,
                                                     vertInput.uv);
 
 	const float3 lightDir = reflect(-viewDir, material.normal.xyz);

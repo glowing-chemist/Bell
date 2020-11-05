@@ -41,7 +41,7 @@ VoxalizeTechnique::VoxalizeTechnique(Engine* eng, RenderGraph& graph) :
 #endif
 {
     GraphicsTask task{"voxalize", mPipelineDesc};
-    task.setVertexAttributes((VertexAttributes::Position4 | VertexAttributes::Normals | VertexAttributes::TextureCoordinates | VertexAttributes::Albedo));
+    task.setVertexAttributes((VertexAttributes::Position4 | VertexAttributes::Normals | VertexAttributes::Tangents | VertexAttributes::TextureCoordinates | VertexAttributes::Albedo));
     task.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
     task.addInput(kVoxelDimmensions, AttachmentType::UniformBuffer);
     task.addInput(kDiffuseVoxelMap, AttachmentType::Image3D);

@@ -38,6 +38,7 @@ StaticMesh::StaticMesh(const std::string& path, const int vertAttributes) :
 											 aiProcess_Triangulate |
 											 aiProcess_JoinIdenticalVertices |
 											 aiProcess_GenNormals |
+                                             aiProcess_CalcTangentSpace |
 											 aiProcess_FlipUVs);
 
     BELL_ASSERT(scene->mNumMeshes == 1, "This files containes more than 1 mesh, which one is loaded is undefined.")
@@ -69,6 +70,8 @@ void StaticMesh::configure(const aiScene* scene, const aiMesh* mesh, const int v
 
     const bool normalsNeeded = mesh->HasNormals() && (vertAttributes & VertexAttributes::Normals);
 
+    const bool tangentsNeeded = mesh->HasTangentsAndBitangents() && (vertAttributes * VertexAttributes::Tangents);
+
     const bool albedoNeeded = (mesh->GetNumColorChannels() > 0) && (vertAttributes & VertexAttributes::Albedo);
 
     // relys on float and MaterialID beingn the same size (should always be true).
@@ -76,6 +79,7 @@ void StaticMesh::configure(const aiScene* scene, const aiMesh* mesh, const int v
     const uint32_t vertexStride =   ((positionNeeded ? primitiveSize : 0) +
                                     ((vertAttributes & VertexAttributes::TextureCoordinates) ? 2 : 0) +
                                     (normalsNeeded ? 1 : 0) +
+                                    (tangentsNeeded ? 1 : 0) +
                                     ((vertAttributes & VertexAttributes::Albedo) ? 1 : 0)) * sizeof(float);
 
 	mVertexStride = vertexStride;
@@ -133,6 +137,25 @@ void StaticMesh::configure(const aiScene* scene, const aiMesh* mesh, const int v
             float4 normal = float4(mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z, 1.0f);
             const char4 packednormals = packNormal(normal);
             mVertexData.WriteVertexChar4(packednormals);
+        }
+
+        if (tangentsNeeded)
+        {
+            //Need to check if inversion is needed for calculated bi-tangent in shader.
+            float3 normal = float3(mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z);
+            float3 tangent = float3(mesh->mTangents[i].x, mesh->mTangents[i].y, mesh->mTangents[i].z);
+            float3 biTangent = float3(mesh->mBitangents[i].x, mesh->mBitangents[i].y, mesh->mBitangents[i].z);
+
+            float3 calculatedBitangent = glm::normalize(glm::cross(normal, tangent));
+            float bitangentSign;
+            if (glm::length(calculatedBitangent - biTangent) < 0.1f)
+                bitangentSign = -1.0f;
+            else
+                bitangentSign = 1.0f;
+
+            static_assert(sizeof(char4) == sizeof(uint32_t), "char4 must match 32 bit int in size");
+            const char4 packedtangent = packNormal(float4(tangent, bitangentSign));
+            mVertexData.WriteVertexChar4(packedtangent);
         }
 
         if(albedoNeeded)

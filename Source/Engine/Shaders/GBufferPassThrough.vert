@@ -24,6 +24,7 @@ GBufferVertOutput main(Vertex vertInput)
 	output.positionWS = transformedPositionWS;
 	output.uv = vertInput.uv;
 	output.normal = float4(normalize(mul(vertInput.normal.xyz, (float3x3)meshMatrix)), 1.0f);
+	output.tangent = float4(normalize(mul(vertInput.tangent.xyz, (float3x3)meshMatrix)), vertInput.tangent.w);
 	output.colour = vertInput.colour;
 	output.materialIndex =  model.materialIndex;
 	output.materialFlags = model.materialFlags;

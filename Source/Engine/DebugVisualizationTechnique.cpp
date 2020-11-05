@@ -112,7 +112,7 @@ DebugAABBTechnique::DebugAABBTechnique(Engine* eng, RenderGraph& graph) :
     mTaskID = graph.addTask(debugAABBTask);
 
     GraphicsTask wireFrameTask("WireFrame", mWireFramePipelineDesc);
-    wireFrameTask.setVertexAttributes(VertexAttributes::Position4 | VertexAttributes::Normals | VertexAttributes::TextureCoordinates | VertexAttributes::Albedo);
+    wireFrameTask.setVertexAttributes(VertexAttributes::Position4 | VertexAttributes::Normals | VertexAttributes::Tangents | VertexAttributes::TextureCoordinates | VertexAttributes::Albedo);
     wireFrameTask.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
     wireFrameTask.addInput("Wireframe transforms", AttachmentType::PushConstants);
     wireFrameTask.addOutput(kGlobalLighting, AttachmentType::RenderTarget2D, Format::RGBA8UNorm);

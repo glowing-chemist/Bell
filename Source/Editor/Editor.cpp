@@ -1450,7 +1450,7 @@ void Editor::drawPassContextMenu(const PassType passType)
 void Editor::loadScene(const std::string& scene)
 {
     mInProgressScene->setPath(scene);
-    mSceneInstanceIDs = mInProgressScene->loadFromFile(VertexAttributes::Position4 | VertexAttributes::Normals | VertexAttributes::TextureCoordinates | VertexAttributes::Albedo, &mEngine);
+    mSceneInstanceIDs = mInProgressScene->loadFromFile(VertexAttributes::Position4 | VertexAttributes::Normals | VertexAttributes::Tangents | VertexAttributes::TextureCoordinates | VertexAttributes::Albedo, &mEngine);
     mInProgressScene->uploadData(&mEngine);
     mInProgressScene->computeBounds(MeshType::Static);
     mInProgressScene->computeBounds(MeshType::Dynamic);

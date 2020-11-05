@@ -188,7 +188,7 @@ int main()
                                       "./Assets/skybox/nz.png"};
 
     Scene testScene("./Assets/Sponza/sponzaPBR.obj");
-    testScene.loadFromFile(VertexAttributes::Position4 | VertexAttributes::Normals | VertexAttributes::TextureCoordinates | VertexAttributes::Albedo, &engine);
+    testScene.loadFromFile(VertexAttributes::Position4 | VertexAttributes::Normals | VertexAttributes::Tangents | VertexAttributes::TextureCoordinates | VertexAttributes::Albedo, &engine);
     testScene.loadSkybox(skybox, &engine);
     testScene.uploadData(&engine);
     testScene.computeBounds(MeshType::Static);

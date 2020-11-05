@@ -12,7 +12,7 @@ GBufferTechnique::GBufferTechnique(Engine* eng, RenderGraph& graph) :
 {
     GraphicsTask task{ "GBuffer", mPipelineDescription };
 
-    task.setVertexAttributes(VertexAttributes::Position4 | VertexAttributes::Normals | VertexAttributes::TextureCoordinates | VertexAttributes::Albedo);
+    task.setVertexAttributes(VertexAttributes::Position4 | VertexAttributes::Normals | VertexAttributes::Tangents | VertexAttributes::TextureCoordinates | VertexAttributes::Albedo);
 
     task.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
     task.addInput(kDefaultSampler, AttachmentType::Sampler);
@@ -131,7 +131,7 @@ GBufferPreDepthTechnique::GBufferPreDepthTechnique(Engine* eng, RenderGraph& gra
 {
     GraphicsTask task{ "GBufferPreDepth", mPipelineDescription };
 
-    task.setVertexAttributes(VertexAttributes::Position4 | VertexAttributes::Normals | VertexAttributes::TextureCoordinates | VertexAttributes::Albedo);
+    task.setVertexAttributes(VertexAttributes::Position4 | VertexAttributes::Normals | VertexAttributes::Tangents | VertexAttributes::TextureCoordinates | VertexAttributes::Albedo);
 
     task.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
     task.addInput(kDefaultSampler, AttachmentType::Sampler);

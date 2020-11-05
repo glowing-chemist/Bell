@@ -35,6 +35,7 @@ GBufferFragOutput main(GBufferVertOutput vertInput)
     MaterialInfo material = calculateMaterialInfo(  vertInput.normal,
                                                     vertInput.colour,
                                                     vertInput.materialIndex, 
+                                                    vertInput.tangent,
                                                     viewDir, 
                                                     vertInput.uv);
 

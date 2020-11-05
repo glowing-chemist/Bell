@@ -76,7 +76,8 @@ void main(VoxalizeGeometryOutput vertInput)
                                                     vertInput.colour, 
                                                     vertInput.materialFlags, 
                                                     vertInput.materialIndex, 
-                                                    viewDir, 
+                                                    vertInput.tangent,
+                                                    viewDir,
                                                     vertInput.uv);
 
     float3 irradiance = ConvolvedSkyboxDiffuse.Sample(linearSampler, material.normal.xyz).xyz;

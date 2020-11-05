@@ -23,6 +23,7 @@ GBufferVertOutput main(Vertex vertex)
 	output.position = transformedPosition;
 	output.positionWS = transformedPositionWS;
 	output.normal = float4(normalize(mul(vertex.normal.xyz, (float3x3)meshMatrix)), 1.0f);
+	output.tangent = float4(normalize(mul(vertex.tangent.xyz, (float3x3)meshMatrix)), vertex.tangent.w);
 	output.colour = vertex.colour;
 	output.materialIndex = model.materialIndex;
 	output.materialFlags = model.materialFlags;

@@ -51,7 +51,7 @@ ShadowMappingTechnique::ShadowMappingTechnique(Engine* eng, RenderGraph& graph) 
 {
     GraphicsTask shadowTask{ "ShadowMapping", mDesc };
     shadowTask.setVertexAttributes(VertexAttributes::Position4 |
-                              VertexAttributes::Normals | VertexAttributes::TextureCoordinates | VertexAttributes::Albedo);
+                              VertexAttributes::Normals |VertexAttributes::Tangents | VertexAttributes::TextureCoordinates | VertexAttributes::Albedo);
 
     shadowTask.addInput(kShadowingLights, AttachmentType::UniformBuffer);
     shadowTask.addInput(kDefaultSampler, AttachmentType::Sampler);

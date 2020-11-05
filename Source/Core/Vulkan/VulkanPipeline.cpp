@@ -297,6 +297,7 @@ void GraphicsPipeline::setVertexAttributes(const int vertexInputs)
 	const bool hasPosition4 = vertexInputs & VertexAttributes::Position4;
 	const bool hasTextureCoords = vertexInputs & VertexAttributes::TextureCoordinates;
 	const bool hasNormals = vertexInputs & VertexAttributes::Normals;
+	const bool hasTangents = vertexInputs & VertexAttributes::Tangents;
 	const bool hasAlbedo = vertexInputs & VertexAttributes::Albedo;
 
 	uint32_t positionSize = 0;
@@ -307,7 +308,7 @@ void GraphicsPipeline::setVertexAttributes(const int vertexInputs)
 	else if (hasPosition4)
 		positionSize = 16;
 
-    const uint32_t vertexStride = positionSize + (hasTextureCoords ? 8 : 0) + (hasNormals ? 4 : 0) + (hasAlbedo ? 4 : 0);
+    const uint32_t vertexStride = positionSize + (hasTextureCoords ? 8 : 0) + (hasNormals ? 4 : 0) + (hasTangents ? 4 : 0) + (hasAlbedo ? 4 : 0);
 
 	vk::VertexInputBindingDescription bindingDesc{};
 	bindingDesc.setStride(vertexStride);
@@ -380,6 +381,19 @@ void GraphicsPipeline::setVertexAttributes(const int vertexInputs)
 
 		attribs.push_back(attribDescNormal);
         currentOffset += 4;
+		++currentLocation;
+	}
+
+	if (hasTangents)
+	{
+		vk::VertexInputAttributeDescription attribDescTangent{};
+		attribDescTangent.setBinding(0);
+		attribDescTangent.setLocation(currentLocation);
+		attribDescTangent.setFormat(vk::Format::eR8G8B8A8Snorm);
+		attribDescTangent.setOffset(currentOffset);
+
+		attribs.push_back(attribDescTangent);
+		currentOffset += 4;
 		++currentLocation;
 	}
 

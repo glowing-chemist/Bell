@@ -23,6 +23,7 @@ GBufferVertOutput main(Vertex vertInput, uint instanceID : SV_InstanceID)
 	output.positionWS = transformedPositionWS;
 	output.uv = vertInput.uv;
 	output.normal = float4(normalize(mul(float3(vertInput.normal.xyz), (float3x3)instanceTransformations[instanceID].meshMatrix)), 1.0f);
+	output.tangent = float4(normalize(mul(float3(vertInput.tangent.xyz), (float3x3)instanceTransformations[instanceID].meshMatrix)), vertInput.tangent.w);
 	output.colour = vertInput.colour;
 	output.materialIndex =  instanceTransformations[instanceID].materialIndex;
 	output.materialFlags = instanceTransformations[instanceID].materialFlags;

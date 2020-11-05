@@ -17,6 +17,7 @@ struct GBufferVertOutput
 	float4 positionWS : POSITION0;
 	float2 uv : TEXCOORD0;
 	float4 normal : NORMAL0;
+	float4 tangent : TANGENT0;
 	float4 colour : COLOUR0;
 	uint materialIndex : MATERIALID;
 	uint materialFlags : MATERIAL_TYPES;
@@ -69,6 +70,7 @@ struct Vertex
 	float4 position : POSITION;
 	float2 uv : TEXCOORD0;
 	float4 normal : NORMAL0;
+	float4 tangent : TANGENT0;
 	float4 colour : COLOR0;
 };
 
@@ -150,9 +152,11 @@ Vertex readVertexFromBuffer(ByteAddressBuffer vertexBuffer, uint offset)
 
 	vert.position = asfloat(vertexBuffer.Load4(offset));
 	vert.uv = asfloat(vertexBuffer.Load2(offset + 16));
-	uint vertToProcessPackedNormal = vertexBuffer.Load(offset + 24);
-	vert.normal = unpackNormals(vertToProcessPackedNormal);
-	vert.colour = unpackColour(vertexBuffer.Load(offset + 28));
+	uint packedNormal = vertexBuffer.Load(offset + 24);
+	vert.normal = unpackNormals(packedNormal);
+	uint packedTangent = vertexBuffer.Load(offset + 28);
+	vert.tangent = unpackNormals(packedTangent);
+	vert.colour = unpackColour(vertexBuffer.Load(offset + 32));
 
 	return vert;
 }
@@ -162,5 +166,6 @@ void writeVertexToBuffer(RWByteAddressBuffer vertexBuffer, uint offset, Vertex v
 	vertexBuffer.Store4(offset, asuint(vert.position));
 	vertexBuffer.Store2(offset + 16, asuint(vert.uv));
 	vertexBuffer.Store(offset + 24, packNormals(vert.normal));
-	vertexBuffer.Store(offset + 28, packColour(vert.colour));
+	vertexBuffer.Store(offset + 28, packNormals(vert.tangent));
+	vertexBuffer.Store(offset + 32, packColour(vert.colour));
 }

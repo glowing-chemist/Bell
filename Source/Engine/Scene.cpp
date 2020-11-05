@@ -95,6 +95,7 @@ std::vector<InstanceID> Scene::loadFromFile(const int vertAttributes, Engine* en
                                              aiProcess_Triangulate |
                                              aiProcess_JoinIdenticalVertices |
                                              aiProcess_GenNormals |
+                                             aiProcess_CalcTangentSpace |
                                              aiProcess_FlipUVs);
 
     const aiNode* rootNode = scene->mRootNode;
@@ -563,6 +564,7 @@ std::vector<SceneID> Scene::loadFile(const std::string &path, MeshType meshType,
                                              aiProcess_Triangulate |
                                              aiProcess_JoinIdenticalVertices |
                                              aiProcess_GenNormals |
+                                             aiProcess_CalcTangentSpace |
                                              aiProcess_FlipUVs);
 
     std::vector<SceneID> ids{};
@@ -570,7 +572,7 @@ std::vector<SceneID> Scene::loadFile(const std::string &path, MeshType meshType,
     for(uint32_t i = 0; i < scene->mNumMeshes; ++i)
     {
         const aiMesh* aimesh = scene->mMeshes[i];
-        StaticMesh mesh(scene, aimesh, VertexAttributes::Position4 | VertexAttributes::Normals | VertexAttributes::TextureCoordinates | VertexAttributes::Albedo);
+        StaticMesh mesh(scene, aimesh, VertexAttributes::Position4 | VertexAttributes::Normals | VertexAttributes::Tangents | VertexAttributes::TextureCoordinates | VertexAttributes::Albedo);
 
         ids.push_back(mSceneMeshes.size());
         mSceneMeshes.push_back({mesh, meshType});

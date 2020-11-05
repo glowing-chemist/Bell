@@ -23,6 +23,12 @@ float3x3 tangentSpaceMatrix(const float3 vertNormal, const float3 view, const fl
 	 return float3x3(tangent * invmax, bitangent * invmax, vertNormal);
 }
 
+float3x3 tangentSpaceMatrix(float3 normal, float4 tangent)
+{
+	const float3 bitangent = normalize(cross(normal, tangent.xyz)) * tangent.w;
+
+	return float3x3(tangent.xyz, bitangent, normal);
+}
 
 float3 remapNormals(const float3 N)
 {
