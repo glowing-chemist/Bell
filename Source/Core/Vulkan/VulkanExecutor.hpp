@@ -35,6 +35,8 @@ public:
 
     virtual void bindVertexBuffer(const BufferView&, const size_t offset) override;
 
+    virtual void bindVertexBuffer(const BufferView*, const size_t* offsets, const uint32_t) override;
+
     virtual void bindIndexBuffer(const BufferView&, const size_t offset) override;
 
     virtual void recordBarriers(BarrierRecorder&) override;

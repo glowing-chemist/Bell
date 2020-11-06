@@ -94,6 +94,16 @@ void VulkanExecutor::bindVertexBuffer(const BufferView& buffer, const size_t off
     ++mRecordedCommands;
 }
 
+void VulkanExecutor::bindVertexBuffer(const BufferView* bufferViews, const size_t* offsets, const uint32_t bufferCount)
+{
+    BELL_ASSERT(bufferCount < 5, "Increase array size")
+    vk::Buffer vertexBuffers[4];
+    for(uint32_t i = 0; i < bufferCount; ++i)
+        vertexBuffers[i] = static_cast<const VulkanBufferView*>(bufferViews[i].getBase())->getBuffer();
+
+    mCommandBuffer.bindVertexBuffers(0, bufferCount, vertexBuffers, offsets);
+    ++mRecordedCommands;
+}
 
 void VulkanExecutor::bindIndexBuffer(const BufferView& buffer, const size_t offset)
 {
