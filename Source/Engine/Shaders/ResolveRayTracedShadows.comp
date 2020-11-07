@@ -15,7 +15,7 @@ Texture2D<float2> velocity;
 
 #if defined(GBuffer_pass) || defined(GBuffer_Pre_Depth)
 [[vk::binding(4)]]
-Texture2D<float3> normals;
+Texture2D<float2> normals;
 #define HAVE_NORMALS 1
 #else
 #define HAVE_NORMALS 0
@@ -66,8 +66,7 @@ void main(uint3 globalIndex : SV_DispatchThreadID)
 	const float currentShadowFactor = shadowMap.Sample(linearSampler, uv);
 
 #if HAVE_NORMALS == 1
-	float3 normalCS = normals.Sample(linearSampler, uv);
-	normalCS = remapNormals(normalCS);
+	float3 normalCS = decodeOct(normals.Load(int3(globalIndex.xy, 0)));
 	normalCS = normalize(mul(float3x3(camera.view), normalCS));
 #else
 	float3 normalCS = normalsFromDepth(currentDepth, uv);

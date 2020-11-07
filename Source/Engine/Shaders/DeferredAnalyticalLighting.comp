@@ -19,7 +19,7 @@ Texture2D<float2> ltcAmp;
 Texture2D<float> depth;
 
 [[vk::binding(5)]]
-Texture2D<float4> vertexNormals;
+Texture2D<float2> vertexNormals;
 
 [[vk::binding(6)]]
 Texture2D<float4> Diffuse;
@@ -67,10 +67,7 @@ void main(uint3 globalIndex : SV_DispatchThreadID)
 	float4 worldSpaceFragmentPos = mul(camera.invertedViewProj, float4((uv - 0.5f) * 2.0f, fragmentDepth, 1.0f));
 	worldSpaceFragmentPos /= worldSpaceFragmentPos.w;
 
-	float3 normal;
-    normal = vertexNormals.Sample(linearSampler, uv);
-    normal = remapNormals(normal);
-    normal = normalize(normal);
+	float3 normal = decodeOct(vertexNormals.Load(int3(globalIndex.xy, 0)));
 
     const float3 viewDir = normalize(float4(camera.position, 1.0f) - worldSpaceFragmentPos).xyz;
 

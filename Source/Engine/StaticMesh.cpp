@@ -5,6 +5,8 @@
 #include "assimp/Importer.hpp"
 #include "assimp/postprocess.h"
 
+#include "glm/gtx/handed_coordinate_space.hpp"
+
 #include <limits>
 
 
@@ -148,10 +150,10 @@ void StaticMesh::configure(const aiScene* scene, const aiMesh* mesh, const int v
 
             float3 calculatedBitangent = glm::normalize(glm::cross(normal, tangent));
             float bitangentSign;
-            if (glm::length(calculatedBitangent - biTangent) < 0.1f)
-                bitangentSign = -1.0f;
-            else
+            if (glm::leftHanded(tangent, biTangent, normal) == glm::leftHanded(tangent, calculatedBitangent, normal))
                 bitangentSign = 1.0f;
+            else
+                bitangentSign = -1.0f;
 
             static_assert(sizeof(char4) == sizeof(uint32_t), "char4 must match 32 bit int in size");
             const char4 packedtangent = packNormal(float4(tangent, bitangentSign));

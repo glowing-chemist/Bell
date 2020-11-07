@@ -15,7 +15,7 @@ Texture2D<float3> DFG;
 Texture2D<float> depth;
 
 [[vk::binding(3)]]
-Texture2D<float3> Normals;
+Texture2D<float2> Normals;
 
 [[vk::binding(4)]]
 Texture2D<float4> Diffuse;
@@ -44,6 +44,7 @@ Texture2D<float> shadowMap;
 float4 main(UVVertOutput vertInput)
 {
     const float2 uv = vertInput.uv;
+    const uint2 pixel = vertInput.uv * camera.frameBufferSize;
 	const float fragmentDepth = depth.Sample(linearSampler, uv);
 
     if(fragmentDepth == 0.0f) // skybox
@@ -52,10 +53,7 @@ float4 main(UVVertOutput vertInput)
 	float4 worldSpaceFragmentPos = mul(camera.invertedViewProj, float4((uv - 0.5f) * 2.0f, fragmentDepth, 1.0f));
     worldSpaceFragmentPos /= worldSpaceFragmentPos.w;
 
-	float3 normal;
-    normal = Normals.Sample(linearSampler, uv);
-    normal = remapNormals(normal);
-    normal = normalize(normal);
+	float3 normal = decodeOct(Normals.Load(int3(pixel, 0)));
 
     const float3 viewDir = normalize(camera.position - worldSpaceFragmentPos.xyz);
 

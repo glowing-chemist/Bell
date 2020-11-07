@@ -13,7 +13,7 @@ ConstantBuffer<CameraBuffer> camera;
 Texture2D<float> LinearDepth;
 
 [[vk::binding(3)]]
-Texture2D<float3> normals;
+Texture2D<float2> normals;
 
 [[vk::binding(4)]]
 SamplerState linearSampler;
@@ -30,8 +30,8 @@ float main(PositionAndUVVertOutput vertInput)
   if(depth == 1.0f)
     return depth;
  
-  float3 normal = normals.Sample(linearSampler, vertInput.uv);
-  normal = remapNormals(normal);
+  const uint2 pixel = vertInput.uv * camera.frameBufferSize;
+  float3 normal = decodeOct(normals.Load(uint3(pixel, 0)));
   normal = normalize(normal);
   // bring in to view space
   normal = normalize(mul((float3x3)camera.view, normal));

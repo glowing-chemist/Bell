@@ -9,7 +9,7 @@
 struct GBufferFragOutput
 {
     float4 diffuse;
-    float3 normal;
+    float2 normal;
     float4 specularRoughness;
     float2 velocity;
     float4 emissiveOcclusion;
@@ -46,7 +46,7 @@ GBufferFragOutput main(GBufferVertOutput vertInput)
 
     GBufferFragOutput output;
 	output.diffuse = material.diffuse;
-	output.normal = (material.normal.xyz + 1.0f) * 0.5f;
+	output.normal = encodeOct(material.normal.xyz);
 	output.specularRoughness = material.specularRoughness;
     output.velocity = (vertInput.velocity * 0.5f) + 0.5f;
     output.emissiveOcclusion = material.emissiveOcclusion;
