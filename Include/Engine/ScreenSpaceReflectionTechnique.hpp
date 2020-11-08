@@ -32,6 +32,9 @@ private:
     Image mReflectionUVs;
     ImageView mReflectionUVsView;
 
+    Image mReflectionMapRaw;
+    ImageView mReflectionMapRawView;
+
     Image mReflectionMap;
     ImageView mReflectionMapView;
 

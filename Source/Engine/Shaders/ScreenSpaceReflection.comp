@@ -32,7 +32,7 @@ void main(uint3 globalIndex : SV_DispatchThreadID)
 {
 	const float2 uv = (float2(globalIndex.xy) / (camera.frameBufferSize / 2.0f)) + camera.jitter;
 
-	const float fragmentDepth = Depth.Load(int3(globalIndex.xy, 0));
+	const float fragmentDepth = Depth.Sample(linearSampler, uv);
 
 	if(fragmentDepth == 0.0f) // skybox.
 	{
@@ -47,15 +47,12 @@ void main(uint3 globalIndex : SV_DispatchThreadID)
 
 	float3 view = normalize(camera.position - positionWS.xyz);
 
-	float3 normal = decodeOct(Normals.Load(int3(globalIndex.xy, 0)));
-	normal = normalize(remapNormals(normal));
+	float3 normal = decodeOct(Normals.Load(int3(globalIndex.xy * 2, 0)));
 
 	uint width, height;
 	LinearDepth.GetDimensions(width, height);
 	width >>= START_MIP;
 	height >>= START_MIP;
-
-	float4 reflectedColour = float4(0.0f, 0.0f, 0.0f, 1.0f);
 
 	const float3 L = reflect(-view, normal);
 

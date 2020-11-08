@@ -33,6 +33,34 @@ TaskID addDeferredUpsampleTaskR8(const char* name, const char* input, const char
 }
 
 
+TaskID addDeferredUpsampleTaskRGBA8(const char* name, const char* input, const char* output, const uint2 outputSize, Engine* eng, RenderGraph& graph)
+{
+    ComputeTask task{ name };
+    task.addInput(input, AttachmentType::Texture2D);
+    task.addInput(output, AttachmentType::Image2D);
+    task.addInput(kDefaultSampler, AttachmentType::Sampler);
+    task.addInput(kPointSampler, AttachmentType::Sampler);
+    task.addInput(kLinearDepth, AttachmentType::Texture2D);
+    task.addInput(kGBufferNormals, AttachmentType::Texture2D);
+
+    task.setRecordCommandsCallback(
+                [=](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+                {
+                    Shader upsampleShader = eng->getShader("./Shaders/BilaterialUpsampleRGBA8.comp");
+                    const RenderTask& task = graph.getTask(taskIndex);
+                    exec->setComputeShader(static_cast<const ComputeTask&>(task), graph, upsampleShader);
+
+                    const float threadGroupWidth = outputSize.x;
+                    const float threadGroupHeight = outputSize.y;
+
+                    exec->dispatch(std::ceil(threadGroupWidth / 16.0f), std::ceil(threadGroupHeight / 16.0f), 1.0f);
+                }
+    );
+
+    return graph.addTask(task);
+}
+
+
 TaskID addBlurXTaskR8(const char* name, const char* input, const char* output, const uint2 outputSize, Engine* eng, RenderGraph& graph)
 {
     ComputeTask blurXTask{name};

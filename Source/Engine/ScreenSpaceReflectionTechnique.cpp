@@ -1,9 +1,11 @@
 #include "Engine/ScreenSpaceReflectionTechnique.hpp"
 #include "Engine/Engine.hpp"
+#include "Engine/UtilityTasks.hpp"
 #include "Core/Executor.hpp"
 
 
 constexpr const char SSRSampler[] = "SSRSampler";
+constexpr const char RawReflections[] = "RawReflections";
 
 
 ScreenSpaceReflectionTechnique::ScreenSpaceReflectionTechnique(Engine* eng, RenderGraph& graph) :
@@ -12,7 +14,10 @@ ScreenSpaceReflectionTechnique::ScreenSpaceReflectionTechnique(Engine* eng, Rend
     mReflectionUVs(getDevice(), Format::RG32Float, ImageUsage::Storage | ImageUsage::Sampled, eng->getSwapChainImage()->getExtent(0, 0).width / 2, eng->getSwapChainImage()->getExtent(0, 0).height / 2,
         1, 1, 1, 1, "Reflection UV map"),
     mReflectionUVsView(mReflectionUVs, ImageViewType::Colour),
-    mReflectionMap(getDevice(), Format::RGBA8UNorm, ImageUsage::Storage | ImageUsage::Sampled, eng->getSwapChainImage()->getExtent(0, 0).width / 2, eng->getSwapChainImage()->getExtent(0, 0).height / 2,
+    mReflectionMapRaw(getDevice(), Format::RGBA8UNorm, ImageUsage::Storage | ImageUsage::Sampled, eng->getSwapChainImage()->getExtent(0, 0).width / 2, eng->getSwapChainImage()->getExtent(0, 0).height / 2,
+                   1, 1, 1, 1, "Reflection map raw"),
+    mReflectionMapRawView(mReflectionMapRaw, ImageViewType::Colour),
+    mReflectionMap(getDevice(), Format::RGBA8UNorm, ImageUsage::Storage | ImageUsage::Sampled, eng->getSwapChainImage()->getExtent(0, 0).width, eng->getSwapChainImage()->getExtent(0, 0).height,
                    1, 1, 1, 1, "Reflection map"),
     mReflectionMapView(mReflectionMap, ImageViewType::Colour),
     mClampedSampler(SamplerType::Linear)
@@ -43,7 +48,7 @@ ScreenSpaceReflectionTechnique::ScreenSpaceReflectionTechnique(Engine* eng, Rend
     resolveReflections.addInput(kReflecionUVs, AttachmentType::Texture2D);
     resolveReflections.addInput(kDefaultSampler, AttachmentType::Sampler);
     resolveReflections.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
-    resolveReflections.addInput(kReflectionMap, AttachmentType::Image2D);
+    resolveReflections.addInput(RawReflections, AttachmentType::Image2D);
     resolveReflections.setRecordCommandsCallback([this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
     {
         Shader computeShader = eng->getShader("./Shaders/RessolveReflections.comp");
@@ -53,6 +58,9 @@ ScreenSpaceReflectionTechnique::ScreenSpaceReflectionTechnique(Engine* eng, Rend
         exec->dispatch(mTileCount.x, mTileCount.y, 1);
     });
     graph.addTask(resolveReflections);
+
+    addDeferredUpsampleTaskRGBA8("upsample reflections", RawReflections, kReflectionMap, uint2(eng->getSwapChainImage()->getExtent(0, 0).width, eng->getSwapChainImage()->getExtent(0, 0).height),
+                                 eng, graph);
 
     mClampedSampler.setAddressModeU(AddressMode::Clamp);
     mClampedSampler.setAddressModeV(AddressMode::Clamp);
@@ -64,6 +72,7 @@ void ScreenSpaceReflectionTechnique::bindResources(RenderGraph& graph)
 {
     if (!graph.isResourceSlotBound(SSRSampler))
     {
+        graph.bindImage(RawReflections, mReflectionMapRawView);
         graph.bindImage(kReflectionMap, mReflectionMapView);
         graph.bindImage(kReflecionUVs, mReflectionUVsView);
         graph.bindSampler(SSRSampler, mClampedSampler);

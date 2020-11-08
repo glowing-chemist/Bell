@@ -1,10 +1,10 @@
 #include "NormalMapping.hlsl"
 
 [[vk::binding(0)]]
-Texture2D<float> Input;
+Texture2D<float4> Input;
 
 [[vk::binding(1)]]
-RWTexture2D<float> Output;
+RWTexture2D<float4> Output;
 
 [[vk::binding(2)]]
 SamplerState linearSampler;
@@ -19,7 +19,7 @@ Texture2D<float2> linearDepth;
 Texture2D<float2> Normals;
 
 
-float nearestDepthSample(const float2 uv, uint2 outputSize, Texture2D<float> input, Texture2D<float2> depth)
+float4 nearestDepthSample(const float2 uv, uint2 outputSize, Texture2D<float4> input, Texture2D<float2> depth)
 {
 	uint inputWidth, inputHeight;
 	input.GetDimensions(inputWidth, inputWidth);

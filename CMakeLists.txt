@@ -296,6 +296,7 @@ set(SHADERS
 	PathTracer.comp
 	RayTracedShadows.comp
 	BilaterialUpsample.comp
+	BilaterialUpsampleRGBA8.comp
 	ResolveRayTracedShadows.comp
 	KdTree.hlsl
 	BasicVertexTransform.vert
