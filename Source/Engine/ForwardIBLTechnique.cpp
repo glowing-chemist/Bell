@@ -15,7 +15,7 @@ ForwardIBLTechnique::ForwardIBLTechnique(Engine* eng, RenderGraph& graph) :
 {
 	GraphicsTask task{ "ForwardIBL", mDesc };
     task.setVertexAttributes(VertexAttributes::Position4 |
-        VertexAttributes::Normals | VertexAttributes::TextureCoordinates | VertexAttributes::Albedo);
+        VertexAttributes::Normals | VertexAttributes::Tangents | VertexAttributes::TextureCoordinates | VertexAttributes::Albedo);
 
 	task.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
 	task.addInput(kDFGLUT, AttachmentType::Texture2D);
