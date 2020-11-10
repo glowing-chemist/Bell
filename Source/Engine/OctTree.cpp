@@ -9,41 +9,37 @@
 
 // Can be enabled for small scenes where the cost of octree traversal traversal is greater
 // than just looping over all meshes.
-#define SMALL_SCENE_OPTIMISATION 1
-
-static constexpr float NO_INTERSECTION = std::numeric_limits<float>::max();
+#define SMALL_SCENE_OPTIMISATION 0
 
 
 template<typename T>
-void OctTree<T>::containedWithin(std::vector<T>& meshes, const Frustum& frustum, const std::unique_ptr<typename OctTree<T>::Node>& node, const EstimationMode estimationMode) const
+void OctTree<T>::containedWithin(std::set<T>& meshes, const Frustum& frustum, const std::unique_ptr<typename OctTree<T>::Node>& node, const EstimationMode estimationMode) const
 {
 	if (frustum.isContainedWithin(node->mBoundingBox, EstimationMode::Under))
 	{
-		meshes.insert(meshes.end(), node->mValues.begin(), node->mValues.end());
+        for(const auto node : node->mValues)
+            meshes.insert(node.mValue);
 		return;
 	}
 
 	for (const auto& childNode : node->mChildren)
 	{
-		if (!childNode)
+        if (childNode)
+        {
+            if (frustum.isContainedWithin(childNode->mBoundingBox, estimationMode))
+                containedWithin(meshes, frustum, childNode, estimationMode);
+        }
+        else
 		{
 			if (frustum.isContainedWithin(node->mBoundingBox, estimationMode))
 			{
 				for (const auto& mesh : node->mValues)
 				{
-                    if (frustum.isContainedWithin(mesh->getMesh()->getAABB() * mesh->getTransMatrix(), estimationMode))
-						meshes.push_back(mesh);
+                    if (frustum.isContainedWithin(mesh.mBounds , estimationMode))
+                        meshes.insert(mesh.mValue);
 				}
 			}
 			return;
-		}
-		else
-		{
-			for (const auto& subNode : node->mChildren)
-			{
-				if (frustum.isContainedWithin(subNode->mBoundingBox, estimationMode))
-					containedWithin(meshes, frustum, subNode, estimationMode);
-			} 
 		}
 	}
 }
@@ -56,27 +52,13 @@ std::vector<T> OctTree<T>::containedWithin(const Frustum& frustum, const Estimat
 	if (!mRoot)
 		return {};
 
-	std::vector<T> meshes{};
+    std::set<T> meshes{};
 
-#if SMALL_SCENE_OPTIMISATION
-
-	for (const auto& mesh : mRoot->mValues)
-	{
-        if (frustum.isContainedWithin(mesh->getMesh()->getAABB() * mesh->getTransMatrix(), estimationMode))
-		{
-			meshes.push_back(mesh);
-		}
-	}
-
-#else
-	meshes.reserve(mRoot->mValues.size());
 	containedWithin(meshes, frustum, mRoot, estimationMode);
 
-	std::sort(meshes.begin(), meshes.end());
-	meshes.erase(std::unique(meshes.begin(), meshes.end()), meshes.end());
-#endif
+    std::vector<T> uniqueMeshes(meshes.begin(), meshes.end());
 
-	return meshes;
+    return uniqueMeshes;
 }
 
 
@@ -84,21 +66,11 @@ template<typename T>
 std::vector<T> OctTree<T>::getIntersections(const AABB& aabb) const
 {
 	std::vector<T> intersections{};
-#if SMALL_SCENE_OPTIMISATION
 
-	for (const auto& mesh : mRoot->mValues)
-	{
-        if (aabb.contains(mesh->getMesh()->getAABB() * mesh->getTransMatrix(), EstimationMode::Over))
-		{
-			intersections.push_back(mesh);
-		}
-	}
-
-#else
 	if(mRoot != nullptr)
 		getIntersections(aabb, mRoot, intersections);
-#endif
-	return intersections;
+
+    return intersections;
 }
 
 
@@ -107,7 +79,8 @@ void OctTree<T>::getIntersections(const AABB& aabb, const std::unique_ptr<typena
 {
 	if (aabb.contains(node->mBoundingBox, EstimationMode::Under))
 	{
-		intersections.insert(intersections.end(), node->mValues.begin(), node->mValues.end());
+        for(const auto node : node->mValues)
+            intersections.push_back(node.mValue);
 		return;
 	}
 
@@ -119,8 +92,8 @@ void OctTree<T>::getIntersections(const AABB& aabb, const std::unique_ptr<typena
 			{
 				for (const auto& mesh : node->mValues)
 				{
-                    if (aabb.contains(mesh->getMesh()->getAABB() * mesh->getTransMatrix(), EstimationMode::Over))
-						intersections.push_back(mesh);
+                    if (aabb.contains(mesh.mBounds, EstimationMode::Over))
+                        intersections.push_back(mesh.mValue);
 				}
 			}
 			return;
@@ -159,7 +132,7 @@ std::unique_ptr<typename OctTree<T>::Node> OctTreeFactory<T>::createSpacialSubdi
 	{
 		if (parentBox.contains(node.mBoundingBox, EstimationMode::Over))
 		{
-			newNode->mValues.push_back(node.mValue);
+            newNode->mValues.push_back({node.mBoundingBox, node.mValue});
 		}
 	}
 

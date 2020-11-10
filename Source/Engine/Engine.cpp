@@ -459,7 +459,9 @@ void Engine::execute(RenderGraph& graph)
         mVertexBuffer->resize(static_cast<uint32_t>(vertexData.size()), false);
         mIndexBuffer->resize(static_cast<uint32_t>(indexData.size()), false);
 
+        mVertexBuffer->resize(vertexData.size(), false);
         mVertexBuffer->setContents(vertexData.data(), static_cast<uint32_t>(vertexData.size()));
+        mIndexBuffer->resize(indexData.size(), false);
         mIndexBuffer->setContents(indexData.data(), static_cast<uint32_t>(indexData.size()));
 
         mVertexBuilder.reset();
@@ -480,7 +482,10 @@ void Engine::execute(RenderGraph& graph)
         }
 
         if(!bounds.empty())
+        {
+            mMeshBoundsBuffer->resize(bounds.size() * sizeof(AABB), false);
             mMeshBoundsBuffer->setContents(bounds.data(), sizeof(AABB) * bounds.size());
+        }
     }
 
     auto& animationVerticies = mAnimationVertexBuilder.finishRecording();

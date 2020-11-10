@@ -25,6 +25,7 @@ Frustum::Frustum(const float4x4 mvp)
 
 bool Frustum::isContainedWithin(const float4 &point) const
 {
+    BELL_ASSERT(point.w == 1.0f, "Not a point")
     bool inFrontOf = true;
 
     inFrontOf = inFrontOf && mNearPlane.isInFrontOf(point);
@@ -40,7 +41,7 @@ bool Frustum::isContainedWithin(const float4 &point) const
 
 bool Frustum::isContainedWithin(const float3 &point) const
 {
-    return isContainedWithin({point, 0.0f});
+    return isContainedWithin({point, 1.0f});
 }
 
 

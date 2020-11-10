@@ -689,6 +689,11 @@ void Scene::computeBounds(const MeshType type)
 {
     generateSceneAABB(type == MeshType::Static);
 
+    const float3 sceneSize = mSceneAABB.getSideLengths();
+    const float maxSceneDimension = std::max(sceneSize.x, std::max(sceneSize.y, sceneSize.z));
+    const uint32_t maxDivisions = std::ceil(std::log2(maxSceneDimension));
+    const uint32_t divisions = std::max(3u, maxDivisions > 8u ? maxDivisions - 8u : maxDivisions);
+
     if(type == MeshType::Static)
     {
         //Build the static meshes BVH structure.
@@ -698,9 +703,9 @@ void Scene::computeBounds(const MeshType type)
                        [](MeshInstance& instance)
                         { return OctTreeFactory<MeshInstance*>::BuilderNode{instance.getMesh()->getAABB() * instance.getTransMatrix(), &instance}; } );
 
-        OctTreeFactory<MeshInstance*> staticBVHFactory(mSceneAABB, staticBVHMeshes);
+        OctTreeFactory<MeshInstance*> staticBVHFactory(mSceneAABB, staticBVHMeshes);        
 
-        mStaticMeshBoundingVolume = staticBVHFactory.generateOctTree(3);
+        mStaticMeshBoundingVolume = staticBVHFactory.generateOctTree(divisions);
     }
     else
     {
@@ -714,7 +719,7 @@ void Scene::computeBounds(const MeshType type)
 
          OctTreeFactory<MeshInstance*> dynamicBVHFactory(mSceneAABB, dynamicBVHMeshes);
 
-         mDynamicMeshBoundingVolume = dynamicBVHFactory.generateOctTree(3);
+         mDynamicMeshBoundingVolume = dynamicBVHFactory.generateOctTree(divisions);
     }
 }
 

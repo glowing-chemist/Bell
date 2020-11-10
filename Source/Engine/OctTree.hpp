@@ -5,6 +5,7 @@
 #include <array>
 #include <memory>
 #include <optional>
+#include <set>
 #include <tuple>
 #include <vector>
 
@@ -31,13 +32,19 @@ public:
 
 	std::vector<T>	getIntersections(const AABB& aabb) const;
 
+    struct BoundedValue
+    {
+        AABB mBounds;
+        T mValue;
+    };
+
     struct Node
     {
         Node() = default;
 
         // Use an optional incase T doesn't have a default constructor.
 		AABB mBoundingBox;
-		std::vector<T> mValues;
+        std::vector<BoundedValue> mValues;
 
         std::unique_ptr<Node> mChildren[8];
     };
@@ -46,7 +53,7 @@ private:
     //std::vector<T>						getIntersections(const Ray&, const std::unique_ptr<Node>&) const;
     //std::vector<std::pair<T, float>>	getIntersectionsWithDistance(const Ray&, std::unique_ptr<Node>&, const float distance) const;
 		
-	void	containedWithin(std::vector<T>& meshes, const Frustum&, const std::unique_ptr<Node>&, const EstimationMode) const;
+    void	containedWithin(std::set<T>& meshes, const Frustum&, const std::unique_ptr<Node>&, const EstimationMode) const;
 
 	void	getIntersections(const AABB& aabb, const std::unique_ptr<typename OctTree<T>::Node>& node, std::vector<T>& intersections) const;
 

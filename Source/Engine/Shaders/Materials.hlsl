@@ -55,6 +55,8 @@ MaterialInfo calculateMaterialInfo(	const float4 vertexNormal,
 		const float3 tangentView = mul(tbv, view);
 		Texture2D<float> heightMap = materials[materialIndex];
 
+		const float2 xDerivities = ddx_fine(uv);
+		const float2 yDerivities = ddy_fine(uv);
 		uv = parallaxUV(uv, tangentView, heightMap, float4(xDerivities, yDerivities));
 
 		++nextMaterialSlot;

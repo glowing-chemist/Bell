@@ -23,7 +23,7 @@ struct ImGuiOptions
     bool mRayTracedShadows = false;
 #endif
     int mReflectionsToggle = 0;
-    bool mSSR = true;
+    bool mSSR = false;
 #if USE_RAY_TRACING
     bool mRayTracedReflections = false;
 #endif
