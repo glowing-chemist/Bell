@@ -9,7 +9,7 @@ TransparentTechnique::TransparentTechnique(Engine* eng, RenderGraph& graph) :
                                getDevice()->getSwapChain()->getSwapChainImageHeight()},
                          Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
                          getDevice()->getSwapChain()->getSwapChainImageHeight()},
-                         true, BlendMode::Add, BlendMode::Add, false, DepthTest::GreaterEqual, FillMode::Fill, Primitive::TriangleList},
+                         FaceWindingOrder::CW, BlendMode::Add, BlendMode::Add, false, DepthTest::GreaterEqual, FillMode::Fill, Primitive::TriangleList},
         mTransparentVertexShader(eng->getShader("./Shaders/ForwardMaterial.vert")),
         mTransparentFragmentShader(eng->getShader("./Shaders/Transparent.frag"))
 {

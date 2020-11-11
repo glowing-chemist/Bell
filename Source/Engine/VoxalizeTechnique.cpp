@@ -20,7 +20,7 @@ VoxalizeTechnique::VoxalizeTechnique(Engine* eng, RenderGraph& graph) :
     mPipelineDesc{
         Rect{VOXEL_SIZE_X, VOXEL_SIZE_Y},
         Rect{VOXEL_SIZE_X, VOXEL_SIZE_Y},
-        true,
+        FaceWindingOrder::CW,
         BlendMode::None,
         BlendMode::None,
         false,

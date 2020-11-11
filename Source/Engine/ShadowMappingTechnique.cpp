@@ -19,7 +19,7 @@ ShadowMappingTechnique::ShadowMappingTechnique(Engine* eng, RenderGraph& graph) 
           static_cast<uint32_t>(eng->getScene()->getShadowLightCamera().getOrthographicFrameBufferSize().y)},
           Rect{static_cast<uint32_t>(eng->getScene()->getShadowLightCamera().getOrthographicFrameBufferSize().x),
           static_cast<uint32_t>(eng->getScene()->getShadowLightCamera().getOrthographicFrameBufferSize().y)},
-        true, BlendMode::None, BlendMode::None, true, DepthTest::LessEqual, FillMode::Fill, Primitive::TriangleList),
+        FaceWindingOrder::CW, BlendMode::None, BlendMode::None, true, DepthTest::LessEqual, FillMode::Fill, Primitive::TriangleList),
     mShadowMapVertexShader(eng->getShader("./Shaders/ShadowMap.vert")),
     mShadowMapFragmentShader(eng->getShader("./Shaders/VarianceShadowMap.frag")),
     mBlurXShader( eng->getShader("Shaders/blurXrg32f.comp") ),

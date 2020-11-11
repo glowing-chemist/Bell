@@ -22,7 +22,7 @@ OverlayTechnique::OverlayTechnique(Engine* eng, RenderGraph& graph) :
 							   getDevice()->getSwapChain()->getSwapChainImageHeight()},
 						 Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
 						 getDevice()->getSwapChain()->getSwapChainImageHeight()},
-						 false, // no backface culling
+                         FaceWindingOrder::None, // no backface culling
 						 BlendMode::None,
 						 BlendMode::None,
 						 false, // no depth writes

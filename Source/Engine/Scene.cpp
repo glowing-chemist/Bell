@@ -692,7 +692,7 @@ void Scene::computeBounds(const MeshType type)
     const float3 sceneSize = mSceneAABB.getSideLengths();
     const float maxSceneDimension = std::max(sceneSize.x, std::max(sceneSize.y, sceneSize.z));
     const uint32_t maxDivisions = std::ceil(std::log2(maxSceneDimension));
-    const uint32_t divisions = std::max(3u, maxDivisions > 8u ? maxDivisions - 8u : maxDivisions);
+    const uint32_t divisions = std::max(3u, maxDivisions > 5u ? maxDivisions - 5u : maxDivisions);
 
     if(type == MeshType::Static)
     {

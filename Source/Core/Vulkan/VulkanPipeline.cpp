@@ -207,9 +207,22 @@ bool GraphicsPipeline::compile(const RenderTask&)
 	rasterInfo.setDepthBiasClamp(false);
     rasterInfo.setPolygonMode(polygonMode); // output filled in fragments
 	rasterInfo.setLineWidth(1.0f);
-	if (mPipelineDescription.mUseBackFaceCulling) {
+    if (mPipelineDescription.mFrontFace != FaceWindingOrder::None) {
 		rasterInfo.setCullMode(vk::CullModeFlagBits::eBack); // cull fragments from the back
-		rasterInfo.setFrontFace(vk::FrontFace::eClockwise);
+
+        vk::FrontFace frontFace = [frontFace = mPipelineDescription.mFrontFace]()
+        {
+            switch(frontFace)
+            {
+                case FaceWindingOrder::CCW:
+                    return vk::FrontFace::eCounterClockwise;
+
+                case FaceWindingOrder::CW:
+                    return vk::FrontFace::eClockwise;
+            }
+        }();
+
+        rasterInfo.setFrontFace(frontFace);
 	}
 	else {
 		rasterInfo.setCullMode(vk::CullModeFlagBits::eNone);

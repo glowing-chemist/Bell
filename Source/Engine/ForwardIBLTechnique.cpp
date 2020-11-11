@@ -11,7 +11,7 @@ ForwardIBLTechnique::ForwardIBLTechnique(Engine* eng, RenderGraph& graph) :
 			   getDevice()->getSwapChain()->getSwapChainImageHeight()},
 		  Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
 			   getDevice()->getSwapChain()->getSwapChainImageHeight()},
-               true, BlendMode::None, BlendMode::None, false, DepthTest::GreaterEqual, FillMode::Fill, Primitive::TriangleList }
+               FaceWindingOrder::CW, BlendMode::None, BlendMode::None, false, DepthTest::GreaterEqual, FillMode::Fill, Primitive::TriangleList }
 {
 	GraphicsTask task{ "ForwardIBL", mDesc };
     task.setVertexAttributes(VertexAttributes::Position4 |

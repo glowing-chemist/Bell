@@ -7,11 +7,6 @@
 #include "Engine/GeomUtils.h"
 
 
-// Can be enabled for small scenes where the cost of octree traversal traversal is greater
-// than just looping over all meshes.
-#define SMALL_SCENE_OPTIMISATION 0
-
-
 template<typename T>
 void OctTree<T>::containedWithin(std::set<T>& meshes, const Frustum& frustum, const std::unique_ptr<typename OctTree<T>::Node>& node, const EstimationMode estimationMode) const
 {
@@ -122,11 +117,11 @@ OctTree<T> OctTreeFactory<T>::generateOctTree(const uint32_t subdivisions)
 template<typename T>
 std::unique_ptr<typename OctTree<T>::Node> OctTreeFactory<T>::createSpacialSubdivisions(const uint32_t subdivisions, const AABB& parentBox, const std::vector<BuilderNode>& nodes)
 {
-	auto newNode = std::make_unique<typename OctTree<T>::Node>();
-	newNode->mBoundingBox = parentBox;
-
 	if (nodes.empty())
-		return newNode;
+        return nullptr;
+
+    auto newNode = std::make_unique<typename OctTree<T>::Node>();
+    newNode->mBoundingBox = parentBox;
 
 	for (const auto& node : nodes)
 	{

@@ -58,6 +58,13 @@ enum class DepthTest
 	Greater
 };
 
+enum class FaceWindingOrder
+{
+    None,
+    CCW,
+    CW
+};
+
 enum class Primitive
 {
 	TriangleList,
@@ -89,20 +96,20 @@ struct GraphicsPipelineDescription
 {
 	Rect mScissorRect;
 	Rect mViewport;
-	bool mUseBackFaceCulling;
+	FaceWindingOrder mFrontFace;
 
 	BlendMode mAlphaBlendMode;
 	BlendMode mColourBlendMode;
 	bool      mDepthWrite;
 	DepthTest mDepthTest;
-    FillMode mFillMode;
+	FillMode mFillMode;
 
 	Primitive mPrimitiveType;
 
     GraphicsPipelineDescription(const Rect& scissor, const Rect& viewport) :
 		mScissorRect{ scissor },
 		mViewport{ viewport },
-		mUseBackFaceCulling{ true },
+    mFrontFace{ FaceWindingOrder::CW },
 		mAlphaBlendMode{ BlendMode::None },
 		mColourBlendMode{ BlendMode::None },
 		mDepthWrite{ false },
@@ -112,16 +119,16 @@ struct GraphicsPipelineDescription
 	{}
 
     GraphicsPipelineDescription(const Rect& scissor, const Rect& viewport,
-		const bool useFaceCulling,
+    const FaceWindingOrder cullface,
 		const BlendMode alphaBlendMode,
 		const BlendMode colourBlendMode,
 		const bool depthWrite,
 		const DepthTest depthTest,
-        const FillMode fillMode,
-        const Primitive primitiveType) :
+    const FillMode fillMode,
+    const Primitive primitiveType) :
 		mScissorRect{ scissor },
 		mViewport{ viewport },
-		mUseBackFaceCulling{ useFaceCulling },
+    mFrontFace{ cullface },
 		mAlphaBlendMode{ alphaBlendMode },
 		mColourBlendMode{ colourBlendMode },
 		mDepthWrite{ depthWrite },
