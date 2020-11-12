@@ -589,7 +589,7 @@ void Engine::execute(RenderGraph& graph)
         });
     }
 
-    //printf("Meshes %zu\n", meshes.size());
+    printf("Meshes %zu\n", meshes.size());
 
     auto barriers = graph.generateBarriers(mRenderDevice);
 	

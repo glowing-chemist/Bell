@@ -31,7 +31,6 @@ float3 normalsFromDepth(float depth, float2 texcoords)
   float3 p2 = float3(xoffset, depth2 - depth);
   
   float3 normal = cross(p1, p2);
-  //normal.z = -normal.z;
   
   return normalize(normal);
 }
@@ -60,7 +59,7 @@ float main(PositionAndUVVertOutput vertInput)
 
     if(NdotL >= 0.0f)
     {
-        const float2 intersectionUV = marchRay(position, L, 5, float2(1.0f, 1.0f) / float2(width, height));
+        const float2 intersectionUV = marchRay(position, L, 7, float2(1.0f, 1.0f) / float2(width, height), 3, camera.nearPlane, camera.farPlane, camera.invertedPerspective);
         if(all(intersectionUV >= float2(0.0f, 0.0f))) // valid intersection.
         {
             const float intersectionDepth = LinearDepth.SampleLevel(linearSampler, intersectionUV, 0.0f);

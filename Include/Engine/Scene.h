@@ -443,6 +443,11 @@ public:
             return inst->getMesh()->getBlendMeshAnimation(name);
     }
 
+    void setOctreeMaxDivisions(const uint32_t maxDiv)
+    {
+        mOctreeMaxDivisions = maxDiv;
+    }
+
 private:
 
     void generateSceneAABB(const bool includeStatic);
@@ -482,6 +487,7 @@ private:
     std::vector<MeshInstance> mDynamicMeshInstances;
     std::vector<uint32_t>     mFreeDynamicMeshIndicies;
 
+    uint32_t mOctreeMaxDivisions;
     OctTree<MeshInstance*> mStaticMeshBoundingVolume;
     OctTree<MeshInstance*> mDynamicMeshBoundingVolume;
 

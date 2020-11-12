@@ -115,9 +115,9 @@ OctTree<T> OctTreeFactory<T>::generateOctTree(const uint32_t subdivisions)
 
 
 template<typename T>
-std::unique_ptr<typename OctTree<T>::Node> OctTreeFactory<T>::createSpacialSubdivisions(const uint32_t subdivisions, const AABB& parentBox, const std::vector<BuilderNode>& nodes)
+std::unique_ptr<typename OctTree<T>::Node> OctTreeFactory<T>::createSpacialSubdivisions(const uint32_t subdivisions, const AABB& parentBox, const std::vector<typename OctTree<T>::BoundedValue>& nodes)
 {
-	if (nodes.empty())
+	if (nodes.empty() || subdivisions == 0)
         return nullptr;
 
     auto newNode = std::make_unique<typename OctTree<T>::Node>();
@@ -125,9 +125,9 @@ std::unique_ptr<typename OctTree<T>::Node> OctTreeFactory<T>::createSpacialSubdi
 
 	for (const auto& node : nodes)
 	{
-		if (parentBox.contains(node.mBoundingBox, EstimationMode::Over))
+		if (parentBox.contains(node.mBounds, EstimationMode::Over))
 		{
-            newNode->mValues.push_back({node.mBoundingBox, node.mValue});
+            newNode->mValues.push_back({node.mBounds, node.mValue});
 		}
 	}
 
@@ -137,7 +137,7 @@ std::unique_ptr<typename OctTree<T>::Node> OctTreeFactory<T>::createSpacialSubdi
 
 		for (uint32_t i = 0; i < subSpaces.size(); ++i)
 		{
-			newNode->mChildren[i] = createSpacialSubdivisions(subdivisions - 1, subSpaces[i], nodes);
+			newNode->mChildren[i] = createSpacialSubdivisions(subdivisions - 1, subSpaces[i], newNode->mValues);
 		}
 	}
 

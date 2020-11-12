@@ -66,15 +66,10 @@ class OctTreeFactory
 {
 public:
 
-	struct BuilderNode
-	{
-		AABB mBoundingBox;
-		T mValue;
-	};
-
+    using BuilderNode = typename OctTree<T>::BoundedValue;
 
     OctTreeFactory(const AABB& rootBox) : mRootBoundingBox{rootBox}, mBoundingBoxes{} {}
-    OctTreeFactory(const AABB& rootBox, std::vector<BuilderNode>& data) : mRootBoundingBox{rootBox},
+    OctTreeFactory(const AABB& rootBox, std::vector<typename OctTree<T>::BoundedValue>& data) : mRootBoundingBox{rootBox},
                                                                             mBoundingBoxes{data} {}
     void addAABB(const AABB& box, const T& value)
         { mBoundingBoxes.push_back({box, value}); }
@@ -84,10 +79,10 @@ public:
 private:
 
     std::array<AABB, 8> splitAABB(const AABB&) const;
-	std::unique_ptr<typename OctTree<T>::Node> createSpacialSubdivisions(const uint32_t subdivisions, const AABB& parentBox, const std::vector<BuilderNode>& nodes);
+	std::unique_ptr<typename OctTree<T>::Node> createSpacialSubdivisions(const uint32_t subdivisions, const AABB& parentBox, const std::vector<typename OctTree<T>::BoundedValue>& nodes);
 
     AABB mRootBoundingBox; // AABB that all others are contained within.
-    std::vector<BuilderNode> mBoundingBoxes;
+    std::vector<typename OctTree<T>::BoundedValue> mBoundingBoxes;
 };
 
 

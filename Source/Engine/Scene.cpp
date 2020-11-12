@@ -29,6 +29,7 @@ const StaticMesh* MeshInstance::getMesh() const
 Scene::Scene(const std::filesystem::path& path) :
     mPath{path},
     mSceneMeshes(),
+    mOctreeMaxDivisions{~0u},
     mStaticMeshBoundingVolume(),
     mDynamicMeshBoundingVolume(),
 	mSceneAABB(float4(std::numeric_limits<float>::max()), float4(std::numeric_limits<float>::min())),
@@ -689,10 +690,17 @@ void Scene::computeBounds(const MeshType type)
 {
     generateSceneAABB(type == MeshType::Static);
 
-    const float3 sceneSize = mSceneAABB.getSideLengths();
-    const float maxSceneDimension = std::max(sceneSize.x, std::max(sceneSize.y, sceneSize.z));
-    const uint32_t maxDivisions = std::ceil(std::log2(maxSceneDimension));
-    const uint32_t divisions = std::max(3u, maxDivisions > 5u ? maxDivisions - 5u : maxDivisions);
+    uint32_t divisions;
+
+    if (mOctreeMaxDivisions != ~0u)
+        divisions = mOctreeMaxDivisions;
+    else
+    {
+        const float3 sceneSize = mSceneAABB.getSideLengths();
+        const float maxSceneDimension = std::max(sceneSize.x, std::max(sceneSize.y, sceneSize.z));
+        const uint32_t maxDivisions = std::ceil(std::log2(maxSceneDimension));
+        divisions = std::max(3u, maxDivisions > 5u ? maxDivisions - 5u : maxDivisions);
+    }
 
     if(type == MeshType::Static)
     {

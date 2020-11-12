@@ -54,7 +54,7 @@ float main(PositionAndUVVertOutput vertInput)
 
     if(NdotL >= 0.0f)
     {
-        const float2 intersectionUV = marchRay(position, L, 5, float2(1.0f, 1.0f) / float2(width, height));
+        const float2 intersectionUV = marchRay(position, L, 7, float2(1.0f, 1.0f) / float2(width, height), 3, camera.nearPlane, camera.farPlane, camera.invertedPerspective);
         if(all(intersectionUV >= float2(0.0f, 0.0f))) // valid intersection.
         {
             const float intersectionDepth = LinearDepth.SampleLevel(linearSampler, intersectionUV, 0.0f);
