@@ -28,21 +28,20 @@
                     ForwardAnalyticalLighting = 1ULL << 21, \
                     DeferredCombinedLighting = 1ULL << 22, \
                     ForwardCombinedLighting = 1ULL << 23, \
-                    SSAOImproved = 1ULL << 24, \
-                    TAA = 1ULL << 25, \
-                    LineariseDepth = 1ULL << 26, \
-                    SSR = 1ULL << 27, \
-                    Voxelize = 1ULL << 28, \
-                    DebugAABB = 1ULL << 29, \
-                    DebugWireFrame = 1ULL << 30, \
-                    Transparent = 1ULL << 31, \
-                    LightProbeDeferredGI = 1ULL << 32, \
-                    VisualizeLightProbes = 1ULL << 33, \
-                    OcclusionCulling = 1ULL << 34, \
-                    PathTracing = 1ULL << 35, \
-                    RayTracedReflections = 1ULL << 36, \
-                    RayTracedShadows = 1ULL << 37, \
-                    DownSampleColour = 1ULL << 38
+                    TAA = 1ULL << 24, \
+                    LineariseDepth = 1ULL << 25, \
+                    SSR = 1ULL << 26, \
+                    Voxelize = 1ULL << 27, \
+                    DebugAABB = 1ULL << 28, \
+                    DebugWireFrame = 1ULL << 29, \
+                    Transparent = 1ULL << 30, \
+                    LightProbeDeferredGI = 1ULL << 31, \
+                    VisualizeLightProbes = 1ULL << 32, \
+                    OcclusionCulling = 1ULL << 33, \
+                    PathTracing = 1ULL << 34, \
+                    RayTracedReflections = 1ULL << 35, \
+                    RayTracedShadows = 1ULL << 36, \
+                    DownSampleColour = 1ULL << 37
 
 // An enum to keep track of which 
 enum class PassType : uint64_t
@@ -67,9 +66,6 @@ inline const char* passToString(const PassType passType)
 
         case PassType::SSAO:
             return "SSAO";
-
-		case PassType::SSAOImproved:
-			return "SSAO_Improved";
 
         case PassType::GBufferPreDepth:
             return "GBuffer_Pre_Depth";

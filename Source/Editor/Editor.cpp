@@ -49,15 +49,6 @@ namespace
                 return newNode;
             }
 
-            case NodeTypes::SSAOImproved:
-            {
-                std::shared_ptr<EditorNode> newNode = std::make_shared<PassNode>("SSAO Improved", passType);
-                newNode->mInputs.push_back(Pin{ 0, newNode, kGBufferNormals, PinType::Texture, PinKind::Input });
-                newNode->mInputs.push_back(Pin{ 0, newNode, kLinearDepth, PinType::Texture, PinKind::Input });
-                newNode->mOutputs.push_back(Pin{ 0, newNode, kSSAO, PinType::Texture, PinKind::Output });
-                return newNode;
-            }
-
             case NodeTypes::GBufferMaterial:
             {
                 std::shared_ptr<EditorNode> newNode = std::make_shared<PassNode>("GBufferMaterial", passType);
@@ -750,7 +741,6 @@ void Editor::drawAssistantWindow()
            drawPassContextMenu(PassType::GBufferPreDepth);
            drawPassContextMenu(PassType::GBUfferMaterialPreDepth);
            drawPassContextMenu(PassType::SSAO);
-           drawPassContextMenu(PassType::SSAOImproved);
 		   drawPassContextMenu(PassType::InplaceCombine);
 		   drawPassContextMenu(PassType::InplaceCombineSRGB);
            drawPassContextMenu(PassType::DeferredPBRIBL);

@@ -306,9 +306,6 @@ std::unique_ptr<Technique> Engine::getSingleTechnique(const PassType passType)
         case PassType::SSAO:
             return std::make_unique<SSAOTechnique>(this, mCurrentRenderGraph);
 
-		case PassType::SSAOImproved:
-			return std::make_unique<SSAOImprovedTechnique>(this, mCurrentRenderGraph);
-
         case PassType::GBufferPreDepth:
             return std::make_unique<GBufferPreDepthTechnique>(this, mCurrentRenderGraph);
 

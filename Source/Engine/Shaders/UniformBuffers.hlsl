@@ -29,9 +29,11 @@ struct CameraBuffer
     
 struct SSAOBuffer    
 {    
-        float4 offsets[64];
-        float scale;
-        int offsetsCount;      
+        float projScale;
+        float radius;
+        float bias;
+        float intensity;
+        float4 projInfo;   
 };
 
 

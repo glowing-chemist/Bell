@@ -15,7 +15,7 @@ struct ImGuiOptions
     bool mForward = false;
     bool mShowLights = false;
     bool mTAA = false;
-    bool mSSAO = false;
+    bool mSSAO = true;
     bool mShadows = true;
     int mShadowToggle = 0;
     bool mShadowMaps = true;
@@ -297,6 +297,9 @@ int main()
         if (graphicsOptions.mShowLights)
             engine.registerPass(PassType::LightFroxelation);
 		
+        if(graphicsOptions.mSSAO)
+            engine.registerPass(PassType::SSAO);
+
         if (graphicsOptions.mDefered)
 		{
             if(graphicsOptions.preDepth)
@@ -308,9 +311,6 @@ int main()
 
             if (graphicsOptions.mShowLights)
                 engine.registerPass(PassType::DeferredAnalyticalLighting);
-
-            if(graphicsOptions.mSSAO)
-                engine.registerPass(PassType::SSAOImproved);
 		}
 		else if(graphicsOptions.mForward)
         {        
@@ -318,9 +318,6 @@ int main()
                 engine.registerPass(PassType::ForwardCombinedLighting);
             else
                 engine.registerPass(PassType::ForwardIBL);
-
-            if(graphicsOptions.mSSAO)
-                engine.registerPass(PassType::SSAO);
         }
 
         if (graphicsOptions.mTAA)
