@@ -45,8 +45,8 @@ Scene::Scene(const std::filesystem::path& path) :
     mOctreeMaxDivisions{~0u},
     mStaticMeshBoundingVolume(),
     mDynamicMeshBoundingVolume(),
-    mRootTransform{},
-	mSceneAABB(float4(std::numeric_limits<float>::max()), float4(std::numeric_limits<float>::min())),
+    mRootTransform{1.0f},
+    mSceneAABB(float4(std::numeric_limits<float>::max()), float4(std::numeric_limits<float>::min())),
     mSceneCamera(float3(0.0f, 0.0f, 0.0f), float3(0.0f, 0.0f, 1.0f), 1920.0f /1080.0f ,0.1f, 2000.0f),
 	mMaterials{},
 	mMaterialImageViews{},
@@ -54,6 +54,7 @@ Scene::Scene(const std::filesystem::path& path) :
     mShadowLightCamera(Camera({0.0f, 0.0f, 0.0f}, {1.0f, 0.0f, 0.0f}, 0.0f)),
     mShadowingLight{},
     mCascadesInfo{mSceneCamera.getFarPlane() * 0.3f, mSceneCamera.getFarPlane() * 0.7f, mSceneCamera.getFarPlane()},
+    mNextInstanceID{0},
 	mSkybox{nullptr}
 {
     setShadowingLight(Camera({0.0f, 0.0f, 0.0f}, {1.0f, 0.0f, 0.0f}, 0.0f));
@@ -111,12 +112,12 @@ std::vector<InstanceID> Scene::loadFromFile(const int vertAttributes, Engine* en
                                              aiProcess_JoinIdenticalVertices |
                                              aiProcess_GenNormals |
                                              aiProcess_CalcTangentSpace |
+                                             aiProcess_GlobalScale |
                                              aiProcess_FlipUVs);
 
     const aiNode* rootNode = scene->mRootNode;
 
-	mSceneMeshes.reserve(scene->mNumMeshes);
-
+    mSceneMeshes.reserve(scene->mNumMeshes);
 
     MaterialMappings meshMaterials;
     fs::path materialFile{mPath};
@@ -580,6 +581,7 @@ std::vector<SceneID> Scene::loadFile(const std::string &path, MeshType meshType,
                                              aiProcess_JoinIdenticalVertices |
                                              aiProcess_GenNormals |
                                              aiProcess_CalcTangentSpace |
+                                             aiProcess_GlobalScale |
                                              aiProcess_FlipUVs);
 
     std::vector<SceneID> ids{};
@@ -611,7 +613,7 @@ InstanceID Scene::addMeshInstance(const SceneID meshID,
 {
     auto& [mesh, meshType] = mSceneMeshes[meshID];
 
-    InstanceID id = mNextInstanceID++;
+    const InstanceID id = mNextInstanceID++;
 
     if(meshType == MeshType::Static)
     {
