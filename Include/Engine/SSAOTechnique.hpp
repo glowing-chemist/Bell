@@ -14,6 +14,7 @@
 extern const char kSSAORaw[];
 extern const char kSSAOHistory[];
 extern const char kSSAOCounter[];
+extern const char kSSAOSampler[];
 
 class SSAOTechnique : public Technique
 {
@@ -35,7 +36,10 @@ public:
         graph.bindImage(kSSAOCounter, mHistoryCounterViews);
 
         if(!graph.isResourceSlotBound(kSSAO))
+        {
             graph.bindImage(kSSAO, mSSAOViews[2]);
+            graph.bindSampler(kSSAOSampler, mNearestSampler);
+        }
 	}
 
 	virtual void render(RenderGraph& graph, Engine*) override final;
@@ -56,6 +60,8 @@ private:
 
     Image mHistoryCounter;
     ImageView mHistoryCounterViews;
+
+    Sampler mNearestSampler;
 
 	PerFrameResource<Buffer> mSSAOBuffer;
 	PerFrameResource<BufferView> mSSAOBufferView;

@@ -8,6 +8,7 @@
 extern const char kSSAORaw[] = "SSAORaw";
 extern const char kSSAOHistory[] = "SSAOHistory";
 extern const char kSSAOCounter[] = "SSAOHistoryCounter";
+extern const char kSSAOSampler[] = "SSAOSampler";
 
 namespace
 {
@@ -49,9 +50,14 @@ SSAOTechnique::SSAOTechnique(Engine* eng, RenderGraph& graph) :
     mHistoryCounter(getDevice(), Format::R32Uint, ImageUsage::Storage | ImageUsage::TransferDest, getDevice()->getSwapChain()->getSwapChainImageWidth() / 2,
                     getDevice()->getSwapChain()->getSwapChainImageHeight() / 2, 1, 1, 1, 1, "SSAO Counter"),
     mHistoryCounterViews(mHistoryCounter, ImageViewType::Colour),
+    mNearestSampler(SamplerType::Point),
     mSSAOBuffer(getDevice(), BufferUsage::Uniform, sizeof(SSAOBuffer), sizeof(SSAOBuffer), "SSAO Offsets"),
     mSSAOBufferView(mSSAOBuffer)
 {
+    mNearestSampler.setAddressModeU(AddressMode::Clamp);
+    mNearestSampler.setAddressModeV(AddressMode::Clamp);
+    mNearestSampler.setAddressModeW(AddressMode::Clamp);
+
     // full screen triangle so no vertex attributes.
     GraphicsTask task{"SSAO", mPipelineDesc};
     task.setVertexAttributes(0);
@@ -66,7 +72,7 @@ SSAOTechnique::SSAOTechnique(Engine* eng, RenderGraph& graph) :
     task.addInput(kSSAOCounter, AttachmentType::Image2D);
     task.addInput(kGBufferVelocity, AttachmentType::Texture2D);
     task.addInput(kGBufferNormals, AttachmentType::Texture2D);
-    task.addInput(kDefaultSampler, AttachmentType::Sampler);
+    task.addInput(kSSAOSampler, AttachmentType::Sampler);
 
     task.addOutput(kSSAORaw, AttachmentType::RenderTarget2D, Format::R8UNorm, LoadOp::Nothing);
 
