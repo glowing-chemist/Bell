@@ -17,7 +17,7 @@ struct ImGuiOptions
     bool mForward = false;
     bool mShowLights = false;
     bool mTAA = false;
-    bool mSSAO = true;
+    bool mSSAO = false;
     bool mShadows = true;
     int mShadowToggle = 0;
     bool mShadowMaps = true;
