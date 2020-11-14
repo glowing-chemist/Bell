@@ -209,7 +209,7 @@ float ssao(const uint2 pixel)
   float3 n_C = float3(normals.Load(int3(pixel, 0)), 0);
   n_C = decodeOct(n_C.xy);
   n_C = mul((float3x3)camera.view, n_C);
-  n_C = normalize(n_C);
+  n_C = -normalize(n_C);
 
   // Choose the screen-space sample radius
   // proportional to the projected area of the sphere

@@ -205,7 +205,7 @@ int main()
     // set camera aspect ratio.
     Camera& camera = testScene.getCamera();
     camera.setAspect(float(windowWidth) / float(windowHeight));
-    camera.setFarPlane(30.0f);
+    camera.setFarPlane(20.0f);
 
     const float3 lightDirection = glm::normalize(float3(0.0f, -1.0f, 0.0f));
     const float3 ligthUp = float3(0.0f, 0.0f, 1.0f);
