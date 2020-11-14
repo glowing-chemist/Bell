@@ -337,6 +337,16 @@ public:
         return *mUnitSphere;
     }
 
+    void setShadowMapResolution(const float2& res)
+    {
+        mShadowMapResolution = res;
+    }
+
+    const float2& getShadowMapResolution() const
+    {
+        return mShadowMapResolution;
+    }
+
 private:
 
     CPUImage renderDiffuseCubeMap(const RayTracingScene &scene, const float3 &position, const uint32_t x, const uint32_t y);
@@ -398,6 +408,8 @@ private:
 
     Sampler mDefaultSampler;
     Sampler mDefaultPointSampler;
+
+    float2 mShadowMapResolution;
 
     // Debug helpers
     bool mShowDebugTexture;

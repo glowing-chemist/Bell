@@ -143,8 +143,8 @@ float4x4 Camera::getProjectionMatrix() const
     }
     else if(mMode == CameraMode::Orthographic)
     {
-        return glm::ortho(-mFrameBufferSize.x / 2.0f, mFrameBufferSize.x / 2.0f,
-                          -mFrameBufferSize.y / 2.0f, mFrameBufferSize.y / 2.0f, mNearPlaneDistance, mFarPlaneDistance);
+        return glm::ortho(-mOrthographicSize.x / 2.0f, mOrthographicSize.x / 2.0f,
+                          mOrthographicSize.y / 2.0f, -mOrthographicSize.y / 2.0f, mNearPlaneDistance, mFarPlaneDistance);
     }
 
     BELL_TRAP;

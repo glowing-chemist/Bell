@@ -3,6 +3,8 @@
 #include <string>
 
 #include <imgui.h>
+#include "Engine/GeomUtils.h"
+#include <glm/gtx/transform.hpp>
 
 #include "Engine/Engine.hpp"
 
@@ -176,9 +178,10 @@ int main()
         return 5;
     }
 
-    Engine engine{window};
+    Engine* engine = new Engine{window};
+    engine->setShadowMapResolution({1920.0f, 1080.0f});
 
-    engine.startFrame(std::chrono::microseconds(0));
+    engine->startFrame(std::chrono::microseconds(0));
 
     std::array<std::string, 6> skybox{"./Assets/skybox/px.png",
                                       "./Assets/skybox/nx.png",
@@ -188,9 +191,10 @@ int main()
                                       "./Assets/skybox/nz.png"};
 
     Scene testScene("./Assets/Sponza/sponzaPBR.obj");
-    testScene.loadFromFile(VertexAttributes::Position4 | VertexAttributes::Normals | VertexAttributes::Tangents | VertexAttributes::TextureCoordinates | VertexAttributes::Albedo, &engine);
-    testScene.loadSkybox(skybox, &engine);
-    testScene.uploadData(&engine);
+    testScene.setRootTransform(glm::scale(float3(0.01f, 0.01f, 0.01f)));
+    testScene.loadFromFile(VertexAttributes::Position4 | VertexAttributes::Normals | VertexAttributes::Tangents | VertexAttributes::TextureCoordinates | VertexAttributes::Albedo, engine);
+    testScene.loadSkybox(skybox, engine);
+    testScene.uploadData(engine);
     testScene.setOctreeMaxDivisions(2);
     testScene.computeBounds(MeshType::Static);
     testScene.computeBounds(MeshType::Dynamic);
@@ -201,14 +205,14 @@ int main()
     // set camera aspect ratio.
     Camera& camera = testScene.getCamera();
     camera.setAspect(float(windowWidth) / float(windowHeight));
+    camera.setFarPlane(30.0f);
 
     const float3 lightDirection = glm::normalize(float3(0.0f, -1.0f, 0.0f));
     const float3 ligthUp = float3(0.0f, 0.0f, 1.0f);
-    Camera ShadowCamera(float3(0.0f, 1500.0f, 0.0f), lightDirection, float(windowWidth) / float(windowHeight), 50.0f, 1600.0f);
+    Camera ShadowCamera(float3(0.0f, 16.0f, 0.0f), lightDirection, float(windowWidth) / float(windowHeight), 1.0f, 20.0f);
     ShadowCamera.setUp(ligthUp);
     ShadowCamera.setMode(CameraMode::Orthographic);
-    //ShadowCamera.setFrameBufferSizeOrthographic({2000.0f, 500.0f});
-    ShadowCamera.setFrameBufferSizeOrthographic({3440.0f, 1440.0f});
+    ShadowCamera.setOrthographicSize({20.0f, 10.0f});
     testScene.setShadowingLight(ShadowCamera);
     
     {
@@ -230,7 +234,7 @@ int main()
         }
     }
 
-    engine.setScene(&testScene);
+    engine->setScene(&testScene);
 #if USE_RAY_TRACING
     engine.setRayTracingScene(&rtScene);
 #endif
@@ -245,16 +249,16 @@ int main()
 
         glfwPollEvents();
 
-        Camera& camera = engine.getCurrentSceneCamera();
+        Camera& camera = engine->getCurrentSceneCamera();
 
         if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-            camera.moveForward(1.5f);
+            camera.moveForward(0.1f);
         if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-            camera.moveBackward(1.5f);
+            camera.moveBackward(0.1f);
         if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-            camera.moveLeft(1.5f);
+            camera.moveLeft(0.1f);
         if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-            camera.moveRight(1.5f);
+            camera.moveRight(0.1f);
         if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
             camera.rotateYaw(1.0f);
         if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
@@ -264,82 +268,82 @@ int main()
         if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS)
             camera.rotatePitch(-1.0f);
         if(glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
-            camera.moveUp((1.5f));
+            camera.moveUp((0.1f));
         if(glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS)
-            camera.moveDown(1.5f);
+            camera.moveDown(0.1f);
 
 		bool unregisterpasses = false;
 
 		if (!firstFrame)
 		{
-            engine.startFrame(std::chrono::duration_cast<std::chrono::microseconds>(diff));
-            unregisterpasses = renderMenu(window, camera, &engine, diff.count());
+            engine->startFrame(std::chrono::duration_cast<std::chrono::microseconds>(diff));
+            unregisterpasses = renderMenu(window, camera, engine, diff.count());
 		}
 
 		if(unregisterpasses)
-			engine.clearRegisteredPasses();
+            engine->clearRegisteredPasses();
 
 
-        engine.registerPass(PassType::ConvolveSkybox);
-        engine.registerPass(PassType::Skybox);
-        engine.registerPass(PassType::LineariseDepth);
+        engine->registerPass(PassType::ConvolveSkybox);
+        engine->registerPass(PassType::Skybox);
+        engine->registerPass(PassType::LineariseDepth);
         //engine.registerPass(PassType::Voxelize);
 
         if (graphicsOptions.mForward || graphicsOptions.preDepth)
-            engine.registerPass(PassType::DepthPre);
+            engine->registerPass(PassType::DepthPre);
 
         if(graphicsOptions.mShadows && graphicsOptions.mShadowMaps)
-            engine.registerPass(PassType::Shadow);
+            engine->registerPass(PassType::Shadow);
 #if USE_RAY_TRACING
         else if(graphicsOptions.mShadows && graphicsOptions.mRayTracedShadows)
-               engine.registerPass(PassType::RayTracedShadows);
+               engine->registerPass(PassType::RayTracedShadows);
 #endif
         if (graphicsOptions.mShowLights)
-            engine.registerPass(PassType::LightFroxelation);
+            engine->registerPass(PassType::LightFroxelation);
 		
-        if(graphicsOptions.mSSAO)
-            engine.registerPass(PassType::SSAO);
+        if(graphicsOptions.mSSAO && graphicsOptions.mDefered)
+            engine->registerPass(PassType::SSAO);
 
         if (graphicsOptions.mDefered)
 		{
             if(graphicsOptions.preDepth)
-                engine.registerPass(PassType::GBufferPreDepth);
+                engine->registerPass(PassType::GBufferPreDepth);
             else
-                engine.registerPass(PassType::GBuffer);
+                engine->registerPass(PassType::GBuffer);
 
-            engine.registerPass(PassType::DeferredPBRIBL);
+            engine->registerPass(PassType::DeferredPBRIBL);
 
             if (graphicsOptions.mShowLights)
-                engine.registerPass(PassType::DeferredAnalyticalLighting);
+                engine->registerPass(PassType::DeferredAnalyticalLighting);
 		}
 		else if(graphicsOptions.mForward)
         {        
             if (graphicsOptions.mShowLights)
-                engine.registerPass(PassType::ForwardCombinedLighting);
+                engine->registerPass(PassType::ForwardCombinedLighting);
             else
-                engine.registerPass(PassType::ForwardIBL);
+                engine->registerPass(PassType::ForwardIBL);
         }
 
         if (graphicsOptions.mTAA)
-            engine.registerPass(PassType::TAA);
+            engine->registerPass(PassType::TAA);
 
         if(graphicsOptions.occlusionCulling)
-            engine.registerPass(PassType::OcclusionCulling);
+            engine->registerPass(PassType::OcclusionCulling);
 
         if (graphicsOptions.mSSR)
         {
-            engine.registerPass(PassType::SSR);
-            engine.registerPass(PassType::DownSampleColour);
+            engine->registerPass(PassType::SSR);
+            engine->registerPass(PassType::DownSampleColour);
         }
 
-        engine.registerPass(PassType::DFGGeneration);
-        engine.registerPass(PassType::Overlay);
-		engine.registerPass(PassType::Composite);
+        engine->registerPass(PassType::DFGGeneration);
+        engine->registerPass(PassType::Overlay);
+        engine->registerPass(PassType::Composite);
 
-        engine.recordScene();
-        engine.render();
-        engine.swap();
-        engine.endFrame();
+        engine->recordScene();
+        engine->render();
+        engine->swap();
+        engine->endFrame();
 
         firstFrame = false;
     }

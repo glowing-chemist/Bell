@@ -48,7 +48,7 @@ public:
 		const int32_t offsety = 0,
 		const int32_t offsetz = 0) override;
 
-	virtual void clear() override;
+    virtual void clear(const float4&) override;
 
     virtual void generateMips() override;
 

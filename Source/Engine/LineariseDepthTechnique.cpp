@@ -43,9 +43,10 @@ LineariseDepthTechnique::LineariseDepthTechnique(Engine* eng, RenderGraph& graph
     mLinearDepth(eng->getDevice(), Format::RG16Float, ImageUsage::Sampled | ImageUsage::Storage, eng->getSwapChainImage()->getExtent(0, 0).width, eng->getSwapChainImage()->getExtent(0, 0).height,
         1, mMipLevels, 1, 1, "Linear Depth"),
     mLinearDepthView(mLinearDepth, ImageViewType::Colour, 0, 1, 0, mMipLevels),
-    mPreviousLinearDepth(eng->getDevice(), Format::RG16Float, ImageUsage::Sampled | ImageUsage::Storage, eng->getSwapChainImage()->getExtent(0, 0).width, eng->getSwapChainImage()->getExtent(0, 0).height,
-        1, mMipLevels, 1, 1, "Linear Depth"),
+    mPreviousLinearDepth(eng->getDevice(), Format::RG16Float, ImageUsage::Sampled | ImageUsage::Storage | ImageUsage::TransferDest, eng->getSwapChainImage()->getExtent(0, 0).width, eng->getSwapChainImage()->getExtent(0, 0).height,
+        1, mMipLevels, 1, 1, "Prev Linear Depth"),
     mPreviousLinearDepthView(mPreviousLinearDepth, ImageViewType::Colour, 0, 1, 0, mMipLevels),
+    mFirstFrame(true),
     mOcclusionSampler(SamplerType::Point)
 {    
     mOcclusionSampler.setAddressModeU(AddressMode::Clamp);
@@ -55,7 +56,7 @@ LineariseDepthTechnique::LineariseDepthTechnique(Engine* eng, RenderGraph& graph
     for(uint32_t i = 1; i < mMipLevels; ++i)
     {
         mMipsViews.push_back(ImageView(mLinearDepth, ImageViewType::Colour, 0, 1, i, 1));
-        mMipsViews.push_back(ImageView(mPreviousLinearDepth, ImageViewType::Colour, 0, 1, i, 1));
+        mPrevMipsViews.push_back(ImageView(mPreviousLinearDepth, ImageViewType::Colour, 0, 1, i, 1));
     }
 
     ComputeTask task{ "linearise depth" };
@@ -74,11 +75,19 @@ LineariseDepthTechnique::LineariseDepthTechnique(Engine* eng, RenderGraph& graph
 
 void LineariseDepthTechnique::render(RenderGraph& graph, Engine*)
 {
+    if(mFirstFrame)
+    {
+        mPreviousLinearDepth->clear(float4(INFINITY, INFINITY, INFINITY, 0.0f));
+        mFirstFrame = false;
+    }
+
 	ComputeTask& task = static_cast<ComputeTask&>(graph.getTask(mTaskID));
 
     mLinearDepth->updateLastAccessed();
     mLinearDepthView->updateLastAccessed();
     for(auto& mip : mMipsViews)
+        mip->updateLastAccessed();
+    for(auto& mip : mPrevMipsViews)
         mip->updateLastAccessed();
 
 	task.setRecordCommandsCallback(
@@ -98,21 +107,27 @@ void LineariseDepthTechnique::bindResources(RenderGraph& graph)
 {
     const uint64_t submissionIndex = getDevice()->getCurrentSubmissionIndex();
 
-    for(uint32_t i = 0; i < (mMipLevels - 1); ++i)
-    {
-        graph.bindImage(mipNames[i], mMipsViews[(i * 2) + ((submissionIndex + 1) % 2)]);
-        graph.bindImage(prevMipNames[i], mMipsViews[(i * 2) + ((submissionIndex) % 2)]);
-    }
-
     if((submissionIndex % 2) == 0)
     {
         graph.bindImage(kLinearDepth, mLinearDepthView);
         graph.bindImage(kPreviousLinearDepth, mPreviousLinearDepthView);
+
+        for(uint32_t i = 0; i < mMipsViews.size(); ++i)
+        {
+            graph.bindImage(mipNames[i], mMipsViews[i], BindingFlags::ManualBarriers);
+            graph.bindImage(prevMipNames[i], mPrevMipsViews[i], BindingFlags::ManualBarriers);
+        }
     }
     else
     {
         graph.bindImage(kLinearDepth, mPreviousLinearDepthView);
         graph.bindImage(kPreviousLinearDepth, mLinearDepthView);
+
+        for(uint32_t i = 0; i < mMipsViews.size(); ++i)
+        {
+            graph.bindImage(prevMipNames[i], mMipsViews[i], BindingFlags::ManualBarriers);
+            graph.bindImage(mipNames[i], mPrevMipsViews[i], BindingFlags::ManualBarriers);
+        }
     }
 
     if(!graph.isResourceSlotBound(kOcclusionSampler))

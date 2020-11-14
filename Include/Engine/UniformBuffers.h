@@ -39,6 +39,7 @@ struct SSAOBuffer
     float bias;
     float intensity;
     float4 projInfo;
+    float2 randomOffset;
 };
 
 

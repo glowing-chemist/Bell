@@ -43,7 +43,7 @@ void TAATechnique::render(RenderGraph& graph, Engine*)
 {
 	if (mFirstFrame)
 	{
-		mHistoryImage->clear();
+        mHistoryImage->clear(float4(0.0f, 0.0f, 0.0f, 0.0f));
 		mFirstFrame = false;
 	}
 

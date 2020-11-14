@@ -49,7 +49,6 @@ public:
         float fieldOfView = 90.0f,
         const CameraMode mode = CameraMode::InfinitePerspective)
         :   mMode(mode),
-            mFrameBufferSize{1920.0f, 1080.0f},
             mPosition{ position },
             mDirection{ direction },
             mUp{ 0.0f, -1.0f, 0.0f },
@@ -80,12 +79,12 @@ public:
         return mMode;
     }
 
-    void setFrameBufferSizeOrthographic(const float2 size)
-        { mFrameBufferSize = size; }
+    void setOrthographicSize(const float2 size)
+        { mOrthographicSize = size; }
 
-    const float2& getOrthographicFrameBufferSize() const
+    const float2& getOrthographicSize() const
     {
-        return mFrameBufferSize;
+        return mOrthographicSize;
     }
 
     const float3& getPosition() const
@@ -142,7 +141,7 @@ public:
 private:
 
     CameraMode mMode;
-    float2 mFrameBufferSize; // framebufer size for orthographic cameras.
+    float2 mOrthographicSize;
 
     float3 mPosition;
     float3 mDirection;

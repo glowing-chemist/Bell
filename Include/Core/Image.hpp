@@ -10,6 +10,7 @@
 #include "Core/BarrierManager.hpp"
 
 #include "Engine/PassTypes.hpp"
+#include "Engine/GeomUtils.h"
 
 
 class RenderDevice;
@@ -62,7 +63,7 @@ public:
                     const int32_t offsetz = 0) = 0;
 
 	// Must be called outside of a renderpass (will execuet at the beginning of the frame).
-	virtual void clear() = 0;
+    virtual void clear(const float4&) = 0;
 
     virtual void generateMips() = 0;
 

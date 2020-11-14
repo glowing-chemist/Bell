@@ -448,6 +448,11 @@ public:
         mOctreeMaxDivisions = maxDiv;
     }
 
+    void setRootTransform(const float4x4& trans)
+    {
+        mRootTransform = trans;
+    }
+
 private:
 
     void generateSceneAABB(const bool includeStatic);
@@ -491,6 +496,7 @@ private:
     OctTree<MeshInstance*> mStaticMeshBoundingVolume;
     OctTree<MeshInstance*> mDynamicMeshBoundingVolume;
 
+    float4x4 mRootTransform;
     AABB mSceneAABB;
 
 	Camera mSceneCamera;

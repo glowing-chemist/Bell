@@ -234,7 +234,6 @@ set(SHADERS
 	DepthOnly.vert                      
 	SSAO.frag
 	blurXR8.comp                               
-	SSAOImproved.frag
 	blurY.comp                                 
 	DFGLutGenerate.comp                 
 	Hammersley.hlsl                           

@@ -33,6 +33,7 @@
   */
 
 #include "VertexOutputs.hlsl"
+#include "NormalMapping.hlsl"
 #include "UniformBuffers.hlsl"
 #include "PBR.hlsl"
 
@@ -46,29 +47,30 @@ ConstantBuffer<CameraBuffer> camera;
 Texture2D<float2> CS_Z_buffer;
 
 [[vk::binding(3)]]
+Texture2D<float2> prevLinearDepth;
+
+[[vk::binding(4)]]
+Texture2D<float> depth;
+
+[[vk::binding(5)]]
+Texture2D<float> history;
+
+[[vk::binding(6)]]
+RWTexture2D<uint> historyCounter;
+
+[[vk::binding(7)]]
+Texture2D<float2> velocity;
+
+[[vk::binding(8)]]
+Texture2D<float2> normals;
+
+[[vk::binding(9)]]
 SamplerState linearSampler;
 
 
 // Total number of direct samples to take at each pixel
-#define NUM_SAMPLES (11)
+#define NUM_SAMPLES (4)
 
-<<<<<<< Updated upstream
-float3 normalsFromDepth(float depth, float2 texcoords)
-{
-  
-  const float2 yoffset = float2(0.0,0.001);
-  const float2 xoffset = float2(0.001,0.0);
-  
-  float depth1 = LinearDepth.SampleLevel(linearSampler, texcoords + yoffset, 0.0f);
-  float depth2 = LinearDepth.SampleLevel(linearSampler, texcoords + xoffset, 0.0f);
-  
-  float3 p1 = float3(yoffset, depth1 - depth);
-  float3 p2 = float3(xoffset, depth2 - depth);
-  
-  float3 normal = cross(p1, p2);
-  
-  return normalize(normal);
-=======
 // If using depth mip levels, the log of the maximum pixel offset before we need to switch to a lower 
 // miplevel to maintain reasonable spatial locality in the cache
 // If this number is too small (< 3), too many taps will land in the same pixel, and we'll get bad variance that manifests as flashing.
@@ -77,10 +79,6 @@ float3 normalsFromDepth(float depth, float2 texcoords)
 
 // This must be less than or equal to the MAX_MIP_LEVEL defined in SSAO.cpp
 #define MAX_MIP_LEVEL 8
-
-/** Used for preventing AO computation on the sky (at infinite depth) and defining the CS Z to bilateral depth key scaling. 
-    This need not match the real far plane*/
-#define FAR_PLANE_Z (300.0)
 
 // This is the number of turns around the circle that the spiral pattern makes.  This should be prime to prevent
 // taps from lining up.  This particular choice was tuned for NUM_SAMPLES == 9
@@ -127,9 +125,9 @@ float3 reconstructCSPosition(float2 S, float z) {
   return float3((S.xy * ssaoOffsets.projInfo.xy + ssaoOffsets.projInfo.zw) * z, z);
 }
 
-/** Reconstructs screen-space unit normal from screen-space position */
-float3 reconstructCSFaceNormal(float3 C) {
-  return normalize(cross(ddy(C), ddx(C)));
+float getViewDepth(const int3 pos)
+{
+    return  (CS_Z_buffer.Load(pos).x * camera.farPlane + camera.nearPlane);
 }
 
 /** Returns a unit vector and a screen-space radius for the tap on a unit disk (the caller should scale by the actual disk radius) */
@@ -143,51 +141,11 @@ float2 tapLocation(int sampleNumber, float spinAngle, out float ssR){
 }
 
 
-/** Used for packing Z into the GB channels */
-float CSZToKey(float z) {
-  return clamp(z * (1.0 / camera.farPlane), 0.0, 1.0);
->>>>>>> Stashed changes
-}
-
- 
-<<<<<<< Updated upstream
-  float3 normal = normalsFromDepth(depth, vertInput.uv);
-
-#ifdef RAY_MARCHING
-
-  uint width, height, mips;
-  LinearDepth.GetDimensions(4, width, height, mips);
-
-  const float3 position = float3( (vertInput.uv - 0.5f) * 2.0, depth);
-  float occlusion = 1.0;
-  for(int i = 0; i < 16; i++) 
-  {
-    float2 Xi = Hammersley(i, 16);
-    float3 L;
-    float  NdotL;
-    importanceSampleCosDir(Xi, normal, L, NdotL);
-
-    if(NdotL >= 0.0f)
-    {
-        const float2 intersectionUV = marchRay(position, L, 7, float2(1.0f, 1.0f) / float2(width, height), 3, camera.nearPlane, camera.farPlane, camera.invertedPerspective);
-        if(all(intersectionUV >= float2(0.0f, 0.0f))) // valid intersection.
-        {
-            const float intersectionDepth = LinearDepth.SampleLevel(linearSampler, intersectionUV, 0.0f);
-            const float3 intersectionPosition = float3((intersectionUV - 0.5f) * 2.0f, -intersectionDepth);
-
-            const float intersectionDistance = length(intersectionPosition - position);
-
-            occlusion -= (1.0f - (intersectionDistance / sqrt(2.0f))) * (1.0f / 16.0f);
-        }
-    }
-  }
-=======
 /** Read the camera-space position of the point at screen-space pixel ssP */
 float3 getPosition(int2 ssP) {
   float3 P;
->>>>>>> Stashed changes
 
-  P.z = -CS_Z_buffer.Load(int3(ssP, 0)).r;
+  P.z = getViewDepth(int3(ssP, 0));
 
   // Offset to pixel center
   P = reconstructCSPosition(float2(ssP) + float2(0.5, 0.5), P.z);
@@ -206,7 +164,7 @@ float3 getOffsetPosition(int2 ssC, float2 unitOffset, float ssR) {
   float3 P;
 
   // Divide coordinate by 2^mipLevel
-  P.z = -CS_Z_buffer.Load(int3(ssP >> mipLevel, mipLevel)).r;
+  P.z = getViewDepth(int3(ssP >> mipLevel, mipLevel));
 
   // Offset to pixel center
   P = reconstructCSPosition(float2(ssP) + float2(0.5, 0.5), P.z);
@@ -235,23 +193,23 @@ float sampleAO(in int2 ssC, in float3 C, in float3 n_C, in float ssDiskRadius, i
     float f = max((ssaoOffsets.radius * ssaoOffsets.radius) - vv, 0.0); return f * f * f * max((vn - ssaoOffsets.bias) / (epsilon + vv), 0.0);
 }
 
-
-float main(const PositionAndUVVertOutput pixel)
+float ssao(const uint2 pixel)
 {
-
-  // Pixel being shaded 
-  int2 ssC = pixel.uv * camera.frameBufferSize;
-
   // World space point being shaded
-  float3 C = getPosition(ssC);
+  float3 C = getPosition(pixel);
 
   // Hash function used in the HPG12 AlchemyAO paper
-  float randomPatternRotationAngle = (3 * ssC.x ^ ssC.y + ssC.x * ssC.y) * 10;
+  const uint2 randomOffset = ssaoOffsets.randomOffset * camera.frameBufferSize;
+  const uint2 randomPosition = pixel + randomOffset;
+  float randomPatternRotationAngle = (3 * randomPosition.x ^ randomPosition.y + randomPosition.x * randomPosition.y) * 10;
 
   // Reconstruct normals from positions. These will lead to 1-pixel black lines
   // at depth discontinuities, however the blur will wipe those out so they are not visible
   // in the final image.
-  float3 n_C = reconstructCSFaceNormal(C);
+  float3 n_C = float3(normals.Load(int3(pixel, 0)), 0);
+  n_C = decodeOct(n_C.xy);
+  n_C = mul((float3x3)camera.view, n_C);
+  n_C = normalize(n_C);
 
   // Choose the screen-space sample radius
   // proportional to the projected area of the sphere
@@ -259,21 +217,55 @@ float main(const PositionAndUVVertOutput pixel)
 
   float sum = 0.0;
   for (int i = 0; i < NUM_SAMPLES; ++i) {
-       sum += sampleAO(ssC, C, n_C, ssDiskRadius, i, randomPatternRotationAngle);
+       sum += sampleAO(pixel, C, n_C, ssDiskRadius, i, randomPatternRotationAngle);
   }
 
-        float temp = (ssaoOffsets.radius * ssaoOffsets.radius) * ssaoOffsets.radius;
-        sum /= temp * temp;
+  float temp = (ssaoOffsets.radius * ssaoOffsets.radius) * ssaoOffsets.radius;
+  sum /= temp * temp;
   float A = max(0.0, 1.0 - sum * ssaoOffsets.intensity * (5.0 / NUM_SAMPLES));
 
   // Bilateral box-filter over a quad for free, respecting depth edges
   // (the difference that this makes is subtle)
   if (abs(ddx(C.z)) < 0.02) {
-    A -= ddx(A) * ((ssC.x & 1) - 0.5);
+    A -= ddx(A) * ((pixel.x & 1) - 0.5);
   }
   if (abs(ddy(C.z)) < 0.02) {
-    A -= ddy(A) * ((ssC.y & 1) - 0.5);
+    A -= ddy(A) * ((pixel.y & 1) - 0.5);
   }
 
   return A;
+}
+
+float main(const PositionAndUVVertOutput pixel)
+{
+  const float linDepth = CS_Z_buffer.SampleLevel(linearSampler, pixel.uv, 0.0f).x;
+  if(linDepth == 1.0f)
+  {
+      historyCounter[pixel.uv * (camera.frameBufferSize / 2)] = 1;
+      return 1.0f;
+  }
+
+  // Pixel being shaded 
+  int2 ssC = pixel.uv * camera.frameBufferSize;
+
+  float ao = ssao(ssC);
+  uint historyCount = 1;
+
+  float2 pixelVelocity = velocity.Sample(linearSampler, pixel.uv);
+  pixelVelocity = (pixelVelocity - 0.5f) * 2.0f;
+  const float2 previousUV = pixel.uv - pixelVelocity;
+
+  const float prevLinDepth = prevLinearDepth.SampleLevel(linearSampler, previousUV, 0.0f).x;
+  const float depthDiff = abs(prevLinDepth - linDepth);
+  if(depthDiff < 0.001)
+  {
+    historyCount = historyCounter.Load(previousUV * (camera.frameBufferSize / 2));
+    const float prevAo = history.Sample(linearSampler, previousUV);
+    ao = prevAo + ((ao - prevAo) * (1.0f / historyCount));
+
+    historyCount = min(historyCount + 1, 64);
+  }
+
+  historyCounter[pixel.uv * (camera.frameBufferSize / 2)] = historyCount;
+  return ao;
 }

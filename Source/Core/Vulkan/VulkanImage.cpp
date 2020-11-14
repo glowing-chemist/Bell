@@ -185,7 +185,7 @@ void VulkanImage::setContents(const void* data,
 }
 
 
-void VulkanImage::clear()
+void VulkanImage::clear(const float4& colour)
 {
 	VulkanRenderDevice* device = static_cast<VulkanRenderDevice*>(getDevice());
 
@@ -215,7 +215,7 @@ void VulkanImage::clear()
 		}
 	}
 
-	vk::ClearColorValue clear{ std::array<float, 4>{0.0f, 0.0f, 0.0f, 0.0f} };
+    vk::ClearColorValue clear{ std::array<float, 4>{colour.x, colour.y, colour.z, colour.w} };
 	vk::ImageSubresourceRange subResource{};
 	subResource.aspectMask = vk::ImageAspectFlagBits::eColor;
 	subResource.baseMipLevel = 0;

@@ -102,7 +102,7 @@ private:
     ImageView mShadowMapView;
 
     Shader                     mRayTracedShadowsShader;
-    TaskID                     mTaskID;;
+    TaskID                     mTaskID;
 };
 
 #endif

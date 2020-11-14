@@ -14,6 +14,19 @@
 #include <iterator>
 #include <limits>
 
+namespace
+{
+    aiMatrix4x4 glmToAi(const float4x4& transformation)
+    {
+        aiMatrix4x4 transformationMatrix{};
+        transformationMatrix.a1 = transformation[0][0]; transformationMatrix.b1 = transformation[0][1];  transformationMatrix.c1 = transformation[0][2]; transformationMatrix.d1 = transformation[0][3];
+        transformationMatrix.a2 = transformation[1][0]; transformationMatrix.b2 = transformation[1][1];  transformationMatrix.c2 = transformation[1][2]; transformationMatrix.d2 = transformation[1][3];
+        transformationMatrix.a3 = transformation[2][0]; transformationMatrix.b3 = transformation[2][1];  transformationMatrix.c3 = transformation[2][2]; transformationMatrix.d3 = transformation[2][3];
+        transformationMatrix.a4 = transformation[3][0]; transformationMatrix.b4 = transformation[3][1];  transformationMatrix.c4 = transformation[3][2]; transformationMatrix.d4 = transformation[3][3];
+
+        return transformationMatrix;
+    }
+}
 
 StaticMesh* MeshInstance::getMesh()
 {
@@ -32,6 +45,7 @@ Scene::Scene(const std::filesystem::path& path) :
     mOctreeMaxDivisions{~0u},
     mStaticMeshBoundingVolume(),
     mDynamicMeshBoundingVolume(),
+    mRootTransform{},
 	mSceneAABB(float4(std::numeric_limits<float>::max()), float4(std::numeric_limits<float>::min())),
     mSceneCamera(float3(0.0f, 0.0f, 0.0f), float3(0.0f, 0.0f, 1.0f), 1920.0f /1080.0f ,0.1f, 2000.0f),
 	mMaterials{},
@@ -119,7 +133,7 @@ std::vector<InstanceID> Scene::loadFromFile(const int vertAttributes, Engine* en
 	// parse node is recursive so will add all meshes to the scene.
     parseNode(scene,
               rootNode,
-              aiMatrix4x4{},
+              glmToAi(mRootTransform),
               kInvalidInstanceID,
               vertAttributes,
               meshMaterials,

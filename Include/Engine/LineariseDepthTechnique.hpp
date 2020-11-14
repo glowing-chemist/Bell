@@ -34,6 +34,9 @@ private:
     ImageView mPreviousLinearDepthView;
 
     std::vector<ImageView> mMipsViews;
+    std::vector<ImageView> mPrevMipsViews;
+
+    bool mFirstFrame;
 
     Sampler mOcclusionSampler;
 };

@@ -5,52 +5,50 @@
 
 #include <cmath>
 
-#define FIXED_SAMPLE_POINTS 1
-
+extern const char kSSAORaw[] = "SSAORaw";
+extern const char kSSAOHistory[] = "SSAOHistory";
+extern const char kSSAOCounter[] = "SSAOHistoryCounter";
 
 namespace
 {
-    template<size_t N>
-    std::array<float4, N> generateSphericalOffsets()
+    float2 generateSphericalOffsets(const uint32_t)
     {
-#if FIXED_SAMPLE_POINTS
-        std::array<float4, N> offsets{
-                float4(0.5381, 0.1856, -0.4319, 0.0), float4(0.1379, 0.2486, 0.4430, 0.0),
-                float4(0.3371, 0.5679, -0.0057, 0.0), float4(-0.6999, -0.0451, -0.0019, 0.0),
-                float4(0.0689, -0.1598, -0.8547, 0.0), float4(0.0560, 0.0069, -0.1843, 0.0),
-                float4(-0.0146, 0.1402, 0.0762, 0.0), float4(0.0100, -0.1924, -0.0344, 0.0),
-                float4(-0.3577, -0.5301, -0.4358, 0.0), float4(-0.3169, 0.1063, 0.0158, 0.0),
-                float4(0.0103, -0.5869, 0.0046, 0.0), float4(-0.0897, -0.4940, 0.3287, 0.0),
-                float4(0.7119, -0.0154, -0.0918, 0.0), float4(-0.0533, 0.0596, -0.5411, 0.0),
-                float4(0.0352, -0.0631, 0.5460, 0.0), float4(-0.4776, 0.2847, -0.0271, 0.0) };
-#else
-        std::array<float4, N> offsets;
+        /*static float2 offsets[16]{
+                float2(0.5381, 0.1856), float2(0.1379, 0.2486),
+                float2(0.3371, 0.5679), float2(-0.6999, -0.0451),
+                float2(0.0689, -0.1598), float2(0.0560, 0.0069),
+                float2(-0.0146, 0.1402), float2(0.0100, -0.1924),
+                float2(-0.3577, -0.5301), float2(-0.3169, 0.1063),
+                float2(0.0103, -0.5869), float2(-0.0897, -0.4940),
+                float2(0.7119, -0.0154), float2(-0.0533, 0.0596),
+                float2(0.0352, -0.0631), float2(-0.4776, 0.2847) };
 
-        for (uint32_t i = 0; i < N; ++i)
-        {
-            const float r1 = (static_cast <float> (rand()) / static_cast <float> (RAND_MAX)) - 0.5f;
-            const float r2 = (static_cast <float> (rand()) / static_cast <float> (RAND_MAX)) - 0.5f;
-            const float r3 = (static_cast <float> (rand()) / static_cast <float> (RAND_MAX)) - 0.5f;
+        return offsets[n];*/
 
-            const float3 vec = float3{ r1, r2, r3 };// glm::normalize(float3{ r1, r2, r3 });
-
-            offsets[i] = float4{ vec, 0.0f };
-        }
-#endif
-
-        return offsets;
+        return float2(((rand() / float(RAND_MAX)) - 0.5f) * 2.0f, ((rand() / float(RAND_MAX)) - 0.5f) * 2.0f);
     }
 }
 
 
 SSAOTechnique::SSAOTechnique(Engine* eng, RenderGraph& graph) :
 	Technique{"SSAO", eng->getDevice()},
-        mPipelineDesc{  Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
-                        getDevice()->getSwapChain()->getSwapChainImageHeight()},
-                  Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
-                  getDevice()->getSwapChain()->getSwapChainImageHeight()}},
+        mPipelineDesc{  Rect{getDevice()->getSwapChain()->getSwapChainImageWidth() / 2,
+                        getDevice()->getSwapChain()->getSwapChainImageHeight() / 2},
+                  Rect{getDevice()->getSwapChain()->getSwapChainImageWidth() / 2,
+                  getDevice()->getSwapChain()->getSwapChainImageHeight() / 2}},
     mFulllscreenTriangleShader(eng->getShader("Shaders/FullScreenTriangle.vert")),
     mSSAOShader(eng->getShader("Shaders/SSAO.frag")),
+    mFirstFrame(true),
+    mSSAO{Image(getDevice(), Format::R8UNorm, ImageUsage::ColourAttachment | ImageUsage::Sampled, getDevice()->getSwapChain()->getSwapChainImageWidth() / 2,
+                getDevice()->getSwapChain()->getSwapChainImageHeight() / 2, 1, 1, 1, 1, "SSAO raw"),
+          Image(getDevice(), Format::R8UNorm, ImageUsage::ColourAttachment | ImageUsage::Sampled | ImageUsage::TransferDest, getDevice()->getSwapChain()->getSwapChainImageWidth() / 2,
+                          getDevice()->getSwapChain()->getSwapChainImageHeight() / 2, 1, 1, 1, 1, "Prev SSAO raw"),
+          Image(getDevice(), Format::R8UNorm, ImageUsage::Storage | ImageUsage::Sampled, getDevice()->getSwapChain()->getSwapChainImageWidth(),
+                          getDevice()->getSwapChain()->getSwapChainImageHeight(), 1, 1, 1, 1, "SSAO")},
+    mSSAOViews{ImageView{mSSAO[0], ImageViewType::Colour}, ImageView{mSSAO[1], ImageViewType::Colour}, ImageView{mSSAO[2], ImageViewType::Colour}},
+    mHistoryCounter(getDevice(), Format::R32Uint, ImageUsage::Storage | ImageUsage::TransferDest, getDevice()->getSwapChain()->getSwapChainImageWidth() / 2,
+                    getDevice()->getSwapChain()->getSwapChainImageHeight() / 2, 1, 1, 1, 1, "SSAO Counter"),
+    mHistoryCounterViews(mHistoryCounter, ImageViewType::Colour),
     mSSAOBuffer(getDevice(), BufferUsage::Uniform, sizeof(SSAOBuffer), sizeof(SSAOBuffer), "SSAO Offsets"),
     mSSAOBufferView(mSSAOBuffer)
 {
@@ -62,9 +60,15 @@ SSAOTechnique::SSAOTechnique(Engine* eng, RenderGraph& graph) :
     task.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
 
     task.addInput(kLinearDepth, AttachmentType::Texture2D);
+    task.addInput(kPreviousLinearDepth, AttachmentType::Texture2D);
+    task.addInput(kGBufferDepth, AttachmentType::Texture2D);
+    task.addInput(kSSAOHistory, AttachmentType::Texture2D);
+    task.addInput(kSSAOCounter, AttachmentType::Image2D);
+    task.addInput(kGBufferVelocity, AttachmentType::Texture2D);
+    task.addInput(kGBufferNormals, AttachmentType::Texture2D);
     task.addInput(kDefaultSampler, AttachmentType::Sampler);
 
-    task.addManagedOutput(kSSAO, AttachmentType::RenderTarget2D, Format::R8UNorm, SizeClass::Swapchain, LoadOp::Nothing);
+    task.addOutput(kSSAORaw, AttachmentType::RenderTarget2D, Format::R8UNorm, LoadOp::Nothing);
 
     task.setRecordCommandsCallback(
         [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine*, const std::vector<const MeshInstance*>&)
@@ -76,22 +80,43 @@ SSAOTechnique::SSAOTechnique(Engine* eng, RenderGraph& graph) :
         }
     );
     graph.addTask(task);
+
+    addDeferredUpsampleTaskR8("Upsample SSAO", kSSAORaw, kSSAO, {getDevice()->getSwapChain()->getSwapChainImageWidth(),
+                                                                 getDevice()->getSwapChain()->getSwapChainImageHeight()}, eng, graph);
 }
 
 
 void SSAOTechnique::render(RenderGraph&, Engine* eng)
 {
+    mHistoryCounter->updateLastAccessed();
+    mHistoryCounterViews->updateLastAccessed();
+    (*mSSAOBuffer)->updateLastAccessed();
+    for(uint32_t i = 0; i < 3; ++i)
+    {
+        mSSAO[i]->updateLastAccessed();
+        mSSAOViews[i]->updateLastAccessed();
+    }
+
+    if(mFirstFrame)
+    {
+        mHistoryCounter->clear(float4(0.0f, 0.0f, 0.0f, 0.0f));
+        mSSAO[1]->clear(float4(1.0f, 1.0f, 1.0f, 1.0f));
+        mFirstFrame = false;
+    }
+
     const Camera& cam = eng->getCurrentSceneCamera();
+    const ImageExtent extent = eng->getSwapChainImageView()->getImageExtent();
+    const size_t index = eng->getDevice()->getCurrentSubmissionIndex() % 16;
 
     SSAOBuffer ssaoBuffer;
 
     const float frustumHeight = 2.0f * std::tan(glm::radians(cam.getFOV() * 0.5f));
+    const float metrePixelHeight = (1.0f / frustumHeight) * float(extent.height);
 
-    const ImageExtent extent = eng->getSwapChainImageView()->getImageExtent();
-    ssaoBuffer.projScale = 500.0f;
-    ssaoBuffer.radius = 3.0f;
+    ssaoBuffer.projScale = metrePixelHeight;
+    ssaoBuffer.radius = 2.0f;
     ssaoBuffer.bias = 0.01;
-    ssaoBuffer.intensity = 0.6f;
+    ssaoBuffer.intensity = 1.0f;
     const float4x4 P = cam.getProjectionMatrix();
     const float4 projConstant
             (float(-2.0 / (extent.width * P[0][0])),
@@ -99,6 +124,7 @@ void SSAOTechnique::render(RenderGraph&, Engine* eng)
              float((1.0 - (double)P[0][2]) / P[0][0]),
              float((1.0 + (double)P[1][2]) / P[1][1]));
     ssaoBuffer.projInfo = projConstant;
+    ssaoBuffer.randomOffset = generateSphericalOffsets(index);
 
     (*mSSAOBuffer)->setContents(&ssaoBuffer, sizeof(SSAOBuffer));
 }
