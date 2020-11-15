@@ -14,6 +14,8 @@ struct PositionAndUVVertOutput
 struct GBufferVertOutput
 {
 	float4 position : SV_Position;
+	float4 curPosition : POSITION2;
+	float4 prevPosition : POSITION1;
 	float4 positionWS : POSITION0;
 	float2 uv : TEXCOORD0;
 	float4 normal : NORMAL0;
@@ -21,7 +23,6 @@ struct GBufferVertOutput
 	float4 colour : COLOUR0;
 	uint materialIndex : MATERIALID;
 	uint materialFlags : MATERIAL_TYPES;
-	float2 velocity : VELOCITY;
 };
 
 struct OverlayVertOutput

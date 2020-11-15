@@ -11,6 +11,7 @@ struct CameraBuffer
         float4x4 invertedPerspective;
 
         float4x4 previousFrameViewProj;
+        float4x4 previousInvertedViewProj;
 
         float nearPlane;
         float farPlane;

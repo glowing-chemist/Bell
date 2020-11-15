@@ -15,6 +15,8 @@ extern const char kSSAORaw[];
 extern const char kSSAOHistory[];
 extern const char kSSAOCounter[];
 extern const char kSSAOSampler[];
+extern const char kSSAOBlurX[];
+extern const char kSSAOBlurY[];
 
 class SSAOTechnique : public Technique
 {
@@ -38,6 +40,8 @@ public:
         if(!graph.isResourceSlotBound(kSSAO))
         {
             graph.bindImage(kSSAO, mSSAOViews[2]);
+            graph.bindImage(kSSAOBlurX, mSSAOBlurView[0]);
+            graph.bindImage(kSSAOBlurY, mSSAOBlurView[1]);
             graph.bindSampler(kSSAOSampler, mNearestSampler);
         }
 	}
@@ -57,6 +61,9 @@ private:
 
     Image mSSAO[3];
     ImageView mSSAOViews[3];
+
+    Image mSSAOBlur[2];
+    ImageView mSSAOBlurView[2];
 
     Image mHistoryCounter;
     ImageView mHistoryCounterViews;

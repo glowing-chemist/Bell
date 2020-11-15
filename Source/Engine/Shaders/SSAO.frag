@@ -35,6 +35,7 @@
 #include "VertexOutputs.hlsl"
 #include "NormalMapping.hlsl"
 #include "UniformBuffers.hlsl"
+#include "Utilities.hlsl"
 #include "PBR.hlsl"
 
 [[vk::binding(0)]]
@@ -172,6 +173,17 @@ float3 getOffsetPosition(int2 ssC, float2 unitOffset, float ssR) {
   return P;
 }
 
+float reconstructViewSpaceDepth(float3 previousPosition)
+{
+  previousPosition.y *= -1.0f;
+  previousPosition.z = unlineariseReverseDepth(previousPosition.z, camera.nearPlane, camera.farPlane);
+  float4 previousWorldPosition = mul(camera.previousInvertedViewProj, float4(previousPosition, 1.0f));
+  previousWorldPosition /= previousWorldPosition.w;
+
+  float cameraSpaceDepth = dot(camera.view[2], previousWorldPosition);
+  const float cameraW = dot(camera.view[3], previousWorldPosition);
+  return -(cameraSpaceDepth / cameraW);
+}
 
 /** Compute the occlusion due to sample with index \a i about the pixel at \a ssC that corresponds
     to camera-space point \a C with unit normal \a n_C, using maximum screen-space sampling radius \a ssDiskRadius */
@@ -256,8 +268,14 @@ float main(const PositionAndUVVertOutput pixel)
   const float2 previousUV = pixel.uv - pixelVelocity;
 
   const float prevLinDepth = prevLinearDepth.SampleLevel(linearSampler, previousUV, 0.0f).x;
-  const float depthDiff = abs(prevLinDepth - linDepth);
-  if(depthDiff < 0.001)
+  const float reprojectedDepthLinear = reconstructViewSpaceDepth(float3((previousUV - 0.5f) * 2.0f, prevLinDepth));
+
+  const float depthVS = (linDepth * (camera.farPlane - camera.nearPlane)) + camera.nearPlane;
+  const float depthDiff = abs(depthVS - reprojectedDepthLinear);
+  
+  const bool offScreen = previousUV.x > 1.0f || previousUV.x < 0.0f || previousUV.y > 1.0f || previousUV.y < 0.0f;
+  
+  if((depthDiff < 0.1) && !offScreen)
   {
     historyCount = historyCounter.Load(previousUV * (camera.frameBufferSize / 2));
     const float prevAo = history.Sample(linearSampler, previousUV);

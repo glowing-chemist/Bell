@@ -12,7 +12,7 @@
 #define USING_OVERLAY 0
 #endif
 
-#if defined(SSAO) || defined(SSAO_Improved)
+#if defined(SSAO)
 #define USING_SSAO 1
 #else
 #define USING_SSAO 0

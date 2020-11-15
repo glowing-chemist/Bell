@@ -19,8 +19,12 @@ GBufferVertOutput main(Vertex vertInput)
 	recreateMeshMatracies(model.meshMatrix, model.prevMeshMatrix, meshMatrix, prevMeshMatrix);
 	float4 transformedPositionWS = mul(vertInput.position, meshMatrix);
 	float4 transformedPosition = mul(camera.viewProj, transformedPositionWS);
+	float4 prevTransformedPositionWS = mul(vertInput.position, prevMeshMatrix);
+	float4 prevTransformedPosition = mul(camera.previousFrameViewProj, transformedPositionWS);
 
 	output.position = transformedPosition;
+	output.curPosition = transformedPosition;
+	output.prevPosition = prevTransformedPosition;
 	output.positionWS = transformedPositionWS;
 	output.uv = vertInput.uv;
 	output.normal = float4(normalize(mul(vertInput.normal.xyz, (float3x3)meshMatrix)), 1.0f);
@@ -28,13 +32,6 @@ GBufferVertOutput main(Vertex vertInput)
 	output.colour = vertInput.colour;
 	output.materialIndex =  model.materialIndex;
 	output.materialFlags = model.materialFlags;
-
-	// Calculate screen space velocity.
-	transformedPosition /= transformedPosition.w;
-	float4 previousPositionWS = mul(vertInput.position, prevMeshMatrix);
-	float4 previousPosition = mul(camera.previousFrameViewProj, previousPositionWS);
-	previousPosition /= previousPosition.w;
-	output.velocity = transformedPosition.xy - previousPosition.xy;
 
 	return output;
 }

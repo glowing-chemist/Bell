@@ -9,12 +9,14 @@ extern const char kSSAORaw[] = "SSAORaw";
 extern const char kSSAOHistory[] = "SSAOHistory";
 extern const char kSSAOCounter[] = "SSAOHistoryCounter";
 extern const char kSSAOSampler[] = "SSAOSampler";
+extern const char kSSAOBlurX[] = "SSAOBlurX";
+extern const char kSSAOBlurY[] = "SSAOBlurY";
 
 namespace
 {
-    float2 generateSphericalOffsets(const uint32_t)
+    float2 generateSphericalOffsets(const uint32_t n)
     {
-        /*static float2 offsets[16]{
+        static float2 offsets[16]{
                 float2(0.5381, 0.1856), float2(0.1379, 0.2486),
                 float2(0.3371, 0.5679), float2(-0.6999, -0.0451),
                 float2(0.0689, -0.1598), float2(0.0560, 0.0069),
@@ -24,9 +26,9 @@ namespace
                 float2(0.7119, -0.0154), float2(-0.0533, 0.0596),
                 float2(0.0352, -0.0631), float2(-0.4776, 0.2847) };
 
-        return offsets[n];*/
+        return offsets[n];
 
-        return float2(((rand() / float(RAND_MAX)) - 0.5f) * 2.0f, ((rand() / float(RAND_MAX)) - 0.5f) * 2.0f);
+        //return float2(((rand() / float(RAND_MAX)) - 0.5f) * 2.0f, ((rand() / float(RAND_MAX)) - 0.5f) * 2.0f);
     }
 }
 
@@ -47,6 +49,11 @@ SSAOTechnique::SSAOTechnique(Engine* eng, RenderGraph& graph) :
           Image(getDevice(), Format::R8UNorm, ImageUsage::Storage | ImageUsage::Sampled, getDevice()->getSwapChain()->getSwapChainImageWidth(),
                           getDevice()->getSwapChain()->getSwapChainImageHeight(), 1, 1, 1, 1, "SSAO")},
     mSSAOViews{ImageView{mSSAO[0], ImageViewType::Colour}, ImageView{mSSAO[1], ImageViewType::Colour}, ImageView{mSSAO[2], ImageViewType::Colour}},
+    mSSAOBlur{Image(getDevice(), Format::R8UNorm, ImageUsage::Storage | ImageUsage::Sampled, getDevice()->getSwapChain()->getSwapChainImageWidth() / 2,
+                    getDevice()->getSwapChain()->getSwapChainImageHeight() / 2, 1, 1, 1, 1, "SSAO blur X"),
+              Image(getDevice(), Format::R8UNorm, ImageUsage::Storage | ImageUsage::Sampled | ImageUsage::TransferDest, getDevice()->getSwapChain()->getSwapChainImageWidth() / 2,
+                              getDevice()->getSwapChain()->getSwapChainImageHeight() / 2, 1, 1, 1, 1, "SSAO blur Y")},
+    mSSAOBlurView{ImageView{mSSAOBlur[0], ImageViewType::Colour}, ImageView{mSSAOBlur[1], ImageViewType::Colour}},
     mHistoryCounter(getDevice(), Format::R32Uint, ImageUsage::Storage | ImageUsage::TransferDest, getDevice()->getSwapChain()->getSwapChainImageWidth() / 2,
                     getDevice()->getSwapChain()->getSwapChainImageHeight() / 2, 1, 1, 1, 1, "SSAO Counter"),
     mHistoryCounterViews(mHistoryCounter, ImageViewType::Colour),
@@ -87,7 +94,13 @@ SSAOTechnique::SSAOTechnique(Engine* eng, RenderGraph& graph) :
     );
     graph.addTask(task);
 
-    addDeferredUpsampleTaskR8("Upsample SSAO", kSSAORaw, kSSAO, {getDevice()->getSwapChain()->getSwapChainImageWidth(),
+    addBlurXTaskR8("SSAOBlurX", kSSAORaw, kSSAOBlurX, {getDevice()->getSwapChain()->getSwapChainImageWidth() / 2,
+                                                       getDevice()->getSwapChain()->getSwapChainImageHeight() / 2}, eng, graph);
+
+    addBlurYTaskR8("SSAOBlurY", kSSAOBlurX, kSSAOBlurY, {getDevice()->getSwapChain()->getSwapChainImageWidth() / 2,
+                                                       getDevice()->getSwapChain()->getSwapChainImageHeight() / 2}, eng, graph);
+
+    addDeferredUpsampleTaskR8("Upsample SSAO", kSSAOBlurY, kSSAO, {getDevice()->getSwapChain()->getSwapChainImageWidth(),
                                                                  getDevice()->getSwapChain()->getSwapChainImageHeight()}, eng, graph);
 }
 
@@ -101,6 +114,11 @@ void SSAOTechnique::render(RenderGraph&, Engine* eng)
     {
         mSSAO[i]->updateLastAccessed();
         mSSAOViews[i]->updateLastAccessed();
+    }
+    for(uint32_t i = 0; i < 2; ++i)
+    {
+        mSSAOBlur[i]->updateLastAccessed();
+        mSSAOBlurView[i]->updateLastAccessed();
     }
 
     if(mFirstFrame)
@@ -120,7 +138,7 @@ void SSAOTechnique::render(RenderGraph&, Engine* eng)
     const float metrePixelHeight = (1.0f / frustumHeight) * float(extent.height);
 
     ssaoBuffer.projScale = metrePixelHeight;
-    ssaoBuffer.radius = 2.0f;
+    ssaoBuffer.radius = 3.0f;
     ssaoBuffer.bias = 0.01;
     ssaoBuffer.intensity = 1.0f;
     const float4x4 P = cam.getProjectionMatrix();

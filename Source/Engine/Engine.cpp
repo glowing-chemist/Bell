@@ -238,7 +238,10 @@ Shader Engine::getShader(const std::string& path)
     std::shared_lock<std::shared_mutex> readLock{ mShaderCacheMutex };
 
 	if(mShaderCache.find(shaderKey) != mShaderCache.end())
+    {
+        BELL_ASSERT(path.find(((mShaderCache.find(shaderKey)->second))->getFilePath()) != std::string::npos, "Possible has collision?")
 		return (*mShaderCache.find(shaderKey)).second;
+    }
 
     // Need exclusive write access.
     readLock.unlock();
@@ -887,6 +890,7 @@ void Engine::updateGlobalBuffers()
             float4x4 view = currentCamera.getViewMatrix();
             float4x4 perspective;
             mCameraBuffer.mPreviousFrameViewProjMatrix = mCameraBuffer.mViewProjMatrix;
+            mCameraBuffer.mPreviousFrameInvertedViewProjMatrix = glm::inverse(mCameraBuffer.mViewProjMatrix);
             // need to add jitter for TAA
             if(isPassRegistered(PassType::TAA))
             {

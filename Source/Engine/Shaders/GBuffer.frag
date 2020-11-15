@@ -44,11 +44,13 @@ GBufferFragOutput main(GBufferVertOutput vertInput)
         discard;
 #endif
 
+    const float2 velocity = (((vertInput.curPosition.xy / vertInput.curPosition.w) * 0.5f + 0.5f) - ((vertInput.prevPosition.xy / vertInput.prevPosition.w) * 0.5f + 0.5f));
+
     GBufferFragOutput output;
 	output.diffuse = material.diffuse;
 	output.normal = encodeOct(material.normal.xyz);
 	output.specularRoughness = material.specularRoughness;
-    output.velocity = (vertInput.velocity * 0.5f) + 0.5f;
+    output.velocity = (velocity * 0.5f) + 0.5f;
     output.emissiveOcclusion = material.emissiveOcclusion;
 
     return output;
