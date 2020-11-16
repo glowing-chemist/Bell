@@ -73,7 +73,7 @@ void StaticMesh::configure(const aiScene* scene, const aiMesh* mesh, const int v
 
     const bool normalsNeeded = mesh->HasNormals() && (vertAttributes & VertexAttributes::Normals);
 
-    const bool tangentsNeeded = mesh->HasTangentsAndBitangents() && (vertAttributes * VertexAttributes::Tangents);
+    const bool tangentsNeeded = mesh->HasTangentsAndBitangents() && (vertAttributes & VertexAttributes::Tangents);
 
     const bool albedoNeeded = (mesh->GetNumColorChannels() > 0) && (vertAttributes & VertexAttributes::Albedo);
 
@@ -82,7 +82,7 @@ void StaticMesh::configure(const aiScene* scene, const aiMesh* mesh, const int v
     const uint32_t vertexStride =   ((positionNeeded ? primitiveSize : 0) +
                                     ((vertAttributes & VertexAttributes::TextureCoordinates) ? 2 : 0) +
                                     (normalsNeeded ? 1 : 0) +
-                                    (tangentsNeeded ? 1 : 0) +
+                                    (vertAttributes & VertexAttributes::Tangents ? 1 : 0) +
                                     ((vertAttributes & VertexAttributes::Albedo) ? 1 : 0)) * sizeof(float);
 
 	mVertexStride = vertexStride;
@@ -159,6 +159,10 @@ void StaticMesh::configure(const aiScene* scene, const aiMesh* mesh, const int v
             static_assert(sizeof(char4) == sizeof(uint32_t), "char4 must match 32 bit int in size");
             const char4 packedtangent = packNormal(float4(tangent, bitangentSign));
             mVertexData.WriteVertexChar4(packedtangent);
+        }
+        else if(vertAttributes & VertexAttributes::Tangents) // Assume no normal mapping so just fill with a 0.
+        {
+            mVertexData.WriteVertexChar4({0, 0, 0, 0});
         }
 
         if(albedoNeeded)
