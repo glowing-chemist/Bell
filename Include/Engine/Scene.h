@@ -218,10 +218,10 @@ public:
     MeshInstance*       getMeshInstance(const InstanceID);
     StaticMesh*         getMesh(const SceneID);
     const StaticMesh*   getMesh(const SceneID) const;
-	const std::unique_ptr<ImageView>& getSkybox() const
-	{
-		return mSkyboxView;
-	}
+    const std::unique_ptr<ImageView>& getSkybox() const
+    {
+	return mSkyboxView;
+    }
 	
     const std::unique_ptr<CPUImage>& getCPUSkybox() const
     {
@@ -229,14 +229,14 @@ public:
     }
 
     void setCamera(const Camera& camera)
-	{
-		mSceneCamera = camera;
-	}
+    {
+	mSceneCamera = camera;
+    }
 	
-	Camera& getCamera()
-	{
-		return mSceneCamera;
-	}
+    Camera& getCamera()
+    {
+	return mSceneCamera;
+    }
 
     const Camera& getCamera() const
     {
@@ -255,15 +255,17 @@ public:
         return mShadowingLight;
     }
 
+    void updateShadowingLight();
+
     ShadowingLight& getShadowingLight()
     {
         return mShadowingLight;
     }
 
-	const std::vector<ImageView>& getMaterials() const
-	{
-		return mMaterialImageViews;
-	}
+    const std::vector<ImageView>& getMaterials() const
+    {
+	return mMaterialImageViews;
+    }
 
     std::vector<ImageView>& getMaterials()
     {

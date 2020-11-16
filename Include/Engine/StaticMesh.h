@@ -59,7 +59,7 @@ class StaticMesh
 {
 public:
 	
-    StaticMesh(const std::string& filePath, const int vertexAttributes);
+    StaticMesh(const std::string& filePath, const int vertexAttributes, const bool globalScaling = false);
     StaticMesh(const aiScene* scene, const aiMesh* mesh, const int vertexAttributes);
 
 

@@ -30,7 +30,7 @@ public:
     //std::vector<T>   allIntersections(const Ray&) const;
     std::vector<T>   containedWithin(const Frustum&, const EstimationMode) const;
 
-	std::vector<T>	getIntersections(const AABB& aabb) const;
+    std::vector<T>	getIntersections(const AABB& aabb) const;
 
     struct BoundedValue
     {

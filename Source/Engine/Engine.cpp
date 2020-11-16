@@ -939,6 +939,7 @@ void Engine::updateGlobalBuffers()
         }
 
         {
+            mCurrentScene->updateShadowingLight();
             const Scene::ShadowingLight& shadowingLight = mCurrentScene->getShadowingLight();
 
             MapInfo mapInfo{};

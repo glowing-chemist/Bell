@@ -72,7 +72,7 @@ std::vector<T> OctTree<T>::getIntersections(const AABB& aabb) const
 template<typename T>
 void OctTree<T>::getIntersections(const AABB& aabb, const std::unique_ptr<typename OctTree<T>::Node>& node, std::vector<T>& intersections) const
 {
-	if (aabb.contains(node->mBoundingBox, EstimationMode::Under))
+    if (aabb.contains(node->mBoundingBox, EstimationMode::Under))
 	{
         for(const auto node : node->mValues)
             intersections.push_back(node.mValue);
@@ -81,25 +81,25 @@ void OctTree<T>::getIntersections(const AABB& aabb, const std::unique_ptr<typena
 
 	for (const auto& childNode : node->mChildren)
 	{
-		if (!childNode)
+        if (childNode)
+        {
+            for (const auto& subNode : node->mChildren)
+            {
+                if (subNode->mBoundingBox.contains(aabb, EstimationMode::Over))
+                    getIntersections(aabb, subNode, intersections);
+            }
+        }
+        else
 		{
-			if (node->mBoundingBox.contains(aabb, EstimationMode::Over))
+            if (node->mBoundingBox.contains(aabb, EstimationMode::Over))
 			{
 				for (const auto& mesh : node->mValues)
 				{
-                    if (aabb.contains(mesh.mBounds, EstimationMode::Over))
+                    if (mesh.mBounds.contains(aabb, EstimationMode::Over))
                         intersections.push_back(mesh.mValue);
 				}
 			}
 			return;
-		}
-		else
-		{
-			for (const auto& subNode : node->mChildren)
-			{
-				if (subNode->mBoundingBox.contains(aabb, EstimationMode::Over))
-					getIntersections(aabb, subNode, intersections);
-			}
 		}
 	}
 }

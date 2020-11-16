@@ -834,15 +834,21 @@ void Scene::generateSceneAABB(const bool includeStatic)
 }
 
 
-void Scene::setShadowingLight(const Camera& cam)
+void Scene::updateShadowingLight()
 {
-    mShadowLightCamera = cam;
-
     const float4x4 view = mShadowLightCamera.getViewMatrix();
     const float4x4 proj = mShadowLightCamera.getProjectionMatrix();
 
     ShadowingLight light{view, glm::inverse(view), proj * view, float4(mShadowLightCamera.getPosition(), 1.0f), float4(mShadowLightCamera.getDirection(), 0.0f), float4(mShadowLightCamera.getUp(), 1.0f)};
     mShadowingLight = light;
+}
+
+
+void Scene::setShadowingLight(const Camera& cam)
+{
+    mShadowLightCamera = cam;
+
+    updateShadowingLight();
 }
 
 

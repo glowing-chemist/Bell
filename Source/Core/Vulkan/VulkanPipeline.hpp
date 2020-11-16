@@ -39,8 +39,18 @@ public:
 		mPipelineLayout = layout;
 	}
 
-protected:
+	void setDebugName(const std::string& name)
+	{
+	    mDebugName= name;
+	}
 
+	const std::string& getDebugName() const
+	{
+	    return mDebugName;
+	}
+
+protected:
+	std::string mDebugName;
 	vk::Pipeline mPipeline;
 	vk::PipelineLayout mPipelineLayout;
 };

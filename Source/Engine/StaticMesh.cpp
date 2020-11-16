@@ -25,7 +25,7 @@ namespace
 }
 
 
-StaticMesh::StaticMesh(const std::string& path, const int vertAttributes) :
+StaticMesh::StaticMesh(const std::string& path, const int vertAttributes, const bool globalScaling) :
 	mVertexData{},
 	mIndexData{},
     mAABB{},
@@ -41,7 +41,7 @@ StaticMesh::StaticMesh(const std::string& path, const int vertAttributes) :
 											 aiProcess_JoinIdenticalVertices |
 											 aiProcess_GenNormals |
                                              aiProcess_CalcTangentSpace |
-                                             aiProcess_GlobalScale |
+                                             (globalScaling ? aiProcess_GlobalScale : 0) |
 											 aiProcess_FlipUVs);
 
     BELL_ASSERT(scene->mNumMeshes == 1, "This files containes more than 1 mesh, which one is loaded is undefined.")

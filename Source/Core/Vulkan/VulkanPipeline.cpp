@@ -36,6 +36,7 @@ std::shared_ptr<Pipeline> PipelineTemplate::instanciateGraphicsPipeline(const Gr
 
     if(mPipelineCache.find(hash) != mPipelineCache.end())
     {
+        BELL_ASSERT(mPipelineCache[hash]->getDebugName() == task.getName(), "Hash collision")
         return mPipelineCache[hash];
     }
     else
@@ -50,6 +51,7 @@ std::shared_ptr<Pipeline> PipelineTemplate::instanciateGraphicsPipeline(const Gr
         graphicsPipeline->setRenderPass(rp);
         graphicsPipeline->setVertexAttributes(task.getVertexAttributes());
         graphicsPipeline->setFrameBufferBlendStates(task);
+        graphicsPipeline->setDebugName(task.getName());
         graphicsPipeline->compile(task);
 
         mPipelineCache.insert({hash, graphicsPipeline});
@@ -67,12 +69,14 @@ std::shared_ptr<Pipeline> PipelineTemplate::instanciateComputePipeline(const Com
 
     if(mPipelineCache.find(hash) != mPipelineCache.end())
     {
+        BELL_ASSERT(mPipelineCache[hash]->getDebugName() == task.getName(), "Hash collision")
         return mPipelineCache[hash];
     }
     else
     {
         std::shared_ptr<Pipeline> computePipeline = std::make_shared<ComputePipeline>(getDevice(), computeShader);
         computePipeline->setLayout(mPipelineLayout);
+        computePipeline->setDebugName(task.getName());
         computePipeline->compile(task);
 
         mPipelineCache.insert({hash, computePipeline});
