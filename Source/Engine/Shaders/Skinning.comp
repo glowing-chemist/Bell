@@ -8,13 +8,6 @@ struct BoneIndex
     float mWeight;
 };
 
-struct BoneIndicies
-{
-    BoneIndex mBoneIndices[13];
-    uint mUsedBones;
-    uint padding;
-};
-
 struct Bone
 {
 	float4x4 transform;

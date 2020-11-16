@@ -138,12 +138,9 @@ public:
     struct BoneIndicies
     {
         BoneIndicies() :
-            mUsedBones(0),
-            padding(~0) {}
+            mBoneIndices{} {}
 
-        BoneIndex mBoneIndices[25];
-        uint32_t mUsedBones;
-        uint32_t padding;
+        std::vector<BoneIndex> mBoneIndices;
     };
 
     const std::vector<uint2>& getBoneIndicies() const

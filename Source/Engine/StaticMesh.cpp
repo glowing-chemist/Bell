@@ -244,9 +244,8 @@ void StaticMesh::loadSkeleton(const aiMesh* mesh)
                 }
 
                 BoneIndicies& indicies = bonesPerVertex[weight.mVertexId];
-                BELL_ASSERT(indicies.mUsedBones < 25, "Only 25 or less bones per vertex are currently supported")
-                const uint8_t index = indicies.mUsedBones++;
-                BoneIndex& boneIndex = indicies.mBoneIndices[index];
+                indicies.mBoneIndices.emplace_back();
+                BoneIndex& boneIndex = indicies.mBoneIndices.back();
                 boneIndex.mBone = mSkeleton.size();
                 boneIndex.mWeight = weight.mWeight;
             }
@@ -267,9 +266,9 @@ void StaticMesh::loadSkeleton(const aiMesh* mesh)
 
             uint2& indexSize = mBoneWeightsIndicies[i];
             indexSize.x = mBoneWeights.size();
-            indexSize.y = index.mUsedBones;
+            indexSize.y = index.mBoneIndices.size();
 
-            mBoneWeights.insert(mBoneWeights.end(), &index.mBoneIndices[0], &index.mBoneIndices[index.mUsedBones]);
+            mBoneWeights.insert(mBoneWeights.end(), index.mBoneIndices.begin(), index.mBoneIndices.end());
         }
     }
 }
