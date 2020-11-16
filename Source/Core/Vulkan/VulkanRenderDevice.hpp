@@ -41,7 +41,7 @@ class Pipeline;
 
 struct vulkanResources
 {
-#ifdef ENABLE_LOGGING
+#if ENABLE_LOGGING
     std::string mDebugName;
 #endif
     std::shared_ptr<PipelineTemplate> mPipelineTemplate;

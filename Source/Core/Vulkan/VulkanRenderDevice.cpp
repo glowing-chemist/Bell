@@ -503,7 +503,7 @@ vulkanResources VulkanRenderDevice::getTaskResources(const RenderGraph& graph, c
         mResourcesLock.lock(); // need to write to the resource map so need exclusive access.
 
         vulkanResources resources = generateVulkanResources(graph, task);
-#ifdef ENABLE_LOGGING
+#if ENABLE_LOGGING
         resources.mDebugName = task.getName();
 #endif
         mVulkanResources.insert({hash, resources});
@@ -530,7 +530,7 @@ vulkanResources VulkanRenderDevice::generateVulkanResources(const RenderGraph& g
         const GraphicsTask& graphicsTask = static_cast<const GraphicsTask&>(task);
         GraphicsPipelineHandles pipelineHandles = createPipelineHandles(graphicsTask, graph);
 
-#ifdef ENABLE_LOGGING
+#if ENABLE_LOGGING
         vulkanResources resources{task.getName(), pipelineHandles.mGraphicsPipelineTemplate, pipelineHandles.mDescriptorSetLayout, pipelineHandles.mRenderPass, {}, {}};
 #else
         vulkanResources resources{pipelineHandles.mGraphicsPipelineTemplate, pipelineHandles.mDescriptorSetLayout, pipelineHandles.mRenderPass, {}, {}};
