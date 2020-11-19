@@ -46,12 +46,12 @@ using float3x4 = glm::mat3x4;
 class AABB;
 
 
-enum class EstimationMode
+enum Intersection : uint8_t
 {
-    Over,
-    Under
+    None = 0,
+    Contains = 1 << 1,
+    Partial = 1 << 2,
 };
-
 
 class Plane
 {
@@ -60,7 +60,7 @@ class Plane
     Plane(const float4& plane) : mPlane{plane} { glm::normalize(mPlane); }
     Plane() = default;
 
-    bool isInFrontOf(const AABB&, const EstimationMode) const;
+    Intersection isInFrontOf(const AABB&) const;
     bool isInFrontOf(const float3&) const;
 
 	private:

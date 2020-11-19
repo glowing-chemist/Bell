@@ -4,32 +4,20 @@
 #include "Engine/AABB.hpp"
 
 
-bool Plane::isInFrontOf(const AABB& aabb, const EstimationMode estimationMode) const
+Intersection Plane::isInFrontOf(const AABB& aabb) const
 {
     const auto aabbVerticies = aabb.getCubeAsVertexArray();
-    bool inFrontOf = true;
 
-    if(estimationMode == EstimationMode::Under)
+    bool all = true;
+    bool any = false;
+    for(const auto& vertex : aabbVerticies)
     {
-        for(const auto& vertex : aabbVerticies)
-        {
-            inFrontOf = inFrontOf && isInFrontOf(vertex);
-        }
-    }
-    else
-    {
-        inFrontOf = false;
-        for(const auto& vertex : aabbVerticies)
-        {
-            if (isInFrontOf(vertex))
-            {
-                inFrontOf = true;
-                break;
-            }
-        }
+        const bool front = isInFrontOf(vertex);
+        all = all && front;
+        any = any || front;
     }
 
-    return inFrontOf;
+    return static_cast<Intersection>((any ? Intersection::Partial : Intersection::None) | (all ? Intersection::Contains : Intersection::None));
 }
 
 

@@ -1404,8 +1404,8 @@ void Editor::drawAddInstanceDialog()
             const InstanceID id = mInProgressScene->addMeshInstance(mMeshToInstance, kInvalidInstanceID, float4x4(1.0f), mat.mMaterialOffset, mat.mMaterialTypes, mMeshInstanceScratchBuffer);
             mSceneInstanceIDs.push_back(id);
 
-            mInProgressScene->computeBounds(MeshType::Static);
-            mInProgressScene->computeBounds(MeshType::Dynamic);
+            mInProgressScene->computeBounds(AccelerationStructure::Static);
+            mInProgressScene->computeBounds(AccelerationStructure::Dynamic);
 
             ImGui::GetIO().ClearInputCharacters();
             memset(mMeshInstanceScratchBuffer, 0, 32);
@@ -1442,8 +1442,8 @@ void Editor::loadScene(const std::string& scene)
     mInProgressScene->setPath(scene);
     mSceneInstanceIDs = mInProgressScene->loadFromFile(VertexAttributes::Position4 | VertexAttributes::Normals | VertexAttributes::Tangents | VertexAttributes::TextureCoordinates | VertexAttributes::Albedo, &mEngine);
     mInProgressScene->uploadData(&mEngine);
-    mInProgressScene->computeBounds(MeshType::Static);
-    mInProgressScene->computeBounds(MeshType::Dynamic);
+    mInProgressScene->computeBounds(AccelerationStructure::Static);
+    mInProgressScene->computeBounds(AccelerationStructure::Dynamic);
 
     std::array<std::string, 6> skybox{	"./Assets/skybox/px.png",
                                         "./Assets/skybox/nx.png",

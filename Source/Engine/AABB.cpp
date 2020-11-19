@@ -66,21 +66,20 @@ bool AABB::contains(const float4& point) const
 }
 
 
-bool AABB::contains(const AABB& aabb, const EstimationMode estimationMode) const
+Intersection AABB::contains(const AABB& aabb) const
 {
 	const auto verticies = aabb.getCubeAsVertexArray();
 	
-	bool inside = true;
+    Intersection inside = Intersection::None;
+    bool all = true;
 	for (const auto& vertex : verticies)
 	{
 		const bool isInside = contains(vertex);
-		inside = inside && isInside;
-
-		if (estimationMode == EstimationMode::Over && isInside)
-			return isInside;
+        all = all && isInside;
+        inside = static_cast<Intersection>(inside | (isInside ? Intersection::Partial : Intersection::None));
 	}
 
-	return inside;
+    return static_cast<Intersection>(inside | (all ? Intersection::Contains : Intersection::None));
 }
 
 

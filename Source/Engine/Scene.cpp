@@ -42,9 +42,12 @@ const StaticMesh* MeshInstance::getMesh() const
 Scene::Scene(const std::filesystem::path& path) :
     mPath{path},
     mSceneMeshes(),
-    mOctreeMaxDivisions{~0u},
+    mOctreeStaticMaxDivisions{2},
+    mOctreeDynamicMaxDivisions{2},
+    mOctreePhysicsMaxDivisions{2},
     mStaticMeshBoundingVolume(),
     mDynamicMeshBoundingVolume(),
+    mPhysicsMeshBoundingVolume(),
     mRootTransform{1.0f},
     mSceneAABB(float4(std::numeric_limits<float>::max()), float4(std::numeric_limits<float>::min())),
     mSceneCamera(float3(0.0f, 0.0f, 0.0f), float3(0.0f, 0.0f, 1.0f), 1920.0f /1080.0f ,0.1f, 2000.0f),
@@ -702,23 +705,11 @@ void Scene::uploadData(Engine* eng)
 }
 
 
-void Scene::computeBounds(const MeshType type)
+void Scene::computeBounds(const AccelerationStructure type)
 {
-    generateSceneAABB(type == MeshType::Static);
+    generateSceneAABB(type == AccelerationStructure::Static || type == AccelerationStructure::Physics);
 
-    uint32_t divisions;
-
-    if (mOctreeMaxDivisions != ~0u)
-        divisions = mOctreeMaxDivisions;
-    else
-    {
-        const float3 sceneSize = mSceneAABB.getSideLengths();
-        const float maxSceneDimension = std::max(sceneSize.x, std::max(sceneSize.y, sceneSize.z));
-        const uint32_t maxDivisions = std::ceil(std::log2(maxSceneDimension));
-        divisions = std::max(3u, maxDivisions > 5u ? maxDivisions - 5u : maxDivisions);
-    }
-
-    if(type == MeshType::Static)
+    if(type == AccelerationStructure::Static)
     {
         //Build the static meshes BVH structure.
         std::vector<typename OctTreeFactory<MeshInstance*>::BuilderNode> staticBVHMeshes{};
@@ -729,9 +720,9 @@ void Scene::computeBounds(const MeshType type)
 
         OctTreeFactory<MeshInstance*> staticBVHFactory(mSceneAABB, staticBVHMeshes);        
 
-        mStaticMeshBoundingVolume = staticBVHFactory.generateOctTree(divisions);
+        mStaticMeshBoundingVolume = staticBVHFactory.generateOctTree(mOctreeStaticMaxDivisions);
     }
-    else
+    else if(type == AccelerationStructure::Dynamic)
     {
         //Build the dynamic meshes BVH structure.
         std::vector<typename OctTreeFactory<MeshInstance*>::BuilderNode> dynamicBVHMeshes{};
@@ -743,7 +734,20 @@ void Scene::computeBounds(const MeshType type)
 
          OctTreeFactory<MeshInstance*> dynamicBVHFactory(mSceneAABB, dynamicBVHMeshes);
 
-         mDynamicMeshBoundingVolume = dynamicBVHFactory.generateOctTree(divisions);
+         mDynamicMeshBoundingVolume = dynamicBVHFactory.generateOctTree(mOctreeDynamicMaxDivisions);
+    }
+    else if(type == AccelerationStructure::Physics)
+    {
+        //Build the physics meshes BVH structure.
+        std::vector<typename OctTreeFactory<MeshInstance*>::BuilderNode> physicsBVHMeshes{};
+
+        std::transform(mStaticMeshInstances.begin(), mStaticMeshInstances.end(), std::back_inserter(physicsBVHMeshes),
+                       [](MeshInstance& instance)
+                        { return OctTreeFactory<MeshInstance*>::BuilderNode{instance.getMesh()->getAABB() * instance.getTransMatrix(), &instance}; } );
+
+        OctTreeFactory<MeshInstance*> physicsBVHFactory(mSceneAABB, physicsBVHMeshes);
+
+        mPhysicsMeshBoundingVolume = physicsBVHFactory.generateOctTree(mOctreePhysicsMaxDivisions);
     }
 }
 
@@ -752,8 +756,8 @@ std::vector<const MeshInstance *> Scene::getViewableMeshes(const Frustum& frustu
 {
     std::vector<const MeshInstance*> instances;
 
-    std::vector<MeshInstance*> staticMeshes = mStaticMeshBoundingVolume.containedWithin(frustum, EstimationMode::Over);
-    std::vector<MeshInstance*> dynamicMeshes = mDynamicMeshBoundingVolume.containedWithin(frustum, EstimationMode::Over);
+    std::vector<MeshInstance*> staticMeshes = mStaticMeshBoundingVolume.containedWithin(frustum);
+    std::vector<MeshInstance*> dynamicMeshes = mDynamicMeshBoundingVolume.containedWithin(frustum);
 
     instances.insert(instances.end(), staticMeshes.begin(), staticMeshes.end());
     instances.insert(instances.end(), dynamicMeshes.begin(), dynamicMeshes.end());
@@ -1026,15 +1030,9 @@ std::vector<Scene::Intersection> Scene::getIntersections() const
 
 	for (auto& mesh : mStaticMeshInstances)
 	{
-        const std::vector<MeshInstance*> staticMeshes = mStaticMeshBoundingVolume.getIntersections(mesh.getMesh()->getAABB() * mesh.getTransMatrix());
-        const std::vector<MeshInstance*> dynamicMeshes = mDynamicMeshBoundingVolume.getIntersections(mesh.getMesh()->getAABB() * mesh.getTransMatrix());
+        const std::vector<MeshInstance*> staticMeshes = mPhysicsMeshBoundingVolume.getIntersections(mesh.getMesh()->getAABB() * mesh.getTransMatrix());
 
 		for (auto& m : staticMeshes)
-		{
-			intersections.emplace_back(m, &mesh);
-		}
-
-		for (auto& m : dynamicMeshes)
 		{
 			intersections.emplace_back(m, &mesh);
 		}
@@ -1042,15 +1040,9 @@ std::vector<Scene::Intersection> Scene::getIntersections() const
 
 	for (auto& mesh : mDynamicMeshInstances)
 	{
-        const std::vector<MeshInstance*> staticMeshes = mStaticMeshBoundingVolume.getIntersections(mesh.getMesh()->getAABB() * mesh.getTransMatrix());
-        const std::vector<MeshInstance*> dynamicMeshes = mDynamicMeshBoundingVolume.getIntersections(mesh.getMesh()->getAABB() * mesh.getTransMatrix());
+        const std::vector<MeshInstance*> staticMeshes = mPhysicsMeshBoundingVolume.getIntersections(mesh.getMesh()->getAABB() * mesh.getTransMatrix());
 
 		for (auto& m : staticMeshes)
-		{
-			intersections.emplace_back(m, &mesh);
-		}
-
-		for (auto& m : dynamicMeshes)
 		{
 			intersections.emplace_back(m, &mesh);
 		}
@@ -1064,21 +1056,13 @@ std::vector<Scene::Intersection> Scene::getIntersections(const InstanceID id)
 {
 	const MeshInstance* instanceToTest = getMeshInstance(id);
 
-    const std::vector<MeshInstance*> staticMeshes = mStaticMeshBoundingVolume.getIntersections(instanceToTest->getMesh()->getAABB() * instanceToTest->getTransMatrix());
-    const std::vector<MeshInstance*> dynamicMeshes = mDynamicMeshBoundingVolume.getIntersections(instanceToTest->getMesh()->getAABB() * instanceToTest->getTransMatrix());
+    const std::vector<MeshInstance*> staticMeshes = mPhysicsMeshBoundingVolume.getIntersections(instanceToTest->getMesh()->getAABB() * instanceToTest->getTransMatrix());
+    BELL_ASSERT(mStaticMeshInstances.size() < 10 || mStaticMeshInstances.size() >= mPhysicsMeshBoundingVolume.getTestsPerformed(), "Ineficient culling")
 
 	std::vector<Intersection> intersections{};
-	intersections.reserve(staticMeshes.size() + dynamicMeshes.size());
+    intersections.reserve(staticMeshes.size());
 
 	for (auto& m : staticMeshes)
-	{
-		if (m != instanceToTest)
-		{
-			intersections.emplace_back(instanceToTest, m);
-		}
-	}
-
-	for (auto& m : dynamicMeshes)
 	{
 		if (m != instanceToTest)
 		{
@@ -1094,21 +1078,13 @@ std::vector<Scene::Intersection> Scene::getIntersections(const InstanceID Ignore
 {
 	const MeshInstance* instanceToIgnore = getMeshInstance(IgnoreID);
 
-	const std::vector<MeshInstance*> staticMeshes = mStaticMeshBoundingVolume.getIntersections(aabbToTest);
-	const std::vector<MeshInstance*> dynamicMeshes = mDynamicMeshBoundingVolume.getIntersections(aabbToTest);
+    const std::vector<MeshInstance*> staticMeshes = mPhysicsMeshBoundingVolume.getIntersections(aabbToTest);
+    BELL_ASSERT(mStaticMeshInstances.size() < 10 || mStaticMeshInstances.size() > mPhysicsMeshBoundingVolume.getTestsPerformed(), "Ineficient culling")
 
 	std::vector<Intersection> intersections{};
-	intersections.reserve(staticMeshes.size() + dynamicMeshes.size());
+    intersections.reserve(staticMeshes.size());
 
 	for (auto& m : staticMeshes)
-	{
-		if (m != instanceToIgnore)
-		{
-			intersections.emplace_back(instanceToIgnore, m);
-		}
-	}
-
-	for (auto& m : dynamicMeshes)
 	{
 		if (m != instanceToIgnore)
 		{

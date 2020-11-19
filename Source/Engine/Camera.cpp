@@ -9,17 +9,17 @@ Frustum::Frustum(const float4x4 mvp)
 {
     const float* mvpp = glm::value_ptr(mvp);
     // Right clipping plane.
-    mRightPLane = float4( mvpp[3]-mvpp[0], mvpp[7]-mvpp[4], mvpp[11]-mvpp[8], mvpp[15]-mvpp[12] );
+    mRightPLane = float4(mvpp[3]-mvpp[0], mvpp[7]-mvpp[4], mvpp[11]-mvpp[8], mvpp[15]-mvpp[12] );
     // Left clipping plane.
-     mLeftPlane = float4( mvpp[3]+mvpp[0], mvpp[7]+mvpp[4], mvpp[11]+mvpp[8], mvpp[15]+mvpp[12] );
+    mLeftPlane = float4(mvpp[3]+mvpp[0], mvpp[7]+mvpp[4], mvpp[11]+mvpp[8], mvpp[15]+mvpp[12] );
     // Bottom clipping plane.
-    mBottomPlane = float4( mvpp[3]+mvpp[1], mvpp[7]+mvpp[5], mvpp[11]+mvpp[9], mvpp[15]+mvpp[13] );
+    mBottomPlane = float4(mvpp[3]+mvpp[1], mvpp[7]+mvpp[5], mvpp[11]+mvpp[9], mvpp[15]+mvpp[13] );
     // Top clipping plane.
-    mTopPlane = float4( mvpp[3]-mvpp[1], mvpp[7]-mvpp[5], mvpp[11]-mvpp[9], mvpp[15]-mvpp[13] );
+    mTopPlane = float4(mvpp[3]-mvpp[1], mvpp[7]-mvpp[5], mvpp[11]-mvpp[9], mvpp[15]-mvpp[13] );
     // Far clipping plane.
-    mFarPlane = float4( mvpp[3]-mvpp[2], mvpp[7]-mvpp[6], mvpp[11]-mvpp[10], mvpp[15]-mvpp[14] );
+    mFarPlane = float4(mvpp[3]-mvpp[2], mvpp[7]-mvpp[6], mvpp[11]-mvpp[10], mvpp[15]-mvpp[14] );
     // Near clipping plane.
-    mNearPlane = float4( mvpp[3]+mvpp[2], mvpp[7]+mvpp[6], mvpp[11]+mvpp[10], mvpp[15]+mvpp[14] );
+    mNearPlane = float4(mvpp[3]+mvpp[2], mvpp[7]+mvpp[6], mvpp[11]+mvpp[10], mvpp[15]+mvpp[14] );
 }
 
 
@@ -45,16 +45,16 @@ bool Frustum::isContainedWithin(const float3 &point) const
 }
 
 
-bool Frustum::isContainedWithin(const AABB &aabb, const EstimationMode mode) const
+Intersection Frustum::isContainedWithin(const AABB &aabb) const
 {
-    bool inFrontOf = true;
+    Intersection inFrontOf = static_cast<Intersection>(Intersection::Partial | Intersection::Contains);
 
-    inFrontOf = inFrontOf && mNearPlane.isInFrontOf(aabb, mode);
-    inFrontOf = inFrontOf && mFarPlane.isInFrontOf(aabb, mode);
-    inFrontOf = inFrontOf && mLeftPlane.isInFrontOf(aabb, mode);
-    inFrontOf = inFrontOf && mRightPLane.isInFrontOf(aabb, mode);
-    inFrontOf = inFrontOf && mTopPlane.isInFrontOf(aabb, mode);
-    inFrontOf = inFrontOf && mBottomPlane.isInFrontOf(aabb, mode);
+    inFrontOf = static_cast<Intersection>(inFrontOf & mNearPlane.isInFrontOf(aabb));
+    inFrontOf = static_cast<Intersection>(inFrontOf & mFarPlane.isInFrontOf(aabb));
+    inFrontOf = static_cast<Intersection>(inFrontOf & mLeftPlane.isInFrontOf(aabb));
+    inFrontOf = static_cast<Intersection>(inFrontOf & mRightPLane.isInFrontOf(aabb));
+    inFrontOf = static_cast<Intersection>(inFrontOf & mTopPlane.isInFrontOf(aabb));
+    inFrontOf = static_cast<Intersection>(inFrontOf & mBottomPlane.isInFrontOf(aabb));
 
     return inFrontOf;
 }

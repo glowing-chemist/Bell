@@ -195,9 +195,10 @@ int main()
     testScene.loadFromFile(VertexAttributes::Position4 | VertexAttributes::Normals | VertexAttributes::Tangents | VertexAttributes::TextureCoordinates | VertexAttributes::Albedo, engine);
     testScene.loadSkybox(skybox, engine);
     testScene.uploadData(engine);
-    testScene.setOctreeMaxDivisions(2);
-    testScene.computeBounds(MeshType::Static);
-    testScene.computeBounds(MeshType::Dynamic);
+    testScene.setOctreeMaxDivisions(3, AccelerationStructure::Static);
+    testScene.setOctreeMaxDivisions(1, AccelerationStructure::Dynamic);
+    testScene.computeBounds(AccelerationStructure::Static);
+    testScene.computeBounds(AccelerationStructure::Dynamic);
 #if USE_RAY_TRACING
     RayTracingScene rtScene(&engine, &testScene);
 #endif
@@ -205,7 +206,7 @@ int main()
     // set camera aspect ratio.
     Camera& camera = testScene.getCamera();
     camera.setAspect(float(windowWidth) / float(windowHeight));
-    camera.setFarPlane(20.0f);
+    camera.setFarPlane(60.0f);
 
     const float3 lightDirection = glm::normalize(float3(0.0f, -1.0f, 0.0f));
     const float3 ligthUp = float3(0.0f, 0.0f, 1.0f);

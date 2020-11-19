@@ -16,7 +16,7 @@ public:
     bool isContainedWithin(const float4& point) const;
     bool isContainedWithin(const float3& point) const;
 
-    bool isContainedWithin(const AABB& aabb, const EstimationMode) const;
+    Intersection isContainedWithin(const AABB& aabb) const;
 
 private:
 

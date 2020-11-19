@@ -43,8 +43,8 @@ public:
     // std::limits<float>::max() to indicate no intersection
     float intersectionDistance(const Ray&) const;
 
-	bool contains(const float4&) const;
-    bool contains(const AABB&, const EstimationMode) const;
+    bool contains(const float4&) const;
+    Intersection contains(const AABB&) const;
 
     AABB& operator*=(const float4x4&);
 

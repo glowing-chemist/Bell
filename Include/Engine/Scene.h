@@ -28,6 +28,13 @@ using SceneID = uint64_t;
 using InstanceID = uint64_t;
 constexpr InstanceID kInvalidInstanceID = std::numeric_limits<InstanceID>::max();
 
+enum class AccelerationStructure
+{
+    Static,
+    Dynamic,
+    Physics
+};
+
 enum class MeshType
 {
 	Dynamic,
@@ -199,7 +206,7 @@ public:
     void          removeMeshInstance(const InstanceID);
 
     void          uploadData(Engine*);
-    void          computeBounds(const MeshType);
+    void          computeBounds(const AccelerationStructure);
 
     std::vector<const MeshInstance*> getViewableMeshes(const Frustum&) const;
 
@@ -445,15 +452,29 @@ public:
             return inst->getMesh()->getBlendMeshAnimation(name);
     }
 
-    void setOctreeMaxDivisions(const uint32_t maxDiv)
+    void setOctreeMaxDivisions(const uint32_t maxDiv, const AccelerationStructure s)
     {
-        mOctreeMaxDivisions = maxDiv;
+    switch(s)
+    {
+        case AccelerationStructure::Dynamic:
+        mOctreeDynamicMaxDivisions = maxDiv;
+        break;
+
+        case AccelerationStructure::Static:
+        mOctreeStaticMaxDivisions = maxDiv;
+        break;
+
+        case AccelerationStructure::Physics:
+        mOctreePhysicsMaxDivisions = maxDiv;
+        break;
+    }
     }
 
     void setRootTransform(const float4x4& trans)
     {
         mRootTransform = trans;
     }
+
 
 private:
 
@@ -494,9 +515,12 @@ private:
     std::vector<MeshInstance> mDynamicMeshInstances;
     std::vector<uint32_t>     mFreeDynamicMeshIndicies;
 
-    uint32_t mOctreeMaxDivisions;
+    uint32_t mOctreeStaticMaxDivisions;
+    uint32_t mOctreeDynamicMaxDivisions;
+    uint32_t mOctreePhysicsMaxDivisions;
     OctTree<MeshInstance*> mStaticMeshBoundingVolume;
     OctTree<MeshInstance*> mDynamicMeshBoundingVolume;
+    OctTree<MeshInstance*> mPhysicsMeshBoundingVolume;
 
     float4x4 mRootTransform;
     AABB mSceneAABB;
