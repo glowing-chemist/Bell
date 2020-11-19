@@ -83,14 +83,7 @@ std::vector<T> OctTree<T>::getIntersections(const AABB& aabb) const
 template<typename T>
 void OctTree<T>::getIntersections(const AABB& aabb, const std::unique_ptr<typename OctTree<T>::Node>& node, std::vector<T>& intersections, const Intersection nodeFlags) const
 {
-    if(nodeFlags & Intersection::Contains)
-    {
-        for (const auto& mesh : node->mValues)
-        {
-            intersections.push_back(mesh.mValue);
-        }
-    }
-    else if(nodeFlags & Intersection::Partial)
+    if(nodeFlags & Intersection::Partial)
     {
         for (const auto& mesh : node->mValues)
         {
