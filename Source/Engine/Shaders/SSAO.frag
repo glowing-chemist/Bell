@@ -275,7 +275,7 @@ float main(const PositionAndUVVertOutput pixel)
   
   const bool offScreen = previousUV.x > 1.0f || previousUV.x < 0.0f || previousUV.y > 1.0f || previousUV.y < 0.0f;
   
-  if((depthDiff < 0.1) && !offScreen)
+  if((depthDiff < 0.2) && !offScreen)
   {
     historyCount = historyCounter.Load(previousUV * (camera.frameBufferSize / 2));
     const float prevAo = history.Sample(linearSampler, previousUV);
