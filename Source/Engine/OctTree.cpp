@@ -9,18 +9,18 @@
 
 
 template<typename T>
-void OctTree<T>::containedWithin(std::vector<T>& meshes, const Frustum& frustum, const std::unique_ptr<typename OctTree<T>::Node>& node, const Intersection nodeFlags) const
+void OctTree<T>::containedWithin(std::vector<T>& meshes, const Frustum& frustum, const typename OctTree<T>::Node& node, const Intersection nodeFlags) const
 {
     if(nodeFlags & Intersection::Contains)
     {
-        for (const auto& mesh : node->mValues)
+        for (const auto& mesh : node.mValues)
         {
             meshes.push_back(mesh.mValue);
         }
     }
     else if(nodeFlags & Intersection::Partial)
     {
-        for (const auto& mesh : node->mValues)
+        for (const auto& mesh : node.mValues)
         {
             ++mTests;
             if (frustum.isContainedWithin(mesh.mBounds))
@@ -32,14 +32,23 @@ void OctTree<T>::containedWithin(std::vector<T>& meshes, const Frustum& frustum,
         return;
     }
 
-	for (const auto& childNode : node->mChildren)
+    for (const auto& childIndex : node.mChildren)
 	{
-        if (childNode)
+        if (childIndex != kInvalidNodeIndex)
         {
-            ++mTests;
-            const Intersection newFlags = frustum.isContainedWithin(childNode->mBoundingBox);
-            if (newFlags)
-                containedWithin(meshes, frustum, childNode, newFlags);
+            const Node& childNode = getNode(childIndex);
+            // no need to test subnodes if parent is completely contained.
+            if(nodeFlags & Intersection::Contains)
+            {
+                containedWithin(meshes, frustum, childNode, nodeFlags);
+            }
+            else
+            {
+                ++mTests;
+                const Intersection newFlags = frustum.isContainedWithin(childNode.mBoundingBox);
+                if (newFlags)
+                    containedWithin(meshes, frustum, childNode, newFlags);
+            }
         }
 	}
 }
@@ -51,13 +60,14 @@ std::vector<T> OctTree<T>::containedWithin(const Frustum& frustum) const
 {
     mTests = 0;
 
-	if (!mRoot)
+    if (mRoot == kInvalidNodeIndex)
 		return {};
 
     std::vector<T> uniqueMeshes{};
 
-    const Intersection initialFlags = frustum.isContainedWithin(mRoot->mBoundingBox);
-    containedWithin(uniqueMeshes, frustum, mRoot, initialFlags);
+    const Node& root = getNode(mRoot);
+    const Intersection initialFlags = frustum.isContainedWithin(root.mBoundingBox);
+    containedWithin(uniqueMeshes, frustum, root, initialFlags);
 
     return uniqueMeshes;
 }
@@ -70,10 +80,11 @@ std::vector<T> OctTree<T>::getIntersections(const AABB& aabb) const
 
 	std::vector<T> intersections{};
 
-	if(mRoot != nullptr)
+    if(mRoot != kInvalidNodeIndex)
     {
-        const Intersection initialFlags = mRoot->mBoundingBox.contains(aabb);
-        getIntersections(aabb, mRoot, intersections, initialFlags);
+        const Node& root = getNode(mRoot);
+        const Intersection initialFlags = root.mBoundingBox.contains(aabb);
+        getIntersections(aabb, root, intersections, initialFlags);
     }
 
     return intersections;
@@ -81,11 +92,11 @@ std::vector<T> OctTree<T>::getIntersections(const AABB& aabb) const
 
 
 template<typename T>
-void OctTree<T>::getIntersections(const AABB& aabb, const std::unique_ptr<typename OctTree<T>::Node>& node, std::vector<T>& intersections, const Intersection nodeFlags) const
+void OctTree<T>::getIntersections(const AABB& aabb, const typename OctTree<T>::Node& node, std::vector<T>& intersections, const Intersection nodeFlags) const
 {
     if(nodeFlags & Intersection::Partial)
     {
-        for (const auto& mesh : node->mValues)
+        for (const auto& mesh : node.mValues)
         {
             ++mTests;
             if (mesh.mBounds.contains(aabb))
@@ -97,12 +108,13 @@ void OctTree<T>::getIntersections(const AABB& aabb, const std::unique_ptr<typena
         return;
     }
 
-    for (const auto& childNode : node->mChildren)
+    for (const auto& childIndex : node.mChildren)
     {
-        if (childNode)
+        if (childIndex != kInvalidNodeIndex)
         {
+            const Node childNode = getNode(childIndex);
             ++mTests;
-            const Intersection newFlags = childNode->mBoundingBox.contains(aabb);
+            const Intersection newFlags = childNode.mBoundingBox.contains(aabb);
             if (newFlags)
                 getIntersections(aabb, childNode, intersections, newFlags);
         }
@@ -113,25 +125,26 @@ void OctTree<T>::getIntersections(const AABB& aabb, const std::unique_ptr<typena
 template<typename T>
 OctTree<T> OctTreeFactory<T>::generateOctTree(const uint32_t subdivisions)
 {
-    auto root = createSpacialSubdivisions(subdivisions, mRootBoundingBox, mBoundingBoxes);
+    const NodeIndex root = createSpacialSubdivisions(subdivisions, mRootBoundingBox, mBoundingBoxes);
 
-	return OctTree<T>{root};
+    return OctTree<T>{root, mNodeStorage};
 }
 
 
 template<typename T>
-std::unique_ptr<typename OctTree<T>::Node> OctTreeFactory<T>::createSpacialSubdivisions(const uint32_t subdivisions,
+NodeIndex OctTreeFactory<T>::createSpacialSubdivisions(const uint32_t subdivisions,
                                                                                         const AABB& parentBox,
                                                                                         const std::vector<typename OctTree<T>::BoundedValue>& nodes)
 {
     if (nodes.empty() || subdivisions == 0)
     {
         BELL_ASSERT(nodes.empty(), "Need to have placed all meshes")
-        return nullptr;
+        return kInvalidNodeIndex;
     }
 
-    auto newNode = std::make_unique<typename OctTree<T>::Node>();
-    newNode->mBoundingBox = parentBox;
+    const NodeIndex nodeIndex = allocateNewNodeIndex();
+    auto& newNode = getNode(nodeIndex);
+    newNode.mBoundingBox = parentBox;
 
     const float3 halfNodeSize = parentBox.getSideLengths() / 2.0f;
     std::vector<typename OctTree<T>::BoundedValue> unfittedNodes{};
@@ -139,7 +152,7 @@ std::unique_ptr<typename OctTree<T>::Node> OctTreeFactory<T>::createSpacialSubdi
 	{
         const float3 size = node.mBounds.getSideLengths();
         if(size.x > halfNodeSize.x || size.y > halfNodeSize.y || size.z > halfNodeSize.z || subdivisions == 1)
-            newNode->mValues.push_back(node);
+            newNode.mValues.push_back(node);
         else
             unfittedNodes.push_back(node);
 	}
@@ -170,24 +183,24 @@ std::unique_ptr<typename OctTree<T>::Node> OctTreeFactory<T>::createSpacialSubdi
             }
         }
 
-        std::unique_ptr<typename OctTree<T>::Node> child = createSpacialSubdivisions(subdivisions - 1, subSpaces[i], subSpaceNodes);
-        if(child)
+       const NodeIndex child = createSpacialSubdivisions(subdivisions - 1, subSpaces[i], subSpaceNodes);
+       if(child != kInvalidNodeIndex)
             ++childCount;
-        newNode->mChildren[i] = std::move(child);
+        getNode(nodeIndex).mChildren[i] = child;
     }
-    newNode->mChildCount = childCount;
+    getNode(nodeIndex).mChildCount = childCount;
 
     for(const auto&[idx, count] : unclaimedCount)
     {
         BELL_ASSERT(count <= 8, "Incorrect map lookup")
         if(count == 8)
-            newNode->mValues.push_back(unfittedNodes[idx]);
+            getNode(nodeIndex).mValues.push_back(unfittedNodes[idx]);
     }
 
-    if(newNode->mValues.empty())
-        return nullptr;
+    if(getNode(nodeIndex).mValues.empty())
+        return kInvalidNodeIndex;
     else
-        return newNode;
+        return nodeIndex;
 }
 
 

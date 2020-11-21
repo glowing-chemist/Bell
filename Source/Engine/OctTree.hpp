@@ -14,14 +14,18 @@
 #include "Engine/GeomUtils.h"
 
 
+constexpr uint32_t kInvalidNodeIndex = ~0u;
+using NodeIndex = uint32_t;
+
+
 template<typename T>
 class OctTree
 {
 public:
     struct Node;
 
-    OctTree(std::unique_ptr<Node>& ptr) : mTests{0},  mRoot{std::move(ptr)} {}
-    OctTree()= default;
+    OctTree(const NodeIndex rootIndex, std::vector<Node>& nodeStorage) : mTests{0},  mRoot{rootIndex}, mNodes{nodeStorage} {}
+    OctTree() : mTests{0}, mRoot{kInvalidNodeIndex} , mNodes{} {}
 
     OctTree(OctTree&&) = default;
     OctTree& operator=(OctTree&&) = default;
@@ -47,7 +51,7 @@ public:
        std::vector<BoundedValue> mValues;
 
        uint32_t mChildCount;
-       std::unique_ptr<Node> mChildren[8];
+       NodeIndex mChildren[8];
     };
 
     uint32_t getTestsPerformed() const
@@ -59,12 +63,20 @@ private:
     //std::vector<T>						getIntersections(const Ray&, const std::unique_ptr<Node>&) const;
     //std::vector<std::pair<T, float>>	getIntersectionsWithDistance(const Ray&, std::unique_ptr<Node>&, const float distance) const;
 		
-    void	containedWithin(std::vector<T> &meshes, const Frustum&, const std::unique_ptr<Node>&, const Intersection nodeFlags) const;
+    const Node& getNode(const NodeIndex n) const
+    {
+        BELL_ASSERT(n != kInvalidNodeIndex && n < mNodes.size(), "Invalid index")
+        return mNodes[n];
+    }
 
-    void	getIntersections(const AABB& aabb, const std::unique_ptr<typename OctTree<T>::Node>& node, std::vector<T>& intersections, const Intersection nodeFlags) const;
+    void	containedWithin(std::vector<T> &meshes, const Frustum&, const Node &, const Intersection nodeFlags) const;
+
+    void	getIntersections(const AABB& aabb, const typename OctTree<T>::Node& node, std::vector<T>& intersections, const Intersection nodeFlags) const;
 
     mutable uint32_t mTests;
-    std::unique_ptr<Node> mRoot;
+    NodeIndex mRoot;
+
+    std::vector<Node> mNodes;
 };
 
 
@@ -83,10 +95,26 @@ public:
 
 private:
 
+    NodeIndex allocateNewNodeIndex()
+    {
+        const NodeIndex i = mNodeStorage.size();
+        mNodeStorage.emplace_back();
+
+        return i;
+    }
+
+    typename OctTree<T>::Node& getNode(const NodeIndex n)
+    {
+        BELL_ASSERT(n != kInvalidNodeIndex && n < mNodeStorage.size(), "Invalid index")
+        return mNodeStorage[n];
+    }
+
     std::array<AABB, 8> splitAABB(const AABB&) const;
-    std::unique_ptr<typename OctTree<T>::Node> createSpacialSubdivisions(const uint32_t subdivisions,
+    NodeIndex createSpacialSubdivisions(const uint32_t subdivisions,
                                                                          const AABB& parentBox,
                                                                          const std::vector<typename OctTree<T>::BoundedValue>& nodes);
+
+    std::vector<typename OctTree<T>::Node> mNodeStorage;
 
     AABB mRootBoundingBox; // AABB that all others are contained within.
     std::vector<typename OctTree<T>::BoundedValue> mBoundingBoxes;
