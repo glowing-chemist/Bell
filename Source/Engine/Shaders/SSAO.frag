@@ -270,12 +270,12 @@ float main(const PositionAndUVVertOutput pixel)
   const float prevLinDepth = prevLinearDepth.SampleLevel(linearSampler, previousUV, 0.0f).x;
   const float reprojectedDepthLinear = reconstructViewSpaceDepth(float3((previousUV - 0.5f) * 2.0f, prevLinDepth));
 
-  const float depthVS = (linDepth * (camera.farPlane - camera.nearPlane)) + camera.nearPlane;
+  const float depthVS = (linDepth * (camera.farPlane - camera.nearPlane));
   const float depthDiff = abs(depthVS - reprojectedDepthLinear);
   
   const bool offScreen = previousUV.x > 1.0f || previousUV.x < 0.0f || previousUV.y > 1.0f || previousUV.y < 0.0f;
   
-  if((depthDiff < 0.2) && !offScreen)
+  if((depthDiff < 0.1) && !offScreen)
   {
     historyCount = historyCounter.Load(previousUV * (camera.frameBufferSize / 2));
     const float prevAo = history.Sample(linearSampler, previousUV);
