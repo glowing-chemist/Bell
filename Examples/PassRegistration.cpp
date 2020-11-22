@@ -216,18 +216,19 @@ int main()
     
     {
         const AABB sceneBounds = testScene.getBounds();
+        const float3 sceneSize = sceneBounds.getSideLengths();
 
-        for (float x = sceneBounds.getBottom().x; x < sceneBounds.getTop().x; x += 300.0f)
+        for (float x = sceneBounds.getBottom().x; x < sceneBounds.getTop().x; x += sceneSize.x / 18.0f)
         {
-            for (float y = sceneBounds.getBottom().y; y < sceneBounds.getTop().y; y += 300.0f)
+            for (float y = sceneBounds.getBottom().y; y < sceneBounds.getTop().y; y += sceneSize.x / 20.0f)
             {
-                for (float z = sceneBounds.getBottom().z; z < sceneBounds.getTop().z; z += 300.0f)
+                for (float z = sceneBounds.getBottom().z; z < sceneBounds.getTop().z; z += sceneSize.x / 10.0f)
                 {
                     const float r = float(rand()) / float((RAND_MAX));
                     const float g = float(rand()) / float((RAND_MAX));
                     const float b = float(rand()) / float((RAND_MAX));
 
-                    testScene.addLight(Scene::Light::pointLight(float4(x, y, z, 1.0f), float4(r, g, b, 1.0f), 4000.0f, 150.0f));
+                    testScene.addLight(Scene::Light::pointLight(float4(x, y, z, 1.0f), float4(r, g, b, 1.0f), 4.0f, 2.0f));
                 }
             }
         }
