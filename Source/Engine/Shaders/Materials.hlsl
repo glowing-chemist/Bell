@@ -7,28 +7,30 @@ float3 fresnelSchlickRoughness(const float cosTheta, const float3 F0, const floa
 }
 
 
-float2 parallaxUV(const float2 startUV, const float3 view, Texture2D<float> height, float4 derivitives)
+float2 parallaxUV(const float2 startUV, const float3 view, Texture2D<float> heightMap)
 {
-	uint numSamples = 6;
+	const uint numSamples = 10;
 	float2 size;
-	height.GetDimensions(size.x, size.y);
-	float2 pixelSize = 1.0f / size;
+	heightMap.GetDimensions(size.x, size.y);
 
-	float3 position = float3(startUV, 1.0f);
-	float stepSize = 2.0f * max(max(max(derivitives.x, derivitives.y), max(derivitives.z, derivitives.w)), max(pixelSize.x, pixelSize.y));
+	float3 position = float3(startUV, 0.5f);
+	const float2 xySize = float2(1.0f / size.x, 1.0f / size.y);
+	const float2 normXY = normalize(view.xy);
+	const float2 xyStepSize = xySize * normXY;
+	const float3 stepDir = float3(xyStepSize, view.z * (length(xyStepSize) / length(view.xy)));
 
 	for(uint i = 0; i < numSamples; ++i)
 	{
-		const float height = height.SampleLevel(linearSampler, position.xy, 0.0f);
+		const float height = heightMap.SampleLevel(linearSampler, position.xy, 0.0f);
 
-		if(position.z < height)
-			break;
+		if(position.z <= height)
+			return position.xy;
 
-		const float heightDiff = position.z - height;
-		position += 10.0f * heightDiff * view * stepSize;
+		const float heightDiff = max(1.0f, 10.0f * abs(position.z - height));
+		position += stepDir * heightDiff;
 	}
 
-	return position.xy;
+	return startUV;
 }
 
 
@@ -52,12 +54,10 @@ MaterialInfo calculateMaterialInfo(	const float4 vertexNormal,
 
 #if MATERIAL_FLAGS & kMaterial_HeightMap
 	{
-		const float3 tangentView = mul(tbv, view);
+		const float3 tangentView = mul(-view, transpose(tbv));
 		Texture2D<float> heightMap = materials[materialIndex];
 
-		const float2 xDerivities = ddx_fine(uv);
-		const float2 yDerivities = ddy_fine(uv);
-		uv = parallaxUV(uv, tangentView, heightMap, float4(xDerivities, yDerivities));
+		uv = parallaxUV(uv, tangentView, heightMap);
 
 		++nextMaterialSlot;
 	}
