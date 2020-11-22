@@ -20,7 +20,7 @@ GBufferVertOutput main(Vertex vertex)
 	float4 transformedPositionWS = mul(vertex.position, meshMatrix);
 	float4 transformedPosition = mul(camera.viewProj, transformedPositionWS);
 	float4 prevTransformedPositionWS = mul(vertex.position, prevMeshMatrix);
-	float4 prevTransformedPosition = mul(camera.previousFrameViewProj, transformedPositionWS);
+	float4 prevTransformedPosition = mul(camera.previousFrameViewProj, prevTransformedPositionWS);
 
 	output.position = transformedPosition;
 	output.curPosition = transformedPosition;
