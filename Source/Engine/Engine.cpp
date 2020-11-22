@@ -156,8 +156,6 @@ Engine::Engine(GLFWwindow* windowPtr) :
 void Engine::setScene(const std::string& path)
 {
     mCurrentScene = new Scene(path);
-    mCurrentScene->setOctreeMaxDivisions(2, AccelerationStructure::Static);
-    mCurrentScene->setOctreeMaxDivisions(2, AccelerationStructure::Dynamic);
     mCurrentScene->loadFromFile(VertexAttributes::Position4 | VertexAttributes::TextureCoordinates | VertexAttributes::Normals | VertexAttributes::Albedo, this);
 
     mCurrentScene->uploadData(this);

@@ -42,9 +42,6 @@ const StaticMesh* MeshInstance::getMesh() const
 Scene::Scene(const std::filesystem::path& path) :
     mPath{path},
     mSceneMeshes(),
-    mOctreeStaticMaxDivisions{2},
-    mOctreeDynamicMaxDivisions{2},
-    mOctreePhysicsMaxDivisions{2},
     mStaticMeshBoundingVolume(),
     mDynamicMeshBoundingVolume(),
     mPhysicsMeshBoundingVolume(),
@@ -720,7 +717,7 @@ void Scene::computeBounds(const AccelerationStructure type)
 
         OctTreeFactory<MeshInstance*> staticBVHFactory(mSceneAABB, staticBVHMeshes);        
 
-        mStaticMeshBoundingVolume = staticBVHFactory.generateOctTree(mOctreeStaticMaxDivisions);
+        mStaticMeshBoundingVolume = staticBVHFactory.generateOctTree();
     }
     else if(type == AccelerationStructure::Dynamic)
     {
@@ -734,7 +731,7 @@ void Scene::computeBounds(const AccelerationStructure type)
 
          OctTreeFactory<MeshInstance*> dynamicBVHFactory(mSceneAABB, dynamicBVHMeshes);
 
-         mDynamicMeshBoundingVolume = dynamicBVHFactory.generateOctTree(mOctreeDynamicMaxDivisions);
+         mDynamicMeshBoundingVolume = dynamicBVHFactory.generateOctTree();
     }
     else if(type == AccelerationStructure::Physics)
     {
@@ -747,7 +744,7 @@ void Scene::computeBounds(const AccelerationStructure type)
 
         OctTreeFactory<MeshInstance*> physicsBVHFactory(mSceneAABB, physicsBVHMeshes);
 
-        mPhysicsMeshBoundingVolume = physicsBVHFactory.generateOctTree(mOctreePhysicsMaxDivisions);
+        mPhysicsMeshBoundingVolume = physicsBVHFactory.generateOctTree();
     }
 }
 

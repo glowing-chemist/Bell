@@ -195,8 +195,6 @@ int main()
     testScene.loadFromFile(VertexAttributes::Position4 | VertexAttributes::Normals | VertexAttributes::Tangents | VertexAttributes::TextureCoordinates | VertexAttributes::Albedo, engine);
     testScene.loadSkybox(skybox, engine);
     testScene.uploadData(engine);
-    testScene.setOctreeMaxDivisions(3, AccelerationStructure::Static);
-    testScene.setOctreeMaxDivisions(1, AccelerationStructure::Dynamic);
     testScene.computeBounds(AccelerationStructure::Static);
     testScene.computeBounds(AccelerationStructure::Dynamic);
 #if USE_RAY_TRACING

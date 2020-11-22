@@ -452,24 +452,6 @@ public:
             return inst->getMesh()->getBlendMeshAnimation(name);
     }
 
-    void setOctreeMaxDivisions(const uint32_t maxDiv, const AccelerationStructure s)
-    {
-    switch(s)
-    {
-        case AccelerationStructure::Dynamic:
-        mOctreeDynamicMaxDivisions = maxDiv;
-        break;
-
-        case AccelerationStructure::Static:
-        mOctreeStaticMaxDivisions = maxDiv;
-        break;
-
-        case AccelerationStructure::Physics:
-        mOctreePhysicsMaxDivisions = maxDiv;
-        break;
-    }
-    }
-
     void setRootTransform(const float4x4& trans)
     {
         mRootTransform = trans;
@@ -515,9 +497,6 @@ private:
     std::vector<MeshInstance> mDynamicMeshInstances;
     std::vector<uint32_t>     mFreeDynamicMeshIndicies;
 
-    uint32_t mOctreeStaticMaxDivisions;
-    uint32_t mOctreeDynamicMaxDivisions;
-    uint32_t mOctreePhysicsMaxDivisions;
     OctTree<MeshInstance*> mStaticMeshBoundingVolume;
     OctTree<MeshInstance*> mDynamicMeshBoundingVolume;
     OctTree<MeshInstance*> mPhysicsMeshBoundingVolume;

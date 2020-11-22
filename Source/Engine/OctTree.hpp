@@ -91,28 +91,21 @@ public:
                                                                             mBoundingBoxes{data} {}
 
 
-    OctTree<T> generateOctTree(const uint32_t subdivisions);
+    OctTree<T> generateOctTree();
 
 private:
 
-    NodeIndex allocateNewNodeIndex()
+    NodeIndex addNode(const typename OctTree<T>::Node& n)
     {
         const NodeIndex i = mNodeStorage.size();
-        mNodeStorage.emplace_back();
+        mNodeStorage.push_back(n);
 
         return i;
     }
 
-    typename OctTree<T>::Node& getNode(const NodeIndex n)
-    {
-        BELL_ASSERT(n != kInvalidNodeIndex && n < mNodeStorage.size(), "Invalid index")
-        return mNodeStorage[n];
-    }
-
     std::array<AABB, 8> splitAABB(const AABB&) const;
-    NodeIndex createSpacialSubdivisions(const uint32_t subdivisions,
-                                                                         const AABB& parentBox,
-                                                                         const std::vector<typename OctTree<T>::BoundedValue>& nodes);
+    NodeIndex createSpacialSubdivisions(const AABB& parentBox,
+                                        const std::vector<typename OctTree<T>::BoundedValue>& nodes);
 
     std::vector<typename OctTree<T>::Node> mNodeStorage;
 

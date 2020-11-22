@@ -123,27 +123,25 @@ void OctTree<T>::getIntersections(const AABB& aabb, const typename OctTree<T>::N
 
 
 template<typename T>
-OctTree<T> OctTreeFactory<T>::generateOctTree(const uint32_t subdivisions)
+OctTree<T> OctTreeFactory<T>::generateOctTree()
 {
-    const NodeIndex root = createSpacialSubdivisions(subdivisions, mRootBoundingBox, mBoundingBoxes);
+    const NodeIndex root = createSpacialSubdivisions(mRootBoundingBox, mBoundingBoxes);
 
     return OctTree<T>{root, mNodeStorage};
 }
 
 
 template<typename T>
-NodeIndex OctTreeFactory<T>::createSpacialSubdivisions(const uint32_t subdivisions,
-                                                                                        const AABB& parentBox,
-                                                                                        const std::vector<typename OctTree<T>::BoundedValue>& nodes)
+NodeIndex OctTreeFactory<T>::createSpacialSubdivisions(const AABB& parentBox,
+                                                       const std::vector<typename OctTree<T>::BoundedValue>& nodes)
 {
-    if (nodes.empty() || subdivisions == 0)
+    if (nodes.empty())
     {
         BELL_ASSERT(nodes.empty(), "Need to have placed all meshes")
         return kInvalidNodeIndex;
     }
 
-    const NodeIndex nodeIndex = allocateNewNodeIndex();
-    auto& newNode = getNode(nodeIndex);
+    typename OctTree<T>::Node newNode{};
     newNode.mBoundingBox = parentBox;
 
     const float3 halfNodeSize = parentBox.getSideLengths() / 2.0f;
@@ -151,16 +149,11 @@ NodeIndex OctTreeFactory<T>::createSpacialSubdivisions(const uint32_t subdivisio
 	for (const auto& node : nodes)
 	{
         const float3 size = node.mBounds.getSideLengths();
-        if(size.x > halfNodeSize.x || size.y > halfNodeSize.y || size.z > halfNodeSize.z || subdivisions == 1)
+        if(size.x > halfNodeSize.x || size.y > halfNodeSize.y || size.z > halfNodeSize.z)
             newNode.mValues.push_back(node);
         else
             unfittedNodes.push_back(node);
 	}
-
-    if(subdivisions == 1)
-    {
-        BELL_ASSERT(unfittedNodes.empty(), "")
-    }
 
     const auto subSpaces = splitAABB(parentBox);
 
@@ -183,24 +176,24 @@ NodeIndex OctTreeFactory<T>::createSpacialSubdivisions(const uint32_t subdivisio
             }
         }
 
-       const NodeIndex child = createSpacialSubdivisions(subdivisions - 1, subSpaces[i], subSpaceNodes);
+       const NodeIndex child = createSpacialSubdivisions(subSpaces[i], subSpaceNodes);
        if(child != kInvalidNodeIndex)
             ++childCount;
-        getNode(nodeIndex).mChildren[i] = child;
+       newNode.mChildren[i] = child;
     }
-    getNode(nodeIndex).mChildCount = childCount;
+    newNode.mChildCount = childCount;
 
     for(const auto&[idx, count] : unclaimedCount)
     {
         BELL_ASSERT(count <= 8, "Incorrect map lookup")
         if(count == 8)
-            getNode(nodeIndex).mValues.push_back(unfittedNodes[idx]);
+            newNode.mValues.push_back(unfittedNodes[idx]);
     }
 
-    if(getNode(nodeIndex).mValues.empty())
+    if(newNode.mValues.empty())
         return kInvalidNodeIndex;
     else
-        return nodeIndex;
+        return addNode(newNode);
 }
 
 
