@@ -190,7 +190,7 @@ NodeIndex OctTreeFactory<T>::createSpacialSubdivisions(const AABB& parentBox,
             newNode.mValues.push_back(unfittedNodes[idx]);
     }
 
-    if(newNode.mValues.empty())
+    if(newNode.mValues.empty() && newNode.mChildCount == 0)
         return kInvalidNodeIndex;
     else
         return addNode(newNode);
