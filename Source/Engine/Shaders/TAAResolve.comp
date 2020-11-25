@@ -55,7 +55,13 @@ void main(uint3 globalIndex : SV_DispatchThreadID)
 
 	const float2 previousUV = uv - currentVelocity;
 
+	const float d = depth.Sample(linearSampler, uv);
 	float4 currentColour = colour.Sample(linearSampler, uv);
+
+	if(d == 0.0f)
+	{
+		newHistory[globalIndex.xy] = currentColour; 
+	}
 
 	const float xDiff = 1.0f / camera.frameBufferSize.x;
 	const float yDiff = 1.0f / camera.frameBufferSize.y;

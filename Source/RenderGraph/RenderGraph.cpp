@@ -323,6 +323,10 @@ void RenderGraph::compileDependancies()
     }
 
     mTaskDependancies.insert(mTaskDependancies.end(), dependancies.begin(), dependancies.end());
+
+#ifndef NDEBUG
+    verifyDependencies();
+#endif
 }
 
 
@@ -941,6 +945,25 @@ void RenderGraph::resetBindings()
 	mBufferViews.clear();
 	mSamplers.clear();
 	mSRS.clear();
+}
+
+
+void RenderGraph::verifyDependencies()
+{
+    // TODO make more reobust, only checks direct circular links currently.
+    for(const auto& [dependantOuter, dependancyOuter] : mTaskDependancies)
+    {
+        for(const auto& [dependantInner, dependancyInner] : mTaskDependancies)
+        {
+            if(dependantOuter == dependancyInner && dependancyOuter == dependantInner)
+            {
+                const RenderTask& task1 = getTask(dependantOuter);
+                const RenderTask& task2 = getTask(dependantOuter);
+                BELL_LOG_ARGS("Circular dependancy between %s and %s", task1.getName().c_str(), task2.getName().c_str());
+                BELL_TRAP;
+            }
+        }
+    }
 }
 
 

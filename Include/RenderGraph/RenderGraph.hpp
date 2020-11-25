@@ -138,6 +138,8 @@ private:
 
     void createInternalResource(RenderDevice*, const char *name, const Format, const ImageUsage, const SizeClass);
 
+    void verifyDependencies();
+
     std::vector<GraphicsTask> mGraphicsTasks;
     std::vector<ComputeTask>  mComputeTasks;
     std::vector<AsyncComputeTask> mAsyncComputeTasks;

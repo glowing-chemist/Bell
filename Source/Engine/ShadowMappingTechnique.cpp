@@ -5,6 +5,7 @@
 #include "Core/Executor.hpp"
 
 const char kShadowMapRaw[] = "ShadowMapRaw";
+extern const char kShadowMapCounter[] = "ShadowMap Counter";
 const char kShadowMapDepth[] = "ShadowMapDepth";
 const char kShadowMapBlurIntermediate[] = "ShadowMapBlurIntermediate";
 const char kShadowMapBlured[] = "ShadowMapBlured";
@@ -87,7 +88,7 @@ ShadowMappingTechnique::ShadowMappingTechnique(Engine* eng, RenderGraph& graph) 
 }
 
 
-void ShadowMappingTechnique::render(RenderGraph& graph, Engine* eng)
+void ShadowMappingTechnique::render(RenderGraph& graph, Engine*)
 {
     (mShadowMap)->updateLastAccessed();
     (mShadowMapView)->updateLastAccessed();
@@ -184,15 +185,15 @@ void ShadowMappingTechnique::render(RenderGraph& graph, Engine* eng)
 
 RayTracedShadowsTechnique::RayTracedShadowsTechnique(Engine* eng, RenderGraph& graph) :
                 Technique("RayTracedShadows", eng->getDevice()),
-                mShadowMapRaw(getDevice(), Format::R8UNorm, ImageUsage::Storage | ImageUsage::Sampled, getDevice()->getSwapChain()->getSwapChainImageWidth() / 4, getDevice()->getSwapChain()->getSwapChainImageHeight() / 4,
-                           1, 1, 1, 1, "ShadowMapRaw"),
-                mShadowMapViewRaw(mShadowMapRaw, ImageViewType::Colour),
-                mShadowMapHistory(getDevice(), Format::R8UNorm, ImageUsage::Storage | ImageUsage::Sampled, getDevice()->getSwapChain()->getSwapChainImageWidth(), getDevice()->getSwapChain()->getSwapChainImageHeight(),
-                           1, 1, 1, 1, "ShadowMapHistory"),
-                mShadowMapHistoryView(mShadowMapHistory, ImageViewType::Colour),
-                mShadowMapUpsampled(getDevice(), Format::R8UNorm, ImageUsage::Storage | ImageUsage::Sampled, getDevice()->getSwapChain()->getSwapChainImageWidth(), getDevice()->getSwapChain()->getSwapChainImageHeight(),
-                           1, 1, 1, 1, "ShadowMapUpsampled"),
-                mShadowMapUpSampledView(mShadowMapUpsampled, ImageViewType::Colour),
+                mFirstFrame(true),
+                mShadowMapCounter(getDevice(), Format::R32Uint, ImageUsage::Storage | ImageUsage::TransferDest, getDevice()->getSwapChain()->getSwapChainImageWidth() / 4, getDevice()->getSwapChain()->getSwapChainImageHeight() / 4,
+                           1, 1, 1, 1, "ShadowMapCounter"),
+                mShadowMapCounterView(mShadowMapCounter, ImageViewType::Colour),
+                mShadowMapHistory{Image{getDevice(), Format::R8UNorm, ImageUsage::Storage | ImageUsage::Sampled, getDevice()->getSwapChain()->getSwapChainImageWidth() / 4, getDevice()->getSwapChain()->getSwapChainImageHeight() / 4,
+                           1, 1, 1, 1, "ShadowMapHistory1"},
+                                  Image{getDevice(), Format::R8UNorm, ImageUsage::Storage | ImageUsage::Sampled | ImageUsage::TransferDest, getDevice()->getSwapChain()->getSwapChainImageWidth() / 4, getDevice()->getSwapChain()->getSwapChainImageHeight() / 4,
+                                                             1, 1, 1, 1, "ShadowMapHistory2"}},
+                mShadowMapHistoryView{ImageView{mShadowMapHistory[0], ImageViewType::Colour}, ImageView{mShadowMapHistory[1], ImageViewType::Colour}},
                 mShadowMap(getDevice(), Format::R8UNorm, ImageUsage::Storage | ImageUsage::Sampled, getDevice()->getSwapChain()->getSwapChainImageWidth(), getDevice()->getSwapChain()->getSwapChainImageHeight(),
                            1, 1, 1, 1, "ShadowMap"),
                 mShadowMapView(mShadowMap, ImageViewType::Colour),
@@ -203,6 +204,11 @@ RayTracedShadowsTechnique::RayTracedShadowsTechnique(Engine* eng, RenderGraph& g
     task.addInput(kGBufferDepth, AttachmentType::Texture2D);
     task.addInput(kDefaultSampler, AttachmentType::Sampler);
     task.addInput(kShadowMapRaw, AttachmentType::Image2D);
+    task.addInput(kShadowMapHistory, AttachmentType::Texture2D);
+    task.addInput(kShadowMapCounter, AttachmentType::Image2D);
+    task.addInput(kLinearDepth, AttachmentType::Texture2D);
+    task.addInput(kPreviousLinearDepth, AttachmentType::Texture2D);
+    task.addInput(kGBufferVelocity, AttachmentType::Texture2D);
     task.addInput(kShadowingLights, AttachmentType::UniformBuffer);
     task.addInput(kBVH, AttachmentType::ShaderResourceSet);
     task.addInput("SampleCount", AttachmentType::PushConstants);
@@ -213,7 +219,7 @@ RayTracedShadowsTechnique::RayTracedShadowsTechnique(Engine* eng, RenderGraph& g
             const RenderTask& task = graph.getTask(taskIndex);
             exec->setComputeShader(static_cast<const ComputeTask&>(task), graph, mRayTracedShadowsShader);
 
-            const uint32_t frameIndex = static_cast<uint32_t>(eng->getDevice()->getCurrentSubmissionIndex() % 8ULL);
+            const uint32_t frameIndex = static_cast<uint32_t>(eng->getDevice()->getCurrentSubmissionIndex() % 64ULL);
             exec->insertPushConsatnt(&frameIndex, sizeof(uint32_t));
 
             const float threadGroupWidth = eng->getSwapChainImageView()->getImageExtent().width / 4;
@@ -226,55 +232,30 @@ RayTracedShadowsTechnique::RayTracedShadowsTechnique(Engine* eng, RenderGraph& g
     // Add a depth aware upsample pass for the quater res shadows.
     const float outputWidth = eng->getSwapChainImageView()->getImageExtent().width;
     const float outputHeight = eng->getSwapChainImageView()->getImageExtent().height;
-    addDeferredUpsampleTaskR8("upsample shadows", kShadowMapRaw, kShadowMapUpsamped, uint2(outputWidth, outputHeight), eng, graph);
-
-    ComputeTask resolveTask("ResolveShadows");
-    resolveTask.addInput(kShadowMapUpsamped, AttachmentType::Texture2D);
-    resolveTask.addInput(kShadowMapHistory, AttachmentType::Texture2D);
-    resolveTask.addInput(kGBufferDepth, AttachmentType::Texture2D);
-    resolveTask.addInput(kGBufferVelocity, AttachmentType::Texture2D);
-    if(eng->isPassRegistered(PassType::GBuffer) || eng->isPassRegistered(PassType::GBufferPreDepth))
-        resolveTask.addInput(kGBufferNormals, AttachmentType::Texture2D);
-    resolveTask.addInput(kDefaultSampler, AttachmentType::Sampler);
-    resolveTask.addInput(kShadowMap, AttachmentType::Image2D);
-    resolveTask.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
-    resolveTask.setRecordCommandsCallback(
-                [](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
-                {
-                    Shader ressolveShader = eng->getShader("./Shaders/ResolveRayTracedShadows.comp");
-                    const RenderTask& task = graph.getTask(taskIndex);
-                    exec->setComputeShader(static_cast<const ComputeTask&>(task), graph, ressolveShader);
-
-                    const float threadGroupWidth = eng->getSwapChainImageView()->getImageExtent().width;
-                    const float threadGroupHeight = eng->getSwapChainImageView()->getImageExtent().height;
-
-                    exec->dispatch(std::ceil(threadGroupWidth / 16.0f), std::ceil(threadGroupHeight / 16.0f), 1.0f);
-                }
-    );
+    addDeferredUpsampleTaskR8("upsample shadows", kShadowMapRaw, kShadowMap, uint2(outputWidth, outputHeight), eng, graph);
 
     mTaskID = graph.addTask(task);
-    graph.addTask(resolveTask);
 }
 
 
 void RayTracedShadowsTechnique::bindResources(RenderGraph& graph)
     {
-        if(!graph.isResourceSlotBound(kShadowMapUpsamped))
+        if(!graph.isResourceSlotBound(kShadowMap))
         {
-            graph.bindImage(kShadowMapRaw, mShadowMapViewRaw);
-            graph.bindImage(kShadowMapUpsamped, mShadowMapUpSampledView);
+            graph.bindImage(kShadowMap, mShadowMapView);
+            graph.bindImage(kShadowMapCounter, mShadowMapCounterView);
         }
 
         const uint64_t frameIndex = getDevice()->getCurrentSubmissionIndex();
         if(frameIndex % 2)
         {
-            graph.bindImage(kShadowMap, mShadowMapView);
-            graph.bindImage(kShadowMapHistory, mShadowMapHistoryView);
+            graph.bindImage(kShadowMapRaw, mShadowMapHistoryView[0]);
+            graph.bindImage(kShadowMapHistory, mShadowMapHistoryView[1]);
         }
         else
         {
-            graph.bindImage(kShadowMap, mShadowMapHistoryView);
-            graph.bindImage(kShadowMapHistory, mShadowMapView);
+            graph.bindImage(kShadowMapRaw, mShadowMapHistoryView[1]);
+            graph.bindImage(kShadowMapHistory, mShadowMapHistoryView[0]);
         }
 
     }

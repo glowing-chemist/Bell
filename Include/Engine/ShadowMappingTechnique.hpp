@@ -6,6 +6,7 @@
 #include "Engine/DefaultResourceSlots.hpp"
 
 extern const char kShadowMapRaw[];
+extern const char kShadowMapCounter[];
 extern const char kShadowMapDepth[];
 extern const char kShadowMapBlurIntermediate[];
 extern const char kShadowMapBlured[];
@@ -83,20 +84,37 @@ public:
         return PassType::RayTracedShadows;
     }
 
-    virtual void render(RenderGraph&, Engine*) override {}
+    virtual void render(RenderGraph&, Engine*) override
+    {
+        if(mFirstFrame)
+        {
+            mShadowMapCounter->clear(float4(0.0f, 0.0f, 0.0f, 0.0f));
+            mShadowMapHistory[1]->clear(float4(0.0f, 0.0f, 0.0f, 0.0f));
+            mFirstFrame = false;
+        }
+
+        mShadowMapCounter->updateLastAccessed();
+        mShadowMapCounterView->updateLastAccessed();
+        mShadowMap->updateLastAccessed();
+        mShadowMapView->updateLastAccessed();
+        for(uint32_t i = 0; i < 2; ++i)
+        {
+            mShadowMapHistory[i]->updateLastAccessed();
+            mShadowMapHistoryView[i]->updateLastAccessed();
+        }
+    }
 
     virtual void bindResources(RenderGraph& graph) override;
 
 private:
 
-    Image    mShadowMapRaw;
-    ImageView mShadowMapViewRaw;
+    bool mFirstFrame;
 
-    Image mShadowMapHistory;
-    ImageView mShadowMapHistoryView;
+    Image    mShadowMapCounter;
+    ImageView mShadowMapCounterView;
 
-    Image mShadowMapUpsampled;
-    ImageView mShadowMapUpSampledView;
+    Image mShadowMapHistory[2];
+    ImageView mShadowMapHistoryView[2];
 
     Image    mShadowMap;
     ImageView mShadowMapView;

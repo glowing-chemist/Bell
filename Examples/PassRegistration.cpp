@@ -198,7 +198,7 @@ int main()
     testScene.computeBounds(AccelerationStructure::Static);
     testScene.computeBounds(AccelerationStructure::Dynamic);
 #if USE_RAY_TRACING
-    RayTracingScene rtScene(&engine, &testScene);
+    RayTracingScene rtScene(engine, &testScene);
 #endif
 
     // set camera aspect ratio.
@@ -218,9 +218,9 @@ int main()
         const AABB sceneBounds = testScene.getBounds();
         const float3 sceneSize = sceneBounds.getSideLengths();
 
-        for (float x = sceneBounds.getBottom().x; x < sceneBounds.getTop().x; x += sceneSize.x / 18.0f)
+        for (float x = sceneBounds.getBottom().x; x < sceneBounds.getTop().x; x += sceneSize.x / 10.0f)
         {
-            for (float y = sceneBounds.getBottom().y; y < sceneBounds.getTop().y; y += sceneSize.x / 20.0f)
+            for (float y = sceneBounds.getBottom().y; y < sceneBounds.getTop().y; y += sceneSize.x / 10.0f)
             {
                 for (float z = sceneBounds.getBottom().z; z < sceneBounds.getTop().z; z += sceneSize.x / 10.0f)
                 {
@@ -236,7 +236,7 @@ int main()
 
     engine->setScene(&testScene);
 #if USE_RAY_TRACING
-    engine.setRayTracingScene(&rtScene);
+    engine->setRayTracingScene(&rtScene);
 #endif
 
     auto lastCPUTime = std::chrono::system_clock::now();

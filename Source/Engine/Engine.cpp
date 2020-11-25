@@ -935,7 +935,10 @@ void Engine::updateGlobalBuffers()
             mLightBuffer.get()->setContents(static_cast<int>(mCurrentScene->getLights().size()), sizeof(uint32_t));
 
             if(!mCurrentScene->getLights().empty())
+            {
+                mLightBuffer.get()->resize(mCurrentScene->getLights().size() * sizeof(Scene::Light), false);
                 mLightBuffer.get()->setContents(mCurrentScene->getLights().data(), static_cast<uint32_t>(mCurrentScene->getLights().size() * sizeof(Scene::Light)), std::max(sizeof(uint4), mRenderDevice->getMinStorageBufferAlignment()));
+            }
         }
 
         {

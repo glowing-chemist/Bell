@@ -1,8 +1,8 @@
 #include "RayTracing.hlsl"
 #include "UniformBuffers.hlsl"
+#include "Utilities.hlsl"
 #include "PBR.hlsl"
 #include "NormalMapping.hlsl"
-
 
 [[vk::binding(0)]]
 ConstantBuffer<CameraBuffer> camera;
@@ -17,6 +17,21 @@ SamplerState linearSampler;
 RWTexture2D<float> shadowMap;
 
 [[vk::binding(4)]]
+Texture2D<float> shadowMapHistory;
+
+[[vk::binding(5)]]
+RWTexture2D<uint> shadowMapCounters;
+
+[[vk::binding(6)]]
+Texture2D<float2> linearDepth;
+
+[[vk::binding(7)]]
+Texture2D<float2> prevLinearDepth;
+
+[[vk::binding(8)]]
+Texture2D<float2> velocity;
+
+[[vk::binding(9)]]
 ConstantBuffer<ShadowingLight> light;
 
 
@@ -73,6 +88,17 @@ float3 getRyaDirConeSpace(const float coneAngleRadians, const float2 Xi)
 				   1.0f - 2 * ((Nx * Nx) + (Ny * Ny)));
 }
 
+float reconstructViewSpaceDepth(float3 previousPosition)
+{
+  previousPosition.y *= -1.0f;
+  previousPosition.z = unlineariseReverseDepth(previousPosition.z, camera.nearPlane, camera.farPlane);
+  float4 previousWorldPosition = mul(camera.previousInvertedViewProj, float4(previousPosition, 1.0f));
+  previousWorldPosition /= previousWorldPosition.w;
+
+  float cameraSpaceDepth = dot(camera.view[2], previousWorldPosition);
+  const float cameraW = dot(camera.view[3], previousWorldPosition);
+  return -(cameraSpaceDepth / cameraW);
+}
 
 [numthreads(16, 16, 1)]
 void main(uint3 globalIndex : SV_DispatchThreadID)
@@ -91,7 +117,7 @@ void main(uint3 globalIndex : SV_DispatchThreadID)
 	float4 worldSpaceFragmentPos = mul(camera.invertedViewProj, float4((uv - 0.5f) * 2.0f, fragmentDepth, 1.0f));
     worldSpaceFragmentPos /= worldSpaceFragmentPos.w;
 
-    const float3 coneSpaceRay = getRyaDirConeSpace(radians(0.125f), Hammersley(constants.sampleCount, 8));
+    const float3 coneSpaceRay = getRyaDirConeSpace(radians(0.125f), Hammersley(constants.sampleCount, 64));
     const float3 coneDir = normalize(light.position - worldSpaceFragmentPos.xyz);
     float3 tangent, bitangent;
     calculateConeTangentBitangent(coneDir, tangent, bitangent);
@@ -108,6 +134,34 @@ void main(uint3 globalIndex : SV_DispatchThreadID)
 	TriangleIntersection result;
 	const bool shadowed = traverseBVH(bvhNodes, bvhIndicies, indexBuffer, vertexPositionBuffer, shadowRay, intersector, result);
 
+	uint historyCount = 1;
+	float shadowTerm = shadowed ? 0.15f : 1.0f;
+
+	float2 pixelVelocity = velocity.Sample(linearSampler, uv);
+  	pixelVelocity = (pixelVelocity - 0.5f) * 2.0f;
+  	const float2 previousUV = uv - pixelVelocity;
+
+  	const float prevLinDepth = prevLinearDepth.SampleLevel(linearSampler, previousUV, 0.0f).x;
+  	const float reprojectedDepthLinear = reconstructViewSpaceDepth(float3((previousUV - 0.5f) * 2.0f, prevLinDepth));
+
+  	const float linDepth = linearDepth.Sample(linearSampler, uv).x;
+  	const float depthVS = (linDepth * (camera.farPlane - camera.nearPlane));
+  	const float depthDiff = abs(depthVS - reprojectedDepthLinear);
+  
+  	const bool offScreen = previousUV.x > 1.0f || previousUV.x < 0.0f || previousUV.y > 1.0f || previousUV.y < 0.0f;
+  
+  	if((depthDiff < 0.1) && !offScreen)
+  	{
+    	historyCount = shadowMapCounters.Load(previousUV * (camera.frameBufferSize / 4));
+    	const float prevShadow = shadowMapHistory.Sample(linearSampler, previousUV);
+    	shadowTerm = prevShadow + ((shadowTerm - prevShadow) * (1.0f / historyCount));
+
+    	historyCount = min(historyCount + 1, 64);
+  	}
+
 	if(globalIndex.x < width && globalIndex.y < height)
-		shadowMap[globalIndex.xy] = shadowed ? 0.15f : 1.0f;
+	{
+		shadowMap[globalIndex.xy] = shadowTerm;
+		shadowMapCounters[globalIndex.xy] = historyCount;
+	}
 }
