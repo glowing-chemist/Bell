@@ -828,8 +828,12 @@ void Engine::recordScene()
         while (mPassesRegisteredThisFrame > 0)
         {
             static_assert(sizeof(unsigned long long) == sizeof(uint64_t), "builtin requires sizes be the same ");
+#ifdef _MSC_VER
+            unsigned long passTypeIndex;
+            _BitScanForward64(&passTypeIndex, mPassesRegisteredThisFrame);
+#else
             const uint64_t passTypeIndex = __builtin_ctzll(mPassesRegisteredThisFrame);
-
+#endif
             mTechniques.push_back(getSingleTechnique(static_cast<PassType>(1ull << passTypeIndex)));
             mPassesRegisteredThisFrame &= mPassesRegisteredThisFrame - 1;
         }
