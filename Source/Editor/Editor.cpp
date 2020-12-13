@@ -391,6 +391,19 @@ Editor::Editor(GLFWwindow* window) :
     Camera& camera = mInProgressScene->getCamera();
     camera.setAspect(float(width) / float(height));
     camera.setMode(CameraMode::Perspective);
+
+    // Set default registered nodes
+    mRegisteredNodes = static_cast<uint64_t>(PassType::DepthPre) | static_cast<uint64_t>(PassType::GBufferPreDepth) |
+                       static_cast<uint64_t>(PassType::DeferredPBRIBL) | static_cast<uint64_t>(PassType::ConvolveSkybox) |
+                       static_cast<uint64_t>(PassType::DFGGeneration) | static_cast<uint64_t>(PassType::Skybox);
+
+    mNodeEditor.addNode(static_cast<uint64_t>(PassType::DepthPre));
+    mNodeEditor.addNode(static_cast<uint64_t>(PassType::GBufferPreDepth));
+    mNodeEditor.addNode(static_cast<uint64_t>(PassType::DeferredPBRIBL));
+    mNodeEditor.addNode(static_cast<uint64_t>(PassType::ConvolveSkybox));
+    mNodeEditor.addNode(static_cast<uint64_t>(PassType::DFGGeneration));
+    mNodeEditor.addNode(static_cast<uint64_t>(PassType::Skybox));
+
 }
 
 
@@ -1170,21 +1183,33 @@ void Editor::drawLightMenu()
             {
                 EditorLight& light = mLights[i];
 
-                ImGui::InputFloat3("Position", &light.mPosition[0]);
-                ImGui::InputFloat3("Direction", &light.mDirection[0]);
+                ImGui::InputFloat4("Position", &light.mPosition[0]);
+                ImGui::InputFloat4("Direction", &light.mDirection[0]);
+                ImGui::InputFloat4("Up", &light.mUp[0]);
                 ImGui::ColorEdit3("Colour", light.mColour, ImGuiColorEditFlags_InputRGB);
                 ImGui::SliderFloat("influence radius", &light.mRadius, 0.1f, 500.0f);
                 ImGui::SliderFloat("intensity", &light.mIntensity, 0.1f, 50.0f);
+                ImGui::SliderFloat("AngleSize", &light.size, 0.0f, 50.0f);
 
-                drawGuizmo(light, viewMatrix, projectionMatrix, mLightOperationMode);
+                float4x4 lightTransform{};
+                lightTransform[0] = float4(glm::cross(float3(light.mUp), float3(light.mDirection)), 0.0f);
+                lightTransform[1] = light.mUp;
+                lightTransform[2] = light.mDirection;
+                lightTransform[3] = light.mPosition;
+                drawGuizmo(lightTransform, viewMatrix, projectionMatrix, mLightOperationMode);
 
                 // Write back light updates to the scenes light buffer.
                 Scene::Light& sceneLight = mInProgressScene->getLight(light.mId);
-                sceneLight.mPosition = light.mPosition;
-                sceneLight.mDirection = light.mDirection;
+                sceneLight.mPosition = lightTransform[3];
+                sceneLight.mDirection = lightTransform[2];
+                sceneLight.mUp = lightTransform[1];
+                light.mPosition = lightTransform[3];
+                light.mDirection = lightTransform[2];
+                light.mUp = lightTransform[1];
                 sceneLight.mAlbedo = float4(light.mColour[0], light.mColour[1], light.mColour[2], 1.0f);
                 sceneLight.mRadius = light.mRadius;
                 sceneLight.mIntensity = light.mIntensity;
+                sceneLight.mAngleSize = light.size;
 
                 ImGui::TreePop();
             }
@@ -1197,12 +1222,13 @@ void Editor::drawLightMenu()
             newLight.mId = id;
             newLight.mType = LightType::Point;
             newLight.mPosition = float4(0.0f, 0.0f, 0.0f, 1.0f);
-            newLight.mDirection = float4(1.0f, 0.0f, 0.0f, 1.0f);
+            newLight.mDirection = float4(1.0f, 0.0f, 0.0f, 0.0f);
             newLight.mColour[0] = 1.0f;
             newLight.mColour[1] = 1.0f;
             newLight.mColour[2] = 1.0f;
             newLight.mIntensity = 20.0f;
             newLight.mRadius = 300.0f;
+            newLight.size = 0.0f;
 
             mLights.push_back(newLight);
         }
@@ -1214,12 +1240,13 @@ void Editor::drawLightMenu()
             newLight.mId = id;
             newLight.mType = LightType::Spot;
             newLight.mPosition = float4(0.0f, 0.0f, 0.0f, 1.0f);
-            newLight.mDirection = float4(1.0f, 0.0f, 0.0f, 1.0f);
+            newLight.mDirection = float4(1.0f, 0.0f, 0.0f, 0.0f);
             newLight.mColour[0] = 1.0f;
             newLight.mColour[1] = 1.0f;
             newLight.mColour[2] = 1.0f;
             newLight.mIntensity = 20.0f;
             newLight.mRadius = 300.0f;
+            newLight.size = 45.0f;
 
             mLights.push_back(newLight);
         }
@@ -1231,12 +1258,14 @@ void Editor::drawLightMenu()
             newLight.mId = id;
             newLight.mType = LightType::Area;
             newLight.mPosition = float4(0.0f, 0.0f, 0.0f, 1.0f);
-            newLight.mDirection = float4(1.0f, 0.0f, 0.0f, 1.0f);
+            newLight.mDirection = float4(0.0f, 0.0f, 1.0f, 0.0f);
+            newLight.mUp = float4(0.0f, 1.0f, 0.0f, 0.0f);
             newLight.mColour[0] = 1.0f;
             newLight.mColour[1] = 1.0f;
             newLight.mColour[2] = 1.0f;
             newLight.mIntensity = 20.0f;
             newLight.mRadius = 300.0f;
+            newLight.size = 50.0f;
 
             mLights.push_back(newLight);
         }
@@ -1288,30 +1317,6 @@ void Editor::drawLightMenu()
 
 
         ImGui::TreePop();
-    }
-}
-
-
-void Editor::drawGuizmo(EditorLight& light, const float4x4 &view, const float4x4 &proj, const ImGuizmo::OPERATION op)
-{
-    float4x4 lightTransformation(1.0f);
-
-    if (op == ImGuizmo::OPERATION::TRANSLATE)
-        lightTransformation = glm::translate(lightTransformation, float3(light.mPosition.x, light.mPosition.y, light.mPosition.z));
-
-    ImGuizmo::Enable(true);
-    ImGuizmo::Manipulate(   glm::value_ptr(view),
-                            glm::value_ptr(proj),
-                            op,
-                            ImGuizmo::MODE::LOCAL,
-                            glm::value_ptr(lightTransformation));
-
-    if(op == ImGuizmo::OPERATION::TRANSLATE)
-        light.mPosition = lightTransformation[3];
-    else if (op == ImGuizmo::OPERATION::ROTATE)
-    {
-        light.mDirection = lightTransformation * light.mDirection;
-        light.mUp = lightTransformation * light.mUp;
     }
 }
 

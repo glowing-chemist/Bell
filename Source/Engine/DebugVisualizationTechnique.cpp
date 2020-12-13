@@ -21,9 +21,15 @@ DebugAABBTechnique::DebugAABBTechnique(Engine* eng, RenderGraph& graph) :
                   getDevice()->getSwapChain()->getSwapChainImageHeight()},
                   FaceWindingOrder::None, BlendMode::None, BlendMode::None, false, DepthTest::GreaterEqual, FillMode::Line, Primitive::TriangleList},
     mSimpleTransformShader(eng->getShader("./Shaders/BasicVertexTransform.vert")),
+    mDebugLightsPipeline{Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
+                        getDevice()->getSwapChain()->getSwapChainImageHeight()},
+                  Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
+                  getDevice()->getSwapChain()->getSwapChainImageHeight()},
+                  FaceWindingOrder::None, BlendMode::None, BlendMode::None, false, DepthTest::GreaterEqual, FillMode::Fill, Primitive::TriangleList},
+    mLightDebugFragmentShader(eng->getShader("./Shaders/LightDebug.frag")),
     mVertexBuffer(getDevice(), BufferUsage::TransferDest | BufferUsage::Vertex, sizeof(float4) * 8, sizeof(float4) * 8),
     mVertexBufferView(mVertexBuffer),
-    mIndexBuffer(getDevice(), BufferUsage::TransferDest | BufferUsage::Index, sizeof(uint32_t) * 24, sizeof(uint32_t) * 24),
+    mIndexBuffer(getDevice(), BufferUsage::TransferDest | BufferUsage::Index, sizeof(uint32_t) * 60, sizeof(uint32_t) * 60),
     mIndexBufferView(mIndexBuffer)
 {
     float4 verticies[8] = {float4(-0.5f, 0.5f, -0.5f, 1.0f),
@@ -36,7 +42,7 @@ DebugAABBTechnique::DebugAABBTechnique(Engine* eng, RenderGraph& graph) :
                            float4(0.5f, -0.5f, -0.5f, 1.0f)};
     mVertexBuffer->setContents(&verticies, sizeof(float4) * 8);
 
-    uint32_t indicies[24] = {0, 1,
+    uint32_t indicies[60] = {0, 1, // Cube as lines.
                              1, 2,
                              2, 3,
                              3, 0,
@@ -47,8 +53,27 @@ DebugAABBTechnique::DebugAABBTechnique(Engine* eng, RenderGraph& graph) :
                              4, 0,
                              5, 1,
                              6, 2,
-                             7, 3};
-    mIndexBuffer->setContents(&indicies, sizeof(uint32_t) * 24);
+                             7, 3,
+
+                             0,2,1, // Cube as tris.
+                             0,3,2,
+
+                             1,2,6,
+                             6,5,1,
+
+                             4,5,6,
+                             6,7,4,
+
+                             2,3,6,
+                             6,3,7,
+
+                             0,7,3,
+                             0,4,7,
+
+                             0,1,5,
+                             0,5,4
+                            };
+    mIndexBuffer->setContents(&indicies, sizeof(uint32_t) * 60);
 
     GraphicsTask debugAABBTask("Debug AABB", mAABBPipelineDesc);
     debugAABBTask.setVertexAttributes(VertexAttributes::Position4);
@@ -139,4 +164,50 @@ DebugAABBTechnique::DebugAABBTechnique(Engine* eng, RenderGraph& graph) :
     });
 
     graph.addTask(wireFrameTask);
+
+    GraphicsTask lightDebug{"Light debug", mDebugLightsPipeline};
+    lightDebug.setVertexAttributes(VertexAttributes::Position4);
+    lightDebug.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
+    lightDebug.addInput(kLightBuffer, AttachmentType::ShaderResourceSet);
+    lightDebug.addInput("Light transforms", AttachmentType::PushConstants);
+    lightDebug.addOutput(kGlobalLighting, AttachmentType::RenderTarget2D, Format::RGBA8UNorm);
+    lightDebug.addOutput(kGBufferDepth, AttachmentType::Depth, Format::D32Float);
+    lightDebug.setRecordCommandsCallback([this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+    {
+        struct LightTransform
+        {
+            float4x4 trans;
+            uint index;
+        };
+
+        exec->bindVertexBuffer(this->mVertexBufferView, 0);
+        exec->bindIndexBuffer(this->mIndexBufferView, 0);
+        const RenderTask& task = graph.getTask(taskIndex);
+        exec->setGraphicsShaders(static_cast<const GraphicsTask&>(task), graph, mAABBDebugVisVertexShader, nullptr, nullptr, nullptr, mLightDebugFragmentShader);
+
+        const std::vector<Scene::Light>& lights = eng->getScene()->getLights();
+        for(uint32_t i = 0; i < lights.size(); ++i)
+        {
+            const Scene::Light& light = lights[i];
+
+            if(light.mType == LightType::Area)
+            {
+                float4x4 lightTransform = float4x4(1.0f);
+                lightTransform[0] = float4(glm::cross(float3(light.mUp), float3(light.mDirection)), 0.0f);
+                lightTransform[1] = light.mUp;
+                lightTransform[2] = light.mDirection;
+                lightTransform[3] = light.mPosition;
+                lightTransform = glm::scale(lightTransform, float3(light.mAngleSize, light.mAngleSize, 0.1f));
+
+                LightTransform pushPonstants{};
+                pushPonstants.trans = lightTransform;
+                pushPonstants.index = i;
+
+                exec->insertPushConsatnt(&pushPonstants, sizeof(LightTransform));
+                exec->indexedDraw(0, 24, 36);
+            }
+        }
+    });
+
+    graph.addTask(lightDebug);
 }

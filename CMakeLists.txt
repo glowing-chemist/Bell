@@ -299,6 +299,7 @@ set(SHADERS
 	KdTree.hlsl
 	BasicVertexTransform.vert
 	RessolveReflections.comp
+	LightDebug.frag
     )
 
 message(STATUS "shader directory ${BELL_SHADER_DIR}Shaders")

@@ -359,12 +359,7 @@ bool spotLightAABBIntersection(const float3 centre, const float3 direction, cons
 
 bool areaLightAABBIntersection(const float3 centre, const float3 normal, const float3 up, const float radius, const AABB aabb)
 {
-	const float3 right = cross(up, normal);
-	const float3 minCorner = centre + (radius * 0.5f * (right - up));
-	const float3 maxCorner = centre + (radius * 0.5f * (up - right)) + normal * radius;
+	const bool intersect = sphereAABBIntersection(centre, radius, aabb);
 
-	const float3 aabbMin = min(minCorner, maxCorner);
-	const float3 aabbMax = max(maxCorner, minCorner);
-
-	return AABBAABBIntersection(AABB(float4(aabbMin, 1.0f), float4(aabbMax, 1.0f)), aabb);
+	return intersect;
 }

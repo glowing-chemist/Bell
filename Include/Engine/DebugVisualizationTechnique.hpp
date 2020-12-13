@@ -30,6 +30,9 @@ private:
     GraphicsPipelineDescription mWireFramePipelineDesc;
     Shader mSimpleTransformShader;
 
+    GraphicsPipelineDescription mDebugLightsPipeline;
+    Shader mLightDebugFragmentShader;
+
     Buffer mVertexBuffer;
     BufferView mVertexBufferView;
 
