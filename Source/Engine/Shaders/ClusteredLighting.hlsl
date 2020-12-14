@@ -17,14 +17,15 @@
 // 3 - strip
 struct Light
 {
-	float4 position;
-	float4 direction; // direction for spotlight.
-	float4 up;
-	float4 albedo;
+	float3 position;
 	float intensity;
+	float3 direction; // direction for spotlight.
 	float radius;
+	float3 up;
 	uint type;
-	float misc; // angle for spotlight and side lenght fo area.
+	float4 albedo;
+	float3 misc; // angle for spotlight and side lenght fo area.
+	uint _padding;
 };
 
 struct AABB
@@ -144,7 +145,7 @@ float4 pointLightContribution(const Light light,
 							const MaterialInfo material,
 							const float3 dfg)
 {
-    const float4 lightDir = light.position - positionWS;
+    const float3 lightDir = light.position - positionWS.xyz;
 	const float lightDistance = length(lightDir);
 
     const float falloff = pow(saturate(1 - pow(lightDistance / light.radius, 4.0f)), 2.0f) / ((lightDistance * lightDistance) + 1); 
@@ -162,7 +163,7 @@ float4 pointLightContributionDiffuse(const Light light,
 									const MaterialInfo material,
 									const float3 dfg)
 {
-    const float4 lightDir = light.position - positionWS;
+    const float3 lightDir = light.position - positionWS.xyz;
 	const float lightDistance = length(lightDir);
 
     const float falloff = pow(saturate(1 - pow(lightDistance / light.radius, 4.0f)), 2.0f) / ((lightDistance * lightDistance) + 1); 
@@ -180,10 +181,10 @@ float4 spotLightContribution(const Light light,
 							const MaterialInfo material,
 							const float3 dfg)
 {
-	if(acos(dot(positionWS - light.position, light.direction)) < radians(light.misc))
+	if(acos(dot(positionWS - light.position, light.direction)) < radians(light.misc.x))
 		return float4(0.0f, 0.0f, 0.0f, 0.0f);
 
-    const float4 lightDir = light.position - positionWS;
+    const float3 lightDir = light.position - positionWS.xyz;
 	const float lightDistance = length(lightDir);
 
     const float falloff = pow(saturate(1 - pow(lightDistance / light.radius, 4.0f)), 2.0f) / ((lightDistance * lightDistance) + 1); 
@@ -201,10 +202,10 @@ float4 spotLightContributionDiffuse(const Light light,
 									const MaterialInfo material,
 									const float3 dfg)
 {
-	if(acos(dot(positionWS - light.position, light.direction)) < radians(light.misc))
+	if(acos(dot(positionWS - light.position, light.direction)) < radians(light.misc.x))
 		return float4(0.0f, 0.0f, 0.0f, 0.0f);
 
-    const float4 lightDir = light.position - positionWS;
+    const float3 lightDir = light.position - positionWS.xyz;
 	const float lightDistance = length(lightDir);
 
     const float falloff = pow(saturate(1 - pow(lightDistance / light.radius, 4.0f)), 2.0f) / ((lightDistance * lightDistance) + 1); 
@@ -276,10 +277,10 @@ float4 areaLightContribution(const Light light,
 
     // Calculate the 4 corners of the square area light in WS.
     float3 points[4];
-    points[0] = light.position.xyz + (light.misc / 2.0f) * (-rightVector + light.up.xyz);
-    points[1] = light.position.xyz + (light.misc / 2.0f) * (rightVector + light.up.xyz);
-    points[2] = light.position.xyz + (light.misc / 2.0f) * (rightVector - light.up.xyz);
-    points[3] = light.position.xyz + (light.misc / 2.0f) * (-rightVector - light.up.xyz);
+    points[0] = light.position.xyz + 0.5f * ((light.misc.x * -rightVector) + (light.misc.y * light.up.xyz));
+    points[1] = light.position.xyz + 0.5f * ((light.misc.x * rightVector) + (light.misc.y * light.up.xyz));
+    points[2] = light.position.xyz + 0.5f * ((light.misc.x * rightVector) - (light.misc.y * light.up.xyz));
+    points[3] = light.position.xyz + 0.5f * ((light.misc.x * -rightVector) - (light.misc.y * light.up.xyz));
 
     float3 spec = LTC_Evaluate(material.normal.xyz, view, positionWS.xyz, Minv, points);
     spec *= amp;
@@ -303,10 +304,10 @@ float4 areaLightContributionDiffuse(const Light light,
 
     // Calculate the 4 corners of the square area light in WS.
     float3 points[4];
-    points[0] = light.position.xyz + (light.misc / 2.0f) * (-rightVector + light.up.xyz);
-    points[1] = light.position.xyz + (light.misc / 2.0f) * (rightVector + light.up.xyz);
-    points[2] = light.position.xyz + (light.misc / 2.0f) * (rightVector - light.up.xyz);
-    points[3] = light.position.xyz + (light.misc / 2.0f) * (-rightVector - light.up.xyz);
+    points[0] = light.position.xyz + (light.misc.x / 2.0f) * (-rightVector + light.up.xyz);
+    points[1] = light.position.xyz + (light.misc.x / 2.0f) * (rightVector + light.up.xyz);
+    points[2] = light.position.xyz + (light.misc.x / 2.0f) * (rightVector - light.up.xyz);
+    points[3] = light.position.xyz + (light.misc.x / 2.0f) * (-rightVector - light.up.xyz);
         
     const float3 diff = LTC_Evaluate(material.normal.xyz, view, positionWS.xyz, float3x3(1), points); 
         
@@ -357,7 +358,15 @@ bool spotLightAABBIntersection(const float3 centre, const float3 direction, cons
 }
 
 
-bool areaLightAABBIntersection(const float3 centre, const float3 normal, const float3 up, const float radius, const AABB aabb)
+bool areaLightAABBIntersection(const float3 centre, const float3 normal, const float radius, const AABB aabb)
+{
+	const bool intersect = sphereAABBIntersection(centre, radius, aabb);
+
+	return intersect;
+}
+
+
+bool stripLightAABBIntersection(const float3 centre, const float radius, const AABB aabb)
 {
 	const bool intersect = sphereAABBIntersection(centre, radius, aabb);
 

@@ -346,17 +346,18 @@ public:
         // Helpers to create the different light varieties.
         static Light pointLight(const float4& position, const float4& albedo, const float intensity, const float radius);
         static Light spotLight(const float4& position, const float4& direction, const float4& albedo, const float intensity, const float radius, const float angle);
-        static Light areaLight(const float4& position, const float4& direction, const float4& up, const float4& albedo, const float intensity, const float radius, const float size);
-        static Light stripLight(const float4& position, const float4& direction, const float4& albedo, const float intensity, const float radius, const float size);
+        static Light areaLight(const float4& position, const float4& direction, const float4& up, const float4& albedo, const float intensity, const float radius, const float2 size);
+        static Light stripLight(const float4& position, const float4& direction, const float4& albedo, const float intensity, const float radius, const float2 size);
 
-        float4 mPosition;
-        float4 mDirection;
-        float4 mUp; // Only relevant for area and line.
-        float4 mAlbedo;
+        float3 mPosition;
         float mIntensity;
-		float mRadius;
-		LightType mType;
-        float mAngleSize; // Cone angle for spot, side lenght for area and length for strip.
+        float3 mDirection; // direction for spotlight.
+        float mRadius;
+        float3 mUp;
+        LightType mType;
+        float4 mAlbedo;
+        float3 mAngleSize; // angle for spotlight and side lenght fo area.
+        uint _padding;
 	};
     size_t addLight(const Light& light)
     {

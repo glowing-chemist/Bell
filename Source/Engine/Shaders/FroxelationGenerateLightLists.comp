@@ -44,37 +44,33 @@ void main(uint3 globalIndex : SV_DispatchThreadID)
 	for(uint i = 0; i < lightCount[0].x; ++i)
 	{
 		const Light light = sceneLights[i];
-		float4 viewSpacePosition = mul(camera.view, light.position);
+		float4 viewSpacePosition = mul(camera.view, float4(light.position, 1.0f));
 		viewSpacePosition /= viewSpacePosition.w;
+
+		bool intersects = false;
 		switch(light.type)
 		{
 			case 0: // Point light
 			{
-				const bool intersects = sphereAABBIntersection(viewSpacePosition.xyz, light.radius, aabb);
-				if(intersects)
-				{
-					lightIndicies[nextFreeSlot++] = i;
-				}
+				intersects = sphereAABBIntersection(viewSpacePosition.xyz, light.radius, aabb);
 				break;
 			}
 
 			case 1: // spot light
 			{
-				const bool intersects = spotLightAABBIntersection(viewSpacePosition.xyz, light.direction.xyz, light.misc, light.radius, aabb);
-				if(intersects)
-				{
-					lightIndicies[nextFreeSlot++] = i;
-				}
+				intersects = spotLightAABBIntersection(viewSpacePosition.xyz, light.direction.xyz, light.misc.x, light.radius, aabb);
 				break;
 			}
 
 			case 2: // area.
 			{
-                const bool intersects = areaLightAABBIntersection(viewSpacePosition.xyz, light.direction.xyz, light.up.xyz, light.radius, aabb);
-				if(intersects)
-				{
-					lightIndicies[nextFreeSlot++] = i;
-				}
+                intersects = areaLightAABBIntersection(viewSpacePosition.xyz, light.direction.xyz, light.radius, aabb);
+                break;
+			}
+
+			case 3: // Strip.
+			{
+				intersects = stripLightAABBIntersection(viewSpacePosition.xyz, light.radius, aabb);
 				break;
 			}
 
@@ -83,6 +79,11 @@ void main(uint3 globalIndex : SV_DispatchThreadID)
 			// Should never hit here.
 			default:
 				continue;
+		}
+
+		if(intersects)
+		{
+			lightIndicies[nextFreeSlot++] = i;
 		}
 
 		// Don't evaluate any more lights if we have asigned all available slots.

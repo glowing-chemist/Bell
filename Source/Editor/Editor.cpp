@@ -1189,7 +1189,7 @@ void Editor::drawLightMenu()
                 ImGui::ColorEdit3("Colour", light.mColour, ImGuiColorEditFlags_InputRGB);
                 ImGui::SliderFloat("influence radius", &light.mRadius, 0.1f, 500.0f);
                 ImGui::SliderFloat("intensity", &light.mIntensity, 0.1f, 50.0f);
-                ImGui::SliderFloat("AngleSize", &light.size, 0.0f, 50.0f);
+                ImGui::InputFloat2("Size", &light.size[0]);
 
                 float4x4 lightTransform{};
                 lightTransform[0] = float4(glm::cross(float3(light.mUp), float3(light.mDirection)), 0.0f);
@@ -1209,7 +1209,7 @@ void Editor::drawLightMenu()
                 sceneLight.mAlbedo = float4(light.mColour[0], light.mColour[1], light.mColour[2], 1.0f);
                 sceneLight.mRadius = light.mRadius;
                 sceneLight.mIntensity = light.mIntensity;
-                sceneLight.mAngleSize = light.size;
+                sceneLight.mAngleSize = float3(light.size, 0.0f);
 
                 ImGui::TreePop();
             }
@@ -1223,12 +1223,13 @@ void Editor::drawLightMenu()
             newLight.mType = LightType::Point;
             newLight.mPosition = float4(0.0f, 0.0f, 0.0f, 1.0f);
             newLight.mDirection = float4(1.0f, 0.0f, 0.0f, 0.0f);
+            newLight.mUp = float4(0.0f, 1.0f, 0.0f, 0.0f);
             newLight.mColour[0] = 1.0f;
             newLight.mColour[1] = 1.0f;
             newLight.mColour[2] = 1.0f;
             newLight.mIntensity = 20.0f;
             newLight.mRadius = 300.0f;
-            newLight.size = 0.0f;
+            newLight.size = {0.0f, 0.0f};
 
             mLights.push_back(newLight);
         }
@@ -1241,12 +1242,13 @@ void Editor::drawLightMenu()
             newLight.mType = LightType::Spot;
             newLight.mPosition = float4(0.0f, 0.0f, 0.0f, 1.0f);
             newLight.mDirection = float4(1.0f, 0.0f, 0.0f, 0.0f);
+            newLight.mUp = float4(0.0f, 1.0f, 0.0f, 0.0f);
             newLight.mColour[0] = 1.0f;
             newLight.mColour[1] = 1.0f;
             newLight.mColour[2] = 1.0f;
             newLight.mIntensity = 20.0f;
             newLight.mRadius = 300.0f;
-            newLight.size = 45.0f;
+            newLight.size = {45.0f, 0.0f};
 
             mLights.push_back(newLight);
         }
@@ -1254,7 +1256,7 @@ void Editor::drawLightMenu()
         if (ImGui::Button("Add area light"))
         {
             EditorLight newLight{};
-            const size_t id = mInProgressScene->addLight(Scene::Light::areaLight(float4(0.0f, 0.0f, 0.0f, 1.0f), float4(1.0f, 0.0f, 0.0f, 1.0), float4(0.0f, 1.0f, 0.0f, 0.0f), float4(1.0f), 20.0f, 300.0f, 50.0f));
+            const size_t id = mInProgressScene->addLight(Scene::Light::areaLight(float4(0.0f, 0.0f, 0.0f, 1.0f), float4(1.0f, 0.0f, 0.0f, 1.0), float4(0.0f, 1.0f, 0.0f, 0.0f), float4(1.0f), 20.0f, 300.0f, float2{5.0f, 5.0f}));
             newLight.mId = id;
             newLight.mType = LightType::Area;
             newLight.mPosition = float4(0.0f, 0.0f, 0.0f, 1.0f);
@@ -1265,27 +1267,30 @@ void Editor::drawLightMenu()
             newLight.mColour[2] = 1.0f;
             newLight.mIntensity = 20.0f;
             newLight.mRadius = 300.0f;
-            newLight.size = 50.0f;
+            newLight.size = {5.0f, 5.0f};
 
             mLights.push_back(newLight);
         }
 
         // CUrrentlt not implemented.
-        /*if (ImGui::Button("Add strip light"))
+        if (ImGui::Button("Add strip light"))
         {
             EditorLight newLight{};
-            const size_t id = mInProgressScene.addLight(Scene::Light::stripLight(float4(0.0f, 0.0f, 0.0f, 1.0f), float4(0.0f, 1.0f, 0.0f, 0.0f), float4(1.0f), 20.0f, 300.0f, 50.0f));
+            const size_t id = mInProgressScene->addLight(Scene::Light::stripLight(float4(0.0f, 0.0f, 0.0f, 1.0f), float4(0.0f, 1.0f, 0.0f, 0.0f), float4(1.0f), 20.0f, 300.0f, float2{1.0f, 10.0f}));
             newLight.mId = id;
             newLight.mType = LightType::Strip;
             newLight.mPosition = float4(0.0f, 0.0f, 0.0f, 1.0f);
-            newLight.mDirection = float4(1.0f, 0.0f, 0.0f, 1.0f);
+            newLight.mDirection = float4(1.0f, 0.0f, 0.0f, 0.0f);
+            newLight.mUp = float4(0.0f, 1.0f, 0.0f, 0.0f);
             newLight.mColour[0] = 1.0f;
             newLight.mColour[1] = 1.0f;
             newLight.mColour[2] = 1.0f;
-            newLight.mInfluence = 20;
+            newLight.mIntensity = 20.0f;
+            newLight.mRadius = 300.0f;
+            newLight.size = {1.0f, 10.0f};
 
             mLights.push_back(newLight);
-        }*/
+        }
 
         Scene::ShadowingLight& shadowingLight = mInProgressScene->getShadowingLight();
         Scene::ShadowCascades& cascades = mInProgressScene->getShadowCascades();

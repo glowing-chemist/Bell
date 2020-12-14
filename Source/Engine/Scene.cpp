@@ -250,7 +250,7 @@ void Scene::addLights(const aiScene* scene)
         sceneLight.mDirection = float4(light->mDirection.x, light->mDirection.y, light->mDirection.z, 1.0f);
         sceneLight.mAlbedo = float4(light->mColorDiffuse.r, light->mColorDiffuse.g, light->mColorDiffuse.b, 1.0f);
         sceneLight.mUp = float4(light->mUp.x, light->mUp.y, light->mUp.z, 1.0f);
-        sceneLight.mAngleSize = 45.0f;
+        sceneLight.mAngleSize = float3{45.0f, 0.0f, 0.0f};
 
         mLights.push_back(sceneLight);
     }
@@ -1115,13 +1115,13 @@ Scene::Light Scene::Light::spotLight(const float4& position, const float4& direc
     light.mIntensity = intensity;
     light.mRadius = radius;
     light.mType = LightType::Spot;
-    light.mAngleSize = angle;
+    light.mAngleSize = float3{angle, 0.0f, 0.0f};
 
     return light;
 }
 
 
-Scene::Light Scene::Light::areaLight(const float4& position, const float4& direction, const float4& up, const float4& albedo, const float intensity, const float radius, const float size)
+Scene::Light Scene::Light::areaLight(const float4& position, const float4& direction, const float4& up, const float4& albedo, const float intensity, const float radius, const float2 size)
 {
     Scene::Light light{};
     light.mPosition = position;
@@ -1131,14 +1131,14 @@ Scene::Light Scene::Light::areaLight(const float4& position, const float4& direc
     light.mIntensity = intensity;
     light.mType = LightType::Area;
     light.mRadius = radius;
-    light.mAngleSize = size;
+    light.mAngleSize = float3{size, 0.0f};
 
 
     return light;
 }
 
 
-Scene::Light Scene::Light::stripLight(const float4& position, const float4& direction, const float4& albedo, const float intensity, const float radius, const float size)
+Scene::Light Scene::Light::stripLight(const float4& position, const float4& direction, const float4& albedo, const float intensity, const float radius, const float2 size)
 {
     Scene::Light light{};
     light.mPosition = position;
@@ -1147,7 +1147,7 @@ Scene::Light Scene::Light::stripLight(const float4& position, const float4& dire
     light.mIntensity = intensity;
     light.mType = LightType::Strip;
     light.mRadius = radius;
-    light.mAngleSize = size;
+    light.mAngleSize = float3{size, 0.0f};
 
     return light;
 }

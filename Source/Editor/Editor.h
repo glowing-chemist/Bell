@@ -21,7 +21,7 @@ struct EditorLight
     float mColour[3];
     float mRadius;
     float mIntensity;
-    float size;
+    float2 size;
 };
 
 enum EditorMode

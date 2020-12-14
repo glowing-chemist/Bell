@@ -96,7 +96,7 @@ void main(uint3 globalIndex : SV_DispatchThreadID)
     	uint indirectLightIndex = indicies[lightListIndicies.x + i];
     	const Light light = sceneLights[indirectLightIndex];
 
-    	        switch(uint(light.type))
+    	switch(uint(light.type))
         {
             case 0:
             {

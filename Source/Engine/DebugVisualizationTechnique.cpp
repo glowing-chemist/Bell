@@ -193,11 +193,11 @@ DebugAABBTechnique::DebugAABBTechnique(Engine* eng, RenderGraph& graph) :
             if(light.mType == LightType::Area)
             {
                 float4x4 lightTransform = float4x4(1.0f);
-                lightTransform[0] = float4(glm::cross(float3(light.mUp), float3(light.mDirection)), 0.0f);
-                lightTransform[1] = light.mUp;
-                lightTransform[2] = light.mDirection;
-                lightTransform[3] = light.mPosition;
-                lightTransform = glm::scale(lightTransform, float3(light.mAngleSize, light.mAngleSize, 0.1f));
+                lightTransform[0] = float4(glm::cross(light.mUp, light.mDirection), 0.0f);
+                lightTransform[1] = float4{light.mUp, 0.0f};
+                lightTransform[2] = float4{light.mDirection, 0.0f};
+                lightTransform[3] = float4{light.mPosition, 1.0f};
+                lightTransform = glm::scale(lightTransform, float3(light.mAngleSize.x, light.mAngleSize.y, 0.1f));
 
                 LightTransform pushPonstants{};
                 pushPonstants.trans = lightTransform;
