@@ -1272,7 +1272,6 @@ void Editor::drawLightMenu()
             mLights.push_back(newLight);
         }
 
-        // CUrrentlt not implemented.
         if (ImGui::Button("Add strip light"))
         {
             EditorLight newLight{};

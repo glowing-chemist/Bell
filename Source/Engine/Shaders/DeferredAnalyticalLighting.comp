@@ -129,6 +129,18 @@ void main(uint3 globalIndex : SV_DispatchThreadID)
                 break;
             }
 
+            case 3: // Strip
+            {
+                lighting += stripLightContribution(light, 
+                                                    worldSpaceFragmentPos, 
+                                                    viewDir, 
+                                                    material,
+                                                    minV, 
+                                                    LTCAmp);
+
+                break;
+            }
+
             // Should never hit here.
             default:
                 continue;

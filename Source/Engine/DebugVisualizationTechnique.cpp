@@ -206,6 +206,22 @@ DebugAABBTechnique::DebugAABBTechnique(Engine* eng, RenderGraph& graph) :
                 exec->insertPushConsatnt(&pushPonstants, sizeof(LightTransform));
                 exec->indexedDraw(0, 24, 36);
             }
+            else if(light.mType == LightType::Strip)
+            {
+                float4x4 lightTransform = float4x4(1.0f);
+                lightTransform[0] = float4(glm::cross(light.mUp, light.mDirection), 0.0f);
+                lightTransform[1] = float4{light.mUp, 0.0f};
+                lightTransform[2] = float4{light.mDirection, 0.0f};
+                lightTransform[3] = float4{light.mPosition, 1.0f};
+                lightTransform = glm::scale(lightTransform, float3(light.mAngleSize.y, light.mAngleSize.x, light.mAngleSize.x));
+
+                LightTransform pushPonstants{};
+                pushPonstants.trans = lightTransform;
+                pushPonstants.index = i;
+
+                exec->insertPushConsatnt(&pushPonstants, sizeof(LightTransform));
+                exec->indexedDraw(0, 24, 36);
+            }
         }
     });
 

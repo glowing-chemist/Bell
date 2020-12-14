@@ -130,8 +130,8 @@ void initializeLightState(out float3x3 minv, out float ltcAmp, out float3 dfg, T
 
 	const float4 t = LTCMat.Sample(linearSampler, float2(R, NoV));
     minv = float3x3(
-            	float3(  1,   0, t.w),
-            	float3(  0, t.z,   0),
+            	float3(t.z,   0, t.w),
+            	float3(   0, 1,   0),
             	float3(t.y,   0, t.x)
         		);
 
@@ -217,7 +217,7 @@ float4 spotLightContributionDiffuse(const Light light,
 }
 
 
-// Area light functions.
+// Area light functions From Eric Heitz.
 float IntegrateEdge(float3 v1, float3 v2)
 {
     float cosTheta = dot(v1, v2);
@@ -227,6 +227,7 @@ float IntegrateEdge(float3 v1, float3 v2)
     return res;
 }
 
+// For sqaure area lights
 float3 LTC_Evaluate(float3 N, float3 V, float3 P, float3x3 Minv, float3 points[4])
 {
     // construct orthonormal basis around N
@@ -266,6 +267,94 @@ float3 LTC_Evaluate(float3 N, float3 V, float3 P, float3x3 Minv, float3 points[4
     return float3(sum);
 }
 
+// Strip light imple from Eric Heitz.
+float Fpo(float d, float l)
+{
+    return l/(d*(d*d + l*l)) + atan(l/d)/(d*d);
+}
+
+float Fwt(float d, float l)
+{
+    return l*l/(d*(d*d + l*l));
+}
+
+float3x3 invert3x3(float3x3 m)
+{
+	const float D = determinant(m);
+ 	float3x3 adj;
+
+	 adj[0][0] = determinant(float2x2(m[1][1], m[1][2], m[2][1], m[2][2]));
+	 adj[0][1] = -determinant(float2x2(m[0][1], m[0][2], m[2][1], m[2][2]));
+	 adj[0][2] = determinant(float2x2(m[0][1], m[0][2], m[1][1], m[1][2]));
+
+	 adj[1][0] = -determinant(float2x2(m[1][0], m[1][2], m[2][0], m[2][2]));
+	 adj[1][1] = determinant(float2x2(m[0][0], m[0][2], m[2][0], m[2][2]));
+	 adj[1][2] = -determinant(float2x2(m[0][0], m[0][2], m[1][0], m[1][2]));
+
+	 adj[2][0] = determinant(float2x2(m[1][0], m[1][1], m[2][0], m[2][1]));
+	 adj[2][1] = -determinant(float2x2(m[0][0], m[0][1], m[2][0], m[2][1]));
+	 adj[2][2] = determinant(float2x2(m[0][0], m[0][1], m[1][0], m[1][1]));
+
+	 return adj *  (1.0f / D);
+}
+
+float I_diffuse_line(float3 p1, float3 p2)
+{
+    // tangent
+    float3 wt = normalize(p2 - p1);
+
+    // clamping
+    if (p1.z <= 0.0 && p2.z <= 0.0) return 0.0;
+    if (p1.z < 0.0) p1 = (+p1*p2.z - p2*p1.z) / (+p2.z - p1.z);
+    if (p2.z < 0.0) p2 = (-p1*p2.z + p2*p1.z) / (-p2.z + p1.z);
+
+    // parameterization
+    float l1 = dot(p1, wt);
+    float l2 = dot(p2, wt);
+
+    // shading point orthonormal projection on the line
+    float3 po = p1 - l1*wt;
+
+    // distance to line
+    float d = length(po);
+
+    // integral
+    float I = (Fpo(d, l2) - Fpo(d, l1)) * po.z +
+              (Fwt(d, l2) - Fwt(d, l1)) * wt.z;
+    return I / PI;
+}
+
+float I_ltc_line(float3 p1, float3 p2, float3x3 Minv)
+{
+    // transform to diffuse configuration
+    float3 p1o = mul(Minv, p1);
+    float3 p2o = mul(Minv, p2);
+    float I_diffuse = I_diffuse_line(p1o, p2o);
+
+    // width factor
+    float3 ortho = normalize(cross(p1, p2));
+    float w =  1.0 / length(mul(invert3x3(transpose(Minv)), ortho));
+
+    return w * I_diffuse;
+}
+
+// For strip lights.
+float3 LTC_Evaluate(float3 N, float3 V, float3 P, float R, float3x3 Minv, float3 linePoints[2])
+{
+    // construct orthonormal basis around N
+    float3 T1, T2;
+    T1 = normalize(V - N*dot(V, N));
+    T2 = cross(N, T1);
+
+    float3x3 B = transpose(float3x3(T1, T2, N));
+
+    float3 p1 = mul(B, linePoints[0] - P);
+    float3 p2 = mul(B, linePoints[1] - P);
+
+    float Iline = R * I_ltc_line(p1, p2, Minv);
+    return float3(min(1.0, Iline));
+}
+
 float4 areaLightContribution(const Light light, 
 							const float4 positionWS, 
 							const float3 view,
@@ -285,10 +374,9 @@ float4 areaLightContribution(const Light light,
     float3 spec = LTC_Evaluate(material.normal.xyz, view, positionWS.xyz, Minv, points);
     spec *= amp;
         
-    const float3 diff = LTC_Evaluate(material.normal.xyz, view, positionWS.xyz, float3x3(1), points); 
+    const float3 diff = LTC_Evaluate(material.normal.xyz, view, positionWS.xyz, float3x3(float3(1.0f, 0.0f, 0.0f), float3(0.0f, 1.0f, 0.0f), float3(0.0f, 0.0f, 1.0f)), points); 
         
-    float3 colour  = light.intensity * (light.albedo.xyz * spec * material.specularRoughness.xyz + light.albedo.xyz * diff * material.diffuse);
-    colour /= 2.0 * PI;
+    float3 colour  = light.intensity * light.albedo.xyz * (spec * material.specularRoughness.xyz + diff * material.diffuse);
 
     return float4(colour, 1.0f);
 }
@@ -309,14 +397,34 @@ float4 areaLightContributionDiffuse(const Light light,
     points[2] = light.position.xyz + (light.misc.x / 2.0f) * (rightVector - light.up.xyz);
     points[3] = light.position.xyz + (light.misc.x / 2.0f) * (-rightVector - light.up.xyz);
         
-    const float3 diff = LTC_Evaluate(material.normal.xyz, view, positionWS.xyz, float3x3(1), points); 
+    const float3 diff = LTC_Evaluate(material.normal.xyz, view, positionWS.xyz, float3x3(float3(1.0f, 0.0f, 0.0f), float3(0.0f, 1.0f, 0.0f), float3(0.0f, 0.0f, 1.0f)), points); 
         
     float3 colour  = light.intensity * (light.albedo.xyz * diff * material.diffuse);
-    colour /= 2.0 * PI;
 
     return float4(colour, 1.0f);
 }
 
+float4 stripLightContribution(const Light light, 
+							const float4 positionWS, 
+							const float3 view,
+							const MaterialInfo material,
+							const float3x3 Minv,
+							const float amp)
+{
+    // Calculate the 2 end of the light in WS.
+    float3 points[2];
+    points[0] = light.position.xyz + 0.5f * light.misc.y * light.direction;
+    points[1] = light.position.xyz - 0.5f * light.misc.y * light.direction;
+
+    float3 spec = LTC_Evaluate(material.normal.xyz, view, positionWS.xyz, light.misc.x, Minv, points);
+    spec *= amp;
+        
+    const float3 diff = LTC_Evaluate(material.normal.xyz, view, positionWS.xyz, light.misc.x, float3x3(float3(1.0f, 0.0f, 0.0f), float3(0.0f, 1.0f, 0.0f), float3(0.0f, 0.0f, 1.0f)), points); 
+        
+    float3 colour  = light.intensity * light.albedo.xyz * (spec * material.specularRoughness.xyz + diff * material.diffuse);
+
+    return float4(colour, 1.0f);
+}
 
 // Interscetion helpers
 bool sphereAABBIntersection(const float3 centre, const float radius, const AABB aabb)
