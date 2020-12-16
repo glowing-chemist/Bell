@@ -42,6 +42,11 @@ public:
         mSelectedMeshInstance = kInvalidInstanceID;
     }
 
+    void setInstance(const InstanceID id)
+    {
+        mSelectedMeshInstance = id;
+    }
+
 private:
 
     RayTracingScene* mRayTracedScene;

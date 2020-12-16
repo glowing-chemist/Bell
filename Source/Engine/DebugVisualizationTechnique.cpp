@@ -177,7 +177,7 @@ DebugAABBTechnique::DebugAABBTechnique(Engine* eng, RenderGraph& graph) :
         struct LightTransform
         {
             float4x4 trans;
-            uint index;
+            uint32_t index;
         };
 
         exec->bindVertexBuffer(this->mVertexBufferView, 0);

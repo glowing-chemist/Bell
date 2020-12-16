@@ -591,12 +591,17 @@ std::vector<SceneID> Scene::loadFile(const std::string &path, MeshType meshType,
         const aiMesh* aimesh = scene->mMeshes[i];
         StaticMesh mesh(scene, aimesh, VertexAttributes::Position4 | VertexAttributes::Normals | VertexAttributes::Tangents | VertexAttributes::TextureCoordinates | VertexAttributes::Albedo);
 
-        ids.push_back(mSceneMeshes.size());
-        mSceneMeshes.push_back({mesh, meshType});
+        ids.push_back(addMesh(mesh, meshType));
     }
 
     mPath = fs::path(path);
-    loadMaterialsExternal(eng, scene);
+
+    fs::path materialFile{ mPath };
+    materialFile += ".mat";
+    if (fs::exists(materialFile))
+        loadMaterialsInternal(eng); // Load materials from the internal .mat format.
+    else
+        loadMaterialsExternal(eng, scene);
 
     return ids;
 }
@@ -785,6 +790,27 @@ MeshInstance* Scene::getMeshInstance(const InstanceID id)
 
         default:
             BELL_TRAP;
+    }
+
+    return nullptr;
+}
+
+const MeshInstance* Scene::getMeshInstance(const InstanceID id) const
+{
+    BELL_ASSERT(mInstanceMap.find(id) != mInstanceMap.end(), "Invalid instanceID")
+
+    const InstanceInfo& entry = (*mInstanceMap.find(id)).second;
+
+    switch (entry.mtype)
+    {
+    case InstanceType::DynamicMesh:
+        return &mDynamicMeshInstances[entry.mIndex];
+
+    case InstanceType::StaticMesh:
+        return&mStaticMeshInstances[entry.mIndex];
+
+    default:
+        BELL_TRAP;
     }
 
     return nullptr;

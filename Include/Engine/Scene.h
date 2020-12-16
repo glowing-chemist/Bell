@@ -223,6 +223,7 @@ public:
     Frustum getShadowingLightFrustum() const;
 
     MeshInstance*       getMeshInstance(const InstanceID);
+    const MeshInstance*       getMeshInstance(const InstanceID) const;
     StaticMesh*         getMesh(const SceneID);
     const StaticMesh*   getMesh(const SceneID) const;
     const std::unique_ptr<ImageView>& getSkybox() const
@@ -357,7 +358,7 @@ public:
         LightType mType;
         float4 mAlbedo;
         float3 mAngleSize; // angle for spotlight and side lenght fo area.
-        uint _padding;
+        uint32_t _padding;
 	};
     size_t addLight(const Light& light)
     {
@@ -459,6 +460,16 @@ public:
     }
 
 
+    struct InstanceInfo
+    {
+        InstanceType mtype;
+        uint64_t mIndex;
+    };
+    const std::unordered_map<InstanceID, InstanceInfo>& getInstanceMap() const
+    {
+        return mInstanceMap;
+    }
+
 private:
 
     void generateSceneAABB(const bool includeStatic);
@@ -517,11 +528,6 @@ private:
     ShadowingLight mShadowingLight;
     ShadowCascades mCascadesInfo;
 
-    struct InstanceInfo
-    {
-        InstanceType mtype;
-        uint64_t mIndex;
-    };
     uint64_t mNextInstanceID;
     std::unordered_map<InstanceID, InstanceInfo> mInstanceMap;
 

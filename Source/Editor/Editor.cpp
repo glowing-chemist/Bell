@@ -351,7 +351,7 @@ Editor::Editor(GLFWwindow* window) :
     mShowMaterialDialog{false},
     mMaterialDialog{},
     mCurrentMaterialIndex{0},
-    mMeshToInstance{0},
+    mMeshToInstance{kInvalidInstanceID},
     mShowAddInstanceDialog{false},
     mResetSceneAtEndOfFrame{false},
     mPublishedScene{false},
@@ -509,8 +509,8 @@ void Editor::renderOverlay()
 
             std::vector<SceneID> ids = mInProgressScene->loadFile(optionalPath->string(), MeshType::Dynamic, &mEngine);
 
-            for(SceneID id : ids)
-                mStaticMeshEntries.push_back({id, optionalPath->filename().string()});
+            for(uint32_t i = 0; i < ids.size(); ++i)
+                mStaticMeshEntries.push_back({ids[i], optionalPath->filename().string() + ":" + std::to_string(i)});
         }
     }
 
@@ -794,6 +794,7 @@ void Editor::drawAssistantWindow()
                if(ImGui::Button("Add instance"))
                {
                     mShowAddInstanceDialog = true;
+                    mMeshToInstance = entry.mID;
                }
                ImGui::PopID();
            }
@@ -808,7 +809,6 @@ void Editor::drawAssistantWindow()
                 MeshInstance* instance = mInProgressScene->getMeshInstance(ID);
                 if(ImGui::TreeNode(instance->getName().c_str()))
                 {
-                    mSelectedMesh = ID;
                     ImGui::TreePop();
                 }
            }
@@ -1087,11 +1087,25 @@ void Editor::drawMeshSelctorWindow()
             bool aabb = instanceFlags & InstanceFlags::DrawAABB;
             ImGui::Checkbox("AABB", &aabb);
 
-            const Instance* parent = instance->getParent();
-            if(parent)
             {
-                ImGui::TextUnformatted("Parent:");
-                ImGui::TextUnformatted(parent->getName().c_str());
+                const Instance* parent = instance->getParent();
+                if (ImGui::BeginCombo("Material", parent ? parent->getName().c_str() : "Not parented"))
+                {
+                    for (uint32_t n = 0; n < mSceneInstanceIDs.size(); n++)
+                    {
+                        const InstanceID ID = mSceneInstanceIDs[n];
+                        const MeshInstance* p = mInProgressScene->getMeshInstance(ID);
+                        BELL_ASSERT(p, "Invalid ID")
+                        bool is_selected = parent == p;
+                        if (ImGui::Selectable(p->getName().c_str(), is_selected))
+                        {
+                            instance->setParentInstance(p);
+                        }
+                        if (is_selected)
+                            ImGui::SetItemDefaultFocus();
+                    }
+                    ImGui::EndCombo();
+                }
             }
 
             const std::vector<Scene::Material>& materials = mInProgressScene->getMaterialDescriptions();
@@ -1416,6 +1430,16 @@ void Editor::drawAddInstanceDialog()
             mInProgressScene->computeBounds(AccelerationStructure::Static);
             mInProgressScene->computeBounds(AccelerationStructure::Dynamic);
 
+            if (mRayTracingScene)
+            {
+                mRayTracingScene->updateCPUAccelerationStructure(mInProgressScene);
+            }
+            else
+            {
+                mRayTracingScene = new RayTracingScene(&mEngine, mInProgressScene);
+                mMeshPicker.setScene(mRayTracingScene);
+            }
+
             ImGui::GetIO().ClearInputCharacters();
             memset(mMeshInstanceScratchBuffer, 0, 32);
         }
@@ -1555,5 +1579,6 @@ void Editor::deleteSelectedMesh()
         mSceneInstanceIDs.erase(std::remove(mSceneInstanceIDs.begin(), mSceneInstanceIDs.end(), mSelectedMesh), mSceneInstanceIDs.end());
         mSelectedMesh = kInvalidInstanceID;
         mMeshPicker.clearSelected();
+        mRayTracingScene->updateCPUAccelerationStructure(mInProgressScene);
     }
 }

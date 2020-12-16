@@ -15,60 +15,8 @@ RayTracingScene::RayTracingScene(Engine* eng, const Scene* scene) :
     mPrimitiveMaterialID{},
     mBVH_SRS{eng->getDevice(), 6}
 {
-    mScene = scene;
-    uint64_t vertexOffset = 0;
-    InstanceID instanceID = 0;
-    for(const auto& instance : scene->getStaticMeshInstances())
-    {
-        const uint32_t vertexStride = instance.getMesh()->getVertexStride();
-
-        // add Index data.
-        const auto& indexBuffer = instance.getMesh()->getIndexData();
-        std::transform(indexBuffer.begin(), indexBuffer.end(), std::back_inserter(mIndexBuffer), [vertexOffset](const uint32_t index)
-        {
-            return vertexOffset + index;
-        });
-
-        // add material mappings
-        for(uint32_t i = 0; i < indexBuffer.size() / 3; ++i)
-        {
-            mPrimitiveMaterialID.push_back({instanceID, instance.getMaterialIndex(), instance.getMaterialFlags()});
-        }
-
-        // Transform and add vertex data.
-        const auto& vertexData = instance.getMesh()->getVertexData();
-        for(uint32_t i = 0; i < vertexData.size(); i += vertexStride)
-        {
-            const unsigned char* vert = &vertexData[i];
-            const float* positionPtr = reinterpret_cast<const float*>(vert);
-
-            const float4 position = float4{positionPtr[0], positionPtr[1], positionPtr[2], positionPtr[3]};
-            BELL_ASSERT(position.w == 1.0f, "Probably incorrect pointer")
-            const float4 transformedPosition = instance.getTransMatrix() * position;
-            BELL_ASSERT(transformedPosition.w == 1.0f, "Non afine transform")
-
-            mPositions.emplace_back(transformedPosition.x, transformedPosition.y, transformedPosition.z);
-
-            const float2 uv = float2{positionPtr[4], positionPtr[5]};
-            mUVs.push_back(uv);
-
-            const float4 normal = unpackNormal(*reinterpret_cast<const uint32_t*>(&positionPtr[6]));
-            mNormals.push_back(normal);
-
-            const float4 colour = unpackColour(*reinterpret_cast<const uint32_t*>(&positionPtr[7]));
-            mVertexColours.push_back(colour);
-        }
-
-        vertexOffset += instance.getMesh()->getVertexCount();
-        ++instanceID;
-    }
-
-    mMeshes = std::make_unique<nanort::TriangleMesh<float>>(reinterpret_cast<float*>(mPositions.data()), mIndexBuffer.data(), sizeof(float3));
-    mPred = std::make_unique<nanort::TriangleSAHPred<float>>(reinterpret_cast<float*>(mPositions.data()), mIndexBuffer.data(), sizeof(float3));
-
-    BELL_ASSERT((mIndexBuffer.size() % 3) == 0, "Invalid index buffer size")
-    bool success = mAccelerationStructure.Build(mIndexBuffer.size() / 3, *mMeshes, *mPred);
-    BELL_ASSERT(success, "Failed to build BVH")
+    updateCPUAccelerationStructure(scene);
+    
     nanort::BVHBuildStatistics stats = mAccelerationStructure.GetStatistics();
     BELL_ASSERT(stats.max_tree_depth <= 32, "Hard coded shader value")
 
@@ -571,4 +519,65 @@ float4 RayTracingScene::shadePoint(const InterpolatedVertex& frag, const float4 
     const float4 specular = traceSpecularRays(frag, origin, sampleCount, depth);
 
     return diffuse + specular;// * (shadowed ? 0.15f : 1.0f);
+}
+
+
+void RayTracingScene::updateCPUAccelerationStructure(const Scene* scene)
+{
+    mScene = scene;
+    uint64_t vertexOffset = 0;
+    InstanceID instanceID = 0;
+    for (const auto& [id, entry] : scene->getInstanceMap())
+    {
+        const MeshInstance* instance = scene->getMeshInstance(id);
+        const StaticMesh* mesh = instance->getMesh();
+        const uint32_t vertexStride = mesh->getVertexStride();
+
+        // add Index data.
+        const auto& indexBuffer = mesh->getIndexData();
+        std::transform(indexBuffer.begin(), indexBuffer.end(), std::back_inserter(mIndexBuffer), [vertexOffset](const uint32_t index)
+        {
+            return vertexOffset + index;
+        });
+
+        // add material mappings
+        for (uint32_t i = 0; i < indexBuffer.size() / 3; ++i)
+        {
+            mPrimitiveMaterialID.push_back({ instanceID, instance->getMaterialIndex(), instance->getMaterialFlags() });
+        }
+
+        // Transform and add vertex data.
+        const auto& vertexData = mesh->getVertexData();
+        for (uint32_t i = 0; i < vertexData.size(); i += vertexStride)
+        {
+            const unsigned char* vert = &vertexData[i];
+            const float* positionPtr = reinterpret_cast<const float*>(vert);
+
+            const float4 position = float4{ positionPtr[0], positionPtr[1], positionPtr[2], positionPtr[3] };
+            BELL_ASSERT(position.w == 1.0f, "Probably incorrect pointer")
+            const float4 transformedPosition = instance->getTransMatrix() * position;
+            BELL_ASSERT(transformedPosition.w == 1.0f, "Non afine transform")
+
+           mPositions.emplace_back(transformedPosition.x, transformedPosition.y, transformedPosition.z);
+
+            const float2 uv = float2{ positionPtr[4], positionPtr[5] };
+            mUVs.push_back(uv);
+
+            const float4 normal = unpackNormal(*reinterpret_cast<const uint32_t*>(&positionPtr[6]));
+            mNormals.push_back(normal);
+
+            const float4 colour = unpackColour(*reinterpret_cast<const uint32_t*>(&positionPtr[7]));
+            mVertexColours.push_back(colour);
+        }
+
+        vertexOffset += mesh->getVertexCount();
+        ++instanceID;
+    }
+
+    mMeshes = std::make_unique<nanort::TriangleMesh<float>>(reinterpret_cast<float*>(mPositions.data()), mIndexBuffer.data(), sizeof(float3));
+    mPred = std::make_unique<nanort::TriangleSAHPred<float>>(reinterpret_cast<float*>(mPositions.data()), mIndexBuffer.data(), sizeof(float3));
+
+    BELL_ASSERT((mIndexBuffer.size() % 3) == 0, "Invalid index buffer size")
+    bool success = mAccelerationStructure.Build(mIndexBuffer.size() / 3, *mMeshes, *mPred);
+    BELL_ASSERT(success, "Failed to build BVH")
 }
