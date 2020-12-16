@@ -7,6 +7,7 @@
 #include <glm/gtx/quaternion.hpp>
 #include <glm/gtx/transform.hpp>
 #include <glm/gtx/matrix_decompose.hpp>
+#include "glm/gtx/handed_coordinate_space.hpp"
 
 #include <set>
 
@@ -336,6 +337,26 @@ MeshBlend::MeshBlend(const aiAnimMesh* mesh)
             mNormals.push_back(float4{ 0.0f, 0.0f, 0.0f , 1.0f });
         }
 
+        if (mesh->HasTangentsAndBitangents())
+        {
+            float3 normal = float3(mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z);
+            float3 tangent = float3(mesh->mTangents[i].x, mesh->mTangents[i].y, mesh->mTangents[i].z);
+            float3 biTangent = float3(mesh->mBitangents[i].x, mesh->mBitangents[i].y, mesh->mBitangents[i].z);
+
+            float3 calculatedBitangent = glm::normalize(glm::cross(normal, tangent));
+            float bitangentSign;
+            if (glm::leftHanded(tangent, biTangent, normal) == glm::leftHanded(tangent, calculatedBitangent, normal))
+                bitangentSign = 1.0f;
+            else
+                bitangentSign = -1.0f;
+
+            mTangents.push_back(float4{ mesh->mTangents[i].x, mesh->mTangents[i].y , mesh->mTangents[i].z , bitangentSign});
+        }
+        else
+        {
+            mTangents.push_back(float4{ 0.0f, 0.0f, 0.0f , 1.0f });
+        }
+
         if (mesh->HasTextureCoords(0))
         {
             mUV.push_back(float2{mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y});
@@ -437,6 +458,7 @@ std::vector<unsigned char> BlendMeshAnimation::getBlendedVerticies(const StaticM
     {
         float3 position{0.0f, 0.0f, 0.0f};
         float4 normal{0.0f, 0.0f, 0.0f, 0.0f};
+        float4 tangent{ 0.0f, 0.0f, 0.0f, 0.0f };
         float2 uv{0.0f, 0.0f};
         uint32_t colour{ 0 };
 
@@ -452,6 +474,7 @@ std::vector<unsigned char> BlendMeshAnimation::getBlendedVerticies(const StaticM
                 weight += shapeWeight * shapes[j].mWeight;
                 position += static_cast<float>(shapeWeight) * shapes[j].mPosition[i] * shapes[j].mWeight;
                 normal += static_cast<float>(shapeWeight) * shapes[j].mNormals[i] * shapes[j].mWeight;
+                tangent += static_cast<float>(shapeWeight) * shapes[j].mTangents[i] * shapes[j].mWeight;
                 uv += static_cast<float>(shapeWeight) * shapes[j].mUV[i] * shapes[j].mWeight;
                 colour += packColour(static_cast<float>(shapeWeight) * unpackColour(shapes[j].mColours[i]));
             }
@@ -461,6 +484,8 @@ std::vector<unsigned char> BlendMeshAnimation::getBlendedVerticies(const StaticM
         newVertexBuffer.writeVertexVector2(aiVector2D{ uv.x, uv.y } / weight);
         const char4 packednormals = packNormal(normal / weight);
         newVertexBuffer.WriteVertexChar4(packednormals);
+        const char4 packedtangent = packNormal(tangent / weight);
+        newVertexBuffer.WriteVertexChar4(packedtangent);
         newVertexBuffer.WriteVertexInt(colour / weight);
     }
 

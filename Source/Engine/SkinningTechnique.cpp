@@ -76,15 +76,15 @@ SkinningTechnique::SkinningTechnique(Engine* eng, RenderGraph& graph) :
                             auto [vertexWriteOffset, indexOffset] = eng->addMeshToBuffer(inst->getMesh());
 
                             const uint32_t vertexCount = inst->getMesh()->getVertexCount();
-                            const uint32_t vertesStride = inst->getMesh()->getVertexStride();
+                            const uint32_t vertexStride = inst->getMesh()->getVertexStride();
                             PushConstant pushConstants{};
                             pushConstants.mVertexCount = vertexCount;
-                            pushConstants.mVertexReadIndex = vertexReadOffset / vertesStride;
-                            pushConstants.mVertexWriteIndex = vertexWriteOffset / vertesStride;
-                            pushConstants.mBlendShapeReadIndex = scratchOffset / vertesStride;
+                            pushConstants.mVertexReadIndex = vertexReadOffset / vertexStride;
+                            pushConstants.mVertexWriteIndex = vertexWriteOffset / vertexStride;
+                            pushConstants.mBlendShapeReadIndex = scratchOffset / vertexStride;
                             BELL_ASSERT(boneOffsets.find(anim.mName) != boneOffsets.end(), "Blendshape animation doesn't have associated skeletal animation")
                             pushConstants.mBoneIndex = boneOffsets[anim.mName];
-                            pushConstants.mVertexStride = vertesStride;
+                            pushConstants.mVertexStride = vertexStride;
 
                             scratchOffset += newVerticies.size();
 

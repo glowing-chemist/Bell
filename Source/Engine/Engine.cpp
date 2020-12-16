@@ -65,10 +65,15 @@ Engine::Engine(GLFWwindow* windowPtr) :
     mRayTracedScene(nullptr),
     mDebugCameraActive(false),
     mDebugCamera({0.0f, 0.0f, 0.0f}, {1.0f, 0.0f, 0.0f}, 1.0f, 0.1f, 2000.0f),
+    mAnimationVertexSize{0},
     mAnimationVertexBuilder(),
+    mBoneIndexSize{0},
     mBoneIndexBuilder(),
+    mBoneWeightSize{0},
     mBoneWeightBuilder(),
+    mVertexSize{0},
     mVertexBuilder(),
+    mIndexSize{0},
     mIndexBuilder(),
     mMaterials{getDevice(), 200},
     mLTCMat(getDevice(), Format::RGBA32Float, ImageUsage::Sampled | ImageUsage::TransferDest, 64, 64, 1, 1, 1, 1, "LTC Mat"),
@@ -410,11 +415,11 @@ std::pair<uint64_t, uint64_t> Engine::addMeshToBuffer(const StaticMesh* mesh)
     const auto& vertexData = mesh->getVertexData();
     const auto& indexData = mesh->getIndexData();
 
-	const auto vertexOffset = mVertexBuilder.addData(vertexData);
+	const auto vertexOffset = mVertexSize + mVertexBuilder.addData(vertexData);
 
-    const auto indexOffset = mIndexBuilder.addData(indexData);
+    const auto indexOffset = mIndexSize + mIndexBuilder.addData(indexData);
 
-	mVertexCache.insert(std::make_pair( mesh, std::pair<uint64_t, uint64_t>{vertexOffset, indexOffset }));
+	mVertexCache.insert(std::make_pair( mesh, std::pair<uint64_t, uint64_t>{vertexOffset, indexOffset}));
 
     return {vertexOffset, indexOffset};
 }
@@ -427,13 +432,13 @@ std::pair<uint64_t, uint64_t> Engine::addMeshToAnimationBuffer(const StaticMesh*
         return it->second;
 
     const auto& vertexData = mesh->getVertexData();
-    const auto vertexOffset = mAnimationVertexBuilder.addData(vertexData);
+    const auto vertexOffset = mAnimationVertexSize + mAnimationVertexBuilder.addData(vertexData);
 
     const auto& boneIndicies = mesh->getBoneIndicies();
     mBoneIndexBuilder.addData(boneIndicies);
 
     const auto& boneWeights = mesh->getBoneWeights();
-    const auto boneWeightsOffset = mBoneWeightBuilder.addData(boneWeights);
+    const auto boneWeightsOffset = mBoneWeightSize + mBoneWeightBuilder.addData(boneWeights);
 
     mTposeVertexCache.insert(std::make_pair( mesh, std::pair<uint64_t, uint64_t>{vertexOffset, boneWeightsOffset}));
 
@@ -454,18 +459,15 @@ void Engine::execute(RenderGraph& graph)
     // Upload vertex/index data if required.
     auto& vertexData = mVertexBuilder.finishRecording();
     auto& indexData = mIndexBuilder.finishRecording();
-    if(!vertexData.empty() && !indexData.empty())
+    if(!vertexData.empty() || !indexData.empty())
     {
-        mVertexBuffer->resize(static_cast<uint32_t>(vertexData.size()), false);
-        mIndexBuffer->resize(static_cast<uint32_t>(indexData.size()), false);
+        mVertexBuffer->resize(static_cast<uint32_t>(vertexData.size()), true);
+        mIndexBuffer->resize(static_cast<uint32_t>(indexData.size()), true);
 
         mVertexBuffer->resize(vertexData.size(), false);
-        mVertexBuffer->setContents(vertexData.data(), static_cast<uint32_t>(vertexData.size()));
+        mVertexBuffer->setContents(vertexData.data(), static_cast<uint32_t>(vertexData.size()), mVertexSize);
         mIndexBuffer->resize(indexData.size(), false);
-        mIndexBuffer->setContents(indexData.data(), static_cast<uint32_t>(indexData.size()));
-
-        mVertexBuilder.reset();
-        mIndexBuilder.reset();
+        mIndexBuffer->setContents(indexData.data(), static_cast<uint32_t>(indexData.size()), mIndexSize);
 
         // upload mesh instance bounds info.
         static_assert(sizeof(AABB) == (sizeof(float4) * 2), "Sizes need to match");
@@ -486,22 +488,33 @@ void Engine::execute(RenderGraph& graph)
             mMeshBoundsBuffer->resize(bounds.size() * sizeof(AABB), false);
             mMeshBoundsBuffer->setContents(bounds.data(), sizeof(AABB) * bounds.size());
         }
+
+        mVertexSize += vertexData.size();
+        mIndexSize += indexData.size();
+
+        mVertexBuilder.reset();
+        mIndexBuilder.reset();
     }
 
     auto& animationVerticies = mAnimationVertexBuilder.finishRecording();
     auto& boneWeights = mBoneWeightBuilder.finishRecording();
     auto& boneIndicies = mBoneIndexBuilder.finishRecording();
-    if(!animationVerticies.empty() && !boneIndicies.empty())
+    if(!animationVerticies.empty() || !boneWeights.empty() || !boneIndicies.empty())
     {
-        mTposeVertexBuffer->resize(static_cast<uint32_t>(animationVerticies.size()), false);
-        mBoneWeightsIndexBuffer->resize(static_cast<uint32_t>(boneIndicies.size()), false);
-        mBonesWeightsBuffer->resize(static_cast<uint32_t>(boneWeights.size()), false);
+        mTposeVertexBuffer->resize(static_cast<uint32_t>(mAnimationVertexSize + animationVerticies.size()), true);
+        mBoneWeightsIndexBuffer->resize(static_cast<uint32_t>(mBoneIndexSize + boneIndicies.size()), true);
+        mBonesWeightsBuffer->resize(static_cast<uint32_t>(mBoneWeightSize + boneWeights.size()), true);
 
-        mTposeVertexBuffer->setContents(animationVerticies.data(), static_cast<uint32_t>(animationVerticies.size()));
-        mBoneWeightsIndexBuffer->setContents(boneIndicies.data(), static_cast<uint32_t>(boneIndicies.size()));
-        mBonesWeightsBuffer->setContents(boneWeights.data(), static_cast<uint32_t>(boneWeights.size()));
+        mTposeVertexBuffer->setContents(animationVerticies.data(), static_cast<uint32_t>(animationVerticies.size()), mAnimationVertexSize);
+        mBoneWeightsIndexBuffer->setContents(boneIndicies.data(), static_cast<uint32_t>(boneIndicies.size()), mBoneIndexSize);
+        mBonesWeightsBuffer->setContents(boneWeights.data(), static_cast<uint32_t>(boneWeights.size()), mBoneWeightSize);
+
+        mAnimationVertexSize += animationVerticies.size();
+        mBoneWeightSize += boneWeights.size();
+        mBoneIndexSize += boneIndicies.size();
 
         mAnimationVertexBuilder.reset();
+        mBoneWeightBuilder.reset();
         mBoneIndexBuilder.reset();
     }
 

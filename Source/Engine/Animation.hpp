@@ -93,6 +93,7 @@ struct MeshBlend
 
     std::vector<float3> mPosition;
     std::vector<float4> mNormals;
+    std::vector<float4> mTangents;
     std::vector<float2> mUV;
     std::vector<uint32_t> mColours;
 

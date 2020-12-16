@@ -365,10 +365,15 @@ private:
     bool mDebugCameraActive;
     Camera mDebugCamera;
 
+    uint32_t mAnimationVertexSize;
     BufferBuilder mAnimationVertexBuilder;
+    uint32_t mBoneIndexSize;
     BufferBuilder mBoneIndexBuilder;
+    uint32_t mBoneWeightSize;
     BufferBuilder mBoneWeightBuilder;
+    uint32_t mVertexSize;
     BufferBuilder mVertexBuilder;
+    uint32_t mIndexSize;
     BufferBuilder mIndexBuilder;
 
     ShaderResourceSet mMaterials;

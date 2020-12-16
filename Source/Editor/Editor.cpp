@@ -1089,7 +1089,7 @@ void Editor::drawMeshSelctorWindow()
 
             {
                 const Instance* parent = instance->getParent();
-                if (ImGui::BeginCombo("Material", parent ? parent->getName().c_str() : "Not parented"))
+                if (ImGui::BeginCombo("Parent", parent ? parent->getName().c_str() : "Not parented"))
                 {
                     for (uint32_t n = 0; n < mSceneInstanceIDs.size(); n++)
                     {
