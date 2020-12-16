@@ -66,6 +66,8 @@ public:
         return mBVH_SRS;
     }
 
+    void updateCPUAccelerationStructure(const Scene* scene);
+
 private:
 
     bool traceRay(const nanort::Ray<float>& ray, InterpolatedVertex* result) const;
