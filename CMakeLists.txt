@@ -298,7 +298,6 @@ set(SHADERS
 	BilaterialUpsampleRGBA8.comp
 	KdTree.hlsl
 	BasicVertexTransform.vert
-	RessolveReflections.comp
 	LightDebug.frag
     )
 

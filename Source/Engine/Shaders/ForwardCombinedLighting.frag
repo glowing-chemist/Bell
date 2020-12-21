@@ -44,8 +44,17 @@ StructuredBuffer<uint2> sparseFroxelList;
 StructuredBuffer<uint> indicies;
 
 #if defined(Shadow_Map) || defined(Cascade_Shadow_Map) || defined(RayTraced_Shadows)
+#define USING_SHADOWS 1
 [[vk::binding(11)]]
 Texture2D<float> shadowMap;
+#else
+#define USING_SHADOWS 0
+#endif
+
+#if defined(Screen_Space_Reflection) || defined(RayTraced_Reflections)
+#define USING_SSR
+[[vk::binding(10 + USING_SHADOWS + 1)]]
+Texture2D<float4> reflectionMap;
 #endif
 
 // an unbound array of matyerial parameter textures
@@ -79,7 +88,11 @@ Output main(GBufferVertOutput vertInput)
     const float lodLevel = roughness * 10.0f;
 
     // Calculate contribution from enviroment.
+#if defined(USING_SSR)
+    float3 radiance = reflectionMap.Sample(linearSampler, uv).xyz;
+#else
     float3 radiance = ConvolvedSkyboxSpecular.SampleLevel(linearSampler, lightDir, lodLevel).xyz;
+#endif
 
     float3 irradiance = ConvolvedSkyboxDiffuse.Sample(linearSampler, material.normal.xyz).xyz;
 

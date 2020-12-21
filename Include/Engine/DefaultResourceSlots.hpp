@@ -37,7 +37,7 @@ extern const char kLightProbes[];
 extern const char kOcclusionPredicationBuffer[];
 extern const char kMeshBoundsBuffer[];
 extern const char kDownSampledColour[];
-extern const char kReflecionUVs[];
+extern const char kPreviousDownSampledColour[];
 
 extern const char kCameraBuffer[];
 extern const char kLightBuffer[];

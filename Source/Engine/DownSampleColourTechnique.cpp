@@ -6,14 +6,18 @@
 
 DownSampleColourTechnique::DownSampleColourTechnique(Engine* eng, RenderGraph& graph) :
 	Technique("Downsample colour", eng->getDevice()),
-	mDowmSampledColour(getDevice(), Format::RGBA8UNorm, ImageUsage::Storage | ImageUsage::Sampled | ImageUsage::TransferDest | ImageUsage::TransferSrc, eng->getSwapChainImage()->getExtent(0, 0).width,
-		eng->getSwapChainImage()->getExtent(0, 0).height, 1, 5, 1, 1, "downsampled colour"),
-	mDownSampledColourViews{ImageView(mDowmSampledColour, ImageViewType::Colour, 0, 1, 0, 1),
-							ImageView(mDowmSampledColour, ImageViewType::Colour, 0, 1, 1, 1),
-							ImageView(mDowmSampledColour, ImageViewType::Colour, 0, 1, 2, 1),
-							ImageView(mDowmSampledColour, ImageViewType::Colour, 0, 1, 3, 1),
-							ImageView(mDowmSampledColour, ImageViewType::Colour, 0, 1, 4, 1),
-							ImageView(mDowmSampledColour, ImageViewType::Colour, 0, 1, 0, 5)},
+    mFirstFrame(true),
+    mDowmSampledColour{Image(getDevice(), Format::RGBA8UNorm, ImageUsage::Storage | ImageUsage::Sampled | ImageUsage::TransferDest | ImageUsage::TransferSrc, eng->getSwapChainImage()->getExtent(0, 0).width,
+        eng->getSwapChainImage()->getExtent(0, 0).height, 1, 5, 1, 1, "downsampled colour"),
+                       Image(getDevice(), Format::RGBA8UNorm, ImageUsage::Storage | ImageUsage::Sampled | ImageUsage::TransferDest | ImageUsage::TransferSrc, eng->getSwapChainImage()->getExtent(0, 0).width,
+                               eng->getSwapChainImage()->getExtent(0, 0).height, 1, 5, 1, 1, "prev downsampled colour")},
+    mDownSampledColourViews{ImageView(mDowmSampledColour[0], ImageViewType::Colour, 0, 1, 0, 1),
+                            ImageView(mDowmSampledColour[0], ImageViewType::Colour, 0, 1, 1, 1),
+                            ImageView(mDowmSampledColour[0], ImageViewType::Colour, 0, 1, 2, 1),
+                            ImageView(mDowmSampledColour[0], ImageViewType::Colour, 0, 1, 3, 1),
+                            ImageView(mDowmSampledColour[0], ImageViewType::Colour, 0, 1, 4, 1),
+                            ImageView(mDowmSampledColour[0], ImageViewType::Colour, 0, 1, 0, 5),
+                            ImageView(mDowmSampledColour[1], ImageViewType::Colour, 0, 1, 0, 5),},
 	mDowmSampledColourInternal(getDevice(), Format::RGBA8UNorm, ImageUsage::Storage | ImageUsage::Sampled | ImageUsage::TransferDest | ImageUsage::TransferSrc, eng->getSwapChainImage()->getExtent(0, 0).width,
 		eng->getSwapChainImage()->getExtent(0, 0).height, 1, 5, 1, 1, "downsampled internal colour"),
 	mDownSampledColourInternalViews{ImageView(mDowmSampledColourInternal, ImageViewType::Colour, 0, 1, 0, 1),
@@ -59,7 +63,8 @@ DownSampleColourTechnique::DownSampleColourTechnique(Engine* eng, RenderGraph& g
 			barrier->transitionLayout(mDownSampledColourInternalViews[5], ImageLayout::TransferSrc, Hazard::ReadAfterWrite, SyncPoint::TopOfPipe, SyncPoint::TransferSource);
 			exec->recordBarriers(barrier);
 
-			exec->blitImage(mDownSampledColourViews[5], mDownSampledColourInternalViews[5], SamplerType::Point);
+            const uint64_t submissionOffset = getDevice()->getCurrentSubmissionIndex() % 2;
+            exec->blitImage(mDownSampledColourViews[5 + submissionOffset], mDownSampledColourInternalViews[5], SamplerType::Linear);
 		}
 	});
 
@@ -69,7 +74,14 @@ DownSampleColourTechnique::DownSampleColourTechnique(Engine* eng, RenderGraph& g
 
 void DownSampleColourTechnique::render(RenderGraph &, Engine *)
 {
-    mDowmSampledColour->updateLastAccessed();
+    if(mFirstFrame)
+    {
+        mDowmSampledColour[1]->clear(float4(0.f, 0.0f, 0.0f, 0.0f));
+        mFirstFrame = false;
+    }
+
+    mDowmSampledColour[0]->updateLastAccessed();
+    mDowmSampledColour[1]->updateLastAccessed();
     for(auto& view : mDownSampledColourViews)
         view->updateLastAccessed();
 
@@ -81,8 +93,16 @@ void DownSampleColourTechnique::render(RenderGraph &, Engine *)
 
 void DownSampleColourTechnique::bindResources(RenderGraph& graph)
 {
-	if (!graph.isResourceSlotBound(kDownSampledColour))
-	{
+    const uint64_t submissionIndex = getDevice()->getCurrentSubmissionIndex();
+
+    if((submissionIndex % 2) == 0)
+    {
 		graph.bindImage(kDownSampledColour, mDownSampledColourViews[5]);
+        graph.bindImage(kPreviousDownSampledColour, mDownSampledColourViews[6]);
 	}
+    else
+    {
+        graph.bindImage(kDownSampledColour, mDownSampledColourViews[6]);
+        graph.bindImage(kPreviousDownSampledColour, mDownSampledColourViews[5]);
+    }
 }

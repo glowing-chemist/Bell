@@ -18,7 +18,6 @@ CompositeTechnique::CompositeTechnique(Engine* eng, RenderGraph& graph) :
     const bool usingSSAO = eng->isPassRegistered(PassType::SSAO);
 	const bool usingOverlay = eng->isPassRegistered(PassType::Overlay);
 	const bool usingTAA = eng->isPassRegistered(PassType::TAA);
-    const bool usingSSR = eng->isPassRegistered(PassType::SSR) || eng->isPassRegistered(PassType::RayTracedReflections);
 
     if (eng->debugTextureEnabled())
 	{
@@ -69,14 +68,6 @@ CompositeTechnique::CompositeTechnique(Engine* eng, RenderGraph& graph) :
             if (usingSSAO)
                 compositeTask.addInput(kSSAO, AttachmentType::Texture2D);
 
-            if (usingSSR && !usingTAA)
-            {
-                compositeTask.addInput(kReflectionMap, AttachmentType::Texture2D);
-                compositeTask.addInput(kGBufferSpecularRoughness, AttachmentType::Texture2D);
-                compositeTask.addInput(kReflecionUVs, AttachmentType::Texture2D);
-
-            }
-
             compositeTask.addInput(kDefaultSampler, AttachmentType::Sampler);
 
             if(usingTAA)
@@ -115,13 +106,6 @@ CompositeTechnique::CompositeTechnique(Engine* eng, RenderGraph& graph) :
 
             if(eng->isPassRegistered(PassType::Overlay))
                 overlayTask.addInput(kOverlay, AttachmentType::Texture2D);
-
-            if (usingSSR)
-            {
-                overlayTask.addInput(kReflectionMap, AttachmentType::Texture2D);
-                overlayTask.addInput(kGBufferSpecularRoughness, AttachmentType::Texture2D);
-                overlayTask.addInput(kReflecionUVs, AttachmentType::Texture2D);
-            }
 
             overlayTask.addInput(kDefaultSampler, AttachmentType::Sampler);
             overlayTask.addInput(kCameraBuffer, AttachmentType::UniformBuffer);

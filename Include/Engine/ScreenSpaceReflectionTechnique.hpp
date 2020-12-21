@@ -29,9 +29,6 @@ public:
 private:
     uint2 mTileCount;
 
-    Image mReflectionUVs;
-    ImageView mReflectionUVsView;
-
     Image mReflectionMapRaw;
     ImageView mReflectionMapRawView;
 

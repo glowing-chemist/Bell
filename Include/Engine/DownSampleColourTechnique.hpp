@@ -24,8 +24,10 @@ public:
 
 	private:
 
-	Image mDowmSampledColour;
-	ImageView mDownSampledColourViews[6];
+    bool mFirstFrame;
+
+    Image mDowmSampledColour[2];
+    ImageView mDownSampledColourViews[7];
 
 	Image mDowmSampledColourInternal;
 	ImageView mDownSampledColourInternalViews[6];

@@ -30,6 +30,9 @@ DeferredImageBasedLightingTechnique::DeferredImageBasedLightingTechnique(Engine*
     if (eng->isPassRegistered(PassType::Shadow) || eng->isPassRegistered(PassType::CascadingShadow) || eng->isPassRegistered(PassType::RayTracedShadows))
         task.addInput(kShadowMap, AttachmentType::Texture2D);
 
+    if(eng->isPassRegistered(PassType::SSR) || eng->isPassRegistered(PassType::RayTracedReflections))
+        task.addInput(kReflectionMap, AttachmentType::Texture2D);
+
     task.addManagedOutput(kGlobalLighting, AttachmentType::RenderTarget2D, Format::RGBA8UNorm,
         SizeClass::Swapchain, LoadOp::Clear_Black, StoreOp::Store, ImageUsage::ColourAttachment | ImageUsage::Sampled | ImageUsage::TransferSrc);
 

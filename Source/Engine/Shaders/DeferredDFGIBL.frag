@@ -36,10 +36,18 @@ TextureCube<float4> ConvolvedSkyboxDiffuse;
 SamplerState linearSampler;
 
 #if defined(Shadow_Map) || defined(Cascade_Shadow_Map) || defined(RayTraced_Shadows)
+#define USING_SHADOWS 1
 [[vk::binding(10)]]
 Texture2D<float> shadowMap;
+#else
+#define USING_SHADOWS 0
 #endif
 
+#if defined(Screen_Space_Reflection) || defined(RayTraced_Reflections)
+#define USING_SSR
+[[vk::binding(9 + USING_SHADOWS + 1)]]
+Texture2D<float4> reflectionMap;
+#endif
 
 float4 main(UVVertOutput vertInput)
 {
@@ -67,7 +75,11 @@ float4 main(UVVertOutput vertInput)
 
 	const float lodLevel = roughness * 10.0f;
 
+#if defined(USING_SSR)
+    float3 radiance = reflectionMap.Sample(linearSampler, uv).xyz;
+#else
 	float3 radiance = ConvolvedSkyboxSpecular.SampleLevel(linearSampler, lightDir, lodLevel).xyz;
+#endif
 
     float3 irradiance = ConvolvedSkyboxDiffuse.Sample(linearSampler, normal).xyz;
 
