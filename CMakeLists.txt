@@ -168,7 +168,6 @@ set(BELL_SOURCE
     # Techniques
     Source/Engine/SSAOTechnique.cpp
     Source/Engine/GBufferTechnique.cpp
-    Source/Engine/GBufferMaterialTechnique.cpp
     Source/Engine/BlurXTechnique.cpp
     Source/Engine/BlurYTechnique.cpp
     Source/Engine/PreDepthTechnique.cpp

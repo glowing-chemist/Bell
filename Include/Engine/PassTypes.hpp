@@ -10,38 +10,37 @@
                     Shadow = 1ULL << 3, \
                     CascadingShadow = 1ULL << 4, \
                     SSAO = 1ULL << 5, \
-                    GBufferMaterial = 1ULL << 6, \
-                    EditorDefault = 1ULL << 7, \
-                    GBufferPreDepth = 1ULL << 8, \
-                    GBUfferMaterialPreDepth = 1ULL << 9, \
-                    InplaceCombine = 1ULL << 10, \
-                    InplaceCombineSRGB = 1ULL << 11, \
-                    Overlay = 1ULL << 12, \
-                    Skybox = 1ULL << 13, \
-                    ConvolveSkybox = 1ULL << 14, \
-                    DFGGeneration = 1ULL << 15, \
-                    Composite = 1ULL << 16, \
-                    ForwardIBL = 1ULL << 17, \
-                    LightFroxelation = 1ULL << 18, \
-                    DeferredPBRIBL = 1ULL << 19, \
-                    DeferredAnalyticalLighting = 1ULL << 20, \
-                    ForwardAnalyticalLighting = 1ULL << 21, \
-                    DeferredCombinedLighting = 1ULL << 22, \
-                    ForwardCombinedLighting = 1ULL << 23, \
-                    TAA = 1ULL << 24, \
-                    LineariseDepth = 1ULL << 25, \
-                    SSR = 1ULL << 26, \
-                    Voxelize = 1ULL << 27, \
-                    DebugAABB = 1ULL << 28, \
-                    DebugWireFrame = 1ULL << 29, \
-                    Transparent = 1ULL << 30, \
-                    LightProbeDeferredGI = 1ULL << 31, \
-                    VisualizeLightProbes = 1ULL << 32, \
-                    OcclusionCulling = 1ULL << 33, \
-                    PathTracing = 1ULL << 34, \
-                    RayTracedReflections = 1ULL << 35, \
-                    RayTracedShadows = 1ULL << 36, \
-                    DownSampleColour = 1ULL << 37
+                    EditorDefault = 1ULL << 6, \
+                    GBufferPreDepth = 1ULL << 7, \
+                    InplaceCombine = 1ULL << 8, \
+                    InplaceCombineSRGB = 1ULL << 9, \
+                    Overlay = 1ULL << 10, \
+                    Skybox = 1ULL << 11, \
+                    ConvolveSkybox = 1ULL << 12, \
+                    DFGGeneration = 1ULL << 13, \
+                    Composite = 1ULL << 14, \
+                    ForwardIBL = 1ULL << 15, \
+                    LightFroxelation = 1ULL << 16, \
+                    DeferredPBRIBL = 1ULL << 17, \
+                    DeferredAnalyticalLighting = 1ULL << 18, \
+                    ForwardAnalyticalLighting = 1ULL << 19, \
+                    DeferredCombinedLighting = 1ULL << 20, \
+                    ForwardCombinedLighting = 1ULL << 21, \
+                    TAA = 1ULL << 22, \
+                    LineariseDepth = 1ULL << 23, \
+                    SSR = 1ULL << 24, \
+                    Voxelize = 1ULL << 25, \
+                    DebugAABB = 1ULL << 26, \
+                    DebugWireFrame = 1ULL << 27, \
+                    Transparent = 1ULL << 28, \
+                    LightProbeDeferredGI = 1ULL << 29, \
+                    VisualizeLightProbes = 1ULL << 30, \
+                    OcclusionCulling = 1ULL << 31, \
+                    PathTracing = 1ULL << 32, \
+                    RayTracedReflections = 1ULL << 33, \
+                    RayTracedShadows = 1ULL << 34, \
+                    DownSampleColour = 1ULL << 35, \
+                    VoxelTerrain = 1ULL << 36
 
 // An enum to keep track of which 
 enum class PassType : uint64_t
@@ -61,17 +60,11 @@ inline const char* passToString(const PassType passType)
         case PassType::GBuffer:
             return "GBuffer_pass";
 
-        case PassType::GBufferMaterial:
-            return "GBuffer_Material_pass";
-
         case PassType::SSAO:
             return "SSAO";
 
         case PassType::GBufferPreDepth:
             return "GBuffer_Pre_Depth";
-
-        case PassType::GBUfferMaterialPreDepth:
-            return "GBuffer_Material_Pre_Depth";
 
 		case PassType::InplaceCombine:
 			return "Inplace_combine";

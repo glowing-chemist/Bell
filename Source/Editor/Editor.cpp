@@ -49,27 +49,6 @@ namespace
                 return newNode;
             }
 
-            case NodeTypes::GBufferMaterial:
-            {
-                std::shared_ptr<EditorNode> newNode = std::make_shared<PassNode>("GBufferMaterial", passType);
-                newNode->mOutputs.push_back(Pin{0, newNode, kGBufferNormals, PinType::Texture, PinKind::Output});
-                newNode->mOutputs.push_back(Pin{0, newNode, kGBufferUV, PinType::Texture, PinKind::Output});
-				newNode->mOutputs.push_back(Pin{0, newNode, kGBufferMaterialID, PinType::Texture, PinKind::Output });
-                newNode->mOutputs.push_back(Pin{ 0, newNode, kGBufferVelocity, PinType::Texture, PinKind::Output });
-                newNode->mOutputs.push_back(Pin{0, newNode, kGBufferDepth, PinType::Texture, PinKind::Output});
-                return newNode;
-            }
-
-            case NodeTypes::GBUfferMaterialPreDepth:
-            {
-                std::shared_ptr<EditorNode> newNode = std::make_shared<PassNode>("GBufferMaterialPreDepth", passType);
-				newNode->mInputs.push_back(Pin{ 0, newNode, kGBufferDepth, PinType::Texture, PinKind::Input });
-                newNode->mOutputs.push_back(Pin{0, newNode, kGBufferNormals, PinType::Texture, PinKind::Output});
-                newNode->mOutputs.push_back(Pin{0, newNode, kGBufferUV, PinType::Texture, PinKind::Output});
-				newNode->mOutputs.push_back(Pin{0, newNode, kGBufferMaterialID, PinType::Texture, PinKind::Output });
-                return newNode;
-            }
-
             case NodeTypes::GBufferPreDepth:
             {
                 std::shared_ptr<EditorNode> newNode = std::make_shared<PassNode>("GBufferPreDepth", passType);
@@ -750,9 +729,7 @@ void Editor::drawAssistantWindow()
 
            drawPassContextMenu(PassType::DepthPre);
            drawPassContextMenu(PassType::GBuffer);
-           drawPassContextMenu(PassType::GBufferMaterial);
            drawPassContextMenu(PassType::GBufferPreDepth);
-           drawPassContextMenu(PassType::GBUfferMaterialPreDepth);
            drawPassContextMenu(PassType::SSAO);
 		   drawPassContextMenu(PassType::InplaceCombine);
 		   drawPassContextMenu(PassType::InplaceCombineSRGB);

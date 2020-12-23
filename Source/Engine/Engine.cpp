@@ -15,7 +15,6 @@
 #include "Engine/TextureUtil.hpp"
 #include "Engine/PreDepthTechnique.hpp"
 #include "Engine/GBufferTechnique.hpp"
-#include "Engine/GBufferMaterialTechnique.hpp"
 #include "Engine/SSAOTechnique.hpp"
 #include "Engine/BlurXTechnique.hpp"
 #include "Engine/BlurYTechnique.hpp"
@@ -308,17 +307,11 @@ std::unique_ptr<Technique> Engine::getSingleTechnique(const PassType passType)
         case PassType::GBuffer:
             return std::make_unique<GBufferTechnique>(this, mCurrentRenderGraph);
 
-        case PassType::GBufferMaterial:
-            return std::make_unique<GBufferMaterialTechnique>(this, mCurrentRenderGraph);
-
         case PassType::SSAO:
             return std::make_unique<SSAOTechnique>(this, mCurrentRenderGraph);
 
         case PassType::GBufferPreDepth:
             return std::make_unique<GBufferPreDepthTechnique>(this, mCurrentRenderGraph);
-
-        case PassType::GBUfferMaterialPreDepth:
-            return std::make_unique<GBufferMaterialPreDepthTechnique>(this, mCurrentRenderGraph);
 
 		case PassType::Overlay:
 			return std::make_unique<OverlayTechnique>(this, mCurrentRenderGraph);
