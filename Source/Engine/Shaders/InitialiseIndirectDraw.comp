@@ -1,0 +1,13 @@
+
+
+[[vk::binding(0)]]
+RWStructuredBuffer<uint> args;
+
+[numthreads(1, 1, 1)]
+void main()
+{
+	args[0] = 0;
+	args[1] = 1;
+	args[2] = 0;
+	args[3] = 0; 
+}

@@ -164,6 +164,7 @@ set(BELL_SOURCE
     Source/Engine/PBR.cpp
     Source/Engine/NavigationMesh.cpp
     Source/Engine/UtilityTasks.cpp
+    Source/Engine/VoxelTerrain.cpp
 
     # Techniques
     Source/Engine/SSAOTechnique.cpp
@@ -194,7 +195,8 @@ set(BELL_SOURCE
     Source/Engine/VisualizeLightProbesTechnique.cpp
     Source/Engine/OcclusionCullingTechnique.cpp
     Source/Engine/PathTracingTechnique.cpp
-	Source/Engine/DownSampleColourTechnique.cpp
+    Source/Engine/DownSampleColourTechnique.cpp
+    Source/Engine/VoxelTerrainTechnique.cpp
 
     # used for texture loading
     ThirdParty/stb_image/stb_image.cpp
@@ -298,6 +300,10 @@ set(SHADERS
 	KdTree.hlsl
 	BasicVertexTransform.vert
 	LightDebug.frag
+	MarchingCubes.comp
+	InitialiseIndirectDraw.comp
+	Terrain.vert
+	TerrainDeferred.frag
     )
 
 message(STATUS "shader directory ${BELL_SHADER_DIR}Shaders")

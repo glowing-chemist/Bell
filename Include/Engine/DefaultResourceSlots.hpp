@@ -38,6 +38,10 @@ extern const char kOcclusionPredicationBuffer[];
 extern const char kMeshBoundsBuffer[];
 extern const char kDownSampledColour[];
 extern const char kPreviousDownSampledColour[];
+extern const char kTerrainVoxelGrid[];
+extern const char kTerrainVertexBuffer[];
+extern const char kTerrainIndirectBuffer[];
+extern const char kTerrainUniformBuffer[];
 
 extern const char kCameraBuffer[];
 extern const char kLightBuffer[];

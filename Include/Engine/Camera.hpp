@@ -126,6 +126,7 @@ public:
 
     float4x4 getViewMatrix() const;
     float4x4 getProjectionMatrix() const;
+    float4x4 getProjectionMatrixOverride(const CameraMode) const;
 
 	float getNearPlane() const
 	{ return mNearPlaneDistance; }

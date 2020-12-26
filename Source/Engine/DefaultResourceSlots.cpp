@@ -36,6 +36,10 @@ const char kOcclusionPredicationBuffer[] = "OcclusionPredication";
 const char kMeshBoundsBuffer[] = "MeshBounds";
 const char kDownSampledColour[] = "DownSampledColour";
 const char kPreviousDownSampledColour[] ="Prev DownsampledColour";
+const char kTerrainVoxelGrid[] = "TerrainVoxels";
+const char kTerrainVertexBuffer[] = "TerrainVoxels";
+const char kTerrainIndirectBuffer[] = "TerrainIndirectArgs";
+const char kTerrainUniformBuffer[] = "TerrainUniforms";
 
 const char kCameraBuffer[]	    = "CameraBuffer";
 const char kLightBuffer[]	    = "LightBuffer";

@@ -100,6 +100,9 @@ vk::Format getVulkanImageFormat(const Format format)
 	case Format::R8UNorm:
 		return vk::Format::eR8Unorm;
 
+    case Format::R8Norm:
+        return vk::Format::eR8Snorm;
+
 	case Format::RG8UNorm:
 		return vk::Format::eR8G8Unorm;
 
@@ -731,8 +734,11 @@ const char* getAttachmentName(const AttachmentType type)
 	case AttachmentType::IndexBuffer:
 		return "Index buffer";
 
-       case AttachmentType::Sampler:
-            return "Sampler";
+    case AttachmentType::Sampler:
+        return "Sampler";
+
+    case AttachmentType::IndirectBuffer:
+        return "Indirect buffer";
 
 	default:
 		return "Add new conversion!!!!";

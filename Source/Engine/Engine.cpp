@@ -42,6 +42,7 @@
 #include "Engine/OcclusionCullingTechnique.hpp"
 #include "Engine/PathTracingTechnique.hpp"
 #include "Engine/DownSampleColourTechnique.hpp"
+#include "Engine/VoxelTerrainTechnique.hpp"
 
 #include "Engine/RayTracedScene.hpp"
 
@@ -390,6 +391,9 @@ std::unique_ptr<Technique> Engine::getSingleTechnique(const PassType passType)
 
         case PassType::DownSampleColour:
             return std::make_unique<DownSampleColourTechnique>(this, mCurrentRenderGraph);
+
+        case PassType::VoxelTerrain:
+            return std::make_unique<VoxelTerrainTechnique>(this, mCurrentRenderGraph);
 
         default:
         {

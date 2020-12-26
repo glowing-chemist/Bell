@@ -12,6 +12,7 @@
 #include "Engine/Animation.hpp"
 #include "Engine/CPUImage.hpp"
 #include "Engine/Instance.hpp"
+#include "Engine/VoxelTerrain.hpp"
 
 #include <algorithm>
 #include <atomic>
@@ -470,6 +471,28 @@ public:
         return mInstanceMap;
     }
 
+    void setTerrainGridSize(const uint3& size, const float voxelSize)
+    {
+        mTerrain = std::make_unique<VoxelTerrain>(size, voxelSize);
+    }
+
+    void initialiseTerrainFromTexture(const std::string& path)
+    {
+        BELL_ASSERT(mTerrain, "Terrain hasn't been initialised")
+        mTerrain->initialiseFromHeightMap(path);
+    }
+
+    void initialiseTerrainFromData(const std::vector<int8_t>& data)
+    {
+        BELL_ASSERT(mTerrain, "Terrain hasn't been initialised")
+        mTerrain->initialiseFromData(data);
+    }
+
+    const std::unique_ptr<VoxelTerrain>& getVoxelTerrain() const
+    {
+        return mTerrain;
+    }
+
 private:
 
     void generateSceneAABB(const bool includeStatic);
@@ -534,6 +557,8 @@ private:
 	std::unique_ptr<Image> mSkybox;
 	std::unique_ptr<ImageView> mSkyboxView;
     std::unique_ptr<CPUImage> mCPUSkybox;
+
+    std::unique_ptr<VoxelTerrain> mTerrain;
 };
 
 #endif

@@ -152,6 +152,9 @@ inline const char* passToString(const PassType passType)
 
         case PassType::DownSampleColour:
             return "DownSampled Colour";
+
+        case PassType::VoxelTerrain:
+            return "Voxel Terrain";
     }
 
     return "UNKNOWN PASS TYPE";
@@ -201,6 +204,7 @@ enum class Format
 	R32Uint,
 	R32Float,
 	R8UNorm,
+    R8Norm,
     RG8UNorm,
 	RG16UNorm,
 	RGB16UNorm,

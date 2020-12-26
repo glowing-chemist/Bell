@@ -153,6 +153,33 @@ float4x4 Camera::getProjectionMatrix() const
 }
 
 
+float4x4 Camera::getProjectionMatrixOverride(const CameraMode overrideMode) const
+{
+    if(overrideMode == CameraMode::InfinitePerspective)
+    {
+        float fov = 1.0f / tan(glm::radians(mFieldOfView) / 2.0f);
+        return glm::mat4(
+            fov / mAspect, 0.0f, 0.0f, 0.0f,
+            0.0f, fov, 0.0f, 0.0f,
+            0.0f, 0.0f, 0.0f, -1.0f,
+            0.0f, 0.0f, mNearPlaneDistance, 0.0f);
+    }
+    else if(overrideMode == CameraMode::Perspective)
+    {
+        return glm::perspective(glm::radians(mFieldOfView), mAspect, mFarPlaneDistance, mNearPlaneDistance);
+    }
+    else if(overrideMode == CameraMode::Orthographic)
+    {
+        return glm::ortho(-mOrthographicSize.x / 2.0f, mOrthographicSize.x / 2.0f,
+                          -mOrthographicSize.y / 2.0f, mOrthographicSize.y / 2.0f, mNearPlaneDistance, mFarPlaneDistance);
+    }
+
+    BELL_TRAP;
+
+    return float4x4();
+}
+
+
 Frustum Camera::getFrustum() const
 {
     return Frustum{ getProjectionMatrix() * getViewMatrix() };

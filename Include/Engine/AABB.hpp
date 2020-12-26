@@ -58,10 +58,10 @@ public:
 	AABB operator+(const float4&) const;
 	AABB operator-(const float4&) const;
 
-    const float4& getTop() const
+    const float4& getMax() const
     { return mMaximum; }
 
-    const float4& getBottom() const
+    const float4& getMin() const
     { return mMinimum; }
 
     float4 getCentralPoint() const

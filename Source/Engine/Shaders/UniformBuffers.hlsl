@@ -65,3 +65,12 @@ struct VoxelDimmensions
     float4 recipVolumeSize; // maps from voxel coords to clip space.
     float4 voxelVolumeSize;
 };
+
+
+struct TerrainVolume
+{
+    float4 minimum;
+    float4 maximum;
+    uint3  offset;
+    float  voxelSize;
+};

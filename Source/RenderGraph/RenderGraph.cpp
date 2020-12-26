@@ -213,14 +213,6 @@ void RenderGraph::compileDependancies()
 
 			const RenderTask& innerTask = getTask(mTaskOrder[j].first, mTaskOrder[j].second);
 
-            bool innerDepthWrite = false;
-            if(innerTask.taskType() == TaskType::Graphics)
-            {
-                const auto& innerGraphicsTask = static_cast<const GraphicsTask&>(innerTask);
-
-                innerDepthWrite = innerGraphicsTask.getPipelineDescription().mDepthWrite;
-            }
-
             // generate dependancies between framebuffer writes and "descriptor" reads.
             {
                 const std::vector<RenderTask::OutputAttachmentInfo>& outResources = outerTask.getOuputAttachments();
@@ -303,10 +295,9 @@ void RenderGraph::compileDependancies()
 					for(size_t innerIndex = 0; innerIndex < inResources.size(); ++innerIndex)
 					{
                         if(outResources[outerIndex].mName == inResources[innerIndex].mName &&
-                                ((outResources[outerIndex].mType == AttachmentType::Depth && inResources[innerIndex].mType == AttachmentType::Depth
-                                && outerDepthWrite && !innerDepthWrite) ||
-                                ((outResources[outerIndex].mType == AttachmentType::RenderTarget2D && inResources[innerIndex].mType == AttachmentType::RenderTarget2D) &&
-                                (outResources[outerIndex].mSize != SizeClass::Custom && inResources[innerIndex].mSize == SizeClass::Custom))))
+                                (((outResources[outerIndex].mType == AttachmentType::Depth && inResources[innerIndex].mType == AttachmentType::Depth) ||
+                                (outResources[outerIndex].mType == AttachmentType::RenderTarget2D && inResources[innerIndex].mType == AttachmentType::RenderTarget2D)) &&
+                                (outResources[outerIndex].mSize != SizeClass::Custom && inResources[innerIndex].mSize == SizeClass::Custom)))
 						{
 							dependancies.insert({i, j});
 
@@ -809,12 +800,13 @@ std::vector<BarrierRecorder> RenderGraph::generateBarriers(RenderDevice* dev)
         const auto& entries = usageInfo.mUsages;
 
         // Print all resource transitions.
-#if 0 
+#if 0
         BELL_LOG_ARGS("\nResource Name: %s", name);
         for (const auto& entry : entries)
         {
             BELL_LOG_ARGS("Used in task %s as a %s", getTask(entry.mTaskIndex).getName().c_str(), getAttachmentName(entry.mType));
         }
+        fflush(stdout);
 #endif
 
         if(entries.empty() || (usageInfo.mFlags & BindingFlags::ManualBarriers)) // Resource isn't used by any tasks or is a SRS.
@@ -958,8 +950,9 @@ void RenderGraph::verifyDependencies()
             if(dependantOuter == dependancyInner && dependancyOuter == dependantInner)
             {
                 const RenderTask& task1 = getTask(dependantOuter);
-                const RenderTask& task2 = getTask(dependantOuter);
+                const RenderTask& task2 = getTask(dependancyOuter);
                 BELL_LOG_ARGS("Circular dependancy between %s and %s", task1.getName().c_str(), task2.getName().c_str());
+                fflush(stdout);
                 BELL_TRAP;
             }
         }

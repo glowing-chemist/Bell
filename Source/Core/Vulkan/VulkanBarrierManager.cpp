@@ -344,7 +344,7 @@ void VulkanBarrierRecorder::memoryBarrier(BufferView& buf, const Hazard hazard, 
 		srcAccess = vk::AccessFlagBits::eMemoryWrite;
 		dstAccess = vk::AccessFlagBits::eMemoryRead;
 
-		if (buf->getUsage() & BufferUsage::IndirectArgs)
+        if (buf->getUsage() & BufferUsage::IndirectArgs && dst == SyncPoint::IndirectArgs)
 			dstAccess |= vk::AccessFlagBits::eIndirectCommandRead;
 		break;
 	}

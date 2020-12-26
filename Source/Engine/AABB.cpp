@@ -93,8 +93,9 @@ AABB& AABB::operator*=(const float4x4& mat)
 	for (const auto& vertex : cubeVerticies)
 	{
         float4 transformedPoint = mat * vertex;
-		smallest = componentWiseMin(smallest, transformedPoint);
+        transformedPoint /= transformedPoint.w;
 
+		smallest = componentWiseMin(smallest, transformedPoint);
 		largest = componentWiseMax(largest, transformedPoint);
 	}
 
@@ -141,9 +142,10 @@ AABB AABB::operator*(const float4x4& mat) const
     float4 largest = float4(-10000000.0f);
 	for (const auto& vertex : cubeVerticies)
 	{
-        const float4 transformedPoint = mat * vertex;
-		smallest = componentWiseMin(smallest, transformedPoint);
+        float4 transformedPoint = mat * vertex;
+        transformedPoint /= transformedPoint.w;
 
+		smallest = componentWiseMin(smallest, transformedPoint);
 		largest = componentWiseMax(largest, transformedPoint);
 	}
 

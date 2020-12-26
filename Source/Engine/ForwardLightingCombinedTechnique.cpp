@@ -20,7 +20,7 @@ ForwardCombinedLightingTechnique::ForwardCombinedLightingTechnique(Engine* eng, 
 {
 	GraphicsTask task{ "ForwardCombinedLighting", mDesc };
 	task.setVertexAttributes(VertexAttributes::Position4 |
-        VertexAttributes::Normals | VertexAttributes::TextureCoordinates | VertexAttributes::Albedo);
+        VertexAttributes::Normals | VertexAttributes::TextureCoordinates | VertexAttributes::Albedo | VertexAttributes::Tangents);
 
 	task.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
 	task.addInput(kDFGLUT, AttachmentType::Texture2D);

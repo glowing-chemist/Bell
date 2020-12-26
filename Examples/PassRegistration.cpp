@@ -197,6 +197,8 @@ int main()
     testScene.uploadData(engine);
     testScene.computeBounds(AccelerationStructure::Static);
     testScene.computeBounds(AccelerationStructure::Dynamic);
+    testScene.setTerrainGridSize(uint3(546u, 8u, 546u), 5.0f);
+    testScene.initialiseTerrainFromTexture("./Assets/HeightMap.jpg");
 #if USE_RAY_TRACING
     RayTracingScene rtScene(engine, &testScene);
 #endif
@@ -204,7 +206,7 @@ int main()
     // set camera aspect ratio.
     Camera& camera = testScene.getCamera();
     camera.setAspect(float(windowWidth) / float(windowHeight));
-    camera.setFarPlane(60.0f);
+    camera.setFarPlane(40.0f);
 
     const float3 lightDirection = glm::normalize(float3(0.0f, -1.0f, 0.0f));
     const float3 ligthUp = float3(0.0f, 0.0f, 1.0f);
@@ -218,11 +220,11 @@ int main()
         const AABB sceneBounds = testScene.getBounds();
         const float3 sceneSize = sceneBounds.getSideLengths();
 
-        for (float x = sceneBounds.getBottom().x; x < sceneBounds.getTop().x; x += sceneSize.x / 10.0f)
+        for (float x = sceneBounds.getMin().x; x < sceneBounds.getMax().x; x += sceneSize.x / 10.0f)
         {
-            for (float y = sceneBounds.getBottom().y; y < sceneBounds.getTop().y; y += sceneSize.x / 10.0f)
+            for (float y = sceneBounds.getMin().y; y < sceneBounds.getMax().y; y += sceneSize.x / 10.0f)
             {
-                for (float z = sceneBounds.getBottom().z; z < sceneBounds.getTop().z; z += sceneSize.x / 10.0f)
+                for (float z = sceneBounds.getMin().z; z < sceneBounds.getMax().z; z += sceneSize.x / 10.0f)
                 {
                     const float r = float(rand()) / float((RAND_MAX));
                     const float g = float(rand()) / float((RAND_MAX));
@@ -287,6 +289,8 @@ int main()
         engine->registerPass(PassType::ConvolveSkybox);
         engine->registerPass(PassType::Skybox);
         engine->registerPass(PassType::LineariseDepth);
+        engine->registerPass(PassType::VoxelTerrain);
+        engine->registerPass(PassType::DebugAABB);
         //engine.registerPass(PassType::Voxelize);
 
         if (graphicsOptions.mForward || graphicsOptions.preDepth)
