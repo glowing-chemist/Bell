@@ -170,3 +170,9 @@ void writeVertexToBuffer(RWByteAddressBuffer vertexBuffer, uint offset, Vertex v
 	vertexBuffer.Store(offset + 28, packNormals(vert.tangent));
 	vertexBuffer.Store(offset + 32, packColour(vert.colour));
 }
+
+void writeBasicVertexToBuffer(RWByteAddressBuffer vertexBuffer, uint offset, BasicVertex vert)
+{
+	vertexBuffer.Store4(offset, asuint(vert.position));
+	vertexBuffer.Store(offset + 16, packNormals(vert.normal));
+}

@@ -2,6 +2,7 @@
  Based on papers found at http://paulbourke.net/geometry/polygonise/
 */
 
+#include "VertexOutputs.hlsl"
 #include "UniformBuffers.hlsl"
 
 [[vk::binding(0)]]
@@ -11,7 +12,10 @@ Texture3D<float> densityTexture;
 RWStructuredBuffer<uint> vertexCount;
 
 [[vk::binding(2)]]
-RWStructuredBuffer<float4> vertexBuffer;
+RWByteAddressBuffer vertexBuffer;
+
+[[vk::binding(3)]]
+SamplerState linearSampler;
 
 [[vk::push_constant]]
 ConstantBuffer<TerrainVolume> constants;
@@ -310,13 +314,14 @@ static int triTable[256][16] =
 
 struct GridPoint
 {
-	float val[8];
+	float val[8]; 
 	float3 p[8];
 };
 
 struct Triangle
 {
 	float3 p[3];
+	float3 faceNormal;
 };
 
 GridPoint loadGridValues(uint3 index, uint3 offset)
@@ -325,21 +330,21 @@ GridPoint loadGridValues(uint3 index, uint3 offset)
 
 	GridPoint voxel;
 	voxel.val[0] = densityTexture.Load(lookupIndex + uint4(0, 0, 1, 0));
-	voxel.p[0] = constants.minimum + ((index + uint4(0, 0, 1, 0)) * constants.voxelSize);
+	voxel.p[0] = constants.minimum + ((lookupIndex + uint4(0, 0, 1, 0)) * constants.voxelSize);
 	voxel.val[1] = densityTexture.Load(lookupIndex + uint4(1, 0, 1, 0));
-	voxel.p[1] = constants.minimum + ((index + uint4(1, 0, 1, 0)) * constants.voxelSize);
+	voxel.p[1] = constants.minimum + ((lookupIndex + uint4(1, 0, 1, 0)) * constants.voxelSize);
 	voxel.val[2] = densityTexture.Load(lookupIndex + uint4(1, 0, 0, 0));
-	voxel.p[2] = constants.minimum + ((index + uint4(1, 0, 0, 0)) * constants.voxelSize);
+	voxel.p[2] = constants.minimum + ((lookupIndex + uint4(1, 0, 0, 0)) * constants.voxelSize);
 	voxel.val[3] = densityTexture.Load(lookupIndex + uint4(0, 0, 0, 0));
-	voxel.p[3] = constants.minimum + ((index + uint4(0, 0, 0, 0)) * constants.voxelSize);
+	voxel.p[3] = constants.minimum + ((lookupIndex + uint4(0, 0, 0, 0)) * constants.voxelSize);
 	voxel.val[4] = densityTexture.Load(lookupIndex + uint4(0, 1, 1, 0));
-	voxel.p[4] = constants.minimum + ((index + uint4(0, 1, 1, 0)) * constants.voxelSize);
+	voxel.p[4] = constants.minimum + ((lookupIndex + uint4(0, 1, 1, 0)) * constants.voxelSize);
 	voxel.val[5] = densityTexture.Load(lookupIndex + uint4(1, 1, 1, 0));
-	voxel.p[5] = constants.minimum + ((index + uint4(1, 1, 1, 0)) * constants.voxelSize);
+	voxel.p[5] = constants.minimum + ((lookupIndex + uint4(1, 1, 1, 0)) * constants.voxelSize);
 	voxel.val[6] = densityTexture.Load(lookupIndex + uint4(1, 1, 0, 0));
-	voxel.p[6] = constants.minimum + ((index + uint4(1, 1, 0, 0)) * constants.voxelSize);
+	voxel.p[6] = constants.minimum + ((lookupIndex + uint4(1, 1, 0, 0)) * constants.voxelSize);
 	voxel.val[7] = densityTexture.Load(lookupIndex + uint4(0, 1, 0, 0));
-	voxel.p[7] = constants.minimum + ((index + uint4(0, 1, 0, 0)) * constants.voxelSize);
+	voxel.p[7] = constants.minimum + ((lookupIndex + uint4(0, 1, 0, 0)) * constants.voxelSize);
 
 	return voxel;
 }
@@ -349,12 +354,12 @@ float3 VertexInterp(float isolevel, float3 p1, float3 p2, float valp1, float val
    float mu;
    float3 p;
 
-   /*if (any(abs(isolevel-valp1) < 0.00001))
+   if (abs(isolevel-valp1) < 0.00001)
       return p1 ;
-   if (any(abs(isolevel-valp2) < 0.00001))
+   if (abs(isolevel-valp2) < 0.00001)
       return p2;
-   if (any(abs(valp1-valp2) < 0.00001))
-      return p1;*/
+   if (abs(valp1-valp2) < 0.00001)
+      return p1;
    mu = (isolevel - valp1) / (valp2 - valp1);
    p.x = p1.x + mu * (p2.x - p1.x);
    p.y = p1.y + mu * (p2.y - p1.y);
@@ -424,16 +429,25 @@ void main(uint3 globalIndex : SV_DispatchThreadID)
       	triangles[triangleCount].p[0] = vertList[triTable[cubeIndex][i + 0]];
       	triangles[triangleCount].p[1] = vertList[triTable[cubeIndex][i + 1]];
       	triangles[triangleCount].p[2] = vertList[triTable[cubeIndex][i + 2]];
+      	triangles[triangleCount].faceNormal = normalize(cross(triangles[triangleCount].p[0] - triangles[triangleCount].p[1], triangles[triangleCount].p[0] - triangles[triangleCount].p[2]));
     	triangleCount++;
    	}
 
    	uint vertexStart;
 	InterlockedAdd(vertexCount[0], triangleCount * 3, vertexStart);
+	vertexStart *= 20; // turn in to bytes.
 
 	for(uint i = 0; i < triangleCount; ++i)
 	{
-		vertexBuffer[vertexStart + (i * 3) + 0] = float4(triangles[i].p[0], 1.0f);
-		vertexBuffer[vertexStart + (i * 3) + 1] = float4(triangles[i].p[1], 1.0f);
-		vertexBuffer[vertexStart + (i * 3) + 2] = float4(triangles[i].p[2], 1.0f);
+		BasicVertex vert;
+		vert.normal = float4(triangles[i].faceNormal, 1.0f);
+		vert.position = float4(triangles[i].p[0], 1.0f);
+		writeBasicVertexToBuffer(vertexBuffer, vertexStart + (i * 3 * 20), vert);
+
+		vert.position = float4(triangles[i].p[1], 1.0f);
+		writeBasicVertexToBuffer(vertexBuffer, vertexStart + (i * 3 * 20) + 20, vert);
+
+		vert.position = float4(triangles[i].p[2], 1.0f);
+		writeBasicVertexToBuffer(vertexBuffer, vertexStart + (i * 3 * 20) + 40, vert);
 	}
 }

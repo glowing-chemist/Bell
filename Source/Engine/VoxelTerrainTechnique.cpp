@@ -46,6 +46,7 @@ VoxelTerrainTechnique::VoxelTerrainTechnique(Engine* eng, RenderGraph& graph) :
         marchCube.addInput(kTerrainVoxelGrid, AttachmentType::Texture3D);
         marchCube.addInput(kTerrainIndirectBuffer, AttachmentType::DataBufferRW);
         marchCube.addInput(kTerrainVertexBuffer, AttachmentType::DataBufferWO);
+        marchCube.addInput(kDefaultSampler, AttachmentType::Sampler);
         marchCube.addInput(kTerrainUniformBuffer, AttachmentType::PushConstants);
         marchCube.setRecordCommandsCallback(
             [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
@@ -84,7 +85,7 @@ VoxelTerrainTechnique::VoxelTerrainTechnique(Engine* eng, RenderGraph& graph) :
             float3 volumeMin = componentWiseMax(terrainVolumeMin, gridMin);
 
             TerrainVolume uniformBuffer{};
-            uniformBuffer.minimum = float4(volumeMin, 1.0f);
+            uniformBuffer.minimum = float4(gridMin, 1.0f);
             uniformBuffer.offset = offset;
             uniformBuffer.voxelSize = voxelSize;
             exec->insertPushConsatnt(&uniformBuffer, sizeof(TerrainVolume));
@@ -107,7 +108,7 @@ VoxelTerrainTechnique::VoxelTerrainTechnique(Engine* eng, RenderGraph& graph) :
                                                   FaceWindingOrder::CW, BlendMode::None, BlendMode::None, true, DepthTest::GreaterEqual, FillMode::Fill, Primitive::TriangleList};
 
         GraphicsTask renderTerrainTask{"Deferred Terrain", pipeline};
-        renderTerrainTask.setVertexAttributes(VertexAttributes::Position4);
+        renderTerrainTask.setVertexAttributes(VertexAttributes::Position4 | VertexAttributes::Normals);
         renderTerrainTask.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
         renderTerrainTask.addInput(kDefaultSampler, AttachmentType::Sampler);
         renderTerrainTask.addInput(kMaterials, AttachmentType::ShaderResourceSet);

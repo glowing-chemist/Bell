@@ -32,7 +32,7 @@ void VoxelTerrain::initialiseFromHeightMap(const std::string& path)
 
                 const float voxelHeight = y * mVoxelSize;
 
-                mVoxelData[voxelIndex] = ((float(heightMap.mData[heightIndex]) / 255.0f) * mSize.y * mVoxelSize) > voxelHeight ? 127 : -127;
+                mVoxelData[voxelIndex] = ((float(heightMap.mData[heightIndex]) / 255.0f) * mSize.y * mVoxelSize * 0.9f) > voxelHeight ? 127 : -127;
             }
         }
     }

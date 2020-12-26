@@ -13,6 +13,12 @@ struct GBufferFragOutput
     float4 emissiveOcclusion;
 };
 
+struct TerrainVertexOutput
+{
+	float4 position : SV_Position;
+	float3 normal : NORMAL;
+};
+
 [[vk::binding(0)]]
 ConstantBuffer<CameraBuffer> camera;
 
@@ -22,11 +28,11 @@ SamplerState linearSampler;
 [[vk::binding(0, 1)]]
 Texture2D materials[];
 
-GBufferFragOutput main()
+GBufferFragOutput main(TerrainVertexOutput vertex)
 {
 	GBufferFragOutput output;
-	output.diffuse = float4(0.65f, 0.65f, 0.65f, 1.0f);
-	output.normal = encodeOct(float3(0.0f, 1.0f, 0.0f));
+	output.diffuse = float4(0.75, 0.75f, 0.75f, 1.0f);
+	output.normal = encodeOct(vertex.normal);
 	output.specularRoughness = float4(0.0f, 0.0f, 0.0f, 1.0f);
 	output.velocity = float2(0.5f, 0.5f);
 	output.emissiveOcclusion = float4(0.0f, 0.0f, 0.0f, 1.0f);
