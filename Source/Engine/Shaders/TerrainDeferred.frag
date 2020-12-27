@@ -13,12 +13,6 @@ struct GBufferFragOutput
     float4 emissiveOcclusion;
 };
 
-struct TerrainVertexOutput
-{
-	float4 position : SV_Position;
-	float3 normal : NORMAL;
-};
-
 [[vk::binding(0)]]
 ConstantBuffer<CameraBuffer> camera;
 
@@ -28,11 +22,35 @@ SamplerState linearSampler;
 [[vk::binding(0, 1)]]
 Texture2D materials[];
 
+[[vk::push_constant]]
+ConstantBuffer<TerrainTextureing> constants;
+
+#define MATERIAL_FLAGS kMaterial_Diffuse
+
+#include "Materials.hlsl"
+
+#define BLEND_SHARPNESS 1.0f
+
 GBufferFragOutput main(TerrainVertexOutput vertex)
 {
+	const float3 viewDir = normalize(camera.position - vertex.worldPosition.xyz);
+	const float2 uvx = vertex.worldPosition.zy / constants.textureScale;
+	const float2 uvy = vertex.worldPosition.xz / constants.textureScale;
+	const float2 uvz = vertex.worldPosition.xy / constants.textureScale;
+
+	MaterialInfo matX = calculateMaterialInfo(float4(vertex.normal, 1.0f), float4(0.75f, 0.75f, 0.75f, 1.0f),
+												constants.materialIndex, float4(1.0f, 0.0f, 0.0f, 1.0f), viewDir, uvx);
+	MaterialInfo matY = calculateMaterialInfo(float4(vertex.normal, 1.0f), float4(0.75f, 0.75f, 0.75f, 1.0f),
+												constants.materialIndex, float4(1.0f, 0.0f, 0.0f, 1.0f), viewDir, uvy);
+	MaterialInfo matZ = calculateMaterialInfo(float4(vertex.normal, 1.0f), float4(0.75f, 0.75f, 0.75f, 1.0f),
+												constants.materialIndex, float4(1.0f, 0.0f, 0.0f, 1.0f), viewDir, uvz);
+
+	float3 blendWeights = pow(abs(vertex.worldPosition.xyz), BLEND_SHARPNESS);
+	blendWeights = blendWeights / (blendWeights.x + blendWeights.y + blendWeights.z);
+
 	GBufferFragOutput output;
-	output.diffuse = float4(0.75, 0.75f, 0.75f, 1.0f);
-	output.normal = encodeOct(vertex.normal);
+	output.diffuse = matX.diffuse * blendWeights.x + matY.diffuse * blendWeights.y + matY.diffuse * blendWeights.z;
+	output.normal = encodeOct(normalize(vertex.normal));
 	output.specularRoughness = float4(0.0f, 0.0f, 0.0f, 1.0f);
 	output.velocity = float2(0.5f, 0.5f);
 	output.emissiveOcclusion = float4(0.0f, 0.0f, 0.0f, 1.0f);

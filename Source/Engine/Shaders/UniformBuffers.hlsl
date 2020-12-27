@@ -74,3 +74,9 @@ struct TerrainVolume
     uint3  offset;
     float  voxelSize;
 };
+
+struct TerrainTextureing
+{
+    float2 textureScale;
+    uint materialIndex;
+};

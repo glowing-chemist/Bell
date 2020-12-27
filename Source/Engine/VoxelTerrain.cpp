@@ -31,8 +31,10 @@ void VoxelTerrain::initialiseFromHeightMap(const std::string& path)
                 BELL_ASSERT(heightIndex < heightMap.mData.size(), "OOB index")
 
                 const float voxelHeight = y * mVoxelSize;
+                const float heightSample = (float(heightMap.mData[heightIndex]) / 255.0f) * mSize.y * mVoxelSize;
+                const float f = heightSample > voxelHeight ? -127.0f * (1.0f - (voxelHeight / heightSample)) : 127.0f * ((voxelHeight - heightSample) / ((mSize.y * mVoxelSize) - heightSample));
 
-                mVoxelData[voxelIndex] = ((float(heightMap.mData[heightIndex]) / 255.0f) * mSize.y * mVoxelSize * 0.9f) > voxelHeight ? -127 : 127;
+                mVoxelData[voxelIndex] = f;
             }
         }
     }

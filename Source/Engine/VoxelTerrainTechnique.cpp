@@ -19,7 +19,9 @@ VoxelTerrainTechnique::VoxelTerrainTechnique(Engine* eng, RenderGraph& graph) :
     mVertexBuffer(getDevice(), BufferUsage::Vertex | BufferUsage::DataBuffer, 100 * 1024 * 1024, 100 * 1024 * 1024, "Terrain vertex buffer"),
     mVertexBufferView(mVertexBuffer),
     mIndirectArgsBuffer(getDevice(), BufferUsage::IndirectArgs | BufferUsage::DataBuffer, sizeof(uint32_t) * 4, sizeof(uint32_t) * 4, "Terrain indirect Args"),
-    mIndirectArgView(mIndirectArgsBuffer)
+    mIndirectArgView(mIndirectArgsBuffer),
+    mTextureScale(5.0f, 5.0f),
+    mMaterialIndex(0)
 {
     // Upload terrain grid.
     const Scene* scene = eng->getScene();
@@ -114,6 +116,7 @@ VoxelTerrainTechnique::VoxelTerrainTechnique(Engine* eng, RenderGraph& graph) :
         renderTerrainTask.addInput(kMaterials, AttachmentType::ShaderResourceSet);
         renderTerrainTask.addInput(kTerrainVertexBuffer, AttachmentType::VertexBuffer);
         renderTerrainTask.addInput(kTerrainIndirectBuffer, AttachmentType::IndirectBuffer);
+        renderTerrainTask.addInput("TextureInfo", AttachmentType::PushConstants);
         renderTerrainTask.addOutput(kGBufferDiffuse, AttachmentType::RenderTarget2D, Format::RGBA8UNorm, LoadOp::Preserve);
         renderTerrainTask.addOutput(kGBufferNormals, AttachmentType::RenderTarget2D, Format::RG8UNorm, LoadOp::Preserve);
         renderTerrainTask.addOutput(kGBufferSpecularRoughness, AttachmentType::RenderTarget2D, Format::RGBA8UNorm, LoadOp::Preserve);
@@ -126,6 +129,9 @@ VoxelTerrainTechnique::VoxelTerrainTechnique(Engine* eng, RenderGraph& graph) :
             const GraphicsTask& task = static_cast<const GraphicsTask&>(graph.getTask(taskIndex));
             exec->setGraphicsShaders(task, graph, mTerrainVertexShader, nullptr, nullptr, nullptr, mTerrainFragmentShaderDeferred);
             exec->bindVertexBuffer(mVertexBufferView, 0);
+
+            TerrainTexturing textureInfo{mTextureScale, mMaterialIndex};
+            exec->insertPushConsatnt(&textureInfo, sizeof(TerrainTexturing));
 
             exec->indirectDraw(1, mIndirectArgView);
         });

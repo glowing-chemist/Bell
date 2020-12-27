@@ -88,6 +88,13 @@ struct OverlayVertex
 	float4 albedo : COLOR0;
 };
 
+struct TerrainVertexOutput
+{
+	float4 position : SV_Position;
+	float4 worldPosition : POSITION0;
+	float3 normal : NORMAL;
+};
+
 struct ObjectMatracies
 {
 	float4x3 meshMatrix;

@@ -16,10 +16,20 @@ public:
     virtual void bindResources(RenderGraph&) override final;
     virtual void render(RenderGraph&, Engine*) override final
     {
-	mVoxelGrid->updateLastAccessed();
-	mVoxelGridView->updateLastAccessed();
-    mVertexBuffer->updateLastAccessed();
-    mIndirectArgsBuffer->updateLastAccessed();
+        mVoxelGrid->updateLastAccessed();
+        mVoxelGridView->updateLastAccessed();
+        mVertexBuffer->updateLastAccessed();
+        mIndirectArgsBuffer->updateLastAccessed();
+    }
+
+    void setTextureScale(const float2& scale)
+    {
+        mTextureScale = scale;
+    }
+
+    void setMaterialIndex(const uint32_t index)
+    {
+        mMaterialIndex = index;
     }
 
 private:
@@ -30,6 +40,12 @@ private:
         float4 maximum;
         uint3  offset;
         float  voxelSize;
+    };
+
+    struct TerrainTexturing
+    {
+        float2 textureScale;
+        uint materialIndex;
     };
 
     Shader mGenerateTerrainMeshShader;
@@ -49,6 +65,9 @@ private:
 
     TaskID mSurfaceGenerationTask;
     TaskID mRenderTaskID;
+
+    float2 mTextureScale;
+    uint32_t mMaterialIndex;
 };
 
 #endif
