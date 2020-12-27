@@ -197,7 +197,7 @@ int main()
     testScene.uploadData(engine);
     testScene.computeBounds(AccelerationStructure::Static);
     testScene.computeBounds(AccelerationStructure::Dynamic);
-    testScene.setTerrainGridSize(uint3(546u, 12u, 546u), 2.0f);
+    testScene.setTerrainGridSize(uint3(546u, 12u, 546u), 5.0f);
     testScene.initialiseTerrainFromTexture("./Assets/HeightMap.jpg");
 #if USE_RAY_TRACING
     RayTracingScene rtScene(engine, &testScene);

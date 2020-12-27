@@ -326,25 +326,25 @@ struct Triangle
 
 GridPoint loadGridValues(uint3 index, uint3 offset)
 {
-	const uint4 lookupIndex = uint4(index, 0) + uint4(offset, 0);
+	const uint4 lookupIndex = uint4(index.xzy, 0) + uint4(offset.xzy, 0);
 
 	GridPoint voxel;
-	voxel.val[0] = densityTexture.Load(lookupIndex + uint4(0, 0, 1, 0));
-	voxel.p[0] = constants.minimum + ((lookupIndex + uint4(0, 0, 1, 0)) * constants.voxelSize);
-	voxel.val[1] = densityTexture.Load(lookupIndex + uint4(1, 0, 1, 0));
-	voxel.p[1] = constants.minimum + ((lookupIndex + uint4(1, 0, 1, 0)) * constants.voxelSize);
+	voxel.val[0] = densityTexture.Load(lookupIndex + uint4(0, 1, 0, 0));
+	voxel.p[0] = constants.minimum + ((lookupIndex.xzy + uint4(0, 0, 1, 0)) * constants.voxelSize);
+	voxel.val[1] = densityTexture.Load(lookupIndex + uint4(1, 1, 0, 0));
+	voxel.p[1] = constants.minimum + ((lookupIndex.xzy + uint4(1, 0, 1, 0)) * constants.voxelSize);
 	voxel.val[2] = densityTexture.Load(lookupIndex + uint4(1, 0, 0, 0));
-	voxel.p[2] = constants.minimum + ((lookupIndex + uint4(1, 0, 0, 0)) * constants.voxelSize);
+	voxel.p[2] = constants.minimum + ((lookupIndex.xzy + uint4(1, 0, 0, 0)) * constants.voxelSize);
 	voxel.val[3] = densityTexture.Load(lookupIndex + uint4(0, 0, 0, 0));
-	voxel.p[3] = constants.minimum + ((lookupIndex + uint4(0, 0, 0, 0)) * constants.voxelSize);
+	voxel.p[3] = constants.minimum + ((lookupIndex.xzy + uint4(0, 0, 0, 0)) * constants.voxelSize);
 	voxel.val[4] = densityTexture.Load(lookupIndex + uint4(0, 1, 1, 0));
-	voxel.p[4] = constants.minimum + ((lookupIndex + uint4(0, 1, 1, 0)) * constants.voxelSize);
+	voxel.p[4] = constants.minimum + ((lookupIndex.xzy + uint4(0, 1, 1, 0)) * constants.voxelSize);
 	voxel.val[5] = densityTexture.Load(lookupIndex + uint4(1, 1, 1, 0));
-	voxel.p[5] = constants.minimum + ((lookupIndex + uint4(1, 1, 1, 0)) * constants.voxelSize);
-	voxel.val[6] = densityTexture.Load(lookupIndex + uint4(1, 1, 0, 0));
-	voxel.p[6] = constants.minimum + ((lookupIndex + uint4(1, 1, 0, 0)) * constants.voxelSize);
-	voxel.val[7] = densityTexture.Load(lookupIndex + uint4(0, 1, 0, 0));
-	voxel.p[7] = constants.minimum + ((lookupIndex + uint4(0, 1, 0, 0)) * constants.voxelSize);
+	voxel.p[5] = constants.minimum + ((lookupIndex.xzy + uint4(1, 1, 1, 0)) * constants.voxelSize);
+	voxel.val[6] = densityTexture.Load(lookupIndex + uint4(1, 0, 1, 0));
+	voxel.p[6] = constants.minimum + ((lookupIndex.xzy + uint4(1, 1, 0, 0)) * constants.voxelSize);
+	voxel.val[7] = densityTexture.Load(lookupIndex + uint4(0, 0, 1, 0));
+	voxel.p[7] = constants.minimum + ((lookupIndex.xzy + uint4(0, 1, 0, 0)) * constants.voxelSize);
 
 	return voxel;
 }
@@ -374,7 +374,7 @@ void main(uint3 globalIndex : SV_DispatchThreadID)
 	uint x, y, z;
 	densityTexture.GetDimensions(x, y, z);
 
-	uint3 voxelIndex = globalIndex + constants.offset;
+	uint3 voxelIndex = globalIndex.xzy + constants.offset.xzy;
 	if(voxelIndex.x >= x || voxelIndex.y >= y || voxelIndex.z >= z)
 		return;
 

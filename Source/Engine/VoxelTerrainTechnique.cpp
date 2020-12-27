@@ -14,7 +14,7 @@ VoxelTerrainTechnique::VoxelTerrainTechnique(Engine* eng, RenderGraph& graph) :
     mTerrainVertexShader(eng->getShader("./Shaders/Terrain.vert")),
     mTerrainFragmentShaderDeferred(eng->getShader("./Shaders/TerrainDeferred.frag")),
     mVoxelGrid(getDevice(), Format::R8Norm, ImageUsage::Sampled | ImageUsage::Storage | ImageUsage::TransferDest,
-               eng->getScene()->getVoxelTerrain()->getSize().x, eng->getScene()->getVoxelTerrain()->getSize().y, eng->getScene()->getVoxelTerrain()->getSize().z, 1, 1, 1, "Terrain Voxels"),
+               eng->getScene()->getVoxelTerrain()->getSize().x, eng->getScene()->getVoxelTerrain()->getSize().z, eng->getScene()->getVoxelTerrain()->getSize().y, 1, 1, 1, "Terrain Voxels"),
     mVoxelGridView(mVoxelGrid, ImageViewType::Colour),
     mVertexBuffer(getDevice(), BufferUsage::Vertex | BufferUsage::DataBuffer, 100 * 1024 * 1024, 100 * 1024 * 1024, "Terrain vertex buffer"),
     mVertexBufferView(mVertexBuffer),
@@ -80,7 +80,7 @@ VoxelTerrainTechnique::VoxelTerrainTechnique(Engine* eng, RenderGraph& graph) :
             }
 
             float3 gridMin = -(voxelGridSize / 2.0f);
-            int3 offset = (terrainVolumeMin - float3(gridMin)) / voxelSize;
+            int3 offset = (terrainVolumeMin - gridMin) / voxelSize;
             offset = glm::max(offset, int3(0, 0, 0));
             float3 volumeMin = componentWiseMax(terrainVolumeMin, gridMin);
 
