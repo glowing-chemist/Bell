@@ -96,7 +96,7 @@ VoxelTerrainTechnique::VoxelTerrainTechnique(Engine* eng, RenderGraph& graph) :
             volumeMax = componentWiseMin(volumeMax, -gridMin);
 
             const float3 volumeSize = volumeMax - volumeMin;
-            exec->dispatch(std::ceil(volumeSize.x / (voxelSize * 8.0f)), std::ceil(volumeSize.y / (voxelSize * 8.0f)), std::ceil(volumeSize.z / (voxelSize * 8.0f)));
+            exec->dispatch(std::ceil(volumeSize.x / (voxelSize * 4.0f)), std::ceil(volumeSize.y / (voxelSize * 4.0f)), std::ceil(volumeSize.z / (voxelSize * 4.0f)));
         });
         mSurfaceGenerationTask = graph.addTask(marchCube);
     }

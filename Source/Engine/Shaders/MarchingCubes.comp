@@ -316,59 +316,79 @@ struct GridPoint
 {
 	float val[8]; 
 	float3 p[8];
+	float3 n[8];
 };
 
 struct Triangle
 {
 	float3 p[3];
-	float3 faceNormal;
+	float3 n[3];
 };
+
+// TODO use groupshared to improve performance.
+//groupshared float s_densityVals[7][7][7];
+
+void loadDensityVals(uint3 index, uint3 offset)
+{
+
+}
 
 GridPoint loadGridValues(uint3 index, uint3 offset)
 {
 	const uint4 lookupIndex = uint4(index.xzy, 0) + uint4(offset.xzy, 0);
 
 	GridPoint voxel;
-	voxel.val[0] = densityTexture.Load(lookupIndex + uint4(0, 1, 0, 0));
-	voxel.p[0] = constants.minimum + ((lookupIndex.xzy + uint4(0, 0, 1, 0)) * constants.voxelSize);
-	voxel.val[1] = densityTexture.Load(lookupIndex + uint4(1, 1, 0, 0));
-	voxel.p[1] = constants.minimum + ((lookupIndex.xzy + uint4(1, 0, 1, 0)) * constants.voxelSize);
-	voxel.val[2] = densityTexture.Load(lookupIndex + uint4(1, 0, 0, 0));
-	voxel.p[2] = constants.minimum + ((lookupIndex.xzy + uint4(1, 0, 0, 0)) * constants.voxelSize);
-	voxel.val[3] = densityTexture.Load(lookupIndex + uint4(0, 0, 0, 0));
-	voxel.p[3] = constants.minimum + ((lookupIndex.xzy + uint4(0, 0, 0, 0)) * constants.voxelSize);
-	voxel.val[4] = densityTexture.Load(lookupIndex + uint4(0, 1, 1, 0));
-	voxel.p[4] = constants.minimum + ((lookupIndex.xzy + uint4(0, 1, 1, 0)) * constants.voxelSize);
-	voxel.val[5] = densityTexture.Load(lookupIndex + uint4(1, 1, 1, 0));
-	voxel.p[5] = constants.minimum + ((lookupIndex.xzy + uint4(1, 1, 1, 0)) * constants.voxelSize);
-	voxel.val[6] = densityTexture.Load(lookupIndex + uint4(1, 0, 1, 0));
-	voxel.p[6] = constants.minimum + ((lookupIndex.xzy + uint4(1, 1, 0, 0)) * constants.voxelSize);
-	voxel.val[7] = densityTexture.Load(lookupIndex + uint4(0, 0, 1, 0));
-	voxel.p[7] = constants.minimum + ((lookupIndex.xzy + uint4(0, 1, 0, 0)) * constants.voxelSize);
+
+	uint4 cubeIndicies[8] = {uint4(0, 1, 0, 0), uint4(1, 1, 0, 0), uint4(1, 0, 0, 0), uint4(0, 0, 0, 0), 
+							 uint4(0, 1, 1, 0), uint4(1, 1, 1, 0), uint4(1, 0, 1, 0), uint4(0, 0, 1, 0)};
+
+	uint4 neighbourIndicies[3] = {uint4(1, 0, 0, 0), uint4(0, 0, 1, 0), uint4(0, 1, 0, 0)};
+
+	for(uint i = 0; i < 8; ++i)
+	{
+		voxel.val[i] = densityTexture.Load(lookupIndex + cubeIndicies[i]);
+		voxel.p[i] = constants.minimum + ((lookupIndex.xzy + cubeIndicies[i].xzyw) * constants.voxelSize);
+		voxel.n[i] = normalize(float3(densityTexture.Load(lookupIndex + cubeIndicies[i] + neighbourIndicies[0]) - densityTexture.Load(lookupIndex + cubeIndicies[i] - neighbourIndicies[0]),
+							   		  densityTexture.Load(lookupIndex + cubeIndicies[i] + neighbourIndicies[1]) - densityTexture.Load(lookupIndex + cubeIndicies[i] - neighbourIndicies[1]),
+							   		  densityTexture.Load(lookupIndex + cubeIndicies[i] + neighbourIndicies[2]) - densityTexture.Load(lookupIndex + cubeIndicies[i] - neighbourIndicies[2])));
+	}
 
 	return voxel;
 }
 
-float3 VertexInterp(float isolevel, float3 p1, float3 p2, float valp1, float valp2)
+void VertexInterp(float isolevel, float3 p1, float3 p2, float3 n1, float3 n2, float valp1, float valp2, out float3 p, out float3 n)
 {
    float mu;
-   float3 p;
 
    if (abs(isolevel-valp1) < 0.00001)
-      return p1 ;
+   {
+   		p = p1;
+   		n = n1;
+   		return;
+   }
    if (abs(isolevel-valp2) < 0.00001)
-      return p2;
+   {
+   		p = p2;
+   		n = n2;
+   		return;
+   }
    if (abs(valp1-valp2) < 0.00001)
-      return p1;
+   {
+   		p = p1;
+   		n = n1;
+   		return;
+   }
    mu = (isolevel - valp1) / (valp2 - valp1);
    p.x = p1.x + mu * (p2.x - p1.x);
    p.y = p1.y + mu * (p2.y - p1.y);
    p.z = p1.z + mu * (p2.z - p1.z);
 
-   return p;
+   n.x = n1.x + mu * (n2.x - n1.x);
+   n.y = n1.y + mu * (n2.y - n1.y);
+   n.z = n1.z + mu * (n2.z - n1.z);   
 }
 
-[numthreads(8, 8, 8)]
+[numthreads(4, 4, 4)]
 void main(uint3 globalIndex : SV_DispatchThreadID)
 {
 	uint x, y, z;
@@ -396,40 +416,46 @@ void main(uint3 globalIndex : SV_DispatchThreadID)
    		return; // Iso surface doesn't pass through this voxel so early out.
 
    	float3 vertList[12];
+   	float3 normList[12];
    	if (edgeBitset & 1u)
-      vertList[0] = VertexInterp(isoLevel, voxel.p[0],voxel.p[1],voxel.val[0],voxel.val[1]);
+      VertexInterp(isoLevel, voxel.p[0],voxel.p[1],voxel.n[0],voxel.n[1],voxel.val[0],voxel.val[1], vertList[0], normList[0]);
    	if (edgeBitset & 2)
-    	vertList[1] = VertexInterp(isoLevel, voxel.p[1],voxel.p[2],voxel.val[1],voxel.val[2]);
+    	VertexInterp(isoLevel, voxel.p[1],voxel.p[2],voxel.n[1],voxel.n[2],voxel.val[1],voxel.val[2], vertList[1], normList[1]);
    	if (edgeBitset & 4)
-   	   vertList[2] = VertexInterp(isoLevel, voxel.p[2],voxel.p[3],voxel.val[2],voxel.val[3]);
+   	   VertexInterp(isoLevel, voxel.p[2],voxel.p[3],voxel.n[2],voxel.n[3],voxel.val[2],voxel.val[3], vertList[2], normList[2]);
    	if (edgeBitset & 8)
-   	   vertList[3] = VertexInterp(isoLevel, voxel.p[3],voxel.p[0],voxel.val[3],voxel.val[0]);
+   	   VertexInterp(isoLevel, voxel.p[3],voxel.p[0],voxel.n[3],voxel.n[0],voxel.val[3],voxel.val[0], vertList[3], normList[3]);
    	if (edgeBitset & 16)
-   	   vertList[4] = VertexInterp(isoLevel, voxel.p[4],voxel.p[5],voxel.val[4],voxel.val[5]);
+   	   VertexInterp(isoLevel, voxel.p[4],voxel.p[5],voxel.n[4],voxel.n[5],voxel.val[4],voxel.val[5], vertList[4], normList[4]);
    	if (edgeBitset & 32)
-   	   vertList[5] = VertexInterp(isoLevel, voxel.p[5],voxel.p[6],voxel.val[5],voxel.val[6]);
+   	   VertexInterp(isoLevel, voxel.p[5],voxel.p[6],voxel.n[5],voxel.n[6],voxel.val[5],voxel.val[6], vertList[5], normList[5]);
    	if (edgeBitset & 64)
-   	   vertList[6] = VertexInterp(isoLevel, voxel.p[6],voxel.p[7],voxel.val[6],voxel.val[7]);
+   	   VertexInterp(isoLevel, voxel.p[6],voxel.p[7],voxel.n[6],voxel.n[7],voxel.val[6],voxel.val[7], vertList[6], normList[6]);
    	if (edgeBitset & 128)
-   	   vertList[7] = VertexInterp(isoLevel, voxel.p[7],voxel.p[4],voxel.val[7],voxel.val[4]);
+   	   VertexInterp(isoLevel, voxel.p[7],voxel.p[4],voxel.n[7],voxel.n[4],voxel.val[7],voxel.val[4], vertList[7], normList[7]);
    	if (edgeBitset & 256)
-   	   vertList[8] = VertexInterp(isoLevel, voxel.p[0],voxel.p[4],voxel.val[0],voxel.val[4]);
+   	   VertexInterp(isoLevel, voxel.p[0],voxel.p[4],voxel.n[0],voxel.n[4],voxel.val[0],voxel.val[4], vertList[8], normList[8]);
    	if (edgeBitset & 512)
-   	   vertList[9] = VertexInterp(isoLevel, voxel.p[1],voxel.p[5],voxel.val[1],voxel.val[5]);
+   	   VertexInterp(isoLevel, voxel.p[1],voxel.p[5],voxel.n[1],voxel.n[5],voxel.val[1],voxel.val[5], vertList[9], normList[9]);
    	if (edgeBitset & 1024)
-   	   vertList[10] = VertexInterp(isoLevel, voxel.p[2],voxel.p[6],voxel.val[2],voxel.val[6]);
+   	   VertexInterp(isoLevel, voxel.p[2],voxel.p[6],voxel.n[2],voxel.n[6],voxel.val[2],voxel.val[6], vertList[10], normList[10]);
    	if (edgeBitset & 2048)
-   	   vertList[11] = VertexInterp(isoLevel, voxel.p[3],voxel.p[7],voxel.val[3],voxel.val[7]);
+   	   VertexInterp(isoLevel, voxel.p[3],voxel.p[7],voxel.n[3],voxel.n[7],voxel.val[3],voxel.val[7], vertList[11], normList[11]);
 
 
    	Triangle triangles[5];
    	uint triangleCount = 0;
    	for (uint i = 0; triTable[cubeIndex][i] != -1; i += 3)
    	{
-      	triangles[triangleCount].p[0] = vertList[triTable[cubeIndex][i + 0]];
-      	triangles[triangleCount].p[1] = vertList[triTable[cubeIndex][i + 1]];
-      	triangles[triangleCount].p[2] = vertList[triTable[cubeIndex][i + 2]];
-      	triangles[triangleCount].faceNormal = normalize(cross(triangles[triangleCount].p[0] - triangles[triangleCount].p[1], triangles[triangleCount].p[0] - triangles[triangleCount].p[2]));
+   		const uint e1 = triTable[cubeIndex][i + 0];
+   		const uint e2 = triTable[cubeIndex][i + 1];
+   		const uint e3 = triTable[cubeIndex][i + 2];
+      	triangles[triangleCount].p[0] = vertList[e1];
+      	triangles[triangleCount].p[1] = vertList[e2];
+      	triangles[triangleCount].p[2] = vertList[e3];
+      	triangles[triangleCount].n[0] = normList[e1];
+      	triangles[triangleCount].n[1] = normList[e2];
+      	triangles[triangleCount].n[2] = normList[e3];
     	triangleCount++;
    	}
 
@@ -440,13 +466,15 @@ void main(uint3 globalIndex : SV_DispatchThreadID)
 	for(uint i = 0; i < triangleCount; ++i)
 	{
 		BasicVertex vert;
-		vert.normal = float4(triangles[i].faceNormal, 1.0f);
+		vert.normal = float4(triangles[i].n[0], 1.0f);
 		vert.position = float4(triangles[i].p[0], 1.0f);
 		writeBasicVertexToBuffer(vertexBuffer, vertexStart + (i * 3 * 20), vert);
 
+		vert.normal = float4(triangles[i].n[1], 1.0f);
 		vert.position = float4(triangles[i].p[1], 1.0f);
 		writeBasicVertexToBuffer(vertexBuffer, vertexStart + (i * 3 * 20) + 20, vert);
 
+		vert.normal = float4(triangles[i].n[2], 1.0f);
 		vert.position = float4(triangles[i].p[2], 1.0f);
 		writeBasicVertexToBuffer(vertexBuffer, vertexStart + (i * 3 * 20) + 40, vert);
 	}
