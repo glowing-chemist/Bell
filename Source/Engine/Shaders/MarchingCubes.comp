@@ -17,6 +17,9 @@ RWByteAddressBuffer vertexBuffer;
 [[vk::binding(3)]]
 SamplerState linearSampler;
 
+[[vk::binding(4)]]
+ConstantBuffer<CameraBuffer> camera;
+
 [[vk::push_constant]]
 ConstantBuffer<TerrainVolume> constants;
 
@@ -388,6 +391,13 @@ void VertexInterp(float isolevel, float3 p1, float3 p2, float3 n1, float3 n2, fl
    n.z = n1.z + mu * (n2.z - n1.z);   
 }
 
+bool cullTriangle(Triangle tri, const float3 camForward)
+{
+	const float3 n = normalize(cross(tri.p[0] - tri.p[1], tri.p[0] - tri.p[2]));
+
+	return dot(n, camForward) >= 0.0f;
+}
+
 [numthreads(4, 4, 4)]
 void main(uint3 globalIndex : SV_DispatchThreadID)
 {
@@ -445,6 +455,7 @@ void main(uint3 globalIndex : SV_DispatchThreadID)
 
    	Triangle triangles[5];
    	uint triangleCount = 0;
+   	const float3 forward = camera.view[2];
    	for (uint i = 0; triTable[cubeIndex][i] != -1; i += 3)
    	{
    		const uint e1 = triTable[cubeIndex][i + 0];

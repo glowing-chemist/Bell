@@ -91,7 +91,9 @@ struct OverlayVertex
 struct TerrainVertexOutput
 {
 	float4 position : SV_Position;
-	float4 worldPosition : POSITION0;
+	float4 clipPosition : POSITION0;
+	float4 prevClipPosition : POSITION1;
+	float4 worldPosition : POSITION2;
 	float3 normal : NORMAL;
 };
 

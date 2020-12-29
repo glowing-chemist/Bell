@@ -49,6 +49,7 @@ VoxelTerrainTechnique::VoxelTerrainTechnique(Engine* eng, RenderGraph& graph) :
         marchCube.addInput(kTerrainIndirectBuffer, AttachmentType::DataBufferRW);
         marchCube.addInput(kTerrainVertexBuffer, AttachmentType::DataBufferWO);
         marchCube.addInput(kDefaultSampler, AttachmentType::Sampler);
+        marchCube.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
         marchCube.addInput(kTerrainUniformBuffer, AttachmentType::PushConstants);
         marchCube.setRecordCommandsCallback(
             [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
