@@ -13,6 +13,7 @@ VoxelTerrainTechnique::VoxelTerrainTechnique(Engine* eng, RenderGraph& graph) :
     mInitialiseIndirectDrawShader(eng->getShader("./Shaders/InitialiseIndirectDraw.comp")),
     mTerrainVertexShader(eng->getShader("./Shaders/Terrain.vert")),
     mTerrainFragmentShaderDeferred(eng->getShader("./Shaders/TerrainDeferred.frag")),
+    mModifyTerrainShader(eng->getShader("./Shaders/ModifyTerrain.comp")),
     mVoxelGrid(getDevice(), Format::R8Norm, ImageUsage::Sampled | ImageUsage::Storage | ImageUsage::TransferDest,
                eng->getScene()->getVoxelTerrain()->getSize().x, eng->getScene()->getVoxelTerrain()->getSize().z, eng->getScene()->getVoxelTerrain()->getSize().y, 1, 1, 1, "Terrain Voxels"),
     mVoxelGridView(mVoxelGrid, ImageViewType::Colour),
@@ -20,8 +21,10 @@ VoxelTerrainTechnique::VoxelTerrainTechnique(Engine* eng, RenderGraph& graph) :
     mVertexBufferView(mVertexBuffer),
     mIndirectArgsBuffer(getDevice(), BufferUsage::IndirectArgs | BufferUsage::DataBuffer, sizeof(uint32_t) * 4, sizeof(uint32_t) * 4, "Terrain indirect Args"),
     mIndirectArgView(mIndirectArgsBuffer),
+    mModifySize(5.0f),
     mTextureScale(5.0f, 5.0f),
-    mMaterialIndex(0)
+    mMaterialIndexXZ(0),
+    mMaterialIndexY(0)
 {
     // Upload terrain grid.
     const Scene* scene = eng->getScene();
@@ -41,6 +44,45 @@ VoxelTerrainTechnique::VoxelTerrainTechnique(Engine* eng, RenderGraph& graph) :
                     exec->dispatch(1, 1, 1);
                 });
         graph.addTask(resetIndirectArgs);
+    }
+
+    {
+        ComputeTask modifyTerrain("ModifyTerrain");
+        modifyTerrain.addInput(kTerrainVoxelGrid, AttachmentType::Image3D);
+        modifyTerrain.addInput(kPreviousLinearDepth, AttachmentType::Texture2D);
+        modifyTerrain.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
+        modifyTerrain.addInput(kDefaultSampler, AttachmentType::Sampler);
+        modifyTerrain.addInput("ModifyConstant", AttachmentType::PushConstants);
+        modifyTerrain.setRecordCommandsCallback(
+                    [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+                {
+                    if(eng->editTerrain())
+                    {
+                        const ComputeTask& task = static_cast<const ComputeTask&>(graph.getTask(taskIndex));
+                        exec->setComputeShader(task, graph, mModifyTerrainShader);
+
+                        ImGuiIO& io = ImGui::GetIO();
+
+                        const Scene* scene = eng->getScene();
+                        const std::unique_ptr<VoxelTerrain>& terrain = scene->getVoxelTerrain();
+                        const float voxelSize = terrain->getVoxelSize();
+                        const float3 voxelGridSize = float3(terrain->getSize()) * voxelSize;
+
+                        float mode = 0.0f;
+                        if(io.MouseDown[0])
+                            mode = 0.01f;
+                        else if(io.MouseDown[1])
+                            mode = -0.01f;
+
+                        TerrainModifying constants{uint2{io.MousePos.x, io.MousePos.y}, mode, voxelSize, voxelGridSize};
+                        exec->insertPushConsatnt(&constants, sizeof(TerrainModifying));
+
+                        const uint32_t modifySize = std::ceil(mModifySize / voxelSize);
+                        exec->dispatch(modifySize, modifySize, modifySize);
+                    }
+                });
+
+        graph.addTask(modifyTerrain);
     }
 
     {
@@ -131,7 +173,7 @@ VoxelTerrainTechnique::VoxelTerrainTechnique(Engine* eng, RenderGraph& graph) :
             exec->setGraphicsShaders(task, graph, mTerrainVertexShader, nullptr, nullptr, nullptr, mTerrainFragmentShaderDeferred);
             exec->bindVertexBuffer(mVertexBufferView, 0);
 
-            TerrainTexturing textureInfo{mTextureScale, mMaterialIndex};
+            TerrainTexturing textureInfo{mTextureScale, mMaterialIndexXZ, mMaterialIndexY};
             exec->insertPushConsatnt(&textureInfo, sizeof(TerrainTexturing));
 
             exec->indirectDraw(1, mIndirectArgView);

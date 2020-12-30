@@ -404,7 +404,7 @@ void main(uint3 globalIndex : SV_DispatchThreadID)
 	uint x, y, z;
 	densityTexture.GetDimensions(x, y, z);
 
-	uint3 voxelIndex = globalIndex.xzy + constants.offset.xzy;
+	const uint3 voxelIndex = globalIndex.xzy + constants.offset.xzy;
 	if(voxelIndex.x >= x || voxelIndex.y >= y || voxelIndex.z >= z)
 		return;
 

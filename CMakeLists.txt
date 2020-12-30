@@ -304,6 +304,7 @@ set(SHADERS
 	InitialiseIndirectDraw.comp
 	Terrain.vert
 	TerrainDeferred.frag
+	ModifyTerrain.comp
     )
 
 message(STATUS "shader directory ${BELL_SHADER_DIR}Shaders")

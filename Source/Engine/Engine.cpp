@@ -100,6 +100,7 @@ Engine::Engine(GLFWwindow* windowPtr) :
     mMeshBoundsBuffer(getDevice(), BufferUsage::DataBuffer | BufferUsage::TransferDest, sizeof(float4) * 1000, sizeof(float4) * 1000, "Bounds buffer"),
     mDefaultSampler(SamplerType::Linear),
     mDefaultPointSampler(SamplerType::Point),
+    mTerrainEnable(false),
     mShowDebugTexture(false),
     mDebugTextureName(""),
     mCameraBuffer{},

@@ -347,6 +347,16 @@ public:
         return mShadowMapResolution;
     }
 
+    bool editTerrain() const
+    {
+        return mTerrainEnable;
+    }
+
+    void setEditTerrain(const bool b)
+    {
+        mTerrainEnable = b;
+    }
+
 private:
 
     CPUImage renderDiffuseCubeMap(const RayTracingScene &scene, const float3 &position, const uint32_t x, const uint32_t y);
@@ -415,6 +425,8 @@ private:
     Sampler mDefaultPointSampler;
 
     float2 mShadowMapResolution;
+
+    bool mTerrainEnable;
 
     // Debug helpers
     bool mShowDebugTexture;

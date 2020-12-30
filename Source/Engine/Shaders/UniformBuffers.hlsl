@@ -78,5 +78,6 @@ struct TerrainVolume
 struct TerrainTextureing
 {
     float2 textureScale;
-    uint materialIndex;
+    uint materialIndexXZ;
+    uint materialIndexY;
 };

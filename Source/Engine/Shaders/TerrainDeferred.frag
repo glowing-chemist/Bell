@@ -39,11 +39,11 @@ GBufferFragOutput main(TerrainVertexOutput vertex)
 	const float2 uvz = vertex.worldPosition.xy / constants.textureScale;
 
 	MaterialInfo matX = calculateMaterialInfo(float4(vertex.normal, 1.0f), float4(0.75f, 0.75f, 0.75f, 1.0f),
-												constants.materialIndex, float4(1.0f, 0.0f, 0.0f, 1.0f), viewDir, uvx);
+												constants.materialIndexXZ, float4(1.0f, 0.0f, 0.0f, 1.0f), viewDir, uvx);
 	MaterialInfo matY = calculateMaterialInfo(float4(vertex.normal, 1.0f), float4(0.75f, 0.75f, 0.75f, 1.0f),
-												constants.materialIndex, float4(1.0f, 0.0f, 0.0f, 1.0f), viewDir, uvy);
+												constants.materialIndexY, float4(1.0f, 0.0f, 0.0f, 1.0f), viewDir, uvy);
 	MaterialInfo matZ = calculateMaterialInfo(float4(vertex.normal, 1.0f), float4(0.75f, 0.75f, 0.75f, 1.0f),
-												constants.materialIndex, float4(1.0f, 0.0f, 0.0f, 1.0f), viewDir, uvz);
+												constants.materialIndexXZ, float4(1.0f, 0.0f, 0.0f, 1.0f), viewDir, uvz);
 
 	float3 blendWeights = pow(abs(vertex.worldPosition.xyz), BLEND_SHARPNESS);
 	blendWeights = blendWeights / (blendWeights.x + blendWeights.y + blendWeights.z);

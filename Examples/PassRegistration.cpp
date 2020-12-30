@@ -31,6 +31,7 @@ struct ImGuiOptions
 #endif
     bool preDepth = true;
     bool occlusionCulling = false;
+    bool editTerrain = false;
 };
 
 static ImGuiOptions graphicsOptions;
@@ -117,6 +118,7 @@ bool renderMenu(GLFWwindow* win, const Camera& cam, Engine* eng, const float cpu
     }
 
     ImGui::Checkbox("Enable pre depth", &graphicsOptions.preDepth);
+    ImGui::Checkbox("Edit Terrain", &graphicsOptions.editTerrain);
     ImGui::Checkbox("Occlusion culling (experimental)", &graphicsOptions.occlusionCulling);
 
     ImGui::Text("Camera position: X: %f Y: %f Z: %f", cam.getPosition().x, cam.getPosition().y, cam.getPosition().z);
@@ -339,6 +341,8 @@ int main()
             engine->registerPass(PassType::SSR);
             engine->registerPass(PassType::DownSampleColour);
         }
+
+        engine->setEditTerrain(graphicsOptions.editTerrain);
 
         engine->registerPass(PassType::DFGGeneration);
         engine->registerPass(PassType::Overlay);

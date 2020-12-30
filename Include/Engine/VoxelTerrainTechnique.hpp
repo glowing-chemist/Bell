@@ -27,9 +27,14 @@ public:
         mTextureScale = scale;
     }
 
-    void setMaterialIndex(const uint32_t index)
+    void setMaterialIndexXZ(const uint32_t index)
     {
-        mMaterialIndex = index;
+        mMaterialIndexXZ = index;
+    }
+
+    void setMaterialIndexY(const uint32_t index)
+    {
+        mMaterialIndexY = index;
     }
 
 private:
@@ -45,7 +50,16 @@ private:
     struct TerrainTexturing
     {
         float2 textureScale;
-        uint materialIndex;
+        uint materialIndexXZ;
+        uint materialIndexY;
+    };
+
+    struct TerrainModifying
+    {
+        uint2 mMousePos;
+        float mValue;
+        float mSize;
+        float3 mTerrainSize;
     };
 
     Shader mGenerateTerrainMeshShader;
@@ -53,6 +67,8 @@ private:
 
     Shader mTerrainVertexShader;
     Shader mTerrainFragmentShaderDeferred;
+
+    Shader mModifyTerrainShader;
 
     Image mVoxelGrid;
     ImageView mVoxelGridView;
@@ -66,8 +82,10 @@ private:
     TaskID mSurfaceGenerationTask;
     TaskID mRenderTaskID;
 
+    float mModifySize;
     float2 mTextureScale;
-    uint32_t mMaterialIndex;
+    uint32_t mMaterialIndexXZ;
+    uint32_t mMaterialIndexY;
 };
 
 #endif

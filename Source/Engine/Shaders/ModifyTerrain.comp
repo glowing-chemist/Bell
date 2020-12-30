@@ -1,0 +1,44 @@
+
+#include "UniformBuffers.hlsl"
+#include "Utilities.hlsl"
+
+struct Constants
+{
+	uint2 mousePos;
+	float value;
+	float voxelSize;
+	float3 terrainSize;
+};
+
+[[vk::binding(0)]]
+RWTexture3D<float> densityTexture;
+
+[[vk::binding(1)]]
+Texture2D<float2> depth;
+
+[[vk::binding(2)]]
+ConstantBuffer<CameraBuffer> camera;
+
+[[vk::binding(3)]]
+SamplerState linearSampler;
+
+[[vk::push_constant]]
+ConstantBuffer<Constants> constants; 
+
+[numthreads(4, 4, 4)]
+void main(uint3 globalIndex : SV_DispatchThreadID)
+{
+	float2 uv = float2(constants.mousePos) / camera.frameBufferSize;
+	float depth = depth.SampleLevel(linearSampler, uv, 0.0f).x;
+	depth = unlineariseReverseDepth(depth, camera.nearPlane, camera.farPlane);
+
+	float4 worldSpacePos = mul(camera.invertedViewProj, float4((uv - 0.5f) * 2.0f, depth, 1.0f));
+	worldSpacePos /= worldSpacePos.w;
+
+	const float3 worldMin = worldSpacePos.xyz + (constants.terrainSize / 2.0f);
+	uint3 offset = worldMin / constants.voxelSize;
+
+	const uint3 voxelIndex = globalIndex.xzy + offset.xzy;
+	const float V = densityTexture.Load(voxelIndex);
+	densityTexture[voxelIndex] = V + constants.value;
+}
