@@ -53,7 +53,7 @@ Scene::Scene(const std::filesystem::path& path) :
     mLights{},
     mShadowLightCamera(Camera({0.0f, 0.0f, 0.0f}, {1.0f, 0.0f, 0.0f}, 0.0f)),
     mShadowingLight{},
-    mCascadesInfo{mSceneCamera.getFarPlane() * 0.3f, mSceneCamera.getFarPlane() * 0.7f, mSceneCamera.getFarPlane()},
+    mCascadesInfo{0.1f, 0.4f, 1.0f},
     mNextInstanceID{0},
 	mSkybox{nullptr}
 {

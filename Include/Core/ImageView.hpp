@@ -9,7 +9,7 @@
 #include "Engine/PassTypes.hpp"
 
 
-class SubResourceInfo;
+struct SubResourceInfo;
 class VulkanBarrierRecorder;
 
 

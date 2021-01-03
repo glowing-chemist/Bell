@@ -73,6 +73,7 @@ struct TerrainVolume
     float4 maximum;
     uint3  offset;
     float  voxelSize;
+    uint   lod;
 };
 
 struct TerrainTextureing

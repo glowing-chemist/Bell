@@ -258,6 +258,7 @@ void CascadeShadowMappingTechnique::render(RenderGraph& graph, Engine* eng)
     (*mCascadesBuffer)->updateLastAccessed();
 
     const Scene::ShadowCascades& cascades = eng->getScene()->getShadowCascades();
+    const float farPlane = eng->getScene()->getCamera().getFarPlane();
 
     (*mCascadesBuffer)->setContents(&cascades, sizeof(Scene::ShadowCascades));
 
@@ -276,30 +277,30 @@ void CascadeShadowMappingTechnique::render(RenderGraph& graph, Engine* eng)
     });
 
     std::vector<const MeshInstance*> nearCascadeMeshes;
-    std::copy_if(meshes.begin(), meshes.end(), std::back_inserter(nearCascadeMeshes), [cascades, cameraPosition = eng->getScene()->getCamera().getPosition()](const MeshInstance* inst)
+    std::copy_if(meshes.begin(), meshes.end(), std::back_inserter(nearCascadeMeshes), [cascades, farPlane, cameraPosition = eng->getScene()->getCamera().getPosition()](const MeshInstance* inst)
     {
          const float3 central = (inst->getMesh()->getAABB() * inst->getTransMatrix()).getCentralPoint();
          const float distance = glm::length(central - cameraPosition);
 
-         return distance <= cascades.mNearEnd;
+         return distance <= cascades.mNearEnd * farPlane;
     });
 
     std::vector<const MeshInstance*> midCascadeMeshes;
-    std::copy_if(meshes.begin(), meshes.end(), std::back_inserter(midCascadeMeshes), [cascades, cameraPosition = eng->getScene()->getCamera().getPosition()](const MeshInstance* inst)
+    std::copy_if(meshes.begin(), meshes.end(), std::back_inserter(midCascadeMeshes), [cascades, farPlane, cameraPosition = eng->getScene()->getCamera().getPosition()](const MeshInstance* inst)
     {
          const float3 central = (inst->getMesh()->getAABB() * inst->getTransMatrix()).getCentralPoint();
          const float distance = glm::length(central - cameraPosition);
 
-         return distance <= cascades.mMidEnd && distance >= cascades.mNearEnd;
+         return distance <= cascades.mMidEnd * farPlane && distance >= cascades.mNearEnd * farPlane;
     });
 
     std::vector<const MeshInstance*> farCascadeMeshes;
-    std::copy_if(meshes.begin(), meshes.end(), std::back_inserter(farCascadeMeshes), [cascades, cameraPosition = eng->getScene()->getCamera().getPosition()](const MeshInstance* inst)
+    std::copy_if(meshes.begin(), meshes.end(), std::back_inserter(farCascadeMeshes), [cascades, farPlane, cameraPosition = eng->getScene()->getCamera().getPosition()](const MeshInstance* inst)
     {
          const float3 central = (inst->getMesh()->getAABB() * inst->getTransMatrix()).getCentralPoint();
          const float distance = glm::length(central - cameraPosition);
 
-         return distance >= cascades.mMidEnd;
+         return distance >= cascades.mMidEnd * farPlane;
     });
 
     GraphicsTask& cascade0Task = static_cast<GraphicsTask&>(graph.getTask(mRenderCascade0));

@@ -338,7 +338,7 @@ void loadDensityVals(uint3 index, uint3 offset)
 
 GridPoint loadGridValues(uint3 index, uint3 offset)
 {
-	const uint4 lookupIndex = uint4(index.xzy, 0) + uint4(offset.xzy, 0);
+	const uint4 lookupIndex = uint4(index.xzy, constants.lod) + uint4(offset.xzy, 0);
 
 	GridPoint voxel;
 
@@ -350,7 +350,7 @@ GridPoint loadGridValues(uint3 index, uint3 offset)
 	for(uint i = 0; i < 8; ++i)
 	{
 		voxel.val[i] = densityTexture.Load(lookupIndex + cubeIndicies[i]);
-		voxel.p[i] = constants.minimum + ((lookupIndex.xzy + cubeIndicies[i].xzyw) * constants.voxelSize);
+		voxel.p[i] = constants.minimum + ((lookupIndex.xzy + cubeIndicies[i].xzy) * constants.voxelSize);
 		voxel.n[i] = normalize(float3(densityTexture.Load(lookupIndex + cubeIndicies[i] + neighbourIndicies[0]) - densityTexture.Load(lookupIndex + cubeIndicies[i] - neighbourIndicies[0]),
 							   		  densityTexture.Load(lookupIndex + cubeIndicies[i] + neighbourIndicies[1]) - densityTexture.Load(lookupIndex + cubeIndicies[i] - neighbourIndicies[1]),
 							   		  densityTexture.Load(lookupIndex + cubeIndicies[i] + neighbourIndicies[2]) - densityTexture.Load(lookupIndex + cubeIndicies[i] - neighbourIndicies[2])));

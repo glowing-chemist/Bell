@@ -45,6 +45,7 @@ private:
         float4 maximum;
         uint3  offset;
         float  voxelSize;
+        uint32_t lod;
     };
 
     struct TerrainTexturing

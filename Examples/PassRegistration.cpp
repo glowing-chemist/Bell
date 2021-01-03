@@ -36,7 +36,7 @@ struct ImGuiOptions
 
 static ImGuiOptions graphicsOptions;
 
-bool renderMenu(GLFWwindow* win, const Camera& cam, Engine* eng, const float cpuTime)
+bool renderMenu(GLFWwindow* win, Camera& cam, Engine* eng, const float cpuTime)
 {
 	double cursorPosx, cursorPosy;
 	glfwGetCursorPos(win, &cursorPosx, &cursorPosy);
@@ -124,6 +124,9 @@ bool renderMenu(GLFWwindow* win, const Camera& cam, Engine* eng, const float cpu
     ImGui::Text("Camera position: X: %f Y: %f Z: %f", cam.getPosition().x, cam.getPosition().y, cam.getPosition().z);
     ImGui::Text("Camera direction: X: %f Y: %f Z: %f", cam.getDirection().x, cam.getDirection().y, cam.getDirection().z);
     ImGui::Text("Camera up: X: %f Y: %f Z: %f", cam.getUp().x, cam.getUp().y, cam.getUp().z);
+    float farPlane = cam.getFarPlane();
+    ImGui::SliderFloat("Far plane", &farPlane, 10.0f, 2000.0f);
+    cam.setFarPlane(farPlane);
 
     RenderDevice* dev = eng->getDevice();
     const RenderGraph& graph = eng->getRenderGraph();
@@ -199,7 +202,7 @@ int main()
     testScene.uploadData(engine);
     testScene.computeBounds(AccelerationStructure::Static);
     testScene.computeBounds(AccelerationStructure::Dynamic);
-    testScene.setTerrainGridSize(uint3(546u, 12u, 546u), 5.0f);
+    testScene.setTerrainGridSize(uint3(546u, 36u, 546u), 3.0f);
     testScene.initialiseTerrainFromTexture("./Assets/HeightMap.jpg");
 #if USE_RAY_TRACING
     RayTracingScene rtScene(engine, &testScene);

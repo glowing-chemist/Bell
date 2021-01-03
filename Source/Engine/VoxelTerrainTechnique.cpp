@@ -2,6 +2,8 @@
 #include "Engine/Engine.hpp"
 #include "Engine/DefaultResourceSlots.hpp"
 
+#include "Engine/TextureUtil.hpp"
+
 #include "Core/Executor.hpp"
 
 #include <numeric>
@@ -15,9 +17,9 @@ VoxelTerrainTechnique::VoxelTerrainTechnique(Engine* eng, RenderGraph& graph) :
     mTerrainFragmentShaderDeferred(eng->getShader("./Shaders/TerrainDeferred.frag")),
     mModifyTerrainShader(eng->getShader("./Shaders/ModifyTerrain.comp")),
     mVoxelGrid(getDevice(), Format::R8Norm, ImageUsage::Sampled | ImageUsage::Storage | ImageUsage::TransferDest,
-               eng->getScene()->getVoxelTerrain()->getSize().x, eng->getScene()->getVoxelTerrain()->getSize().z, eng->getScene()->getVoxelTerrain()->getSize().y, 1, 1, 1, "Terrain Voxels"),
-    mVoxelGridView(mVoxelGrid, ImageViewType::Colour),
-    mVertexBuffer(getDevice(), BufferUsage::Vertex | BufferUsage::DataBuffer, 100 * 1024 * 1024, 100 * 1024 * 1024, "Terrain vertex buffer"),
+               eng->getScene()->getVoxelTerrain()->getSize().x, eng->getScene()->getVoxelTerrain()->getSize().z, eng->getScene()->getVoxelTerrain()->getSize().y, 3, 1, 1, "Terrain Voxels"),
+    mVoxelGridView(mVoxelGrid, ImageViewType::Colour, 0, 1, 0, 3),
+    mVertexBuffer(getDevice(), BufferUsage::Vertex | BufferUsage::DataBuffer, 10 * 1024 * 1024, 10 * 1024 * 1024, "Terrain vertex buffer"),
     mVertexBufferView(mVertexBuffer),
     mIndirectArgsBuffer(getDevice(), BufferUsage::IndirectArgs | BufferUsage::DataBuffer, sizeof(uint32_t) * 4, sizeof(uint32_t) * 4, "Terrain indirect Args"),
     mIndirectArgView(mIndirectArgsBuffer),
@@ -27,10 +29,18 @@ VoxelTerrainTechnique::VoxelTerrainTechnique(Engine* eng, RenderGraph& graph) :
     mMaterialIndexY(0)
 {
     // Upload terrain grid.
-    const Scene* scene = eng->getScene();
-    const std::unique_ptr<VoxelTerrain>& terrain = scene->getVoxelTerrain();
-    const uint3 voxelGridSize = terrain->getSize();
-    mVoxelGrid->setContents(terrain->getVoxelData().data(), voxelGridSize.x, voxelGridSize.y, voxelGridSize.z);
+    {
+        const Scene* scene = eng->getScene();
+        const std::unique_ptr<VoxelTerrain>& terrain = scene->getVoxelTerrain();
+        uint3 voxelGridSize = terrain->getSize();
+        for(uint32_t m = 0; m < 3; ++m)
+        {
+            const std::vector<int8_t>& voxelData = terrain->getVoxelData(m);
+
+            mVoxelGrid->setContents(voxelData.data(), voxelGridSize.x, voxelGridSize.y, voxelGridSize.z, 0, m);
+            voxelGridSize /= 2;
+        }
+    }
 
     {
         ComputeTask resetIndirectArgs{"Terrain reset args"};
@@ -66,7 +76,7 @@ VoxelTerrainTechnique::VoxelTerrainTechnique(Engine* eng, RenderGraph& graph) :
                         const Scene* scene = eng->getScene();
                         const std::unique_ptr<VoxelTerrain>& terrain = scene->getVoxelTerrain();
                         const float voxelSize = terrain->getVoxelSize();
-                        const float3 voxelGridSize = float3(terrain->getSize()) * voxelSize;
+                        const float3 voxelGridWorldSize = float3(terrain->getSize()) * voxelSize;
 
                         float mode = 0.0f;
                         if(io.MouseDown[0])
@@ -74,7 +84,7 @@ VoxelTerrainTechnique::VoxelTerrainTechnique(Engine* eng, RenderGraph& graph) :
                         else if(io.MouseDown[1])
                             mode = -0.01f;
 
-                        TerrainModifying constants{uint2{io.MousePos.x, io.MousePos.y}, mode, voxelSize, voxelGridSize};
+                        TerrainModifying constants{uint2{io.MousePos.x, io.MousePos.y}, mode, voxelSize, voxelGridWorldSize};
                         exec->insertPushConsatnt(&constants, sizeof(TerrainModifying));
 
                         const uint32_t modifySize = std::ceil(mModifySize / voxelSize);
@@ -100,46 +110,67 @@ VoxelTerrainTechnique::VoxelTerrainTechnique(Engine* eng, RenderGraph& graph) :
             exec->setComputeShader(task, graph, mGenerateTerrainMeshShader);
 
             const Scene* scene = eng->getScene();
+            const Scene::ShadowCascades cascades = scene->getShadowCascades();
             const Camera& cam = scene->getCamera();
+            const float cameraFarPlane = cam.getFarPlane();
+            const float2 cascadeRanges[3] = {{cam.getNearPlane(), cascades.mNearEnd * cameraFarPlane},
+                                             {cascades.mNearEnd * cameraFarPlane, cascades.mMidEnd * cameraFarPlane},
+                                             {cascades.mMidEnd * cameraFarPlane, cascades.mFarEnd * cameraFarPlane} };
             const std::unique_ptr<VoxelTerrain>& terrain = scene->getVoxelTerrain();
-            const float voxelSize = terrain->getVoxelSize();
-            const float3 voxelGridSize = float3(terrain->getSize()) * voxelSize;
 
-            const float4x4 invView = glm::inverse(cam.getViewMatrix());
-            const float farPlane = cam.getFarPlane();
-            const float frustumHalfHeight = farPlane * tan(glm::radians(cam.getFOV()) * 0.5f);
-            const float aspect = cam.getAspect();
-            const float frustumHalfWidth = frustumHalfHeight * aspect;
-            const float3 camUp = float3(0.f, frustumHalfHeight, 0.0f);
-            const float3 camRight = float3(frustumHalfWidth, 0.0f, 0.0f);
-            float3 viewSpaceFrustumPoints[8] = {camUp + camRight, -camUp + camRight
-                                              , camUp - camRight, -camUp - camRight,
-                                               camUp + camRight - float3(0.0f, 0.0f, farPlane), -camUp + camRight - float3(0.0f, 0.0f, farPlane)
-                                              ,camUp - camRight - float3(0.0f, 0.0f, farPlane), -camUp - camRight - float3(0.0f, 0.0f, farPlane)};
-            float3 terrainVolumeMin{INFINITY, INFINITY, INFINITY};
-            float3 terrainVolumeMax{-INFINITY, -INFINITY, -INFINITY};
-            for(uint32_t i = 0u; i < 8u; ++i)
+            // generate terrain at 3 LODs.
+            for(uint32_t lod = 0u; lod < 3u; ++lod)
             {
-                terrainVolumeMin = componentWiseMin(terrainVolumeMin, invView * float4(viewSpaceFrustumPoints[i], 1.0f));
-                terrainVolumeMax = componentWiseMax(terrainVolumeMax, invView * float4(viewSpaceFrustumPoints[i], 1.0f));
+                const float baseVoxelSize = terrain->getVoxelSize();
+                const float lodFactor = std::pow(2, lod);
+                const float lodVoxelSize = baseVoxelSize * lodFactor;
+                const float3 voxelGridWorldSize = float3(terrain->getSize()) * baseVoxelSize;
+
+                const float4x4 invView = glm::inverse(cam.getViewMatrix());
+                const float nearPlane = cascadeRanges[lod].x;
+                const float farPlane = cascadeRanges[lod].y;
+                const float frustumHalfHeightFar = farPlane * tanf(glm::radians(cam.getFOV()) * 0.5f);
+                const float frustumHalfHeightNear = nearPlane * tanf(glm::radians(cam.getFOV()) * 0.5f);
+                const float aspect = cam.getAspect();
+                const float frustumHalfWidthFar = frustumHalfHeightFar * aspect;
+                const float frustumHalfWidthNear = frustumHalfHeightNear * aspect;
+                const float3 camUpFar = float3(0.f, frustumHalfHeightFar, 0.0f);
+                const float3 camRightFar = float3(frustumHalfWidthFar, 0.0f, 0.0f);
+                const float3 camUpNear = float3(0.f, frustumHalfHeightNear, 0.0f);
+                const float3 camRightNear = float3(frustumHalfWidthNear, 0.0f, 0.0f);
+                float3 viewSpaceFrustumPoints[8] = {camUpNear + camRightNear - float3(0.0f, 0.0f, nearPlane), -camUpNear + camRightNear - float3(0.0f, 0.0f, nearPlane),
+                                                    camUpNear - camRightNear - float3(0.0f, 0.0f, nearPlane), -camUpNear - camRightNear - float3(0.0f, 0.0f, nearPlane),
+                                                    camUpFar + camRightFar - float3(0.0f, 0.0f, farPlane), -camUpFar + camRightFar - float3(0.0f, 0.0f, farPlane),
+                                                    camUpFar - camRightFar - float3(0.0f, 0.0f, farPlane), -camUpFar - camRightFar - float3(0.0f, 0.0f, farPlane)};
+                float3 terrainVolumeMin{INFINITY, INFINITY, INFINITY};
+                float3 terrainVolumeMax{-INFINITY, -INFINITY, -INFINITY};
+                for(uint32_t i = 0u; i < 8u; ++i)
+                {
+                    const float4 transformedPoint = invView * float4(viewSpaceFrustumPoints[i], 1.0f);
+                    terrainVolumeMin = componentWiseMin(terrainVolumeMin, float3(transformedPoint.x, transformedPoint.y, transformedPoint.z));
+                    terrainVolumeMax = componentWiseMax(terrainVolumeMax, float3(transformedPoint.x, transformedPoint.y, transformedPoint.z));
+                }
+                float3 gridMin = -(voxelGridWorldSize / 2.0f);
+                float3 gridMax = -gridMin;
+                float3 volumeMin = componentWiseMax(terrainVolumeMin, gridMin);
+                volumeMin = componentWiseMin(terrainVolumeMin, gridMax);
+                int3 offset = (terrainVolumeMin - gridMin) / lodVoxelSize;
+
+                TerrainVolume uniformBuffer{};
+                uniformBuffer.minimum = float4(gridMin, 1.0f);
+                uniformBuffer.offset = offset;
+                uniformBuffer.voxelSize = lodVoxelSize;
+                uniformBuffer.lod = lod;
+                exec->insertPushConsatnt(&uniformBuffer, sizeof(TerrainVolume));
+
+                float3 volumeMax = terrainVolumeMax;
+                volumeMax = componentWiseMin(volumeMax, gridMax);
+                volumeMax = componentWiseMax(volumeMax, gridMin);
+
+                const float3 volumeSize = volumeMax - volumeMin;
+                exec->dispatch(std::ceil(volumeSize.x / (lodVoxelSize * 4.0f)), std::ceil(volumeSize.y / (lodVoxelSize * 4.0f)), std::ceil(volumeSize.z / (lodVoxelSize * 4.0f)));
             }
 
-            float3 gridMin = -(voxelGridSize / 2.0f);
-            int3 offset = (terrainVolumeMin - gridMin) / voxelSize;
-            offset = glm::max(offset, int3(0, 0, 0));
-            float3 volumeMin = componentWiseMax(terrainVolumeMin, gridMin);
-
-            TerrainVolume uniformBuffer{};
-            uniformBuffer.minimum = float4(gridMin, 1.0f);
-            uniformBuffer.offset = offset;
-            uniformBuffer.voxelSize = voxelSize;
-            exec->insertPushConsatnt(&uniformBuffer, sizeof(TerrainVolume));
-
-            float3 volumeMax = terrainVolumeMax;
-            volumeMax = componentWiseMin(volumeMax, -gridMin);
-
-            const float3 volumeSize = volumeMax - volumeMin;
-            exec->dispatch(std::ceil(volumeSize.x / (voxelSize * 4.0f)), std::ceil(volumeSize.y / (voxelSize * 4.0f)), std::ceil(volumeSize.z / (voxelSize * 4.0f)));
         });
         mSurfaceGenerationTask = graph.addTask(marchCube);
     }

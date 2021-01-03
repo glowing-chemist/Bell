@@ -15,32 +15,35 @@ public:
     void initialiseFromHeightMap(const std::string& path);
     void initialiseFromData(const std::vector<int8_t>&);
 
-    const std::vector<int8_t>& getVoxelData() const
+    const std::vector<int8_t>& getVoxelData(const uint32_t lod) const
     {
-	return mVoxelData;
+        return mVoxelData[lod];
     }
 
-    std::vector<int8_t>& getVoxelData()
+    std::vector<int8_t>& getVoxelData(const uint32_t lod)
     {
-	return mVoxelData;
+        return mVoxelData[lod];
     }
 
     uint3 getSize() const
     {
-	return mSize;
+        return mSize;
     }
 
     float getVoxelSize() const
     {
-	return mVoxelSize;
+        return mVoxelSize;
     }
 
 private:
 
+    void generateLODs();
+
     uint3 mSize;
     float mVoxelSize;
 
-    std::vector<int8_t> mVoxelData;
+    // for 3 LODS.
+    std::vector<int8_t> mVoxelData[3];
 };
 
 #endif
