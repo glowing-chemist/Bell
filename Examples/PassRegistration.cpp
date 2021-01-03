@@ -202,8 +202,8 @@ int main()
     testScene.uploadData(engine);
     testScene.computeBounds(AccelerationStructure::Static);
     testScene.computeBounds(AccelerationStructure::Dynamic);
-    testScene.setTerrainGridSize(uint3(546u, 36u, 546u), 3.0f);
-    testScene.initialiseTerrainFromTexture("./Assets/HeightMap.jpg");
+    //testScene.setTerrainGridSize(uint3(546u, 36u, 546u), 3.0f);
+    //testScene.initialiseTerrainFromTexture("./Assets/HeightMap.jpg");
 #if USE_RAY_TRACING
     RayTracingScene rtScene(engine, &testScene);
 #endif
@@ -294,7 +294,7 @@ int main()
         engine->registerPass(PassType::ConvolveSkybox);
         engine->registerPass(PassType::Skybox);
         engine->registerPass(PassType::LineariseDepth);
-        engine->registerPass(PassType::VoxelTerrain);
+        //engine->registerPass(PassType::VoxelTerrain);
         engine->registerPass(PassType::DebugAABB);
         //engine.registerPass(PassType::Voxelize);
 
