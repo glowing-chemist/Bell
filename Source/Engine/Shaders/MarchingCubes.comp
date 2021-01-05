@@ -338,12 +338,13 @@ void loadDensityVals(uint3 index, uint3 offset)
 
 GridPoint loadGridValues(uint3 index, uint3 offset)
 {
-	const uint4 lookupIndex = uint4(index.xzy, constants.lod) + uint4(offset.xzy, 0);
+	const float lodFactor = constants.lod;
+	const uint4 lookupIndex = (uint4(index.xzy, 0) + uint4(offset.xzy, 0)) * lodFactor;
 
 	GridPoint voxel;
 
-	uint4 cubeIndicies[8] = {uint4(0, 1, 0, 0), uint4(1, 1, 0, 0), uint4(1, 0, 0, 0), uint4(0, 0, 0, 0), 
-							 uint4(0, 1, 1, 0), uint4(1, 1, 1, 0), uint4(1, 0, 1, 0), uint4(0, 0, 1, 0)};
+	uint4 cubeIndicies[8] = {uint4(0, lodFactor, 0, 0), uint4(lodFactor, lodFactor, 0, 0), uint4(lodFactor, 0, 0, 0), uint4(0, 0, 0, 0), 
+							 uint4(0, lodFactor, lodFactor, 0), uint4(lodFactor, lodFactor, lodFactor, 0), uint4(lodFactor, 0, lodFactor, 0), uint4(0, 0, lodFactor, 0)};
 
 	uint4 neighbourIndicies[3] = {uint4(1, 0, 0, 0), uint4(0, 0, 1, 0), uint4(0, 1, 0, 0)};
 

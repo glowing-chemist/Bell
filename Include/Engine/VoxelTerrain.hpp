@@ -13,21 +13,22 @@ public:
     ~VoxelTerrain() = default;
 
     void initialiseFromHeightMap(const std::string& path);
-    void initialiseFromData(const std::vector<int8_t>&);
+    void initialiseFromData(const std::vector<int8_t>& data);
 
-    const std::vector<int8_t>& getVoxelData(const uint32_t lod) const
+    const std::vector<int8_t>& getVoxelData() const
     {
-        return mVoxelData[lod];
+        return mVoxelData;
     }
 
-    std::vector<int8_t>& getVoxelData(const uint32_t lod)
+    std::vector<int8_t>& getVoxelData()
     {
-        return mVoxelData[lod];
+        return mVoxelData;
     }
 
     uint3 getSize() const
     {
-        return mSize;
+        return mSize;    void initialiseFromData(const std::vector<int8_t>&);
+
     }
 
     float getVoxelSize() const
@@ -37,13 +38,11 @@ public:
 
 private:
 
-    void generateLODs();
-
     uint3 mSize;
     float mVoxelSize;
 
     // for 3 LODS.
-    std::vector<int8_t> mVoxelData[3];
+    std::vector<int8_t> mVoxelData;
 };
 
 #endif

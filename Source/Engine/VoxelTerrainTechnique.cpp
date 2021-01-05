@@ -17,8 +17,8 @@ VoxelTerrainTechnique::VoxelTerrainTechnique(Engine* eng, RenderGraph& graph) :
     mTerrainFragmentShaderDeferred(eng->getShader("./Shaders/TerrainDeferred.frag")),
     mModifyTerrainShader(eng->getShader("./Shaders/ModifyTerrain.comp")),
     mVoxelGrid(getDevice(), Format::R8Norm, ImageUsage::Sampled | ImageUsage::Storage | ImageUsage::TransferDest,
-               eng->getScene()->getVoxelTerrain()->getSize().x, eng->getScene()->getVoxelTerrain()->getSize().z, eng->getScene()->getVoxelTerrain()->getSize().y, 3, 1, 1, "Terrain Voxels"),
-    mVoxelGridView(mVoxelGrid, ImageViewType::Colour, 0, 1, 0, 3),
+               eng->getScene()->getVoxelTerrain()->getSize().x, eng->getScene()->getVoxelTerrain()->getSize().z, eng->getScene()->getVoxelTerrain()->getSize().y, 1, 1, 1, "Terrain Voxels"),
+    mVoxelGridView(mVoxelGrid, ImageViewType::Colour),
     mVertexBuffer(getDevice(), BufferUsage::Vertex | BufferUsage::DataBuffer, 10 * 1024 * 1024, 10 * 1024 * 1024, "Terrain vertex buffer"),
     mVertexBufferView(mVertexBuffer),
     mIndirectArgsBuffer(getDevice(), BufferUsage::IndirectArgs | BufferUsage::DataBuffer, sizeof(uint32_t) * 4, sizeof(uint32_t) * 4, "Terrain indirect Args"),
@@ -33,13 +33,9 @@ VoxelTerrainTechnique::VoxelTerrainTechnique(Engine* eng, RenderGraph& graph) :
         const Scene* scene = eng->getScene();
         const std::unique_ptr<VoxelTerrain>& terrain = scene->getVoxelTerrain();
         uint3 voxelGridSize = terrain->getSize();
-        for(uint32_t m = 0; m < 3; ++m)
-        {
-            const std::vector<int8_t>& voxelData = terrain->getVoxelData(m);
+        const std::vector<int8_t>& voxelData = terrain->getVoxelData();
 
-            mVoxelGrid->setContents(voxelData.data(), voxelGridSize.x, voxelGridSize.y, voxelGridSize.z, 0, m);
-            voxelGridSize /= 2;
-        }
+        mVoxelGrid->setContents(voxelData.data(), voxelGridSize.x, voxelGridSize.y, voxelGridSize.z);
     }
 
     {
@@ -122,7 +118,7 @@ VoxelTerrainTechnique::VoxelTerrainTechnique(Engine* eng, RenderGraph& graph) :
             for(uint32_t lod = 0u; lod < 3u; ++lod)
             {
                 const float baseVoxelSize = terrain->getVoxelSize();
-                const float lodFactor = std::pow(2, lod);
+                const float lodFactor = std::pow(2.0f, float(lod));
                 const float lodVoxelSize = baseVoxelSize * lodFactor;
                 const float3 voxelGridWorldSize = float3(terrain->getSize()) * baseVoxelSize;
 
@@ -159,8 +155,8 @@ VoxelTerrainTechnique::VoxelTerrainTechnique(Engine* eng, RenderGraph& graph) :
                 TerrainVolume uniformBuffer{};
                 uniformBuffer.minimum = float4(gridMin, 1.0f);
                 uniformBuffer.offset = offset;
-                uniformBuffer.voxelSize = lodVoxelSize;
-                uniformBuffer.lod = lod;
+                uniformBuffer.voxelSize = baseVoxelSize;
+                uniformBuffer.lod = lodFactor;
                 exec->insertPushConsatnt(&uniformBuffer, sizeof(TerrainVolume));
 
                 float3 volumeMax = terrainVolumeMax;
