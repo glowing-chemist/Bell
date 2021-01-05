@@ -6,8 +6,10 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/glm.hpp>
 #include <glm/gtx/compatibility.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 #include <algorithm>
+#include <array>
 
 
 using float2 = glm::vec2;
@@ -131,6 +133,20 @@ struct Rect
 	uint32_t x, y;
 };
 
+
+inline std::array<float4, 6> frustumPlanes(const float4x4& mat)
+{
+    std::array<float4, 6> planes;
+    const float* mvpp = glm::value_ptr(mat);
+    planes[0] = float4(mvpp[3]-mvpp[0], mvpp[7]-mvpp[4], mvpp[11]-mvpp[8], mvpp[15]-mvpp[12] );
+    planes[1] = float4(mvpp[3]+mvpp[0], mvpp[7]+mvpp[4], mvpp[11]+mvpp[8], mvpp[15]+mvpp[12] );
+    planes[2] = float4(mvpp[3]+mvpp[1], mvpp[7]+mvpp[5], mvpp[11]+mvpp[9], mvpp[15]+mvpp[13] );
+    planes[3] = float4(mvpp[3]-mvpp[1], mvpp[7]-mvpp[5], mvpp[11]-mvpp[9], mvpp[15]-mvpp[13] );
+    planes[4] = float4(mvpp[3]-mvpp[2], mvpp[7]-mvpp[6], mvpp[11]-mvpp[10], mvpp[15]-mvpp[14] );
+    planes[5] = float4(mvpp[3]+mvpp[2], mvpp[7]+mvpp[6], mvpp[11]+mvpp[10], mvpp[15]+mvpp[14] );
+
+    return planes;
+}
 
 #endif
 

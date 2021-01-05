@@ -41,11 +41,11 @@ private:
 
     struct TerrainVolume
     {
-        float4 minimum;
-        float4 maximum;
-        uint3  offset;
+        float3 minimum;
         float  voxelSize;
-        uint32_t lod;
+        uint3  offset;
+        uint   lod;
+        float4 frustumPlanes[6];
     };
 
     struct TerrainTexturing

@@ -69,11 +69,11 @@ struct VoxelDimmensions
 
 struct TerrainVolume
 {
-    float4 minimum;
-    float4 maximum;
-    uint3  offset;
+    float3 minimum;
     float  voxelSize;
+    uint3  offset;
     uint   lod;
+    float4 frustumPlanes[6];
 };
 
 struct TerrainTextureing

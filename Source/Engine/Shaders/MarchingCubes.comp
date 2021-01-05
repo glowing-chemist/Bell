@@ -336,12 +336,28 @@ void loadDensityVals(uint3 index, uint3 offset)
 
 }
 
-GridPoint loadGridValues(uint3 index, uint3 offset)
+GridPoint loadGridPositions(uint3 index, uint3 offset)
 {
+	GridPoint voxel;
+
 	const float lodFactor = constants.lod;
 	const uint4 lookupIndex = (uint4(index.xzy, 0) + uint4(offset.xzy, 0)) * lodFactor;
 
-	GridPoint voxel;
+	uint4 cubeIndicies[8] = {uint4(0, lodFactor, 0, 0), uint4(lodFactor, lodFactor, 0, 0), uint4(lodFactor, 0, 0, 0), uint4(0, 0, 0, 0), 
+							 uint4(0, lodFactor, lodFactor, 0), uint4(lodFactor, lodFactor, lodFactor, 0), uint4(lodFactor, 0, lodFactor, 0), uint4(0, 0, lodFactor, 0)};
+
+	for(uint i = 0; i < 8; ++i)
+	{
+		voxel.p[i] = constants.minimum + ((lookupIndex.xzy + cubeIndicies[i].xzy) * constants.voxelSize);
+	}
+
+	return voxel;
+}
+
+void loadGridValues(inout GridPoint voxel, uint3 index, uint3 offset)
+{
+	const float lodFactor = constants.lod;
+	const uint4 lookupIndex = (uint4(index.xzy, 0) + uint4(offset.xzy, 0)) * lodFactor;
 
 	uint4 cubeIndicies[8] = {uint4(0, lodFactor, 0, 0), uint4(lodFactor, lodFactor, 0, 0), uint4(lodFactor, 0, 0, 0), uint4(0, 0, 0, 0), 
 							 uint4(0, lodFactor, lodFactor, 0), uint4(lodFactor, lodFactor, lodFactor, 0), uint4(lodFactor, 0, lodFactor, 0), uint4(0, 0, lodFactor, 0)};
@@ -351,13 +367,30 @@ GridPoint loadGridValues(uint3 index, uint3 offset)
 	for(uint i = 0; i < 8; ++i)
 	{
 		voxel.val[i] = densityTexture.Load(lookupIndex + cubeIndicies[i]);
-		voxel.p[i] = constants.minimum + ((lookupIndex.xzy + cubeIndicies[i].xzy) * constants.voxelSize);
 		voxel.n[i] = normalize(float3(densityTexture.Load(lookupIndex + cubeIndicies[i] + neighbourIndicies[0]) - densityTexture.Load(lookupIndex + cubeIndicies[i] - neighbourIndicies[0]),
 							   		  densityTexture.Load(lookupIndex + cubeIndicies[i] + neighbourIndicies[1]) - densityTexture.Load(lookupIndex + cubeIndicies[i] - neighbourIndicies[1]),
 							   		  densityTexture.Load(lookupIndex + cubeIndicies[i] + neighbourIndicies[2]) - densityTexture.Load(lookupIndex + cubeIndicies[i] - neighbourIndicies[2])));
 	}
+}
 
-	return voxel;
+bool cullVoxel(GridPoint voxel)
+{
+    for(uint i = 0; i < 6; i++)
+    {
+        uint n = 0;
+        n += ((dot( constants.frustumPlanes[i], float4(voxel.p[0], 1.0f) ) < 0.0 ) ? 1 : 0);
+        n += ((dot( constants.frustumPlanes[i], float4(voxel.p[1], 1.0f) ) < 0.0 ) ? 1 : 0);
+        n += ((dot( constants.frustumPlanes[i], float4(voxel.p[2], 1.0f) ) < 0.0 ) ? 1 : 0);
+        n += ((dot( constants.frustumPlanes[i], float4(voxel.p[3], 1.0f) ) < 0.0 ) ? 1 : 0);
+        n += ((dot( constants.frustumPlanes[i], float4(voxel.p[4], 1.0f) ) < 0.0 ) ? 1 : 0);
+        n += ((dot( constants.frustumPlanes[i], float4(voxel.p[5], 1.0f) ) < 0.0 ) ? 1 : 0);
+        n += ((dot( constants.frustumPlanes[i], float4(voxel.p[6], 1.0f) ) < 0.0 ) ? 1 : 0);
+        n += ((dot( constants.frustumPlanes[i], float4(voxel.p[7], 1.0f) ) < 0.0 ) ? 1 : 0);
+        if(n == 8 ) 
+        	return true;
+    }
+
+    return false;
 }
 
 void VertexInterp(float isolevel, float3 p1, float3 p2, float3 n1, float3 n2, float valp1, float valp2, out float3 p, out float3 n)
@@ -405,13 +438,18 @@ void main(uint3 globalIndex : SV_DispatchThreadID)
 	uint x, y, z;
 	densityTexture.GetDimensions(x, y, z);
 
-	const uint3 voxelIndex = globalIndex.xzy + constants.offset.xzy;
+	const uint3 voxelIndex = (globalIndex.xzy + constants.offset.xzy) * constants.lod;
 	if(voxelIndex.x >= x || voxelIndex.y >= y || voxelIndex.z >= z)
 		return;
 
-	const float isoLevel = 0.0f;
+	GridPoint voxel = loadGridPositions(globalIndex, constants.offset);
 
-	GridPoint voxel = loadGridValues(globalIndex, constants.offset);
+	if(cullVoxel(voxel))
+		return;
+
+	loadGridValues(voxel, globalIndex, constants.offset);
+
+	const float isoLevel = 0.0f;
 	uint cubeIndex = 0;
 	if (voxel.val[0] >= isoLevel) cubeIndex |= 1u;
    	if (voxel.val[1] >= isoLevel) cubeIndex |= 2u;

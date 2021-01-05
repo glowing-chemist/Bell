@@ -67,6 +67,7 @@ void VulkanExecutor::indexedIndirectDraw(const uint32_t drawCalls, const BufferV
 
 void VulkanExecutor::insertPushConsatnt(const void *val, const size_t size)
 {
+    BELL_ASSERT(size <= 128, "Max push constants size exceeded")
     mCommandBuffer.pushConstants(mPipelineLayout, vk::ShaderStageFlagBits::eAll, 0, size, val);
     ++mRecordedCommands;
 }

@@ -3,10 +3,13 @@
 #include "Engine/DefaultResourceSlots.hpp"
 
 #include "Engine/TextureUtil.hpp"
+#include "Engine/GeomUtils.h"
 
 #include "Core/Executor.hpp"
 
 #include <numeric>
+
+#include <glm/gtx/transform.hpp>
 
 
 VoxelTerrainTechnique::VoxelTerrainTechnique(Engine* eng, RenderGraph& graph) :
@@ -108,6 +111,7 @@ VoxelTerrainTechnique::VoxelTerrainTechnique(Engine* eng, RenderGraph& graph) :
             const Scene* scene = eng->getScene();
             const Scene::ShadowCascades cascades = scene->getShadowCascades();
             const Camera& cam = scene->getCamera();
+            const float4x4 view = cam.getViewMatrix();
             const float cameraFarPlane = cam.getFarPlane();
             const float2 cascadeRanges[3] = {{cam.getNearPlane(), cascades.mNearEnd * cameraFarPlane},
                                              {cascades.mNearEnd * cameraFarPlane, cascades.mMidEnd * cameraFarPlane},
@@ -152,11 +156,15 @@ VoxelTerrainTechnique::VoxelTerrainTechnique(Engine* eng, RenderGraph& graph) :
                 volumeMin = componentWiseMin(terrainVolumeMin, gridMax);
                 int3 offset = (terrainVolumeMin - gridMin) / lodVoxelSize;
 
+                const float4x4 proj = glm::perspective(glm::radians(cam.getFOV()), cam.getAspect(), farPlane, nearPlane);
+                const std::array<float4, 6> planes = frustumPlanes(proj * view);
+
                 TerrainVolume uniformBuffer{};
-                uniformBuffer.minimum = float4(gridMin, 1.0f);
+                uniformBuffer.minimum = gridMin;
                 uniformBuffer.offset = offset;
                 uniformBuffer.voxelSize = baseVoxelSize;
                 uniformBuffer.lod = lodFactor;
+                memcpy(&uniformBuffer.frustumPlanes, planes.data(), sizeof(float4) * 6);
                 exec->insertPushConsatnt(&uniformBuffer, sizeof(TerrainVolume));
 
                 float3 volumeMax = terrainVolumeMax;
