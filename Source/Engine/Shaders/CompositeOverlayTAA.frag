@@ -1,5 +1,6 @@
 #include "VertexOutputs.hlsl"
 #include "UniformBuffers.hlsl"
+#include "ColourMapping.hlsl"
 
 #if defined(Overlay)
 #define USING_OVERLAY 1
@@ -34,15 +35,14 @@ float4 main(PositionAndUVVertOutput vertOutput)
 	colour -= taaOutput.Sample(defaultSampler, vertOutput.uv + float2(pixelSize.x, 0.0f));
 	colour -= taaOutput.Sample(defaultSampler, vertOutput.uv + float2(0.0f, -pixelSize.y));
 	colour -= taaOutput.Sample(defaultSampler, vertOutput.uv + float2(-pixelSize.x, 0.0f));
-	colour = saturate(colour);
+
+	colour = performColourMapping(colour, 2.2f, 1.0f);
 
 #if USING_OVERLAY
 	const float4 overlay = overlay.Sample(defaultSampler, vertOutput.uv);
 
-	return ((1.0f - overlay.w) * colour) + overlay;
-#else
+	colour = ((1.0f - overlay.w) * colour) + overlay;
+#endif
 
 	return colour;
-
-#endif
 }

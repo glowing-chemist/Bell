@@ -7,12 +7,12 @@ constexpr const char* kTAASAmpler = "TAASampler";
 
 TAATechnique::TAATechnique(Engine* eng, RenderGraph& graph) :
 	Technique("TAA", eng->getDevice()),
-	mHistoryImage(	eng->getDevice(), Format::RGBA8UNorm, ImageUsage::Storage | ImageUsage::Sampled | ImageUsage::TransferDest, 
+    mHistoryImage(	eng->getDevice(), Format::RGBA16Float, ImageUsage::Storage | ImageUsage::Sampled | ImageUsage::TransferDest,
 					eng->getSwapChainImage()->getExtent(0, 0).width, 
 					eng->getSwapChainImage()->getExtent(0, 0).height,
 					1, 1, 1, 1, "TAA history"),
 	mHistoryImageView(mHistoryImage, ImageViewType::Colour),
-	mNextHistoryImage(eng->getDevice(), Format::RGBA8UNorm, ImageUsage::Storage | ImageUsage::Sampled | ImageUsage::TransferDest,
+    mNextHistoryImage(eng->getDevice(), Format::RGBA16Float, ImageUsage::Storage | ImageUsage::Sampled | ImageUsage::TransferDest,
 		eng->getSwapChainImage()->getExtent(0, 0).width,
 		eng->getSwapChainImage()->getExtent(0, 0).height,
 		1, 1, 1, 1, "next TAA history"),
@@ -34,35 +34,32 @@ TAATechnique::TAATechnique(Engine* eng, RenderGraph& graph) :
 	resolveTAA.addInput(kTAAHistory, AttachmentType::Texture2D);
 	resolveTAA.addInput(kNewTAAHistory, AttachmentType::Image2D);
 	resolveTAA.addInput(kTAASAmpler, AttachmentType::Sampler);
+    resolveTAA.setRecordCommandsCallback(
+        [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+        {
+            const RenderTask& task = graph.getTask(taskIndex);
+            exec->setComputeShader(static_cast<const ComputeTask&>(task), graph, mTAAShader);
+
+            const float threadGroupWidth = eng->getSwapChainImageView()->getImageExtent().width;
+            const float threadGroupHeight = eng->getSwapChainImageView()->getImageExtent().height;
+
+            exec->dispatch(	static_cast<uint32_t>(std::ceil(threadGroupWidth / 32.0f)),
+                            static_cast<uint32_t>(std::ceil(threadGroupHeight / 32.0f)),
+                            1);
+        }
+    );
 
 	mTaskID = graph.addTask(resolveTAA);
 }
 
 
-void TAATechnique::render(RenderGraph& graph, Engine*)
+void TAATechnique::render(RenderGraph&, Engine*)
 {
 	if (mFirstFrame)
 	{
         mHistoryImage->clear(float4(0.0f, 0.0f, 0.0f, 0.0f));
 		mFirstFrame = false;
 	}
-
-	ComputeTask& resolveTAA = static_cast<ComputeTask&>(graph.getTask(mTaskID));
-
-	resolveTAA.setRecordCommandsCallback(
-        [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
-		{
-            const RenderTask& task = graph.getTask(taskIndex);
-            exec->setComputeShader(static_cast<const ComputeTask&>(task), graph, mTAAShader);
-
-			const float threadGroupWidth = eng->getSwapChainImageView()->getImageExtent().width;
-			const float threadGroupHeight = eng->getSwapChainImageView()->getImageExtent().height;
-
-			exec->dispatch(	static_cast<uint32_t>(std::ceil(threadGroupWidth / 32.0f)),
-							static_cast<uint32_t>(std::ceil(threadGroupHeight / 32.0f)),
-							1);
-		}
-	);
 }
 
 

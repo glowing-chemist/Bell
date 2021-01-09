@@ -151,10 +151,10 @@ inline const char* passToString(const PassType passType)
             return "RayTraced_Shadows";
 
         case PassType::DownSampleColour:
-            return "DownSampled Colour";
+            return "DownSampled_Colour";
 
         case PassType::VoxelTerrain:
-            return "Voxel Terrain";
+            return "Voxel_Terrain";
     }
 
     return "UNKNOWN PASS TYPE";

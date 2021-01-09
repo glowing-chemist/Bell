@@ -31,7 +31,6 @@ struct ImGuiOptions
 #endif
     bool preDepth = true;
     bool occlusionCulling = false;
-    bool editTerrain = false;
 };
 
 static ImGuiOptions graphicsOptions;
@@ -118,7 +117,6 @@ bool renderMenu(GLFWwindow* win, Camera& cam, Engine* eng, const float cpuTime)
     }
 
     ImGui::Checkbox("Enable pre depth", &graphicsOptions.preDepth);
-    ImGui::Checkbox("Edit Terrain", &graphicsOptions.editTerrain);
     ImGui::Checkbox("Occlusion culling (experimental)", &graphicsOptions.occlusionCulling);
 
     ImGui::Text("Camera position: X: %f Y: %f Z: %f", cam.getPosition().x, cam.getPosition().y, cam.getPosition().z);
@@ -202,8 +200,6 @@ int main()
     testScene.uploadData(engine);
     testScene.computeBounds(AccelerationStructure::Static);
     testScene.computeBounds(AccelerationStructure::Dynamic);
-    //testScene.setTerrainGridSize(uint3(546u, 36u, 546u), 3.0f);
-    //testScene.initialiseTerrainFromTexture("./Assets/HeightMap.jpg");
 #if USE_RAY_TRACING
     RayTracingScene rtScene(engine, &testScene);
 #endif
@@ -235,7 +231,7 @@ int main()
                     const float g = float(rand()) / float((RAND_MAX));
                     const float b = float(rand()) / float((RAND_MAX));
 
-                    testScene.addLight(Scene::Light::pointLight(float4(x, y, z, 1.0f), float4(r, g, b, 1.0f), 4.0f, 2.0f));
+                    testScene.addLight(Scene::Light::pointLight(float4(x, y, z, 1.0f), float4(r, g, b, 1.0f), 40.0f, 2.0f));
                 }
             }
         }
@@ -294,7 +290,6 @@ int main()
         engine->registerPass(PassType::ConvolveSkybox);
         engine->registerPass(PassType::Skybox);
         engine->registerPass(PassType::LineariseDepth);
-        //engine->registerPass(PassType::VoxelTerrain);
         engine->registerPass(PassType::DebugAABB);
         //engine.registerPass(PassType::Voxelize);
 
@@ -344,8 +339,6 @@ int main()
             engine->registerPass(PassType::SSR);
             engine->registerPass(PassType::DownSampleColour);
         }
-
-        engine->setEditTerrain(graphicsOptions.editTerrain);
 
         engine->registerPass(PassType::DFGGeneration);
         engine->registerPass(PassType::Overlay);

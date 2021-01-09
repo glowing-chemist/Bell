@@ -145,7 +145,11 @@ vk::Format getVulkanImageFormat(const Format format)
 	case Format::R16UInt:
 		return vk::Format::eR16Uint;
 
+    case Format::RGBA16Float:
+        return vk::Format::eR16G16B16A16Sfloat;
+
 	default:
+        BELL_TRAP;
 		return vk::Format::eR8G8B8A8Srgb;
 	}
 }
@@ -230,6 +234,7 @@ Format getBellImageFormat(const vk::Format format)
 		return Format::D24S8Float;
 
 	default:
+        BELL_TRAP;
 		return Format::RGBA8SRGB;
 	}
 }

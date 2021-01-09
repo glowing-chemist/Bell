@@ -79,7 +79,7 @@ DebugAABBTechnique::DebugAABBTechnique(Engine* eng, RenderGraph& graph) :
     debugAABBTask.setVertexAttributes(VertexAttributes::Position4);
     debugAABBTask.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
     debugAABBTask.addInput("ABBBMatrix", AttachmentType::PushConstants);
-    debugAABBTask.addOutput(kGlobalLighting, AttachmentType::RenderTarget2D, Format::RGBA8UNorm);
+    debugAABBTask.addOutput(kGlobalLighting, AttachmentType::RenderTarget2D, Format::RGBA16Float);
     debugAABBTask.addOutput(kGBufferDepth, AttachmentType::Depth, Format::D32Float);
     debugAABBTask.setRecordCommandsCallback(
                 [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>& meshes)
@@ -140,7 +140,7 @@ DebugAABBTechnique::DebugAABBTechnique(Engine* eng, RenderGraph& graph) :
     wireFrameTask.setVertexAttributes(VertexAttributes::Position4 | VertexAttributes::Normals | VertexAttributes::Tangents | VertexAttributes::TextureCoordinates | VertexAttributes::Albedo);
     wireFrameTask.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
     wireFrameTask.addInput("Wireframe transforms", AttachmentType::PushConstants);
-    wireFrameTask.addOutput(kGlobalLighting, AttachmentType::RenderTarget2D, Format::RGBA8UNorm);
+    wireFrameTask.addOutput(kGlobalLighting, AttachmentType::RenderTarget2D, Format::RGBA16Float);
     wireFrameTask.addOutput(kGBufferDepth, AttachmentType::Depth, Format::D32Float);
     wireFrameTask.setRecordCommandsCallback([this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>& meshes)
     {
@@ -170,7 +170,7 @@ DebugAABBTechnique::DebugAABBTechnique(Engine* eng, RenderGraph& graph) :
     lightDebug.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
     lightDebug.addInput(kLightBuffer, AttachmentType::ShaderResourceSet);
     lightDebug.addInput("Light transforms", AttachmentType::PushConstants);
-    lightDebug.addOutput(kGlobalLighting, AttachmentType::RenderTarget2D, Format::RGBA8UNorm);
+    lightDebug.addOutput(kGlobalLighting, AttachmentType::RenderTarget2D, Format::RGBA16Float);
     lightDebug.addOutput(kGBufferDepth, AttachmentType::Depth, Format::D32Float);
     lightDebug.setRecordCommandsCallback([this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
     {

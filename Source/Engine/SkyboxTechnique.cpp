@@ -19,7 +19,7 @@ SkyboxTechnique::SkyboxTechnique(Engine* eng, RenderGraph& graph) :
     task.addInput(kSkyBox, AttachmentType::CubeMap);
 	task.addInput(kDefaultSampler, AttachmentType::Sampler);
 
-	task.addOutput(kGlobalLighting, AttachmentType::RenderTarget2D, Format::RGBA8UNorm);
+    task.addOutput(kGlobalLighting, AttachmentType::RenderTarget2D, Format::RGBA16Float);
 	task.addOutput(kGBufferDepth, AttachmentType::Depth, Format::D32Float);
 
 	task.setRecordCommandsCallback(

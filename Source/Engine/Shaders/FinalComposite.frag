@@ -1,4 +1,5 @@
 #include "VertexOutputs.hlsl"
+#include "ColourMapping.hlsl"
 
 #if defined(Deferred_analytical_lighting)
 #define USING_ANALYTICAL_LIGHTING 1
@@ -53,10 +54,15 @@ float4 main(PositionAndUVVertOutput vertOutput)
 	lighting *= ssao.Sample(defaultSampler, vertOutput.uv);
 #endif
 
+#if defined(TAA)
 	float4 result = lighting;
+#else
+	float4 result = performColourMapping(lighting, 2.2f, 1.0f);
+#endif
+
 #if USING_OVERLAY
 	const float4 overlay = overlay.Sample(defaultSampler, vertOutput.uv);
-	result = ((1.0f - overlay.w) * lighting) + overlay;
+	result = ((1.0f - overlay.w) * result) + overlay;
 #endif
 
 	return result;

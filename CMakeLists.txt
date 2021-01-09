@@ -305,6 +305,7 @@ set(SHADERS
 	Terrain.vert
 	TerrainDeferred.frag
 	ModifyTerrain.comp
+	ColourMapping.hlsl
     )
 
 message(STATUS "shader directory ${BELL_SHADER_DIR}Shaders")

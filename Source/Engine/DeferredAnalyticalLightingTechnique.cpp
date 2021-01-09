@@ -5,7 +5,7 @@
 DeferredAnalyticalLightingTechnique::DeferredAnalyticalLightingTechnique(Engine* eng, RenderGraph& graph) :
 	Technique("deferred analytical lighting", eng->getDevice()),
     mDeferredAnalitucalLightingShader( eng->getShader("./Shaders/DeferredAnalyticalLighting.comp") ),
-	mAnalyticalLighting(eng->getDevice(), Format::RGBA8UNorm, ImageUsage::Sampled | ImageUsage::Storage, eng->getSwapChainImageView()->getImageExtent().width, 
+    mAnalyticalLighting(eng->getDevice(), Format::RGBA16Float, ImageUsage::Sampled | ImageUsage::Storage, eng->getSwapChainImageView()->getImageExtent().width,
 		eng->getSwapChainImageView()->getImageExtent().height, 1, 1, 1, 1, kAnalyticLighting),
     mAnalyticalLightingView(mAnalyticalLighting, ImageViewType::Colour)
 {

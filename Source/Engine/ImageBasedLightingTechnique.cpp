@@ -33,8 +33,8 @@ DeferredImageBasedLightingTechnique::DeferredImageBasedLightingTechnique(Engine*
     if(eng->isPassRegistered(PassType::SSR) || eng->isPassRegistered(PassType::RayTracedReflections))
         task.addInput(kReflectionMap, AttachmentType::Texture2D);
 
-    task.addManagedOutput(kGlobalLighting, AttachmentType::RenderTarget2D, Format::RGBA8UNorm,
-        SizeClass::Swapchain, LoadOp::Clear_Black, StoreOp::Store, ImageUsage::ColourAttachment | ImageUsage::Sampled | ImageUsage::TransferSrc);
+    task.addManagedOutput(kGlobalLighting, AttachmentType::RenderTarget2D, Format::RGBA16Float,
+        SizeClass::Swapchain, LoadOp::Clear_Black, StoreOp::Store, ImageUsage::ColourAttachment | ImageUsage::Sampled);
 
     task.setRecordCommandsCallback(
         [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine*, const std::vector<const MeshInstance*>&)
