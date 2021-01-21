@@ -50,6 +50,7 @@ class BarrierRecorderBase : public DeviceChild
 {
 public:
 	BarrierRecorderBase(RenderDevice* device);
+    virtual ~BarrierRecorderBase() = default;
 
 	virtual void transferResourceToQueue(Image&, const QueueType, const Hazard, const SyncPoint src, const SyncPoint dst) = 0;
 	virtual void transferResourceToQueue(Buffer&, const QueueType, const Hazard, const SyncPoint src, const SyncPoint dst) = 0;
