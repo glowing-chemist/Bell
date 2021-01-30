@@ -33,7 +33,7 @@ VulkanRenderDevice::VulkanRenderDevice(vk::Instance instance,
     mPermanentDescriptorManager{this},
     mSubmissionCount{0},
     mFinishedTimeStamps{}
-{
+{   
     // This is a bit of a hack to work around not being able to tell for the first few frames that
     // the fences we waited on hadn't been submitted (as no work has been done).
     mCurrentSubmission = mSwapChain->getNumberOfSwapChainImages();
@@ -42,6 +42,15 @@ VulkanRenderDevice::VulkanRenderDevice(vk::Instance instance,
     mGraphicsQueue = mDevice.getQueue(static_cast<uint32_t>(mQueueFamilyIndicies.GraphicsQueueIndex), 0);
     mComputeQueue  = mDevice.getQueue(static_cast<uint32_t>(mQueueFamilyIndicies.ComputeQueueIndex), 0);
     mTransferQueue = mDevice.getQueue(static_cast<uint32_t>(mQueueFamilyIndicies.TransferQueueIndex), 0);
+
+#if PROFILE
+    mProfileDeviceHandle = mDevice;
+    mProfilePhysicalDeviceHandle = mPhysicalDevice;
+    mProfileGraphicsQueue = mGraphicsQueue;
+#endif
+
+    uint32_t graphicsQueueIndex = mQueueFamilyIndicies.GraphicsQueueIndex;
+    PROFILER_INIT_VULKAN(&mProfileDeviceHandle, &mProfilePhysicalDeviceHandle, &mProfileGraphicsQueue, &graphicsQueueIndex, 1);
 
     mLimits = mPhysicalDevice.getProperties().limits;
 

@@ -31,6 +31,9 @@ include_directories(
 			"${CMAKE_CURRENT_LIST_DIR}/ThirdParty/glm"
 			"${CMAKE_CURRENT_LIST_DIR}/ThirdParty/stb_image"
 			"${CMAKE_CURRENT_LIST_DIR}/ThirdParty/D3D12MemoryAllocator/src"
+			"${CMAKE_CURRENT_LIST_DIR}/ThirdParty/RecastDetour/Recast/Include"
+			"${CMAKE_CURRENT_LIST_DIR}/ThirdParty/RecastDetour/Detour/Include"
+			"${CMAKE_CURRENT_LIST_DIR}/ThirdParty/Optik/src"
 			${glmIncludeDirs}
 		    )
 
@@ -41,6 +44,8 @@ set(GLFW_BUILD_EXAMPLES 0)
 add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/ThirdParty/GLFW3/glfw-3.2.1")
 add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/ThirdParty/assimp-4.1.0")
 add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/ThirdParty/imgui-node-editor/NodeEditor")
+add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/ThirdParty/RecastDetour")
+add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/ThirdParty/Optik")
 
 
 if(USE_ASAN)
@@ -165,6 +170,7 @@ set(BELL_SOURCE
     Source/Engine/NavigationMesh.cpp
     Source/Engine/UtilityTasks.cpp
     Source/Engine/VoxelTerrain.cpp
+    Source/Engine/SceneNavigator.cpp
 
     # Techniques
     Source/Engine/SSAOTechnique.cpp
@@ -323,7 +329,7 @@ file(COPY "${CMAKE_CURRENT_LIST_DIR}/Assets" DESTINATION "${CMAKE_BINARY_DIR}/")
 
 
 add_library(${PROJECT_NAME} ${BELL_SOURCE} ${DearImGUI_SOURCE})
-target_link_libraries(${PROJECT_NAME} BELL_BASE assimp)
+target_link_libraries(${PROJECT_NAME} BELL_BASE assimp Recast Detour OptickCore)
 add_dependencies(${PROJECT_NAME} COPY_SHADERS)
 
 

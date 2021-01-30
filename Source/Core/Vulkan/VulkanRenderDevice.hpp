@@ -10,6 +10,7 @@
 #include <shared_mutex>
 #include <vulkan/vulkan.hpp>
 
+#include "Core/Profiling.hpp"
 #include "Core/RenderDevice.hpp"
 #include "Core/BarrierManager.hpp"
 #include "MemoryManager.hpp"
@@ -391,6 +392,11 @@ private:
     // underlying devices
     vk::Device mDevice;
     vk::PhysicalDevice mPhysicalDevice;
+#if PROFILE // Just copies of the vkhpp handles for interfacing with optik
+    VkDevice mProfileDeviceHandle;
+    VkPhysicalDevice mProfilePhysicalDeviceHandle;
+    VkQueue mProfileGraphicsQueue;
+#endif
 
 	vk::Instance mInstance;
 

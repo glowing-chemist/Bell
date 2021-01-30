@@ -15,6 +15,7 @@
 #include "Engine/UniformBuffers.h"
 #include "Engine/Technique.hpp"
 #include "Engine/ThreadPool.hpp"
+#include "Core/Profiling.hpp"
 
 #include "imgui.h"
 
@@ -192,11 +193,13 @@ public:
 
     void startFrame(const std::chrono::microseconds& frameDelta)
     {
-    mRenderDevice->startFrame();
+        PROFILER_TICK("Start frame")
 
-    mFrameUpdateDelta = frameDelta;
-    // Start timestamp after swapchain wait ie don't count waiting for vsync in frametime.
-    mFrameStartTime = std::chrono::system_clock::now();
+        mRenderDevice->startFrame();
+
+        mFrameUpdateDelta = frameDelta;
+        // Start timestamp after swapchain wait ie don't count waiting for vsync in frametime.
+        mFrameStartTime = std::chrono::system_clock::now();
     }
 
     void endFrame()
