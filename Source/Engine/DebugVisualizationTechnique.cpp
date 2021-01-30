@@ -84,6 +84,10 @@ DebugAABBTechnique::DebugAABBTechnique(Engine* eng, RenderGraph& graph) :
     debugAABBTask.setRecordCommandsCallback(
                 [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>& meshes)
                 {
+                    PROFILER_EVENT("Debug aabb");
+                    PROFILER_GPU_TASK(exec);
+                    PROFILER_GPU_EVENT("Debug aabb");
+
                     exec->bindVertexBuffer(this->mVertexBufferView, 0);
                     exec->bindIndexBuffer(this->mIndexBufferView, 0);
                     const RenderTask& task = graph.getTask(taskIndex);
@@ -144,6 +148,10 @@ DebugAABBTechnique::DebugAABBTechnique(Engine* eng, RenderGraph& graph) :
     wireFrameTask.addOutput(kGBufferDepth, AttachmentType::Depth, Format::D32Float);
     wireFrameTask.setRecordCommandsCallback([this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>& meshes)
     {
+        PROFILER_EVENT("debug wireframe");
+        PROFILER_GPU_TASK(exec);
+        PROFILER_GPU_EVENT("debug wireframe");
+
         exec->bindIndexBuffer(eng->getIndexBuffer(), 0);
         exec->bindVertexBuffer(eng->getVertexBuffer(), 0);
 
@@ -174,6 +182,10 @@ DebugAABBTechnique::DebugAABBTechnique(Engine* eng, RenderGraph& graph) :
     lightDebug.addOutput(kGBufferDepth, AttachmentType::Depth, Format::D32Float);
     lightDebug.setRecordCommandsCallback([this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
     {
+        PROFILER_EVENT("debug light");
+        PROFILER_GPU_TASK(exec);
+        PROFILER_GPU_EVENT("debug light");
+
         struct LightTransform
         {
             float4x4 trans;

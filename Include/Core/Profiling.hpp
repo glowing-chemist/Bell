@@ -1,35 +1,49 @@
 #ifndef BELL_PROFILING
 #define BELL_PROFILING
 
-#define PROFILE 1
+#define PROFILE 0
 
-#if PROFILE
-#define USE_OPTIK 1
-#endif
+#define USE_OPTIK PROFILE
 
 #include "optick.h"
 
-#ifdef PROFILE
+#ifdef VULKAN
+#include "Core/Vulkan/VulkanExecutor.hpp"
+#else
+#include "Core/DX_12/DX_12Executor.hpp"
+#endif
 
-#define PROFILER_TICK(n) OPTICK_FRAME(n)
+#if PROFILE
 
-#define PROFILER_EVENT() OPTIK_EVENT()
+#define PROFILER_START_FRAME(n) OPTICK_FRAME(n)
 
-#define PROFILER_THREAD(n) OPTIK_THREAD(n)
+#define PROFILER_END_FRAME() OPTICK_FRAME_FLIP()
 
-#define PROFILER_TAG(e, n) OPTIK_TAG(n, e)
+#define PROFILER_EVENT() OPTICK_EVENT()
+
+#define PROFILER_THREAD(n) OPTICK_THREAD(n)
+
+#define PROFILER_TAG(e, n) OPTICK_TAG(n, e)
 
 #define PROFILER_INIT_VULKAN(dev, physDev, queues, queueFamilies, queueCount) OPTICK_GPU_INIT_VULKAN(dev, physDev, queues, queueFamilies, queueCount, nullptr)
 
 #define PROFILER_GPU_FLIP(swapChain) OPTICK_GPU_FLIP(swapChain)
 
-#define PROFILER_GPU_SCOPE(cmdList) OPTICK_GPU_CONTEXT(cmdList)
+#ifdef VULKAN
+
+#define PROFILER_GPU_TASK(exec) OPTICK_GPU_CONTEXT(static_cast<VulkanExecutor*>(exec)->getCommandBuffer())
+
+#else
+
+#define PROFILER_GPU_TASK(exec) OPTICK_GPU_CONTEXT(static_cast<DX12_Executor*>(exec)->getCommandList())
+
+#endif
 
 #define PROFILER_GPU_EVENT(n) OPTICK_GPU_EVENT(n)
 
 #else
 
-#define PROFILER_TICK(n) (void)n
+#define PROFILER_START_FRAME(n)
 
 #define PROFILER_EVENT()
 
@@ -39,9 +53,9 @@
 
 #define PROFILER_INIT_VULKAN(dev, physDev, queues, queueFamilies, queueCount)
 
-PROFILER_GPU_FLIP(swapChain)
+#define PROFILER_GPU_FLIP(swapChain)
 
-#define PROFILER_GPU_SCOPE(cmdList)
+#define PROFILER_GPU_TASK(exec)
 
 #define PROFILER_GPU_EVENT(n)
 

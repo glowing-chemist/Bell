@@ -109,6 +109,10 @@ CascadeShadowMappingTechnique::CascadeShadowMappingTechnique(Engine* eng, Render
         blurXTask0.setRecordCommandsCallback(
                     [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
                     {
+                        PROFILER_EVENT("shadow cascade0 blurx");
+                        PROFILER_GPU_TASK(exec);
+                        PROFILER_GPU_EVENT("shadow cascade0 blurx");
+
                         const RenderTask& task = graph.getTask(taskIndex);
                         exec->setComputeShader(static_cast<const ComputeTask&>(task), graph, mBlurXShader);
 
@@ -127,6 +131,10 @@ CascadeShadowMappingTechnique::CascadeShadowMappingTechnique(Engine* eng, Render
         blurYTask0.setRecordCommandsCallback(
                     [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
                     {
+                        PROFILER_EVENT("shadow cascade0 blury");
+                        PROFILER_GPU_TASK(exec);
+                        PROFILER_GPU_EVENT("shadow cascade0 blury");
+
                         const RenderTask& task = graph.getTask(taskIndex);
                         exec->setComputeShader(static_cast<const ComputeTask&>(task), graph, mBlurYShader);
 
@@ -145,6 +153,10 @@ CascadeShadowMappingTechnique::CascadeShadowMappingTechnique(Engine* eng, Render
         blurXTask1.setRecordCommandsCallback(
                     [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
                     {
+                        PROFILER_EVENT("shadow cascade1 blurx");
+                        PROFILER_GPU_TASK(exec);
+                        PROFILER_GPU_EVENT("shadow cascade1 blurx");
+
                         const RenderTask& task = graph.getTask(taskIndex);
                         exec->setComputeShader(static_cast<const ComputeTask&>(task), graph, mBlurXShader);
 
@@ -163,6 +175,10 @@ CascadeShadowMappingTechnique::CascadeShadowMappingTechnique(Engine* eng, Render
         blurYTask1.setRecordCommandsCallback(
                     [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
                     {
+                        PROFILER_EVENT("shadow cascade1 blury");
+                        PROFILER_GPU_TASK(exec);
+                        PROFILER_GPU_EVENT("shadow cascade1 blury");
+
                         const RenderTask& task = graph.getTask(taskIndex);
                         exec->setComputeShader(static_cast<const ComputeTask&>(task), graph, mBlurYShader);
 
@@ -181,6 +197,10 @@ CascadeShadowMappingTechnique::CascadeShadowMappingTechnique(Engine* eng, Render
         blurXTask2.setRecordCommandsCallback(
                     [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
                     {
+                        PROFILER_EVENT("shadow cascade2 blurx");
+                        PROFILER_GPU_TASK(exec);
+                        PROFILER_GPU_EVENT("shadow cascade2 blurx");
+
                         const RenderTask& task = graph.getTask(taskIndex);
                         exec->setComputeShader(static_cast<const ComputeTask&>(task), graph, mBlurXShader);
 
@@ -199,6 +219,10 @@ CascadeShadowMappingTechnique::CascadeShadowMappingTechnique(Engine* eng, Render
         blurYTask2.setRecordCommandsCallback(
                     [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
                     {
+                        PROFILER_EVENT("shadow cascade2 blurxy");
+                        PROFILER_GPU_TASK(exec);
+                        PROFILER_GPU_EVENT("shadow cascade2 blurxy");
+
                         const RenderTask& task = graph.getTask(taskIndex);
                         exec->setComputeShader(static_cast<const ComputeTask&>(task), graph, mBlurYShader);
 
@@ -223,6 +247,10 @@ CascadeShadowMappingTechnique::CascadeShadowMappingTechnique(Engine* eng, Render
         resolveTask.setRecordCommandsCallback(
                     [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
                     {
+                        PROFILER_EVENT("ressolve shadows");
+                        PROFILER_GPU_TASK(exec);
+                        PROFILER_GPU_EVENT("ressolve shadows");
+
                         const RenderTask& task = graph.getTask(taskIndex);
                         exec->setComputeShader(static_cast<const ComputeTask&>(task), graph, mResolveShader);
 

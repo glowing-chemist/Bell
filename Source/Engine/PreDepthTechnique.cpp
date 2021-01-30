@@ -33,6 +33,10 @@ PreDepthTechnique::PreDepthTechnique(Engine* eng, RenderGraph& graph) :
         task.setRecordCommandsCallback(
             [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>& meshes)
             {
+                PROFILER_EVENT("Pre-Z");
+                PROFILER_GPU_TASK(exec);
+                PROFILER_GPU_EVENT("Pre-Z");
+
                 exec->bindIndexBuffer(eng->getIndexBuffer(), 0);
                 exec->bindVertexBuffer(eng->getVertexBuffer(), 0);
 
@@ -67,6 +71,10 @@ PreDepthTechnique::PreDepthTechnique(Engine* eng, RenderGraph& graph) :
         task.setRecordCommandsCallback(
             [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>& meshes)
             {
+                PROFILER_EVENT("Pre-Z");
+                PROFILER_GPU_TASK(exec);
+                PROFILER_GPU_EVENT("Pre-Z");
+
                 exec->bindIndexBuffer(eng->getIndexBuffer(), 0);
                 exec->bindVertexBuffer(eng->getVertexBuffer(), 0);
 

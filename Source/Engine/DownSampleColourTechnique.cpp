@@ -32,6 +32,10 @@ DownSampleColourTechnique::DownSampleColourTechnique(Engine* eng, RenderGraph& g
 	downSampleColourTask.addInput(kDownSampledColour, AttachmentType::TransferDestination);
 	downSampleColourTask.setRecordCommandsCallback([this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
 	{
+		PROFILER_EVENT("Downsample colour");
+		PROFILER_GPU_TASK(exec);
+		PROFILER_GPU_EVENT("Downsample colour");
+
 		// put internal resourece in top layout trasnferDst
 		{
 			BarrierRecorder barrier{ getDevice() };

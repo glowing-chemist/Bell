@@ -4,6 +4,7 @@
 #include "VulkanRenderDevice.hpp"
 #include "Core/BellLogging.hpp"
 #include "Core/ConversionUtils.hpp"
+#include "Core/Profiling.hpp"
 
 #include <vulkan/vulkan.hpp>
 #include <GLFW/glfw3.h>
@@ -129,6 +130,7 @@ void VulkanSwapChain::present(const QueueType queue)
 	
 	const VkQueue presentQueue = static_cast<VulkanRenderDevice*>(getDevice())->getQueue(queue);
 
+	PROFILER_GPU_FLIP(&tempSwapchain);
 	VkResult result = vkQueuePresentKHR(presentQueue, &info);
 
     mCurrentImageIndex = (mCurrentImageIndex + 1) % mSwapChainImages.size();

@@ -24,7 +24,7 @@ source_group("OptickCore" FILES ${OPTICK_SRC})
 
 # Enabled
 option(OPTICK_ENABLED "Enable profiling with Optick" ON)
-option(OPTICK_INSTALL_TARGETS "Should optick be installed? Set to OFF if you use add_subdirectory to include Optick." ON)
+option(OPTICK_INSTALL_TARGETS "Should optick be installed? Set to OFF if you use add_subdirectory to include Optick." OFF)
 
 if(NOT OPTICK_ENABLED)
 	message(STATUS "Optick is disabled")
@@ -39,7 +39,7 @@ endif()
 # Options
 option(OPTICK_USE_VULKAN "Built-in support for Vulkan" ON)
 option(OPTICK_USE_D3D12 "Built-in support for DirectX 12" OFF)
-option(OPTICK_BUILD_GUI_APP "Build Optick gui viewer app" ON)
+option(OPTICK_BUILD_GUI_APP "Build Optick gui viewer app" OFF)
 option(OPTICK_BUILD_CONSOLE_SAMPLE "Build Optick console sample app" ${standalone})
 
 # OptickCore

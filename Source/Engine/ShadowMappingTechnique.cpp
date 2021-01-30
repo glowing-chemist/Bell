@@ -105,6 +105,10 @@ void ShadowMappingTechnique::render(RenderGraph& graph, Engine*)
     shadowTask.setRecordCommandsCallback(
         [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
         {
+            PROFILER_EVENT("Render shadow maps");
+            PROFILER_GPU_TASK(exec);
+            PROFILER_GPU_EVENT("Render shadow maps");
+
             const Frustum lightFrustum = eng->getScene()->getShadowingLightFrustum();
             std::vector<const MeshInstance*> meshes = eng->getScene()->getViewableMeshes(lightFrustum);
             std::sort(meshes.begin(), meshes.end(), [lightPosition = eng->getScene()->getShadowingLight().mPosition](const MeshInstance* lhs, const MeshInstance* rhs)
@@ -169,6 +173,10 @@ void ShadowMappingTechnique::render(RenderGraph& graph, Engine*)
     resolveTask.setRecordCommandsCallback(
         [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
         {
+            PROFILER_EVENT("Ressolve shadow maps");
+            PROFILER_GPU_TASK(exec);
+            PROFILER_GPU_EVENT("Ressolve shadow maps");
+
             const RenderTask& task = graph.getTask(taskIndex);
             exec->setComputeShader(static_cast<const ComputeTask&>(task), graph, mResolveShader);
 

@@ -3,7 +3,7 @@
 #include "Engine/Engine.hpp"
 #include "Engine/DefaultResourceSlots.hpp"
 #include "Core/Executor.hpp"
-
+#include "Core/Profiling.hpp"
 
 DeferredImageBasedLightingTechnique::DeferredImageBasedLightingTechnique(Engine* eng, RenderGraph& graph) :
     Technique("GlobalIBL", eng->getDevice()),
@@ -39,6 +39,10 @@ DeferredImageBasedLightingTechnique::DeferredImageBasedLightingTechnique(Engine*
     task.setRecordCommandsCallback(
         [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine*, const std::vector<const MeshInstance*>&)
         {
+            PROFILER_EVENT("Defered IBL");
+            PROFILER_GPU_TASK(exec);
+            PROFILER_GPU_EVENT("Defered IBL");
+
             const RenderTask& task = graph.getTask(taskIndex);
             exec->setGraphicsShaders(static_cast<const GraphicsTask&>(task), graph, mIBLVertexShader, nullptr, nullptr, nullptr, mIBLFragmentShader);
 

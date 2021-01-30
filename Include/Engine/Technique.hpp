@@ -28,6 +28,11 @@ public:
 
     virtual void bindResources(RenderGraph&) = 0;
 
+    const std::string getName() const
+    {
+        return mName;
+    }
+
 private:
 
     std::string mName;

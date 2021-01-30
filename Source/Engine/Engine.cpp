@@ -454,6 +454,8 @@ uint64_t Engine::getMeshBoundsIndex(const MeshInstance* inst)
 
 void Engine::execute(RenderGraph& graph)
 {
+    PROFILER_EVENT();
+
     // Upload vertex/index data if required.
     auto& vertexData = mVertexBuilder.finishRecording();
     auto& indexData = mIndexBuilder.finishRecording();
@@ -580,6 +582,7 @@ void Engine::execute(RenderGraph& graph)
     if(mCurrentScene)
     {
         meshes = mCurrentScene ? mCurrentScene->getViewableMeshes(mCurrentScene->getCamera().getFrustum()) : std::vector<const MeshInstance*>{};
+        PROFILER_EVENT("sort meshes");
         std::sort(meshes.begin(), meshes.end(), [camera = mCurrentScene->getCamera()](const MeshInstance* lhs, const MeshInstance* rhs)
         {
             // Sort first by material flags and than by disatnce to camera.
@@ -775,6 +778,8 @@ void Engine::terimateAnimation(const InstanceID id, const std::string& name)
 
 void Engine::tickAnimations()
 {
+    PROFILER_EVENT();
+
     double elapsedTime = mFrameUpdateDelta.count();
     elapsedTime /= 1000000.0;
     uint64_t boneOffset = 0;
@@ -831,6 +836,8 @@ void Engine::tickAnimations()
 
 void Engine::recordScene()
 {   
+    PROFILER_EVENT();
+
     // Add new techniques
     if (mPassesRegisteredThisFrame > 0)
     {
@@ -861,12 +868,16 @@ void Engine::recordScene()
 
 void Engine::render()
 {
+    PROFILER_EVENT();
+
 	execute(mCurrentRenderGraph);
 }
 
 
 void Engine::updateGlobalBuffers()
 {
+    PROFILER_EVENT();
+
     if(!mInitialisedTLCTextures)
     {
         // Load textures for LTC.

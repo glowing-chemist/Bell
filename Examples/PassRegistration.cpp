@@ -4,6 +4,7 @@
 
 #include <imgui.h>
 #include "Engine/GeomUtils.h"
+#include "Core/Profiling.hpp"
 #include <glm/gtx/transform.hpp>
 
 #include "Engine/Engine.hpp"
@@ -246,6 +247,8 @@ int main()
 
     while(!glfwWindowShouldClose(window))
     {
+        PROFILER_START_FRAME("Start frame");
+
         const auto currentTime = std::chrono::system_clock::now();
         const std::chrono::duration<float, std::ratio<1, 1000>> diff = currentTime - lastCPUTime;
         lastCPUTime = currentTime;

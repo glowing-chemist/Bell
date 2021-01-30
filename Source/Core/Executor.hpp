@@ -1,8 +1,6 @@
 #ifndef EXECUTOR_HPP
 #define EXECUTOR_HPP
 
-#include "glm/mat4x4.hpp"
-
 #include "Core/DeviceChild.hpp"
 #include "Core/Sampler.hpp"
 

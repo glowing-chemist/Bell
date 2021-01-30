@@ -34,6 +34,10 @@ DeferredProbeGITechnique::DeferredProbeGITechnique(Engine* eng, RenderGraph& gra
     task.setRecordCommandsCallback(
         [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine*, const std::vector<const MeshInstance*>&)
         {
+            PROFILER_EVENT("Deferred probe GI");
+            PROFILER_GPU_TASK(exec);
+            PROFILER_GPU_EVENT("Deferred probe GI");
+
             const RenderTask& task = graph.getTask(taskIndex);
             exec->setGraphicsShaders(static_cast<const GraphicsTask&>(task), graph, mProbeVertexShader, nullptr, nullptr, nullptr, mProbeFragmentShader);
 

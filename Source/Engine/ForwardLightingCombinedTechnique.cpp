@@ -54,8 +54,12 @@ ForwardCombinedLightingTechnique::ForwardCombinedLightingTechnique(Engine* eng, 
     if(eng->isPassRegistered(PassType::OcclusionCulling))
     {
         task.setRecordCommandsCallback(
-            [](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>& meshes)
+            [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>& meshes)
             {
+                PROFILER_EVENT("Forward combiuned lighting");
+                PROFILER_GPU_TASK(exec);
+                PROFILER_GPU_EVENT("Forward combiuned lighting");
+            
                 exec->bindIndexBuffer(eng->getIndexBuffer(), 0);
                 exec->bindVertexBuffer(eng->getVertexBuffer(), 0);
 
@@ -100,8 +104,12 @@ ForwardCombinedLightingTechnique::ForwardCombinedLightingTechnique(Engine* eng, 
     else
     {
         task.setRecordCommandsCallback(
-            [](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>& meshes)
+            [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>& meshes)
             {
+                PROFILER_EVENT("Forward combiuned lighting");
+                PROFILER_GPU_TASK(exec);
+                PROFILER_GPU_EVENT("Forward combiuned lighting");
+
                 exec->bindIndexBuffer(eng->getIndexBuffer(), 0);
                 exec->bindVertexBuffer(eng->getVertexBuffer(), 0);
 

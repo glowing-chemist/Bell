@@ -8,6 +8,7 @@
 #include "VulkanExecutor.hpp"
 #include "VulkanCommandContext.hpp"
 #include "Core/ContainerUtils.hpp"
+#include "Core/Profiling.hpp"
 
 #include "RenderGraph/RenderGraph.hpp"
 
@@ -246,6 +247,8 @@ uint32_t VulkanRenderDevice::getQueueFamilyIndex(const QueueType type) const
 
 GraphicsPipelineHandles VulkanRenderDevice::createPipelineHandles(const GraphicsTask& task, const RenderGraph& graph)
 {
+    PROFILER_EVENT();
+
     const vk::RenderPass renderPass = generateRenderPass(task);
 
 	const std::vector<vk::DescriptorSetLayout> SRSLayouts = generateShaderResourceSetLayouts(task, graph);
@@ -260,6 +263,8 @@ GraphicsPipelineHandles VulkanRenderDevice::createPipelineHandles(const Graphics
 
 ComputePipelineHandles VulkanRenderDevice::createPipelineHandles(const ComputeTask& task, const RenderGraph& graph)
 {
+    PROFILER_EVENT();
+
 	const std::vector<vk::DescriptorSetLayout> SRSLayouts = generateShaderResourceSetLayouts(task, graph);
     const vk::PipelineLayout layout = generatePipelineLayout(SRSLayouts, task);
 
@@ -271,6 +276,8 @@ ComputePipelineHandles VulkanRenderDevice::createPipelineHandles(const ComputeTa
 
 vk::RenderPass	VulkanRenderDevice::generateRenderPass(const GraphicsTask& task)
 {
+    PROFILER_EVENT();
+
     const auto& outputAttachments = task.getOuputAttachments();
 
     std::vector<vk::AttachmentDescription> attachmentDescriptions;
@@ -373,6 +380,8 @@ vk::RenderPass	VulkanRenderDevice::generateRenderPass(const GraphicsTask& task)
 template<typename B>
 vk::DescriptorSetLayout VulkanRenderDevice::generateDescriptorSetLayoutBindings(const std::vector<B>& bindings, const TaskType taskType)
 {
+    PROFILER_EVENT();
+
 	std::vector<vk::DescriptorSetLayoutBinding> layoutBindings{};
 	layoutBindings.reserve(bindings.size());
 
@@ -462,6 +471,8 @@ vk::DescriptorSetLayout VulkanRenderDevice::generateDescriptorSetLayout(const Re
 
 vk::PipelineLayout VulkanRenderDevice::generatePipelineLayout(const std::vector< vk::DescriptorSetLayout>& descLayout, const RenderTask& task)
 {
+    PROFILER_EVENT();
+
     vk::PipelineLayoutCreateInfo info{};
     info.setSetLayoutCount(descLayout.size());
     info.setPSetLayouts(descLayout.data());
@@ -490,6 +501,8 @@ vk::PipelineLayout VulkanRenderDevice::generatePipelineLayout(const std::vector<
 
 vulkanResources VulkanRenderDevice::getTaskResources(const RenderGraph& graph, const RenderTask& task, const uint64_t prefixHash)
 {
+    PROFILER_EVENT();
+
     std::hash<std::string> stringHasher{};
 
     uint64_t hash = prefixHash;
@@ -534,6 +547,8 @@ vulkanResources VulkanRenderDevice::getTaskResources(const RenderGraph& graph, c
 
 vulkanResources VulkanRenderDevice::generateVulkanResources(const RenderGraph& graph, const RenderTask& task)
 {
+    PROFILER_EVENT();
+
     if(task.taskType() == TaskType::Graphics)
     {
         const GraphicsTask& graphicsTask = static_cast<const GraphicsTask&>(task);
@@ -573,6 +588,8 @@ vulkanResources VulkanRenderDevice::generateVulkanResources(const RenderGraph& g
 
 vk::Framebuffer VulkanRenderDevice::createFrameBuffer(const RenderGraph& graph, const uint32_t taskIndex, const vk::RenderPass renderPass)
 {
+    PROFILER_EVENT();
+
     const auto& outputBindings = graph.getTask(taskIndex).getOuputAttachments();
 
     std::vector<vk::ImageView> imageViews{};
@@ -608,6 +625,8 @@ vk::Framebuffer VulkanRenderDevice::createFrameBuffer(const RenderGraph& graph, 
 
 std::vector<vk::DescriptorSetLayout> VulkanRenderDevice::generateShaderResourceSetLayouts(const RenderTask& task, const RenderGraph& graph)
 {
+    PROFILER_EVENT();
+
 	std::vector<vk::DescriptorSetLayout> layouts{};
 	layouts.push_back(generateDescriptorSetLayout(task));
 
@@ -635,6 +654,8 @@ vk::Fence VulkanRenderDevice::createFence(const bool signaled)
 
 vk::Sampler VulkanRenderDevice::getImmutableSampler(const Sampler& samplerDesc)
 {
+    PROFILER_EVENT();
+
     vk::Sampler sampler = mImmutableSamplerCache[samplerDesc];
 
     if(sampler != vk::Sampler(nullptr))
@@ -698,6 +719,8 @@ vk::Sampler VulkanRenderDevice::getImmutableSampler(const Sampler& samplerDesc)
 
 void VulkanRenderDevice::startFrame()
 {
+    PROFILER_EVENT();
+
     frameSyncSetup();
     // update timestampts.
     mFinishedTimeStamps.clear();
@@ -734,6 +757,8 @@ void VulkanRenderDevice::endFrame()
 
 void VulkanRenderDevice::submitContext(CommandContextBase *context, const bool finalSubmission)
 {
+    PROFILER_EVENT();
+
     vk::CommandBuffer primaryCmdBuffer = static_cast<VulkanCommandContext*>(context)->getPrefixCommandBuffer();
     primaryCmdBuffer.end();
 
@@ -812,6 +837,8 @@ void VulkanRenderDevice::frameSyncSetup()
 
 void VulkanRenderDevice::clearDeferredResources()
 {
+    PROFILER_EVENT();
+
     for(uint32_t i = 0; i < mFramebuffersPendingDestruction.size(); ++i)
     {
         auto& [submission, frameBuffer] = mFramebuffersPendingDestruction.front();
@@ -904,6 +931,8 @@ void VulkanRenderDevice::setDebugName(const std::string& name, const uint64_t ha
 
 void VulkanRenderDevice::invalidatePipelines()
 {
+    PROFILER_EVENT();
+
     mDevice.waitIdle();
 
     for(auto& [hash, handles] : mVulkanResources)

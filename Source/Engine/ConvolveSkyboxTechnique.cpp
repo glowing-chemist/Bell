@@ -52,6 +52,10 @@ void ConvolveSkyBoxTechnique::render(RenderGraph& graph, Engine*)
 		convolveTask.setRecordCommandsCallback(
             [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine*, const std::vector<const MeshInstance*>&)
 			{
+                PROFILER_EVENT("Convolve skybox");
+                PROFILER_GPU_TASK(exec);
+                PROFILER_GPU_EVENT("Convolve skybox");
+
                 const RenderTask& task = graph.getTask(taskIndex);
                 exec->setComputeShader(static_cast<const ComputeTask&>(task), graph, mConvolveSkyboxShader);
 

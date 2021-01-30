@@ -1,6 +1,7 @@
 #include "VulkanCommandContext.hpp"
 #include "VulkanExecutor.hpp"
 #include "VulkanRenderDevice.hpp"
+#include "Core/Profiling.hpp"
 
 
 VulkanCommandContext::VulkanCommandContext(RenderDevice* dev, const QueueType queue) :
@@ -24,6 +25,8 @@ VulkanCommandContext::~VulkanCommandContext()
 
 void VulkanCommandContext::setupState(const RenderGraph& graph, uint32_t taskIndex, Executor* exec, const uint64_t prefixHash)
 {
+    PROFILER_EVENT();
+
     VulkanRenderDevice* device = static_cast<VulkanRenderDevice*>(getDevice());
 
     vulkanResources resources = device->getTaskResources(graph, taskIndex, prefixHash);

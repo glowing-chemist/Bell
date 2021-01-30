@@ -86,6 +86,10 @@ SSAOTechnique::SSAOTechnique(Engine* eng, RenderGraph& graph) :
     task.setRecordCommandsCallback(
         [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine*, const std::vector<const MeshInstance*>&)
         {
+            PROFILER_EVENT("ssao");
+            PROFILER_GPU_TASK(exec);
+            PROFILER_GPU_EVENT("ssao");
+
             const RenderTask& task = graph.getTask(taskIndex);
             exec->setGraphicsShaders(static_cast<const GraphicsTask&>(task), graph, mFulllscreenTriangleShader, nullptr, nullptr, nullptr, mSSAOShader);
 

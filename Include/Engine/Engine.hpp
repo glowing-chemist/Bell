@@ -193,8 +193,6 @@ public:
 
     void startFrame(const std::chrono::microseconds& frameDelta)
     {
-        PROFILER_TICK("Start frame")
-
         mRenderDevice->startFrame();
 
         mFrameUpdateDelta = frameDelta;
@@ -214,7 +212,9 @@ public:
 
     void render();
     void swap()
-    { mRenderDevice->swap(); }
+    { 
+        mRenderDevice->swap(); 
+    }
 
     void flushWait()
     { mRenderDevice->flushWait(); }

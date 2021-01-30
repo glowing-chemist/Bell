@@ -2,6 +2,7 @@
 #include "Engine/Engine.hpp"
 #include "Engine/TextureUtil.hpp"
 #include "Core/BellLogging.hpp"
+#include "Core/Profiling.hpp"
 
 #include "assimp/Importer.hpp"
 #include "assimp/postprocess.h"
@@ -709,6 +710,8 @@ void Scene::uploadData(Engine* eng)
 
 void Scene::computeBounds(const AccelerationStructure type)
 {
+    PROFILER_EVENT();
+
     generateSceneAABB(type == AccelerationStructure::Static || type == AccelerationStructure::Physics);
 
     if(type == AccelerationStructure::Static)
@@ -756,6 +759,8 @@ void Scene::computeBounds(const AccelerationStructure type)
 
 std::vector<const MeshInstance *> Scene::getViewableMeshes(const Frustum& frustum) const
 {
+    PROFILER_EVENT();
+
     std::vector<const MeshInstance*> instances;
 
     std::vector<MeshInstance*> staticMeshes = mStaticMeshBoundingVolume.containedWithin(frustum);

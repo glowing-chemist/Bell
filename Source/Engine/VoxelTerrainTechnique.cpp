@@ -65,6 +65,10 @@ VoxelTerrainTechnique::VoxelTerrainTechnique(Engine* eng, RenderGraph& graph) :
         modifyTerrain.setRecordCommandsCallback(
                     [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
                 {
+                    PROFILER_EVENT("Voxel terrain");
+                    PROFILER_GPU_TASK(exec);
+                    PROFILER_GPU_EVENT("voxel terrain");
+
                     if(eng->editTerrain())
                     {
                         const ComputeTask& task = static_cast<const ComputeTask&>(graph.getTask(taskIndex));

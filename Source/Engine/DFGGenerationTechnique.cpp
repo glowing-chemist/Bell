@@ -29,6 +29,10 @@ void DFGGenerationTechnique::render(RenderGraph& graph, Engine*)
 		task.setRecordCommandsCallback(
             [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine*, const std::vector<const MeshInstance*>&)
 			{
+				PROFILER_EVENT("DFG generation");
+				PROFILER_GPU_TASK(exec);
+				PROFILER_GPU_EVENT("DFG generation");
+
                 const RenderTask& task = graph.getTask(taskIndex);
                 exec->setComputeShader(static_cast<const ComputeTask&>(task), graph, mDFGGenerationShader);
 

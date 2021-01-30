@@ -25,6 +25,10 @@ SkyboxTechnique::SkyboxTechnique(Engine* eng, RenderGraph& graph) :
 	task.setRecordCommandsCallback(
         [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine*, const std::vector<const MeshInstance*>&)
 		{
+            PROFILER_EVENT("render skybox");
+            PROFILER_GPU_TASK(exec);
+            PROFILER_GPU_EVENT("render skybox");
+
             const RenderTask& task = graph.getTask(taskIndex);
             exec->setGraphicsShaders(static_cast<const GraphicsTask&>(task), graph, mSkyboxVertexShader, nullptr, nullptr, nullptr, mSkyboxFragmentShader);
 

@@ -25,6 +25,9 @@ SkinningTechnique::SkinningTechnique(Engine* eng, RenderGraph& graph) :
     skinningTask.setRecordCommandsCallback(
                 [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
                 {
+                    PROFILER_EVENT("Skinning");
+                    PROFILER_GPU_TASK(exec);
+                    PROFILER_GPU_EVENT("Skinning");
 
                     std::unordered_map<std::string, uint32_t> boneOffsets{};
 

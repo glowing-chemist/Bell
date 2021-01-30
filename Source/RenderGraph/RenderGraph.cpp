@@ -3,6 +3,7 @@
 #include "Core/RenderDevice.hpp"
 #include "Core/BellLogging.hpp"
 #include "Core/ConversionUtils.hpp"
+#include "COre/Profiling.hpp"
 
 #include <algorithm>
 #include <map>
@@ -180,6 +181,8 @@ void RenderGraph::addDependancy(const std::string& dependancy, const std::string
 
 void RenderGraph::compile(RenderDevice* dev)
 {
+    PROFILER_EVENT();
+
 	compileDependancies();
 	generateInternalResources(dev);
 	reorderTasks();
@@ -189,6 +192,8 @@ void RenderGraph::compile(RenderDevice* dev)
 
 void RenderGraph::compileDependancies()
 {
+    PROFILER_EVENT();
+
 	std::set<std::pair<uint32_t, uint32_t>> dependancies;
 
     for(size_t i = 0; i < mTaskOrder.size(); ++i)
@@ -323,6 +328,8 @@ void RenderGraph::compileDependancies()
 
 void RenderGraph::bindResource(const char* name, const uint32_t flags)
 {
+    PROFILER_EVENT();
+
     uint32_t taskOrderIndex = 0;
 	for(const auto& [taskType, taskIndex] : mTaskOrder)
     {
@@ -750,6 +757,8 @@ const ShaderResourceSet& RenderGraph::getShaderResourceSet(const char* name) con
 
 std::vector<BarrierRecorder> RenderGraph::generateBarriers(RenderDevice* dev)
 {    
+    PROFILER_EVENT();
+
 	std::vector<BarrierRecorder> barriers{};
     for(uint32_t i = 0; i < mTaskOrder.size(); ++i)
         barriers.emplace_back(dev);

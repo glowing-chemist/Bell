@@ -10,6 +10,7 @@
 #include <condition_variable>
 #include <vector>
 
+#include "Core/Profiling.hpp"
 
 class ThreadPool
 {
@@ -40,6 +41,7 @@ public:
         {
             auto workerFunc = [this, i]()
             {
+                PROFILER_THREAD("Worker");
                 const uint32_t queueIndex = i;
                 while(!mExit)
                 {

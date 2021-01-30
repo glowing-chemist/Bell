@@ -34,6 +34,10 @@ OcclusionCullingTechnique::OcclusionCullingTechnique(Engine* eng, RenderGraph& g
     task.setRecordCommandsCallback(
         [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>& meshes)
         {
+            PROFILER_EVENT("Occlusion culling");
+            PROFILER_GPU_TASK(exec);
+            PROFILER_GPU_EVENT("Occlusion culling");
+
             if(!meshes.empty() && !eng->getDebugCameraActive())
             {
                 std::vector<uint32_t> indicies{};

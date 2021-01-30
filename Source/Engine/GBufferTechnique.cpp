@@ -31,8 +31,12 @@ GBufferTechnique::GBufferTechnique(Engine* eng, RenderGraph& graph) :
     if(eng->isPassRegistered(PassType::OcclusionCulling))
     {
         task.setRecordCommandsCallback(
-            [](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>& meshes)
+            [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>& meshes)
             {
+                PROFILER_EVENT("gbuffer fill");
+                PROFILER_GPU_TASK(exec);
+                PROFILER_GPU_EVENT("gbuffer fill");
+
                 exec->bindIndexBuffer(eng->getIndexBuffer(), 0);
                 exec->bindVertexBuffer(eng->getVertexBuffer(), 0);
 
@@ -79,8 +83,12 @@ GBufferTechnique::GBufferTechnique(Engine* eng, RenderGraph& graph) :
     else
     {
         task.setRecordCommandsCallback(
-            [](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>& meshes)
+            [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>& meshes)
             {
+                PROFILER_EVENT("gbuffer fill");
+                PROFILER_GPU_TASK(exec);
+                PROFILER_GPU_EVENT("gbuffer fill");
+
                 exec->bindIndexBuffer(eng->getIndexBuffer(), 0);
                 exec->bindVertexBuffer(eng->getVertexBuffer(), 0);
 
@@ -150,8 +158,12 @@ GBufferPreDepthTechnique::GBufferPreDepthTechnique(Engine* eng, RenderGraph& gra
     if(eng->isPassRegistered(PassType::OcclusionCulling))
     {
         task.setRecordCommandsCallback(
-            [](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>& meshes)
+            [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>& meshes)
             {
+                PROFILER_EVENT("gbuffer fill");
+                PROFILER_GPU_TASK(exec);
+                PROFILER_GPU_EVENT("gbuffer fill");
+
                 exec->bindIndexBuffer(eng->getIndexBuffer(), 0);
                 exec->bindVertexBuffer(eng->getVertexBuffer(), 0);
                 uint64_t currentMaterialFLags = ~0;
@@ -197,8 +209,12 @@ GBufferPreDepthTechnique::GBufferPreDepthTechnique(Engine* eng, RenderGraph& gra
     else
     {
         task.setRecordCommandsCallback(
-            [](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>& meshes)
+            [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>& meshes)
             {
+                PROFILER_EVENT("gbuffer fill");
+                PROFILER_GPU_TASK(exec);
+                PROFILER_GPU_EVENT("gbuffer fill");
+
                 exec->bindIndexBuffer(eng->getIndexBuffer(), 0);
                 exec->bindVertexBuffer(eng->getVertexBuffer(), 0);
 

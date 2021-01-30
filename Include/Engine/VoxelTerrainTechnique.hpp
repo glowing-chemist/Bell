@@ -44,15 +44,15 @@ private:
         float3 minimum;
         float  voxelSize;
         uint3  offset;
-        uint   lod;
+        uint32_t   lod;
         float4 frustumPlanes[6];
     };
 
     struct TerrainTexturing
     {
         float2 textureScale;
-        uint materialIndexXZ;
-        uint materialIndexY;
+        uint32_t materialIndexXZ;
+        uint32_t materialIndexY;
     };
 
     struct TerrainModifying

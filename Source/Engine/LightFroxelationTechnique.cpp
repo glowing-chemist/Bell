@@ -44,6 +44,10 @@ LightFroxelationTechnique::LightFroxelationTechnique(Engine* eng, RenderGraph& g
     clearCountersTask.setRecordCommandsCallback(
         [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine*, const std::vector<const MeshInstance*>&)
         {
+            PROFILER_EVENT("Clear froxel counter");
+            PROFILER_GPU_TASK(exec);
+            PROFILER_GPU_EVENT("Clear froxel counter");
+
             const RenderTask& task = graph.getTask(taskIndex);
             exec->setComputeShader(static_cast<const ComputeTask&>(task), graph, mClearCoutersShader);
 
@@ -62,6 +66,10 @@ LightFroxelationTechnique::LightFroxelationTechnique(Engine* eng, RenderGraph& g
     activeFroxelTask.setRecordCommandsCallback(
         [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
         {
+            PROFILER_EVENT("light froxelation");
+            PROFILER_GPU_TASK(exec);
+            PROFILER_GPU_EVENT("light froxelation");
+
             const RenderTask& task = graph.getTask(taskIndex);
             exec->setComputeShader(static_cast<const ComputeTask&>(task), graph, mActiveFroxelsShader);
 
@@ -98,6 +106,10 @@ LightFroxelationTechnique::LightFroxelationTechnique(Engine* eng, RenderGraph& g
     lightListAsignmentTask.setRecordCommandsCallback(
         [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine*, const std::vector<const MeshInstance*>&)
         {
+            PROFILER_EVENT("build light lists");
+            PROFILER_GPU_TASK(exec);
+            PROFILER_GPU_EVENT("build light lists");
+
             const RenderTask& task = graph.getTask(taskIndex);
             exec->setComputeShader(static_cast<const ComputeTask&>(task), graph, mLightAsignmentShader);
 
