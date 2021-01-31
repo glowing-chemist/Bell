@@ -3,7 +3,7 @@
 #include "Core/RenderDevice.hpp"
 #include "Core/BellLogging.hpp"
 #include "Core/ConversionUtils.hpp"
-#include "COre/Profiling.hpp"
+#include "Core/Profiling.hpp"
 
 #include <algorithm>
 #include <map>
