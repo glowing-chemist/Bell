@@ -132,7 +132,7 @@ endif(WIN32)
 if(VULKAN)
     if(WIN32)
 
-		if(${CMAKE_BUILD_TYPE} STREQUAL Debug)
+		if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
 			set(SHADERC "$ENV{VULKAN_SDK}/LibDebug/shaderc_combinedd.lib")
 		else()
 			set(SHADERC "$ENV{VULKAN_SDK}/Lib/shaderc_combined.lib")
@@ -325,7 +325,7 @@ list(APPEND shader_dest "${BELL_SHADER_DIR}Shaders/${shader}")
 endforeach(shader)
 add_custom_target(COPY_SHADERS DEPENDS ${shader_dest})
 
-file(COPY "${CMAKE_CURRENT_LIST_DIR}/Assets" DESTINATION "${CMAKE_BINARY_DIR}/")
+file(COPY "${CMAKE_CURRENT_LIST_DIR}/Assets" DESTINATION "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/")
 
 
 add_library(${PROJECT_NAME} ${BELL_SOURCE} ${DearImGUI_SOURCE})
