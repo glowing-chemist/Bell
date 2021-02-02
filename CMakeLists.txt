@@ -325,7 +325,11 @@ list(APPEND shader_dest "${BELL_SHADER_DIR}Shaders/${shader}")
 endforeach(shader)
 add_custom_target(COPY_SHADERS DEPENDS ${shader_dest})
 
-file(COPY "${CMAKE_CURRENT_LIST_DIR}/Assets" DESTINATION "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/")
+if(MSVC)
+    file(COPY "${CMAKE_CURRENT_LIST_DIR}/Assets" DESTINATION "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/")
+else()
+    file(COPY "${CMAKE_CURRENT_LIST_DIR}/Assets" DESTINATION "${CMAKE_BINARY_DIR}/")
+endif(MSVC)
 
 
 add_library(${PROJECT_NAME} ${BELL_SOURCE} ${DearImGUI_SOURCE})
