@@ -695,6 +695,8 @@ void Scene::removeMeshInstance(const InstanceID id)
 
 void Scene::uploadData(Engine* eng)
 {
+    PROFILER_EVENT();
+
     eng->flushWait();
     eng->clearVertexCache();
 
@@ -1054,6 +1056,8 @@ void Scene::addMaterial(const MaterialPaths& mat, Engine* eng)
 
 std::vector<Scene::Intersection> Scene::getIntersections() const
 {
+    PROFILER_EVENT();
+
 	std::vector<Intersection> intersections;
 
 	for (auto& mesh : mStaticMeshInstances)
@@ -1082,6 +1086,8 @@ std::vector<Scene::Intersection> Scene::getIntersections() const
 
 std::vector<Scene::Intersection> Scene::getIntersections(const InstanceID id)
 {
+    PROFILER_EVENT();
+
 	const MeshInstance* instanceToTest = getMeshInstance(id);
 
     const std::vector<MeshInstance*> staticMeshes = mPhysicsMeshBoundingVolume.getIntersections(instanceToTest->getMesh()->getAABB() * instanceToTest->getTransMatrix());
@@ -1104,6 +1110,8 @@ std::vector<Scene::Intersection> Scene::getIntersections(const InstanceID id)
 
 std::vector<Scene::Intersection> Scene::getIntersections(const InstanceID IgnoreID, const AABB& aabbToTest)
 {
+    PROFILER_EVENT();
+
 	const MeshInstance* instanceToIgnore = getMeshInstance(IgnoreID);
 
     const std::vector<MeshInstance*> staticMeshes = mPhysicsMeshBoundingVolume.getIntersections(aabbToTest);
