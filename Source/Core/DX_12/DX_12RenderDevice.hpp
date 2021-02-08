@@ -12,7 +12,7 @@ public:
 	DX_12RenderDevice(ID3D12Device*, IDXGIAdapter* adapter, IDXGIFactory* deviceFactory, GLFWwindow*);
 	~DX_12RenderDevice();
 
-	virtual CommandContextBase*		   getCommandContext(const uint32_t index) override;
+	virtual CommandContextBase*		   getCommandContext(const uint32_t index, const QueueType) override;
 
 	virtual void                       startFrame() override;
 	virtual void                       endFrame() override;
@@ -33,6 +33,8 @@ public:
 	virtual void					   swap() override;
 
 	virtual size_t					   getMinStorageBufferAlignment() const override;
+    virtual bool                       getHasCommandPredicationSupport() const override;
+    virtual bool                       getHasAsyncComputeSupport() const override;
 
 	virtual const std::vector<uint64_t>& getAvailableTimestamps() const override;
 	virtual float                      getTimeStampPeriod() const override;

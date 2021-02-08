@@ -67,7 +67,7 @@ DX_12RenderDevice::~DX_12RenderDevice()
 }
 
 
-CommandContextBase* DX_12RenderDevice::getCommandContext(const uint32_t index)
+CommandContextBase* DX_12RenderDevice::getCommandContext(const uint32_t index, const QueueType)
 {
 	BELL_TRAP;
 	return nullptr;
@@ -150,6 +150,17 @@ size_t DX_12RenderDevice::getMinStorageBufferAlignment() const
 {
 	BELL_TRAP; // TODO Look in to this.
 	return 16;
+}
+
+bool DX_12RenderDevice::getHasCommandPredicationSupport() const
+{
+    return false;
+}
+
+
+bool DX_12RenderDevice::getHasAsyncComputeSupport() const
+{
+    return false;
 }
 
 

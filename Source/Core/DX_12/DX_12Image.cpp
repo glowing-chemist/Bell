@@ -102,7 +102,7 @@ void DX_12Image::setContents(   const void* data,
 }
 
 
-void DX_12Image::clear()
+void DX_12Image::clear(const float4&)
 {
     BELL_TRAP;
 }

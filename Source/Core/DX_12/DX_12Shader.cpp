@@ -60,8 +60,8 @@ namespace
     };
 }
 
-DX_12Shader::DX_12Shader(RenderDevice* dev, const std::string& path) :
-	ShaderBase(dev, path)
+DX_12Shader::DX_12Shader(RenderDevice* dev, const std::string& path, const uint64_t prefixHash) :
+	ShaderBase(dev, path, prefixHash)
 {
     if (path.find(".vert") != std::string::npos)
         mShaderProfile = L"vs_6_0";
@@ -86,7 +86,7 @@ DX_12Shader::~DX_12Shader()
 }
 
 
-bool DX_12Shader::compile(const std::vector<std::string>& prefix)
+bool DX_12Shader::compile(const std::vector<ShaderDefine>& prefix)
 {
     IDxcLibrary* library;
     HRESULT hr = DxcCreateInstance(CLSID_DxcLibrary, IID_PPV_ARGS(&library));

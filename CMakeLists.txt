@@ -37,7 +37,7 @@ include_directories(
 			${glmIncludeDirs}
 		    )
 
-# avoid building unnesary stuff
+# avoid building unnecessary stuff
 set(GLFW_BUILD_DOCS 0)
 set(GLFW_BUILD_TESTS 0)
 set(GLFW_BUILD_EXAMPLES 0)

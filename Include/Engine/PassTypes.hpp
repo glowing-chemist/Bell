@@ -155,9 +155,10 @@ inline const char* passToString(const PassType passType)
 
         case PassType::VoxelTerrain:
             return "Voxel_Terrain";
-    }
 
-    return "UNKNOWN PASS TYPE";
+        default:
+            return "UNKNOWN_PASS_TYPE";
+    }
 }
 
 

@@ -65,6 +65,7 @@ RenderTask& RenderGraph::getTask(const TaskID id)
     switch (id.mTaskType)
     {
     case TaskType::Graphics:
+    case TaskType::All:
         return mGraphicsTasks[id.mTaskIndex];
 
     case TaskType::Compute:
@@ -83,6 +84,7 @@ const RenderTask& RenderGraph::getTask(const TaskID id) const
     switch (id.mTaskType)
     {
     case TaskType::Graphics:
+    case TaskType::All:
         return mGraphicsTasks[id.mTaskIndex];
 
     case TaskType::Compute:

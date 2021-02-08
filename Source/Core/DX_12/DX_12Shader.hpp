@@ -11,10 +11,10 @@ class DX_12Shader : public ShaderBase
 {
 public:
 
-	DX_12Shader(RenderDevice*, const std::string& path);
+	DX_12Shader(RenderDevice*, const std::string& path, const uint64_t prefixHash);
 	~DX_12Shader();
 
-	virtual bool compile(const std::vector<std::string> & prefix = {}) override final;
+	virtual bool compile(const std::vector<ShaderDefine> & prefix = {}) override final;
 	virtual bool reload() override final;
 
 	IDxcBlob* getShaderBlob()
