@@ -212,12 +212,17 @@ public:
 
     void render();
     void swap()
-    { 
+    {
+        PROFILER_EVENT();
+
         mRenderDevice->swap(); 
     }
 
     void flushWait()
-    { mRenderDevice->flushWait(); }
+    {
+        PROFILER_EVENT();
+        mRenderDevice->flushWait();
+    }
 
     GLFWwindow* getWindow()
     { return mWindow; }
