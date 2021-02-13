@@ -203,7 +203,7 @@ public:
     void endFrame()
     {
 	mRenderDevice->endFrame();
-
+    mDebugAABBs.clear();
     // Set the frame time.
     mAccumilatedFrameUpdates += mFrameUpdateDelta;
     std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
@@ -365,6 +365,16 @@ public:
         mTerrainEnable = b;
     }
 
+    void addDebugAABB(const AABB& aabb)
+    {
+        mDebugAABBs.push_back(aabb);
+    }
+
+    const std::vector<AABB>& getDebugAABB() const
+    {
+        return mDebugAABBs;
+    }
+
 private:
 
     CPUImage renderDiffuseCubeMap(const RayTracingScene &scene, const float3 &position, const uint32_t x, const uint32_t y);
@@ -439,6 +449,8 @@ private:
     // Debug helpers
     bool mShowDebugTexture;
     const char* mDebugTextureName;
+
+    std::vector<AABB> mDebugAABBs;
 
 	// Global uniform buffers
 

@@ -108,6 +108,14 @@ DebugAABBTechnique::DebugAABBTechnique(Engine* eng, RenderGraph& graph) :
                         }
                     }
 
+                    const std::vector<AABB>& debugAABBs = eng->getDebugAABB();
+                    for(const AABB& aabb : debugAABBs)
+                    {
+                        float4x4 AABBtransformation = glm::translate(float3(aabb.getCentralPoint())) * glm::scale(aabb.getSideLengths());
+                        exec->insertPushConsatnt(&AABBtransformation, sizeof(float4x4));
+                        exec->indexedDraw(0, 0, 24);
+                    }
+
                     // Check all active animations and draw bone OBBs
                     const std::vector<Engine::SkeletalAnimationEntry>& activeAnims = eng->getActiveSkeletalAnimations();
                     for(const Engine::SkeletalAnimationEntry& entry : activeAnims)
