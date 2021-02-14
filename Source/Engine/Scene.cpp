@@ -9,6 +9,7 @@
 #include "assimp/pbrmaterial.h"
 
 #include "glm/gtc/matrix_transform.hpp"
+#include "glm/gtx/quaternion.hpp"
 
 #include <algorithm>
 #include <fstream>
@@ -662,6 +663,27 @@ InstanceID Scene::addMeshInstance(const SceneID meshID,
 
     return id;
 }
+
+
+InstanceID    Scene::addMeshInstance( const SceneID meshID,
+                                      const InstanceID parentInstance,
+                                      const float3& position,
+                                      const float3& size,
+                                      const quat& rotation,
+                                      const uint32_t materialIndex,
+                                      const uint32_t materialFlags,
+                                      const std::string& name)
+{
+    auto& [mesh, meshType] = mSceneMeshes[meshID];
+    const AABB aabb = mesh.getAABB();
+    const float3 sideLengths = aabb.getSideLengths();
+    const float3 requiredScale = size / sideLengths;
+
+    const float4x4 requiredTransform = glm::translate(float4x4(1.0f), position) * glm::toMat4(rotation) * glm::scale(float4x4(1.0f), requiredScale);
+
+    return addMeshInstance(meshID, parentInstance, requiredTransform, materialIndex, materialFlags, name);
+}
+
 
 
 void Scene::removeMeshInstance(const InstanceID id)

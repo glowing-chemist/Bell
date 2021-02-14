@@ -204,6 +204,14 @@ public:
                                   const uint32_t materialIndex,
                                   const uint32_t materialFlags,
                                   const std::string& name = "");
+    InstanceID    addMeshInstance(const SceneID,
+                                  const InstanceID parentInstance,
+                                  const float3& position,
+                                  const float3& size,
+                                  const quat& rotation,
+                                  const uint32_t materialIndex,
+                                  const uint32_t materialFlags,
+                                  const std::string& name = "");
     void          removeMeshInstance(const InstanceID);
 
     void          uploadData(Engine*);
@@ -460,6 +468,10 @@ public:
         mRootTransform = trans;
     }
 
+    const float4x4& getRootTransform() const
+    {
+	    return mRootTransform;
+    }
 
     struct InstanceInfo
     {
