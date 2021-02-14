@@ -233,6 +233,8 @@ public:
 
     MeshInstance*       getMeshInstance(const InstanceID);
     const MeshInstance*       getMeshInstance(const InstanceID) const;
+    float3 getInstancePosition(const InstanceID) const;
+    void   setInstancePosition(const InstanceID, const float3&);
     StaticMesh*         getMesh(const SceneID);
     const StaticMesh*   getMesh(const SceneID) const;
     const std::unique_ptr<ImageView>& getSkybox() const

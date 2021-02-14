@@ -845,6 +845,22 @@ const MeshInstance* Scene::getMeshInstance(const InstanceID id) const
     return nullptr;
 }
 
+float3 Scene::getInstancePosition(const InstanceID id) const
+{
+    const MeshInstance* inst = getMeshInstance(id);
+    const float4x4 transformation = inst->getTransMatrix();
+
+    return float3{transformation[3]};
+}
+
+void   Scene::setInstancePosition(const InstanceID id, const float3& pos)
+{
+    MeshInstance* inst = getMeshInstance(id);
+    float4x4 transformation = inst->getTransMatrix();
+    transformation[3] = float4{pos, 1.0f};
+    inst->setTransMatrix(transformation);
+}
+
 
 StaticMesh* Scene::getMesh(const SceneID id)
 {

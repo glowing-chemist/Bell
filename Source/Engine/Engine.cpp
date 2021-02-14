@@ -763,7 +763,7 @@ void Engine::terimateAnimation(const InstanceID id, const std::string& name)
         mActiveSkeletalAnimations.erase(std::remove_if(mActiveSkeletalAnimations.begin(), mActiveSkeletalAnimations.end(), [id, name](const SkeletalAnimationEntry& entry)
         {
             return entry.mName == name && entry.mMesh == id;
-        }));
+        }), mActiveSkeletalAnimations.end());
     }
 
     if(!mActiveBlendShapeAnimations.empty())
@@ -771,7 +771,7 @@ void Engine::terimateAnimation(const InstanceID id, const std::string& name)
         mActiveBlendShapeAnimations.erase(std::remove_if(mActiveBlendShapeAnimations.begin(), mActiveBlendShapeAnimations.end(), [id, name](const BlendShapeAnimationEntry& entry)
         {
             return entry.mName == name && entry.mMesh == id;
-        }));
+        }), mActiveBlendShapeAnimations.end());
     }
 }
 

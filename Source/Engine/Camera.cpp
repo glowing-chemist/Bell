@@ -1,4 +1,5 @@
 #include "Engine/Camera.hpp"
+#include "Engine/AABB.hpp"
 
 #include <glm/gtx/transform.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -176,11 +177,36 @@ float4x4 Camera::getProjectionMatrixOverride(const CameraMode overrideMode) cons
 
     BELL_TRAP;
 
-    return float4x4();
+    return float4x4(1.0f);
 }
 
 
 Frustum Camera::getFrustum() const
 {
     return Frustum{ getProjectionMatrix() * getViewMatrix() };
+}
+
+
+AABB Camera::getFrustumAABB() const
+{
+    const float4x4 viewProj = getProjectionMatrixOverride(CameraMode::Perspective) * getViewMatrix();
+    const float4x4 invViewProj = glm::inverse(viewProj);
+
+    const std::array<float4, 8> clipSpaceCorners{float4{1.0f, 1.0f, 1.0f, 1.0f}, float4{-1.0f, 1.0f, 1.0f, 1.0f},
+                                                 float4{1.0f, -1.0f, 1.0f, 1.0f}, float4{1.0f, 1.0f, -1.0f, 1.0f},
+                                                 float4{-1.0f, -1.0f, 1.0f, 1.0f}, float4{-1.0f, 1.0f, -1.0f, 1.0f},
+                                                 float4{-1.0f, -1.0f, -1.0f, 1.0f}, float4{1.0f, -1.0f, -1.0f, 1.0f}};
+
+    float4 min = float4{INFINITY, INFINITY, INFINITY, INFINITY};
+    float4 max = float4{-INFINITY, -INFINITY, -INFINITY, -INFINITY};
+    for(const float4& corner : clipSpaceCorners)
+    {
+        float4 transformedCorner = invViewProj * corner;
+        transformedCorner /= transformedCorner.w;
+
+        min = componentWiseMin(min, transformedCorner);
+        max = componentWiseMax(max, transformedCorner);
+    }
+
+    return AABB{min, max};
 }

@@ -139,6 +139,9 @@ public:
 
     Frustum getFrustum() const;
 
+	AABB getFrustumAABB() const;
+
+
 private:
 
     CameraMode mMode;
