@@ -507,6 +507,11 @@ public:
         return mTerrain;
     }
 
+    void testPrint() const
+    {
+        printf("Lua test hook\n");
+    }
+
 private:
 
     void generateSceneAABB(const bool includeStatic);
