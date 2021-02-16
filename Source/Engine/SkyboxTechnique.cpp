@@ -4,7 +4,7 @@
 #include "Engine/DefaultResourceSlots.hpp"
 #include "Core/Executor.hpp"
 
-SkyboxTechnique::SkyboxTechnique(Engine* eng, RenderGraph& graph) :
+SkyboxTechnique::SkyboxTechnique(RenderEngine* eng, RenderGraph& graph) :
 	Technique("Skybox", eng->getDevice()),
     mPipelineDesc{Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
                   getDevice()->getSwapChain()->getSwapChainImageHeight()},
@@ -23,7 +23,7 @@ SkyboxTechnique::SkyboxTechnique(Engine* eng, RenderGraph& graph) :
 	task.addOutput(kGBufferDepth, AttachmentType::Depth, Format::D32Float);
 
 	task.setRecordCommandsCallback(
-        [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine*, const std::vector<const MeshInstance*>&)
+        [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, RenderEngine*, const std::vector<const MeshInstance*>&)
 		{
             PROFILER_EVENT("render skybox");
             PROFILER_GPU_TASK(exec);

@@ -10,7 +10,7 @@ class ForwardCombinedLightingTechnique : public Technique
 {
 public:
 
-	ForwardCombinedLightingTechnique(Engine*, RenderGraph&);
+	ForwardCombinedLightingTechnique(RenderEngine*, RenderGraph&);
 	~ForwardCombinedLightingTechnique() = default;
 
 	virtual PassType getPassType() const
@@ -18,7 +18,7 @@ public:
 		return PassType::ForwardCombinedLighting;
 	}
 
-    virtual void render(RenderGraph&, Engine*) {}
+    virtual void render(RenderGraph&, RenderEngine*) {}
 
 	virtual void bindResources(RenderGraph& graph);
 

@@ -4,7 +4,7 @@
 #include "Core/Executor.hpp"
 
 
-DownSampleColourTechnique::DownSampleColourTechnique(Engine* eng, RenderGraph& graph) :
+DownSampleColourTechnique::DownSampleColourTechnique(RenderEngine* eng, RenderGraph& graph) :
 	Technique("Downsample colour", eng->getDevice()),
     mFirstFrame(true),
     mDowmSampledColour{Image(getDevice(), Format::RGBA8UNorm, ImageUsage::Storage | ImageUsage::Sampled | ImageUsage::TransferDest | ImageUsage::TransferSrc, eng->getSwapChainImage()->getExtent(0, 0).width,
@@ -30,7 +30,7 @@ DownSampleColourTechnique::DownSampleColourTechnique(Engine* eng, RenderGraph& g
 	ComputeTask downSampleColourTask("DownSample Colour");
 	downSampleColourTask.addInput(kGlobalLighting, AttachmentType::TransferSource);
 	downSampleColourTask.addInput(kDownSampledColour, AttachmentType::TransferDestination);
-	downSampleColourTask.setRecordCommandsCallback([this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+	downSampleColourTask.setRecordCommandsCallback([this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, RenderEngine* eng, const std::vector<const MeshInstance*>&)
 	{
 		PROFILER_EVENT("Downsample colour");
 		PROFILER_GPU_TASK(exec);
@@ -76,7 +76,7 @@ DownSampleColourTechnique::DownSampleColourTechnique(Engine* eng, RenderGraph& g
 }
 
 
-void DownSampleColourTechnique::render(RenderGraph &, Engine *)
+void DownSampleColourTechnique::render(RenderGraph &, RenderEngine *)
 {
     if(mFirstFrame)
     {

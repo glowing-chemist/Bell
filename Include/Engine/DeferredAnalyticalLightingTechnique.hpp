@@ -10,7 +10,7 @@
 class DeferredAnalyticalLightingTechnique : public Technique
 {
 public:
-	DeferredAnalyticalLightingTechnique(Engine*, RenderGraph&);
+	DeferredAnalyticalLightingTechnique(RenderEngine*, RenderGraph&);
 	~DeferredAnalyticalLightingTechnique() = default;
 
 	virtual PassType getPassType() const override final
@@ -18,7 +18,7 @@ public:
 		return PassType::DeferredAnalyticalLighting;
 	}
 
-	virtual void render(RenderGraph& graph, Engine*) override final
+	virtual void render(RenderGraph& graph, RenderEngine*) override final
 	{
         mAnalyticalLighting->updateLastAccessed();
         mAnalyticalLightingView->updateLastAccessed();

@@ -15,14 +15,14 @@
 class GBufferTechnique : public Technique
 {
 public:
-	GBufferTechnique(Engine*, RenderGraph&);
+	GBufferTechnique(RenderEngine*, RenderGraph&);
 	virtual ~GBufferTechnique() = default;
 
 	virtual PassType getPassType() const final override
 		{ return PassType::GBuffer; }
 
     virtual void bindResources(RenderGraph&) override final {}
-    virtual void render(RenderGraph&, Engine*) override final {}
+    virtual void render(RenderGraph&, RenderEngine*) override final {}
 
 private:
 
@@ -35,7 +35,7 @@ private:
 class GBufferPreDepthTechnique : public Technique
 {
 public:
-    GBufferPreDepthTechnique(Engine*, RenderGraph&);
+    GBufferPreDepthTechnique(RenderEngine*, RenderGraph&);
     virtual ~GBufferPreDepthTechnique() = default;
 
     virtual PassType getPassType() const final override
@@ -43,7 +43,7 @@ public:
 
 
     virtual void bindResources(RenderGraph&) override final {}
-    virtual void render(RenderGraph&, Engine*) override final {}
+    virtual void render(RenderGraph&, RenderEngine*) override final {}
 
 private:
 

@@ -2,7 +2,7 @@
 #include "Core/Executor.hpp"
 
 
-PreDepthTechnique::PreDepthTechnique(Engine* eng, RenderGraph& graph) :
+PreDepthTechnique::PreDepthTechnique(RenderEngine* eng, RenderGraph& graph) :
     Technique{"PreDepth", eng->getDevice()},
     mPipelineDescription{Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
                                getDevice()->getSwapChain()->getSwapChainImageHeight()},
@@ -31,7 +31,7 @@ PreDepthTechnique::PreDepthTechnique(Engine* eng, RenderGraph& graph) :
     if(eng->isPassRegistered(PassType::OcclusionCulling))
     {
         task.setRecordCommandsCallback(
-            [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>& meshes)
+            [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, RenderEngine* eng, const std::vector<const MeshInstance*>& meshes)
             {
                 PROFILER_EVENT("Pre-Z");
                 PROFILER_GPU_TASK(exec);
@@ -69,7 +69,7 @@ PreDepthTechnique::PreDepthTechnique(Engine* eng, RenderGraph& graph) :
     else
     {
         task.setRecordCommandsCallback(
-            [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>& meshes)
+            [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, RenderEngine* eng, const std::vector<const MeshInstance*>& meshes)
             {
                 PROFILER_EVENT("Pre-Z");
                 PROFILER_GPU_TASK(exec);

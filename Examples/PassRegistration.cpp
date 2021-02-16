@@ -36,7 +36,7 @@ struct ImGuiOptions
 
 static ImGuiOptions graphicsOptions;
 
-bool renderMenu(GLFWwindow* win, Camera& cam, Engine* eng, const float cpuTime)
+bool renderMenu(GLFWwindow* win, Camera& cam, RenderEngine* eng, const float cpuTime)
 {
 	double cursorPosx, cursorPosy;
 	glfwGetCursorPos(win, &cursorPosx, &cursorPosy);
@@ -182,7 +182,7 @@ int main()
         return 5;
     }
 
-    Engine* engine = new Engine{window};
+    RenderEngine* engine = new RenderEngine{window};
     engine->setShadowMapResolution({1920.0f, 1080.0f});
 
     engine->startFrame(std::chrono::microseconds(0));

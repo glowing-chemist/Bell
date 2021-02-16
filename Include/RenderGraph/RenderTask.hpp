@@ -12,11 +12,11 @@
 
 class RenderGraph;
 class Executor;
-class Engine;
+class RenderEngine;
 class RenderTask;
 class MeshInstance;
 
-using CommandCallbackFunc = std::function<void(const RenderGraph& graph, const uint32_t taskIndex, Executor*, Engine*, const std::vector<const MeshInstance*>&)>;
+using CommandCallbackFunc = std::function<void(const RenderGraph& graph, const uint32_t taskIndex, Executor*, RenderEngine*, const std::vector<const MeshInstance*>&)>;
 
 enum class LoadOp
 {
@@ -121,7 +121,7 @@ public:
         mRecordCommandsCallback = callback;
     }
 
-    void executeRecordCommandsCallback(const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>& meshes) const
+    void executeRecordCommandsCallback(const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, RenderEngine* eng, const std::vector<const MeshInstance*>& meshes) const
     {
         mRecordCommandsCallback(graph, taskIndex, exec, eng, meshes);
     }

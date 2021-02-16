@@ -12,7 +12,7 @@ class ViaualizeLightProbesTechnique : public Technique
 
 public:
 
-    ViaualizeLightProbesTechnique(Engine*, RenderGraph&);
+    ViaualizeLightProbesTechnique(RenderEngine*, RenderGraph&);
     ~ViaualizeLightProbesTechnique() = default;
 
     virtual PassType getPassType() const
@@ -20,7 +20,7 @@ public:
     return PassType::VisualizeLightProbes;
     }
 
-    virtual void render(RenderGraph&, Engine*) {}
+    virtual void render(RenderGraph&, RenderEngine*) {}
 
     virtual void bindResources(RenderGraph&) {}
 

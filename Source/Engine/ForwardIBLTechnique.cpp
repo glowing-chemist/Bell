@@ -5,7 +5,7 @@
 #include "Core/Executor.hpp"
 
 
-ForwardIBLTechnique::ForwardIBLTechnique(Engine* eng, RenderGraph& graph) :
+ForwardIBLTechnique::ForwardIBLTechnique(RenderEngine* eng, RenderGraph& graph) :
 	Technique("ForwardIBL", eng->getDevice()),
     mDesc{Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
 			   getDevice()->getSwapChain()->getSwapChainImageHeight()},
@@ -44,7 +44,7 @@ ForwardIBLTechnique::ForwardIBLTechnique(Engine* eng, RenderGraph& graph) :
     if(eng->isPassRegistered(PassType::OcclusionCulling))
     {
         task.setRecordCommandsCallback(
-            [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>& meshes)
+            [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, RenderEngine* eng, const std::vector<const MeshInstance*>& meshes)
             {
                 PROFILER_EVENT("Forward IBL");
                 PROFILER_GPU_TASK(exec);
@@ -94,7 +94,7 @@ ForwardIBLTechnique::ForwardIBLTechnique(Engine* eng, RenderGraph& graph) :
     else
     {
         task.setRecordCommandsCallback(
-            [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>& meshes)
+            [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, RenderEngine* eng, const std::vector<const MeshInstance*>& meshes)
             {
                 PROFILER_EVENT("Forward IBL");
                 PROFILER_GPU_TASK(exec);

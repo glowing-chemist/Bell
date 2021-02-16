@@ -15,14 +15,14 @@
 class TransparentTechnique : public Technique
 {
 public:
-    TransparentTechnique(Engine*, RenderGraph&);
+    TransparentTechnique(RenderEngine*, RenderGraph&);
     virtual ~TransparentTechnique() = default;
 
     virtual PassType getPassType() const final override
         { return PassType::Transparent; }
 
     virtual void bindResources(RenderGraph&) override final {};
-    virtual void render(RenderGraph&, Engine*) override final {};
+    virtual void render(RenderGraph&, RenderEngine*) override final {};
 
 private:
 

@@ -8,13 +8,13 @@ class VoxelTerrainTechnique : public Technique
 {
 public:
 
-    VoxelTerrainTechnique(Engine*, RenderGraph&);
+    VoxelTerrainTechnique(RenderEngine*, RenderGraph&);
 
     virtual PassType getPassType() const final override
     { return PassType::VoxelTerrain; }
 
     virtual void bindResources(RenderGraph&) override final;
-    virtual void render(RenderGraph&, Engine*) override final
+    virtual void render(RenderGraph&, RenderEngine*) override final
     {
         mVoxelGrid->updateLastAccessed();
         mVoxelGridView->updateLastAccessed();

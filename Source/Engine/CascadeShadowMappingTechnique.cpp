@@ -3,7 +3,7 @@
 #include "Core/Executor.hpp"
 
 
-CascadeShadowMappingTechnique::CascadeShadowMappingTechnique(Engine* eng, RenderGraph& graph) :
+CascadeShadowMappingTechnique::CascadeShadowMappingTechnique(RenderEngine* eng, RenderGraph& graph) :
     Technique("Cascade shadow mapping", eng->getDevice()),
     mBlurXShader( eng->getShader("Shaders/blurXrg32f.comp") ),
     mBlurYShader( eng->getShader("Shaders/blurYrg32f.comp") ),
@@ -107,7 +107,7 @@ CascadeShadowMappingTechnique::CascadeShadowMappingTechnique(Engine* eng, Render
         blurXTask0.addInput(kCascadeShadowMapBlurIntermediate0, AttachmentType::Image2D);
         blurXTask0.addInput(kDefaultSampler, AttachmentType::Sampler);
         blurXTask0.setRecordCommandsCallback(
-                    [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+                    [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, RenderEngine* eng, const std::vector<const MeshInstance*>&)
                     {
                         PROFILER_EVENT("shadow cascade0 blurx");
                         PROFILER_GPU_TASK(exec);
@@ -129,7 +129,7 @@ CascadeShadowMappingTechnique::CascadeShadowMappingTechnique(Engine* eng, Render
         blurYTask0.addInput(kCascadeShadowMapBlured0, AttachmentType::Image2D);
         blurYTask0.addInput(kDefaultSampler, AttachmentType::Sampler);
         blurYTask0.setRecordCommandsCallback(
-                    [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+                    [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, RenderEngine* eng, const std::vector<const MeshInstance*>&)
                     {
                         PROFILER_EVENT("shadow cascade0 blury");
                         PROFILER_GPU_TASK(exec);
@@ -151,7 +151,7 @@ CascadeShadowMappingTechnique::CascadeShadowMappingTechnique(Engine* eng, Render
         blurXTask1.addInput(kCascadeShadowMapBlurIntermediate1, AttachmentType::Image2D);
         blurXTask1.addInput(kDefaultSampler, AttachmentType::Sampler);
         blurXTask1.setRecordCommandsCallback(
-                    [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+                    [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, RenderEngine* eng, const std::vector<const MeshInstance*>&)
                     {
                         PROFILER_EVENT("shadow cascade1 blurx");
                         PROFILER_GPU_TASK(exec);
@@ -173,7 +173,7 @@ CascadeShadowMappingTechnique::CascadeShadowMappingTechnique(Engine* eng, Render
         blurYTask1.addInput(kCascadeShadowMapBlured1, AttachmentType::Image2D);
         blurYTask1.addInput(kDefaultSampler, AttachmentType::Sampler);
         blurYTask1.setRecordCommandsCallback(
-                    [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+                    [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, RenderEngine* eng, const std::vector<const MeshInstance*>&)
                     {
                         PROFILER_EVENT("shadow cascade1 blury");
                         PROFILER_GPU_TASK(exec);
@@ -195,7 +195,7 @@ CascadeShadowMappingTechnique::CascadeShadowMappingTechnique(Engine* eng, Render
         blurXTask2.addInput(kCascadeShadowMapBlurIntermediate2, AttachmentType::Image2D);
         blurXTask2.addInput(kDefaultSampler, AttachmentType::Sampler);
         blurXTask2.setRecordCommandsCallback(
-                    [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+                    [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, RenderEngine* eng, const std::vector<const MeshInstance*>&)
                     {
                         PROFILER_EVENT("shadow cascade2 blurx");
                         PROFILER_GPU_TASK(exec);
@@ -217,7 +217,7 @@ CascadeShadowMappingTechnique::CascadeShadowMappingTechnique(Engine* eng, Render
         blurYTask2.addInput(kCascadeShadowMapBlured2, AttachmentType::Image2D);
         blurYTask2.addInput(kDefaultSampler, AttachmentType::Sampler);
         blurYTask2.setRecordCommandsCallback(
-                    [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+                    [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, RenderEngine* eng, const std::vector<const MeshInstance*>&)
                     {
                         PROFILER_EVENT("shadow cascade2 blurxy");
                         PROFILER_GPU_TASK(exec);
@@ -245,7 +245,7 @@ CascadeShadowMappingTechnique::CascadeShadowMappingTechnique(Engine* eng, Render
         resolveTask.addInput(kDefaultSampler, AttachmentType::Sampler);
         resolveTask.addInput(kCascadesInfo, AttachmentType::UniformBuffer);
         resolveTask.setRecordCommandsCallback(
-                    [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+                    [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, RenderEngine* eng, const std::vector<const MeshInstance*>&)
                     {
                         PROFILER_EVENT("ressolve shadows");
                         PROFILER_GPU_TASK(exec);
@@ -267,7 +267,7 @@ CascadeShadowMappingTechnique::CascadeShadowMappingTechnique(Engine* eng, Render
 }
 
 
-void CascadeShadowMappingTechnique::render(RenderGraph& graph, Engine* eng)
+void CascadeShadowMappingTechnique::render(RenderGraph& graph, RenderEngine* eng)
 {
     (mCascadeShadowMaps)->updateLastAccessed();
     (mCascadeShaowMapsViewMip0)->updateLastAccessed();
@@ -333,7 +333,7 @@ void CascadeShadowMappingTechnique::render(RenderGraph& graph, Engine* eng)
 
     GraphicsTask& cascade0Task = static_cast<GraphicsTask&>(graph.getTask(mRenderCascade0));
     cascade0Task.setRecordCommandsCallback(
-                [nearCascadeMeshes](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+                [nearCascadeMeshes](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, RenderEngine* eng, const std::vector<const MeshInstance*>&)
                 {
                     exec->bindIndexBuffer(eng->getIndexBuffer(), 0);
                     exec->bindVertexBuffer(eng->getVertexBuffer(), 0);
@@ -361,7 +361,7 @@ void CascadeShadowMappingTechnique::render(RenderGraph& graph, Engine* eng)
 
     GraphicsTask& cascade1Task = static_cast<GraphicsTask&>(graph.getTask(mRenderCascade1));
     cascade1Task.setRecordCommandsCallback(
-                [midCascadeMeshes](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+                [midCascadeMeshes](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, RenderEngine* eng, const std::vector<const MeshInstance*>&)
                 {
                     exec->bindIndexBuffer(eng->getIndexBuffer(), 0);
                     exec->bindVertexBuffer(eng->getVertexBuffer(), 0);
@@ -389,7 +389,7 @@ void CascadeShadowMappingTechnique::render(RenderGraph& graph, Engine* eng)
 
     GraphicsTask& cascade2Task = static_cast<GraphicsTask&>(graph.getTask(mRenderCascade2));
     cascade2Task.setRecordCommandsCallback(
-                [farCascadeMeshes](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+                [farCascadeMeshes](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, RenderEngine* eng, const std::vector<const MeshInstance*>&)
                 {
                     exec->bindIndexBuffer(eng->getIndexBuffer(), 0);
                     exec->bindVertexBuffer(eng->getVertexBuffer(), 0);

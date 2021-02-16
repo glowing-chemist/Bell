@@ -5,20 +5,20 @@
 #include "Engine/DefaultResourceSlots.hpp"
 #include "Core/PerFrameResource.hpp"
 
-class Engine;
+class RenderEngine;
 class RenderGraph;
 
 class LineariseDepthTechnique : public Technique
 {
 public:
-	LineariseDepthTechnique(Engine*, RenderGraph&);
+	LineariseDepthTechnique(RenderEngine*, RenderGraph&);
 
 	virtual PassType getPassType() const override final
 	{
 		return PassType::LineariseDepth;
 	}
 
-	virtual void render(RenderGraph&, Engine*) override final;
+	virtual void render(RenderGraph&, RenderEngine*) override final;
 
     virtual void bindResources(RenderGraph& graph) override final;
 

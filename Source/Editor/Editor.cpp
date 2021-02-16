@@ -912,7 +912,7 @@ void Editor::drawAssistantWindow()
                    {
                        volumesHaveChanged = true;
 
-                       Engine::IrradianceProbeVolume& volume = mIrradianceVolumes[i];
+                       RenderEngine::IrradianceProbeVolume& volume = mIrradianceVolumes[i];
                        ImGui::InputFloat3("probe density X Y Z", &volume.mProbeDensity.x);
 
                        ImGui::Checkbox("Show Guizmo", &mIrradianceVolumesOptions[i].mShowImGuizmo);
@@ -988,7 +988,7 @@ void Editor::drawAssistantWindow()
                     {
                         volumesHaveChanged = true;
 
-                        Engine::RadianceProbe& probe = mRadianceProbes[i];
+                        RenderEngine::RadianceProbe& probe = mRadianceProbes[i];
                         ImGui::InputFloat("probe raduis", &probe.mRadius);
 
                         ImGui::InputFloat3("probe location", &probe.mPosition.x);
@@ -1483,20 +1483,20 @@ void Editor::loadScene(const std::string& scene)
 
 void Editor::bakeAndSaveLightProbes()
 {
-    std::vector<Engine::SphericalHarmonic> harmonics = mEngine.generateIrradianceProbes(mIrradianceVolumes);
+    std::vector<RenderEngine::SphericalHarmonic> harmonics = mEngine.generateIrradianceProbes(mIrradianceVolumes);
 
     const std::string harmnonicsFileName = mInProgressScene->getPath().string() + ".irradianceProbes";
     FILE* harmonicsFile = fopen(harmnonicsFileName.c_str(), "wb");
     BELL_ASSERT(harmonicsFile, "Unabel to create harmonics file")
-    fwrite(harmonics.data(), sizeof(Engine::SphericalHarmonic), harmonics.size(), harmonicsFile);
+    fwrite(harmonics.data(), sizeof(RenderEngine::SphericalHarmonic), harmonics.size(), harmonicsFile);
     fclose(harmonicsFile);
 
-    std::vector<Engine::KdNode> lookupData = mEngine.generateProbeKdTree(harmonics);
+    std::vector<RenderEngine::KdNode> lookupData = mEngine.generateProbeKdTree(harmonics);
 
     const std::string lookupTexturePath = mInProgressScene->getPath().string() + ".irradianceLookup";
     FILE* lookupFile = fopen(lookupTexturePath.c_str(), "wb");
     BELL_ASSERT(lookupFile, "Unabel to create harmonics file")
-    fwrite(lookupData.data(), sizeof(Engine::KdNode), lookupData.size(), lookupFile);
+    fwrite(lookupData.data(), sizeof(RenderEngine::KdNode), lookupData.size(), lookupFile);
     fclose(lookupFile);
 }
 

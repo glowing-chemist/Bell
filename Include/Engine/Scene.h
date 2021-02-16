@@ -22,7 +22,7 @@
 #include <string>
 #include <vector>
 
-class Engine;
+class RenderEngine;
 
 
 using SceneID = uint64_t;
@@ -193,11 +193,11 @@ public:
         return mPath;
     }
 
-    std::vector<InstanceID> loadFromFile(const int vertAttributes, Engine*);
-	void loadSkybox(const std::array<std::string, 6>& path, Engine*);
+    std::vector<InstanceID> loadFromFile(const int vertAttributes, RenderEngine*);
+	void loadSkybox(const std::array<std::string, 6>& path, RenderEngine*);
 
     SceneID       addMesh(const StaticMesh& mesh, MeshType);
-    std::vector<SceneID> loadFile(const std::string& path, MeshType, Engine *eng);
+    std::vector<SceneID> loadFile(const std::string& path, MeshType, RenderEngine *eng);
     InstanceID    addMeshInstance(const SceneID,
                                   const InstanceID parentInstance,
                                   const float4x4&,
@@ -214,7 +214,7 @@ public:
                                   const std::string& name = "");
     void          removeMeshInstance(const InstanceID);
 
-    void          uploadData(Engine*);
+    void          uploadData(RenderEngine*);
     void          computeBounds(const AccelerationStructure);
 
     std::vector<const MeshInstance*> getViewableMeshes(const Frustum&) const;
@@ -351,7 +351,7 @@ public:
     }
 
     void addMaterial(const Material& mat);
-    void addMaterial(const MaterialPaths& mat, Engine *eng);
+    void addMaterial(const MaterialPaths& mat, RenderEngine *eng);
 
 	struct Light
 	{
@@ -425,7 +425,7 @@ public:
         return mCascadesInfo;
     }
 
-	void loadMaterials(Engine*);
+	void loadMaterials(RenderEngine*);
 
 	struct Intersection
 	{
@@ -527,9 +527,9 @@ private:
 	using MaterialMappings = std::map<aiString, uint32_t, AiStringComparitor>;
 
     // return a mapping between mesh name and material index from the Bell material file format
-	MaterialMappings loadMaterialsInternal(Engine*);
+	MaterialMappings loadMaterialsInternal(RenderEngine*);
     // Loads materials at the index specified by the external scene file.
-    void loadMaterialsExternal(Engine*, const aiScene *scene);
+    void loadMaterialsExternal(RenderEngine*, const aiScene *scene);
 
     void parseNode(const aiScene* scene,
                    const aiNode* node,

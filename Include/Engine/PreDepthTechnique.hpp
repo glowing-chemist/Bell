@@ -13,7 +13,7 @@
 class PreDepthTechnique : public Technique
 {
 public:
-    PreDepthTechnique(Engine* dev, RenderGraph&);
+    PreDepthTechnique(RenderEngine* dev, RenderGraph&);
     virtual ~PreDepthTechnique() = default;
 
     virtual PassType getPassType() const final override
@@ -24,7 +24,7 @@ public:
 
     virtual void bindResources(RenderGraph&) override final {}
 
-    virtual void render(RenderGraph&, Engine*) override final {}
+    virtual void render(RenderGraph&, RenderEngine*) override final {}
 
 
 private:

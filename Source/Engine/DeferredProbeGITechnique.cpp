@@ -4,7 +4,7 @@
 
 #include "Core/Executor.hpp"
 
-DeferredProbeGITechnique::DeferredProbeGITechnique(Engine* eng, RenderGraph& graph) :
+DeferredProbeGITechnique::DeferredProbeGITechnique(RenderEngine* eng, RenderGraph& graph) :
     Technique("DeferredProbeGI", eng->getDevice()),
     mPipelineDesc{Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
                     getDevice()->getSwapChain()->getSwapChainImageHeight()},
@@ -32,7 +32,7 @@ DeferredProbeGITechnique::DeferredProbeGITechnique(Engine* eng, RenderGraph& gra
         SizeClass::Swapchain, LoadOp::Clear_Black, StoreOp::Store, ImageUsage::ColourAttachment | ImageUsage::Sampled | ImageUsage::TransferSrc);
 
     task.setRecordCommandsCallback(
-        [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine*, const std::vector<const MeshInstance*>&)
+        [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, RenderEngine*, const std::vector<const MeshInstance*>&)
         {
             PROFILER_EVENT("Deferred probe GI");
             PROFILER_GPU_TASK(exec);

@@ -9,7 +9,7 @@ class DeferredImageBasedLightingTechnique : public Technique
 {
 public:
 
-    DeferredImageBasedLightingTechnique(Engine*, RenderGraph&);
+    DeferredImageBasedLightingTechnique(RenderEngine*, RenderGraph&);
     ~DeferredImageBasedLightingTechnique() = default;
 
     virtual PassType getPassType() const override final
@@ -17,7 +17,7 @@ public:
         return PassType::DeferredPBRIBL;
     }
 
-    virtual void render(RenderGraph&, Engine*) override final
+    virtual void render(RenderGraph&, RenderEngine*) override final
     {}
 
     virtual void bindResources(RenderGraph&) override final {}

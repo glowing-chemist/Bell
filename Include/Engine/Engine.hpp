@@ -1,5 +1,5 @@
-#ifndef ENGINE_HPP
-#define ENGINE_HPP
+#ifndef RENDER_ENGINE_HPP
+#define RENDER_ENGINE_HPP
 
 #include "Core/RenderInstance.hpp"
 #include "Core/RenderDevice.hpp"
@@ -29,11 +29,11 @@
 #include <variant>
 
 
-class Engine
+class RenderEngine
 {
 public:
 
-    Engine(GLFWwindow*);
+    RenderEngine(GLFWwindow*);
 
     void setScene(const std::string& path);
 

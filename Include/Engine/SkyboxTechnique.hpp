@@ -6,20 +6,20 @@
 #include "RenderGraph/GraphicsTask.hpp"
 
 
-class Engine;
+class RenderEngine;
 
 
 class SkyboxTechnique : public Technique
 {
 public:
-    SkyboxTechnique(Engine*, RenderGraph&);
+    SkyboxTechnique(RenderEngine*, RenderGraph&);
     virtual ~SkyboxTechnique() = default;
 
     virtual PassType getPassType() const override final
     { return PassType::Skybox; }
 
     // default empty implementations as most classes won't need to do anything for one of these.
-    virtual void render(RenderGraph&, Engine*) override final
+    virtual void render(RenderGraph&, RenderEngine*) override final
     {}
 
     virtual void bindResources(RenderGraph&) override final

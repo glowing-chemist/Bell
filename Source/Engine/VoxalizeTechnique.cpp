@@ -8,7 +8,7 @@
 #define VOXEL_SIZE_Z 50
 
 
-VoxalizeTechnique::VoxalizeTechnique(Engine* eng, RenderGraph& graph) :
+VoxalizeTechnique::VoxalizeTechnique(RenderEngine* eng, RenderGraph& graph) :
     Technique("Voxalize", eng->getDevice()),
     mVoxelMap(eng->getDevice(),
               Format::RGBA8UNorm, ImageUsage::Storage | ImageUsage::Sampled | ImageUsage::TransferDest,
@@ -94,7 +94,7 @@ VoxalizeTechnique::VoxalizeTechnique(Engine* eng, RenderGraph& graph) :
 }
 
 
-void VoxalizeTechnique::render(RenderGraph& graph, Engine* eng)
+void VoxalizeTechnique::render(RenderGraph& graph, RenderEngine* eng)
 {
     // Need to manually clear this as load/store ops don't work on uavs :(.
     mVoxelMap->clear(float4(0.0f, 0.0f, 0.0f, 0.0f));
@@ -118,7 +118,7 @@ void VoxalizeTechnique::render(RenderGraph& graph, Engine* eng)
     GraphicsTask& task = static_cast<GraphicsTask&>(graph.getTask(mTaskID));
 
     task.setRecordCommandsCallback(
-        [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>& meshes)
+        [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, RenderEngine* eng, const std::vector<const MeshInstance*>& meshes)
         {
             exec->bindIndexBuffer(eng->getIndexBuffer(), 0);
             exec->bindVertexBuffer(eng->getVertexBuffer(), 0);

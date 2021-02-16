@@ -10,7 +10,7 @@
 #include <vector>
 
 
-class Engine;
+class RenderEngine;
 
 
 enum class NodeTypes : uint64_t
@@ -134,7 +134,7 @@ public:
 
     void draw();
 
-	void addPasses(Engine&);
+	void addPasses(RenderEngine&);
 
     std::vector<const char*> getAvailableDebugTextures() const;
 

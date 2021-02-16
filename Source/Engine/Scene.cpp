@@ -77,7 +77,7 @@ Scene::~Scene()
 }
 
 
-void Scene::loadSkybox(const std::array<std::string, 6>& paths, Engine* eng)
+void Scene::loadSkybox(const std::array<std::string, 6>& paths, RenderEngine* eng)
 {
 	uint32_t i = 0;
     std::vector<unsigned char> skyboxData{};
@@ -105,7 +105,7 @@ void Scene::loadSkybox(const std::array<std::string, 6>& paths, Engine* eng)
 }
 
 
-std::vector<InstanceID> Scene::loadFromFile(const int vertAttributes, Engine* eng)
+std::vector<InstanceID> Scene::loadFromFile(const int vertAttributes, RenderEngine* eng)
 {
     Assimp::Importer importer;
 
@@ -259,13 +259,13 @@ void Scene::addLights(const aiScene* scene)
 }
 
 
-void Scene::loadMaterials(Engine* eng)
+void Scene::loadMaterials(RenderEngine* eng)
 {
     const MaterialMappings mappings = loadMaterialsInternal(eng);
 }
 
 
-Scene::MaterialMappings Scene::loadMaterialsInternal(Engine* eng)
+Scene::MaterialMappings Scene::loadMaterialsInternal(RenderEngine* eng)
 {
 	// TODO replace this with a lower level file interface to avoid horrible iostream performance.
 	std::ifstream materialFile{};
@@ -396,7 +396,7 @@ Scene::MaterialMappings Scene::loadMaterialsInternal(Engine* eng)
 }
 
 
-void Scene::loadMaterialsExternal(Engine* eng, const aiScene* scene)
+void Scene::loadMaterialsExternal(RenderEngine* eng, const aiScene* scene)
 {
     const std::string sceneDirectory = mPath.parent_path().string();
 
@@ -574,7 +574,7 @@ SceneID Scene::addMesh(const StaticMesh& mesh, MeshType meshType)
 }
 
 
-std::vector<SceneID> Scene::loadFile(const std::string &path, MeshType meshType, Engine* eng)
+std::vector<SceneID> Scene::loadFile(const std::string &path, MeshType meshType, RenderEngine* eng)
 {
     Assimp::Importer importer;
 
@@ -715,7 +715,7 @@ void Scene::removeMeshInstance(const InstanceID id)
 }
 
 
-void Scene::uploadData(Engine* eng)
+void Scene::uploadData(RenderEngine* eng)
 {
     PROFILER_EVENT();
 
@@ -974,7 +974,7 @@ void Scene::addMaterial(const Scene::Material& mat)
 }
 
 
-void Scene::addMaterial(const MaterialPaths& mat, Engine* eng)
+void Scene::addMaterial(const MaterialPaths& mat, RenderEngine* eng)
 {
     const uint32_t materialFlags = mat.mMaterialTypes;
     Scene::Material newMaterial{};

@@ -12,14 +12,14 @@
 class TAATechnique : public Technique
 {
 public:
-	TAATechnique(Engine*, RenderGraph&);
+	TAATechnique(RenderEngine*, RenderGraph&);
 
 	virtual PassType getPassType() const override
 	{
 		return PassType::TAA;
 	}
 
-	virtual void render(RenderGraph&, Engine*) override;
+	virtual void render(RenderGraph&, RenderEngine*) override;
 
 	virtual void bindResources(RenderGraph&) override;
 

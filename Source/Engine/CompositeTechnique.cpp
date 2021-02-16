@@ -6,7 +6,7 @@
 #include "Core/Executor.hpp"
 
 
-CompositeTechnique::CompositeTechnique(Engine* eng, RenderGraph& graph) :
+CompositeTechnique::CompositeTechnique(RenderEngine* eng, RenderGraph& graph) :
 	Technique("Composite", eng->getDevice()) 
 {
 	const auto viewPortX = eng->getSwapChainImage()->getExtent(0, 0).width;
@@ -35,7 +35,7 @@ CompositeTechnique::CompositeTechnique(Engine* eng, RenderGraph& graph) :
 		compositeTask.addOutput(kFrameBufer, AttachmentType::RenderTarget2D, eng->getSwapChainImage()->getFormat(), LoadOp::Clear_Black);
 
 		compositeTask.setRecordCommandsCallback(
-            [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+            [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, RenderEngine* eng, const std::vector<const MeshInstance*>&)
 			{
                 PROFILER_EVENT("Composite");
                 PROFILER_GPU_TASK(exec);
@@ -81,7 +81,7 @@ CompositeTechnique::CompositeTechnique(Engine* eng, RenderGraph& graph) :
 
 
             compositeTask.setRecordCommandsCallback(
-                [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+                [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, RenderEngine* eng, const std::vector<const MeshInstance*>&)
                 {
                     PROFILER_EVENT("Composite");
                     PROFILER_GPU_TASK(exec);
@@ -119,7 +119,7 @@ CompositeTechnique::CompositeTechnique(Engine* eng, RenderGraph& graph) :
             overlayTask.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
             overlayTask.addOutput(kFrameBufer, AttachmentType::RenderTarget2D, eng->getSwapChainImage()->getFormat(), LoadOp::Clear_Black);
             overlayTask.setRecordCommandsCallback(
-                [](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+                [](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, RenderEngine* eng, const std::vector<const MeshInstance*>&)
                 {
                     Shader vertexShader = eng->getShader("./Shaders/FullScreenTriangle.vert");
                     Shader fragmentShader = eng->getShader("./Shaders/CompositeOverlayTAA.frag");
@@ -149,7 +149,7 @@ CompositeTechnique::CompositeTechnique(Engine* eng, RenderGraph& graph) :
             compositeTask.addOutput(kFrameBufer, AttachmentType::RenderTarget2D, eng->getSwapChainImage()->getFormat(), LoadOp::Clear_Black);
 
             compositeTask.setRecordCommandsCallback(
-                [](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+                [](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, RenderEngine* eng, const std::vector<const MeshInstance*>&)
                 {
                     Shader vertexShader = eng->getShader("./Shaders/FullScreenTriangle.vert");
                     Shader fragmentShader = eng->getShader("./Shaders/Blit.frag");

@@ -9,7 +9,7 @@ class CompositeTechnique : public Technique
 {
 public:
 
-	CompositeTechnique(Engine*, RenderGraph&);
+	CompositeTechnique(RenderEngine*, RenderGraph&);
 	virtual ~CompositeTechnique() = default;
 
 	virtual PassType getPassType() const
@@ -18,7 +18,7 @@ public:
 	}
 
 	// default empty implementations as most classes won't need to do anything for one of these.
-	virtual void render(RenderGraph&, Engine*) override final
+	virtual void render(RenderGraph&, RenderEngine*) override final
 	{}
 
     virtual void bindResources(RenderGraph& graph) override final;

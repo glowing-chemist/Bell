@@ -11,7 +11,7 @@
 #include "stbi_image_write.h"
 
 
-RayTracingScene::RayTracingScene(Engine* eng, const Scene* scene) :
+RayTracingScene::RayTracingScene(RenderEngine* eng, const Scene* scene) :
     mPrimitiveMaterialID{},
     mBVH_SRS{eng->getDevice(), 6}
 {

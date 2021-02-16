@@ -9,7 +9,7 @@ constexpr const char* kLightIndexCounter = "lightIndexCounter";
 constexpr const char* kActiveFroxelsCounter = "ActiveFroxelsCounter";
 
 
-LightFroxelationTechnique::LightFroxelationTechnique(Engine* eng, RenderGraph& graph) :
+LightFroxelationTechnique::LightFroxelationTechnique(RenderEngine* eng, RenderGraph& graph) :
 	Technique("LightFroxelation", eng->getDevice()),
     mActiveFroxelsShader(eng->getShader("./Shaders/ActiveFroxels.comp")),
     mIndirectArgsShader(eng->getShader("./Shaders/IndirectFroxelArgs.comp")),
@@ -42,7 +42,7 @@ LightFroxelationTechnique::LightFroxelationTechnique(Engine* eng, RenderGraph& g
     clearCountersTask.addInput(kActiveFroxelsCounter, AttachmentType::DataBufferWO);
     clearCountersTask.addInput(kLightIndexCounter, AttachmentType::DataBufferWO);
     clearCountersTask.setRecordCommandsCallback(
-        [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine*, const std::vector<const MeshInstance*>&)
+        [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, RenderEngine*, const std::vector<const MeshInstance*>&)
         {
             PROFILER_EVENT("Clear froxel counter");
             PROFILER_GPU_TASK(exec);
@@ -64,7 +64,7 @@ LightFroxelationTechnique::LightFroxelationTechnique(Engine* eng, RenderGraph& g
     activeFroxelTask.addInput(kActiveFroxelBuffer, AttachmentType::DataBufferWO);
     activeFroxelTask.addInput(kActiveFroxelsCounter, AttachmentType::DataBufferRW);
     activeFroxelTask.setRecordCommandsCallback(
-        [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+        [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, RenderEngine* eng, const std::vector<const MeshInstance*>&)
         {
             PROFILER_EVENT("light froxelation");
             PROFILER_GPU_TASK(exec);
@@ -84,7 +84,7 @@ LightFroxelationTechnique::LightFroxelationTechnique(Engine* eng, RenderGraph& g
     indirectArgsTask.addInput(kActiveFroxelsCounter, AttachmentType::DataBufferRO);
     indirectArgsTask.addInput(kFroxelIndirectArgs, AttachmentType::DataBufferWO);
     indirectArgsTask.setRecordCommandsCallback(
-        [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine*, const std::vector<const MeshInstance*>&)
+        [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, RenderEngine*, const std::vector<const MeshInstance*>&)
         {
             const RenderTask& task = graph.getTask(taskIndex);
             exec->setComputeShader(static_cast<const ComputeTask&>(task), graph, mIndirectArgsShader);
@@ -104,7 +104,7 @@ LightFroxelationTechnique::LightFroxelationTechnique(Engine* eng, RenderGraph& g
     lightListAsignmentTask.addInput(kLightBuffer, AttachmentType::ShaderResourceSet);
     lightListAsignmentTask.addInput(kFroxelIndirectArgs, AttachmentType::IndirectBuffer);
     lightListAsignmentTask.setRecordCommandsCallback(
-        [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine*, const std::vector<const MeshInstance*>&)
+        [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, RenderEngine*, const std::vector<const MeshInstance*>&)
         {
             PROFILER_EVENT("build light lists");
             PROFILER_GPU_TASK(exec);
@@ -120,7 +120,7 @@ LightFroxelationTechnique::LightFroxelationTechnique(Engine* eng, RenderGraph& g
 }
 
 
-void LightFroxelationTechnique::render(RenderGraph&, Engine*)
+void LightFroxelationTechnique::render(RenderGraph&, RenderEngine*)
 {
     mActiveFroxelsImageView->updateLastAccessed();
     mActiveFroxelsImage->updateLastAccessed();

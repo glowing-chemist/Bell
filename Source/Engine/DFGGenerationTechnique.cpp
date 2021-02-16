@@ -3,7 +3,7 @@
 #include "Core/Executor.hpp"
 
 
-DFGGenerationTechnique::DFGGenerationTechnique(Engine* eng, RenderGraph& graph) :
+DFGGenerationTechnique::DFGGenerationTechnique(RenderEngine* eng, RenderGraph& graph) :
 	Technique("DFGGeneration", eng->getDevice()),
     mDFGGenerationShader( eng->getShader("./Shaders/DFGLutGenerate.comp") ),
     mDFGLUT(eng->getDevice(), Format::RGBA16UNorm, ImageUsage::Sampled | ImageUsage::Storage, 512, 512, 1, 1, 1, 1, "DFGLUT"),
@@ -17,7 +17,7 @@ DFGGenerationTechnique::DFGGenerationTechnique(Engine* eng, RenderGraph& graph) 
 
 }
 
-void DFGGenerationTechnique::render(RenderGraph& graph, Engine*)
+void DFGGenerationTechnique::render(RenderGraph& graph, RenderEngine*)
 {
 	mDFGLUT->updateLastAccessed();
 	mDFGLUTView->updateLastAccessed();
@@ -27,7 +27,7 @@ void DFGGenerationTechnique::render(RenderGraph& graph, Engine*)
 	if (mFirstFrame)
 	{
 		task.setRecordCommandsCallback(
-            [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine*, const std::vector<const MeshInstance*>&)
+            [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, RenderEngine*, const std::vector<const MeshInstance*>&)
 			{
 				PROFILER_EVENT("DFG generation");
 				PROFILER_GPU_TASK(exec);
@@ -45,7 +45,7 @@ void DFGGenerationTechnique::render(RenderGraph& graph, Engine*)
 	else
 	{
 		task.setRecordCommandsCallback(
-            [](const RenderGraph&, const uint32_t, Executor*, Engine*, const std::vector<const MeshInstance*>&)
+            [](const RenderGraph&, const uint32_t, Executor*, RenderEngine*, const std::vector<const MeshInstance*>&)
 			{
 				return;
 			}

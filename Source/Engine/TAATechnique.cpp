@@ -5,7 +5,7 @@
 
 constexpr const char* kTAASAmpler = "TAASampler";
 
-TAATechnique::TAATechnique(Engine* eng, RenderGraph& graph) :
+TAATechnique::TAATechnique(RenderEngine* eng, RenderGraph& graph) :
 	Technique("TAA", eng->getDevice()),
     mHistoryImage(	eng->getDevice(), Format::RGBA16Float, ImageUsage::Storage | ImageUsage::Sampled | ImageUsage::TransferDest,
 					eng->getSwapChainImage()->getExtent(0, 0).width, 
@@ -35,7 +35,7 @@ TAATechnique::TAATechnique(Engine* eng, RenderGraph& graph) :
 	resolveTAA.addInput(kNewTAAHistory, AttachmentType::Image2D);
 	resolveTAA.addInput(kTAASAmpler, AttachmentType::Sampler);
     resolveTAA.setRecordCommandsCallback(
-        [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+        [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, RenderEngine* eng, const std::vector<const MeshInstance*>&)
         {
             const RenderTask& task = graph.getTask(taskIndex);
             exec->setComputeShader(static_cast<const ComputeTask&>(task), graph, mTAAShader);
@@ -53,7 +53,7 @@ TAATechnique::TAATechnique(Engine* eng, RenderGraph& graph) :
 }
 
 
-void TAATechnique::render(RenderGraph&, Engine*)
+void TAATechnique::render(RenderGraph&, RenderEngine*)
 {
 	if (mFirstFrame)
 	{

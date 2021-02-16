@@ -163,7 +163,7 @@ private:
 
     bool mImGuiSetupNeeded;
 
-    Engine mEngine;
+    RenderEngine mEngine;
 
     std::vector<InstanceID> mSceneInstanceIDs;
 
@@ -189,8 +189,8 @@ private:
         bool mShowImGuizmo;
     };
     std::vector<EditorIrradianceVolumeOptions> mIrradianceVolumesOptions;
-    std::vector<Engine::IrradianceProbeVolume> mIrradianceVolumes;
-    std::vector<Engine::RadianceProbe> mRadianceProbes;
+    std::vector<RenderEngine::IrradianceProbeVolume> mIrradianceVolumes;
+    std::vector<RenderEngine::RadianceProbe> mRadianceProbes;
 
     std::vector<EditorLight> mLights;
     EditorLight mShadowingLight;

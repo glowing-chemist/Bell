@@ -7,7 +7,7 @@
 class DeferredProbeGITechnique : public Technique
 {
 public:
-    DeferredProbeGITechnique(Engine*, RenderGraph&);
+    DeferredProbeGITechnique(RenderEngine*, RenderGraph&);
     ~DeferredProbeGITechnique() = default;
 
     virtual PassType getPassType() const override final
@@ -15,7 +15,7 @@ public:
 	return PassType::LightProbeDeferredGI;
     }
 
-    virtual void render(RenderGraph&, Engine*) override final
+    virtual void render(RenderGraph&, RenderEngine*) override final
     {}
 
     virtual void bindResources(RenderGraph&) override final {}

@@ -16,7 +16,7 @@ extern const char kShadowMapHistory[];
 class ShadowMappingTechnique : public Technique
 {
 public:
-    ShadowMappingTechnique(Engine*, RenderGraph&);
+    ShadowMappingTechnique(RenderEngine*, RenderGraph&);
     ~ShadowMappingTechnique() = default;
 
     virtual PassType getPassType() const override
@@ -24,7 +24,7 @@ public:
         return PassType::Shadow;
     }
 
-    virtual void render(RenderGraph&, Engine*) override;
+    virtual void render(RenderGraph&, RenderEngine*) override;
 
     virtual void bindResources(RenderGraph& graph) override 
     {
@@ -76,7 +76,7 @@ private:
 class RayTracedShadowsTechnique : public Technique
 {
 public:
-    RayTracedShadowsTechnique(Engine*, RenderGraph&);
+    RayTracedShadowsTechnique(RenderEngine*, RenderGraph&);
     ~RayTracedShadowsTechnique() = default;
 
     virtual PassType getPassType() const override
@@ -84,7 +84,7 @@ public:
         return PassType::RayTracedShadows;
     }
 
-    virtual void render(RenderGraph&, Engine*) override
+    virtual void render(RenderGraph&, RenderEngine*) override
     {
         if(mFirstFrame)
         {

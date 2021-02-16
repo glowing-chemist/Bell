@@ -9,7 +9,7 @@ constexpr const char kOcclusionIndexBuffer[] = "OcclusionIndexBuffer";
 constexpr const char kOcclusionSampler[] = "OcclusionSampler";
 
 
-OcclusionCullingTechnique::OcclusionCullingTechnique(Engine* eng, RenderGraph& graph) :
+OcclusionCullingTechnique::OcclusionCullingTechnique(RenderEngine* eng, RenderGraph& graph) :
     Technique("Occlusion culling", eng->getDevice()),
     mOcclusionCullingShader(eng->getShader("./Shaders/OcclusionCulling.comp")),
     mBoundsIndexBuffer(getDevice(), BufferUsage::TransferDest | BufferUsage::DataBuffer, sizeof(uint32_t) * 500, sizeof(uint32_t) * 500, "Occlusion index buffer"),
@@ -32,7 +32,7 @@ OcclusionCullingTechnique::OcclusionCullingTechnique(Engine* eng, RenderGraph& g
     task.addInput(kOcclusionSampler, AttachmentType::Sampler);
     task.addInput("MeshCount", AttachmentType::PushConstants);
     task.setRecordCommandsCallback(
-        [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>& meshes)
+        [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, RenderEngine* eng, const std::vector<const MeshInstance*>& meshes)
         {
             PROFILER_EVENT("Occlusion culling");
             PROFILER_GPU_TASK(exec);

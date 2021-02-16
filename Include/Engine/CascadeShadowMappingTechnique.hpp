@@ -24,7 +24,7 @@ static constexpr char kCascadesInfo[] = "CascadesInfo";
 class CascadeShadowMappingTechnique : public Technique
 {
 public:
-    CascadeShadowMappingTechnique(Engine*, RenderGraph&);
+    CascadeShadowMappingTechnique(RenderEngine*, RenderGraph&);
     ~CascadeShadowMappingTechnique() = default;
 
     virtual PassType getPassType() const override
@@ -32,7 +32,7 @@ public:
         return PassType::CascadingShadow;
     }
 
-    virtual void render(RenderGraph&, Engine* eng) override;
+    virtual void render(RenderGraph&, RenderEngine* eng) override;
 
     virtual void bindResources(RenderGraph& graph) override
     {

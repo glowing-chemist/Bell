@@ -36,7 +36,7 @@ constexpr const char* prevMipNames[] = {kPrevLinearDepthMip1, kPrevLinearDepthMi
 constexpr const char* kOcclusionSampler = "OcclusionSampler";
 
 
-LineariseDepthTechnique::LineariseDepthTechnique(Engine* eng, RenderGraph& graph) :
+LineariseDepthTechnique::LineariseDepthTechnique(RenderEngine* eng, RenderGraph& graph) :
 	Technique("linearise depth", eng->getDevice()),
     mMipLevels{static_cast<uint32_t>(std::ceil(std::log2(eng->getSwapChainImage()->getExtent(0, 0).height)))},
     mLineariseDepthShader(mMipLevels == 10 ? eng->getShader("./Shaders/LineariseDepth10.comp") : eng->getShader("./Shaders/LineariseDepth11.comp")),
@@ -73,7 +73,7 @@ LineariseDepthTechnique::LineariseDepthTechnique(Engine* eng, RenderGraph& graph
 }
 
 
-void LineariseDepthTechnique::render(RenderGraph& graph, Engine*)
+void LineariseDepthTechnique::render(RenderGraph& graph, RenderEngine*)
 {
     if(mFirstFrame)
     {
@@ -91,7 +91,7 @@ void LineariseDepthTechnique::render(RenderGraph& graph, Engine*)
         mip->updateLastAccessed();
 
 	task.setRecordCommandsCallback(
-        [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+        [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, RenderEngine* eng, const std::vector<const MeshInstance*>&)
 		{
             const RenderTask& task = graph.getTask(taskIndex);
             exec->setComputeShader(static_cast<const ComputeTask&>(task), graph, mLineariseDepthShader);

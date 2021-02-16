@@ -6,7 +6,7 @@
 constexpr const char* slots[] = { "convolved0", "convolved1", "convolved2", "convolved3", "convolved4", "convolved5", "convolved6", "convolved7", "convolved8", "convolved9" };
 
 
-ConvolveSkyBoxTechnique::ConvolveSkyBoxTechnique(Engine* eng, RenderGraph& graph) :
+ConvolveSkyBoxTechnique::ConvolveSkyBoxTechnique(RenderEngine* eng, RenderGraph& graph) :
 	Technique("convolveskybox", eng->getDevice()),
     mConvolveSkyboxShader(eng->getShader("./Shaders/SkyBoxConvolve.comp")),
     mConvolvedSpecularSkybox(eng->getDevice(), Format::RGBA8UNorm, ImageUsage::CubeMap | ImageUsage::Sampled | ImageUsage::Storage,
@@ -38,7 +38,7 @@ ConvolveSkyBoxTechnique::ConvolveSkyBoxTechnique(Engine* eng, RenderGraph& graph
 }
 
 
-void ConvolveSkyBoxTechnique::render(RenderGraph& graph, Engine*)
+void ConvolveSkyBoxTechnique::render(RenderGraph& graph, RenderEngine*)
 {
     mConvolvedSpecularSkybox->updateLastAccessed();
     mConvolvedSpecularView->updateLastAccessed();
@@ -50,7 +50,7 @@ void ConvolveSkyBoxTechnique::render(RenderGraph& graph, Engine*)
 	if(mFirstFrame)
 	{
 		convolveTask.setRecordCommandsCallback(
-            [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine*, const std::vector<const MeshInstance*>&)
+            [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, RenderEngine*, const std::vector<const MeshInstance*>&)
 			{
                 PROFILER_EVENT("Convolve skybox");
                 PROFILER_GPU_TASK(exec);
@@ -68,7 +68,7 @@ void ConvolveSkyBoxTechnique::render(RenderGraph& graph, Engine*)
 	else
 	{
 		convolveTask.setRecordCommandsCallback(
-            [](const RenderGraph&, const uint32_t, Executor*, Engine*, const std::vector<const MeshInstance*>&)
+            [](const RenderGraph&, const uint32_t, Executor*, RenderEngine*, const std::vector<const MeshInstance*>&)
 			{
 				return;
 			}

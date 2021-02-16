@@ -33,7 +33,7 @@ namespace
 }
 
 
-SSAOTechnique::SSAOTechnique(Engine* eng, RenderGraph& graph) :
+SSAOTechnique::SSAOTechnique(RenderEngine* eng, RenderGraph& graph) :
 	Technique{"SSAO", eng->getDevice()},
         mPipelineDesc{  Rect{getDevice()->getSwapChain()->getSwapChainImageWidth() / 2,
                         getDevice()->getSwapChain()->getSwapChainImageHeight() / 2},
@@ -84,7 +84,7 @@ SSAOTechnique::SSAOTechnique(Engine* eng, RenderGraph& graph) :
     task.addOutput(kSSAORaw, AttachmentType::RenderTarget2D, Format::R8UNorm, LoadOp::Nothing);
 
     task.setRecordCommandsCallback(
-        [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine*, const std::vector<const MeshInstance*>&)
+        [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, RenderEngine*, const std::vector<const MeshInstance*>&)
         {
             PROFILER_EVENT("ssao");
             PROFILER_GPU_TASK(exec);
@@ -109,7 +109,7 @@ SSAOTechnique::SSAOTechnique(Engine* eng, RenderGraph& graph) :
 }
 
 
-void SSAOTechnique::render(RenderGraph&, Engine* eng)
+void SSAOTechnique::render(RenderGraph&, RenderEngine* eng)
 {
     mHistoryCounter->updateLastAccessed();
     mHistoryCounterViews->updateLastAccessed();

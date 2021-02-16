@@ -10,7 +10,7 @@ class ForwardIBLTechnique : public Technique
 {
 public:
 
-	ForwardIBLTechnique(Engine*, RenderGraph&);
+	ForwardIBLTechnique(RenderEngine*, RenderGraph&);
 	~ForwardIBLTechnique() = default;
 
 	virtual PassType getPassType() const
@@ -18,7 +18,7 @@ public:
 		return PassType::ForwardIBL;
 	}
 
-    virtual void render(RenderGraph&, Engine*) {};
+    virtual void render(RenderGraph&, RenderEngine*) {};
 
     virtual void bindResources(RenderGraph&) {}
 

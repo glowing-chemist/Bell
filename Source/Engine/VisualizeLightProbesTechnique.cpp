@@ -12,7 +12,7 @@ const char kLightProbeVertexBuffer[] = "LightProbesVert";
 const char kLightProbeIndexBuffer[] = "LightProbeIndex";
 
 
-ViaualizeLightProbesTechnique::ViaualizeLightProbesTechnique(Engine* eng, RenderGraph& graph) :
+ViaualizeLightProbesTechnique::ViaualizeLightProbesTechnique(RenderEngine* eng, RenderGraph& graph) :
     Technique("VisualizeLightProbes", eng->getDevice()),
     mIrradianceProbePipeline{Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
                 getDevice()->getSwapChain()->getSwapChainImageHeight()},
@@ -46,7 +46,7 @@ ViaualizeLightProbesTechnique::ViaualizeLightProbesTechnique(Engine* eng, Render
         task.addOutput(kGlobalLighting, AttachmentType::RenderTarget2D, Format::RGBA8UNorm);
         task.addOutput(kGBufferDepth, AttachmentType::Depth, Format::D32Float);
         task.setRecordCommandsCallback(
-                    [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+                    [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, RenderEngine* eng, const std::vector<const MeshInstance*>&)
                     {
                         struct PushConstants
                         {
@@ -90,7 +90,7 @@ ViaualizeLightProbesTechnique::ViaualizeLightProbesTechnique(Engine* eng, Render
         task.addOutput(kGlobalLighting, AttachmentType::RenderTarget2D, Format::RGBA8UNorm);
         task.addOutput(kGBufferDepth, AttachmentType::Depth, Format::D32Float);
         task.setRecordCommandsCallback(
-                    [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+                    [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, RenderEngine* eng, const std::vector<const MeshInstance*>&)
                     {
                         struct PushConstants
                         {

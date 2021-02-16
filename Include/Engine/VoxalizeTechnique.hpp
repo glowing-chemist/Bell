@@ -15,7 +15,7 @@
 class VoxalizeTechnique : public Technique
 {
 public:
-    VoxalizeTechnique(Engine*, RenderGraph&);
+    VoxalizeTechnique(RenderEngine*, RenderGraph&);
     ~VoxalizeTechnique() = default;
 
     virtual PassType getPassType() const override final
@@ -23,7 +23,7 @@ public:
         return PassType::Voxelize;
     }
 
-    virtual void render(RenderGraph&, Engine*) override final;
+    virtual void render(RenderGraph&, RenderEngine*) override final;
 
     virtual void bindResources(RenderGraph& graph) override final
     {

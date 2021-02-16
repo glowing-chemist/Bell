@@ -7,7 +7,7 @@
 constexpr const char kForwardPoitnSampler[] = "ForwardPointSampler";
 
 
-ForwardCombinedLightingTechnique::ForwardCombinedLightingTechnique(Engine* eng, RenderGraph& graph) :
+ForwardCombinedLightingTechnique::ForwardCombinedLightingTechnique(RenderEngine* eng, RenderGraph& graph) :
 	Technique("ForwardCombinedLighting", eng->getDevice()),
     mDesc{Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
 			   getDevice()->getSwapChain()->getSwapChainImageHeight()},
@@ -54,7 +54,7 @@ ForwardCombinedLightingTechnique::ForwardCombinedLightingTechnique(Engine* eng, 
     if(eng->isPassRegistered(PassType::OcclusionCulling))
     {
         task.setRecordCommandsCallback(
-            [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>& meshes)
+            [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, RenderEngine* eng, const std::vector<const MeshInstance*>& meshes)
             {
                 PROFILER_EVENT("Forward combiuned lighting");
                 PROFILER_GPU_TASK(exec);
@@ -104,7 +104,7 @@ ForwardCombinedLightingTechnique::ForwardCombinedLightingTechnique(Engine* eng, 
     else
     {
         task.setRecordCommandsCallback(
-            [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>& meshes)
+            [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, RenderEngine* eng, const std::vector<const MeshInstance*>& meshes)
             {
                 PROFILER_EVENT("Forward combiuned lighting");
                 PROFILER_GPU_TASK(exec);

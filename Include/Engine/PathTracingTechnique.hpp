@@ -12,7 +12,7 @@
 class PathTracingTechnique : public Technique
 {
 public:
-    PathTracingTechnique(Engine*, RenderGraph&);
+    PathTracingTechnique(RenderEngine*, RenderGraph&);
     virtual ~PathTracingTechnique() = default;
 
     virtual PassType getPassType() const final override
@@ -24,7 +24,7 @@ public:
             graph.bindImage(kGlobalLighting, mGlobalLightingView);
     }
 
-    virtual void render(RenderGraph&, Engine*) override final
+    virtual void render(RenderGraph&, RenderEngine*) override final
     {
         mGloballighting->updateLastAccessed();
         mGlobalLightingView->updateLastAccessed();

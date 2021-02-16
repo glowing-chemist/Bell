@@ -164,7 +164,7 @@ void ImGuiNodeEditor::draw()
 }
 
 
-void ImGuiNodeEditor::addPasses(Engine& eng)
+void ImGuiNodeEditor::addPasses(RenderEngine& eng)
 {
 	for (const auto& node : mNodes)
 	{

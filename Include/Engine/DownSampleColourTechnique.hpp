@@ -10,7 +10,7 @@ class DownSampleColourTechnique : public Technique
 {
 public:
 
-	DownSampleColourTechnique(Engine*, RenderGraph&);
+	DownSampleColourTechnique(RenderEngine*, RenderGraph&);
 	~DownSampleColourTechnique() = default;
 
 	virtual PassType getPassType() const
@@ -18,7 +18,7 @@ public:
 		return PassType::DownSampleColour;
 	}
 
-    virtual void render(RenderGraph&, Engine*) override final;
+    virtual void render(RenderGraph&, RenderEngine*) override final;
 
 	virtual void bindResources(RenderGraph& graph) override final;
 

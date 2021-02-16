@@ -11,19 +11,19 @@
 #include "Engine/DefaultResourceSlots.hpp"
 #include "Technique.hpp"
 
-class Engine;
+class RenderEngine;
 
 class OverlayTechnique : public Technique
 {
 public:
 
-    OverlayTechnique(Engine* dev, RenderGraph&);
+    OverlayTechnique(RenderEngine* dev, RenderGraph&);
     virtual ~OverlayTechnique() = default;
 
     virtual PassType getPassType() const override
     { return PassType::Overlay; }
 
-    virtual void render(RenderGraph&, Engine*) override;
+    virtual void render(RenderGraph&, RenderEngine*) override;
 
     virtual void bindResources(RenderGraph& graph) override;
 

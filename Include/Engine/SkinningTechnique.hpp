@@ -8,14 +8,14 @@
 class SkinningTechnique : public Technique
 {
 public:
-    SkinningTechnique(Engine*, RenderGraph&);
+    SkinningTechnique(RenderEngine*, RenderGraph&);
     virtual ~SkinningTechnique() = default;
 
     virtual PassType getPassType() const final override
         { return PassType::Animation; }
 
     virtual void bindResources(RenderGraph&) override final;
-    virtual void render(RenderGraph&, Engine*) override final {}
+    virtual void render(RenderGraph&, RenderEngine*) override final {}
 
     struct PushConstant
     {

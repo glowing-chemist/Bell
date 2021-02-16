@@ -52,7 +52,7 @@
 #include <thread>
 
 
-Engine::Engine(GLFWwindow* windowPtr) :
+RenderEngine::RenderEngine(GLFWwindow* windowPtr) :
     mThreadPool(),
 #ifdef VULKAN
     mRenderInstance( new VulkanRenderInstance(windowPtr)),
@@ -159,7 +159,7 @@ Engine::Engine(GLFWwindow* windowPtr) :
 }
 
 
-void Engine::setScene(const std::string& path)
+void RenderEngine::setScene(const std::string& path)
 {
     mCurrentScene = new Scene(path);
     mCurrentScene->loadFromFile(VertexAttributes::Position4 | VertexAttributes::TextureCoordinates | VertexAttributes::Normals | VertexAttributes::Albedo, this);
@@ -172,7 +172,7 @@ void Engine::setScene(const std::string& path)
 }
 
 
-void Engine::setScene(Scene* scene)
+void RenderEngine::setScene(Scene* scene)
 {
     mCurrentScene = scene;
 
@@ -201,41 +201,41 @@ void Engine::setScene(Scene* scene)
 }
 
 
-void Engine::setRayTracingScene(RayTracingScene* scene)
+void RenderEngine::setRayTracingScene(RayTracingScene* scene)
 {
     mRayTracedScene = scene;
 }
 
 
-Camera& Engine::getCurrentSceneCamera()
+Camera& RenderEngine::getCurrentSceneCamera()
 {
     return mDebugCameraActive ? mDebugCamera : mCurrentScene ? mCurrentScene->getCamera() : mDebugCamera;
 }
 
 
-Image Engine::createImage(const uint32_t x,
-				  const uint32_t y,
-				  const uint32_t z,
-                  const uint32_t mips,
-                  const uint32_t levels,
-                  const uint32_t samples,
-				  const Format format,
-				  ImageUsage usage,
-				  const std::string& name)
+Image RenderEngine::createImage(const uint32_t x,
+                                const uint32_t y,
+                                const uint32_t z,
+                                const uint32_t mips,
+                                const uint32_t levels,
+                                const uint32_t samples,
+                                const Format format,
+                                ImageUsage usage,
+                                const std::string& name)
 {
     return Image{mRenderDevice, format, usage, x, y, z, mips, levels, samples, name};
 }
 
-Buffer Engine::createBuffer(const uint32_t size,
-					const uint32_t stride,
-					BufferUsage usage,
-					const std::string& name)
+Buffer RenderEngine::createBuffer(const uint32_t size,
+                                  const uint32_t stride,
+                                  BufferUsage usage,
+                                  const std::string& name)
 {
 	return Buffer{mRenderDevice, usage, size, stride, name};
 }
 
 
-Shader Engine::getShader(const std::string& path)
+Shader RenderEngine::getShader(const std::string& path)
 {
     std::hash<std::string> pathHasher{};
     const uint64_t hashedPath = pathHasher(path);
@@ -267,7 +267,7 @@ Shader Engine::getShader(const std::string& path)
 }
 
 
-Shader Engine::getShader(const std::string& path, const ShaderDefine& define)
+Shader RenderEngine::getShader(const std::string& path, const ShaderDefine& define)
 {
     std::hash<std::string> pathHasher{};
     uint64_t hashed = pathHasher(path);
@@ -299,7 +299,7 @@ Shader Engine::getShader(const std::string& path, const ShaderDefine& define)
 }
 
 
-std::unique_ptr<Technique> Engine::getSingleTechnique(const PassType passType)
+std::unique_ptr<Technique> RenderEngine::getSingleTechnique(const PassType passType)
 {
     switch(passType)
     {
@@ -404,7 +404,7 @@ std::unique_ptr<Technique> Engine::getSingleTechnique(const PassType passType)
     }
 }
 
-std::pair<uint64_t, uint64_t> Engine::addMeshToBuffer(const StaticMesh* mesh)
+std::pair<uint64_t, uint64_t> RenderEngine::addMeshToBuffer(const StaticMesh* mesh)
 {
 	const auto it = mVertexCache.find(mesh);
 	if (it != mVertexCache.end())
@@ -423,7 +423,7 @@ std::pair<uint64_t, uint64_t> Engine::addMeshToBuffer(const StaticMesh* mesh)
 }
 
 
-std::pair<uint64_t, uint64_t> Engine::addMeshToAnimationBuffer(const StaticMesh* mesh)
+std::pair<uint64_t, uint64_t> RenderEngine::addMeshToAnimationBuffer(const StaticMesh* mesh)
 {
     const auto it = mTposeVertexCache.find(mesh);
     if(it != mTposeVertexCache.end())
@@ -444,7 +444,7 @@ std::pair<uint64_t, uint64_t> Engine::addMeshToAnimationBuffer(const StaticMesh*
 }
 
 
-uint64_t Engine::getMeshBoundsIndex(const MeshInstance* inst)
+uint64_t RenderEngine::getMeshBoundsIndex(const MeshInstance* inst)
 {
     BELL_ASSERT(mMeshBoundsCache.find(inst) != mMeshBoundsCache.end(), "Unable to fin dinstance bounds")
 
@@ -452,7 +452,7 @@ uint64_t Engine::getMeshBoundsIndex(const MeshInstance* inst)
 }
 
 
-void Engine::execute(RenderGraph& graph)
+void RenderEngine::execute(RenderGraph& graph)
 {
     PROFILER_EVENT();
 
@@ -743,7 +743,7 @@ void Engine::execute(RenderGraph& graph)
 }
 
 
-void Engine::startAnimation(const InstanceID id, const std::string& name, const bool loop, const float speedModifer)
+void RenderEngine::startAnimation(const InstanceID id, const std::string& name, const bool loop, const float speedModifer)
 {
     BELL_ASSERT(mCurrentScene, "No scene set")
     const MeshInstance* inst = mCurrentScene->getMeshInstance(id);
@@ -756,7 +756,7 @@ void Engine::startAnimation(const InstanceID id, const std::string& name, const 
 }
 
 
-void Engine::terimateAnimation(const InstanceID id, const std::string& name)
+void RenderEngine::terimateAnimation(const InstanceID id, const std::string& name)
 {
     if(!mActiveSkeletalAnimations.empty())
     {
@@ -776,7 +776,7 @@ void Engine::terimateAnimation(const InstanceID id, const std::string& name)
 }
 
 
-void Engine::tickAnimations()
+void RenderEngine::tickAnimations()
 {
     PROFILER_EVENT();
 
@@ -834,7 +834,7 @@ void Engine::tickAnimations()
 }
 
 
-void Engine::recordScene()
+void RenderEngine::recordScene()
 {   
     PROFILER_EVENT();
 
@@ -866,7 +866,7 @@ void Engine::recordScene()
 }
 
 
-void Engine::render()
+void RenderEngine::render()
 {
     PROFILER_EVENT();
 
@@ -874,7 +874,7 @@ void Engine::render()
 }
 
 
-void Engine::updateGlobalBuffers()
+void RenderEngine::updateGlobalBuffers()
 {
     PROFILER_EVENT();
 
@@ -990,7 +990,7 @@ void Engine::updateGlobalBuffers()
 }
 
 
-void Engine::registerPass(const PassType pass)
+void RenderEngine::registerPass(const PassType pass)
 {
 	if((static_cast<uint64_t>(pass) & mCurrentRegistredPasses) == 0)
 	{
@@ -1001,13 +1001,13 @@ void Engine::registerPass(const PassType pass)
 }
 
 
-bool Engine::isPassRegistered(const PassType pass) const
+bool RenderEngine::isPassRegistered(const PassType pass) const
 {
 	return (static_cast<uint64_t>(pass) & mCurrentRegistredPasses) > 0;
 }
 
 
-void Engine::rayTraceScene()
+void RenderEngine::rayTraceScene()
 {
     if(mRayTracedScene)
     {
@@ -1021,7 +1021,7 @@ void Engine::rayTraceScene()
 }
 
 
-CPUImage Engine::renderDiffuseCubeMap(const RayTracingScene& scene, const float3 &position, const uint32_t x, const uint32_t y)
+CPUImage RenderEngine::renderDiffuseCubeMap(const RayTracingScene& scene, const float3 &position, const uint32_t x, const uint32_t y)
 {
     std::vector<unsigned char> data(x * y * 6 * sizeof(uint32_t));
 
@@ -1054,7 +1054,7 @@ CPUImage Engine::renderDiffuseCubeMap(const RayTracingScene& scene, const float3
 }
 
 
-std::vector<Engine::SphericalHarmonic> Engine::generateIrradianceProbes(const std::vector<IrradianceProbeVolume>& volumes)
+std::vector<RenderEngine::SphericalHarmonic> RenderEngine::generateIrradianceProbes(const std::vector<IrradianceProbeVolume>& volumes)
 {
     std::vector<float3> positions{};
     for(const auto& volume : volumes)
@@ -1067,9 +1067,9 @@ std::vector<Engine::SphericalHarmonic> Engine::generateIrradianceProbes(const st
 }
 
 
-std::vector<Engine::SphericalHarmonic> Engine::generateIrradianceProbes(const std::vector<float3>& positions)
+std::vector<RenderEngine::SphericalHarmonic> RenderEngine::generateIrradianceProbes(const std::vector<float3>& positions)
 {
-    std::vector<Engine::SphericalHarmonic> harmonics{};
+    std::vector<RenderEngine::SphericalHarmonic> harmonics{};
 
     if(mRayTracedScene)
     {
@@ -1085,18 +1085,18 @@ std::vector<Engine::SphericalHarmonic> Engine::generateIrradianceProbes(const st
     if(!harmonics.empty())
     {
         mIrradianceProbeBuffer = std::make_unique<Buffer>(mRenderDevice, BufferUsage::TransferDest | BufferUsage::DataBuffer,
-                                                          sizeof(Engine::SphericalHarmonic) * harmonics.size(), sizeof(Engine::SphericalHarmonic) * harmonics.size(),
+                                                          sizeof(RenderEngine::SphericalHarmonic) * harmonics.size(), sizeof(RenderEngine::SphericalHarmonic) * harmonics.size(),
                                                           "Irradiance harmonics");
         mIrradianceProbeBufferView = std::make_unique<BufferView>(*mIrradianceProbeBuffer);
 
-        (*mIrradianceProbeBuffer)->setContents(harmonics.data(), sizeof(Engine::SphericalHarmonic) * harmonics.size());
+        (*mIrradianceProbeBuffer)->setContents(harmonics.data(), sizeof(RenderEngine::SphericalHarmonic) * harmonics.size());
     }
 
     return harmonics;
 }
 
 
-Engine::SphericalHarmonic Engine::generateSphericalHarmonic(const float3& position, const CPUImage& cubemap)
+RenderEngine::SphericalHarmonic RenderEngine::generateSphericalHarmonic(const float3& position, const CPUImage& cubemap)
 {
     SphericalHarmonic harmonic{};
     harmonic.mPosition = float4(position, 1.0f);
@@ -1210,12 +1210,12 @@ Engine::SphericalHarmonic Engine::generateSphericalHarmonic(const float3& positi
 }
 
 
-std::vector<Engine::KdNode> Engine::generateProbeKdTree(std::vector<SphericalHarmonic> &harmonics)
+std::vector<RenderEngine::KdNode> RenderEngine::generateProbeKdTree(std::vector<SphericalHarmonic> &harmonics)
 {
-    std::vector<Engine::KdNode> treeNodes{};
+    std::vector<RenderEngine::KdNode> treeNodes{};
 
-    std::function<int32_t(const uint32_t, std::vector<uint32_t>&, std::vector<Engine::KdNode>&)> buildKdTreeRecurse =
-            [&](const uint32_t depth, std::vector<uint32_t>& nodeHarmonicsindicies, std::vector<Engine::KdNode>& results) -> int32_t
+    std::function<int32_t(const uint32_t, std::vector<uint32_t>&, std::vector<RenderEngine::KdNode>&)> buildKdTreeRecurse =
+            [&](const uint32_t depth, std::vector<uint32_t>& nodeHarmonicsindicies, std::vector<RenderEngine::KdNode>& results) -> int32_t
     {
         if(nodeHarmonicsindicies.empty())
             return -1;
@@ -1275,7 +1275,7 @@ std::vector<Engine::KdNode> Engine::generateProbeKdTree(std::vector<SphericalHar
 }
 
 
-void Engine::loadIrradianceProbes(const std::string& probesPath, const std::string& lookupPath)
+void RenderEngine::loadIrradianceProbes(const std::string& probesPath, const std::string& lookupPath)
 {
     FILE* probeFile = fopen(probesPath.c_str(), "rb");
     BELL_ASSERT(probeFile, "Unable to find irradiance probe file")
@@ -1289,11 +1289,11 @@ void Engine::loadIrradianceProbes(const std::string& probesPath, const std::stri
     fclose(probeFile);
 
     mIrradianceProbeBuffer = std::make_unique<Buffer>(mRenderDevice, BufferUsage::TransferDest | BufferUsage::DataBuffer,
-                                                      sizeof(Engine::SphericalHarmonic) * mIrradianceProbesHarmonics.size(), sizeof(Engine::SphericalHarmonic) * mIrradianceProbesHarmonics.size(),
+                                                      sizeof(RenderEngine::SphericalHarmonic) * mIrradianceProbesHarmonics.size(), sizeof(RenderEngine::SphericalHarmonic) * mIrradianceProbesHarmonics.size(),
                                                       "Irradiance harmonics");
     mIrradianceProbeBufferView = std::make_unique<BufferView>(*mIrradianceProbeBuffer);
 
-    (*mIrradianceProbeBuffer)->setContents(mIrradianceProbesHarmonics.data(), sizeof(Engine::SphericalHarmonic) * mIrradianceProbesHarmonics.size());
+    (*mIrradianceProbeBuffer)->setContents(mIrradianceProbesHarmonics.data(), sizeof(RenderEngine::SphericalHarmonic) * mIrradianceProbesHarmonics.size());
 
     // load lookup texture.
     FILE* lookupFile = fopen(lookupPath.c_str(), "rb");
@@ -1328,7 +1328,7 @@ void Engine::loadIrradianceProbes(const std::string& probesPath, const std::stri
 }
 
 
-Technique* Engine::getRegisteredTechnique(const PassType pass)
+Technique* RenderEngine::getRegisteredTechnique(const PassType pass)
 {
     if(mCurrentRegistredPasses & static_cast<uint64_t>(pass))
     {
@@ -1346,7 +1346,7 @@ Technique* Engine::getRegisteredTechnique(const PassType pass)
 
 
 
-std::vector<float3> Engine::IrradianceProbeVolume::getProbePositions() const
+std::vector<float3> RenderEngine::IrradianceProbeVolume::getProbePositions() const
 {
     std::vector<float3> positions{};
 

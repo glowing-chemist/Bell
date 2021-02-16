@@ -15,7 +15,7 @@
 #include <memory>
 #include <vector>
 
-class Engine;
+class RenderEngine;
 class Scene;
 class Camera;
 
@@ -23,7 +23,7 @@ class RayTracingScene
 {
 public:
 
-    RayTracingScene(Engine *eng, const Scene*);
+    RayTracingScene(RenderEngine *eng, const Scene*);
     ~RayTracingScene() = default;
 
     void renderSceneToMemory(const Camera&, const uint32_t x, const uint32_t y, uint8_t *, ThreadPool&) const;

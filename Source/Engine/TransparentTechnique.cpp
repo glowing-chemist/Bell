@@ -3,7 +3,7 @@
 
 #include "Core/Executor.hpp"
 
-TransparentTechnique::TransparentTechnique(Engine* eng, RenderGraph& graph) :
+TransparentTechnique::TransparentTechnique(RenderEngine* eng, RenderGraph& graph) :
     Technique{"GBuffer", eng->getDevice()},
         mPipelineDescription{Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
                                getDevice()->getSwapChain()->getSwapChainImageHeight()},
@@ -34,7 +34,7 @@ TransparentTechnique::TransparentTechnique(Engine* eng, RenderGraph& graph) :
     task.addOutput(kGBufferDepth, AttachmentType::Depth, Format::D32Float);
 
     task.setRecordCommandsCallback(
-                [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>& meshes)
+                [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, RenderEngine* eng, const std::vector<const MeshInstance*>& meshes)
                 {
                     PROFILER_EVENT("transparent render");
                     PROFILER_GPU_TASK(exec);

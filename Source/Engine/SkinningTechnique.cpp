@@ -7,7 +7,7 @@ constexpr const char kBlendShapesScratchBuffer[] = "BlendShapes";
 constexpr uint32_t kScratchBufferSize = 5u * 1024u * 1024u;
 
 
-SkinningTechnique::SkinningTechnique(Engine* eng, RenderGraph& graph) :
+SkinningTechnique::SkinningTechnique(RenderEngine* eng, RenderGraph& graph) :
     Technique("Skinning", eng->getDevice()),
     mSkinningShader(eng->getShader("./Shaders/Skinning.comp")),
     mSkinningBlendShapesShader(eng->getShader("./Shaders/SkinnedBlendShapes.comp")),
@@ -23,7 +23,7 @@ SkinningTechnique::SkinningTechnique(Engine* eng, RenderGraph& graph) :
     skinningTask.addInput(kBlendShapesScratchBuffer, AttachmentType::DataBufferRO);
     skinningTask.addInput("meshParams", AttachmentType::PushConstants);
     skinningTask.setRecordCommandsCallback(
-                [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+                [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, RenderEngine* eng, const std::vector<const MeshInstance*>&)
                 {
                     PROFILER_EVENT("Skinning");
                     PROFILER_GPU_TASK(exec);

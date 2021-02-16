@@ -9,7 +9,7 @@
 class DebugAABBTechnique : public Technique
 {
 public:
-    DebugAABBTechnique(Engine*, RenderGraph&);
+    DebugAABBTechnique(RenderEngine*, RenderGraph&);
     ~DebugAABBTechnique() = default;
 
     virtual PassType getPassType() const
@@ -17,7 +17,7 @@ public:
         return PassType::DebugAABB;
     }
 
-    virtual void render(RenderGraph&, Engine*) {}
+    virtual void render(RenderGraph&, RenderEngine*) {}
 
     virtual void bindResources(RenderGraph&) {}
 

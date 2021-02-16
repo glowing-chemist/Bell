@@ -2,7 +2,7 @@
 #include "Engine/Engine.hpp"
 #include "Core/Executor.hpp"
 
-DeferredAnalyticalLightingTechnique::DeferredAnalyticalLightingTechnique(Engine* eng, RenderGraph& graph) :
+DeferredAnalyticalLightingTechnique::DeferredAnalyticalLightingTechnique(RenderEngine* eng, RenderGraph& graph) :
 	Technique("deferred analytical lighting", eng->getDevice()),
     mDeferredAnalitucalLightingShader( eng->getShader("./Shaders/DeferredAnalyticalLighting.comp") ),
     mAnalyticalLighting(eng->getDevice(), Format::RGBA16Float, ImageUsage::Sampled | ImageUsage::Storage, eng->getSwapChainImageView()->getImageExtent().width,
@@ -27,7 +27,7 @@ DeferredAnalyticalLightingTechnique::DeferredAnalyticalLightingTechnique(Engine*
 	task.addInput(kLightBuffer, AttachmentType::ShaderResourceSet);
 
 	task.setRecordCommandsCallback(
-        [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+        [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, RenderEngine* eng, const std::vector<const MeshInstance*>&)
 		{
 			PROFILER_EVENT("deferred lighting");
 			PROFILER_GPU_TASK(exec);

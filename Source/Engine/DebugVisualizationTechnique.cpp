@@ -6,7 +6,7 @@
 #include "glm/gtx/transform.hpp"
 
 
-DebugAABBTechnique::DebugAABBTechnique(Engine* eng, RenderGraph& graph) :
+DebugAABBTechnique::DebugAABBTechnique(RenderEngine* eng, RenderGraph& graph) :
     Technique("DebugAABB", eng->getDevice()),
     mAABBPipelineDesc{Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
                         getDevice()->getSwapChain()->getSwapChainImageHeight()},
@@ -82,7 +82,7 @@ DebugAABBTechnique::DebugAABBTechnique(Engine* eng, RenderGraph& graph) :
     debugAABBTask.addOutput(kGlobalLighting, AttachmentType::RenderTarget2D, Format::RGBA16Float);
     debugAABBTask.addOutput(kGBufferDepth, AttachmentType::Depth, Format::D32Float);
     debugAABBTask.setRecordCommandsCallback(
-                [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>& meshes)
+                [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, RenderEngine* eng, const std::vector<const MeshInstance*>& meshes)
                 {
                     PROFILER_EVENT("Debug aabb");
                     PROFILER_GPU_TASK(exec);
@@ -117,8 +117,8 @@ DebugAABBTechnique::DebugAABBTechnique(Engine* eng, RenderGraph& graph) :
                     }
 
                     // Check all active animations and draw bone OBBs
-                    const std::vector<Engine::SkeletalAnimationEntry>& activeAnims = eng->getActiveSkeletalAnimations();
-                    for(const Engine::SkeletalAnimationEntry& entry : activeAnims)
+                    const std::vector<RenderEngine::SkeletalAnimationEntry>& activeAnims = eng->getActiveSkeletalAnimations();
+                    for(const RenderEngine::SkeletalAnimationEntry& entry : activeAnims)
                     {
                         MeshInstance* inst = eng->getScene()->getMeshInstance(entry.mMesh);
                         if(inst->getInstanceFlags() & InstanceFlags::DrawAABB)
@@ -154,7 +154,7 @@ DebugAABBTechnique::DebugAABBTechnique(Engine* eng, RenderGraph& graph) :
     wireFrameTask.addInput("Wireframe transforms", AttachmentType::PushConstants);
     wireFrameTask.addOutput(kGlobalLighting, AttachmentType::RenderTarget2D, Format::RGBA16Float);
     wireFrameTask.addOutput(kGBufferDepth, AttachmentType::Depth, Format::D32Float);
-    wireFrameTask.setRecordCommandsCallback([this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>& meshes)
+    wireFrameTask.setRecordCommandsCallback([this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, RenderEngine* eng, const std::vector<const MeshInstance*>& meshes)
     {
         PROFILER_EVENT("debug wireframe");
         PROFILER_GPU_TASK(exec);
@@ -188,7 +188,7 @@ DebugAABBTechnique::DebugAABBTechnique(Engine* eng, RenderGraph& graph) :
     lightDebug.addInput("Light transforms", AttachmentType::PushConstants);
     lightDebug.addOutput(kGlobalLighting, AttachmentType::RenderTarget2D, Format::RGBA16Float);
     lightDebug.addOutput(kGBufferDepth, AttachmentType::Depth, Format::D32Float);
-    lightDebug.setRecordCommandsCallback([this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+    lightDebug.setRecordCommandsCallback([this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, RenderEngine* eng, const std::vector<const MeshInstance*>&)
     {
         PROFILER_EVENT("debug light");
         PROFILER_GPU_TASK(exec);

@@ -11,7 +11,7 @@
 class LightFroxelationTechnique : public Technique
 {
 public:
-	LightFroxelationTechnique(Engine*, RenderGraph&);
+	LightFroxelationTechnique(RenderEngine*, RenderGraph&);
 	~LightFroxelationTechnique() = default;
 
     virtual PassType getPassType() const override final
@@ -19,7 +19,7 @@ public:
 		return PassType::LightFroxelation;
 	}
 
-    virtual void render(RenderGraph&, Engine*) override final;
+    virtual void render(RenderGraph&, RenderEngine*) override final;
 
     virtual void bindResources(RenderGraph&) override final;
 

@@ -7,14 +7,14 @@
 #include "Core/ImageView.hpp"
 #include "Core/PerFrameResource.hpp"
 
-class Engine;
+class RenderEngine;
 class RenderGraph;
 
 class ScreenSpaceReflectionTechnique : public Technique
 {
 public:
 
-	ScreenSpaceReflectionTechnique(Engine*, RenderGraph&);
+	ScreenSpaceReflectionTechnique(RenderEngine*, RenderGraph&);
 	~ScreenSpaceReflectionTechnique() = default;
 
 	virtual PassType getPassType() const override final
@@ -22,7 +22,7 @@ public:
 		return PassType::SSR;
 	}
 
-	virtual void render(RenderGraph&, Engine*) override final {}
+	virtual void render(RenderGraph&, RenderEngine*) override final {}
 
 	virtual void bindResources(RenderGraph& graph) override final;
 
@@ -43,7 +43,7 @@ class RayTracedReflectionTechnique : public Technique
 {
 public:
 
-    RayTracedReflectionTechnique(Engine*, RenderGraph&);
+    RayTracedReflectionTechnique(RenderEngine*, RenderGraph&);
     ~RayTracedReflectionTechnique() = default;
 
     virtual PassType getPassType() const override final
@@ -51,7 +51,7 @@ public:
         return PassType::RayTracedReflections;
     }
 
-    virtual void render(RenderGraph&, Engine*) override final {}
+    virtual void render(RenderGraph&, RenderEngine*) override final {}
 
     virtual void bindResources(RenderGraph& graph) override final;
 

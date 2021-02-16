@@ -2,7 +2,7 @@
 #include "Core/Executor.hpp"
 
 
-GBufferTechnique::GBufferTechnique(Engine* eng, RenderGraph& graph) :
+GBufferTechnique::GBufferTechnique(RenderEngine* eng, RenderGraph& graph) :
 	Technique{"GBuffer", eng->getDevice()},
         mPipelineDescription{Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
                                getDevice()->getSwapChain()->getSwapChainImageHeight()},
@@ -31,7 +31,7 @@ GBufferTechnique::GBufferTechnique(Engine* eng, RenderGraph& graph) :
     if(eng->isPassRegistered(PassType::OcclusionCulling))
     {
         task.setRecordCommandsCallback(
-            [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>& meshes)
+            [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, RenderEngine* eng, const std::vector<const MeshInstance*>& meshes)
             {
                 PROFILER_EVENT("gbuffer fill");
                 PROFILER_GPU_TASK(exec);
@@ -83,7 +83,7 @@ GBufferTechnique::GBufferTechnique(Engine* eng, RenderGraph& graph) :
     else
     {
         task.setRecordCommandsCallback(
-            [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>& meshes)
+            [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, RenderEngine* eng, const std::vector<const MeshInstance*>& meshes)
             {
                 PROFILER_EVENT("gbuffer fill");
                 PROFILER_GPU_TASK(exec);
@@ -129,7 +129,7 @@ GBufferTechnique::GBufferTechnique(Engine* eng, RenderGraph& graph) :
 }
 
 
-GBufferPreDepthTechnique::GBufferPreDepthTechnique(Engine* eng, RenderGraph& graph) :
+GBufferPreDepthTechnique::GBufferPreDepthTechnique(RenderEngine* eng, RenderGraph& graph) :
     Technique{"GBufferPreDepth", eng->getDevice()},
         mPipelineDescription{Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
                                getDevice()->getSwapChain()->getSwapChainImageHeight()},
@@ -158,7 +158,7 @@ GBufferPreDepthTechnique::GBufferPreDepthTechnique(Engine* eng, RenderGraph& gra
     if(eng->isPassRegistered(PassType::OcclusionCulling))
     {
         task.setRecordCommandsCallback(
-            [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>& meshes)
+            [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, RenderEngine* eng, const std::vector<const MeshInstance*>& meshes)
             {
                 PROFILER_EVENT("gbuffer fill");
                 PROFILER_GPU_TASK(exec);
@@ -209,7 +209,7 @@ GBufferPreDepthTechnique::GBufferPreDepthTechnique(Engine* eng, RenderGraph& gra
     else
     {
         task.setRecordCommandsCallback(
-            [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>& meshes)
+            [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, RenderEngine* eng, const std::vector<const MeshInstance*>& meshes)
             {
                 PROFILER_EVENT("gbuffer fill");
                 PROFILER_GPU_TASK(exec);

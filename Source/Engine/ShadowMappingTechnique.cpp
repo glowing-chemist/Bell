@@ -14,7 +14,7 @@ extern const char kShadowMapHistory[] = "ShadowMapHistory";
 
 
 
-ShadowMappingTechnique::ShadowMappingTechnique(Engine* eng, RenderGraph& graph) :
+ShadowMappingTechnique::ShadowMappingTechnique(RenderEngine* eng, RenderGraph& graph) :
     Technique("ShadowMapping", eng->getDevice()),
     mDesc(Rect{static_cast<uint32_t>(eng->getShadowMapResolution().x),
           static_cast<uint32_t>(eng->getShadowMapResolution().y)},
@@ -88,7 +88,7 @@ ShadowMappingTechnique::ShadowMappingTechnique(Engine* eng, RenderGraph& graph) 
 }
 
 
-void ShadowMappingTechnique::render(RenderGraph& graph, Engine*)
+void ShadowMappingTechnique::render(RenderGraph& graph, RenderEngine*)
 {
     (mShadowMap)->updateLastAccessed();
     (mShadowMapView)->updateLastAccessed();
@@ -103,7 +103,7 @@ void ShadowMappingTechnique::render(RenderGraph& graph, Engine*)
     ComputeTask& resolveTask = static_cast<ComputeTask&>(graph.getTask(mResolveTaskID));
 
     shadowTask.setRecordCommandsCallback(
-        [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+        [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, RenderEngine* eng, const std::vector<const MeshInstance*>&)
         {
             PROFILER_EVENT("Render shadow maps");
             PROFILER_GPU_TASK(exec);
@@ -145,7 +145,7 @@ void ShadowMappingTechnique::render(RenderGraph& graph, Engine*)
     );
 
     blurXTask.setRecordCommandsCallback(
-        [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+        [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, RenderEngine* eng, const std::vector<const MeshInstance*>&)
         {
             const RenderTask& task = graph.getTask(taskIndex);
             exec->setComputeShader(static_cast<const ComputeTask&>(task), graph, mBlurXShader);
@@ -158,7 +158,7 @@ void ShadowMappingTechnique::render(RenderGraph& graph, Engine*)
     );
 
     blurYTask.setRecordCommandsCallback(
-        [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+        [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, RenderEngine* eng, const std::vector<const MeshInstance*>&)
         {
             const RenderTask& task = graph.getTask(taskIndex);
             exec->setComputeShader(static_cast<const ComputeTask&>(task), graph, mBlurYShader);
@@ -171,7 +171,7 @@ void ShadowMappingTechnique::render(RenderGraph& graph, Engine*)
     );
 
     resolveTask.setRecordCommandsCallback(
-        [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+        [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, RenderEngine* eng, const std::vector<const MeshInstance*>&)
         {
             PROFILER_EVENT("Ressolve shadow maps");
             PROFILER_GPU_TASK(exec);
@@ -191,7 +191,7 @@ void ShadowMappingTechnique::render(RenderGraph& graph, Engine*)
 }
 
 
-RayTracedShadowsTechnique::RayTracedShadowsTechnique(Engine* eng, RenderGraph& graph) :
+RayTracedShadowsTechnique::RayTracedShadowsTechnique(RenderEngine* eng, RenderGraph& graph) :
                 Technique("RayTracedShadows", eng->getDevice()),
                 mFirstFrame(true),
                 mShadowMapCounter(getDevice(), Format::R32Uint, ImageUsage::Storage | ImageUsage::TransferDest, getDevice()->getSwapChain()->getSwapChainImageWidth() / 4, getDevice()->getSwapChain()->getSwapChainImageHeight() / 4,
@@ -222,7 +222,7 @@ RayTracedShadowsTechnique::RayTracedShadowsTechnique(Engine* eng, RenderGraph& g
     task.addInput("SampleCount", AttachmentType::PushConstants);
 
     task.setRecordCommandsCallback(
-        [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+        [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, RenderEngine* eng, const std::vector<const MeshInstance*>&)
         {
             const RenderTask& task = graph.getTask(taskIndex);
             exec->setComputeShader(static_cast<const ComputeTask&>(task), graph, mRayTracedShadowsShader);

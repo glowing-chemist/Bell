@@ -12,7 +12,7 @@ class DFGGenerationTechnique : public Technique
 {
 public:
 
-	DFGGenerationTechnique(Engine*, RenderGraph& graph);
+	DFGGenerationTechnique(RenderEngine*, RenderGraph& graph);
 	virtual ~DFGGenerationTechnique() = default;
 
 	virtual PassType getPassType() const override final
@@ -20,7 +20,7 @@ public:
 		return PassType::DFGGeneration;
 	}
 
-	virtual void render(RenderGraph&, Engine*) override final;
+	virtual void render(RenderGraph&, RenderEngine*) override final;
 
     virtual void bindResources(RenderGraph& graph) override final
 	{

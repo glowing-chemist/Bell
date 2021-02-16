@@ -8,7 +8,7 @@ constexpr const char kOverlayOBU[] = "OverlayUBO";
 constexpr const char kOverlayVertex[] = "OverlayVertex";
 constexpr const char kOverlayIndex[] = "OverlayIndex";
 
-OverlayTechnique::OverlayTechnique(Engine* eng, RenderGraph& graph) :
+OverlayTechnique::OverlayTechnique(RenderEngine* eng, RenderGraph& graph) :
 	Technique{"Overlay", eng->getDevice()},
 	mFontTexture(getDevice(), Format::RGBA8UNorm, ImageUsage::Sampled | ImageUsage::TransferDest, 512, 64, 1, 1, 1, 1, "Font Texture"),
 	mFontImageView(mFontTexture, ImageViewType::Colour),
@@ -50,7 +50,7 @@ OverlayTechnique::OverlayTechnique(Engine* eng, RenderGraph& graph) :
 	task.addManagedOutput(kOverlay, AttachmentType::RenderTarget2D, eng->getSwapChainImage()->getFormat(), SizeClass::Swapchain, LoadOp::Clear_Black);
 
     task.setRecordCommandsCallback(
-        [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine*, const std::vector<const MeshInstance*>&)
+        [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, RenderEngine*, const std::vector<const MeshInstance*>&)
         {
             ImDrawData* drawData = ImGui::GetDrawData();
             if (drawData)
@@ -85,7 +85,7 @@ OverlayTechnique::OverlayTechnique(Engine* eng, RenderGraph& graph) :
 }
 
 
-void OverlayTechnique::render(RenderGraph&, Engine*)
+void OverlayTechnique::render(RenderGraph&, RenderEngine*)
 {
 	(*mOverlayUniformBuffer)->updateLastAccessed();
 	mFontTexture->updateLastAccessed();

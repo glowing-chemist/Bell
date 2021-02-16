@@ -5,7 +5,7 @@
 #include "Core/Executor.hpp"
 
 
-PathTracingTechnique::PathTracingTechnique(Engine* eng, RenderGraph& graph) :
+PathTracingTechnique::PathTracingTechnique(RenderEngine* eng, RenderGraph& graph) :
     Technique("PathTracing", eng->getDevice()),
     mGloballighting(getDevice(), Format::RGBA8UNorm, ImageUsage::Storage | ImageUsage::Sampled | ImageUsage::ColourAttachment, getDevice()->getSwapChain()->getSwapChainImageWidth() / 4,
                     getDevice()->getSwapChain()->getSwapChainImageHeight() / 4, 1, 1, 1, 1, "Global lighting"),
@@ -23,7 +23,7 @@ PathTracingTechnique::PathTracingTechnique(Engine* eng, RenderGraph& graph) :
     task.addInput(kBVH, AttachmentType::ShaderResourceSet);
 
     task.setRecordCommandsCallback(
-                [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+                [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, RenderEngine* eng, const std::vector<const MeshInstance*>&)
                 {
                     const RenderTask& task = graph.getTask(taskIndex);
                     exec->setComputeShader(static_cast<const ComputeTask&>(task), graph, mPathTracingShader);

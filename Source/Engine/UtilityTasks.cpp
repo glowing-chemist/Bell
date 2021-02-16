@@ -5,7 +5,7 @@
 #include "Core/Executor.hpp"
 
 
-TaskID addDeferredUpsampleTaskR8(const char* name, const char* input, const char* output, const uint2 outputSize, Engine* eng, RenderGraph& graph)
+TaskID addDeferredUpsampleTaskR8(const char* name, const char* input, const char* output, const uint2 outputSize, RenderEngine* eng, RenderGraph& graph)
 {
     ComputeTask task{ name };
     task.addInput(input, AttachmentType::Texture2D);
@@ -16,7 +16,7 @@ TaskID addDeferredUpsampleTaskR8(const char* name, const char* input, const char
     task.addInput(kGBufferNormals, AttachmentType::Texture2D);
 
     task.setRecordCommandsCallback(
-                [=](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+                [=](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, RenderEngine* eng, const std::vector<const MeshInstance*>&)
                 {
                     Shader upsampleShader = eng->getShader("./Shaders/BilaterialUpsample.comp");
                     const RenderTask& task = graph.getTask(taskIndex);
@@ -33,7 +33,7 @@ TaskID addDeferredUpsampleTaskR8(const char* name, const char* input, const char
 }
 
 
-TaskID addDeferredUpsampleTaskRGBA8(const char* name, const char* input, const char* output, const uint2 outputSize, Engine* eng, RenderGraph& graph)
+TaskID addDeferredUpsampleTaskRGBA8(const char* name, const char* input, const char* output, const uint2 outputSize, RenderEngine* eng, RenderGraph& graph)
 {
     ComputeTask task{ name };
     task.addInput(input, AttachmentType::Texture2D);
@@ -44,7 +44,7 @@ TaskID addDeferredUpsampleTaskRGBA8(const char* name, const char* input, const c
     task.addInput(kGBufferNormals, AttachmentType::Texture2D);
 
     task.setRecordCommandsCallback(
-                [=](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+                [=](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, RenderEngine* eng, const std::vector<const MeshInstance*>&)
                 {
                     Shader upsampleShader = eng->getShader("./Shaders/BilaterialUpsampleRGBA8.comp");
                     const RenderTask& task = graph.getTask(taskIndex);
@@ -61,14 +61,14 @@ TaskID addDeferredUpsampleTaskRGBA8(const char* name, const char* input, const c
 }
 
 
-TaskID addBlurXTaskR8(const char* name, const char* input, const char* output, const uint2 outputSize, Engine* eng, RenderGraph& graph)
+TaskID addBlurXTaskR8(const char* name, const char* input, const char* output, const uint2 outputSize, RenderEngine* eng, RenderGraph& graph)
 {
     ComputeTask blurXTask{name};
     blurXTask.addInput(input, AttachmentType::Texture2D);
     blurXTask.addInput(output, AttachmentType::Image2D);
     blurXTask.addInput(kDefaultSampler, AttachmentType::Sampler);
     blurXTask.setRecordCommandsCallback(
-        [=](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+        [=](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, RenderEngine* eng, const std::vector<const MeshInstance*>&)
         {
             Shader blurXShader = eng->getShader("./Shaders/blurXR8.comp");
             const RenderTask& task = graph.getTask(taskIndex);
@@ -82,14 +82,14 @@ TaskID addBlurXTaskR8(const char* name, const char* input, const char* output, c
 }
 
 
-TaskID addBlurYTaskR8(const char* name, const char* input, const char* output, const uint2 outputSize, Engine* eng, RenderGraph& graph)
+TaskID addBlurYTaskR8(const char* name, const char* input, const char* output, const uint2 outputSize, RenderEngine* eng, RenderGraph& graph)
 {
     ComputeTask blurYTask{ name };
     blurYTask.addInput(input, AttachmentType::Texture2D);
     blurYTask.addInput(output, AttachmentType::Image2D);
     blurYTask.addInput(kDefaultSampler, AttachmentType::Sampler);
     blurYTask.setRecordCommandsCallback(
-        [=](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine*, const std::vector<const MeshInstance*>&)
+        [=](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, RenderEngine*, const std::vector<const MeshInstance*>&)
         {
             Shader blurYShader = eng->getShader("./Shaders/blurYR8.comp");
             const RenderTask& task = graph.getTask(taskIndex);

@@ -11,7 +11,7 @@
 
 #include <string>
 
-class Engine;
+class RenderEngine;
 
 class Technique : public DeviceChild
 {
@@ -24,7 +24,7 @@ public:
 
     virtual PassType getPassType() const = 0;
 
-	virtual void render(RenderGraph&, Engine*) = 0;
+	virtual void render(RenderGraph&, RenderEngine*) = 0;
 
     virtual void bindResources(RenderGraph&) = 0;
 

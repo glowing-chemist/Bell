@@ -5,7 +5,7 @@
 #include "Core/Executor.hpp"
 #include "Core/Profiling.hpp"
 
-DeferredImageBasedLightingTechnique::DeferredImageBasedLightingTechnique(Engine* eng, RenderGraph& graph) :
+DeferredImageBasedLightingTechnique::DeferredImageBasedLightingTechnique(RenderEngine* eng, RenderGraph& graph) :
     Technique("GlobalIBL", eng->getDevice()),
     mPipelineDesc{Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
                     getDevice()->getSwapChain()->getSwapChainImageHeight()},
@@ -37,7 +37,7 @@ DeferredImageBasedLightingTechnique::DeferredImageBasedLightingTechnique(Engine*
         SizeClass::Swapchain, LoadOp::Clear_Black, StoreOp::Store, ImageUsage::ColourAttachment | ImageUsage::Sampled);
 
     task.setRecordCommandsCallback(
-        [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine*, const std::vector<const MeshInstance*>&)
+        [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, RenderEngine*, const std::vector<const MeshInstance*>&)
         {
             PROFILER_EVENT("Defered IBL");
             PROFILER_GPU_TASK(exec);

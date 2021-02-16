@@ -21,7 +21,7 @@ extern const char kSSAOBlurY[];
 class SSAOTechnique : public Technique
 {
 public:
-	SSAOTechnique(Engine* dev, RenderGraph&);
+	SSAOTechnique(RenderEngine* dev, RenderGraph&);
 	virtual ~SSAOTechnique() = default;
 
 	virtual PassType getPassType() const final override
@@ -46,7 +46,7 @@ public:
         }
 	}
 
-	virtual void render(RenderGraph& graph, Engine*) override final;
+	virtual void render(RenderGraph& graph, RenderEngine*) override final;
 
 private:
 

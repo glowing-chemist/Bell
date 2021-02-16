@@ -10,7 +10,7 @@
 class OcclusionCullingTechnique : public Technique
 {
 public:
-    OcclusionCullingTechnique(Engine*, RenderGraph&);
+    OcclusionCullingTechnique(RenderEngine*, RenderGraph&);
     ~OcclusionCullingTechnique() = default;
 
     virtual PassType getPassType() const
@@ -18,7 +18,7 @@ public:
         return PassType::OcclusionCulling;
     }
 
-    virtual void render(RenderGraph&, Engine*) {};
+    virtual void render(RenderGraph&, RenderEngine*) {};
 
     virtual void bindResources(RenderGraph&);
 

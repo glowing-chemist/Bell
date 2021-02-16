@@ -12,7 +12,7 @@
 #include <glm/gtx/transform.hpp>
 
 
-VoxelTerrainTechnique::VoxelTerrainTechnique(Engine* eng, RenderGraph& graph) :
+VoxelTerrainTechnique::VoxelTerrainTechnique(RenderEngine* eng, RenderGraph& graph) :
     Technique("Voxel terrain", eng->getDevice()),
     mGenerateTerrainMeshShader(eng->getShader("./Shaders/MarchingCubes.comp")),
     mInitialiseIndirectDrawShader(eng->getShader("./Shaders/InitialiseIndirectDraw.comp")),
@@ -45,7 +45,7 @@ VoxelTerrainTechnique::VoxelTerrainTechnique(Engine* eng, RenderGraph& graph) :
         ComputeTask resetIndirectArgs{"Terrain reset args"};
         resetIndirectArgs.addInput(kTerrainIndirectBuffer, AttachmentType::DataBufferWO);
         resetIndirectArgs.setRecordCommandsCallback(
-                [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine*, const std::vector<const MeshInstance*>&)
+                [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, RenderEngine*, const std::vector<const MeshInstance*>&)
                 {
                     const ComputeTask& task = static_cast<const ComputeTask&>(graph.getTask(taskIndex));
                     exec->setComputeShader(task, graph, mInitialiseIndirectDrawShader);
@@ -63,7 +63,7 @@ VoxelTerrainTechnique::VoxelTerrainTechnique(Engine* eng, RenderGraph& graph) :
         modifyTerrain.addInput(kDefaultSampler, AttachmentType::Sampler);
         modifyTerrain.addInput("ModifyConstant", AttachmentType::PushConstants);
         modifyTerrain.setRecordCommandsCallback(
-                    [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+                    [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, RenderEngine* eng, const std::vector<const MeshInstance*>&)
                 {
                     PROFILER_EVENT("Voxel terrain");
                     PROFILER_GPU_TASK(exec);
@@ -107,7 +107,7 @@ VoxelTerrainTechnique::VoxelTerrainTechnique(Engine* eng, RenderGraph& graph) :
         marchCube.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
         marchCube.addInput(kTerrainUniformBuffer, AttachmentType::PushConstants);
         marchCube.setRecordCommandsCallback(
-            [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+            [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, RenderEngine* eng, const std::vector<const MeshInstance*>&)
         {
             const ComputeTask& task = static_cast<const ComputeTask&>(graph.getTask(taskIndex));
             exec->setComputeShader(task, graph, mGenerateTerrainMeshShader);
@@ -206,7 +206,7 @@ VoxelTerrainTechnique::VoxelTerrainTechnique(Engine* eng, RenderGraph& graph) :
         renderTerrainTask.addOutput(kGBufferEmissiveOcclusion, AttachmentType::RenderTarget2D, Format::RGBA8UNorm, LoadOp::Preserve);
         renderTerrainTask.addOutput(kGBufferDepth, AttachmentType::Depth, Format::D32Float, LoadOp::Preserve);
         renderTerrainTask.setRecordCommandsCallback(
-        [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine*, const std::vector<const MeshInstance*>&)
+        [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, RenderEngine*, const std::vector<const MeshInstance*>&)
         {
             const GraphicsTask& task = static_cast<const GraphicsTask&>(graph.getTask(taskIndex));
             exec->setGraphicsShaders(task, graph, mTerrainVertexShader, nullptr, nullptr, nullptr, mTerrainFragmentShaderDeferred);

@@ -8,7 +8,7 @@ constexpr const char SSRSampler[] = "SSRSampler";
 constexpr const char RawReflections[] = "RawReflections";
 
 
-ScreenSpaceReflectionTechnique::ScreenSpaceReflectionTechnique(Engine* eng, RenderGraph& graph) :
+ScreenSpaceReflectionTechnique::ScreenSpaceReflectionTechnique(RenderEngine* eng, RenderGraph& graph) :
 	Technique("SSR", eng->getDevice()),
     mTileCount(std::ceil(eng->getSwapChainImage()->getExtent(0, 0).width / 16.0f), std::ceil(eng->getSwapChainImage()->getExtent(0, 0).height / 16.0f)),
     mReflectionMapRaw(getDevice(), Format::RGBA8UNorm, ImageUsage::Storage | ImageUsage::Sampled, eng->getSwapChainImage()->getExtent(0, 0).width / 2, eng->getSwapChainImage()->getExtent(0, 0).height / 2,
@@ -32,7 +32,7 @@ ScreenSpaceReflectionTechnique::ScreenSpaceReflectionTechnique(Engine* eng, Rend
     SSRTask.addInput(RawReflections, AttachmentType::Image2D);
 
     SSRTask.setRecordCommandsCallback(
-      [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+      [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, RenderEngine* eng, const std::vector<const MeshInstance*>&)
         {
             Shader computeShader = eng->getShader("./Shaders/ScreenSpaceReflection.comp");
             const RenderTask& task = graph.getTask(taskIndex);
@@ -63,7 +63,7 @@ void ScreenSpaceReflectionTechnique::bindResources(RenderGraph& graph)
 }
 
 
-RayTracedReflectionTechnique::RayTracedReflectionTechnique(Engine* eng, RenderGraph& graph) :
+RayTracedReflectionTechnique::RayTracedReflectionTechnique(RenderEngine* eng, RenderGraph& graph) :
     Technique("Ray traced reflections", eng->getDevice()),
     mReflectionMap(eng->getDevice(), Format::RGBA8UNorm, ImageUsage::Storage | ImageUsage::Sampled,
                    eng->getSwapChainImage()->getExtent(0, 0).width / 4, eng->getSwapChainImage()->getExtent(0, 0).height / 4,
@@ -85,7 +85,7 @@ RayTracedReflectionTechnique::RayTracedReflectionTechnique(Engine* eng, RenderGr
     task.addInput(kBVH, AttachmentType::ShaderResourceSet);
 
     task.setRecordCommandsCallback(
-                [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+                [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, RenderEngine* eng, const std::vector<const MeshInstance*>&)
                 {
                     Shader computeShader = eng->getShader("./Shaders/RayTracedReflections.comp");
                     const RenderTask& task = graph.getTask(taskIndex);
