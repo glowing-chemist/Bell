@@ -862,6 +862,14 @@ void   Scene::setInstancePosition(const InstanceID id, const float3& pos)
 }
 
 
+void   Scene::translateInstance(const InstanceID id, const float3& v)
+{
+    float3 pos = getInstancePosition(id);
+    pos += v;
+    setInstancePosition(id, pos);
+}
+
+
 StaticMesh* Scene::getMesh(const SceneID id)
 {
     return &mSceneMeshes[id].first;
