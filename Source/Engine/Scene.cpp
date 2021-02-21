@@ -49,17 +49,16 @@ Scene::Scene(const std::filesystem::path& path) :
     mPhysicsMeshBoundingVolume(),
     mRootTransform{1.0f},
     mSceneAABB(float4(std::numeric_limits<float>::max()), float4(std::numeric_limits<float>::min())),
-    mSceneCamera(float3(0.0f, 0.0f, 0.0f), float3(0.0f, 0.0f, 1.0f), 1920.0f /1080.0f ,0.1f, 2000.0f),
+    mSceneCamera(nullptr),
 	mMaterials{},
 	mMaterialImageViews{},
     mLights{},
-    mShadowLightCamera(Camera({0.0f, 0.0f, 0.0f}, {1.0f, 0.0f, 0.0f}, 0.0f)),
+    mShadowLightCamera(nullptr),
     mShadowingLight{},
     mCascadesInfo{0.1f, 0.4f, 1.0f},
     mNextInstanceID{0},
 	mSkybox{nullptr}
 {
-    setShadowingLight(Camera({0.0f, 0.0f, 0.0f}, {1.0f, 0.0f, 0.0f}, 0.0f));
 }
 
 
@@ -916,16 +915,20 @@ void Scene::generateSceneAABB(const bool includeStatic)
 
 void Scene::updateShadowingLight()
 {
-    const float4x4 view = mShadowLightCamera.getViewMatrix();
-    const float4x4 proj = mShadowLightCamera.getProjectionMatrix();
+    if(!mShadowLightCamera)
+        return;
 
-    ShadowingLight light{view, glm::inverse(view), proj * view, float4(mShadowLightCamera.getPosition(), 1.0f), float4(mShadowLightCamera.getDirection(), 0.0f), float4(mShadowLightCamera.getUp(), 1.0f)};
+    const float4x4 view = mShadowLightCamera->getViewMatrix();
+    const float4x4 proj = mShadowLightCamera->getProjectionMatrix();
+
+    ShadowingLight light{view, glm::inverse(view), proj * view, float4(mShadowLightCamera->getPosition(), 1.0f), float4(mShadowLightCamera->getDirection(), 0.0f), float4(mShadowLightCamera->getUp(), 1.0f)};
     mShadowingLight = light;
 }
 
 
-void Scene::setShadowingLight(const Camera& cam)
+void Scene::setShadowingLight(Camera* cam)
 {
+    BELL_ASSERT(cam, "Camera can't be null")
     mShadowLightCamera = cam;
 
     updateShadowingLight();

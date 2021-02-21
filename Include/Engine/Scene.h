@@ -248,26 +248,26 @@ public:
         return mCPUSkybox;
     }
 
-    void setCamera(const Camera& camera)
+    void setCamera(Camera* camera)
     {
 	mSceneCamera = camera;
     }
 	
     Camera& getCamera()
     {
-	return mSceneCamera;
+	return *mSceneCamera;
     }
 
     const Camera& getCamera() const
     {
-        return mSceneCamera;
+        return *mSceneCamera;
     }
 
-    void setShadowingLight(const Camera&);
+    void setShadowingLight(Camera*);
 
     Camera& getShadowLightCamera()
     {
-        return mShadowLightCamera;
+        return *mShadowLightCamera;
     }
 
     const ShadowingLight& getShadowingLight() const
@@ -559,7 +559,8 @@ private:
     float4x4 mRootTransform;
     AABB mSceneAABB;
 
-	Camera mSceneCamera;
+
+	Camera* mSceneCamera;
 
 	std::vector<Material> mMaterials;
 	std::vector<ImageView> mMaterialImageViews;
@@ -567,7 +568,7 @@ private:
     std::vector<CPUImage> mCPUMaterials;
 
     std::vector<Light> mLights;
-    Camera mShadowLightCamera;
+    Camera* mShadowLightCamera;
     ShadowingLight mShadowingLight;
     ShadowCascades mCascadesInfo;
 
