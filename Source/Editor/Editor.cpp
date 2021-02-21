@@ -340,6 +340,8 @@ Editor::Editor(GLFWwindow* window) :
     mEditShadowingLight{false},
     mMeshPicker(nullptr),
     mSelectedMesh{kInvalidInstanceID},
+    mMainCamera(float3{0.0f, 0.0f, 0.0f}, float3{1.0f, 0.0f, 0.0f}, 1920.0f / 1080.0f, 0.1f, 200.0f, 90.0f, CameraMode::Perspective),
+    mShadowCamera(float3{0.0f, 0.0f, 0.0f}, float3{1.0f, 0.0f, 0.0f}, 1.0f, 0.1f, 200.0f, 90.0f, CameraMode::Orthographic),
     mInitialScene{""}
 {
     ImGui::CreateContext();
@@ -367,6 +369,7 @@ Editor::Editor(GLFWwindow* window) :
     int width, height;
     glfwGetWindowSize(mWindow, &width, &height);
 
+    mInProgressScene->setCamera(&mMainCamera);
     Camera& camera = mInProgressScene->getCamera();
     camera.setAspect(float(width) / float(height));
     camera.setMode(CameraMode::Perspective);
@@ -383,6 +386,7 @@ Editor::Editor(GLFWwindow* window) :
     mNodeEditor.addNode(static_cast<uint64_t>(PassType::DFGGeneration));
     mNodeEditor.addNode(static_cast<uint64_t>(PassType::Skybox));
 
+    mShadowCamera.setOrthographicSize({100.0f, 100.0f});
 }
 
 
@@ -528,6 +532,7 @@ void Editor::swap()
         mRayTracingScene = nullptr;
         delete mInProgressScene;
         mInProgressScene = new Scene("InProgress");
+        mInProgressScene->setCamera(&mMainCamera);
 
         mEngine.setScene(nullptr);
         mResetSceneAtEndOfFrame = false;
@@ -1305,9 +1310,9 @@ void Editor::drawLightMenu()
                 shadowingLight.mUp = lightTransformation * shadowingLight.mUp;
             }
 
-            Camera shadowCam(shadowingLight.mPosition, shadowingLight.mDirection, 1920.0f / 1080.0f);
-            shadowCam.setUp(shadowingLight.mUp);
-            mInProgressScene->setShadowingLight(shadowCam);
+            mShadowCamera = Camera(shadowingLight.mPosition, shadowingLight.mDirection, 1920.0f / 1080.0f);
+            mShadowCamera.setUp(shadowingLight.mUp);
+            mInProgressScene->setShadowingLight(&mShadowCamera);
         }
 
 

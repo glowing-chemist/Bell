@@ -206,7 +206,9 @@ int main()
 #endif
 
     // set camera aspect ratio.
-    Camera& camera = testScene.getCamera();
+    Camera camera{{0.0f, 0.0f, 0.0f}, {1.0f, 0.0f, 0.0f}, static_cast<float>(windowHeight) / static_cast<float>(windowWidth),
+                  0.1f, 200.0f};
+    testScene.setCamera(&camera);
     camera.setAspect(float(windowWidth) / float(windowHeight));
     camera.setFarPlane(40.0f);
 
@@ -216,7 +218,7 @@ int main()
     ShadowCamera.setUp(ligthUp);
     ShadowCamera.setMode(CameraMode::Orthographic);
     ShadowCamera.setOrthographicSize({20.0f, 10.0f});
-    testScene.setShadowingLight(ShadowCamera);
+    testScene.setShadowingLight(&ShadowCamera);
     
     {
         const AABB sceneBounds = testScene.getBounds();

@@ -200,6 +200,9 @@ private:
     MeshPicker mMeshPicker;
     InstanceID mSelectedMesh;
 
+    Camera mMainCamera;
+    Camera mShadowCamera;
+
     std::string mInitialScene;
 
     std::vector<EditorTab*> mTabExtensions;
