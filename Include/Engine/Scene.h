@@ -120,8 +120,28 @@ public:
         mMaterialFlags{materialFLags},
         mInstanceFlags{InstanceFlags::Draw} {}
 
+    MeshInstance(Scene* scene,
+                 SceneID mesh,
+                 const float3& position,
+                 const quat& rotation,
+                 const float3& scale,
+                 const uint32_t materialID,
+                 const uint32_t materialFLags,
+                 const std::string& name = "") :
+            Instance(position, rotation, scale, name),
+            mScene(scene),
+            mMesh(mesh),
+            mMaterialIndex{materialID},
+            mMaterialFlags{materialFLags},
+            mInstanceFlags{InstanceFlags::Draw} {}
+
     StaticMesh* getMesh();
     const StaticMesh* getMesh() const;
+
+    SceneID getSceneID() const
+    {
+        return mMesh;
+    }
 
     uint32_t getMaterialIndex() const
     {

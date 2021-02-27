@@ -618,7 +618,7 @@ void Editor::pumpInputQueue()
 
         if (mCameraInfo.mInFreeFlyMode)
         {
-            camera.rotatePitch(mCursorPosDelta.y);
+            camera.rotatePitch(-mCursorPosDelta.y);
             camera.rotateWorldUp(-mCursorPosDelta.x);
         }
 
