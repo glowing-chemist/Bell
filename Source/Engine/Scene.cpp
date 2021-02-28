@@ -573,7 +573,7 @@ SceneID Scene::addMesh(const StaticMesh& mesh, MeshType meshType)
 }
 
 
-std::vector<SceneID> Scene::loadFile(const std::string &path, MeshType meshType, RenderEngine* eng)
+std::vector<SceneID> Scene::loadFile(const std::string &path, MeshType meshType, RenderEngine* eng, const bool loadMaterials)
 {
     Assimp::Importer importer;
 
@@ -597,12 +597,15 @@ std::vector<SceneID> Scene::loadFile(const std::string &path, MeshType meshType,
 
     mPath = fs::path(path);
 
-    fs::path materialFile{ mPath };
-    materialFile += ".mat";
-    if (fs::exists(materialFile))
-        loadMaterialsInternal(eng); // Load materials from the internal .mat format.
-    else
-        loadMaterialsExternal(eng, scene);
+    if(loadMaterials)
+    {
+        fs::path materialFile{mPath};
+        materialFile += ".mat";
+        if (fs::exists(materialFile))
+            loadMaterialsInternal(eng); // Load materials from the internal .mat format.
+        else
+            loadMaterialsExternal(eng, scene);
+    }
 
     return ids;
 }
@@ -667,18 +670,15 @@ InstanceID Scene::addMeshInstance(const SceneID meshID,
 InstanceID    Scene::addMeshInstance( const SceneID meshID,
                                       const InstanceID parentInstance,
                                       const float3& position,
-                                      const float3& size,
+                                      const float3& scale,
                                       const quat& rotation,
                                       const uint32_t materialIndex,
                                       const uint32_t materialFlags,
                                       const std::string& name)
 {
     auto& [mesh, meshType] = mSceneMeshes[meshID];
-    const AABB aabb = mesh.getAABB();
-    const float3 sideLengths = aabb.getSideLengths();
-    const float3 requiredScale = size / sideLengths;
 
-    const float4x4 requiredTransform = glm::translate(float4x4(1.0f), position) * glm::toMat4(rotation) * glm::scale(float4x4(1.0f), requiredScale);
+    const float4x4 requiredTransform = glm::translate(position) * glm::toMat4(rotation) * glm::scale(scale);
 
     return addMeshInstance(meshID, parentInstance, requiredTransform, materialIndex, materialFlags, name);
 }

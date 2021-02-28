@@ -217,7 +217,7 @@ public:
 	void loadSkybox(const std::array<std::string, 6>& path, RenderEngine*);
 
     SceneID       addMesh(const StaticMesh& mesh, MeshType);
-    std::vector<SceneID> loadFile(const std::string& path, MeshType, RenderEngine *eng);
+    std::vector<SceneID> loadFile(const std::string& path, MeshType, RenderEngine *eng, const bool loadMaterials = true);
     InstanceID    addMeshInstance(const SceneID,
                                   const InstanceID parentInstance,
                                   const float4x4&,
