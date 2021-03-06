@@ -115,7 +115,7 @@ private:
     void drawMeshSelctorWindow();
     void drawDebugTexturePicker(const std::vector<const char*>& textures);
     void drawLightMenu();
-    void drawGuizmo(float4x4& world, const float4x4& view, const float4x4& proj, const ImGuizmo::OPERATION mode);
+    bool drawGuizmo(float4x4& world, const float4x4& view, const float4x4& proj, const ImGuizmo::OPERATION mode);
 
     void addMaterial();
     void drawAddInstanceDialog();

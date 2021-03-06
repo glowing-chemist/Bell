@@ -543,7 +543,7 @@ void RayTracingScene::updateCPUAccelerationStructure(const Scene* scene)
         // add material mappings
         for (uint32_t i = 0; i < indexBuffer.size() / 3; ++i)
         {
-            mPrimitiveMaterialID.push_back({ instanceID, instance->getMaterialIndex(), instance->getMaterialFlags() });
+            mPrimitiveMaterialID.push_back({ instanceID, instance->getMaterialIndex(0), instance->getMaterialFlags(0) });
         }
 
         // Transform and add vertex data.

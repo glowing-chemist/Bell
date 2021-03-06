@@ -1,6 +1,7 @@
 #include "Engine/Scene.h"
 #include "Engine/Engine.hpp"
 #include "Engine/TextureUtil.hpp"
+#include "Engine/UberShaderStateCache.hpp"
 #include "Core/BellLogging.hpp"
 #include "Core/Profiling.hpp"
 
@@ -30,6 +31,53 @@ namespace
     }
 }
 
+MeshInstance::MeshInstance(Scene* scene,
+                            SceneID meshID,
+                            const float4x3& trans,
+                            const uint32_t materialID,
+                            const uint32_t materialFLags,
+                            const std::string& name)  :
+        Instance(trans, name),
+        mScene(scene),
+        mMesh(meshID),
+        mMaterials{},
+        mInstanceFlags{InstanceFlags::Draw}
+{
+    const StaticMesh* mesh = scene->getMesh(meshID);
+    const std::vector<SubMesh>& submeshes = mesh->getSubMeshes();
+    mMaterials.resize(submeshes.size());
+    for(auto&[materialIndex, materialFlags] : mMaterials)
+    {
+        materialIndex = materialID;
+        materialFlags = materialFLags;
+    }
+}
+
+MeshInstance::MeshInstance(Scene* scene,
+                            SceneID meshID,
+                            const float3& position,
+                            const quat& rotation,
+                            const float3& scale,
+                            const uint32_t materialID,
+                            const uint32_t materialFLags,
+                            const std::string& name) :
+        Instance(position, rotation, scale, name),
+        mScene(scene),
+        mMesh(meshID),
+        mMaterials{},
+        mInstanceFlags{InstanceFlags::Draw}
+{
+    const StaticMesh* mesh = scene->getMesh(meshID);
+    const std::vector<SubMesh>& submeshes = mesh->getSubMeshes();
+    mMaterials.resize(submeshes.size());
+    for(auto&[materialIndex, materialFlags] : mMaterials)
+    {
+        materialIndex = materialID;
+        materialFlags = materialFLags;
+    }
+}
+
+
 StaticMesh* MeshInstance::getMesh()
 {
     return mScene->getMesh(mMesh);
@@ -38,6 +86,23 @@ StaticMesh* MeshInstance::getMesh()
 const StaticMesh* MeshInstance::getMesh() const
 {
     return mScene->getMesh(mMesh);
+}
+
+
+void MeshInstance::draw(Executor* exec, UberShaderStateCache* cache, const uint32_t baseVertexOffset, const uint32_t baseIndexOffset) const
+{
+    const StaticMesh* mesh = getMesh();
+    const uint32_t vertesStride = mesh->getVertexStride();
+    const std::vector<SubMesh>& subMeshes = mesh->getSubMeshes();
+    for(uint32_t i = 0; i < subMeshes.size(); ++i)
+    {
+        const SubMesh& subMesh = subMeshes[i];
+        MeshEntry shaderEntry = getMeshShaderEntry(i, subMesh);
+        cache->update(shaderEntry.mMaterialFlags);
+
+        exec->insertPushConsatnt(&shaderEntry, sizeof(MeshEntry));
+        exec->indexedDraw((baseVertexOffset / vertesStride) + subMesh.mVertexOffset, (baseIndexOffset / sizeof(uint32_t)) + subMesh.mIndexOffset, subMesh.mIndexCount);
+    }
 }
 
 
@@ -567,13 +632,13 @@ void Scene::loadMaterialsExternal(RenderEngine* eng, const aiScene* scene)
 SceneID Scene::addMesh(const StaticMesh& mesh, MeshType meshType)
 {
     SceneID id = mSceneMeshes.size();
-    mSceneMeshes.push_back({mesh, meshType});
+    mSceneMeshes.emplace_back(mesh, meshType);
 
     return id;
 }
 
 
-std::vector<SceneID> Scene::loadFile(const std::string &path, MeshType meshType, RenderEngine* eng, const bool loadMaterials)
+SceneID Scene::loadFile(const std::string &path, MeshType meshType, RenderEngine* eng, const bool loadMaterials)
 {
     Assimp::Importer importer;
 
@@ -585,15 +650,9 @@ std::vector<SceneID> Scene::loadFile(const std::string &path, MeshType meshType,
                                              aiProcess_GlobalScale |
                                              aiProcess_FlipUVs);
 
-    std::vector<SceneID> ids{};
-    ids.reserve(scene->mNumMeshes);
-    for(uint32_t i = 0; i < scene->mNumMeshes; ++i)
-    {
-        const aiMesh* aimesh = scene->mMeshes[i];
-        StaticMesh mesh(scene, aimesh, VertexAttributes::Position4 | VertexAttributes::Normals | VertexAttributes::Tangents | VertexAttributes::TextureCoordinates | VertexAttributes::Albedo);
-
-        ids.push_back(addMesh(mesh, meshType));
-    }
+    StaticMesh newMesh(scene, VertexAttributes::Position4 | VertexAttributes::Normals | VertexAttributes::TextureCoordinates |
+                       VertexAttributes::Tangents | VertexAttributes::Albedo);
+    const InstanceID id = addMesh(newMesh, meshType);
 
     mPath = fs::path(path);
 
@@ -607,7 +666,7 @@ std::vector<SceneID> Scene::loadFile(const std::string &path, MeshType meshType,
             loadMaterialsExternal(eng, scene);
     }
 
-    return ids;
+    return id;
 }
 
 

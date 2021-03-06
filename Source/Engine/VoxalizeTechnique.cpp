@@ -1,5 +1,6 @@
 #include "Engine/VoxalizeTechnique.hpp"
 #include "Engine/Engine.hpp"
+#include "Engine/UberShaderStateCache.hpp"
 #include "Core/Executor.hpp"
 
 
@@ -125,17 +126,16 @@ void VoxalizeTechnique::render(RenderGraph& graph, RenderEngine* eng)
             const RenderTask& task = graph.getTask(taskIndex);
             exec->setGraphicsShaders(static_cast<const GraphicsTask&>(task), graph, mVolxalizeVertexShader, &mVolxalizeGeometryShader, nullptr, nullptr, mVolxalizeFragmentShader);
 
+            UberShaderStateCache stateCache(exec, graph, task);
+
             for (const auto& mesh : meshes)
             {
-                if (mesh->getMaterialFlags() & MaterialType::Transparent)
+                if (!(mesh->getInstanceFlags() & InstanceFlags::Draw))
                     continue;
 
                 const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->getMesh());
 
-                const MeshEntry entry = mesh->getMeshShaderEntry();
-
-                exec->insertPushConsatnt(&entry, sizeof(MeshEntry));
-                exec->indexedDraw(vertexOffset / mesh->getMesh()->getVertexStride(), indexOffset / sizeof(uint32_t), mesh->getMesh()->getIndexData().size());
+                mesh->draw(exec, &stateCache, vertexOffset, indexOffset);
             }
         }
     );

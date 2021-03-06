@@ -28,8 +28,8 @@ namespace
 StaticMesh::StaticMesh(const std::string& path, const int vertAttributes, const bool globalScaling) :
 	mVertexData{},
 	mIndexData{},
-    mAABB{},
-    mPassTypes{static_cast<uint64_t>(PassType::EditorDefault)},
+    mAABB{{INFINITY, INFINITY, INFINITY, INFINITY}, {-INFINITY, -INFINITY, -INFINITY, -INFINITY}},
+    mBoneCount(0),
 	mVertexCount(0),
     mVertexAttributes(vertAttributes),
     mVertexStride(0)
@@ -44,18 +44,39 @@ StaticMesh::StaticMesh(const std::string& path, const int vertAttributes, const 
                                              (globalScaling ? aiProcess_GlobalScale : 0) |
 											 aiProcess_FlipUVs);
 
-    BELL_ASSERT(scene->mNumMeshes == 1, "This files containes more than 1 mesh, which one is loaded is undefined.")
+    parseNode(scene,
+              scene->mRootNode,
+              aiMatrix4x4(),
+              mVertexAttributes);
 
-    const aiMesh* mesh = scene->mMeshes[0];
-
-    configure(scene, mesh, vertAttributes);
+    loadAnimations(scene);
 }
 
 
 StaticMesh::StaticMesh(const aiScene *scene, const aiMesh* mesh, const int vertexAttributes) :
-    mVertexAttributes(vertexAttributes)
+    mAABB{{INFINITY, INFINITY, INFINITY, INFINITY}, {-INFINITY, -INFINITY, -INFINITY, -INFINITY}},
+    mVertexAttributes(vertexAttributes),
+    mBoneCount(0),
+    mVertexCount(0)
 {
     configure(scene, mesh, vertexAttributes);
+
+    loadAnimations(scene);
+}
+
+
+StaticMesh::StaticMesh(const aiScene* scene, const int vertexAttributes) :
+        mAABB{{INFINITY, INFINITY, INFINITY, INFINITY}, {-INFINITY, -INFINITY, -INFINITY, -INFINITY}},
+        mVertexAttributes(vertexAttributes),
+        mBoneCount(0),
+        mVertexCount(0)
+{
+    parseNode(scene,
+              scene->mRootNode,
+              aiMatrix4x4(),
+              vertexAttributes);
+
+    loadAnimations(scene);
 }
 
 
@@ -86,11 +107,17 @@ void StaticMesh::configure(const aiScene* scene, const aiMesh* mesh, const int v
                                     ((vertAttributes & VertexAttributes::Albedo) ? 1 : 0)) * sizeof(float);
 
 	mVertexStride = vertexStride;
-	mVertexCount = mesh->mNumVertices;
+	mVertexCount += mesh->mNumVertices;
+
+	SubMesh newSubMesh{};
+	newSubMesh.mIndexOffset = mIndexData.size();
+	newSubMesh.mIndexCount = mesh->mNumFaces * mesh->mFaces[0].mNumIndices;
+	newSubMesh.mVertexOffset = mVertexData.getVertexBuffer().size() / mVertexStride;
+	newSubMesh.mTransform = float4x4(1.0f);
 
     // assume triangles atm
-    mIndexData.reserve(mesh->mNumFaces * mesh->mFaces[0].mNumIndices);
-    mVertexData.setSize(mesh->mNumVertices * vertexStride);
+    mIndexData.reserve(mIndexData.size() + (mesh->mNumFaces * mesh->mFaces[0].mNumIndices));
+    mVertexData.setSize(newSubMesh.mVertexOffset + (mesh->mNumVertices * vertexStride));
 
     // Copy the index data
     for(uint32_t i = 0; i < mesh->mNumFaces; ++i)
@@ -187,39 +214,23 @@ void StaticMesh::configure(const aiScene* scene, const aiMesh* mesh, const int v
         }
     }
 
-    mAABB = AABB{topLeft, bottumRight};
+    mAABB = AABB{componentWiseMin(topLeft, mAABB.getMin()), componentWiseMax(bottumRight, mAABB.getMax())};
 
-    loadSkeleton(mesh);
+    loadSkeleton(mesh, newSubMesh);
     loadBlendMeshed(mesh);
 
-    if(hasAnimations())
-    {
-        // Load animations.
-        for(uint32_t i = 0; i < scene->mNumAnimations; ++i)
-        {
-            const aiAnimation* animation = scene->mAnimations[i];
-         
-            if (animation->mNumChannels > 0)
-                mSkeletalAnimations.insert({ std::string(animation->mName.C_Str()), SkeletalAnimation(*this, animation, scene) });
-            if (animation->mNumMorphMeshChannels > 0)
-                mBlendAnimations.insert({ std::string(animation->mName.C_Str()), BlendMeshAnimation(animation, scene) });
-            if (animation->mNumChannels == 0 && animation->mNumMorphMeshChannels == 0)
-            {
-                BELL_LOG_ARGS("Unsupported animation %s not loaded", animation->mName.C_Str())
-            }
-        }
-    }
+    mSubMeshes.push_back(newSubMesh);
 }
 
 
-void StaticMesh::loadSkeleton(const aiMesh* mesh)
+void StaticMesh::loadSkeleton(const aiMesh* mesh, SubMesh& submesh)
 {
     if(mesh->mNumBones > 0)
     {
-        mSkeleton.reserve(mesh->mNumBones);
+        submesh.mSkeleton.reserve(mesh->mNumBones);
         std::vector<BoneIndicies> bonesPerVertex;
         bonesPerVertex.resize(mVertexCount);
-        mBoneWeightsIndicies.resize(mVertexCount);
+        submesh.mBoneWeightsIndicies.resize(mVertexCount);
 
         for(uint32_t i = 0; i < mesh->mNumBones; ++i)
         {
@@ -250,7 +261,7 @@ void StaticMesh::loadSkeleton(const aiMesh* mesh)
                 BoneIndicies& indicies = bonesPerVertex[weight.mVertexId];
                 indicies.mBoneIndices.emplace_back();
                 BoneIndex& boneIndex = indicies.mBoneIndices.back();
-                boneIndex.mBone = mSkeleton.size();
+                boneIndex.mBone = mBoneCount;
                 boneIndex.mWeight = weight.mWeight;
             }
 
@@ -260,7 +271,8 @@ void StaticMesh::loadSkeleton(const aiMesh* mesh)
                             float3{initialAABB.getSideLengths() / 2.0f},
                             float3{initialAABB.getMin()}};
 
-            mSkeleton.push_back(bone);
+            submesh.mSkeleton.push_back(bone);
+            ++mBoneCount;
         }
 
         // Now generate bone weights offsets per vertex.
@@ -268,11 +280,11 @@ void StaticMesh::loadSkeleton(const aiMesh* mesh)
         {
             const BoneIndicies& index = bonesPerVertex[i];
 
-            uint2& indexSize = mBoneWeightsIndicies[i];
-            indexSize.x = mBoneWeights.size();
+            uint2& indexSize = submesh.mBoneWeightsIndicies[i];
+            indexSize.x = submesh.mBoneWeights.size();
             indexSize.y = index.mBoneIndices.size();
 
-            mBoneWeights.insert(mBoneWeights.end(), index.mBoneIndices.begin(), index.mBoneIndices.end());
+            submesh.mBoneWeights.insert(submesh.mBoneWeights.end(), index.mBoneIndices.begin(), index.mBoneIndices.end());
         }
     }
 }
@@ -307,6 +319,57 @@ uint32_t StaticMesh::getPrimitiveSize(const aiPrimitiveType primitiveType) const
 		}
 
 		return primitiveElementSize;
+}
+
+
+void StaticMesh::parseNode(const aiScene* scene,
+                      const aiNode* node,
+                      const aiMatrix4x4& parentTransofrmation,
+                      const int vertAttributes)
+{
+    aiMatrix4x4 transformation = parentTransofrmation * node->mTransformation;
+
+    for(uint32_t i = 0; i < node->mNumMeshes; ++i)
+    {
+        const aiMesh* currentMesh = scene->mMeshes[node->mMeshes[i]];
+
+        float4x4 transformationMatrix{};
+        transformationMatrix[0][0] = transformation.a1; transformationMatrix[0][1] = transformation.b1;  transformationMatrix[0][2] = transformation.c1; transformationMatrix[0][3] = transformation.d1;
+        transformationMatrix[1][0] = transformation.a2; transformationMatrix[1][1] = transformation.b2;  transformationMatrix[1][2] = transformation.c2; transformationMatrix[1][3] = transformation.d2;
+        transformationMatrix[2][0] = transformation.a3; transformationMatrix[2][1] = transformation.b3;  transformationMatrix[2][2] = transformation.c3; transformationMatrix[2][3] = transformation.d3;
+        transformationMatrix[3][0] = transformation.a4; transformationMatrix[3][1] = transformation.b4;  transformationMatrix[3][2] = transformation.c4; transformationMatrix[3][3] = transformation.d4;
+
+
+        configure(scene, currentMesh, vertAttributes);
+        mSubMeshes.back().mTransform = transformationMatrix;
+    }
+
+    // Recurse through all child nodes
+    for(uint32_t i = 0; i < node->mNumChildren; ++i)
+    {
+        parseNode(scene,
+                  node->mChildren[i],
+                  transformation,
+                  vertAttributes);
+    }
+}
+
+
+void StaticMesh::loadAnimations(const aiScene* scene)
+{
+    for(uint32_t i = 0; i < scene->mNumAnimations; ++i)
+    {
+        const aiAnimation* animation = scene->mAnimations[i];
+
+        if (animation->mNumChannels > 0)
+            mSkeletalAnimations.insert({ std::string(animation->mName.C_Str()), SkeletalAnimation(*this, animation, scene) });
+        if (animation->mNumMorphMeshChannels > 0)
+            mBlendAnimations.insert({ std::string(animation->mName.C_Str()), BlendMeshAnimation(animation, scene) });
+        if (animation->mNumChannels == 0 && animation->mNumMorphMeshChannels == 0)
+        {
+            BELL_LOG_ARGS("Unsupported animation %s not loaded", animation->mName.C_Str())
+        }
+    }
 }
 
 

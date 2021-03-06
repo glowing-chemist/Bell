@@ -1,5 +1,6 @@
 #include "Engine/ShadowMappingTechnique.hpp"
 #include "Engine/Engine.hpp"
+#include "Engine/UberShaderStateCache.hpp"
 #include "Engine/DefaultResourceSlots.hpp"
 #include "Engine/UtilityTasks.hpp"
 #include "Core/Executor.hpp"
@@ -128,18 +129,17 @@ void ShadowMappingTechnique::render(RenderGraph& graph, RenderEngine*)
             const RenderTask& task = graph.getTask(taskIndex);
             exec->setGraphicsShaders(static_cast<const GraphicsTask&>(task), graph, mShadowMapVertexShader, nullptr, nullptr, nullptr, mShadowMapFragmentShader);
 
+            UberShaderStateCache stateCache(exec, graph, task);
+
             for (const auto& mesh : meshes)
             {
                 // Don't render transparent geometry.
-                if ((mesh->getMaterialFlags() & MaterialType::Transparent) > 0 || !(mesh->getInstanceFlags() & InstanceFlags::Draw))
+                if (!(mesh->getInstanceFlags() & InstanceFlags::Draw))
                     continue;
 
                 const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->getMesh());
 
-                const MeshEntry entry = mesh->getMeshShaderEntry();
-
-                exec->insertPushConsatnt(&entry, sizeof(MeshEntry));
-                exec->indexedDraw(vertexOffset / mesh->getMesh()->getVertexStride(), indexOffset / sizeof(uint32_t), mesh->getMesh()->getIndexData().size());
+                mesh->draw(exec, &stateCache, vertexOffset, indexOffset);
             }
         }
     );

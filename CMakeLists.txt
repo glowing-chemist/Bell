@@ -171,6 +171,7 @@ set(BELL_SOURCE
     Source/Engine/UtilityTasks.cpp
     Source/Engine/VoxelTerrain.cpp
     Source/Engine/SceneNavigator.cpp
+	Source/Engine/UberShaderStateCache.cpp
 
     # Techniques
     Source/Engine/SSAOTechnique.cpp

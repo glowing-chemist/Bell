@@ -33,35 +33,43 @@ SkeletalAnimation::SkeletalAnimation(const StaticMesh& mesh, const aiAnimation* 
     mInverseGlobalTransform(glm::inverse(aiMatrix4x4ToFloat4x4(scene->mRootNode->mTransformation))),
     mBones()
 {
-    const std::vector<StaticMesh::Bone>& bones = mesh.getSkeleton();
-    for(const auto& bone : bones)
+    const std::vector<SubMesh>& subMeshes = mesh.getSubMeshes();
+    for(const auto& subMesh : subMeshes)
     {
-        mBones[bone.mName]; // Just create an entry for every bone.
-        readNodeHierarchy(anim, aiString(bone.mName.c_str()), scene->mRootNode);
+        const std::vector<Bone> &bones = subMesh.mSkeleton;
+        for (const auto &bone : bones)
+        {
+            mBones[bone.mName]; // Just create an entry for every bone.
+            readNodeHierarchy(anim, aiString(bone.mName.c_str()), scene->mRootNode);
+        }
     }
 }
 
 
 std::vector<float4x4> SkeletalAnimation::calculateBoneMatracies(const StaticMesh& mesh, const double tick)
 {
-    const auto& bones = mesh.getSkeleton();
+    const std::vector<SubMesh>& subMeshes = mesh.getSubMeshes();
     std::vector<float4x4> boneTransforms{};
-    boneTransforms.reserve(bones.size());
-    for(const auto& bone : bones)
+    for(const auto& subMesh : subMeshes)
     {
-        BELL_ASSERT(mBones.find(bone.mName) != mBones.end(), "Bone not found")
-        BoneTransform& transform = mBones[bone.mName];
-        const std::vector<Tick>& ticks = transform.getTicks();
-
-        uint32_t i = 1;
-        while(tick > ticks[i].mTick)
+        const auto &bones = subMesh.mSkeleton;
+        boneTransforms.reserve(boneTransforms.size() + bones.size());
+        for (const auto &bone : bones)
         {
-            ++i;
-        }
+            BELL_ASSERT(mBones.find(bone.mName) != mBones.end(), "Bone not found")
+            BoneTransform &transform = mBones[bone.mName];
+            const std::vector<Tick> &ticks = transform.getTicks();
 
-        BELL_ASSERT(i < ticks.size(), "tick out of bounds")
-        const float4x4 boneTransform = interpolateTick(ticks[i - 1], ticks[i], tick);
-        boneTransforms.push_back(boneTransform * bone.mInverseBindPose);
+            uint32_t i = 1;
+            while (tick > ticks[i].mTick)
+            {
+                ++i;
+            }
+
+            BELL_ASSERT(i < ticks.size(), "tick out of bounds")
+            const float4x4 boneTransform = interpolateTick(ticks[i - 1], ticks[i], tick);
+            boneTransforms.push_back(boneTransform * bone.mInverseBindPose);
+        }
     }
 
     return boneTransforms;

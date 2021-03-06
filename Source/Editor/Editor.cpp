@@ -490,10 +490,9 @@ void Editor::renderOverlay()
         {
             mShowMeshFileBrowser = false;
 
-            std::vector<SceneID> ids = mInProgressScene->loadFile(optionalPath->string(), MeshType::Dynamic, &mEngine);
+            SceneID id = mInProgressScene->loadFile(optionalPath->string(), MeshType::Dynamic, &mEngine);
 
-            for(uint32_t i = 0; i < ids.size(); ++i)
-                mStaticMeshEntries.push_back({ids[i], optionalPath->filename().string() + ":" + std::to_string(i)});
+            mStaticMeshEntries.push_back({id, optionalPath->filename().string()});
         }
     }
 
@@ -1091,7 +1090,7 @@ void Editor::drawMeshSelctorWindow()
             }
 
             const std::vector<Scene::Material>& materials = mInProgressScene->getMaterialDescriptions();
-            const uint32_t current_index = instance->getMaterialIndex();
+            const uint32_t current_index = instance->getMaterialIndex(0);
             const Scene::Material& currentMaterial = *std::find_if(materials.begin(), materials.end(), [current_index](const Scene::Material& mat)
             {
                 return current_index == mat.mMaterialOffset;
@@ -1104,8 +1103,8 @@ void Editor::drawMeshSelctorWindow()
                     bool is_selected = current_index == materials[n].mMaterialOffset;
                     if (ImGui::Selectable(materials[n].mName.c_str(), is_selected))
                     {
-                        instance->setMaterialIndex(materials[n].mMaterialOffset);
-                        instance->setMaterialFlags(materials[n].mMaterialTypes);
+                        instance->setMaterialIndex(0, materials[n].mMaterialOffset);
+                        instance->setMaterialFlags(0, materials[n].mMaterialTypes);
                     }
                     if (is_selected)
                         ImGui::SetItemDefaultFocus();
@@ -1321,9 +1320,9 @@ void Editor::drawLightMenu()
 }
 
 
-void Editor::drawGuizmo(float4x4& world, const float4x4& view, const float4x4& proj, const ImGuizmo::OPERATION op)
+bool Editor::drawGuizmo(float4x4& world, const float4x4& view, const float4x4& proj, const ImGuizmo::OPERATION op)
 {
-    ImGuizmo::Manipulate(   glm::value_ptr(view),
+    return ImGuizmo::Manipulate(   glm::value_ptr(view),
                             glm::value_ptr(proj),
                             op,
                             ImGuizmo::MODE::LOCAL,
@@ -1546,9 +1545,18 @@ void Editor::drawselectedMeshGuizmo()
         const float4x4 proj = camera.getProjectionMatrix();
         float4x4 trans = instance->getTransMatrix();
 
-        drawGuizmo(trans, view, proj, mLightOperationMode);
+        if(drawGuizmo(trans, view, proj, mLightOperationMode))
+        {
+            float3 position, scale, skew;
+            quat rotation;
+            float4 persp;
+            glm::decompose(trans, scale, rotation, position, skew, persp);
 
-        instance->setTransMatrix(trans);
+            instance->setPosition(position);
+            instance->setRotation(rotation);
+            instance->setScale(scale);
+        }
+
     }
 }
 

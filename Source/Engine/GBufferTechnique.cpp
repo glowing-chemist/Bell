@@ -1,4 +1,5 @@
 #include "Engine/GBufferTechnique.hpp"
+#include "Engine/UberShaderStateCache.hpp"
 #include "Core/Executor.hpp"
 
 
@@ -40,38 +41,25 @@ GBufferTechnique::GBufferTechnique(RenderEngine* eng, RenderGraph& graph) :
                 exec->bindIndexBuffer(eng->getIndexBuffer(), 0);
                 exec->bindVertexBuffer(eng->getVertexBuffer(), 0);
 
-                uint64_t currentMaterialFLags = ~0;
-
                 const RenderTask& task = graph.getTask(taskIndex);
                 Shader vertexShader = eng->getShader("./Shaders/GBufferPassThrough.vert");
 
                 const BufferView& pred = eng->getRenderGraph().getBuffer(kOcclusionPredicationBuffer);
 
+                UberShaderMaterialStateCache stateCache(exec, eng, graph, task, vertexShader, "./Shaders/GBuffer.frag");
+
                 for (uint32_t i = 0; i < meshes.size(); ++i)
                 {
-                    const auto& mesh = meshes[i];
+                    const auto* mesh = meshes[i];
 
-                    if (mesh->getMaterialFlags() & MaterialType::Transparent || !(mesh->getInstanceFlags() & InstanceFlags::Draw))
+                    if (!(mesh->getInstanceFlags() & InstanceFlags::Draw))
                         continue;
-
-                    //need to set new pipeline.
-                    if(mesh->getMaterialFlags() != currentMaterialFLags)
-                    {
-                        currentMaterialFLags = mesh->getMaterialFlags();
-
-                        ShaderDefine materialDefine("MATERIAL_FLAGS", currentMaterialFLags);
-                        Shader fragmentShader = eng->getShader("./Shaders/GBuffer.frag", materialDefine);
-                        exec->setGraphicsShaders(static_cast<const GraphicsTask&>(task), graph, vertexShader, nullptr, nullptr, nullptr, fragmentShader);
-                    }
 
                     const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->getMesh());
 
-                    const MeshEntry entry = mesh->getMeshShaderEntry();
-
                     exec->startCommandPredication(pred, i);
 
-                    exec->insertPushConsatnt(&entry, sizeof(MeshEntry));
-                    exec->indexedDraw(vertexOffset / mesh->getMesh()->getVertexStride(), indexOffset / sizeof(uint32_t), mesh->getMesh()->getIndexData().size());
+                    mesh->draw(exec, &stateCache, vertexOffset, indexOffset);
 
                     exec->endCommandPredication();
                 }
@@ -92,33 +80,20 @@ GBufferTechnique::GBufferTechnique(RenderEngine* eng, RenderGraph& graph) :
                 exec->bindIndexBuffer(eng->getIndexBuffer(), 0);
                 exec->bindVertexBuffer(eng->getVertexBuffer(), 0);
 
-                uint64_t currentMaterialFLags = ~0;
-
                 const RenderTask& task = graph.getTask(taskIndex);
                 Shader vertexShader = eng->getShader("./Shaders/GBufferPassThrough.vert");
 
+                UberShaderMaterialStateCache stateCache(exec, eng, graph, task, vertexShader, "./Shaders/GBuffer.frag");
+
                 for (const auto& mesh : meshes)
                 {
-                    if (mesh->getMaterialFlags() & MaterialType::Transparent || !(mesh->getInstanceFlags() & InstanceFlags::Draw))
+                    if (!(mesh->getInstanceFlags() & InstanceFlags::Draw))
                         continue;
 
-                    //need to set new pipeline.
-                    if(mesh->getMaterialFlags() != currentMaterialFLags)
-                    {
-                        currentMaterialFLags = mesh->getMaterialFlags();
-
-                        ShaderDefine materialDefine("MATERIAL_FLAGS", currentMaterialFLags);
-                        Shader fragmentShader = eng->getShader("./Shaders/GBuffer.frag", materialDefine);
-                        exec->setGraphicsShaders(static_cast<const GraphicsTask&>(task), graph, vertexShader, nullptr, nullptr, nullptr, fragmentShader);
-                    }
-
                     const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->getMesh());
+                    mesh->draw(exec, &stateCache, vertexOffset, indexOffset);
 
-                    const MeshEntry entry = mesh->getMeshShaderEntry();
-
-                    exec->insertPushConsatnt(&entry, sizeof(MeshEntry));
-                    exec->indexedDraw(vertexOffset / mesh->getMesh()->getVertexStride(), indexOffset / sizeof(uint32_t), mesh->getMesh()->getIndexData().size());
-                }
+                   }
 
                 exec->setSubmitFlag();
             }
@@ -166,38 +141,27 @@ GBufferPreDepthTechnique::GBufferPreDepthTechnique(RenderEngine* eng, RenderGrap
 
                 exec->bindIndexBuffer(eng->getIndexBuffer(), 0);
                 exec->bindVertexBuffer(eng->getVertexBuffer(), 0);
-                uint64_t currentMaterialFLags = ~0;
 
                 const RenderTask& task = graph.getTask(taskIndex);
                 Shader vertexShader = eng->getShader("./Shaders/GBufferPassThrough.vert");
 
                 const BufferView& pred = eng->getRenderGraph().getBuffer(kOcclusionPredicationBuffer);
 
+                UberShaderMaterialStateCache stateCache(exec, eng, graph, task, vertexShader, "./Shaders/GBuffer.frag");
+
                 for (uint32_t i = 0; i < meshes.size(); ++i)
                 {
                     const auto& mesh = meshes[i];
 
-                    if (mesh->getMaterialFlags() & MaterialType::Transparent || !(mesh->getInstanceFlags() & InstanceFlags::Draw))
+                    if (!(mesh->getInstanceFlags() & InstanceFlags::Draw))
                         continue;
-
-                    //need to set new pipeline.
-                    if(mesh->getMaterialFlags() != currentMaterialFLags)
-                    {
-                        currentMaterialFLags = mesh->getMaterialFlags();
-
-                        ShaderDefine materialDefine("MATERIAL_FLAGS", currentMaterialFLags);
-                        Shader fragmentShader = eng->getShader("./Shaders/GBuffer.frag", materialDefine);
-                        exec->setGraphicsShaders(static_cast<const GraphicsTask&>(task), graph, vertexShader, nullptr, nullptr, nullptr, fragmentShader);
-                    }
 
                     const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->getMesh());
 
-                    const MeshEntry entry = mesh->getMeshShaderEntry();
 
                     exec->startCommandPredication(pred, i);
 
-                    exec->insertPushConsatnt(&entry, sizeof(MeshEntry));
-                    exec->indexedDraw(vertexOffset / mesh->getMesh()->getVertexStride(), indexOffset / sizeof(uint32_t), mesh->getMesh()->getIndexData().size());
+                    mesh->draw(exec, &stateCache, vertexOffset, indexOffset);
 
                     exec->endCommandPredication();
                 }
@@ -218,33 +182,21 @@ GBufferPreDepthTechnique::GBufferPreDepthTechnique(RenderEngine* eng, RenderGrap
                 exec->bindIndexBuffer(eng->getIndexBuffer(), 0);
                 exec->bindVertexBuffer(eng->getVertexBuffer(), 0);
 
-                uint64_t currentMaterialFLags = ~0;
 
                 const RenderTask& task = graph.getTask(taskIndex);
                 Shader vertexShader = eng->getShader("./Shaders/GBufferPassThrough.vert");
 
+                UberShaderMaterialStateCache stateCache(exec, eng, graph, task, vertexShader, "./Shaders/GBuffer.frag");
+
                 for (const auto& mesh : meshes)
                 {
-                    if (mesh->getMaterialFlags() & MaterialType::Transparent || !(mesh->getInstanceFlags() & InstanceFlags::Draw))
+                    if (!(mesh->getInstanceFlags() & InstanceFlags::Draw))
                         continue;
-
-                    //need to set new pipeline.
-                    if(mesh->getMaterialFlags() != currentMaterialFLags)
-                    {
-                        currentMaterialFLags = mesh->getMaterialFlags();
-
-                        ShaderDefine materialDefine("MATERIAL_FLAGS", currentMaterialFLags);
-                        Shader fragmentShader = eng->getShader("./Shaders/GBuffer.frag", materialDefine);
-                        exec->setGraphicsShaders(static_cast<const GraphicsTask&>(task), graph, vertexShader, nullptr, nullptr, nullptr, fragmentShader);
-                    }
 
                     const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->getMesh());
 
-                    const MeshEntry entry = mesh->getMeshShaderEntry();
-
-                    exec->insertPushConsatnt(&entry, sizeof(MeshEntry));
-                    exec->indexedDraw(vertexOffset / mesh->getMesh()->getVertexStride(), indexOffset / sizeof(uint32_t), mesh->getMesh()->getIndexData().size());
-                }
+                    mesh->draw(exec, &stateCache, vertexOffset, indexOffset);
+                  }
 
                 exec->setSubmitFlag();
             }

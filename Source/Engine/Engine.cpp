@@ -432,11 +432,16 @@ std::pair<uint64_t, uint64_t> RenderEngine::addMeshToAnimationBuffer(const Stati
     const auto& vertexData = mesh->getVertexData();
     const auto vertexOffset = mAnimationVertexSize + mAnimationVertexBuilder.addData(vertexData);
 
-    const auto& boneIndicies = mesh->getBoneIndicies();
-    mBoneIndexBuilder.addData(boneIndicies);
+    const std::vector<SubMesh>& subMeshes = mesh->getSubMeshes();
+    uint32_t boneWeightsOffset = 0;
+    for(const auto& subMesh : subMeshes)
+    {
+        const auto &boneIndicies = subMesh.mBoneWeightsIndicies;
+        mBoneIndexBuilder.addData(boneIndicies);
 
-    const auto& boneWeights = mesh->getBoneWeights();
-    const auto boneWeightsOffset = mBoneWeightSize + mBoneWeightBuilder.addData(boneWeights);
+        const auto &boneWeights = subMesh.mBoneWeights;
+        boneWeightsOffset += mBoneWeightSize + mBoneWeightBuilder.addData(boneWeights);
+    }
 
     mTposeVertexCache.insert(std::make_pair( mesh, std::pair<uint64_t, uint64_t>{vertexOffset, boneWeightsOffset}));
 
@@ -446,7 +451,7 @@ std::pair<uint64_t, uint64_t> RenderEngine::addMeshToAnimationBuffer(const Stati
 
 uint64_t RenderEngine::getMeshBoundsIndex(const MeshInstance* inst)
 {
-    BELL_ASSERT(mMeshBoundsCache.find(inst) != mMeshBoundsCache.end(), "Unable to fin dinstance bounds")
+    BELL_ASSERT(mMeshBoundsCache.find(inst) != mMeshBoundsCache.end(), "Unable to find instance bounds")
 
     return mMeshBoundsCache[inst];
 }
@@ -585,21 +590,12 @@ void RenderEngine::execute(RenderGraph& graph)
         PROFILER_EVENT("sort meshes");
         std::sort(meshes.begin(), meshes.end(), [camera = mCurrentScene->getCamera()](const MeshInstance* lhs, const MeshInstance* rhs)
         {
-            // Sort first by material flags and than by disatnce to camera.
-            if(lhs->getMaterialFlags() != rhs->getMaterialFlags())
-            {
-                return lhs->getMaterialFlags() < rhs->getMaterialFlags();
-            }
-            else
-            {
-                const float3 centralLeft = (lhs->getMesh()->getAABB() *  lhs->getTransMatrix()).getCentralPoint();
-                const float leftDistance = glm::length(centralLeft - camera.getPosition());
+            const float3 centralLeft = (lhs->getMesh()->getAABB() *  lhs->getTransMatrix()).getCentralPoint();
+            const float leftDistance = glm::length(centralLeft - camera.getPosition());
 
-                const float3 centralright = (rhs->getMesh()->getAABB() * rhs->getTransMatrix()).getCentralPoint();
-                const float rightDistance = glm::length(centralright - camera.getPosition());
-
-                return leftDistance < rightDistance;
-            }
+            const float3 centralright = (rhs->getMesh()->getAABB() * rhs->getTransMatrix()).getCentralPoint();
+            const float rightDistance = glm::length(centralright - camera.getPosition());
+            return leftDistance < rightDistance;
         });
     }
 

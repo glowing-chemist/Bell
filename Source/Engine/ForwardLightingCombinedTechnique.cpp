@@ -1,6 +1,7 @@
 #include "Engine/ForwardLightingCombinedTechnique.hpp"
 
 #include "Engine/Engine.hpp"
+#include "Engine/UberShaderStateCache.hpp"
 #include "Engine/DefaultResourceSlots.hpp"
 #include "Core/Executor.hpp"
 
@@ -70,31 +71,20 @@ ForwardCombinedLightingTechnique::ForwardCombinedLightingTechnique(RenderEngine*
 
                 const BufferView& pred = eng->getRenderGraph().getBuffer(kOcclusionPredicationBuffer);
 
+                UberShaderMaterialStateCache stateCache(exec, eng, graph, task, vertexShader, "./Shaders/ForwardCombinedLighting.frag");
+
                 for (uint32_t i = 0; i < meshes.size(); ++i)
                 {
                     const auto& mesh = meshes[i];
 
-                    if (mesh->getMaterialFlags() & MaterialType::Transparent || !(mesh->getInstanceFlags() & InstanceFlags::Draw))
+                    if (!(mesh->getInstanceFlags() & InstanceFlags::Draw))
                         continue;
-
-                    //need to set new pipeline.
-                    if(mesh->getMaterialFlags() != currentMaterialFLags)
-                    {
-                        currentMaterialFLags = mesh->getMaterialFlags();
-
-                        ShaderDefine materialDefine("MATERIAL_FLAGS", currentMaterialFLags);
-                        Shader fragmentShader = eng->getShader("./Shaders/ForwardCombinedLighting.frag", materialDefine);
-                        exec->setGraphicsShaders(static_cast<const GraphicsTask&>(task), graph, vertexShader, nullptr, nullptr, nullptr, fragmentShader);
-                    }
 
                     const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->getMesh());
 
-                    const MeshEntry entry = mesh->getMeshShaderEntry();
-
                     exec->startCommandPredication(pred, i);
 
-                    exec->insertPushConsatnt(&entry, sizeof(MeshEntry));
-                    exec->indexedDraw(vertexOffset / mesh->getMesh()->getVertexStride(), indexOffset / sizeof(uint32_t), mesh->getMesh()->getIndexData().size());
+                    mesh->draw(exec, &stateCache, vertexOffset, indexOffset);
 
                     exec->endCommandPredication();
                 }
@@ -113,32 +103,19 @@ ForwardCombinedLightingTechnique::ForwardCombinedLightingTechnique(RenderEngine*
                 exec->bindIndexBuffer(eng->getIndexBuffer(), 0);
                 exec->bindVertexBuffer(eng->getVertexBuffer(), 0);
 
-                uint64_t currentMaterialFLags = ~0;
-
                 const RenderTask& task = graph.getTask(taskIndex);
                 Shader vertexShader = eng->getShader("./Shaders/ForwardMaterial.vert");
 
+                UberShaderMaterialStateCache stateCache(exec, eng, graph, task, vertexShader, "./Shaders/ForwardCombinedLighting.frag");
+
                 for (const auto& mesh : meshes)
                 {
-                    if (mesh->getMaterialFlags() & MaterialType::Transparent || !(mesh->getInstanceFlags() & InstanceFlags::Draw))
+                    if (!(mesh->getInstanceFlags() & InstanceFlags::Draw))
                         continue;
-
-                    //need to set new pipeline.
-                    if(mesh->getMaterialFlags() != currentMaterialFLags)
-                    {
-                        currentMaterialFLags = mesh->getMaterialFlags();
-
-                        ShaderDefine materialDefine("MATERIAL_FLAGS", currentMaterialFLags);
-                        Shader fragmentShader = eng->getShader("./Shaders/ForwardCombinedLighting.frag", materialDefine);
-                        exec->setGraphicsShaders(static_cast<const GraphicsTask&>(task), graph, vertexShader, nullptr, nullptr, nullptr, fragmentShader);
-                    }
 
                     const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->getMesh());
 
-                    const MeshEntry entry = mesh->getMeshShaderEntry();
-
-                    exec->insertPushConsatnt(&entry, sizeof(MeshEntry));
-                    exec->indexedDraw(vertexOffset / mesh->getMesh()->getVertexStride(), indexOffset / sizeof(uint32_t), mesh->getMesh()->getIndexData().size());
+                    mesh->draw(exec, &stateCache, vertexOffset, indexOffset);
                 }
             }
         );

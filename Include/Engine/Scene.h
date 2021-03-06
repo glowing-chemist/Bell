@@ -23,7 +23,7 @@
 #include <vector>
 
 class RenderEngine;
-
+class UberShaderStateCache;
 
 using SceneID = uint64_t;
 using InstanceID = uint64_t;
@@ -112,13 +112,7 @@ public:
                  const float4x3& trans,
                  const uint32_t materialID,
                  const uint32_t materialFLags,
-                 const std::string& name = "") :
-        Instance(trans, name),
-        mScene(scene),
-        mMesh(mesh),
-        mMaterialIndex{materialID},
-        mMaterialFlags{materialFLags},
-        mInstanceFlags{InstanceFlags::Draw} {}
+                 const std::string& name = "");
 
     MeshInstance(Scene* scene,
                  SceneID mesh,
@@ -127,13 +121,7 @@ public:
                  const float3& scale,
                  const uint32_t materialID,
                  const uint32_t materialFLags,
-                 const std::string& name = "") :
-            Instance(position, rotation, scale, name),
-            mScene(scene),
-            mMesh(mesh),
-            mMaterialIndex{materialID},
-            mMaterialFlags{materialFLags},
-            mInstanceFlags{InstanceFlags::Draw} {}
+                 const std::string& name = "");
 
     StaticMesh* getMesh();
     const StaticMesh* getMesh() const;
@@ -143,14 +131,14 @@ public:
         return mMesh;
     }
 
-    uint32_t getMaterialIndex() const
+    uint32_t getMaterialIndex(const uint32_t subMesh) const
     {
-        return mMaterialIndex;
+        return mMaterials[subMesh].mMaterialIndex;
     }
 
-    void setMaterialIndex(const uint32_t i)
+    void setMaterialIndex(const uint32_t subMesh, const uint32_t i)
     {
-        mMaterialIndex = i;
+        mMaterials[subMesh].mMaterialIndex = i;
     }
 
     uint32_t getInstanceFlags() const
@@ -163,33 +151,39 @@ public:
         mInstanceFlags = flags;
     }
 
-    uint32_t getMaterialFlags() const
+    uint32_t getMaterialFlags(const uint32_t subMesh) const
     {
-        return mMaterialFlags;
+        return mMaterials[subMesh].mMaterialFlags;
     }
 
-    void setMaterialFlags(const uint32_t flags)
+    void setMaterialFlags(const uint32_t subMesh, const uint32_t flags)
     {
-        mMaterialFlags = flags;
+        mMaterials[subMesh].mMaterialFlags = flags;
     }
 
-    MeshEntry getMeshShaderEntry() const
+    void draw(Executor*, UberShaderStateCache*, const uint32_t baseVertexOffset, const uint32_t baseIndexOffset) const;
+
+private:
+
+    MeshEntry getMeshShaderEntry(const uint32_t submesh_i, const SubMesh& submesh) const
     {
         MeshEntry entry{};
-        entry.mTransformation = transpose(float4x3(getTransMatrix()));
-        entry.mPreviousTransformation = transpose(float4x3(getPreviousTransMatrix()));
-        entry.mMaterialIndex = mMaterialIndex;
-        entry.mMaterialFlags = mMaterialFlags;
+        entry.mTransformation = transpose(float4x3(getTransMatrix() * submesh.mTransform));
+        entry.mPreviousTransformation = transpose(float4x3(getPreviousTransMatrix() * submesh.mTransform));
+        entry.mMaterialIndex = mMaterials[submesh_i].mMaterialIndex;
+        entry.mMaterialFlags = mMaterials[submesh_i].mMaterialFlags;
 
         return entry;
     }
 
-private:
-
     Scene* mScene;
     SceneID mMesh;
-    uint32_t mMaterialIndex;
-    uint32_t mMaterialFlags;
+    struct MaterialEntry
+    {
+        uint32_t mMaterialIndex;
+        uint32_t mMaterialFlags;
+    };
+    std::vector<MaterialEntry> mMaterials;
     uint32_t mInstanceFlags;
 };
 
@@ -217,7 +211,7 @@ public:
 	void loadSkybox(const std::array<std::string, 6>& path, RenderEngine*);
 
     SceneID       addMesh(const StaticMesh& mesh, MeshType);
-    std::vector<SceneID> loadFile(const std::string& path, MeshType, RenderEngine *eng, const bool loadMaterials = true);
+    SceneID       loadFile(const std::string& path, MeshType, RenderEngine *eng, const bool loadMaterials = true);
     InstanceID    addMeshInstance(const SceneID,
                                   const InstanceID parentInstance,
                                   const float4x4&,

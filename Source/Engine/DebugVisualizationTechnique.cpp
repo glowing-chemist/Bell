@@ -123,22 +123,28 @@ DebugAABBTechnique::DebugAABBTechnique(RenderEngine* eng, RenderGraph& graph) :
                         MeshInstance* inst = eng->getScene()->getMeshInstance(entry.mMesh);
                         if(inst->getInstanceFlags() & InstanceFlags::DrawAABB)
                         {
-                            const std::vector<StaticMesh::Bone>& skeleton = inst->getMesh()->getSkeleton();
-                            SkeletalAnimation& activeAnim = inst->getMesh()->getSkeletalAnimation(entry.mName);
-                            std::vector<float4x4> boneTransforms = activeAnim.calculateBoneMatracies(*inst->getMesh(), entry.mTick);
-                            BELL_ASSERT(boneTransforms.size() == skeleton.size(), "Bone size mismatch")
-
-                            for(uint32_t i = 0; i < skeleton.size(); ++i)
+                            const std::vector<SubMesh>& subMeshes = inst->getMesh()->getSubMeshes();
+                            for(const auto& subMesh : subMeshes)
                             {
-                                const float4x4& boneTransform = boneTransforms[i];
-                                const StaticMesh::Bone& bone = skeleton[i];
+                                const std::vector<Bone> &skeleton = subMesh.mSkeleton;
+                                SkeletalAnimation &activeAnim = inst->getMesh()->getSkeletalAnimation(entry.mName);
+                                std::vector<float4x4> boneTransforms = activeAnim.calculateBoneMatracies(
+                                        *inst->getMesh(), entry.mTick);
+                                BELL_ASSERT(boneTransforms.size() == skeleton.size(), "Bone size mismatch")
 
-                                const float3 sideLenghts = bone.mOBB.getSideLengths();
-                                const float3 centralPoint = bone.mOBB.getCentralPoint();
+                                for (uint32_t i = 0; i < skeleton.size(); ++i) {
+                                    const float4x4 &boneTransform = boneTransforms[i];
+                                    const Bone &bone = skeleton[i];
 
-                                float4x4 OBBTransformation = inst->getTransMatrix() * boneTransform * glm::translate(centralPoint) * glm::scale(float4x4(1.0f), sideLenghts);
-                                exec->insertPushConsatnt(&OBBTransformation, sizeof(float4x4));
-                                exec->indexedDraw(0, 0, 24);
+                                    const float3 sideLenghts = bone.mOBB.getSideLengths();
+                                    const float3 centralPoint = bone.mOBB.getCentralPoint();
+
+                                    float4x4 OBBTransformation =
+                                            inst->getTransMatrix() * boneTransform * glm::translate(centralPoint) *
+                                            glm::scale(float4x4(1.0f), sideLenghts);
+                                    exec->insertPushConsatnt(&OBBTransformation, sizeof(float4x4));
+                                    exec->indexedDraw(0, 0, 24);
+                                }
                             }
                         }
                     }

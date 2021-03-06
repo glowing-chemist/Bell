@@ -1,4 +1,5 @@
 #include "Engine/PreDepthTechnique.hpp"
+#include "Engine/UberShaderStateCache.hpp"
 #include "Core/Executor.hpp"
 
 
@@ -43,23 +44,22 @@ PreDepthTechnique::PreDepthTechnique(RenderEngine* eng, RenderGraph& graph) :
                 const RenderTask& task = graph.getTask(taskIndex);
                 exec->setGraphicsShaders(static_cast<const GraphicsTask&>(task), graph, mPreDepthVertexShader, nullptr, nullptr, nullptr, mPreDepthFragmentShader);
 
+                UberShaderStateCache stateCache(exec, graph, task);
+
                 const BufferView& pred = eng->getRenderGraph().getBuffer(kOcclusionPredicationBuffer);
 
                 for (uint32_t i = 0; i < meshes.size(); ++i)
                 {
                     const auto& mesh = meshes[i];
 
-                    if (mesh->getMaterialFlags() & MaterialType::Transparent || !(mesh->getInstanceFlags() & InstanceFlags::Draw))
+                    if (!(mesh->getInstanceFlags() & InstanceFlags::Draw))
                         continue;
 
                     const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->getMesh());
 
-                    const MeshEntry entry = mesh->getMeshShaderEntry();
-
                     exec->startCommandPredication(pred, i);
 
-                    exec->insertPushConsatnt(&entry, sizeof(MeshEntry));
-                    exec->indexedDraw(vertexOffset / mesh->getMesh()->getVertexStride(), indexOffset / sizeof(uint32_t), mesh->getMesh()->getIndexData().size());
+                    mesh->draw(exec, &stateCache, vertexOffset, indexOffset);
 
                     exec->endCommandPredication();
                 }
@@ -81,18 +81,17 @@ PreDepthTechnique::PreDepthTechnique(RenderEngine* eng, RenderGraph& graph) :
                 const RenderTask& task = graph.getTask(taskIndex);
                 exec->setGraphicsShaders(static_cast<const GraphicsTask&>(task), graph, mPreDepthVertexShader, nullptr, nullptr, nullptr, mPreDepthFragmentShader);
 
+                UberShaderStateCache stateCache(exec, graph, task);
+
                 for (const auto& mesh : meshes)
                 {
                     // Don't render transparent geometry.
-                    if ((mesh->getMaterialFlags() & MaterialType::Transparent) > 0 || !(mesh->getInstanceFlags() & InstanceFlags::Draw))
+                    if (!(mesh->getInstanceFlags() & InstanceFlags::Draw))
                         continue;
 
                     const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->getMesh());
 
-                    const MeshEntry entry = mesh->getMeshShaderEntry();
-
-                    exec->insertPushConsatnt(&entry, sizeof(MeshEntry));
-                    exec->indexedDraw(vertexOffset / mesh->getMesh()->getVertexStride(), indexOffset / sizeof(uint32_t), mesh->getMesh()->getIndexData().size());
+                    mesh->draw(exec, &stateCache, vertexOffset, indexOffset);
                 }
             }
         );

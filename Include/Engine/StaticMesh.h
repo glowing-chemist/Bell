@@ -55,12 +55,51 @@ private:
 
 };
 
+struct Bone
+{
+    std::string mName;
+    float4x4 mInverseBindPose;
+    OBB mOBB;
+};
+
+struct BoneIndex
+{
+    BoneIndex() :
+            mBone(0),
+            mWeight(0.0f) {}
+
+    uint32_t mBone;
+    float mWeight;
+};
+
+struct BoneIndicies
+{
+    BoneIndicies() :
+            mBoneIndices{} {}
+
+    std::vector<BoneIndex> mBoneIndices;
+};
+
+struct SubMesh
+{
+    uint32_t mVertexOffset;
+    uint32_t mIndexOffset;
+    uint32_t mIndexCount;
+
+    float4x4 mTransform;
+
+    std::vector<Bone> mSkeleton;
+    std::vector<BoneIndex> mBoneWeights;
+    std::vector<uint2> mBoneWeightsIndicies;
+};
+
 class StaticMesh
 {
 public:
 	
     StaticMesh(const std::string& filePath, const int vertexAttributes, const bool globalScaling = false);
     StaticMesh(const aiScene* scene, const aiMesh* mesh, const int vertexAttributes);
+    StaticMesh(const aiScene* scene, const int vertexAttributes);
 
 
     const AABB& getAABB() const
@@ -83,16 +122,6 @@ public:
         return mIndexData;
     }
 
-    void addPass(const PassType passType)
-    {
-        mPassTypes |= static_cast<uint64_t>(passType);
-    }
-
-    PassType getPassTypes() const
-    {
-        return static_cast<PassType>(mPassTypes);
-    }
-
     int getVertexAttributes() const
     {
         return mVertexAttributes;
@@ -110,47 +139,7 @@ public:
 
     bool hasAnimations() const
     {
-        return !mSkeleton.empty() || !mBlendMeshes.empty();
-    }
-
-    struct Bone
-    {
-        std::string mName;
-        float4x4 mInverseBindPose;
-	OBB mOBB;
-    };
-
-    const std::vector<Bone>& getSkeleton() const
-    {
-        return mSkeleton;
-    }
-
-    struct BoneIndex
-    {
-        BoneIndex() :
-            mBone(0),
-            mWeight(0.0f) {}
-
-        uint32_t mBone;
-        float mWeight;
-    };
-
-    struct BoneIndicies
-    {
-        BoneIndicies() :
-            mBoneIndices{} {}
-
-        std::vector<BoneIndex> mBoneIndices;
-    };
-
-    const std::vector<uint2>& getBoneIndicies() const
-    {
-        return mBoneWeightsIndicies;
-    }
-
-    const std::vector<BoneIndex>& getBoneWeights() const
-    {
-        return mBoneWeights;
+        return !mSkeletalAnimations.empty() || !mBlendAnimations.empty();
     }
 
     bool isSkeletalAnimation(const std::string& name) const
@@ -192,17 +181,33 @@ public:
         return mBlendMeshes;
     }
 
+    const std::vector<SubMesh>& getSubMeshes() const
+    {
+        return mSubMeshes;
+    }
+
+    uint32_t getBoneCount() const
+    {
+        return mBoneCount;
+    }
+
 private:
 
     void configure(const aiScene *scene, const aiMesh* mesh, const int vertexAttributes);
-    void loadSkeleton(const aiMesh* mesh);
+    void loadSkeleton(const aiMesh* mesh, SubMesh& submesh);
     void loadBlendMeshed(const aiMesh* mesh);
+
+    void loadAnimations(const aiScene*);
 
     uint32_t getPrimitiveSize(const aiPrimitiveType) const;
 
-    std::vector<Bone> mSkeleton;
-    std::vector<BoneIndex> mBoneWeights;
-    std::vector<uint2> mBoneWeightsIndicies;
+    void parseNode(const aiScene* scene,
+                   const aiNode* node,
+                   const aiMatrix4x4& parentTransofrmation,
+                   const int vertAttributes);
+
+    std::vector<SubMesh> mSubMeshes;
+
     VertexBuffer         mVertexData;
     std::vector<uint32_t> mIndexData;
 
@@ -213,7 +218,7 @@ private:
 
     AABB mAABB;
 
-    uint64_t mPassTypes;
+    uint32_t mBoneCount;
 	uint64_t mVertexCount;
     int mVertexAttributes;
 	uint32_t mVertexStride;
