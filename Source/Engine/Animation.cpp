@@ -39,8 +39,7 @@ SkeletalAnimation::SkeletalAnimation(const StaticMesh& mesh, const aiAnimation* 
         const std::vector<Bone> &bones = subMesh.mSkeleton;
         for (const auto &bone : bones)
         {
-            mBones[bone.mName]; // Just create an entry for every bone.
-            readNodeHierarchy(anim, aiString(bone.mName.c_str()), scene->mRootNode);
+            readNodeHierarchy(anim, bone.mName, scene->mRootNode);
         }
     }
 }
@@ -57,18 +56,20 @@ std::vector<float4x4> SkeletalAnimation::calculateBoneMatracies(const StaticMesh
         for (const auto &bone : bones)
         {
             BELL_ASSERT(mBones.find(bone.mName) != mBones.end(), "Bone not found")
-            BoneTransform &transform = mBones[bone.mName];
-            const std::vector<Tick> &ticks = transform.getTicks();
-
-            uint32_t i = 1;
-            while (tick > ticks[i].mTick)
+            BoneTransform &transforms = mBones[bone.mName];
+            float4x4 transform = transforms.getBoneTransform(tick);
+            uint16_t parent = bone.mParentIndex;
+            while(parent != 0xFFFF)
             {
-                ++i;
+                const Bone& parentBone = bones[parent];
+                parent = parentBone.mParentIndex;
+                BoneTransform &parentTransforms = mBones[parentBone.mName];
+                float4x4 parentTransform = parentTransforms.getBoneTransform(tick);
+
+                transform = parentTransform * transform;
             }
 
-            BELL_ASSERT(i < ticks.size(), "tick out of bounds")
-            const float4x4 boneTransform = interpolateTick(ticks[i - 1], ticks[i], tick);
-            boneTransforms.push_back(boneTransform * bone.mInverseBindPose);
+            boneTransforms.push_back(mInverseGlobalTransform * transform * bone.mInverseBindPose);
         }
     }
 
@@ -76,112 +77,39 @@ std::vector<float4x4> SkeletalAnimation::calculateBoneMatracies(const StaticMesh
 }
 
 
-float4x4 SkeletalAnimation::interpolateTick(const Tick& lhs, const Tick& rhs, const double tick) const
+void SkeletalAnimation::readNodeHierarchy(const aiAnimation* anim, const std::string& name, const aiNode* rootNode)
 {
-    const float lerpFactor = float(tick - lhs.mTick) / float(rhs.mTick - lhs.mTick);
-    BELL_ASSERT(lerpFactor >= 0.0 && lerpFactor <= 1.0f, "Lerp factor out of range")
-
-    // Decompose matracties.
-    float3 skew;
-    float4 perspective; // These 2 shouldn't be needed.
-
-    float3 lhsScale;
-    glm::quat lhsRotation;
-    float3 lhsTranslation;
-    glm::decompose(lhs.mBoneTransform, lhsScale, lhsRotation, lhsTranslation, skew, perspective);
-
-    float3 rhsScale;
-    glm::quat rhsRotation;
-    float3 rhsTranslation;
-    glm::decompose(rhs.mBoneTransform, rhsScale, rhsRotation, rhsTranslation, skew, perspective);
-
-
-    const float3 scale = glm::lerp(lhsScale, rhsScale, lerpFactor);
-    const glm::quat rotation = glm::slerp(lhsRotation, rhsRotation, lerpFactor);
-    const float3 translation = glm::lerp(lhsTranslation, rhsTranslation, lerpFactor);
-
-    const float4x4 scaleMat = glm::scale(float4x4(1.0f), scale);
-    const float4x4 rotMat = glm::toMat4(rotation);
-    const float4x4 transMat = glm::translate(float4x4(1.0f), translation);
-
-    return transMat * rotMat * scaleMat;
-}
-
-
-void SkeletalAnimation::readNodeHierarchy(const aiAnimation* anim, const aiString& name, const aiNode* rootNode)
-{
-    std::string nodeName(name.data);
-
-    const aiNode* node = rootNode->FindNode(name.C_Str());
+    const aiNode* node = rootNode->FindNode(name.c_str());
     BELL_ASSERT(node, "Unable to find node matching anim node")
-    const aiNodeAnim* animNode = findNodeAnim(anim, nodeName);
+    const aiNodeAnim* animNode = findNodeAnim(anim, name);
 
-    getParentTransform(anim, node, 0.0);
-    getParentTransform(anim, node, mNumTicks);
-
-    struct DoubleComparator
-    {
-        bool operator()(const double lhs, const double rhs) const
-        {
-            const double diff = rhs - lhs;
-            return diff > 0.001;
-        }
-    };
-
+    BoneTransform transforms{};
     if(animNode)
     {
-        std::set<double, DoubleComparator> uniqueTicks;
         for(uint32_t i = 0; i < animNode->mNumPositionKeys; ++i)
         {
-            uniqueTicks.insert(animNode->mPositionKeys[i].mTime);
+            transforms.mPositions.push_back({animNode->mPositionKeys[i].mTime, float3{animNode->mPositionKeys[i].mValue.x,
+                    animNode->mPositionKeys[i].mValue.y,
+                    animNode->mPositionKeys[i].mValue.z}});
         }
         for(uint32_t i = 0; i < animNode->mNumScalingKeys; ++i)
         {
-            uniqueTicks.insert(animNode->mScalingKeys[i].mTime);
+            transforms.mScales.push_back({animNode->mScalingKeys[i].mTime, float3{animNode->mScalingKeys[i].mValue.x,
+                                                                                        animNode->mScalingKeys[i].mValue.y,
+                                                                                        animNode->mScalingKeys[i].mValue.z}});
         }
         for(uint32_t i = 0; i < animNode->mNumRotationKeys; ++i)
         {
-            uniqueTicks.insert(animNode->mRotationKeys[i].mTime);
+            quat rotation;
+            rotation.x = animNode->mRotationKeys[i].mValue.x;
+            rotation.y = animNode->mRotationKeys[i].mValue.y;
+            rotation.z = animNode->mRotationKeys[i].mValue.z;
+            rotation.w = animNode->mRotationKeys[i].mValue.w;
+            transforms.mRotations.push_back({animNode->mRotationKeys[i].mTime, rotation});
         }
-
-        for(double tick : uniqueTicks)
-        {
-            getParentTransform(anim, node, tick);
-        }
-    }
-}
-
-
-float4x4 SkeletalAnimation::getParentTransform(const aiAnimation* anim, const aiNode* parent, const double tick)
-{
-    float4x4 nodeTransformation(aiMatrix4x4ToFloat4x4(parent->mTransformation));
-    std::string nodeName(parent->mName.data);
-    const aiNodeAnim* nodeAnim = findNodeAnim(anim, nodeName);
-
-    BELL_ASSERT(tick <= mNumTicks, "Tick out of bounds")
-
-    if (nodeAnim)
-    {
-        const float4x4 scale = interpolateScale(tick, nodeAnim);
-        const float4x4 rotation = interpolateRotation(tick, nodeAnim);
-        const float4x4 translation = interpolateTranslation(tick, nodeAnim);
-
-        nodeTransformation = translation * rotation * scale;
     }
 
-    float4x4 finalTransforms;
-    if(parent->mParent)
-        finalTransforms = getParentTransform(anim, parent->mParent, tick) * nodeTransformation;
-    else
-        finalTransforms = nodeTransformation;
-
-    if(mBones.find(nodeName) != mBones.end())
-    {
-        BoneTransform& boneTrans = mBones[nodeName];
-        boneTrans.insert(tick, mInverseGlobalTransform * finalTransforms);
-    }
-
-    return finalTransforms;
+    mBones[name] = transforms;
 }
 
 
@@ -199,124 +127,140 @@ const aiNodeAnim* SkeletalAnimation::findNodeAnim(const aiAnimation* animation, 
 }
 
 
-float4x4 SkeletalAnimation::interpolateScale(double time, const aiNodeAnim* pNodeAnim)
+float4x4 SkeletalAnimation::BoneTransform::getBoneTransform(const double tick)
 {
-    aiVector3D scale;
+    const float3 scale = interpolateScale(tick);
+    const float3 position = interpolateTranslation(tick);
+    const quat rotation = interpolateRotation(tick);
 
-    if (pNodeAnim->mNumScalingKeys == 1)
-    {
-        scale = pNodeAnim->mScalingKeys[0].mValue;
-    }
-    else
-    {
-        uint32_t frameIndex = 0;
-        for (uint32_t i = 0; i < pNodeAnim->mNumScalingKeys - 1; i++)
-        {
-            if (time <= pNodeAnim->mScalingKeys[i + 1].mTime)
-            {
-                frameIndex = i;
-                break;
-            }
-        }
-
-        BELL_ASSERT((frameIndex + 1) < pNodeAnim->mNumScalingKeys, "frame index out of bounds")
-
-        aiVectorKey currentFrame = pNodeAnim->mScalingKeys[frameIndex];
-        aiVectorKey nextFrame = pNodeAnim->mScalingKeys[(frameIndex + 1) % pNodeAnim->mNumScalingKeys];
-
-        float delta = (time - (float)currentFrame.mTime) / (float)(nextFrame.mTime - currentFrame.mTime);
-        BELL_ASSERT(delta >= 0.0 && delta <= 1.0, "Delta out of range")
-
-        const aiVector3D& start = currentFrame.mValue;
-        const aiVector3D& end = nextFrame.mValue;
-
-        scale = (start + delta * (end - start));
-    }
-
-    return glm::scale(float4x4(1.0f), float3(scale.x, scale.y, scale.z));
+    return glm::translate(position) * glm::mat4_cast(rotation) * glm::scale(scale);
 }
 
 
-float4x4 SkeletalAnimation::interpolateTranslation(double time, const aiNodeAnim* pNodeAnim)
+float3 SkeletalAnimation::BoneTransform::interpolateScale(double time)
 {
-    aiVector3D translation;
+    float3 scale;
 
-    if (pNodeAnim->mNumPositionKeys == 1)
+    if(mScales.empty())
     {
-        translation = pNodeAnim->mPositionKeys[0].mValue;
+        return float3{1.0f, 1.0f, 1.0f};
+    }
+    else if (mScales.size() == 1)
+    {
+        scale = mScales[0].mValue;
     }
     else
     {
         uint32_t frameIndex = 0;
-        for (uint32_t i = 0; i < pNodeAnim->mNumPositionKeys - 1; i++)
+        for (uint32_t i = 0; i < mScales.size() - 1; i++)
         {
-            if (time <= pNodeAnim->mPositionKeys[i + 1].mTime)
+            if (time <= mScales[i + 1].mTime)
             {
                 frameIndex = i;
                 break;
             }
         }
 
-        BELL_ASSERT((frameIndex + 1) < pNodeAnim->mNumPositionKeys, "frame index out of bounds")
+        BELL_ASSERT((frameIndex + 1) < mScales.size(), "frame index out of bounds")
 
-        aiVectorKey currentFrame = pNodeAnim->mPositionKeys[frameIndex];
-        aiVectorKey nextFrame = pNodeAnim->mPositionKeys[(frameIndex + 1) % pNodeAnim->mNumPositionKeys];
+        const ScaleKey& currentFrame = mScales[frameIndex];
+        const ScaleKey& nextFrame = mScales[(frameIndex + 1) % mScales.size()];
 
-        float delta = (time - (float)currentFrame.mTime) / (float)(nextFrame.mTime - currentFrame.mTime);
+        double delta = (time - currentFrame.mTime) / (nextFrame.mTime - currentFrame.mTime);
         BELL_ASSERT(delta >= 0.0 && delta <= 1.0, "Delta out of range")
 
-        const aiVector3D& start = currentFrame.mValue;
-        const aiVector3D& end = nextFrame.mValue;
+        const float3& start = currentFrame.mValue;
+        const float3& end = nextFrame.mValue;
 
-        translation = (start + delta * (end - start));
+        scale = (start + static_cast<float>(delta) * (end - start));
     }
 
-    return glm::translate(float4x4(1.0f), float3(translation.x, translation.y, translation.z));
+    return scale;
 }
 
 
-float4x4 SkeletalAnimation::interpolateRotation(double time, const aiNodeAnim* pNodeAnim)
+float3 SkeletalAnimation::BoneTransform::interpolateTranslation(double time)
 {
-    aiQuaternion rotation;
+    float3 translation;
 
-    if (pNodeAnim->mNumRotationKeys == 1)
+    if(mPositions.empty())
     {
-        rotation = pNodeAnim->mRotationKeys[0].mValue;
+        return float3{0.0f, 0.0f, 0.0f};
+    }
+    else if (mPositions.size() == 1)
+    {
+        translation = mPositions[0].mValue;
     }
     else
     {
         uint32_t frameIndex = 0;
-        for (uint32_t i = 0; i < pNodeAnim->mNumRotationKeys - 1; i++)
+        for (uint32_t i = 0; i < mPositions.size() - 1; i++)
         {
-            if (time <= pNodeAnim->mRotationKeys[i + 1].mTime)
+            if (time <= mPositions[i + 1].mTime)
             {
                 frameIndex = i;
                 break;
             }
         }
 
-        BELL_ASSERT((frameIndex + 1) < pNodeAnim->mNumRotationKeys, "frame index out of bounds")
+        BELL_ASSERT((frameIndex + 1) < mPositions.size(), "frame index out of bounds")
 
-        aiQuatKey currentFrame = pNodeAnim->mRotationKeys[frameIndex];
-        aiQuatKey nextFrame = pNodeAnim->mRotationKeys[(frameIndex + 1) % pNodeAnim->mNumRotationKeys];
+        const PositionKey& currentFrame = mPositions[frameIndex];
+        const PositionKey& nextFrame = mPositions[(frameIndex + 1) % mPositions.size()];
 
-        float delta = (time - (float)currentFrame.mTime) / (float)(nextFrame.mTime - currentFrame.mTime);
+        double delta = (time - currentFrame.mTime) / (nextFrame.mTime - currentFrame.mTime);
         BELL_ASSERT(delta >= 0.0 && delta <= 1.0, "Delta out of range")
 
-        const aiQuaternion& start = currentFrame.mValue;
-        const aiQuaternion& end = nextFrame.mValue;
+        const float3& start = currentFrame.mValue;
+        const float3& end = nextFrame.mValue;
 
-        aiQuaternion::Interpolate(rotation, start, end, delta);
-        rotation.Normalize();
+        translation = (start + static_cast<float>(delta) * (end - start));
     }
 
-    glm::quat quat;
-    quat.x = rotation.x;
-    quat.y = rotation.y;
-    quat.z = rotation.z;
-    quat.w = rotation.w;
+    return translation;
+}
 
-    return glm::toMat4(quat);
+
+quat SkeletalAnimation::BoneTransform::interpolateRotation(double time)
+{
+    quat rotation;
+
+    if(mRotations.empty())
+    {
+        return quat{1.0f, 0.0f, 0.0f, 0.0f};
+    }
+    else if (mRotations.size() == 1)
+    {
+        rotation = mRotations[0].mValue;
+    }
+    else
+    {
+        uint32_t frameIndex = 0;
+        for (uint32_t i = 0; i < mRotations.size() - 1; i++)
+        {
+            if (time <= mRotations[i + 1].mTime)
+            {
+                frameIndex = i;
+                break;
+            }
+        }
+
+        BELL_ASSERT((frameIndex + 1) < mRotations.size(), "frame index out of bounds")
+
+        const RotationKey& currentFrame = mRotations[frameIndex];
+        const RotationKey& nextFrame = mRotations[(frameIndex + 1) % mRotations.size()];
+
+        double delta = (time - currentFrame.mTime) / (nextFrame.mTime - currentFrame.mTime);
+        BELL_ASSERT(delta >= 0.0 && delta <= 1.0, "Delta out of range")
+
+        const quat& start = currentFrame.mValue;
+        const quat& end = nextFrame.mValue;
+
+        rotation = glm::slerp(start, end, static_cast<float>(delta));
+    }
+
+    rotation = glm::normalize(rotation);
+    return rotation;
 }
 
 

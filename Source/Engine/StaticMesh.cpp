@@ -216,14 +216,33 @@ void StaticMesh::configure(const aiScene* scene, const aiMesh* mesh, const int v
 
     mAABB = AABB{componentWiseMin(topLeft, mAABB.getMin()), componentWiseMax(bottumRight, mAABB.getMax())};
 
-    loadSkeleton(mesh, newSubMesh);
+    loadSkeleton(scene, mesh, newSubMesh);
     loadBlendMeshed(mesh);
 
     mSubMeshes.push_back(newSubMesh);
 }
 
 
-void StaticMesh::loadSkeleton(const aiMesh* mesh, SubMesh& submesh)
+uint16_t StaticMesh::findBoneParent(const aiNode* bone, aiBone** const skeleton, const uint32_t boneCount)
+{
+    const aiNode* currentNode = bone;
+    while(currentNode->mParent)
+    {
+        const aiNode* parent = currentNode->mParent;
+        for(uint16_t i = 0; i < boneCount; ++i)
+        {
+            if(parent->mName == skeleton[i]->mName)
+                return i;
+        }
+
+        currentNode = parent;
+    }
+
+    return 0xFFFF;
+}
+
+
+void StaticMesh::loadSkeleton(const aiScene* scene, const aiMesh* mesh, SubMesh& submesh)
 {
     if(mesh->mNumBones > 0)
     {
@@ -232,15 +251,19 @@ void StaticMesh::loadSkeleton(const aiMesh* mesh, SubMesh& submesh)
         bonesPerVertex.resize(mVertexCount);
         submesh.mBoneWeightsIndicies.resize(mVertexCount);
 
+        const aiNode* rootNode = scene->mRootNode;
+
         for(uint32_t i = 0; i < mesh->mNumBones; ++i)
         {
             const aiBone* assimpBone = mesh->mBones[i];
-            if(assimpBone->mNumWeights == 0)
-                continue;
 
             Bone bone{};
             bone.mName = assimpBone->mName.C_Str();
             bone.mInverseBindPose = aiMatrix4x4ToFloat4x4(assimpBone->mOffsetMatrix);
+
+            const aiNode* boneNode = rootNode->FindNode(assimpBone->mName);
+            BELL_ASSERT(boneNode, "Can't find bone node")
+            bone.mParentIndex = findBoneParent(boneNode, mesh->mBones, mesh->mNumBones);
 
             float4 topLeft{std::numeric_limits<float>::infinity(), std::numeric_limits<float>::infinity(), std::numeric_limits<float>::infinity(), 1.0f};
             float4 bottumRight{-std::numeric_limits<float>::infinity(), -std::numeric_limits<float>::infinity(), -std::numeric_limits<float>::infinity(), 1.0f};

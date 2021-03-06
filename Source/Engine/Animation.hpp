@@ -29,35 +29,43 @@ public:
         return mNumTicks;
     }
 
-    struct Tick
-    {
-        double mTick;
-        float4x4 mBoneTransform;
-    };
-
     struct BoneTransform
     {
-        void insert(const double tick, const float4x4 trans)
-        {
-            if(std::find_if(mTick.begin(), mTick.end(), [tick](const Tick& t)
-            {
-                return tick == t.mTick;
-            }) != mTick.end())
-                return;
+        BoneTransform() :
+            mPositions{},
+            mScales{},
+            mRotations{} {}
 
-            mTick.insert(std::find_if(mTick.begin(), mTick.end(), [tick](const Tick& t)
-            {
-                return t.mTick > tick;
-            }), Tick{tick, trans});
-        }
-        const std::vector<Tick>& getTicks() const
+        float4x4 getBoneTransform(const double tick);
+
+        struct PositionKey
         {
-            return mTick;
-        }
+            double mTime;
+            float3 mValue;
+        };
+
+        struct ScaleKey
+        {
+            double mTime;
+            float3 mValue;
+        };
+
+        struct RotationKey
+        {
+            double mTime;
+            quat mValue;
+        };
+
+        std::vector<PositionKey> mPositions;
+        std::vector<ScaleKey> mScales;
+        std::vector<RotationKey> mRotations;
 
     private:
 
-        std::vector<Tick> mTick;
+        float3 interpolateScale(double time);
+        float3 interpolateTranslation(double time);
+        quat interpolateRotation(double time);
+
     };
 
     const std::string& getName() const
@@ -67,16 +75,9 @@ public:
 
 private:
 
-    float4x4 interpolateTick(const Tick& lhs, const Tick& rhs, const double tick) const;
-
-    void readNodeHierarchy(const aiAnimation* anim, const aiString &name, const aiNode* rootNode);
-    float4x4 getParentTransform(const aiAnimation* anim, const aiNode* parent, const double tick);
+    void readNodeHierarchy(const aiAnimation* anim, const std::string& name, const aiNode* rootNode);
 
     const aiNodeAnim* findNodeAnim(const aiAnimation* animation, const std::string& nodeName);
-
-    float4x4 interpolateScale(double time, const aiNodeAnim* pNodeAnim);
-    float4x4 interpolateTranslation(double time, const aiNodeAnim* pNodeAnim);
-    float4x4 interpolateRotation(double time, const aiNodeAnim* pNodeAnim);
 
     std::string mName;
     double mNumTicks;
