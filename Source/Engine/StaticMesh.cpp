@@ -59,7 +59,7 @@ StaticMesh::StaticMesh(const aiScene *scene, const aiMesh* mesh, const int verte
     mBoneCount(0),
     mVertexCount(0)
 {
-    configure(scene, mesh, vertexAttributes);
+    configure(scene, mesh, float4x4(1.0f), vertexAttributes);
 
     loadAnimations(scene);
 }
@@ -80,7 +80,7 @@ StaticMesh::StaticMesh(const aiScene* scene, const int vertexAttributes) :
 }
 
 
-void StaticMesh::configure(const aiScene* scene, const aiMesh* mesh, const int vertAttributes)
+void StaticMesh::configure(const aiScene* scene, const aiMesh* mesh, const float4x4 transform, const int vertAttributes)
 {
     const unsigned int primitiveType = mesh->mPrimitiveTypes;
 
@@ -117,7 +117,7 @@ void StaticMesh::configure(const aiScene* scene, const aiMesh* mesh, const int v
 
     // assume triangles atm
     mIndexData.reserve(mIndexData.size() + (mesh->mNumFaces * mesh->mFaces[0].mNumIndices));
-    mVertexData.setSize(newSubMesh.mVertexOffset + (mesh->mNumVertices * vertexStride));
+    mVertexData.setSize(mVertexData.getVertexBuffer().size() + (mesh->mNumVertices * vertexStride));
 
     // Copy the index data
     for(uint32_t i = 0; i < mesh->mNumFaces; ++i)
@@ -214,7 +214,9 @@ void StaticMesh::configure(const aiScene* scene, const aiMesh* mesh, const int v
         }
     }
 
-    mAABB = AABB{componentWiseMin(topLeft, mAABB.getMin()), componentWiseMax(bottumRight, mAABB.getMax())};
+    AABB submeshAABB{topLeft, bottumRight};
+    submeshAABB = submeshAABB * transform;
+    mAABB = AABB{componentWiseMin(submeshAABB.getMin(), mAABB.getMin()), componentWiseMax(submeshAABB.getMax(), mAABB.getMax())};
 
     loadSkeleton(scene, mesh, newSubMesh);
     loadBlendMeshed(mesh);
@@ -363,7 +365,7 @@ void StaticMesh::parseNode(const aiScene* scene,
         transformationMatrix[3][0] = transformation.a4; transformationMatrix[3][1] = transformation.b4;  transformationMatrix[3][2] = transformation.c4; transformationMatrix[3][3] = transformation.d4;
 
 
-        configure(scene, currentMesh, vertAttributes);
+        configure(scene, currentMesh, transformationMatrix, vertAttributes);
         mSubMeshes.back().mTransform = transformationMatrix;
     }
 

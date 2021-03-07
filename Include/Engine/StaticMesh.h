@@ -199,7 +199,7 @@ public:
 
 private:
 
-    void configure(const aiScene *scene, const aiMesh* mesh, const int vertexAttributes);
+    void configure(const aiScene *scene, const aiMesh* mesh, const float4x4 transform, const int vertexAttributes);
 
     uint16_t findBoneParent(const aiNode*, aiBone** const, const uint32_t);
     void loadSkeleton(const aiScene* scene, const aiMesh* mesh, SubMesh& submesh);
