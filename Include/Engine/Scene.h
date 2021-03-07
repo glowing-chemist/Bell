@@ -131,6 +131,11 @@ public:
         return mMesh;
     }
 
+    uint32_t getSubMeshCount() const
+    {
+	return mMaterials.size();
+    }
+
     uint32_t getMaterialIndex(const uint32_t subMesh) const
     {
         return mMaterials[subMesh].mMaterialIndex;

@@ -192,6 +192,11 @@ public:
         return mBoneCount;
     }
 
+    uint32_t getSubMeshCount() const
+    {
+	return mSubMeshes.size();
+    }
+
 private:
 
     void configure(const aiScene *scene, const aiMesh* mesh, const int vertexAttributes);
