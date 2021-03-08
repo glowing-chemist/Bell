@@ -40,7 +40,8 @@
                     RayTracedReflections = 1ULL << 33, \
                     RayTracedShadows = 1ULL << 34, \
                     DownSampleColour = 1ULL << 35, \
-                    VoxelTerrain = 1ULL << 36
+                    VoxelTerrain = 1ULL << 36,   \
+                    InstanceID = 1ULL << 37
 
 // An enum to keep track of which 
 enum class PassType : uint64_t

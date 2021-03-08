@@ -43,6 +43,7 @@
 #include "Engine/PathTracingTechnique.hpp"
 #include "Engine/DownSampleColourTechnique.hpp"
 #include "Engine/VoxelTerrainTechnique.hpp"
+#include "Engine/InstanceIDTechnique.hpp"
 
 #include "Engine/RayTracedScene.hpp"
 
@@ -395,6 +396,9 @@ std::unique_ptr<Technique> RenderEngine::getSingleTechnique(const PassType passT
 
         case PassType::VoxelTerrain:
             return std::make_unique<VoxelTerrainTechnique>(this, mCurrentRenderGraph);
+
+        case PassType::InstanceID:
+            return std::make_unique<InstanceIDTechnique>(this, mCurrentRenderGraph);
 
         default:
         {

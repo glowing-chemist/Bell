@@ -204,6 +204,7 @@ set(BELL_SOURCE
     Source/Engine/PathTracingTechnique.cpp
     Source/Engine/DownSampleColourTechnique.cpp
     Source/Engine/VoxelTerrainTechnique.cpp
+	Source/Engine/InstanceIDTechnique.cpp
 
     # used for texture loading
     ThirdParty/stb_image/stb_image.cpp
@@ -313,6 +314,9 @@ set(SHADERS
 	TerrainDeferred.frag
 	ModifyTerrain.comp
 	ColourMapping.hlsl
+	InstanceID.vert
+	InstanceID.frag
+	SetPickedInstance.comp
     )
 
 message(STATUS "shader directory ${BELL_SHADER_DIR}Shaders")

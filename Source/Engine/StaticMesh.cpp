@@ -113,7 +113,7 @@ void StaticMesh::configure(const aiScene* scene, const aiMesh* mesh, const float
 	newSubMesh.mIndexOffset = mIndexData.size();
 	newSubMesh.mIndexCount = mesh->mNumFaces * mesh->mFaces[0].mNumIndices;
 	newSubMesh.mVertexOffset = mVertexData.getVertexBuffer().size() / mVertexStride;
-	newSubMesh.mTransform = float4x4(1.0f);
+	newSubMesh.mTransform = transform;
 
     // assume triangles atm
     mIndexData.reserve(mIndexData.size() + (mesh->mNumFaces * mesh->mFaces[0].mNumIndices));
@@ -366,7 +366,6 @@ void StaticMesh::parseNode(const aiScene* scene,
 
 
         configure(scene, currentMesh, transformationMatrix, vertAttributes);
-        mSubMeshes.back().mTransform = transformationMatrix;
     }
 
     // Recurse through all child nodes

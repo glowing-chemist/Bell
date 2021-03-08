@@ -105,6 +105,12 @@ struct ObjectMatracies
 	uint materialFlags;
 };
 
+struct InstanceIDOutput
+{
+	float4 position : SV_Position;
+	uint id : ID;
+};
+
 
 void recreateMeshMatracies(in float4x3 meshMat, in float4x3 prevMeshMat, out float4x4 mat, out float4x4 prevMat)
 {

@@ -1,27 +1,29 @@
 #include "VertexOutputs.hlsl"
 #include "UniformBuffers.hlsl"
 
-struct transformedPosition
+struct InstanceInfo
 {
 	float4x4 trans;
+	uint id;
 };
 
 [[vk::push_constant]]
-ConstantBuffer<transformedPosition> model;
+ConstantBuffer<InstanceInfo> model;
 
 
 [[vk::binding(0)]]
 ConstantBuffer<CameraBuffer> camera;
 
 
-PositionOutput main(Vertex vertex)
+InstanceIDOutput main(Vertex vertex)
 {
-	PositionOutput output;
+	InstanceIDOutput output;
 
 	float4 transformedPositionWS = mul(model.trans, vertex.position);
 	float4 transformedPosition = mul(camera.viewProj, transformedPositionWS);
 
 	output.position = transformedPosition;
+	output.id = model.id;
 	
 	return output;
 }

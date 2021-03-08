@@ -40,6 +40,7 @@ const char kTerrainVoxelGrid[] = "TerrainVoxels";
 const char kTerrainVertexBuffer[] = "TerrainVoxels";
 const char kTerrainIndirectBuffer[] = "TerrainIndirectArgs";
 const char kTerrainUniformBuffer[] = "TerrainUniforms";
+const char kInstanceIDBuffer[] = "InstanceIDBuffer";
 
 const char kCameraBuffer[]	    = "CameraBuffer";
 const char kLightBuffer[]	    = "LightBuffer";

@@ -33,6 +33,7 @@ namespace
 
 MeshInstance::MeshInstance(Scene* scene,
                             SceneID meshID,
+                            InstanceID id,
                             const float4x3& trans,
                             const uint32_t materialID,
                             const uint32_t materialFLags,
@@ -40,6 +41,7 @@ MeshInstance::MeshInstance(Scene* scene,
         Instance(trans, name),
         mScene(scene),
         mMesh(meshID),
+        mID{id},
         mMaterials{},
         mInstanceFlags{InstanceFlags::Draw}
 {
@@ -55,6 +57,7 @@ MeshInstance::MeshInstance(Scene* scene,
 
 MeshInstance::MeshInstance(Scene* scene,
                             SceneID meshID,
+                           InstanceID id,
                             const float3& position,
                             const quat& rotation,
                             const float3& scale,
@@ -64,6 +67,7 @@ MeshInstance::MeshInstance(Scene* scene,
         Instance(position, rotation, scale, name),
         mScene(scene),
         mMesh(meshID),
+        mID{id},
         mMaterials{},
         mInstanceFlags{InstanceFlags::Draw}
 {
@@ -691,12 +695,12 @@ InstanceID Scene::addMeshInstance(const SceneID meshID,
             mFreeStaticMeshIndicies.pop_back();
 
             mInstanceMap[id] = {InstanceType::StaticMesh, freeIndex};
-            mStaticMeshInstances[freeIndex] = MeshInstance{this, meshID, transformation, materialIndex, materialFlags, name};
+            mStaticMeshInstances[freeIndex] = MeshInstance{this, meshID, id, transformation, materialIndex, materialFlags, name};
         }
         else
         {
             mInstanceMap[id] = {InstanceType::StaticMesh, mStaticMeshInstances.size()};
-            mStaticMeshInstances.push_back({this, meshID, transformation, materialIndex, materialFlags, name});
+            mStaticMeshInstances.push_back({this, meshID, id, transformation, materialIndex, materialFlags, name});
         }
 
         if(parentInstance != kInvalidInstanceID)
@@ -710,12 +714,12 @@ InstanceID Scene::addMeshInstance(const SceneID meshID,
             mFreeDynamicMeshIndicies.pop_back();
 
             mInstanceMap[id] = {InstanceType::DynamicMesh, freeIndex};
-            mDynamicMeshInstances[freeIndex] = MeshInstance{this, meshID, transformation, materialIndex, materialFlags, name};
+            mDynamicMeshInstances[freeIndex] = MeshInstance{this, meshID, id, transformation, materialIndex, materialFlags, name};
         }
         else
         {
             mInstanceMap[id] = {InstanceType::DynamicMesh, mDynamicMeshInstances.size()};
-            mDynamicMeshInstances.push_back({this, meshID, transformation, materialIndex, materialFlags, name});
+            mDynamicMeshInstances.push_back({this, meshID, id, transformation, materialIndex, materialFlags, name});
         }
 
         if(parentInstance != kInvalidInstanceID)

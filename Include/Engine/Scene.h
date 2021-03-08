@@ -109,6 +109,7 @@ class MeshInstance : public Instance
 public:
     MeshInstance(Scene* scene,
                  SceneID mesh,
+                 InstanceID id,
                  const float4x3& trans,
                  const uint32_t materialID,
                  const uint32_t materialFLags,
@@ -116,6 +117,7 @@ public:
 
     MeshInstance(Scene* scene,
                  SceneID mesh,
+                 InstanceID id,
                  const float3& position,
                  const quat& rotation,
                  const float3& scale,
@@ -129,6 +131,11 @@ public:
     SceneID getSceneID() const
     {
         return mMesh;
+    }
+
+    InstanceID  getID() const
+    {
+        return mID;
     }
 
     uint32_t getSubMeshCount() const
@@ -183,6 +190,7 @@ private:
 
     Scene* mScene;
     SceneID mMesh;
+    InstanceID mID;
     struct MaterialEntry
     {
         uint32_t mMaterialIndex;

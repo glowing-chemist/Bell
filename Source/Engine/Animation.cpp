@@ -49,10 +49,10 @@ std::vector<float4x4> SkeletalAnimation::calculateBoneMatracies(const StaticMesh
 {
     const std::vector<SubMesh>& subMeshes = mesh.getSubMeshes();
     std::vector<float4x4> boneTransforms{};
+    boneTransforms.reserve(mesh.getBoneCount());
     for(const auto& subMesh : subMeshes)
     {
         const auto &bones = subMesh.mSkeleton;
-        boneTransforms.reserve(boneTransforms.size() + bones.size());
         for (const auto &bone : bones)
         {
             BELL_ASSERT(mBones.find(bone.mName) != mBones.end(), "Bone not found")
@@ -69,7 +69,7 @@ std::vector<float4x4> SkeletalAnimation::calculateBoneMatracies(const StaticMesh
                 transform = parentTransform * transform;
             }
 
-            boneTransforms.push_back(mInverseGlobalTransform * transform * bone.mInverseBindPose);
+            boneTransforms.emplace_back(mInverseGlobalTransform * transform * bone.mInverseBindPose);
         }
     }
 
@@ -273,20 +273,20 @@ MeshBlend::MeshBlend(const aiAnimMesh* mesh)
     {
         if (mesh->HasPositions())
         {
-            mPosition.push_back(float3{mesh->mVertices[i].x, mesh->mVertices[i].y , mesh->mVertices[i].z});
+            mPosition.emplace_back(mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z);
         }
         else
         {
-            mPosition.push_back(float3{ 0.0f, 0.0f, 0.0f });
+            mPosition.emplace_back(0.0f, 0.0f, 0.0f );
         }
 
         if (mesh->HasNormals())
         {
-            mNormals.push_back(float4{mesh->mNormals[i].x, mesh->mNormals[i].y , mesh->mNormals[i].z , 1.0f});
+            mNormals.emplace_back(mesh->mNormals[i].x, mesh->mNormals[i].y , mesh->mNormals[i].z , 1.0f);
         }
         else
         {
-            mNormals.push_back(float4{ 0.0f, 0.0f, 0.0f , 1.0f });
+            mNormals.emplace_back(0.0f, 0.0f, 0.0f , 1.0f);
         }
 
         if (mesh->HasTangentsAndBitangents())
@@ -302,16 +302,16 @@ MeshBlend::MeshBlend(const aiAnimMesh* mesh)
             else
                 bitangentSign = -1.0f;
 
-            mTangents.push_back(float4{ mesh->mTangents[i].x, mesh->mTangents[i].y , mesh->mTangents[i].z , bitangentSign});
+            mTangents.emplace_back(mesh->mTangents[i].x, mesh->mTangents[i].y , mesh->mTangents[i].z , bitangentSign);
         }
         else
         {
-            mTangents.push_back(float4{ 0.0f, 0.0f, 0.0f , 1.0f });
+            mTangents.emplace_back(0.0f, 0.0f, 0.0f , 1.0f );
         }
 
         if (mesh->HasTextureCoords(0))
         {
-            mUV.push_back(float2{mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y});
+            mUV.emplace_back(mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y);
         }
         else
         {
