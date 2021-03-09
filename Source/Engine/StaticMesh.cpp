@@ -253,6 +253,7 @@ void StaticMesh::loadSkeleton(const aiScene* scene, const aiMesh* mesh, SubMesh&
         bonesPerVertex.resize(mVertexCount);
         submesh.mBoneWeightsIndicies.resize(mVertexCount);
 
+        const uint32_t boneIndexOffset = mBoneCount;
         const aiNode* rootNode = scene->mRootNode;
 
         for(uint32_t i = 0; i < mesh->mNumBones; ++i)
@@ -265,7 +266,7 @@ void StaticMesh::loadSkeleton(const aiScene* scene, const aiMesh* mesh, SubMesh&
 
             const aiNode* boneNode = rootNode->FindNode(assimpBone->mName);
             BELL_ASSERT(boneNode, "Can't find bone node")
-            bone.mParentIndex = findBoneParent(boneNode, mesh->mBones, mesh->mNumBones);
+            bone.mParentIndex = boneIndexOffset + findBoneParent(boneNode, mesh->mBones, mesh->mNumBones);
 
             float4 topLeft{std::numeric_limits<float>::infinity(), std::numeric_limits<float>::infinity(), std::numeric_limits<float>::infinity(), 1.0f};
             float4 bottumRight{-std::numeric_limits<float>::infinity(), -std::numeric_limits<float>::infinity(), -std::numeric_limits<float>::infinity(), 1.0f};
