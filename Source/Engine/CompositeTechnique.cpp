@@ -7,7 +7,8 @@
 
 
 CompositeTechnique::CompositeTechnique(RenderEngine* eng, RenderGraph& graph) :
-	Technique("Composite", eng->getDevice()) 
+	Technique("Composite", eng->getDevice()),
+	mConstants{1.0f, 1.0f}
 {
 	const auto viewPortX = eng->getSwapChainImage()->getExtent(0, 0).width;
 	const auto viewPortY = eng->getSwapChainImage()->getExtent(0, 0).height;
@@ -31,6 +32,7 @@ CompositeTechnique::CompositeTechnique(RenderEngine* eng, RenderGraph& graph) :
         compositeTask.addInput(eng->getDebugTextureSlot(), AttachmentType::Texture2D);
 		compositeTask.addInput(kOverlay, AttachmentType::Texture2D);
 		compositeTask.addInput(kDefaultSampler, AttachmentType::Sampler);
+		compositeTask.addInput("Constants", AttachmentType::PushConstants);
 
 		compositeTask.addOutput(kFrameBufer, AttachmentType::RenderTarget2D, eng->getSwapChainImage()->getFormat(), LoadOp::Clear_Black);
 
@@ -47,6 +49,7 @@ CompositeTechnique::CompositeTechnique(RenderEngine* eng, RenderGraph& graph) :
                 const RenderTask& task = graph.getTask(taskIndex);
                 exec->setGraphicsShaders(static_cast<const GraphicsTask&>(task), graph, vertexShader, nullptr, nullptr, nullptr, fragmentShader);
 
+                exec->insertPushConsatnt(&mConstants, sizeof(ColourConstants));
 				exec->draw(0, 3);
 			}
 		);
@@ -73,6 +76,7 @@ CompositeTechnique::CompositeTechnique(RenderEngine* eng, RenderGraph& graph) :
                 compositeTask.addInput(kSSAO, AttachmentType::Texture2D);
 
             compositeTask.addInput(kDefaultSampler, AttachmentType::Sampler);
+            compositeTask.addInput("Constants", AttachmentType::PushConstants);
 
             if(usingTAA)
                 compositeTask.addManagedOutput(kCompositeOutput, AttachmentType::RenderTarget2D, Format::RGBA16Float, SizeClass::Swapchain, LoadOp::Nothing);
@@ -93,6 +97,7 @@ CompositeTechnique::CompositeTechnique(RenderEngine* eng, RenderGraph& graph) :
                     const RenderTask& task = graph.getTask(taskIndex);
                     exec->setGraphicsShaders(static_cast<const GraphicsTask&>(task), graph, vertexShader, nullptr, nullptr, nullptr, fragmentShader);
 
+                    exec->insertPushConsatnt(&mConstants, sizeof(ColourConstants));
                     exec->draw(0, 3);
                 }
             );
@@ -117,9 +122,10 @@ CompositeTechnique::CompositeTechnique(RenderEngine* eng, RenderGraph& graph) :
 
             overlayTask.addInput(kDefaultSampler, AttachmentType::Sampler);
             overlayTask.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
+            overlayTask.addInput("Constants", AttachmentType::PushConstants);
             overlayTask.addOutput(kFrameBufer, AttachmentType::RenderTarget2D, eng->getSwapChainImage()->getFormat(), LoadOp::Clear_Black);
             overlayTask.setRecordCommandsCallback(
-                [](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, RenderEngine* eng, const std::vector<const MeshInstance*>&)
+                [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, RenderEngine* eng, const std::vector<const MeshInstance*>&)
                 {
                     Shader vertexShader = eng->getShader("./Shaders/FullScreenTriangle.vert");
                     Shader fragmentShader = eng->getShader("./Shaders/CompositeOverlayTAA.frag");
@@ -127,6 +133,7 @@ CompositeTechnique::CompositeTechnique(RenderEngine* eng, RenderGraph& graph) :
                     const RenderTask& task = graph.getTask(taskIndex);
                     exec->setGraphicsShaders(static_cast<const GraphicsTask&>(task), graph, vertexShader, nullptr, nullptr, nullptr, fragmentShader);
 
+                    exec->insertPushConsatnt(&mConstants, sizeof(ColourConstants));
                     exec->draw(0, 3);
                 }
             );

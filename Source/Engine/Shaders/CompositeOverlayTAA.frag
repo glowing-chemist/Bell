@@ -22,6 +22,9 @@ SamplerState defaultSampler;
 [[vk::binding(2 + USING_OVERLAY)]]
 ConstantBuffer<CameraBuffer> camera;
 
+[[vk::push_constant]]
+ConstantBuffer<ColourCorrection> constants;
+
 float4 main(PositionAndUVVertOutput vertOutput)
 {
 	// Sharpen the taa output.
@@ -36,7 +39,7 @@ float4 main(PositionAndUVVertOutput vertOutput)
 	colour -= taaOutput.Sample(defaultSampler, vertOutput.uv + float2(0.0f, -pixelSize.y));
 	colour -= taaOutput.Sample(defaultSampler, vertOutput.uv + float2(-pixelSize.x, 0.0f));
 
-	colour = performColourMapping(colour, 2.2f, 1.0f);
+	colour = performColourMapping(colour, constants.gamma, constants.exposure);
 
 #if USING_OVERLAY
 	const float4 overlay = overlay.Sample(defaultSampler, vertOutput.uv);

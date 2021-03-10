@@ -22,6 +22,25 @@ public:
 	{}
 
     virtual void bindResources(RenderGraph& graph) override final;
+
+	float& getGamma()
+    {
+	    return mConstants.mGamma;
+    }
+
+    float& getExposure()
+    {
+	    return mConstants.mExposure;
+    }
+
+private:
+
+    struct ColourConstants
+    {
+        float mGamma;
+        float mExposure;
+    };
+    ColourConstants mConstants;
 };
 
 #endif

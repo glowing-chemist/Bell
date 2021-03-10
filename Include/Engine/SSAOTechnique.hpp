@@ -48,6 +48,21 @@ public:
 
 	virtual void render(RenderGraph& graph, RenderEngine*) override final;
 
+	float& getRadius()
+    {
+	    return mConstants.radius;
+    }
+
+    float& getBias()
+    {
+	    return mConstants.bias;
+    }
+
+    float& getIntensity()
+    {
+	    return mConstants.intensity;
+    }
+
 private:
 
 	std::string mDepthNameSlot;
@@ -72,6 +87,14 @@ private:
 
 	PerFrameResource<Buffer> mSSAOBuffer;
 	PerFrameResource<BufferView> mSSAOBufferView;
+
+	struct SSAOConstants
+    {
+	    float radius;
+	    float bias;
+	    float intensity;
+    };
+    SSAOConstants mConstants;
 };
 
 

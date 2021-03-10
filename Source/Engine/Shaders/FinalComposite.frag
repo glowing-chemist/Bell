@@ -1,5 +1,6 @@
 #include "VertexOutputs.hlsl"
 #include "ColourMapping.hlsl"
+#include "UniformBuffers.hlsl"
 
 #if defined(Deferred_analytical_lighting)
 #define USING_ANALYTICAL_LIGHTING 1
@@ -41,6 +42,8 @@ Texture2D<float> ssao;
 [[vk::binding(USING_OVERLAY + USING_ANALYTICAL_LIGHTING + USING_SSAO + 1)]]
 SamplerState defaultSampler;
 
+[[vk::push_constant]]
+ConstantBuffer<ColourCorrection> constants;
 
 float4 main(PositionAndUVVertOutput vertOutput)
 {
@@ -57,7 +60,7 @@ float4 main(PositionAndUVVertOutput vertOutput)
 #if defined(TAA)
 	float4 result = lighting;
 #else
-	float4 result = performColourMapping(lighting, 2.2f, 1.0f);
+	float4 result = performColourMapping(lighting, constants.gamma, constants.exposure);
 #endif
 
 #if USING_OVERLAY

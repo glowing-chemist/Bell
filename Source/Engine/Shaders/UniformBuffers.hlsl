@@ -83,3 +83,9 @@ struct TerrainTextureing
     uint materialIndexXZ;
     uint materialIndexY;
 };
+
+struct ColourCorrection
+{
+    float gamma;
+    float exposure;
+};

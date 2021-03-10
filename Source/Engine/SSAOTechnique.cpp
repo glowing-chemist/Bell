@@ -59,7 +59,8 @@ SSAOTechnique::SSAOTechnique(RenderEngine* eng, RenderGraph& graph) :
     mHistoryCounterViews(mHistoryCounter, ImageViewType::Colour),
     mNearestSampler(SamplerType::Point),
     mSSAOBuffer(getDevice(), BufferUsage::Uniform, sizeof(SSAOBuffer), sizeof(SSAOBuffer), "SSAO Offsets"),
-    mSSAOBufferView(mSSAOBuffer)
+    mSSAOBufferView(mSSAOBuffer),
+    mConstants{3.0f, 0.01f, 1.0f}
 {
     mNearestSampler.setAddressModeU(AddressMode::Clamp);
     mNearestSampler.setAddressModeV(AddressMode::Clamp);
@@ -142,9 +143,9 @@ void SSAOTechnique::render(RenderGraph&, RenderEngine* eng)
     const float metrePixelHeight = (1.0f / frustumHeight) * float(extent.height);
 
     ssaoBuffer.projScale = metrePixelHeight;
-    ssaoBuffer.radius = 3.0f;
-    ssaoBuffer.bias = 0.01;
-    ssaoBuffer.intensity = 1.0f;
+    ssaoBuffer.radius = mConstants.radius;
+    ssaoBuffer.bias = mConstants.bias;
+    ssaoBuffer.intensity = mConstants.intensity;
     const float4x4 P = cam.getProjectionMatrix();
     const float4 projConstant
             (float(-2.0 / (extent.width * P[0][0])),
