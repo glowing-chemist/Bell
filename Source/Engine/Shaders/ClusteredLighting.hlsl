@@ -46,10 +46,6 @@ uint3 getFroxelPosition(const uint2 position, const float depth, const float2 si
 {
 	const uint2 xyFroxel = position / FROXEL_TILE_SIZE;
 
-	float depthVS = depth;
-    depthVS *= (farPlane - nearPlane);
-    depthVS += nearPlane;
-
     // Formula from original paper ( Clustered Deferred and forward shading, Ola et al.)
     // produces to many depth subdivisions for my liking.
 	//const float Sy = size.y / FROXEL_TILE_SIZE; 
@@ -57,11 +53,11 @@ uint3 getFroxelPosition(const uint2 position, const float depth, const float2 si
 #if LINEAR_SUBDIVISIONS
 	// Linear (used just for comparison).
 	float k = farPlane / float(DEPTH_SUBDIVISIONS);
-	uint kn = uint(depthVS / k);
+	uint kn = uint(depth / k);
 #else
 	// Version with a fixed (DEPTH_SUBDIVISIONS) number of subdivisions.
 	const float k1 = (farPlane - nearPlane) / pow(DEPTH_SUBDIVISION_FACTOR, DEPTH_SUBDIVISIONS);
-	const float kn = floor(log(depthVS / k1) / log(DEPTH_SUBDIVISION_FACTOR));
+	const float kn = floor(log(depth / k1) / log(DEPTH_SUBDIVISION_FACTOR));
 #endif
 
 	return uint3(xyFroxel, kn);

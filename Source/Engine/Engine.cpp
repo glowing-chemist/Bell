@@ -917,6 +917,7 @@ void RenderEngine::updateGlobalBuffers()
             float4x4 perspective;
             mCameraBuffer.mPreviousFrameViewProjMatrix = mCameraBuffer.mViewProjMatrix;
             mCameraBuffer.mPreviousFrameInvertedViewProjMatrix = glm::inverse(mCameraBuffer.mViewProjMatrix);
+            mCameraBuffer.mPreviousViewMatrix = mCameraBuffer.mViewMatrix;
             // need to add jitter for TAA
             if(isPassRegistered(PassType::TAA))
             {

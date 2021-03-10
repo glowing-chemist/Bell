@@ -70,13 +70,13 @@ SamplerState linearSampler;
 
 
 // Total number of direct samples to take at each pixel
-#define NUM_SAMPLES (4)
+#define NUM_SAMPLES (9)
 
 // If using depth mip levels, the log of the maximum pixel offset before we need to switch to a lower 
 // miplevel to maintain reasonable spatial locality in the cache
 // If this number is too small (< 3), too many taps will land in the same pixel, and we'll get bad variance that manifests as flashing.
 // If it is too high (> 5), we'll get bad performance because we're not using the MIP levels effectively
-#define LOG_MAX_OFFSET 3
+#define LOG_MAX_OFFSET 4
 
 // This must be less than or equal to the MAX_MIP_LEVEL defined in SSAO.cpp
 #define MAX_MIP_LEVEL 8
@@ -128,7 +128,7 @@ float3 reconstructCSPosition(float2 S, float z) {
 
 float getViewDepth(const int3 pos)
 {
-    return  (CS_Z_buffer.Load(pos).x * camera.farPlane + camera.nearPlane);
+    return  CS_Z_buffer.Load(pos).x;
 }
 
 /** Returns a unit vector and a screen-space radius for the tap on a unit disk (the caller should scale by the actual disk radius) */
@@ -173,17 +173,6 @@ float3 getOffsetPosition(int2 ssC, float2 unitOffset, float ssR) {
   return P;
 }
 
-float reconstructViewSpaceDepth(float3 previousPosition)
-{
-  previousPosition.y *= -1.0f;
-  previousPosition.z = unlineariseReverseDepth(previousPosition.z, camera.nearPlane, camera.farPlane);
-  float4 previousWorldPosition = mul(camera.previousInvertedViewProj, float4(previousPosition, 1.0f));
-  previousWorldPosition /= previousWorldPosition.w;
-
-  float cameraSpaceDepth = dot(camera.view[2], previousWorldPosition);
-  const float cameraW = dot(camera.view[3], previousWorldPosition);
-  return -(cameraSpaceDepth / cameraW);
-}
 
 /** Compute the occlusion due to sample with index \a i about the pixel at \a ssC that corresponds
     to camera-space point \a C with unit normal \a n_C, using maximum screen-space sampling radius \a ssDiskRadius */
@@ -250,8 +239,8 @@ float ssao(const uint2 pixel)
 
 float main(const PositionAndUVVertOutput pixel)
 {
-  const float linDepth = CS_Z_buffer.SampleLevel(linearSampler, pixel.uv, 0.0f).x;
-  if(linDepth == 1.0f)
+  const float currentDepth = depth.Sample(linearSampler, pixel.uv);
+  if(currentDepth == 0.0f)
   {
       historyCounter[pixel.uv * (camera.frameBufferSize / 2)] = 1;
       return 1.0f;
@@ -267,11 +256,14 @@ float main(const PositionAndUVVertOutput pixel)
   pixelVelocity = (pixelVelocity - 0.5f) * 2.0f;
   const float2 previousUV = pixel.uv - pixelVelocity;
 
-  const float prevLinDepth = prevLinearDepth.SampleLevel(linearSampler, previousUV, 0.0f).x;
-  const float reprojectedDepthLinear = reconstructViewSpaceDepth(float3((previousUV - 0.5f) * 2.0f, prevLinDepth));
+  const float prevDepth = prevLinearDepth.SampleLevel(linearSampler, previousUV, 0.0f).x;
 
-  const float depthVS = (linDepth * (camera.farPlane - camera.nearPlane));
-  const float depthDiff = abs(depthVS - reprojectedDepthLinear);
+  float4 worldSpaceFragmentPos = mul(camera.invertedViewProj, float4((pixel.uv - 0.5f) * 2.0f, currentDepth, 1.0f));
+  worldSpaceFragmentPos /= worldSpaceFragmentPos.w;
+  float4 reprojectedPositionVS = mul(camera.previousView, worldSpaceFragmentPos);
+  const float depthVS = -reprojectedPositionVS.z;
+
+  const float depthDiff = abs(depthVS - prevDepth);
   
   const bool offScreen = previousUV.x > 1.0f || previousUV.x < 0.0f || previousUV.y > 1.0f || previousUV.y < 0.0f;
   

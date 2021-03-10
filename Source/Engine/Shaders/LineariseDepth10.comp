@@ -73,9 +73,9 @@ void main(uint3 globalIndex : SV_DispatchThreadID)
 	const float2 uv = float2(globalIndex.xy) / camera.frameBufferSize;
 
 	const float depth = gbufferDepth.Sample(linearSampler, uv);
-	float linearDepth = lineariseReverseDepth(depth, camera.nearPlane, camera.farPlane);
-
-	linearDepth = saturate(linearDepth);
+	float4 viewSpaceFragmentPos = mul(camera.invertedPerspective, float4((uv - 0.5f) * 2.0f, depth, 1.0f));
+    viewSpaceFragmentPos /= viewSpaceFragmentPos.w;
+	float linearDepth = -viewSpaceFragmentPos.z;
 
 	uint width, height;
 	linearDepthBufferMip0.GetDimensions(width, height);

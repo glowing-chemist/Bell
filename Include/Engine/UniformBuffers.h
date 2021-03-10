@@ -16,6 +16,7 @@ struct CameraBuffer
 
     float4x4 mPreviousFrameViewProjMatrix;
     float4x4 mPreviousFrameInvertedViewProjMatrix;
+    float4x4 mPreviousViewMatrix;
 
     float mNeaPlane;
     float mFarPlane;
