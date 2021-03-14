@@ -209,6 +209,7 @@ enum class Format
     R8Norm,
     RG8UNorm,
 	RG16UNorm,
+	RG16SNorm,
 	RGB16UNorm,
 	RGBA16UNorm,
 	RGBA16SNorm,
