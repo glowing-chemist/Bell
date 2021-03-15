@@ -171,8 +171,8 @@ Output main(GBufferVertOutput vertInput)
     Output output;
 
     output.colour = lighting;
-    const float2 velocity = (((vertInput.curPosition.xy / vertInput.curPosition.w) * 0.5f + 0.5f) - ((vertInput.prevPosition.xy / vertInput.prevPosition.w) * 0.5f + 0.5f));
-    output.velocity = velocity * 0.5f + 0.5f;
+    const float2 velocity = (vertInput.curPosition.xy / vertInput.curPosition.w) - (vertInput.prevPosition.xy / vertInput.prevPosition.w);
+    output.velocity = velocity;
 
     return output;
 }

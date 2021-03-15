@@ -138,7 +138,7 @@ void main(uint3 globalIndex : SV_DispatchThreadID)
 	float shadowTerm = shadowed ? 0.15f : 1.0f;
 
 	float2 pixelVelocity = velocity.Sample(linearSampler, uv);
-  	pixelVelocity = (pixelVelocity - 0.5f) * 2.0f;
+  	pixelVelocity = pixelVelocity - 0.5f;
   	const float2 previousUV = uv - pixelVelocity;
 
   	const float prevLinDepth = prevLinearDepth.SampleLevel(linearSampler, previousUV, 0.0f).x;

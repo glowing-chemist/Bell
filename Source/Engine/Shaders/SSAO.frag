@@ -253,7 +253,7 @@ float main(const PositionAndUVVertOutput pixel)
   uint historyCount = 1;
 
   float2 pixelVelocity = velocity.Sample(linearSampler, pixel.uv);
-  pixelVelocity = (pixelVelocity - 0.5f) * 2.0f;
+  pixelVelocity = pixelVelocity * 0.5f;
   const float2 previousUV = pixel.uv - pixelVelocity;
 
   const float prevDepth = prevLinearDepth.SampleLevel(linearSampler, previousUV, 0.0f).x;

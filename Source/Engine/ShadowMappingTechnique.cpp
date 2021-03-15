@@ -91,6 +91,10 @@ ShadowMappingTechnique::ShadowMappingTechnique(RenderEngine* eng, RenderGraph& g
 
 void ShadowMappingTechnique::render(RenderGraph& graph, RenderEngine*)
 {
+    (mShadowMapDepth)->updateLastAccessed();
+    (mShadowMapDepthView)->updateLastAccessed();
+    (mShadowMapRaw)->updateLastAccessed();
+    (mShadowMapRawView)->updateLastAccessed();
     (mShadowMap)->updateLastAccessed();
     (mShadowMapView)->updateLastAccessed();
     (mShadowMapIntermediate)->updateLastAccessed();

@@ -78,7 +78,7 @@ void main(uint3 globalIndex : SV_DispatchThreadID)
 	// March the ray.
     float2 colourUV = marchRay(position, rayDirection, 30, float2(1.0f, 1.0f) / float2(width, height), START_MIP, camera.nearPlane, camera.farPlane, camera.invertedPerspective);
     float2 currentVelocity = velocity.Sample(linearSampler, uv);
-    currentVelocity = (currentVelocity - 0.5f) * 2.0f;
+    currentVelocity = currentVelocity - 0.5f;
     colourUV = colourUV - currentVelocity;
 
     const float roughness = specularRoughness.Sample(linearSampler, uv).w;

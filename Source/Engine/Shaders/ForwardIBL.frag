@@ -94,9 +94,9 @@ Output main(GBufferVertOutput vertInput)
 
     Output output;
 
-    const float2 velocity = (((vertInput.curPosition.xy / vertInput.curPosition.w) * 0.5f + 0.5f) - ((vertInput.prevPosition.xy / vertInput.prevPosition.w) * 0.5f + 0.5f));
+    const float2 velocity = (vertInput.curPosition.xy / vertInput.curPosition.w) - (vertInput.prevPosition.xy / vertInput.prevPosition.w);
     output.colour = float4(specular + diffuse + material.emissiveOcclusion.xyz, 1.0) * material.emissiveOcclusion.w;
-    output.velocity = velocity * 0.5f + 0.5f;
+    output.velocity = velocity;
 
     return output;
 }

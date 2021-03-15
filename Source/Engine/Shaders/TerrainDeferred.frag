@@ -48,13 +48,13 @@ GBufferFragOutput main(TerrainVertexOutput vertex)
 	float3 blendWeights = pow(abs(vertex.worldPosition.xyz), BLEND_SHARPNESS);
 	blendWeights = blendWeights / (blendWeights.x + blendWeights.y + blendWeights.z);
 
-	const float2 velocity = (((vertex.clipPosition.xy / vertex.clipPosition.w) * 0.5f + 0.5f) - ((vertex.prevClipPosition.xy / vertex.prevClipPosition.w) * 0.5f + 0.5f));
+	const float2 velocity = (vertex.clipPosition.xy / vertex.clipPosition.w) - (vertex.prevClipPosition.xy / vertex.prevClipPosition.w);
 
 	GBufferFragOutput output;
 	output.diffuse = matX.diffuse * blendWeights.x + matY.diffuse * blendWeights.y + matZ.diffuse * blendWeights.z;
 	output.normal = encodeOct(normalize(vertex.normal));
 	output.specularRoughness = float4(0.0f, 0.0f, 0.0f, 1.0f);
-	output.velocity = (velocity * 0.5f) + 0.5f;
+	output.velocity = velocity;
 	output.emissiveOcclusion = float4(0.0f, 0.0f, 0.0f, 1.0f);
 
 	return output;

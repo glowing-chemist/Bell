@@ -49,7 +49,7 @@ ForwardCombinedLightingTechnique::ForwardCombinedLightingTechnique(RenderEngine*
 
 
     task.addManagedOutput(kGlobalLighting, AttachmentType::RenderTarget2D, Format::RGBA16Float, SizeClass::Swapchain, LoadOp::Clear_Black);
-	task.addManagedOutput(kGBufferVelocity, AttachmentType::RenderTarget2D, Format::RG16UNorm, SizeClass::Swapchain, LoadOp::Clear_Black);
+	task.addManagedOutput(kGBufferVelocity, AttachmentType::RenderTarget2D, Format::RG16Float, SizeClass::Swapchain, LoadOp::Clear_Black);
 	task.addOutput(kGBufferDepth, AttachmentType::Depth, Format::D32Float);
 
     if(eng->isPassRegistered(PassType::OcclusionCulling))
