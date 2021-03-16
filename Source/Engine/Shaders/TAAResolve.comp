@@ -51,7 +51,7 @@ void main(uint3 globalIndex : SV_DispatchThreadID)
 	const float2 uv = (float2(globalIndex.xy) / gbufferSize);
 
 	float2 currentVelocity = velocity.Sample(linearSampler, uv);
-	currentVelocity = currentVelocity - 0.5f;
+	currentVelocity = currentVelocity * 0.5f;
 
 	const float2 previousUV = uv - currentVelocity;
 
