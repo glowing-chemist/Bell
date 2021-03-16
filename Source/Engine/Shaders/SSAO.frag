@@ -60,12 +60,15 @@ Texture2D<float> history;
 RWTexture2D<uint> historyCounter;
 
 [[vk::binding(7)]]
-Texture2D<float2> velocity;
+Texture2D<uint> prevHistoryCounter;
 
 [[vk::binding(8)]]
-Texture2D<float2> normals;
+Texture2D<float2> velocity;
 
 [[vk::binding(9)]]
+Texture2D<float2> normals;
+
+[[vk::binding(10)]]
 SamplerState linearSampler;
 
 
@@ -269,7 +272,7 @@ float main(const PositionAndUVVertOutput pixel)
   
   if((depthDiff < 0.1) && !offScreen)
   {
-    historyCount = historyCounter.Load(previousUV * (camera.frameBufferSize / 2));
+    historyCount = prevHistoryCounter.Load(uint3(previousUV * (camera.frameBufferSize / 2), 0));
     const float prevAo = history.Sample(linearSampler, previousUV);
     ao = prevAo + ((ao - prevAo) * (1.0f / historyCount));
 

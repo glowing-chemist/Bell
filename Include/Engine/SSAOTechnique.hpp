@@ -14,6 +14,7 @@
 extern const char kSSAORaw[];
 extern const char kSSAOHistory[];
 extern const char kSSAOCounter[];
+extern const char kSSAOPrevCounter[];
 extern const char kSSAOSampler[];
 extern const char kSSAOBlurX[];
 extern const char kSSAOBlurY[];
@@ -35,7 +36,8 @@ public:
         graph.bindImage(kSSAORaw, mSSAOViews[index]);
         graph.bindImage(kSSAOHistory, mSSAOViews[1 - index]);
 
-        graph.bindImage(kSSAOCounter, mHistoryCounterViews);
+        graph.bindImage(kSSAOCounter, mHistoryCounterViews[index]);
+        graph.bindImage(kSSAOPrevCounter, mHistoryCounterViews[1 - index]);
 
         if(!graph.isResourceSlotBound(kSSAO))
         {
@@ -80,8 +82,8 @@ private:
     Image mSSAOBlur[2];
     ImageView mSSAOBlurView[2];
 
-    Image mHistoryCounter;
-    ImageView mHistoryCounterViews;
+    Image mHistoryCounters[2];
+    ImageView mHistoryCounterViews[2];
 
     Sampler mNearestSampler;
 

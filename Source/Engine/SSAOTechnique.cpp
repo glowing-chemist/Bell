@@ -8,6 +8,7 @@
 extern const char kSSAORaw[] = "SSAORaw";
 extern const char kSSAOHistory[] = "SSAOHistory";
 extern const char kSSAOCounter[] = "SSAOHistoryCounter";
+extern const char kSSAOPrevCounter[] = "SSAOPrevHistoryCounter";
 extern const char kSSAOSampler[] = "SSAOSampler";
 extern const char kSSAOBlurX[] = "SSAOBlurX";
 extern const char kSSAOBlurY[] = "SSAOBlurY";
@@ -54,9 +55,11 @@ SSAOTechnique::SSAOTechnique(RenderEngine* eng, RenderGraph& graph) :
               Image(getDevice(), Format::R8UNorm, ImageUsage::Storage | ImageUsage::Sampled | ImageUsage::TransferDest, getDevice()->getSwapChain()->getSwapChainImageWidth() / 2,
                               getDevice()->getSwapChain()->getSwapChainImageHeight() / 2, 1, 1, 1, 1, "SSAO blur Y")},
     mSSAOBlurView{ImageView{mSSAOBlur[0], ImageViewType::Colour}, ImageView{mSSAOBlur[1], ImageViewType::Colour}},
-    mHistoryCounter(getDevice(), Format::R32Uint, ImageUsage::Storage | ImageUsage::TransferDest, getDevice()->getSwapChain()->getSwapChainImageWidth() / 2,
+    mHistoryCounters{Image(getDevice(), Format::R32Uint, ImageUsage::Storage | ImageUsage::Sampled, getDevice()->getSwapChain()->getSwapChainImageWidth() / 2,
                     getDevice()->getSwapChain()->getSwapChainImageHeight() / 2, 1, 1, 1, 1, "SSAO Counter"),
-    mHistoryCounterViews(mHistoryCounter, ImageViewType::Colour),
+                    Image(getDevice(), Format::R32Uint, ImageUsage::Storage |ImageUsage::TransferDest | ImageUsage::Sampled, getDevice()->getSwapChain()->getSwapChainImageWidth() / 2,
+                            getDevice()->getSwapChain()->getSwapChainImageHeight() / 2, 1, 1, 1, 1, "SSAO Counter2")},
+    mHistoryCounterViews{ImageView(mHistoryCounters[0], ImageViewType::Colour), ImageView(mHistoryCounters[1], ImageViewType::Colour)},
     mNearestSampler(SamplerType::Point),
     mSSAOBuffer(getDevice(), BufferUsage::Uniform, sizeof(SSAOBuffer), sizeof(SSAOBuffer), "SSAO Offsets"),
     mSSAOBufferView(mSSAOBuffer),
@@ -78,6 +81,7 @@ SSAOTechnique::SSAOTechnique(RenderEngine* eng, RenderGraph& graph) :
     task.addInput(kGBufferDepth, AttachmentType::Texture2D);
     task.addInput(kSSAOHistory, AttachmentType::Texture2D);
     task.addInput(kSSAOCounter, AttachmentType::Image2D);
+    task.addInput(kSSAOPrevCounter, AttachmentType::Texture2D);
     task.addInput(kGBufferVelocity, AttachmentType::Texture2D);
     task.addInput(kGBufferNormals, AttachmentType::Texture2D);
     task.addInput(kSSAOSampler, AttachmentType::Sampler);
@@ -112,8 +116,11 @@ SSAOTechnique::SSAOTechnique(RenderEngine* eng, RenderGraph& graph) :
 
 void SSAOTechnique::render(RenderGraph&, RenderEngine* eng)
 {
-    mHistoryCounter->updateLastAccessed();
-    mHistoryCounterViews->updateLastAccessed();
+    for(uint32_t i = 0; i < 2; ++i)
+    {
+        mHistoryCounters[i]->updateLastAccessed();
+        mHistoryCounterViews[i]->updateLastAccessed();
+    }
     (*mSSAOBuffer)->updateLastAccessed();
     for(uint32_t i = 0; i < 3; ++i)
     {
@@ -128,7 +135,7 @@ void SSAOTechnique::render(RenderGraph&, RenderEngine* eng)
 
     if(mFirstFrame)
     {
-        mHistoryCounter->clear(float4(0.0f, 0.0f, 0.0f, 0.0f));
+        mHistoryCounters[1]->clear(float4(0.0f, 0.0f, 0.0f, 0.0f));
         mSSAO[1]->clear(float4(1.0f, 1.0f, 1.0f, 1.0f));
         mFirstFrame = false;
     }
