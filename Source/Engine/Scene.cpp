@@ -115,13 +115,14 @@ Scene::Scene(const std::filesystem::path& path) :
     mSceneMeshes(),
     mStaticMeshBoundingVolume(),
     mDynamicMeshBoundingVolume(),
-    mPhysicsMeshBoundingVolume(),
+    mLightsBoundingVolume(),
     mRootTransform{1.0f},
     mSceneAABB(float4(std::numeric_limits<float>::max()), float4(std::numeric_limits<float>::min())),
     mSceneCamera(nullptr),
 	mMaterials{},
 	mMaterialImageViews{},
     mLights{},
+    mFreeLightIndicies{},
     mShadowLightCamera(nullptr),
     mShadowingLight{},
     mCascadesInfo{0.1f, 0.4f, 1.0f},
@@ -748,7 +749,7 @@ InstanceID    Scene::addMeshInstance( const SceneID meshID,
 
 
 
-void Scene::removeMeshInstance(const InstanceID id)
+void Scene::removeInstance(const InstanceID id)
 {
     BELL_ASSERT(mInstanceMap.find(id) != mInstanceMap.end(), "Instance doesn't exist")
 
@@ -766,6 +767,13 @@ void Scene::removeMeshInstance(const InstanceID id)
         {
             mFreeStaticMeshIndicies.push_back(entry.mIndex);
             mStaticMeshInstances[entry.mIndex].setInstanceFlags(0);
+            break;
+        }
+
+        case InstanceType::Light:
+        {
+            mFreeLightIndicies.push_back(entry.mIndex);
+            mLights[entry.mIndex].mIntensity = 0.0f;
             break;
         }
 
@@ -798,52 +806,73 @@ void Scene::computeBounds(const AccelerationStructure type)
 {
     PROFILER_EVENT();
 
-    generateSceneAABB(type == AccelerationStructure::Static || type == AccelerationStructure::Physics);
+    generateSceneAABB(type == AccelerationStructure::StaticMesh);
 
-    if(type == AccelerationStructure::Static)
+    if(type == AccelerationStructure::StaticMesh)
     {
         //Build the static meshes BVH structure.
         std::vector<typename OctTreeFactory<MeshInstance*>::BuilderNode> staticBVHMeshes{};
+        std::vector<MeshInstance*> activeInstances{};
+        activeInstances.reserve(mStaticMeshInstances.size());
+        for(auto& instance : mStaticMeshInstances)
+        {
+            if(instance.getInstanceFlags() != 0)
+                activeInstances.push_back(&instance);
+        }
 
-        std::transform(mStaticMeshInstances.begin(), mStaticMeshInstances.end(), std::back_inserter(staticBVHMeshes),
-                       [](MeshInstance& instance)
-                        { return OctTreeFactory<MeshInstance*>::BuilderNode{instance.getMesh()->getAABB() * instance.getTransMatrix(), &instance}; } );
+        std::transform(activeInstances.begin(), activeInstances.end(), std::back_inserter(staticBVHMeshes),
+                       [](MeshInstance* instance)
+                        { return OctTreeFactory<MeshInstance*>::BuilderNode{instance->getMesh()->getAABB() * instance->getTransMatrix(), instance}; } );
 
         OctTreeFactory<MeshInstance*> staticBVHFactory(mSceneAABB, staticBVHMeshes);        
 
         mStaticMeshBoundingVolume = staticBVHFactory.generateOctTree();
     }
-    else if(type == AccelerationStructure::Dynamic)
+    else if(type == AccelerationStructure::DynamicMesh)
     {
         //Build the dynamic meshes BVH structure.
         std::vector<typename OctTreeFactory<MeshInstance*>::BuilderNode> dynamicBVHMeshes{};
+        std::vector<MeshInstance*> activeInstances{};
+        activeInstances.reserve(mDynamicMeshInstances.size());
+        for(auto& instance : mDynamicMeshInstances)
+        {
+            if(instance.getInstanceFlags() != 0)
+                activeInstances.push_back(&instance);
+        }
 
-        std::transform(mDynamicMeshInstances.begin(), mDynamicMeshInstances.end(), std::back_inserter(dynamicBVHMeshes),
-                       [](MeshInstance& instance)
-                        { return OctTreeFactory<MeshInstance*>::BuilderNode{instance.getMesh()->getAABB() * instance.getTransMatrix(), &instance}; } );
+        std::transform(activeInstances.begin(), activeInstances.end(), std::back_inserter(dynamicBVHMeshes),
+                       [](MeshInstance* instance)
+                        { return OctTreeFactory<MeshInstance*>::BuilderNode{instance->getMesh()->getAABB() * instance->getTransMatrix(), instance}; } );
 
 
          OctTreeFactory<MeshInstance*> dynamicBVHFactory(mSceneAABB, dynamicBVHMeshes);
 
          mDynamicMeshBoundingVolume = dynamicBVHFactory.generateOctTree();
     }
-    else if(type == AccelerationStructure::Physics)
+    else if(type == AccelerationStructure::Lights)
     {
-        //Build the physics meshes BVH structure.
-        std::vector<typename OctTreeFactory<MeshInstance*>::BuilderNode> physicsBVHMeshes{};
+        std::vector<typename OctTreeFactory<Light*>::BuilderNode> lightBVHMeshes{};
+        std::vector<Light*> activeInstances{};
+        activeInstances.reserve(mLights.size());
+        for(auto& light : mLights)
+        {
+            if(light.mIntensity != 0.0f)
+                activeInstances.push_back(&light);
+        }
 
-        std::transform(mStaticMeshInstances.begin(), mStaticMeshInstances.end(), std::back_inserter(physicsBVHMeshes),
-                       [](MeshInstance& instance)
-                        { return OctTreeFactory<MeshInstance*>::BuilderNode{instance.getMesh()->getAABB() * instance.getTransMatrix(), &instance}; } );
+        std::transform(activeInstances.begin(), activeInstances.end(), std::back_inserter(lightBVHMeshes),
+                       [](Light* instance)
+                       { return OctTreeFactory<Light*>::BuilderNode{instance->getAABB(), instance}; } );
 
-        OctTreeFactory<MeshInstance*> physicsBVHFactory(mSceneAABB, physicsBVHMeshes);
 
-        mPhysicsMeshBoundingVolume = physicsBVHFactory.generateOctTree();
+        OctTreeFactory<Light*> lightBVHFactory(mSceneAABB, lightBVHMeshes);
+
+        mLightsBoundingVolume = lightBVHFactory.generateOctTree();
     }
 }
 
 
-std::vector<const MeshInstance *> Scene::getViewableMeshes(const Frustum& frustum) const
+std::vector<const MeshInstance *> Scene::getVisibleMeshes(const Frustum& frustum) const
 {
     PROFILER_EVENT();
 
@@ -856,6 +885,12 @@ std::vector<const MeshInstance *> Scene::getViewableMeshes(const Frustum& frustu
     instances.insert(instances.end(), dynamicMeshes.begin(), dynamicMeshes.end());
 
     return instances;
+}
+
+
+std::vector<Scene::Light*> Scene::getVisibleLights(const Frustum& frustum) const
+{
+    return mLightsBoundingVolume.containedWithin(frustum);
 }
 
 
@@ -1163,81 +1198,37 @@ void Scene::addMaterial(const MaterialPaths& mat, RenderEngine* eng)
 }
 
 
-std::vector<Scene::Intersection> Scene::getIntersections() const
+InstanceID Scene::addLight(const Light& light)
 {
-    PROFILER_EVENT();
+    const InstanceID id = mNextInstanceID++;
 
-	std::vector<Intersection> intersections;
+    if(!mFreeLightIndicies.empty())
+    {
+        const uint32_t freeIndex = mFreeLightIndicies.back();
+        mFreeLightIndicies.pop_back();
 
-	for (auto& mesh : mStaticMeshInstances)
-	{
-        const std::vector<MeshInstance*> staticMeshes = mPhysicsMeshBoundingVolume.getIntersections(mesh.getMesh()->getAABB() * mesh.getTransMatrix());
+        mInstanceMap[id] = {InstanceType::Light, freeIndex};
+        mLights[freeIndex] = light;
+    }
+    else
+    {
+        mInstanceMap[id] = {InstanceType::Light, mLights.size()};
+        mLights.push_back(light);
+    }
 
-		for (auto& m : staticMeshes)
-		{
-			intersections.emplace_back(m, &mesh);
-		}
-	}
-
-	for (auto& mesh : mDynamicMeshInstances)
-	{
-        const std::vector<MeshInstance*> staticMeshes = mPhysicsMeshBoundingVolume.getIntersections(mesh.getMesh()->getAABB() * mesh.getTransMatrix());
-
-		for (auto& m : staticMeshes)
-		{
-			intersections.emplace_back(m, &mesh);
-		}
-	}
-
-	return intersections;
+    return id;
 }
 
 
-std::vector<Scene::Intersection> Scene::getIntersections(const InstanceID id)
+Scene::Light& Scene::getLight(const InstanceID id)
 {
-    PROFILER_EVENT();
+    BELL_ASSERT(mInstanceMap.find(id) != mInstanceMap.end(), "Invalid ID")
+    BELL_ASSERT(mInstanceMap.find(id)->second.mtype == InstanceType::Light, "Invalid ID")
 
-	const MeshInstance* instanceToTest = getMeshInstance(id);
+    const uint32_t index = mInstanceMap[id].mIndex;
+    BELL_ASSERT(index < mLights.size(), "invalid light index")
 
-    const std::vector<MeshInstance*> staticMeshes = mPhysicsMeshBoundingVolume.getIntersections(instanceToTest->getMesh()->getAABB() * instanceToTest->getTransMatrix());
-    BELL_ASSERT(mStaticMeshInstances.size() < 10 || mStaticMeshInstances.size() >= mPhysicsMeshBoundingVolume.getTestsPerformed(), "Ineficient culling")
-
-	std::vector<Intersection> intersections{};
-    intersections.reserve(staticMeshes.size());
-
-	for (auto& m : staticMeshes)
-	{
-		if (m != instanceToTest)
-		{
-			intersections.emplace_back(instanceToTest, m);
-		}
-	}
-
-	return intersections;
-}
-
-
-std::vector<Scene::Intersection> Scene::getIntersections(const InstanceID IgnoreID, const AABB& aabbToTest)
-{
-    PROFILER_EVENT();
-
-	const MeshInstance* instanceToIgnore = getMeshInstance(IgnoreID);
-
-    const std::vector<MeshInstance*> staticMeshes = mPhysicsMeshBoundingVolume.getIntersections(aabbToTest);
-    BELL_ASSERT(mStaticMeshInstances.size() < 10 || mStaticMeshInstances.size() > mPhysicsMeshBoundingVolume.getTestsPerformed(), "Ineficient culling")
-
-	std::vector<Intersection> intersections{};
-    intersections.reserve(staticMeshes.size());
-
-	for (auto& m : staticMeshes)
-	{
-		if (m != instanceToIgnore)
-		{
-			intersections.emplace_back(instanceToIgnore, m);
-		}
-	}
-
-	return intersections;
+    return mLights[index];
 }
 
 
@@ -1298,4 +1289,14 @@ Scene::Light Scene::Light::stripLight(const float4& position, const float4& dire
     light.mAngleSize = float3{size, 0.0f};
 
     return light;
+}
+
+
+AABB Scene::Light::getAABB() const
+{
+    const float maxDiameter = sqrt(mRadius * mRadius * 2.0f);
+    const float4 boundsMin = float4(mPosition - (0.5f * maxDiameter), 1.0f);
+    const float4 boundsMax = float4(mPosition + (0.5f * maxDiameter), 1.0f);
+
+    return AABB{boundsMin, boundsMax};
 }

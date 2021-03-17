@@ -292,7 +292,7 @@ void CascadeShadowMappingTechnique::render(RenderGraph& graph, RenderEngine* eng
     (*mCascadesBuffer)->setContents(&cascades, sizeof(Scene::ShadowCascades));
 
     const Frustum lightFrustum = eng->getScene()->getShadowingLightFrustum();
-    std::vector<const MeshInstance*> meshes = eng->getScene()->getViewableMeshes(lightFrustum);
+    std::vector<const MeshInstance*> meshes = eng->getScene()->getVisibleMeshes(lightFrustum);
 
     std::sort(meshes.begin(), meshes.end(), [lightPosition = eng->getScene()->getShadowingLight().mPosition](const MeshInstance* lhs, const MeshInstance* rhs)
     {

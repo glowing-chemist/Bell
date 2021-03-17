@@ -199,8 +199,8 @@ int main()
     testScene.loadFromFile(VertexAttributes::Position4 | VertexAttributes::Normals | VertexAttributes::Tangents | VertexAttributes::TextureCoordinates | VertexAttributes::Albedo, engine);
     testScene.loadSkybox(skybox, engine);
     testScene.uploadData(engine);
-    testScene.computeBounds(AccelerationStructure::Static);
-    testScene.computeBounds(AccelerationStructure::Dynamic);
+    testScene.computeBounds(AccelerationStructure::StaticMesh);
+    testScene.computeBounds(AccelerationStructure::DynamicMesh);
 #if USE_RAY_TRACING
     RayTracingScene rtScene(engine, &testScene);
 #endif
@@ -239,6 +239,7 @@ int main()
             }
         }
     }
+    testScene.computeBounds(AccelerationStructure::Lights);
 
     engine->setScene(&testScene);
 #if USE_RAY_TRACING

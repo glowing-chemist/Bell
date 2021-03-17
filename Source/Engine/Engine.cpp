@@ -166,8 +166,9 @@ void RenderEngine::setScene(const std::string& path)
     mCurrentScene->loadFromFile(VertexAttributes::Position4 | VertexAttributes::TextureCoordinates | VertexAttributes::Normals | VertexAttributes::Albedo, this);
 
     mCurrentScene->uploadData(this);
-    mCurrentScene->computeBounds(AccelerationStructure::Static);
-    mCurrentScene->computeBounds(AccelerationStructure::Dynamic);
+    mCurrentScene->computeBounds(AccelerationStructure::StaticMesh);
+    mCurrentScene->computeBounds(AccelerationStructure::DynamicMesh);
+    mCurrentScene->computeBounds(AccelerationStructure::Lights);
 
     setScene(mCurrentScene);
 }
@@ -590,7 +591,7 @@ void RenderEngine::execute(RenderGraph& graph)
 
     if(mCurrentScene)
     {
-        meshes = mCurrentScene ? mCurrentScene->getViewableMeshes(mCurrentScene->getCamera().getFrustum()) : std::vector<const MeshInstance*>{};
+        meshes = mCurrentScene ? mCurrentScene->getVisibleMeshes(mCurrentScene->getCamera().getFrustum()) : std::vector<const MeshInstance*>{};
         PROFILER_EVENT("sort meshes");
         std::sort(meshes.begin(), meshes.end(), [camera = mCurrentScene->getCamera()](const MeshInstance* lhs, const MeshInstance* rhs)
         {
@@ -959,12 +960,18 @@ void RenderEngine::updateGlobalBuffers()
         }
 
         {
-            mLightBuffer.get()->setContents(static_cast<int>(mCurrentScene->getLights().size()), sizeof(uint32_t));
+            Frustum frustum = getCurrentSceneCamera().getFrustum();
+            std::vector<Scene::Light*> visibleLightPtrs = mCurrentScene->getVisibleLights(frustum);
+            std::vector<Scene::Light> visibleLights(visibleLightPtrs.size());
+            std::transform(visibleLightPtrs.begin(), visibleLightPtrs.end(), std::back_inserter(visibleLights), []
+                    (const Scene::Light* light) { return *light; });
 
-            if(!mCurrentScene->getLights().empty())
+            mLightBuffer.get()->setContents(static_cast<int>(visibleLights.size()), sizeof(uint32_t));
+
+            if(!visibleLights.empty())
             {
-                mLightBuffer.get()->resize(mCurrentScene->getLights().size() * sizeof(Scene::Light), false);
-                mLightBuffer.get()->setContents(mCurrentScene->getLights().data(), static_cast<uint32_t>(mCurrentScene->getLights().size() * sizeof(Scene::Light)), std::max(sizeof(uint4), mRenderDevice->getMinStorageBufferAlignment()));
+                mLightBuffer.get()->resize(visibleLights.size() * sizeof(Scene::Light), false);
+                mLightBuffer.get()->setContents(visibleLights.data(), static_cast<uint32_t>(visibleLights.size() * sizeof(Scene::Light)), std::max(sizeof(uint4), mRenderDevice->getMinStorageBufferAlignment()));
             }
         }
 

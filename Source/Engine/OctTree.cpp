@@ -234,4 +234,12 @@ class OctTreeFactory<MeshInstance*>;
 template
 class OctTree<MeshInstance*>;
 
+template
+class OctTreeFactory<Scene::Light*>;
+
+template
+class OctTree<Scene::Light*>;
+
+
+
 

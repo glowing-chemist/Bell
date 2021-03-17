@@ -31,9 +31,9 @@ constexpr InstanceID kInvalidInstanceID = std::numeric_limits<InstanceID>::max()
 
 enum class AccelerationStructure
 {
-    Static,
-    Dynamic,
-    Physics
+    StaticMesh,
+    DynamicMesh,
+    Lights
 };
 
 enum class MeshType
@@ -239,12 +239,34 @@ public:
                                   const uint32_t materialIndex,
                                   const uint32_t materialFlags,
                                   const std::string& name = "");
-    void          removeMeshInstance(const InstanceID);
+    void          removeInstance(const InstanceID);
 
     void          uploadData(RenderEngine*);
     void          computeBounds(const AccelerationStructure);
 
-    std::vector<const MeshInstance*> getViewableMeshes(const Frustum&) const;
+    struct Light
+    {
+        // Helpers to create the different light varieties.
+        static Light pointLight(const float4& position, const float4& albedo, const float intensity, const float radius);
+        static Light spotLight(const float4& position, const float4& direction, const float4& albedo, const float intensity, const float radius, const float angle);
+        static Light areaLight(const float4& position, const float4& direction, const float4& up, const float4& albedo, const float intensity, const float radius, const float2 size);
+        static Light stripLight(const float4& position, const float4& direction, const float4& albedo, const float intensity, const float radius, const float2 size);
+
+        AABB getAABB() const;
+
+        float3 mPosition;
+        float mIntensity;
+        float3 mDirection; // direction for spotlight.
+        float mRadius;
+        float3 mUp;
+        LightType mType;
+        float4 mAlbedo;
+        float3 mAngleSize; // angle for spotlight and side length fo area.
+        uint32_t _padding;
+    };
+
+    std::vector<const MeshInstance*> getVisibleMeshes(const Frustum&) const;
+    std::vector<Scene::Light*> getVisibleLights(const Frustum&) const;
 
     const std::vector<MeshInstance>& getStaticMeshInstances() const
     {
@@ -381,43 +403,14 @@ public:
     void addMaterial(const Material& mat);
     void addMaterial(const MaterialPaths& mat, RenderEngine *eng);
 
-	struct Light
-	{
-        // Helpers to create the different light varieties.
-        static Light pointLight(const float4& position, const float4& albedo, const float intensity, const float radius);
-        static Light spotLight(const float4& position, const float4& direction, const float4& albedo, const float intensity, const float radius, const float angle);
-        static Light areaLight(const float4& position, const float4& direction, const float4& up, const float4& albedo, const float intensity, const float radius, const float2 size);
-        static Light stripLight(const float4& position, const float4& direction, const float4& albedo, const float intensity, const float radius, const float2 size);
+    InstanceID addLight(const Light& light);
 
-        float3 mPosition;
-        float mIntensity;
-        float3 mDirection; // direction for spotlight.
-        float mRadius;
-        float3 mUp;
-        LightType mType;
-        float4 mAlbedo;
-        float3 mAngleSize; // angle for spotlight and side lenght fo area.
-        uint32_t _padding;
-	};
-    size_t addLight(const Light& light)
-    {
-        const size_t lightID = mLights.size();
-        mLights.push_back(light);
-
-        return lightID;
-    }
-
-    Light& getLight(const size_t ID)
-    {
-        BELL_ASSERT(ID < mLights.size(), "Invalid light ID")
-        return mLights[ID];
-    }
-
-    void clearLights()
-    { mLights.clear(); }
+    Light& getLight(const InstanceID id);
 
     const std::vector<Light>& getLights() const
-    { return mLights; }
+    {
+        return mLights;
+    }
 
     struct ShadowingLight
     {
@@ -454,19 +447,6 @@ public:
     }
 
 	void loadMaterials(RenderEngine*);
-
-	struct Intersection
-	{
-		Intersection(const MeshInstance* m, const MeshInstance* m2) :
-			mEntry1{m},
-			mEntry2{m2} {}
-
-		const MeshInstance* mEntry1;
-		const MeshInstance* mEntry2;
-	};
-	std::vector<Intersection> getIntersections() const;
-	std::vector<Intersection> getIntersections(const InstanceID);
-	std::vector<Intersection> getIntersections(const InstanceID IgnoreID, const AABB& aabbToTest);
 
 	const AABB& getBounds() const
 	{
@@ -581,7 +561,7 @@ private:
 
     OctTree<MeshInstance*> mStaticMeshBoundingVolume;
     OctTree<MeshInstance*> mDynamicMeshBoundingVolume;
-    OctTree<MeshInstance*> mPhysicsMeshBoundingVolume;
+    OctTree<Light*>        mLightsBoundingVolume;
 
     float4x4 mRootTransform;
     AABB mSceneAABB;
@@ -594,7 +574,9 @@ private:
 
     std::vector<CPUImage> mCPUMaterials;
 
-    std::vector<Light> mLights;
+    std::vector<Light>        mLights;
+    std::vector<uint32_t>     mFreeLightIndicies;
+
     Camera* mShadowLightCamera;
     ShadowingLight mShadowingLight;
     ShadowCascades mCascadesInfo;

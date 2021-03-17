@@ -30,8 +30,6 @@ public:
     OctTree(OctTree&&) = default;
     OctTree& operator=(OctTree&&) = default;
 
-    //std::optional<T> closestIntersection(const Ray&) const;
-    //std::vector<T>   allIntersections(const Ray&) const;
     std::vector<T>   containedWithin(const Frustum&) const;
 
     std::vector<T>	getIntersections(const AABB& aabb) const;
@@ -60,8 +58,6 @@ public:
     }
 
 private:
-    //std::vector<T>						getIntersections(const Ray&, const std::unique_ptr<Node>&) const;
-    //std::vector<std::pair<T, float>>	getIntersectionsWithDistance(const Ray&, std::unique_ptr<Node>&, const float distance) const;
 		
     const Node& getNode(const NodeIndex n) const
     {

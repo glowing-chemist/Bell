@@ -1408,8 +1408,8 @@ void Editor::drawAddInstanceDialog()
             const InstanceID id = mInProgressScene->addMeshInstance(mMeshToInstance, kInvalidInstanceID, float4x4(1.0f), mat.mMaterialOffset, mat.mMaterialTypes, mMeshInstanceScratchBuffer);
             mSceneInstanceIDs.push_back(id);
 
-            mInProgressScene->computeBounds(AccelerationStructure::Static);
-            mInProgressScene->computeBounds(AccelerationStructure::Dynamic);
+            mInProgressScene->computeBounds(AccelerationStructure::StaticMesh);
+            mInProgressScene->computeBounds(AccelerationStructure::DynamicMesh);
 
             if (mRayTracingScene)
             {
@@ -1456,8 +1456,8 @@ void Editor::loadScene(const std::string& scene)
     mInProgressScene->setPath(scene);
     mSceneInstanceIDs = mInProgressScene->loadFromFile(VertexAttributes::Position4 | VertexAttributes::Normals | VertexAttributes::Tangents | VertexAttributes::TextureCoordinates | VertexAttributes::Albedo, &mEngine);
     mInProgressScene->uploadData(&mEngine);
-    mInProgressScene->computeBounds(AccelerationStructure::Static);
-    mInProgressScene->computeBounds(AccelerationStructure::Dynamic);
+    mInProgressScene->computeBounds(AccelerationStructure::StaticMesh);
+    mInProgressScene->computeBounds(AccelerationStructure::DynamicMesh);
 
     std::array<std::string, 6> skybox{	"./Assets/skybox/px.png",
                                         "./Assets/skybox/nx.png",
@@ -1565,7 +1565,7 @@ void Editor::deleteSelectedMesh()
 {
     if(mSelectedMesh != kInvalidInstanceID)
     {
-        mInProgressScene->removeMeshInstance(mSelectedMesh);
+        mInProgressScene->removeInstance(mSelectedMesh);
         mSceneInstanceIDs.erase(std::remove(mSceneInstanceIDs.begin(), mSceneInstanceIDs.end(), mSelectedMesh), mSceneInstanceIDs.end());
         mSelectedMesh = kInvalidInstanceID;
         mMeshPicker.clearSelected();
