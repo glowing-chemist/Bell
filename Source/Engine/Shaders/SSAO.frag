@@ -256,7 +256,7 @@ float main(const PositionAndUVVertOutput pixel)
   uint historyCount = 1;
 
   float2 pixelVelocity = velocity.Sample(linearSampler, pixel.uv);
-  pixelVelocity = pixelVelocity * 0.5f;
+  pixelVelocity *= 0.5f;
   const float2 previousUV = pixel.uv - pixelVelocity;
 
   const float prevDepth = prevLinearDepth.SampleLevel(linearSampler, previousUV, 0.0f).x;
@@ -272,7 +272,8 @@ float main(const PositionAndUVVertOutput pixel)
   
   if((depthDiff < 0.1) && !offScreen)
   {
-    historyCount = prevHistoryCounter.Load(uint3(previousUV * (camera.frameBufferSize / 2), 0));
+    uint3 prevPixel = uint3(previousUV * (camera.frameBufferSize / 2), 0);
+    historyCount = prevHistoryCounter.Load(prevPixel);
     const float prevAo = history.Sample(linearSampler, previousUV);
     ao = prevAo + ((ao - prevAo) * (1.0f / historyCount));
 

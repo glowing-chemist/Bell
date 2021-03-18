@@ -60,7 +60,7 @@ SSAOTechnique::SSAOTechnique(RenderEngine* eng, RenderGraph& graph) :
                     Image(getDevice(), Format::R32Uint, ImageUsage::Storage |ImageUsage::TransferDest | ImageUsage::Sampled, getDevice()->getSwapChain()->getSwapChainImageWidth() / 2,
                             getDevice()->getSwapChain()->getSwapChainImageHeight() / 2, 1, 1, 1, 1, "SSAO Counter2")},
     mHistoryCounterViews{ImageView(mHistoryCounters[0], ImageViewType::Colour), ImageView(mHistoryCounters[1], ImageViewType::Colour)},
-    mNearestSampler(SamplerType::Point),
+    mNearestSampler(SamplerType::Linear),
     mSSAOBuffer(getDevice(), BufferUsage::Uniform, sizeof(SSAOBuffer), sizeof(SSAOBuffer), "SSAO Offsets"),
     mSSAOBufferView(mSSAOBuffer),
     mConstants{3.0f, 0.01f, 1.0f}
