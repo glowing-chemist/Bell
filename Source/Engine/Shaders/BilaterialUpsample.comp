@@ -31,18 +31,18 @@ float nearestDepthSample(const float2 uv, uint2 outputSize, Texture2D<float> inp
 
 	float depthSamples[4] = 
 	{
-		depth.SampleLevel(linearSampler, uv, depthMip, int2(0, 0)).x,
-		depth.SampleLevel(linearSampler, uv, depthMip, int2(0, 1)).x,
-		depth.SampleLevel(linearSampler, uv, depthMip, int2(1, 0)).x,
-		depth.SampleLevel(linearSampler, uv, depthMip, int2(1, 1)).x
+		depth.SampleLevel(linearSampler, uv, depthMip).x,
+		depth.SampleLevel(linearSampler, uv +  (float2(0, 1) / outputSize), depthMip).x,
+		depth.SampleLevel(linearSampler, uv +  (float2(1, 0) / outputSize), depthMip).x,
+		depth.SampleLevel(linearSampler, uv +  (float2(1, 1) / outputSize), depthMip).x
 	};
 
-	int2 inputOffsets[4] = 
+	float2 inputOffsets[4] = 
 	{
-		int2(0, 0),
-		int2(0, 1),
-		int2(1, 0),
-		int2(1, 1)
+		float2(0, 0) / float2(outputSize.x, outputSize.y),
+		float2(0, 1) / float2(outputSize.x, outputSize.y),
+		float2(1, 0) / float2(outputSize.x, outputSize.y),
+		float2(1, 1) / float2(outputSize.x, outputSize.y)
 	};
 
 	float d0 = depth.SampleLevel(linearSampler, uv, 0.0f).x;
@@ -58,7 +58,7 @@ float nearestDepthSample(const float2 uv, uint2 outputSize, Texture2D<float> inp
 		}
 	}
 
-	return input.Sample(pointSampler, uv, inputOffsets[bestDepthIndex]);
+	return input.Sample(pointSampler, uv + inputOffsets[bestDepthIndex]);
 }
 
 
