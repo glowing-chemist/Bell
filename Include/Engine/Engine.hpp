@@ -459,11 +459,6 @@ private:
 
     PerFrameResource<Buffer> mShadowCastingLight;
 
-    PerFrameResource<Buffer> mLightBuffer;
-    PerFrameResource<BufferView> mLightBufferView;
-    PerFrameResource<BufferView> mLightCountView;
-    PerFrameResource<ShaderResourceSet> mLightsSRS;
-
     float2 mTAAJitter[16];
 
     std::vector<SkeletalAnimationEntry> mActiveSkeletalAnimations;

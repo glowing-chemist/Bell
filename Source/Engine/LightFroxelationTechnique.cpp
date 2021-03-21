@@ -19,6 +19,11 @@ LightFroxelationTechnique::LightFroxelationTechnique(RenderEngine* eng, RenderGr
     mXTiles(eng->getDevice()->getSwapChainImageView()->getImageExtent().width / 32),
     mYTiles(eng->getDevice()->getSwapChainImageView()->getImageExtent().height / 32),
 
+    mLightBuffer(getDevice(), BufferUsage::DataBuffer | BufferUsage::TransferDest, (sizeof(Scene::Light) * 1000) + std::max(sizeof(uint4), getDevice()->getMinStorageBufferAlignment()), (sizeof(Scene::Light) * 1000) + std::max(sizeof(uint4), getDevice()->getMinStorageBufferAlignment()), "LightBuffer"),
+    mLightBufferView(mLightBuffer, std::max(sizeof(uint4), getDevice()->getMinStorageBufferAlignment())),
+    mLightCountView(mLightBuffer, 0, sizeof(uint4)),
+    mLightsSRS(getDevice(), 2),
+
 	mActiveFroxelsImage(eng->getDevice(), Format::R32Uint, ImageUsage::Storage | ImageUsage::Sampled, eng->getDevice()->getSwapChainImageView()->getImageExtent().width,
 		eng->getDevice()->getSwapChainImageView()->getImageExtent().height, 1, 1, 1, 1, "ActiveFroxels"),
 	mActiveFroxelsImageView(mActiveFroxelsImage, ImageViewType::Colour),
@@ -38,6 +43,14 @@ LightFroxelationTechnique::LightFroxelationTechnique(RenderEngine* eng, RenderGr
     mLightIndexBufferView(mLightIndexBuffer, std::max(eng->getDevice()->getMinStorageBufferAlignment(), sizeof(uint32_t))),
     mLightIndexCounterView(mLightIndexBuffer, 0, static_cast<uint32_t>(sizeof(uint32_t)))
 {
+    // set light buffers SRS
+    for(uint32_t i = 0; i < getDevice()->getSwapChainImageCount(); ++i)
+    {
+        mLightsSRS.get(i)->addDataBufferRO(mLightCountView.get(i));
+        mLightsSRS.get(i)->addDataBufferRW(mLightBufferView.get(i));
+        mLightsSRS.get(i)->finalise();
+    }
+
     ComputeTask clearCountersTask{ "clearFroxelationCounters" };
     clearCountersTask.addInput(kActiveFroxelsCounter, AttachmentType::DataBufferWO);
     clearCountersTask.addInput(kLightIndexCounter, AttachmentType::DataBufferWO);
@@ -120,7 +133,7 @@ LightFroxelationTechnique::LightFroxelationTechnique(RenderEngine* eng, RenderGr
 }
 
 
-void LightFroxelationTechnique::render(RenderGraph&, RenderEngine*)
+void LightFroxelationTechnique::render(RenderGraph&, RenderEngine* engine)
 {
     mActiveFroxelsImageView->updateLastAccessed();
     mActiveFroxelsImage->updateLastAccessed();
@@ -128,11 +141,32 @@ void LightFroxelationTechnique::render(RenderGraph&, RenderEngine*)
     mSparseFroxelBuffer->updateLastAccessed();
     mLightIndexBuffer->updateLastAccessed();
     mIndirectArgsBuffer->updateLastAccessed();
+
+    (*mLightBuffer)->updateLastAccessed();
+    (*mLightsSRS)->updateLastAccessed();
+
+
+    // Frustum cull the lights and send to the gpu.
+    Frustum frustum = engine->getCurrentSceneCamera().getFrustum();
+    std::vector<Scene::Light*> visibleLightPtrs = engine->getScene()->getVisibleLights(frustum);
+    std::vector<Scene::Light> visibleLights(visibleLightPtrs.size());
+    std::transform(visibleLightPtrs.begin(), visibleLightPtrs.end(), std::back_inserter(visibleLights), []
+            (const Scene::Light* light) { return *light; });
+
+    mLightBuffer.get()->setContents(static_cast<int>(visibleLights.size()), sizeof(uint32_t));
+
+    if(!visibleLights.empty())
+    {
+        mLightBuffer.get()->resize(visibleLights.size() * sizeof(Scene::Light), false);
+        mLightBuffer.get()->setContents(visibleLights.data(), static_cast<uint32_t>(visibleLights.size() * sizeof(Scene::Light)), std::max(sizeof(uint4), engine->getDevice()->getMinStorageBufferAlignment()));
+    }
 }
 
 
 void LightFroxelationTechnique::bindResources(RenderGraph& graph)
 {
+    graph.bindShaderResourceSet(kLightBuffer, *mLightsSRS);
+
     if(!graph.isResourceSlotBound(kActiveFroxels))
     {
         graph.bindImage(kActiveFroxels, mActiveFroxelsImageView);

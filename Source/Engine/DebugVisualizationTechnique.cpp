@@ -187,69 +187,72 @@ DebugAABBTechnique::DebugAABBTechnique(RenderEngine* eng, RenderGraph& graph) :
 
     graph.addTask(wireFrameTask);
 
-    GraphicsTask lightDebug{"Light debug", mDebugLightsPipeline};
-    lightDebug.setVertexAttributes(VertexAttributes::Position4);
-    lightDebug.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
-    lightDebug.addInput(kLightBuffer, AttachmentType::ShaderResourceSet);
-    lightDebug.addInput("Light transforms", AttachmentType::PushConstants);
-    lightDebug.addOutput(kGlobalLighting, AttachmentType::RenderTarget2D, Format::RGBA16Float);
-    lightDebug.addOutput(kGBufferDepth, AttachmentType::Depth, Format::D32Float);
-    lightDebug.setRecordCommandsCallback([this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, RenderEngine* eng, const std::vector<const MeshInstance*>&)
+    if(eng->isPassRegistered(PassType::LightFroxelation))
     {
-        PROFILER_EVENT("debug light");
-        PROFILER_GPU_TASK(exec);
-        PROFILER_GPU_EVENT("debug light");
-
-        struct LightTransform
+        GraphicsTask lightDebug{"Light debug", mDebugLightsPipeline};
+        lightDebug.setVertexAttributes(VertexAttributes::Position4);
+        lightDebug.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
+        lightDebug.addInput(kLightBuffer, AttachmentType::ShaderResourceSet);
+        lightDebug.addInput("Light transforms", AttachmentType::PushConstants);
+        lightDebug.addOutput(kGlobalLighting, AttachmentType::RenderTarget2D, Format::RGBA16Float);
+        lightDebug.addOutput(kGBufferDepth, AttachmentType::Depth, Format::D32Float);
+        lightDebug.setRecordCommandsCallback([this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, RenderEngine* eng, const std::vector<const MeshInstance*>&)
         {
-            float4x4 trans;
-            uint32_t index;
-        };
+            PROFILER_EVENT("debug light");
+            PROFILER_GPU_TASK(exec);
+            PROFILER_GPU_EVENT("debug light");
 
-        exec->bindVertexBuffer(this->mVertexBufferView, 0);
-        exec->bindIndexBuffer(this->mIndexBufferView, 0);
-        const RenderTask& task = graph.getTask(taskIndex);
-        exec->setGraphicsShaders(static_cast<const GraphicsTask&>(task), graph, mAABBDebugVisVertexShader, nullptr, nullptr, nullptr, mLightDebugFragmentShader);
-
-        const std::vector<Scene::Light>& lights = eng->getScene()->getLights();
-        for(uint32_t i = 0; i < lights.size(); ++i)
-        {
-            const Scene::Light& light = lights[i];
-
-            if(light.mType == LightType::Area)
+            struct LightTransform
             {
-                float4x4 lightTransform = float4x4(1.0f);
-                lightTransform[0] = float4(glm::cross(light.mUp, light.mDirection), 0.0f);
-                lightTransform[1] = float4{light.mUp, 0.0f};
-                lightTransform[2] = float4{light.mDirection, 0.0f};
-                lightTransform[3] = float4{light.mPosition, 1.0f};
-                lightTransform = glm::scale(lightTransform, float3(light.mAngleSize.x, light.mAngleSize.y, 0.1f));
+                float4x4 trans;
+                uint32_t index;
+            };
 
-                LightTransform pushPonstants{};
-                pushPonstants.trans = lightTransform;
-                pushPonstants.index = i;
+            exec->bindVertexBuffer(this->mVertexBufferView, 0);
+            exec->bindIndexBuffer(this->mIndexBufferView, 0);
+            const RenderTask& task = graph.getTask(taskIndex);
+            exec->setGraphicsShaders(static_cast<const GraphicsTask&>(task), graph, mAABBDebugVisVertexShader, nullptr, nullptr, nullptr, mLightDebugFragmentShader);
 
-                exec->insertPushConsatnt(&pushPonstants, sizeof(LightTransform));
-                exec->indexedDraw(0, 24, 36);
-            }
-            else if(light.mType == LightType::Strip)
+            const std::vector<Scene::Light>& lights = eng->getScene()->getLights();
+            for(uint32_t i = 0; i < lights.size(); ++i)
             {
-                float4x4 lightTransform = float4x4(1.0f);
-                lightTransform[0] = float4(glm::cross(light.mUp, light.mDirection), 0.0f);
-                lightTransform[1] = float4{light.mUp, 0.0f};
-                lightTransform[2] = float4{light.mDirection, 0.0f};
-                lightTransform[3] = float4{light.mPosition, 1.0f};
-                lightTransform = glm::scale(lightTransform, float3(light.mAngleSize.y, light.mAngleSize.x, light.mAngleSize.x));
+                const Scene::Light& light = lights[i];
 
-                LightTransform pushPonstants{};
-                pushPonstants.trans = lightTransform;
-                pushPonstants.index = i;
+                if(light.mType == LightType::Area)
+                {
+                    float4x4 lightTransform = float4x4(1.0f);
+                    lightTransform[0] = float4(glm::cross(light.mUp, light.mDirection), 0.0f);
+                    lightTransform[1] = float4{light.mUp, 0.0f};
+                    lightTransform[2] = float4{light.mDirection, 0.0f};
+                    lightTransform[3] = float4{light.mPosition, 1.0f};
+                    lightTransform = glm::scale(lightTransform, float3(light.mAngleSize.x, light.mAngleSize.y, 0.1f));
 
-                exec->insertPushConsatnt(&pushPonstants, sizeof(LightTransform));
-                exec->indexedDraw(0, 24, 36);
+                    LightTransform pushPonstants{};
+                    pushPonstants.trans = lightTransform;
+                    pushPonstants.index = i;
+
+                    exec->insertPushConsatnt(&pushPonstants, sizeof(LightTransform));
+                    exec->indexedDraw(0, 24, 36);
+                }
+                else if(light.mType == LightType::Strip)
+                {
+                    float4x4 lightTransform = float4x4(1.0f);
+                    lightTransform[0] = float4(glm::cross(light.mUp, light.mDirection), 0.0f);
+                    lightTransform[1] = float4{light.mUp, 0.0f};
+                    lightTransform[2] = float4{light.mDirection, 0.0f};
+                    lightTransform[3] = float4{light.mPosition, 1.0f};
+                    lightTransform = glm::scale(lightTransform, float3(light.mAngleSize.y, light.mAngleSize.x, light.mAngleSize.x));
+
+                    LightTransform pushPonstants{};
+                    pushPonstants.trans = lightTransform;
+                    pushPonstants.index = i;
+
+                    exec->insertPushConsatnt(&pushPonstants, sizeof(LightTransform));
+                    exec->indexedDraw(0, 24, 36);
+                }
             }
-        }
-    });
+        });
 
-    graph.addTask(lightDebug);
+        graph.addTask(lightDebug);
+    }
 }

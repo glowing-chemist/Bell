@@ -40,6 +40,11 @@ private:
     uint32_t mXTiles;
     uint32_t mYTiles;
 
+    PerFrameResource<Buffer> mLightBuffer;
+    PerFrameResource<BufferView> mLightBufferView;
+    PerFrameResource<BufferView> mLightCountView;
+    PerFrameResource<ShaderResourceSet> mLightsSRS;
+
     Image         mActiveFroxelsImage;
     ImageView     mActiveFroxelsImageView;
 
