@@ -133,7 +133,7 @@ void ShadowMappingTechnique::render(RenderGraph& graph, RenderEngine*)
             const RenderTask& task = graph.getTask(taskIndex);
             exec->setGraphicsShaders(static_cast<const GraphicsTask&>(task), graph, mShadowMapVertexShader, nullptr, nullptr, nullptr, mShadowMapFragmentShader);
 
-            UberShaderStateCache stateCache(exec, graph, task);
+            UberShaderStateCache stateCache(exec);
 
             for (const auto& mesh : meshes)
             {

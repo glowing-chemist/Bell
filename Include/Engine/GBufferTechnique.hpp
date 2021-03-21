@@ -21,10 +21,14 @@ public:
 	virtual PassType getPassType() const final override
 		{ return PassType::GBuffer; }
 
+	virtual void postGraphCompilation(RenderGraph&, RenderEngine*);
+
     virtual void bindResources(RenderGraph&) override final {}
     virtual void render(RenderGraph&, RenderEngine*) override final {}
 
 private:
+
+    std::unordered_map<uint64_t, PipelineHandle> mMaterialPipelineVariants;
 
 	GraphicsPipelineDescription mPipelineDescription;
 
@@ -41,11 +45,14 @@ public:
     virtual PassType getPassType() const final override
         { return PassType::GBufferPreDepth; }
 
+    virtual void postGraphCompilation(RenderGraph&, RenderEngine*);
 
     virtual void bindResources(RenderGraph&) override final {}
     virtual void render(RenderGraph&, RenderEngine*) override final {}
 
 private:
+
+    std::unordered_map<uint64_t, PipelineHandle> mMaterialPipelineVariants;
 
     GraphicsPipelineDescription mPipelineDescription;
 

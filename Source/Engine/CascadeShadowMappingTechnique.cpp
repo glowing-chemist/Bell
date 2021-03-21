@@ -344,7 +344,7 @@ void CascadeShadowMappingTechnique::render(RenderGraph& graph, RenderEngine* eng
                     const RenderTask& task = graph.getTask(taskIndex);
                     exec->setGraphicsShaders(static_cast<const GraphicsTask&>(task), graph, vertexShader, nullptr, nullptr, nullptr, fragmentShader);
 
-                    UberShaderStateCache stateCache(exec, graph, task);
+                    UberShaderStateCache stateCache(exec);
 
                     for (const auto& mesh : nearCascadeMeshes)
                     {
@@ -370,7 +370,7 @@ void CascadeShadowMappingTechnique::render(RenderGraph& graph, RenderEngine* eng
                     const RenderTask& task = graph.getTask(taskIndex);
                     exec->setGraphicsShaders(static_cast<const GraphicsTask&>(task), graph, vertexShader, nullptr, nullptr, nullptr, fragmentShader);
 
-                    UberShaderStateCache stateCache(exec, graph, task);
+                    UberShaderStateCache stateCache(exec);
 
                     for (const auto& mesh : midCascadeMeshes)
                     {
@@ -397,7 +397,7 @@ void CascadeShadowMappingTechnique::render(RenderGraph& graph, RenderEngine* eng
                     const RenderTask& task = graph.getTask(taskIndex);
                     exec->setGraphicsShaders(static_cast<const GraphicsTask&>(task), graph, vertexShader, nullptr, nullptr, nullptr, fragmentShader);
 
-                    UberShaderStateCache stateCache(exec, graph, task);
+                    UberShaderStateCache stateCache(exec);
 
                     for (const auto& mesh : farCascadeMeshes)
                     {

@@ -28,6 +28,8 @@ public:
 
     virtual void bindResources(RenderGraph&) = 0;
 
+    virtual void postGraphCompilation(RenderGraph&, RenderEngine*) {}
+
     const std::string getName() const
     {
         return mName;

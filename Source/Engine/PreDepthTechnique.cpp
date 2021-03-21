@@ -44,7 +44,7 @@ PreDepthTechnique::PreDepthTechnique(RenderEngine* eng, RenderGraph& graph) :
                 const RenderTask& task = graph.getTask(taskIndex);
                 exec->setGraphicsShaders(static_cast<const GraphicsTask&>(task), graph, mPreDepthVertexShader, nullptr, nullptr, nullptr, mPreDepthFragmentShader);
 
-                UberShaderStateCache stateCache(exec, graph, task);
+                UberShaderStateCache stateCache(exec);
 
                 const BufferView& pred = eng->getRenderGraph().getBuffer(kOcclusionPredicationBuffer);
 
@@ -81,7 +81,7 @@ PreDepthTechnique::PreDepthTechnique(RenderEngine* eng, RenderGraph& graph) :
                 const RenderTask& task = graph.getTask(taskIndex);
                 exec->setGraphicsShaders(static_cast<const GraphicsTask&>(task), graph, mPreDepthVertexShader, nullptr, nullptr, nullptr, mPreDepthFragmentShader);
 
-                UberShaderStateCache stateCache(exec, graph, task);
+                UberShaderStateCache stateCache(exec);
 
                 for (const auto& mesh : meshes)
                 {

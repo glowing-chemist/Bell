@@ -203,6 +203,35 @@ CommandContextBase* VulkanRenderDevice::getCommandContext(const uint32_t index, 
 }
 
 
+PipelineHandle VulkanRenderDevice::compileGraphicsPipeline(const GraphicsTask& task,
+                                                           const RenderGraph& graph,
+                                                           const Shader& vertexShader,
+                                                           const Shader* geometryShader,
+                                                           const Shader* tessControl,
+                                                           const Shader* tessEval,
+                                                           const Shader& fragmentShader)
+{
+    BELL_ASSERT(vertexShader->getPrefixHash() == fragmentShader->getPrefixHash(), "Shaders compiled with different prefix hashes")
+
+    vulkanResources handles = getTaskResources(graph, task, vertexShader->getPrefixHash());
+
+    std::shared_ptr<Pipeline> pipeline = handles.mPipelineTemplate->instanciateGraphicsPipeline(task, vertexShader->getPrefixHash() ^ vertexShader->getCompiledDefinesHash() ^ fragmentShader->getCompiledDefinesHash(), *handles.mRenderPass, vertexShader, geometryShader, tessControl, tessEval, fragmentShader);
+
+    return reinterpret_cast<uint64_t>(VkPipeline(pipeline->getHandle()));
+}
+
+PipelineHandle VulkanRenderDevice::compileComputePipeline(const ComputeTask& task,
+                                                          const RenderGraph& graph,
+                                                          const Shader& computeShader)
+{
+    vulkanResources handles = getTaskResources(graph, task, computeShader->getPrefixHash());
+
+    std::shared_ptr<Pipeline> pipeline = handles.mPipelineTemplate->instanciateComputePipeline(task, computeShader->getPrefixHash() ^ computeShader->getCompiledDefinesHash(), computeShader);
+
+    return reinterpret_cast<uint64_t>(VkPipeline(pipeline->getHandle()));
+}
+
+
 vk::Buffer  VulkanRenderDevice::createBuffer(const uint32_t size, const vk::BufferUsageFlags usage)
 {
     vk::BufferCreateInfo createInfo{};

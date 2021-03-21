@@ -47,7 +47,7 @@ TransparentTechnique::TransparentTechnique(RenderEngine* eng, RenderGraph& graph
                     const RenderTask& task = graph.getTask(taskIndex);
                     exec->setGraphicsShaders(static_cast<const GraphicsTask&>(task), graph, mTransparentVertexShader, nullptr, nullptr, nullptr, mTransparentFragmentShader);
 
-                    UberShaderStateCache stateCache(exec, graph, task);
+                    UberShaderStateCache stateCache(exec);
 
                     for (const auto& mesh : meshes)
                     {

@@ -17,11 +17,15 @@
 
 class RenderGraph;
 class RenderTask;
+class GraphicsTask;
+class ComputeTask;
 class Executor;
 class ImageBase;
 class BufferBase;
+class Shader;
 class CommandContextBase;
 
+using PipelineHandle = uint64_t;
 
 class RenderDevice
 {
@@ -35,6 +39,18 @@ public:
     virtual ~RenderDevice() = default;
 
     virtual CommandContextBase*        getCommandContext(const uint32_t index, const QueueType) = 0;
+
+    virtual PipelineHandle             compileGraphicsPipeline(const GraphicsTask& task,
+                                                       const RenderGraph& graph,
+                                                       const Shader& vertexShader,
+                                                       const Shader* geometryShader,
+                                                       const Shader* tessControl,
+                                                       const Shader* tessEval,
+                                                       const Shader& fragmentShader) = 0;
+
+    virtual PipelineHandle             compileComputePipeline(const ComputeTask& task,
+                                                       const RenderGraph& graph,
+                                                       const Shader& compuetShader) = 0;
 
 	virtual void                       startFrame() = 0;
 	virtual void                       endFrame() = 0;

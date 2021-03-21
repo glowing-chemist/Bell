@@ -65,7 +65,10 @@ public:
                                   const RenderGraph& graph,
                                   const Shader&) = 0;
 
-    // Commands for updatign resources
+    virtual void setGraphicsPipeline(const uint64_t) = 0;
+    virtual void setComputePipeline(const uint64_t) = 0;
+
+    // Commands for updating resources
     virtual void copyDataToBuffer(const void*, const size_t size, const size_t offset, Buffer&) = 0;
 
     virtual void blitImage(const ImageView& dst, const ImageView& src, const SamplerType) = 0;

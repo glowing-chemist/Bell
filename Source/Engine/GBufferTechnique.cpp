@@ -5,6 +5,7 @@
 
 GBufferTechnique::GBufferTechnique(RenderEngine* eng, RenderGraph& graph) :
 	Technique{"GBuffer", eng->getDevice()},
+    mMaterialPipelineVariants{},
         mPipelineDescription{Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
                                getDevice()->getSwapChain()->getSwapChainImageHeight()},
                          Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
@@ -41,12 +42,9 @@ GBufferTechnique::GBufferTechnique(RenderEngine* eng, RenderGraph& graph) :
                 exec->bindIndexBuffer(eng->getIndexBuffer(), 0);
                 exec->bindVertexBuffer(eng->getVertexBuffer(), 0);
 
-                const RenderTask& task = graph.getTask(taskIndex);
-                Shader vertexShader = eng->getShader("./Shaders/GBufferPassThrough.vert");
-
                 const BufferView& pred = eng->getRenderGraph().getBuffer(kOcclusionPredicationBuffer);
 
-                UberShaderMaterialStateCache stateCache(exec, eng, graph, task, vertexShader, "./Shaders/GBuffer.frag");
+                UberShaderCachedMaterialStateCache stateCache(exec, mMaterialPipelineVariants);
 
                 for (uint32_t i = 0; i < meshes.size(); ++i)
                 {
@@ -80,10 +78,7 @@ GBufferTechnique::GBufferTechnique(RenderEngine* eng, RenderGraph& graph) :
                 exec->bindIndexBuffer(eng->getIndexBuffer(), 0);
                 exec->bindVertexBuffer(eng->getVertexBuffer(), 0);
 
-                const RenderTask& task = graph.getTask(taskIndex);
-                Shader vertexShader = eng->getShader("./Shaders/GBufferPassThrough.vert");
-
-                UberShaderMaterialStateCache stateCache(exec, eng, graph, task, vertexShader, "./Shaders/GBuffer.frag");
+                UberShaderCachedMaterialStateCache stateCache(exec, mMaterialPipelineVariants);
 
                 for (const auto& mesh : meshes)
                 {
@@ -104,8 +99,34 @@ GBufferTechnique::GBufferTechnique(RenderEngine* eng, RenderGraph& graph) :
 }
 
 
+void GBufferTechnique::postGraphCompilation(RenderGraph& graph, RenderEngine* engine)
+{
+    const Scene* scene = engine->getScene();
+    RenderDevice* device = engine->getDevice();
+    const std::vector<Scene::Material>& materials = scene->getMaterialDescriptions();
+    // compile pipelines for all material variants.
+    const RenderTask& task = graph.getTask(mTaskID);
+    Shader vertexShader = engine->getShader("./Shaders/GBufferPassThrough.vert");
+    for(const auto& material : materials)
+    {
+        if(mMaterialPipelineVariants.find(material.mMaterialTypes) == mMaterialPipelineVariants.end())
+        {
+            ShaderDefine materialDefine("MATERIAL_FLAGS", material.mMaterialTypes);
+            Shader fragmentShader = engine->getShader("./Shaders/GBuffer.frag", materialDefine);
+
+            const PipelineHandle pipeline = device->compileGraphicsPipeline(static_cast<const GraphicsTask&>(task),
+                                                                            graph, vertexShader, nullptr,
+                                                                            nullptr, nullptr, fragmentShader);
+
+            mMaterialPipelineVariants.insert({material.mMaterialTypes, pipeline});
+        }
+    }
+}
+
+
 GBufferPreDepthTechnique::GBufferPreDepthTechnique(RenderEngine* eng, RenderGraph& graph) :
     Technique{"GBufferPreDepth", eng->getDevice()},
+    mMaterialPipelineVariants{},
         mPipelineDescription{Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
                                getDevice()->getSwapChain()->getSwapChainImageHeight()},
                          Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
@@ -142,12 +163,9 @@ GBufferPreDepthTechnique::GBufferPreDepthTechnique(RenderEngine* eng, RenderGrap
                 exec->bindIndexBuffer(eng->getIndexBuffer(), 0);
                 exec->bindVertexBuffer(eng->getVertexBuffer(), 0);
 
-                const RenderTask& task = graph.getTask(taskIndex);
-                Shader vertexShader = eng->getShader("./Shaders/GBufferPassThrough.vert");
-
                 const BufferView& pred = eng->getRenderGraph().getBuffer(kOcclusionPredicationBuffer);
 
-                UberShaderMaterialStateCache stateCache(exec, eng, graph, task, vertexShader, "./Shaders/GBuffer.frag");
+                UberShaderCachedMaterialStateCache stateCache(exec, mMaterialPipelineVariants);
 
                 for (uint32_t i = 0; i < meshes.size(); ++i)
                 {
@@ -182,11 +200,7 @@ GBufferPreDepthTechnique::GBufferPreDepthTechnique(RenderEngine* eng, RenderGrap
                 exec->bindIndexBuffer(eng->getIndexBuffer(), 0);
                 exec->bindVertexBuffer(eng->getVertexBuffer(), 0);
 
-
-                const RenderTask& task = graph.getTask(taskIndex);
-                Shader vertexShader = eng->getShader("./Shaders/GBufferPassThrough.vert");
-
-                UberShaderMaterialStateCache stateCache(exec, eng, graph, task, vertexShader, "./Shaders/GBuffer.frag");
+                UberShaderCachedMaterialStateCache stateCache(exec, mMaterialPipelineVariants);
 
                 for (const auto& mesh : meshes)
                 {
@@ -205,3 +219,29 @@ GBufferPreDepthTechnique::GBufferPreDepthTechnique(RenderEngine* eng, RenderGrap
 
     mTaskID = graph.addTask(task);
 }
+
+
+void GBufferPreDepthTechnique::postGraphCompilation(RenderGraph& graph, RenderEngine* engine)
+{
+    const Scene* scene = engine->getScene();
+    RenderDevice* device = engine->getDevice();
+    const std::vector<Scene::Material>& materials = scene->getMaterialDescriptions();
+    // compile pipelines for all material variants.
+    const RenderTask& task = graph.getTask(mTaskID);
+    Shader vertexShader = engine->getShader("./Shaders/GBufferPassThrough.vert");
+    for(const auto& material : materials)
+    {
+        if(mMaterialPipelineVariants.find(material.mMaterialTypes) == mMaterialPipelineVariants.end())
+        {
+            ShaderDefine materialDefine("MATERIAL_FLAGS", material.mMaterialTypes);
+            Shader fragmentShader = engine->getShader("./Shaders/GBuffer.frag", materialDefine);
+
+            const PipelineHandle pipeline = device->compileGraphicsPipeline(static_cast<const GraphicsTask&>(task),
+                                                                            graph, vertexShader, nullptr,
+                                                                            nullptr, nullptr, fragmentShader);
+
+            mMaterialPipelineVariants.insert({material.mMaterialTypes, pipeline});
+        }
+    }
+}
+

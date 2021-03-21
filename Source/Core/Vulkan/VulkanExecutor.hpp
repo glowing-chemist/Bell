@@ -61,6 +61,10 @@ public:
                                   const RenderGraph& graph,
                                   const Shader&) override;
 
+    virtual void setGraphicsPipeline(const uint64_t) override;
+
+    virtual void setComputePipeline(const uint64_t) override;
+
     virtual uint32_t getRecordedCommandCount() override
     {
         return mRecordedCommands;

@@ -553,6 +553,9 @@ void RenderEngine::execute(RenderGraph& graph)
         if(mRayTracedScene)
             mCurrentRenderGraph.bindShaderResourceSet(kBVH, mRayTracedScene->getGPUBVH());
 
+        for(auto& technique : mTechniques)
+            technique->postGraphCompilation(graph, this);
+
         mCompileGraph = false;
     }
 

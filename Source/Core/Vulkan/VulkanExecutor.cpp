@@ -258,3 +258,16 @@ void VulkanExecutor::setComputeShader(const ComputeTask& task,
 
     mCommandBuffer.bindPipeline(vk::PipelineBindPoint::eCompute, pipeline->getHandle());
 }
+
+
+void VulkanExecutor::setGraphicsPipeline(const uint64_t pipelineHandle)
+{
+    mCommandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, VkPipeline(pipelineHandle));
+}
+
+
+void VulkanExecutor::setComputePipeline(const uint64_t pipelineHandle)
+{
+    mCommandBuffer.bindPipeline(vk::PipelineBindPoint::eCompute, VkPipeline(pipelineHandle));
+}
+

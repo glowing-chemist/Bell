@@ -126,7 +126,7 @@ void VoxalizeTechnique::render(RenderGraph& graph, RenderEngine* eng)
             const RenderTask& task = graph.getTask(taskIndex);
             exec->setGraphicsShaders(static_cast<const GraphicsTask&>(task), graph, mVolxalizeVertexShader, &mVolxalizeGeometryShader, nullptr, nullptr, mVolxalizeFragmentShader);
 
-            UberShaderStateCache stateCache(exec, graph, task);
+            UberShaderStateCache stateCache(exec);
 
             for (const auto& mesh : meshes)
             {
