@@ -149,7 +149,8 @@ void LightFroxelationTechnique::render(RenderGraph&, RenderEngine* engine)
     // Frustum cull the lights and send to the gpu.
     Frustum frustum = engine->getCurrentSceneCamera().getFrustum();
     std::vector<Scene::Light*> visibleLightPtrs = engine->getScene()->getVisibleLights(frustum);
-    std::vector<Scene::Light> visibleLights(visibleLightPtrs.size());
+    std::vector<Scene::Light> visibleLights{};
+    visibleLights.reserve(visibleLightPtrs.size());
     std::transform(visibleLightPtrs.begin(), visibleLightPtrs.end(), std::back_inserter(visibleLights), []
             (const Scene::Light* light) { return *light; });
 
