@@ -15,8 +15,6 @@ ForwardCombinedLightingTechnique::ForwardCombinedLightingTechnique(RenderEngine*
 		  Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
 			   getDevice()->getSwapChain()->getSwapChainImageHeight()},
                FaceWindingOrder::CW, BlendMode::None, BlendMode::None, false, DepthTest::GreaterEqual, FillMode::Fill, Primitive::TriangleList },
-    mForwardCombinedVertexShader(eng->getShader("./Shaders/ForwardMaterial.vert")),
-    mForwardCombinedFragmentShader(eng->getShader("./Shaders/ForwardCombinedLighting.frag")),
 	mPointSampler(SamplerType::Point)
 {
 	GraphicsTask task{ "ForwardCombinedLighting", mDesc };
@@ -64,14 +62,9 @@ ForwardCombinedLightingTechnique::ForwardCombinedLightingTechnique(RenderEngine*
                 exec->bindIndexBuffer(eng->getIndexBuffer(), 0);
                 exec->bindVertexBuffer(eng->getVertexBuffer(), 0);
 
-                uint64_t currentMaterialFLags = ~0;
-
-                const RenderTask& task = graph.getTask(taskIndex);
-                Shader vertexShader = eng->getShader("./Shaders/ForwardMaterial.vert");
-
                 const BufferView& pred = eng->getRenderGraph().getBuffer(kOcclusionPredicationBuffer);
 
-                UberShaderMaterialStateCache stateCache(exec, eng, graph, task, vertexShader, "./Shaders/ForwardCombinedLighting.frag");
+                UberShaderCachedMaterialStateCache stateCache(exec, mMaterialPipelineVariants);
 
                 for (uint32_t i = 0; i < meshes.size(); ++i)
                 {
@@ -103,10 +96,7 @@ ForwardCombinedLightingTechnique::ForwardCombinedLightingTechnique(RenderEngine*
                 exec->bindIndexBuffer(eng->getIndexBuffer(), 0);
                 exec->bindVertexBuffer(eng->getVertexBuffer(), 0);
 
-                const RenderTask& task = graph.getTask(taskIndex);
-                Shader vertexShader = eng->getShader("./Shaders/ForwardMaterial.vert");
-
-                UberShaderMaterialStateCache stateCache(exec, eng, graph, task, vertexShader, "./Shaders/ForwardCombinedLighting.frag");
+                UberShaderCachedMaterialStateCache stateCache(exec, mMaterialPipelineVariants);
 
                 for (const auto& mesh : meshes)
                 {
@@ -128,4 +118,29 @@ ForwardCombinedLightingTechnique::ForwardCombinedLightingTechnique(RenderEngine*
 void ForwardCombinedLightingTechnique::bindResources(RenderGraph& graph)
 {
     graph.bindSampler(kForwardPoitnSampler, mPointSampler);
+}
+
+
+void ForwardCombinedLightingTechnique::postGraphCompilation(RenderGraph& graph, RenderEngine* engine)
+{
+    const Scene* scene = engine->getScene();
+    RenderDevice* device = engine->getDevice();
+    const std::vector<Scene::Material>& materials = scene->getMaterialDescriptions();
+    // compile pipelines for all material variants.
+    const RenderTask& task = graph.getTask(mTaskID);
+    Shader vertexShader = engine->getShader("./Shaders/ForwardMaterial.vert");
+    for(const auto& material : materials)
+    {
+        if(mMaterialPipelineVariants.find(material.mMaterialTypes) == mMaterialPipelineVariants.end())
+        {
+            ShaderDefine materialDefine("MATERIAL_FLAGS", material.mMaterialTypes);
+            Shader fragmentShader = engine->getShader("./Shaders/ForwardCombinedLighting.frag", materialDefine);
+
+            const PipelineHandle pipeline = device->compileGraphicsPipeline(static_cast<const GraphicsTask&>(task),
+                                                                            graph, vertexShader, nullptr,
+                                                                            nullptr, nullptr, fragmentShader);
+
+            mMaterialPipelineVariants.insert({material.mMaterialTypes, pipeline});
+        }
+    }
 }

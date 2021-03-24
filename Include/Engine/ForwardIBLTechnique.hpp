@@ -18,12 +18,15 @@ public:
 		return PassType::ForwardIBL;
 	}
 
-    virtual void render(RenderGraph&, RenderEngine*) {};
+    virtual void render(RenderGraph&, RenderEngine*) override final {};
 
-    virtual void bindResources(RenderGraph&) {}
+    virtual void bindResources(RenderGraph&) override final {}
+
+    virtual void postGraphCompilation(RenderGraph&, RenderEngine*) override final;
 
 private:
 
+    std::unordered_map<uint64_t, uint64_t> mMaterialPipelineVariants;
 	GraphicsPipelineDescription mDesc;
 
 	TaskID mTaskID;

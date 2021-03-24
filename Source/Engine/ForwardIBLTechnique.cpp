@@ -54,14 +54,9 @@ ForwardIBLTechnique::ForwardIBLTechnique(RenderEngine* eng, RenderGraph& graph) 
                 exec->bindIndexBuffer(eng->getIndexBuffer(), 0);
                 exec->bindVertexBuffer(eng->getVertexBuffer(), 0);
 
-                uint64_t currentMaterialFLags = ~0;
-
-                const RenderTask& task = graph.getTask(taskIndex);
-                Shader vertexShader = eng->getShader("./Shaders/ForwardMaterial.vert");
-
                 const BufferView& pred = eng->getRenderGraph().getBuffer(kOcclusionPredicationBuffer);
 
-                UberShaderMaterialStateCache stateCache(exec, eng, graph, task, vertexShader, "./Shaders/ForwardIBL.frag");
+                UberShaderCachedMaterialStateCache stateCache(exec, mMaterialPipelineVariants);
 
                 for (uint32_t i = 0; i < meshes.size(); ++i)
                 {
@@ -93,12 +88,7 @@ ForwardIBLTechnique::ForwardIBLTechnique(RenderEngine* eng, RenderGraph& graph) 
                 exec->bindIndexBuffer(eng->getIndexBuffer(), 0);
                 exec->bindVertexBuffer(eng->getVertexBuffer(), 0);
 
-                uint64_t currentMaterialFLags = ~0;
-
-                const RenderTask& task = graph.getTask(taskIndex);
-                Shader vertexShader = eng->getShader("./Shaders/ForwardMaterial.vert");
-
-                UberShaderMaterialStateCache stateCache(exec, eng, graph, task, vertexShader, "./Shaders/ForwardIBL.frag");
+                UberShaderCachedMaterialStateCache stateCache(exec, mMaterialPipelineVariants);
 
                 for (const auto& mesh : meshes)
                 {
@@ -113,4 +103,29 @@ ForwardIBLTechnique::ForwardIBLTechnique(RenderEngine* eng, RenderGraph& graph) 
     }
 
 	mTaskID = graph.addTask(task);
+}
+
+
+void ForwardIBLTechnique::postGraphCompilation(RenderGraph& graph, RenderEngine* engine)
+{
+    const Scene* scene = engine->getScene();
+    RenderDevice* device = engine->getDevice();
+    const std::vector<Scene::Material>& materials = scene->getMaterialDescriptions();
+    // compile pipelines for all material variants.
+    const RenderTask& task = graph.getTask(mTaskID);
+    Shader vertexShader = engine->getShader("./Shaders/ForwardMaterial.vert");
+    for(const auto& material : materials)
+    {
+        if(mMaterialPipelineVariants.find(material.mMaterialTypes) == mMaterialPipelineVariants.end())
+        {
+            ShaderDefine materialDefine("MATERIAL_FLAGS", material.mMaterialTypes);
+            Shader fragmentShader = engine->getShader("./Shaders/ForwardIBL.frag", materialDefine);
+
+            const PipelineHandle pipeline = device->compileGraphicsPipeline(static_cast<const GraphicsTask&>(task),
+                                                                            graph, vertexShader, nullptr,
+                                                                            nullptr, nullptr, fragmentShader);
+
+            mMaterialPipelineVariants.insert({material.mMaterialTypes, pipeline});
+        }
+    }
 }

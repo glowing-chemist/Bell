@@ -18,16 +18,17 @@ public:
 		return PassType::ForwardCombinedLighting;
 	}
 
-    virtual void render(RenderGraph&, RenderEngine*) {}
+    virtual void render(RenderGraph&, RenderEngine*) override final {}
 
-	virtual void bindResources(RenderGraph& graph);
+	virtual void bindResources(RenderGraph& graph) override final;
+
+    virtual void postGraphCompilation(RenderGraph&, RenderEngine*) override final;
 
 private:
 
 	GraphicsPipelineDescription mDesc;
 
-    Shader mForwardCombinedVertexShader;
-    Shader mForwardCombinedFragmentShader;
+    std::unordered_map<uint64_t, uint64_t> mMaterialPipelineVariants;
 
 	TaskID mTaskID;
 
