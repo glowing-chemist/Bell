@@ -12,7 +12,7 @@ public:
     virtual ~SkinningTechnique() = default;
 
     virtual PassType getPassType() const final override
-        { return PassType::Animation; }
+        { return PassType::ComputeSkinning; }
 
     virtual void bindResources(RenderGraph&) override final;
     virtual void render(RenderGraph&, RenderEngine*) override final {}

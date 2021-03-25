@@ -225,7 +225,7 @@ void StaticMesh::configure(const aiScene* scene, const aiMesh* mesh, const float
 }
 
 
-uint16_t StaticMesh::findBoneParent(const aiNode* bone, aiBone** const skeleton, const uint32_t boneCount)
+uint16_t StaticMesh::findBoneParent(const aiNode* bone, aiBone** const skeleton, const uint32_t boneCount, float4x4& localTransform)
 {
     const aiNode* currentNode = bone;
     while(currentNode->mParent)
@@ -237,6 +237,7 @@ uint16_t StaticMesh::findBoneParent(const aiNode* bone, aiBone** const skeleton,
                 return i;
         }
 
+        localTransform = aiMatrix4x4ToFloat4x4(currentNode->mTransformation) * localTransform;
         currentNode = parent;
     }
 
@@ -266,7 +267,9 @@ void StaticMesh::loadSkeleton(const aiScene* scene, const aiMesh* mesh, SubMesh&
 
             const aiNode* boneNode = rootNode->FindNode(assimpBone->mName);
             BELL_ASSERT(boneNode, "Can't find bone node")
-            bone.mParentIndex = boneIndexOffset + findBoneParent(boneNode, mesh->mBones, mesh->mNumBones);
+            float4x4 localMatrix = float4x4(1.0f);
+            bone.mParentIndex = boneIndexOffset + findBoneParent(boneNode, mesh->mBones, mesh->mNumBones, localMatrix);
+            bone.mLocalMatrix = localMatrix;
 
             float4 topLeft{std::numeric_limits<float>::infinity(), std::numeric_limits<float>::infinity(), std::numeric_limits<float>::infinity(), 1.0f};
             float4 bottumRight{-std::numeric_limits<float>::infinity(), -std::numeric_limits<float>::infinity(), -std::numeric_limits<float>::infinity(), 1.0f};

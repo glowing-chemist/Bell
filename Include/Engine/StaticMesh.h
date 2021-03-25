@@ -60,6 +60,7 @@ struct Bone
     std::string mName;
     uint16_t mParentIndex;
     float4x4 mInverseBindPose;
+    float4x4 mLocalMatrix;
     OBB mOBB;
 };
 
@@ -201,7 +202,7 @@ private:
 
     void configure(const aiScene *scene, const aiMesh* mesh, const float4x4 transform, const int vertexAttributes);
 
-    uint16_t findBoneParent(const aiNode*, aiBone** const, const uint32_t);
+    uint16_t findBoneParent(const aiNode*, aiBone** const, const uint32_t, float4x4&);
     void loadSkeleton(const aiScene* scene, const aiMesh* mesh, SubMesh& submesh);
     void loadBlendMeshed(const aiMesh* mesh);
 

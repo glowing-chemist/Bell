@@ -233,7 +233,7 @@ namespace
                 return newNode;
             }
 
-            case NodeTypes::Animation:
+            case NodeTypes::ComputeSkinning:
             {
                 std::shared_ptr<EditorNode> newNode = std::make_shared<PassNode>("Skinning", passType);
                 return newNode;
@@ -754,7 +754,7 @@ void Editor::drawAssistantWindow()
            drawPassContextMenu(PassType::SSR);
            drawPassContextMenu(PassType::RayTracedReflections);
            drawPassContextMenu(PassType::Transparent);
-           drawPassContextMenu(PassType::Animation);
+           drawPassContextMenu(PassType::ComputeSkinning);
            drawPassContextMenu(PassType::Voxelize);
            drawPassContextMenu(PassType::VisualizeLightProbes);
            drawPassContextMenu(PassType::OcclusionCulling);

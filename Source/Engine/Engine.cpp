@@ -360,7 +360,7 @@ std::unique_ptr<Technique> RenderEngine::getSingleTechnique(const PassType passT
         case PassType::CascadingShadow:
             return std::make_unique<CascadeShadowMappingTechnique>(this, mCurrentRenderGraph);
 
-        case PassType::Animation:
+        case PassType::ComputeSkinning:
             return std::make_unique<SkinningTechnique>(this, mCurrentRenderGraph);
 
         case PassType::LightProbeDeferredGI:

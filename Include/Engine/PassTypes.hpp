@@ -6,7 +6,7 @@
 
 #define PASS_TYPES  DepthPre = 1ULL, \
                     GBuffer = 1ULL << 1, \
-                    Animation = 1ULL << 2, \
+                    ComputeSkinning = 1ULL << 2, \
                     Shadow = 1ULL << 3, \
                     CascadingShadow = 1ULL << 4, \
                     SSAO = 1ULL << 5, \
@@ -127,7 +127,7 @@ inline const char* passToString(const PassType passType)
         case PassType::CascadingShadow:
             return "Cascade_Shadow_Map";
 
-        case PassType::Animation:
+        case PassType::ComputeSkinning:
             return "Skinning";
 
         case PassType::Voxelize:
