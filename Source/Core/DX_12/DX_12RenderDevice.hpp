@@ -14,6 +14,18 @@ public:
 
 	virtual CommandContextBase*		   getCommandContext(const uint32_t index, const QueueType) override;
 
+    virtual PipelineHandle             compileGraphicsPipeline(const GraphicsTask& task,
+                                                       const RenderGraph& graph,
+                                                       const Shader& vertexShader,
+                                                       const Shader* geometryShader,
+                                                       const Shader* tessControl,
+                                                       const Shader* tessEval,
+                                                       const Shader& fragmentShader) override;
+
+    virtual PipelineHandle             compileComputePipeline(const ComputeTask& task,
+                                                              const RenderGraph& graph,
+                                                              const Shader& compuetShader) override;
+
 	virtual void                       startFrame() override;
 	virtual void                       endFrame() override;
 

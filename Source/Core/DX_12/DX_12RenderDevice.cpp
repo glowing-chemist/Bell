@@ -74,6 +74,28 @@ CommandContextBase* DX_12RenderDevice::getCommandContext(const uint32_t index, c
 }
 
 
+PipelineHandle DX_12RenderDevice::compileGraphicsPipeline(const GraphicsTask& task,
+                                                           const RenderGraph& graph,
+                                                           const Shader& vertexShader,
+                                                           const Shader* geometryShader,
+                                                           const Shader* tessControl,
+                                                           const Shader* tessEval,
+                                                           const Shader& fragmentShader)
+{
+    BELL_TRAP;
+    return 0ULL;
+}
+
+
+PipelineHandle DX_12RenderDevice::compileComputePipeline(const ComputeTask& task,
+                                                          const RenderGraph& graph,
+                                                          const Shader& computeShader)
+{
+    BELL_TRAP;
+    return 0ULL;
+}
+
+
 void DX_12RenderDevice::startFrame()
 {
 	ID3D12Fence* currentFence = mFrameComplete[mCurrentFrameIndex];
@@ -212,7 +234,7 @@ D3D12MA::ALLOCATION_DESC DX_12RenderDevice::getResourceAllocationDescription(con
 {
 	D3D12MA::ALLOCATION_DESC desc{};
 	desc.CustomPool = nullptr;
-	desc.HeapType = usage & ImageUsage::TransferSrc ? D3D12_HEAP_TYPE::D3D12_HEAP_TYPE_UPLOAD : D3D12_HEAP_TYPE::D3D12_HEAP_TYPE_DEFAULT;
+	desc.HeapType = D3D12_HEAP_TYPE::D3D12_HEAP_TYPE_DEFAULT;
 	desc.Flags = D3D12MA::ALLOCATION_FLAG_NONE;
 	desc.ExtraHeapFlags = D3D12_HEAP_FLAG_ALLOW_ALL_BUFFERS_AND_TEXTURES;
 

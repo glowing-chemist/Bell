@@ -19,7 +19,7 @@ DX_12RenderInstance::DX_12RenderInstance(GLFWwindow* window) :
 	factoryFlags |= DXGI_CREATE_FACTORY_DEBUG;
 #endif
 	HRESULT result = CreateDXGIFactory2(factoryFlags, IID_PPV_ARGS(&mFactory));
-	BELL_ASSERT(result == S_OK, "Failed to create instace factory");
+	BELL_ASSERT(result == S_OK, "Failed to create instance factory");
 }
 
 
@@ -62,6 +62,10 @@ RenderDevice* DX_12RenderInstance::createRenderDevice(const int DeviceFeatureFla
 	mFactory->EnumAdapterByLuid(adapterLUID, IID_PPV_ARGS(&chosenAdapter));
 	BELL_ASSERT(chosenAdapter, "Unable to fetch adapter");
 	mAdapter = chosenAdapter;
+
+    DXGI_ADAPTER_DESC1 chosenDesc;
+    mAdapter->GetDesc1(&chosenDesc);
+    BELL_LOG_ARGS("Chosen device %S", chosenDesc.Description)
 
 	ID3D12Device6* device = nullptr;
 	HRESULT result = D3D12CreateDevice(chosenAdapter, D3D_FEATURE_LEVEL_12_0, IID_PPV_ARGS(&device));

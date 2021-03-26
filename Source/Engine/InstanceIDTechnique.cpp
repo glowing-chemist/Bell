@@ -1,6 +1,7 @@
 #include "Engine/InstanceIDTechnique.hpp"
 #include "RenderGraph/GraphicsTask.hpp"
 #include "Engine/DefaultResourceSlots.hpp"
+#include "Core/Executor.hpp"
 
 #include "Engine/Engine.hpp"
 

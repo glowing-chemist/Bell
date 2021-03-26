@@ -4,6 +4,7 @@
 #include "Engine/UberShaderStateCache.hpp"
 #include "Core/BellLogging.hpp"
 #include "Core/Profiling.hpp"
+#include "Core/Executor.hpp"
 
 #include "assimp/Importer.hpp"
 #include "assimp/postprocess.h"
