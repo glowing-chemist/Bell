@@ -85,6 +85,7 @@ elseif(DX_12)
 		Source/Core/DX_12/DX_12Shader.cpp
 		Source/Core/DX_12/DX_12SwapChain.cpp
 		Source/Core/DX_12/DX_12ShaderResourceSet.cpp
+		Source/Core/DX_12/DX_12Executor.cpp
 		
 		ThirdParty/D3D12MemoryAllocator/src/D3D12MemAlloc.cpp
 		)

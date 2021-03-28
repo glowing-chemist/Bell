@@ -73,8 +73,15 @@ public:
 
     virtual void blitImage(const ImageView& dst, const ImageView& src, const SamplerType) = 0;
 
-    virtual uint32_t getRecordedCommandCount() = 0;
-    virtual void      resetRecordedCommandCount() = 0;
+    uint32_t getRecordedCommandCount() const
+    {
+        return mRecordedCommands;
+    }
+
+    void resetRecordedCommandCount()
+    {
+        mRecordedCommands = 0;
+    }
 
     void setSubmitFlag()
     {
@@ -91,8 +98,10 @@ public:
         return mSubmitFlag;
     }
 
-private:
+protected:
+    uint32_t mRecordedCommands;
 
+private:
     bool mSubmitFlag;
 };
 

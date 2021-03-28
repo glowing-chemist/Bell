@@ -98,17 +98,17 @@ void DX_12Image::setContents(   const void* data,
                                 const int32_t offsety,
                                 const int32_t offsetz)
 {
-    BELL_TRAP;
+    BELL_LOG("DX_12Image::SetContents not implemented")
 }
 
 
 void DX_12Image::clear(const float4&)
 {
-    BELL_TRAP;
+    BELL_LOG("DX_12Image::clear not implemented")
 }
 
 
 void DX_12Image::generateMips()
 {
-    BELL_TRAP;
+    BELL_LOG("DX_12Image::generateMips not implemented")
 }

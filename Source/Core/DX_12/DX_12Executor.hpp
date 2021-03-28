@@ -9,8 +9,8 @@
 class DX12_Executor : public Executor
 {
 public:
-    DX12_Executor(RenderDevice*, ID3D12CommandList*);
-    virtual ~DX12_Executor();
+    DX12_Executor(RenderDevice*, ID3D12GraphicsCommandList*);
+    virtual ~DX12_Executor() {};
 
     virtual void draw(const uint32_t vertexOffset, const uint32_t vertexCount) override final;
 
@@ -62,11 +62,8 @@ public:
 
     virtual void blitImage(const ImageView& dst, const ImageView& src, const SamplerType) override final;
 
-    virtual uint32_t getRecordedCommandCount() override final;
-    virtual void      resetRecordedCommandCount() override final;
-
 private:
-    ID3D12CommandList* mCommandList;
+    ID3D12GraphicsCommandList* mCommandList;
 };
 
 #endif

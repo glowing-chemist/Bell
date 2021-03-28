@@ -65,16 +65,6 @@ public:
 
     virtual void setComputePipeline(const uint64_t) override;
 
-    virtual uint32_t getRecordedCommandCount() override
-    {
-        return mRecordedCommands;
-    }
-
-    virtual void      resetRecordedCommandCount() override
-    {
-        mRecordedCommands = 0;
-    }
-
     uint64_t getAndClearSemaphoreReadSignalValue()
     {
         const uint64_t value = mMaxSemaphoreReadSignal;
@@ -105,7 +95,6 @@ private:
     PFN_vkCmdBeginConditionalRenderingEXT mBeginConditionalRenderingFPtr;
     PFN_vkCmdEndConditionalRenderingEXT   mEndConditionalRenderingFPtr;
 
-    uint32_t mRecordedCommands;
     uint64_t mMaxSemaphoreReadSignal;
     uint64_t mMaxSemaphoreWriteSignal;
 };

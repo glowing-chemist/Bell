@@ -20,17 +20,17 @@ public:
 
 	~DX_12ImageView();
 
-	D3D12_RENDER_TARGET_VIEW_DESC getRenderTarget() const
+	D3D12_CPU_DESCRIPTOR_HANDLE getRenderTarget() const
 	{
 		return mRenderTarget;
 	}
 
-	D3D12_UNORDERED_ACCESS_VIEW_DESC getUnorderedAccessView() const
+    D3D12_CPU_DESCRIPTOR_HANDLE getUnorderedAccessView() const
 	{
 		return mUAV;
 	}
 
-	D3D12_SHADER_RESOURCE_VIEW_DESC  getShaderResourceView() const 
+    D3D12_CPU_DESCRIPTOR_HANDLE  getShaderResourceView() const
 	{
 		return mSRV;
 	}
@@ -42,9 +42,9 @@ public:
 
 private:
 
-	D3D12_RENDER_TARGET_VIEW_DESC mRenderTarget;
-	D3D12_UNORDERED_ACCESS_VIEW_DESC  mUAV;
-	D3D12_SHADER_RESOURCE_VIEW_DESC  mSRV;
+    D3D12_CPU_DESCRIPTOR_HANDLE mRenderTarget;
+    D3D12_CPU_DESCRIPTOR_HANDLE  mUAV;
+    D3D12_CPU_DESCRIPTOR_HANDLE  mSRV;
 
 	ID3D12Resource* mResource;
 

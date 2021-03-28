@@ -20,14 +20,18 @@ DX_12ImageView::DX_12ImageView(Image& parentImage,
 
 	if (mUsage & ImageUsage::ColourAttachment || mUsage & ImageUsage::DepthStencil)
 	{
-		mRenderTarget.Format = getDX12ImageFormat(mImageFormat);
-		mRenderTarget.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
-		mRenderTarget.Texture2D = {lod, level};
+	    D3D12_RENDER_TARGET_VIEW_DESC renderTarget{};
+        renderTarget.Format = getDX12ImageFormat(mImageFormat);
+        renderTarget.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
+        renderTarget.Texture2D = {lod, level};
+
+        // TODO add to cpu descriptor pool
 	}
 
 	if (mUsage & ImageUsage::Sampled) // create SRV.
 	{
-		mSRV.Format = getDX12ImageFormat(mImageFormat);
+	    D3D12_SHADER_RESOURCE_VIEW_DESC SRV{};
+        SRV.Format = getDX12ImageFormat(mImageFormat);
 		D3D12_SRV_DIMENSION dimensions = D3D12_SRV_DIMENSION::D3D12_SRV_DIMENSION_TEXTURE1D;
 		const ImageExtent extent = parentImage->getExtent(0, 0);
 		if (extent.height > 1)
@@ -36,29 +40,32 @@ DX_12ImageView::DX_12ImageView(Image& parentImage,
 			dimensions = D3D12_SRV_DIMENSION::D3D12_SRV_DIMENSION_TEXTURE2DARRAY;
 		if (extent.depth > 1)
 			dimensions = D3D12_SRV_DIMENSION::D3D12_SRV_DIMENSION_TEXTURE3D;
-		mSRV.ViewDimension = dimensions;
+        SRV.ViewDimension = dimensions;
 		
 		if (dimensions == D3D12_SRV_DIMENSION::D3D12_SRV_DIMENSION_TEXTURE1D)
 		{
-			mSRV.Texture1D = { lod, lodCount, 16.0f };
+            SRV.Texture1D = { lod, lodCount, 16.0f };
 		}
 		else if (dimensions == D3D12_SRV_DIMENSION::D3D12_SRV_DIMENSION_TEXTURE2D)
 		{
-			mSRV.Texture2D = {lod, lodCount, level, 16.0f};
+            SRV.Texture2D = {lod, lodCount, level, 16.0f};
 		}
 		else if (dimensions == D3D12_SRV_DIMENSION::D3D12_SRV_DIMENSION_TEXTURE2DARRAY)
 		{
-			mSRV.Texture2DArray = {lod, lodCount, level, levelCount, level, 16.0f};
+            SRV.Texture2DArray = {lod, lodCount, level, levelCount, level, 16.0f};
 		}
 		else
 		{
-			mSRV.Texture3D = {lod, lodCount, 16.0f};
+            SRV.Texture3D = {lod, lodCount, 16.0f};
 		}
+
+        // TODO add to cpu descriptor pool
 	}
 
 	if (mUsage & ImageUsage::Storage) // create UAV
 	{
-		mUAV.Format = getDX12ImageFormat(mImageFormat);
+	    D3D12_UNORDERED_ACCESS_VIEW_DESC UAV{};
+        UAV.Format = getDX12ImageFormat(mImageFormat);
 		D3D12_UAV_DIMENSION dimensions = D3D12_UAV_DIMENSION::D3D12_UAV_DIMENSION_TEXTURE1D;
 		const ImageExtent extent = parentImage->getExtent(0, 0);
 		if (extent.height > 1)
@@ -67,23 +74,25 @@ DX_12ImageView::DX_12ImageView(Image& parentImage,
 			dimensions = D3D12_UAV_DIMENSION::D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
 		if (extent.depth > 1)
 			dimensions = D3D12_UAV_DIMENSION::D3D12_UAV_DIMENSION_TEXTURE3D;
-		mUAV.ViewDimension = dimensions;
+        UAV.ViewDimension = dimensions;
 		if (dimensions == D3D12_UAV_DIMENSION::D3D12_UAV_DIMENSION_TEXTURE1D)
 		{
-			mUAV.Texture1D = { lod};
+            UAV.Texture1D = { lod};
 		}
 		else if (dimensions == D3D12_UAV_DIMENSION::D3D12_UAV_DIMENSION_TEXTURE2D)
 		{
-			mUAV.Texture2D = { lod, level};
+            UAV.Texture2D = { lod, level};
 		}
 		else if (dimensions == D3D12_UAV_DIMENSION::D3D12_UAV_DIMENSION_TEXTURE2DARRAY)
 		{
-			mUAV.Texture2DArray = { lod, level, levelCount, level };
+            UAV.Texture2DArray = { lod, level, levelCount, level };
 		}
 		else
 		{
-			mUAV.Texture3D = { lod, 0,  extent.depth};
+            UAV.Texture3D = { lod, 0,  extent.depth};
 		}
+
+        // TODO add to cpu descriptor pool
 	}
 }
 
