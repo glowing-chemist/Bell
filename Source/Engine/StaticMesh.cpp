@@ -253,9 +253,6 @@ void StaticMesh::loadSkeleton(const aiScene* scene, const aiMesh* mesh)
         {
             const aiBone* assimpBone = mesh->mBones[i];
 
-            if(assimpBone->mNumWeights == 0)
-                continue;
-
             Bone bone{};
             bone.mName = assimpBone->mName.C_Str();
             bone.mInverseBindPose = aiMatrix4x4ToFloat4x4(assimpBone->mOffsetMatrix);
@@ -318,7 +315,7 @@ void StaticMesh::loadBlendMeshed(const aiMesh* mesh)
 {
     for (uint32_t i = 0; i < mesh->mNumAnimMeshes; ++i)
     {
-        mBlendMeshes.push_back(MeshBlend(mesh->mAnimMeshes[i]));
+        mBlendMeshes.emplace_back(mesh->mAnimMeshes[i]);
     }
 }
 

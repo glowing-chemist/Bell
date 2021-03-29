@@ -43,7 +43,7 @@ SkeletalAnimation::SkeletalAnimation(const StaticMesh& mesh, const aiAnimation* 
     const Bone& rootBone = bones[0];
     BELL_ASSERT(rootBone.mParentIndex == 0XFFFF, "not root bone")
     const aiNode* rootBoneNode = scene->mRootNode->FindNode(rootBone.mName.c_str());
-    mRootTransform = glm::inverse(rootBone.mLocalMatrix) * aiMatrix4x4ToFloat4x4(rootBoneNode->mTransformation);
+    mRootTransform = rootBone.mLocalMatrix * glm::inverse(aiMatrix4x4ToFloat4x4(rootBoneNode->mTransformation));
 }
 
 
@@ -63,6 +63,7 @@ std::vector<float4x4> SkeletalAnimation::calculateBoneMatracies(const StaticMesh
             transform = bone.mLocalMatrix;
         else
             transform = transforms.getBoneTransform(tick);
+
         uint16_t parent = bone.mParentIndex;
         while(parent != 0xFFFF)
         {
@@ -71,10 +72,13 @@ std::vector<float4x4> SkeletalAnimation::calculateBoneMatracies(const StaticMesh
             BoneTransform &parentTransforms = mBones[parentBone.mName];
             float4x4 parentTransform = parentTransforms.getBoneTransform(tick);
 
-            transform = parentTransform * transform;
+            if(parent != 0XFFFF)
+                transform = parentTransform * transform;
+            else
+                transform = mRootTransform * transform;
         }
 
-        boneTransforms.emplace_back(transform * mRootTransform * bone.mInverseBindPose);
+        boneTransforms.emplace_back(transform * bone.mInverseBindPose);
     }
 
     return boneTransforms;
