@@ -82,7 +82,7 @@ private:
     std::string mName;
     double mNumTicks;
     double mTicksPerSec;
-    float4x4 mInverseGlobalTransform;
+    float4x4 mRootTransform;
 
     std::map<std::string, BoneTransform> mBones;
 };

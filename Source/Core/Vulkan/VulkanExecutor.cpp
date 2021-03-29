@@ -11,7 +11,6 @@
 VulkanExecutor::VulkanExecutor(RenderDevice *dev, vk::CommandBuffer cmdBuffer) :
     Executor(dev),
     mCommandBuffer{ cmdBuffer },
-    mRecordedCommands{0},
     mMaxSemaphoreReadSignal{~0ULL},
     mMaxSemaphoreWriteSignal{~0ULL}
 {

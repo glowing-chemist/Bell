@@ -29,7 +29,6 @@ StaticMesh::StaticMesh(const std::string& path, const int vertAttributes, const 
 	mVertexData{},
 	mIndexData{},
     mAABB{{INFINITY, INFINITY, INFINITY, INFINITY}, {-INFINITY, -INFINITY, -INFINITY, -INFINITY}},
-    mBoneCount(0),
 	mVertexCount(0),
     mVertexAttributes(vertAttributes),
     mVertexStride(0)
@@ -56,7 +55,6 @@ StaticMesh::StaticMesh(const std::string& path, const int vertAttributes, const 
 StaticMesh::StaticMesh(const aiScene *scene, const aiMesh* mesh, const int vertexAttributes) :
     mAABB{{INFINITY, INFINITY, INFINITY, INFINITY}, {-INFINITY, -INFINITY, -INFINITY, -INFINITY}},
     mVertexAttributes(vertexAttributes),
-    mBoneCount(0),
     mVertexCount(0)
 {
     configure(scene, mesh, float4x4(1.0f), vertexAttributes);
@@ -68,7 +66,6 @@ StaticMesh::StaticMesh(const aiScene *scene, const aiMesh* mesh, const int verte
 StaticMesh::StaticMesh(const aiScene* scene, const int vertexAttributes) :
         mAABB{{INFINITY, INFINITY, INFINITY, INFINITY}, {-INFINITY, -INFINITY, -INFINITY, -INFINITY}},
         mVertexAttributes(vertexAttributes),
-        mBoneCount(0),
         mVertexCount(0)
 {
     parseNode(scene,
@@ -218,24 +215,21 @@ void StaticMesh::configure(const aiScene* scene, const aiMesh* mesh, const float
     submeshAABB = submeshAABB * transform;
     mAABB = AABB{componentWiseMin(submeshAABB.getMin(), mAABB.getMin()), componentWiseMax(submeshAABB.getMax(), mAABB.getMax())};
 
-    loadSkeleton(scene, mesh, newSubMesh);
+    loadSkeleton(scene, mesh);
     loadBlendMeshed(mesh);
 
     mSubMeshes.push_back(newSubMesh);
 }
 
 
-uint16_t StaticMesh::findBoneParent(const aiNode* bone, aiBone** const skeleton, const uint32_t boneCount, float4x4& localTransform)
+uint16_t StaticMesh::findBoneParent(const aiNode* bone, float4x4& localTransform)
 {
     const aiNode* currentNode = bone;
     while(currentNode->mParent)
     {
         const aiNode* parent = currentNode->mParent;
-        for(uint16_t i = 0; i < boneCount; ++i)
-        {
-            if(parent->mName == skeleton[i]->mName)
-                return i;
-        }
+        if(mBoneIndexMap.find(parent->mName.C_Str()) != mBoneIndexMap.end())
+            return mBoneIndexMap[parent->mName.C_Str()];
 
         localTransform = aiMatrix4x4ToFloat4x4(currentNode->mTransformation) * localTransform;
         currentNode = parent;
@@ -245,21 +239,22 @@ uint16_t StaticMesh::findBoneParent(const aiNode* bone, aiBone** const skeleton,
 }
 
 
-void StaticMesh::loadSkeleton(const aiScene* scene, const aiMesh* mesh, SubMesh& submesh)
+void StaticMesh::loadSkeleton(const aiScene* scene, const aiMesh* mesh)
 {
     if(mesh->mNumBones > 0)
     {
-        submesh.mSkeleton.reserve(mesh->mNumBones);
         std::vector<BoneIndicies> bonesPerVertex;
         bonesPerVertex.resize(mVertexCount);
-        submesh.mBoneWeightsIndicies.resize(mVertexCount);
+        mBoneWeightsIndicies.resize(mVertexCount);
 
-        const uint32_t boneIndexOffset = mBoneCount;
         const aiNode* rootNode = scene->mRootNode;
 
         for(uint32_t i = 0; i < mesh->mNumBones; ++i)
         {
             const aiBone* assimpBone = mesh->mBones[i];
+
+            if(assimpBone->mNumWeights == 0)
+                continue;
 
             Bone bone{};
             bone.mName = assimpBone->mName.C_Str();
@@ -267,8 +262,8 @@ void StaticMesh::loadSkeleton(const aiScene* scene, const aiMesh* mesh, SubMesh&
 
             const aiNode* boneNode = rootNode->FindNode(assimpBone->mName);
             BELL_ASSERT(boneNode, "Can't find bone node")
-            float4x4 localMatrix = float4x4(1.0f);
-            bone.mParentIndex = boneIndexOffset + findBoneParent(boneNode, mesh->mBones, mesh->mNumBones, localMatrix);
+            float4x4 localMatrix = aiMatrix4x4ToFloat4x4(boneNode->mTransformation);
+            bone.mParentIndex = findBoneParent(boneNode, localMatrix);
             bone.mLocalMatrix = localMatrix;
 
             float4 topLeft{std::numeric_limits<float>::infinity(), std::numeric_limits<float>::infinity(), std::numeric_limits<float>::infinity(), 1.0f};
@@ -290,7 +285,7 @@ void StaticMesh::loadSkeleton(const aiScene* scene, const aiMesh* mesh, SubMesh&
                 BoneIndicies& indicies = bonesPerVertex[weight.mVertexId];
                 indicies.mBoneIndices.emplace_back();
                 BoneIndex& boneIndex = indicies.mBoneIndices.back();
-                boneIndex.mBone = mBoneCount;
+                boneIndex.mBone = mSkeleton.size();
                 boneIndex.mWeight = weight.mWeight;
             }
 
@@ -300,8 +295,8 @@ void StaticMesh::loadSkeleton(const aiScene* scene, const aiMesh* mesh, SubMesh&
                             float3{initialAABB.getSideLengths() / 2.0f},
                             float3{initialAABB.getMin()}};
 
-            submesh.mSkeleton.push_back(bone);
-            ++mBoneCount;
+            mBoneIndexMap[bone.mName] = mSkeleton.size();
+            mSkeleton.push_back(bone);
         }
 
         // Now generate bone weights offsets per vertex.
@@ -309,11 +304,11 @@ void StaticMesh::loadSkeleton(const aiScene* scene, const aiMesh* mesh, SubMesh&
         {
             const BoneIndicies& index = bonesPerVertex[i];
 
-            uint2& indexSize = submesh.mBoneWeightsIndicies[i];
-            indexSize.x = submesh.mBoneWeights.size();
+            uint2& indexSize = mBoneWeightsIndicies[i];
+            indexSize.x = mBoneWeights.size();
             indexSize.y = index.mBoneIndices.size();
 
-            submesh.mBoneWeights.insert(submesh.mBoneWeights.end(), index.mBoneIndices.begin(), index.mBoneIndices.end());
+            mBoneWeights.insert(mBoneWeights.end(), index.mBoneIndices.begin(), index.mBoneIndices.end());
         }
     }
 }

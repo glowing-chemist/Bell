@@ -89,10 +89,6 @@ struct SubMesh
     uint32_t mIndexCount;
 
     float4x4 mTransform;
-
-    std::vector<Bone> mSkeleton;
-    std::vector<BoneIndex> mBoneWeights;
-    std::vector<uint2> mBoneWeightsIndicies;
 };
 
 class StaticMesh
@@ -190,7 +186,7 @@ public:
 
     uint32_t getBoneCount() const
     {
-        return mBoneCount;
+        return mSkeleton.size();
     }
 
     uint32_t getSubMeshCount() const
@@ -198,12 +194,27 @@ public:
 	return mSubMeshes.size();
     }
 
+    const std::vector<Bone>& getSkeleton() const
+    {
+        return mSkeleton;
+    }
+
+    const std::vector<BoneIndex>& getBoneWeights() const
+    {
+        return mBoneWeights;
+    }
+
+    const std::vector<uint2>& getBoneIndicies() const
+    {
+        return mBoneWeightsIndicies;
+    }
+
 private:
 
     void configure(const aiScene *scene, const aiMesh* mesh, const float4x4 transform, const int vertexAttributes);
 
-    uint16_t findBoneParent(const aiNode*, aiBone** const, const uint32_t, float4x4&);
-    void loadSkeleton(const aiScene* scene, const aiMesh* mesh, SubMesh& submesh);
+    uint16_t findBoneParent(const aiNode*, float4x4&);
+    void loadSkeleton(const aiScene* scene, const aiMesh* mesh);
     void loadBlendMeshed(const aiMesh* mesh);
 
     void loadAnimations(const aiScene*);
@@ -217,6 +228,11 @@ private:
 
     std::vector<SubMesh> mSubMeshes;
 
+    std::unordered_map<std::string, uint32_t> mBoneIndexMap;
+    std::vector<Bone> mSkeleton;
+    std::vector<BoneIndex> mBoneWeights;
+    std::vector<uint2> mBoneWeightsIndicies;
+
     VertexBuffer         mVertexData;
     std::vector<uint32_t> mIndexData;
 
@@ -227,7 +243,6 @@ private:
 
     AABB mAABB;
 
-    uint32_t mBoneCount;
 	uint64_t mVertexCount;
     int mVertexAttributes;
 	uint32_t mVertexStride;

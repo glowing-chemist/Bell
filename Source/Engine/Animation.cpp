@@ -27,21 +27,23 @@ namespace
 
 
 SkeletalAnimation::SkeletalAnimation(const StaticMesh& mesh, const aiAnimation* anim, const aiScene* scene) :
-    mName(anim->mName.C_Str()),
-    mNumTicks(anim->mDuration),
-    mTicksPerSec(anim->mTicksPerSecond),
-    mInverseGlobalTransform(glm::inverse(aiMatrix4x4ToFloat4x4(scene->mRootNode->mTransformation))),
-    mBones()
+        mName(anim->mName.C_Str()),
+        mNumTicks(anim->mDuration),
+        mTicksPerSec(anim->mTicksPerSecond),
+        mRootTransform(1.0f),
+        mBones()
 {
-    const std::vector<SubMesh>& subMeshes = mesh.getSubMeshes();
-    for(const auto& subMesh : subMeshes)
+    const std::vector<Bone> &bones = mesh.getSkeleton();
+    for (const auto &bone : bones)
     {
-        const std::vector<Bone> &bones = subMesh.mSkeleton;
-        for (const auto &bone : bones)
-        {
-            readNodeHierarchy(anim, bone.mName, scene->mRootNode);
-        }
+        readNodeHierarchy(anim, bone.mName, scene->mRootNode);
     }
+
+    // get all transforms from scene root to root bone
+    const Bone& rootBone = bones[0];
+    BELL_ASSERT(rootBone.mParentIndex == 0XFFFF, "not root bone")
+    const aiNode* rootBoneNode = scene->mRootNode->FindNode(rootBone.mName.c_str());
+    mRootTransform = glm::inverse(rootBone.mLocalMatrix) * aiMatrix4x4ToFloat4x4(rootBoneNode->mTransformation);
 }
 
 
@@ -50,27 +52,29 @@ std::vector<float4x4> SkeletalAnimation::calculateBoneMatracies(const StaticMesh
     const std::vector<SubMesh>& subMeshes = mesh.getSubMeshes();
     std::vector<float4x4> boneTransforms{};
     boneTransforms.reserve(mesh.getBoneCount());
-    for(const auto& subMesh : subMeshes)
+
+    const auto &bones = mesh.getSkeleton();
+    for (const auto &bone : bones)
     {
-        const auto &bones = subMesh.mSkeleton;
-        for (const auto &bone : bones)
+        BELL_ASSERT(mBones.find(bone.mName) != mBones.end(), "Bone not found")
+        BoneTransform &transforms = mBones[bone.mName];
+        float4x4 transform{};
+        if(transforms.mScales.empty() && transforms.mPositions.empty() && transforms.mRotations.empty())
+            transform = bone.mLocalMatrix;
+        else
+            transform = transforms.getBoneTransform(tick);
+        uint16_t parent = bone.mParentIndex;
+        while(parent != 0xFFFF)
         {
-            BELL_ASSERT(mBones.find(bone.mName) != mBones.end(), "Bone not found")
-            BoneTransform &transforms = mBones[bone.mName];
-            float4x4 transform = transforms.getBoneTransform(tick);
-            uint16_t parent = bone.mParentIndex;
-            while(parent != 0xFFFF)
-            {
-                const Bone& parentBone = bones[parent];
-                parent = parentBone.mParentIndex;
-                BoneTransform &parentTransforms = mBones[parentBone.mName];
-                float4x4 parentTransform = parentTransforms.getBoneTransform(tick);
+            const Bone& parentBone = bones[parent];
+            parent = parentBone.mParentIndex;
+            BoneTransform &parentTransforms = mBones[parentBone.mName];
+            float4x4 parentTransform = parentTransforms.getBoneTransform(tick);
 
-                transform = parentTransform * transform;
-            }
-
-            boneTransforms.emplace_back(mInverseGlobalTransform * transform * bone.mInverseBindPose);
+            transform = parentTransform * transform;
         }
+
+        boneTransforms.emplace_back(transform * mRootTransform * bone.mInverseBindPose);
     }
 
     return boneTransforms;

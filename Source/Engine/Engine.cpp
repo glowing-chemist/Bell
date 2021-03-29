@@ -428,14 +428,12 @@ std::pair<uint64_t, uint64_t> RenderEngine::addMeshToAnimationBuffer(const Stati
 
     const std::vector<SubMesh>& subMeshes = mesh->getSubMeshes();
     uint32_t boneWeightsOffset = 0;
-    for(const auto& subMesh : subMeshes)
-    {
-        const auto &boneIndicies = subMesh.mBoneWeightsIndicies;
-        mBoneIndexBuilder.addData(boneIndicies);
 
-        const auto &boneWeights = subMesh.mBoneWeights;
-        boneWeightsOffset += mBoneWeightSize + mBoneWeightBuilder.addData(boneWeights);
-    }
+    const auto &boneIndicies = mesh->getBoneIndicies();
+    mBoneIndexBuilder.addData(boneIndicies);
+
+    const auto &boneWeights = mesh->getBoneWeights();
+    boneWeightsOffset += mBoneWeightSize + mBoneWeightBuilder.addData(boneWeights);
 
     mTposeVertexCache.insert(std::make_pair( mesh, std::pair<uint64_t, uint64_t>{vertexOffset, boneWeightsOffset}));
 
