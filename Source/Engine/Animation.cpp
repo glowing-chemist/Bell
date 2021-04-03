@@ -43,7 +43,7 @@ SkeletalAnimation::SkeletalAnimation(const StaticMesh& mesh, const aiAnimation* 
     const Bone& rootBone = bones[0];
     BELL_ASSERT(rootBone.mParentIndex == 0XFFFF, "not root bone")
     const aiNode* rootBoneNode = scene->mRootNode->FindNode(rootBone.mName.c_str());
-    mRootTransform = rootBone.mLocalMatrix * glm::inverse(aiMatrix4x4ToFloat4x4(rootBoneNode->mTransformation));
+    mRootTransform = glm::inverse(aiMatrix4x4ToFloat4x4(rootBoneNode->mTransformation)) * rootBone.mLocalMatrix;
 }
 
 
@@ -59,26 +59,28 @@ std::vector<float4x4> SkeletalAnimation::calculateBoneMatracies(const StaticMesh
         BELL_ASSERT(mBones.find(bone.mName) != mBones.end(), "Bone not found")
         BoneTransform &transforms = mBones[bone.mName];
         float4x4 transform{};
+        float4x4 rootTransform(1.0f);
         if(transforms.mScales.empty() && transforms.mPositions.empty() && transforms.mRotations.empty())
             transform = bone.mLocalMatrix;
         else
+        {
             transform = transforms.getBoneTransform(tick);
+            rootTransform = mRootTransform;
+        }
 
         uint16_t parent = bone.mParentIndex;
         while(parent != 0xFFFF)
         {
             const Bone& parentBone = bones[parent];
-            parent = parentBone.mParentIndex;
             BoneTransform &parentTransforms = mBones[parentBone.mName];
             float4x4 parentTransform = parentTransforms.getBoneTransform(tick);
 
-            if(parent != 0XFFFF)
-                transform = parentTransform * transform;
-            else
-                transform = mRootTransform * transform;
+            transform = parentTransform * transform;
+
+            parent = parentBone.mParentIndex;
         }
 
-        boneTransforms.emplace_back(transform * bone.mInverseBindPose);
+        boneTransforms.emplace_back(rootTransform * transform * bone.mInverseBindPose);
     }
 
     return boneTransforms;

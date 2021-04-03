@@ -231,7 +231,7 @@ uint16_t StaticMesh::findBoneParent(const aiNode* bone, float4x4& localTransform
         if(mBoneIndexMap.find(parent->mName.C_Str()) != mBoneIndexMap.end())
             return mBoneIndexMap[parent->mName.C_Str()];
 
-        localTransform = aiMatrix4x4ToFloat4x4(currentNode->mTransformation) * localTransform;
+        localTransform = aiMatrix4x4ToFloat4x4(parent->mTransformation) * localTransform;
         currentNode = parent;
     }
 
