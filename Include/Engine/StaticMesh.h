@@ -85,6 +85,7 @@ struct BoneIndicies
 struct SubMesh
 {
     uint32_t mVertexOffset;
+    uint32_t mVertexCount;
     uint32_t mIndexOffset;
     uint32_t mIndexCount;
 

@@ -4,6 +4,7 @@
 #include "Engine/Technique.hpp"
 #include "Core/Buffer.hpp"
 #include "Core/BufferView.hpp"
+#include "Core/PerFrameResource.hpp"
 
 
 class DebugAABBTechnique : public Technique
@@ -17,7 +18,7 @@ public:
         return PassType::DebugAABB;
     }
 
-    virtual void render(RenderGraph&, RenderEngine*) {}
+    virtual void render(RenderGraph&, RenderEngine*);
 
     virtual void bindResources(RenderGraph&) {}
 
@@ -35,6 +36,9 @@ private:
 
     Buffer mVertexBuffer;
     BufferView mVertexBufferView;
+
+    PerFrameResource<Buffer> mDebugLineVertexBuffer;
+    PerFrameResource<BufferView> mDebugLineVertexBufferView;
 
     Buffer mIndexBuffer;
     BufferView mIndexBufferView;

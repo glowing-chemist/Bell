@@ -29,6 +29,8 @@ DebugAABBTechnique::DebugAABBTechnique(RenderEngine* eng, RenderGraph& graph) :
     mLightDebugFragmentShader(eng->getShader("./Shaders/LightDebug.frag")),
     mVertexBuffer(getDevice(), BufferUsage::TransferDest | BufferUsage::Vertex, sizeof(float4) * 8, sizeof(float4) * 8),
     mVertexBufferView(mVertexBuffer),
+    mDebugLineVertexBuffer(getDevice(), BufferUsage::TransferDest | BufferUsage::Vertex, sizeof(float4) * 2000000, sizeof(float4) * 2000000),
+    mDebugLineVertexBufferView(mDebugLineVertexBuffer),
     mIndexBuffer(getDevice(), BufferUsage::TransferDest | BufferUsage::Index, sizeof(uint32_t) * 60, sizeof(uint32_t) * 60),
     mIndexBufferView(mIndexBuffer)
 {
@@ -145,8 +147,19 @@ DebugAABBTechnique::DebugAABBTechnique(RenderEngine* eng, RenderGraph& graph) :
                             }
                         }
                     }
-                }
 
+                    // Draw debug lines.
+                    const std::vector<Line>& lines = eng->getDebugLines();
+                    if(!lines.empty())
+                    {
+                        exec->bindVertexBuffer(*mDebugLineVertexBufferView, 0);
+
+                        float4x4 identityTransform(1.0f);
+                        exec->insertPushConsatnt(&identityTransform, sizeof(float4x4));
+                        exec->draw(0, lines.size() * 2);
+                    }
+
+                }
     );
 
     mTaskID = graph.addTask(debugAABBTask);
@@ -252,4 +265,12 @@ DebugAABBTechnique::DebugAABBTechnique(RenderEngine* eng, RenderGraph& graph) :
 
         graph.addTask(lightDebug);
     }
+}
+
+
+void DebugAABBTechnique::render(RenderGraph &, RenderEngine* renderEngine)
+{
+    const std::vector<Line>& lines = renderEngine->getDebugLines();
+    if(!lines.empty())
+        (*mDebugLineVertexBuffer)->setContents(lines.data(), lines.size() * sizeof(Line));
 }

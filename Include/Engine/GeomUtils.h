@@ -91,6 +91,13 @@ private:
     float3 mDirection;
 };
 
+struct Line
+{
+    float4 mStart;
+    float4 mEnd;
+};
+
+
 
 // Free Functions
 

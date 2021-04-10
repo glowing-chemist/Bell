@@ -55,7 +55,8 @@ StaticMesh::StaticMesh(const std::string& path, const int vertAttributes, const 
 StaticMesh::StaticMesh(const aiScene *scene, const aiMesh* mesh, const int vertexAttributes) :
     mAABB{{INFINITY, INFINITY, INFINITY, INFINITY}, {-INFINITY, -INFINITY, -INFINITY, -INFINITY}},
     mVertexAttributes(vertexAttributes),
-    mVertexCount(0)
+    mVertexCount(0),
+    mVertexStride(0)
 {
     configure(scene, mesh, float4x4(1.0f), vertexAttributes);
 
@@ -66,7 +67,8 @@ StaticMesh::StaticMesh(const aiScene *scene, const aiMesh* mesh, const int verte
 StaticMesh::StaticMesh(const aiScene* scene, const int vertexAttributes) :
         mAABB{{INFINITY, INFINITY, INFINITY, INFINITY}, {-INFINITY, -INFINITY, -INFINITY, -INFINITY}},
         mVertexAttributes(vertexAttributes),
-        mVertexCount(0)
+        mVertexCount(0),
+        mVertexStride(0)
 {
     parseNode(scene,
               scene->mRootNode,
@@ -103,6 +105,7 @@ void StaticMesh::configure(const aiScene* scene, const aiMesh* mesh, const float
                                     (vertAttributes & VertexAttributes::Tangents ? 1 : 0) +
                                     ((vertAttributes & VertexAttributes::Albedo) ? 1 : 0)) * sizeof(float);
 
+    BELL_ASSERT(mVertexStride == 0 || mVertexStride == vertexStride, "Submeshes must have the same stride")
 	mVertexStride = vertexStride;
 	mVertexCount += mesh->mNumVertices;
 
@@ -110,6 +113,7 @@ void StaticMesh::configure(const aiScene* scene, const aiMesh* mesh, const float
 	newSubMesh.mIndexOffset = mIndexData.size();
 	newSubMesh.mIndexCount = mesh->mNumFaces * mesh->mFaces[0].mNumIndices;
 	newSubMesh.mVertexOffset = mVertexData.getVertexBuffer().size() / mVertexStride;
+	newSubMesh.mVertexCount = mesh->mNumVertices;
 	newSubMesh.mTransform = transform;
 
     // assume triangles atm

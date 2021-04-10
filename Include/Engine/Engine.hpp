@@ -202,12 +202,13 @@ public:
 
     void endFrame()
     {
-	mRenderDevice->endFrame();
-    mDebugAABBs.clear();
-    // Set the frame time.
-    mAccumilatedFrameUpdates += mFrameUpdateDelta;
-    std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
-    mLastFrameTime = std::chrono::duration_cast<std::chrono::microseconds>(now - mFrameStartTime);
+        mRenderDevice->endFrame();
+        mDebugAABBs.clear();
+        mDebugLines.clear();
+        // Set the frame time.
+        mAccumilatedFrameUpdates += mFrameUpdateDelta;
+        std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
+        mLastFrameTime = std::chrono::duration_cast<std::chrono::microseconds>(now - mFrameStartTime);
     }
 
     void render();
@@ -375,6 +376,16 @@ public:
         return mDebugAABBs;
     }
 
+    void addDebugLine(const Line& line)
+    {
+        mDebugLines.push_back(line);
+    }
+
+    const std::vector<Line>& getDebugLines() const
+    {
+        return mDebugLines;
+    }
+
 private:
 
     CPUImage renderDiffuseCubeMap(const RayTracingScene &scene, const float3 &position, const uint32_t x, const uint32_t y);
@@ -451,6 +462,7 @@ private:
     const char* mDebugTextureName;
 
     std::vector<AABB> mDebugAABBs;
+    std::vector<Line> mDebugLines;
 
 	// Global uniform buffers
 
