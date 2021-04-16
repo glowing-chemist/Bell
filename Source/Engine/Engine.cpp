@@ -2,6 +2,7 @@
 #include "Core/CommandContext.hpp"
 #include "Core/BellLogging.hpp"
 #include "Core/Executor.hpp"
+#include "Core/ContainerUtils.hpp"
 
 #ifdef VULKAN
 #include "Core/Vulkan/VulkanRenderInstance.hpp" 
@@ -54,6 +55,8 @@
 
 
 RenderEngine::RenderEngine(GLFWwindow* windowPtr) :
+    mDefaultMemoryResource(),
+    mFrameAllocator(100 * 1024 * 1024),
     mThreadPool(),
 #ifdef VULKAN
     mRenderInstance( new VulkanRenderInstance(windowPtr)),
@@ -684,15 +687,14 @@ void RenderEngine::execute(RenderGraph& graph)
             return context;
         };
 
-        std::vector<std::future<CommandContextBase*>> resultHandles{};
-        resultHandles.reserve(mAsyncTaskContextMappings.size());
+        RAIISlabAllocator tmpAllocator{mFrameAllocator};
+        Array<std::future<CommandContextBase*>> resultHandles(mSyncTaskContextMappings.size(), tmpAllocator);
         for (uint32_t i = 1; i < mSyncTaskContextMappings.size(); ++i)
         {
             resultHandles.push_back(mThreadPool.addTask(recordToContext, mSyncTaskContextMappings[i], i, QueueType::Graphics));
         }
 
-        std::vector<std::future<CommandContextBase*>> asyncResultHandles{};
-        asyncResultHandles.reserve(mAsyncTaskContextMappings.size());
+        Array<std::future<CommandContextBase*>> asyncResultHandles(mAsyncTaskContextMappings.size(), tmpAllocator);
         for(uint32_t i = 0; i < mAsyncTaskContextMappings.size(); ++i)
         {
             asyncResultHandles.push_back(mThreadPool.addTask(recordToContext, mAsyncTaskContextMappings[i], i, QueueType::Compute));
@@ -708,7 +710,7 @@ void RenderEngine::execute(RenderGraph& graph)
             mRenderDevice->submitContext(context);
         }
 
-        for (uint32_t i = 0; i < resultHandles.size(); ++i)
+        for (uint32_t i = 0; i < resultHandles.getSize(); ++i)
         {
             std::future<CommandContextBase*>& result = resultHandles[i];
 

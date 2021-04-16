@@ -16,6 +16,7 @@
 #include "Engine/Technique.hpp"
 #include "Engine/ThreadPool.hpp"
 #include "Core/Profiling.hpp"
+#include "Engine/Allocators.hpp"
 
 #include "imgui.h"
 
@@ -102,6 +103,16 @@ public:
     RenderGraph& getRenderGraph()
     {
         return mCurrentRenderGraph;
+    }
+
+    Allocator& getDefaultMemoryResource()
+    {
+        return mDefaultMemoryResource;
+    }
+
+    SlabAllocator& getFrameAllocator()
+    {
+        return mFrameAllocator;
     }
 
 	void registerPass(const PassType);
@@ -205,6 +216,7 @@ public:
         mRenderDevice->endFrame();
         mDebugAABBs.clear();
         mDebugLines.clear();
+        mFrameAllocator.reset();
         // Set the frame time.
         mAccumilatedFrameUpdates += mFrameUpdateDelta;
         std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
@@ -390,6 +402,9 @@ private:
 
     CPUImage renderDiffuseCubeMap(const RayTracingScene &scene, const float3 &position, const uint32_t x, const uint32_t y);
     SphericalHarmonic generateSphericalHarmonic(const float3 &position, const CPUImage& cubemap);
+
+    Allocator mDefaultMemoryResource;
+    SlabAllocator mFrameAllocator;
 
     std::unique_ptr<Technique>                   getSingleTechnique(const PassType);
 

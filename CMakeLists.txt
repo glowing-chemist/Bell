@@ -173,6 +173,7 @@ set(BELL_SOURCE
     Source/Engine/VoxelTerrain.cpp
     Source/Engine/SceneNavigator.cpp
 	Source/Engine/UberShaderStateCache.cpp
+	Source/Engine/Allocators.cpp
 
     # Techniques
     Source/Engine/SSAOTechnique.cpp
