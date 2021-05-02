@@ -2,7 +2,7 @@
 #include "Core/BellLogging.hpp"
 
 #include <cmath>
-
+#include <cstring>
 
 namespace
 {
@@ -134,7 +134,7 @@ PoolAllocator::PoolAllocator(const uint64_t size, const uint64_t count) :
 {
     mResource = static_cast<unsigned char*>(malloc(mCount * mSize));
     mActiveSlots = static_cast<uint64_t*>(malloc(((mCount + 63) / 64) * sizeof(uint64_t)));
-    memset(mActiveSlots, 1, ((mCount + 63) / 64) * sizeof(uint64_t));
+    std::memset(mActiveSlots, 1, ((mCount + 63) / 64) * sizeof(uint64_t));
 }
 
 
@@ -223,7 +223,7 @@ Allocator::Allocator() :
 
 Allocator& Allocator::operator=(Allocator&& other)
 {
-    memcpy(mAllocatorPools, other.mAllocatorPools, sizeof(PoolAllocator) * 8);
+    std::memcpy(mAllocatorPools, other.mAllocatorPools, sizeof(PoolAllocator) * 8);
 
     return *this;
 }
