@@ -4,7 +4,7 @@ Bell is a modern rendergraph driven vulkan renderer. It supports both a UE4 styl
 
 ![Material comparison](https://github.com/glowing-chemist/Bell/blob/master/Assets/Screenshots/materialBottles.png)
 
-It currently has forward and deferred image based lighting paths, af well as dynamic lighting provided by a clustered lighting path.
+It currently has forward and deferred image based lighting paths, as well as dynamic lighting provided by a clustered lighting path.
 ![Clustered lighting in Sponza](https://github.com/glowing-chemist/Bell/blob/master/Assets/Screenshots/ClusteredSponza.png)
 
 The renderer is trivially extendable by implementing a subclass of RenderEngine/Technique, which takes care of requesting 
