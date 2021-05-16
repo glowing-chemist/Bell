@@ -36,6 +36,8 @@ public:
 #endif
     }
 
+    virtual void postGraphCompilation(RenderGraph&, RenderEngine*) final override;
+
 private:
 
     struct ConstantBuffer
@@ -54,9 +56,7 @@ private:
 
     GraphicsPipelineDescription mPipelineDesc;
 
-    Shader mVolxalizeVertexShader;
-    Shader mVolxalizeGeometryShader;
-    Shader mVolxalizeFragmentShader;
+    std::unordered_map<uint64_t, PipelineHandle> mMaterialPipelineVariants;
 
     TaskID mTaskID;
 

@@ -70,61 +70,40 @@ VulkanShader::~VulkanShader()
 
 bool VulkanShader::compile(const std::vector<ShaderDefine> &prefix)
 {
-    // glslang currently has a bug when compiling hlsl geometry shaders where inputs are not asigned correctly.
-    // Do as a temp workaround I've precompiled all geamotry shaders with dxc and will just load them here.
-    if(mShaderStage == shaderc_geometry_shader)
-    {
-        fs::path spirvPath = mFilePath;
-        spirvPath += ".spv";
-
-        FILE* file = fopen(spirvPath.string().c_str(), "rb");
-        fseek(file, 0L, SEEK_END);
-        const size_t fileSize = ftell(file);
-        fseek(file, 0L, SEEK_SET);
-
-        BELL_ASSERT(fileSize % 4 == 0, "SPIRV must be a multiple fo 4 bytes")
-
-        mSPIRV.resize(fileSize / sizeof(uint32_t));
-        fread(mSPIRV.data(), sizeof(char), fileSize, file);
-        mCompiled = true;
-    }
-    else
-    {
-        shaderc::Compiler compiler;
-        shaderc::CompileOptions options;
-        options.SetSourceLanguage(shaderc_source_language::shaderc_source_language_hlsl);
+    shaderc::Compiler compiler;
+    shaderc::CompileOptions options;
+    options.SetSourceLanguage(shaderc_source_language::shaderc_source_language_hlsl);
 #ifndef NDEBUG
-        options.SetOptimizationLevel(shaderc_optimization_level::shaderc_optimization_level_zero);
+    options.SetOptimizationLevel(shaderc_optimization_level::shaderc_optimization_level_zero);
 #else
-        options.SetOptimizationLevel(shaderc_optimization_level::shaderc_optimization_level_performance);
+    options.SetOptimizationLevel(shaderc_optimization_level::shaderc_optimization_level_performance);
 #endif
-        std::hash<std::string> stringHasher;
-        for (const auto& define : prefix)
-        {
-            options.AddMacroDefinition(define.getName(), define.getValue());
-            mCompileDefinesHash += stringHasher(define.getName()) ^ stringHasher(define.getValue());
-        }
-        std::unique_ptr<shaderc::CompileOptions::IncluderInterface> includer = std::make_unique<ShaderIncluder>();
-        options.SetIncluder(std::move(includer));
-        options.SetTargetEnvironment(shaderc_target_env::shaderc_target_env_vulkan, shaderc_env_version_vulkan_1_1);
-
-        shaderc::SpvCompilationResult result = compiler.CompileGlslToSpv(mSource.data(), mSource.size(), mShaderStage, mFilePath.string().c_str(), "main", options);
-
-        if (result.GetCompilationStatus() != shaderc_compilation_status::shaderc_compilation_status_success)
-        {
-            auto preProcessResult = compiler.PreprocessGlsl(mSource.data(), mSource.size(), mShaderStage, mFilePath.string().c_str(), options);
-            std::string shaderSource(preProcessResult.begin(), preProcessResult.end());
-
-            BELL_LOG_ARGS("Shader compilation failed %s", result.GetErrorMessage().c_str())
-            BELL_LOG_ARGS("shader %s \nShader source \n%s", mFilePath.string().c_str() , shaderSource.c_str())
-            BELL_TRAP;
-
-            return false;
-        }
-
-        mSPIRV.insert(mSPIRV.begin(), result.cbegin(), result.cend());
-        mCompiled = true;
+    std::hash<std::string> stringHasher;
+    for (const auto& define : prefix)
+    {
+        options.AddMacroDefinition(define.getName(), define.getValue());
+        mCompileDefinesHash += stringHasher(define.getName()) ^ stringHasher(define.getValue());
     }
+    std::unique_ptr<shaderc::CompileOptions::IncluderInterface> includer = std::make_unique<ShaderIncluder>();
+    options.SetIncluder(std::move(includer));
+    options.SetTargetEnvironment(shaderc_target_env::shaderc_target_env_vulkan, shaderc_env_version_vulkan_1_1);
+
+    shaderc::SpvCompilationResult result = compiler.CompileGlslToSpv(mSource.data(), mSource.size(), mShaderStage, mFilePath.string().c_str(), "main", options);
+
+    if (result.GetCompilationStatus() != shaderc_compilation_status::shaderc_compilation_status_success)
+    {
+        auto preProcessResult = compiler.PreprocessGlsl(mSource.data(), mSource.size(), mShaderStage, mFilePath.string().c_str(), options);
+        std::string shaderSource(preProcessResult.begin(), preProcessResult.end());
+
+        BELL_LOG_ARGS("Shader compilation failed %s", result.GetErrorMessage().c_str())
+                BELL_LOG_ARGS("shader %s \nShader source \n%s", mFilePath.string().c_str() , shaderSource.c_str())
+                BELL_TRAP;
+
+        return false;
+    }
+
+    mSPIRV.insert(mSPIRV.begin(), result.cbegin(), result.cend());
+    mCompiled = true;
 
 #ifdef NDEBUG // get rid of the source when not in debug builds to save memory.
 	mSource.clear();

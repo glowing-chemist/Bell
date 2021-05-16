@@ -619,15 +619,16 @@ vk::Framebuffer VulkanRenderDevice::createFrameBuffer(const RenderGraph& graph, 
 {
     PROFILER_EVENT();
 
-    const auto& outputBindings = graph.getTask(taskIndex).getOuputAttachments();
+    const GraphicsTask& task = static_cast<const GraphicsTask&>(graph.getTask(taskIndex));
+    const GraphicsPipelineDescription& pipelineDesc = task.getPipelineDescription();
+    const auto& outputBindings = task.getOuputAttachments();
 
     std::vector<vk::ImageView> imageViews{};
-    ImageExtent imageExtent;
+    ImageExtent imageExtent = {pipelineDesc.mViewport.x, pipelineDesc.mViewport.y, 1u};
 
     for(const auto& bindingInfo : outputBindings)
     {
             const auto& imageView = graph.getImageView(bindingInfo.mName);
-            imageExtent = imageView->getImageExtent();
             imageViews.push_back(static_cast<const VulkanImageView&>(*imageView.getBase()).getImageView());
     }
 

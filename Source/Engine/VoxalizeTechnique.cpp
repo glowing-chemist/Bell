@@ -28,17 +28,13 @@ VoxalizeTechnique::VoxalizeTechnique(RenderEngine* eng, RenderGraph& graph) :
         DepthTest::None,
         FillMode::Fill,
         Primitive::TriangleList
-        },
-    mVolxalizeVertexShader(eng->getShader("./Shaders/Voxalize.vert")),
-    mVolxalizeGeometryShader(eng->getShader("./Shaders/Voxalize.geom")),
-    mVolxalizeFragmentShader(eng->getShader("./Shaders/Voxalize.frag"))
+        }
 #if DEBUG_VOXEL_GENERATION
     ,mVoxelDebug(eng->getDevice(),
                  Format::RGBA8UNorm, ImageUsage::Storage | ImageUsage::Sampled,
                  eng->getSwapChainImage()->getExtent(0, 0).width,
                  eng->getSwapChainImage()->getExtent(0, 0).height, 1, 1, 1, 1, "Debug Voxels"),
-    mVoxelDebugView(mVoxelDebug, ImageViewType::Colour),
-    mDebugVoxelPipeline{eng->getShader("./Shaders/DebugVoxels.comp")}
+    mVoxelDebugView(mVoxelDebug, ImageViewType::Colour)
 #endif
 {
     GraphicsTask task{"voxalize", mPipelineDesc};
@@ -63,7 +59,10 @@ VoxalizeTechnique::VoxalizeTechnique(RenderEngine* eng, RenderGraph& graph) :
         task.addInput(kShadowMap, AttachmentType::Texture2D);
 
     task.addInput(kMaterials, AttachmentType::ShaderResourceSet);
-    task.addInput(kLightBuffer, AttachmentType::ShaderResourceSet);
+
+    if(eng->isPassRegistered(PassType::LightFroxelation))
+        task.addInput(kLightBuffer, AttachmentType::ShaderResourceSet);
+
     task.addInput("ModelInfo", AttachmentType::PushConstants);
     task.addInput(kSceneVertexBuffer, AttachmentType::VertexBuffer);
     task.addInput(kSceneIndexBuffer, AttachmentType::IndexBuffer);
@@ -71,7 +70,7 @@ VoxalizeTechnique::VoxalizeTechnique(RenderEngine* eng, RenderGraph& graph) :
     mTaskID = graph.addTask(task);
 
 #if DEBUG_VOXEL_GENERATION
-    ComputeTask debugTask("Voxel debug", mDebugVoxelPipeline);
+    ComputeTask debugTask("Voxel debug");
     debugTask.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
     debugTask.addInput(kVoxelDimmensions, AttachmentType::UniformBuffer);
     debugTask.addInput(kGBufferDepth, AttachmentType::Texture2D);
@@ -79,8 +78,11 @@ VoxalizeTechnique::VoxalizeTechnique(RenderEngine* eng, RenderGraph& graph) :
     debugTask.addInput(kDebugVoxels, AttachmentType::Image2D);
     debugTask.addInput(kDefaultSampler, AttachmentType::Sampler);
     debugTask.setRecordCommandsCallback(
-                [](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, Engine* eng, const std::vector<const MeshInstance*>&)
+                [](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, RenderEngine* eng, const std::vector<const MeshInstance*>&)
                 {
+                    const RenderTask& task = graph.getTask(taskIndex);
+                    exec->setComputeShader(static_cast<const ComputeTask&>(task), graph, eng->getShader("./Shaders/DebugVoxels.comp"));
+
                     const float threadGroupWidth = eng->getSwapChainImageView()->getImageExtent().width;
                     const float threadGroupHeight = eng->getSwapChainImageView()->getImageExtent().height;
 
@@ -95,8 +97,42 @@ VoxalizeTechnique::VoxalizeTechnique(RenderEngine* eng, RenderGraph& graph) :
 }
 
 
+void VoxalizeTechnique::postGraphCompilation(RenderGraph& graph, RenderEngine* engine)
+{
+    const Scene* scene = engine->getScene();
+    RenderDevice* device = engine->getDevice();
+    const std::vector<Scene::Material>& materials = scene->getMaterialDescriptions();
+    // compile pipelines for all material variants.
+    const RenderTask& task = graph.getTask(mTaskID);
+    Shader vertexShader = engine->getShader("./Shaders/Voxalize.vert");
+    Shader geometryShader = engine->getShader("./Shaders/Voxalize.geom");
+    for(const auto& material : materials)
+    {
+        if(mMaterialPipelineVariants.find(material.mMaterialTypes) == mMaterialPipelineVariants.end())
+        {
+            ShaderDefine materialDefine("MATERIAL_FLAGS", material.mMaterialTypes);
+            Shader fragmentShader = engine->getShader("./Shaders/Voxalize.frag", materialDefine);
+
+            const PipelineHandle pipeline = device->compileGraphicsPipeline(static_cast<const GraphicsTask&>(task),
+                                                                            graph, vertexShader, &geometryShader,
+                                                                            nullptr, nullptr, fragmentShader);
+
+            mMaterialPipelineVariants.insert({material.mMaterialTypes, pipeline});
+        }
+    }
+}
+
+
 void VoxalizeTechnique::render(RenderGraph& graph, RenderEngine* eng)
 {
+    mVoxelMap->updateLastAccessed();
+    mVoxelMapView->updateLastAccessed();
+    (*mVoxelDimmensions)->updateLastAccessed();
+#if DEBUG_VOXEL_GENERATION
+    mVoxelDebug->updateLastAccessed();
+    mVoxelDebugView->updateLastAccessed();
+#endif
+
     // Need to manually clear this as load/store ops don't work on uavs :(.
     mVoxelMap->clear(float4(0.0f, 0.0f, 0.0f, 0.0f));
 
@@ -119,14 +155,12 @@ void VoxalizeTechnique::render(RenderGraph& graph, RenderEngine* eng)
     GraphicsTask& task = static_cast<GraphicsTask&>(graph.getTask(mTaskID));
 
     task.setRecordCommandsCallback(
-        [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, RenderEngine* eng, const std::vector<const MeshInstance*>& meshes)
+        [this](const RenderGraph&, const uint32_t, Executor* exec, RenderEngine* eng, const std::vector<const MeshInstance*>& meshes)
         {
             exec->bindIndexBuffer(eng->getIndexBuffer(), 0);
             exec->bindVertexBuffer(eng->getVertexBuffer(), 0);
-            const RenderTask& task = graph.getTask(taskIndex);
-            exec->setGraphicsShaders(static_cast<const GraphicsTask&>(task), graph, mVolxalizeVertexShader, &mVolxalizeGeometryShader, nullptr, nullptr, mVolxalizeFragmentShader);
 
-            UberShaderStateCache stateCache(exec);
+            UberShaderCachedMaterialStateCache stateCache(exec, mMaterialPipelineVariants);
 
             for (const auto& mesh : meshes)
             {

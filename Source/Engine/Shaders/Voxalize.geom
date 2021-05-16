@@ -50,6 +50,7 @@ void main(
 		// Append the rest of the parameters as is:
 		output[j].uv = input[j].uv;
 		output[j].normal = input[j].normal;
+		output[j].tangent = input[j].tangent;
 		output[j].colour = input[j].colour;
 		output[j].positionWS = input[j].positionWS;
 		output[j].materialIndex = input[j].materialIndex;

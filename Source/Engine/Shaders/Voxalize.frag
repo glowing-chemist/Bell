@@ -74,7 +74,6 @@ void main(VoxalizeGeometryOutput vertInput)
 
     MaterialInfo material = calculateMaterialInfo(  vertInput.normal,
                                                     vertInput.colour, 
-                                                    vertInput.materialFlags, 
                                                     vertInput.materialIndex, 
                                                     vertInput.tangent,
                                                     viewDir,

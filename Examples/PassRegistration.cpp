@@ -297,13 +297,14 @@ int main()
         engine->registerPass(PassType::Skybox);
         engine->registerPass(PassType::LineariseDepth);
         engine->registerPass(PassType::DebugAABB);
-        //engine.registerPass(PassType::Voxelize);
+        //engine->registerPass(PassType::Voxelize);
 
         if (graphicsOptions.mForward || graphicsOptions.preDepth)
             engine->registerPass(PassType::DepthPre);
 
         if(graphicsOptions.mShadows && graphicsOptions.mShadowMaps)
             engine->registerPass(PassType::Shadow);
+
 #if USE_RAY_TRACING
         else if(graphicsOptions.mShadows && graphicsOptions.mRayTracedShadows)
                engine->registerPass(PassType::RayTracedShadows);

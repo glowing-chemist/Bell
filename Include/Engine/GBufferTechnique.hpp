@@ -21,7 +21,7 @@ public:
 	virtual PassType getPassType() const final override
 		{ return PassType::GBuffer; }
 
-	virtual void postGraphCompilation(RenderGraph&, RenderEngine*);
+    virtual void postGraphCompilation(RenderGraph&, RenderEngine*) final override;
 
     virtual void bindResources(RenderGraph&) override final {}
     virtual void render(RenderGraph&, RenderEngine*) override final {}
