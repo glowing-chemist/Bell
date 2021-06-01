@@ -20,6 +20,14 @@ vk::SurfaceFormatKHR chooseSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>
         form.colorSpace = vk::ColorSpaceKHR::eSrgbNonlinear;
         return form;
     }
+
+    // else look for eB8G8R8A8Unorm.
+    for(const auto& surfaceSpec : formats)
+    {
+        if(surfaceSpec.format == vk::Format::eB8G8R8A8Unorm)
+            return surfaceSpec;
+    }
+
     return formats[0]; // if not pick the first format
 }
 
