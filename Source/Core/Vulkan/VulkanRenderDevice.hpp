@@ -334,7 +334,7 @@ public:
 
     vk::AccelerationStructureBuildSizesInfoKHR                  getAccelerationStructureMemoryRequirements(const vk::AccelerationStructureBuildTypeKHR,
                                                                                                            const vk::AccelerationStructureBuildGeometryInfoKHR&,
-                                                                                                           const uint32_t* maxPrimitives) const;
+                                                                                                           const std::vector<uint32_t>& maxPrimitives) const;
 
     vk::Instance                                                getParentInstance() const
     {

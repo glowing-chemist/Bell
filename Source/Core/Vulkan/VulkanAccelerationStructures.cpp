@@ -63,7 +63,7 @@ VulkanAccelerationStructure VulkanBottomLevelAccelerationStructure::constructAcc
     const VulkanRenderDevice* vkDevice =  static_cast<const VulkanRenderDevice*>(mEng.getDevice());
 
     vk::AccelerationStructureBuildSizesInfoKHR buildSize = vkDevice->getAccelerationStructureMemoryRequirements(vk::AccelerationStructureBuildTypeKHR::eHost,
-            geomBuildInfo, primiviteCounts.data());
+            geomBuildInfo, primiviteCounts);
 
     VulkanBuffer backingBuffer(mEng.getDevice(), BufferUsage::AccelerationStructure, buildSize.accelerationStructureSize, buildSize.accelerationStructureSize, name);
 
