@@ -122,6 +122,19 @@ public:
 		mSRSPendingDestruction.push_back({ set.getLastAccessed(), VkSRS.getPool(), VkSRS.getLayout(), VkSRS.getDescriptorSet() });
 	}
 
+	vk::AccelerationStructureKHR createAccelerationStructure(const vk::AccelerationStructureCreateInfoKHR& info) const
+    {
+        return mDevice.createAccelerationStructureKHR(info);
+    }
+
+    void buildAccelerationStructure(const uint32_t count,
+                                    const vk::AccelerationStructureBuildGeometryInfoKHR* pInfos,
+                                    const vk::AccelerationStructureBuildRangeInfoKHR* const* ppBuildRangeInfos) const
+    {
+        mDevice.buildAccelerationStructuresKHR(vk::DeferredOperationKHR(), count,
+                                               pInfos, ppBuildRangeInfos);
+    }
+
     void                               destroyFrameBuffer(vk::Framebuffer& frameBuffer, uint64_t frameIndex)
                                             { mFramebuffersPendingDestruction.push_back({frameIndex, frameBuffer}); }
 
@@ -318,6 +331,10 @@ public:
     {
         return mLimits.timestampPeriod;
     }
+
+    vk::AccelerationStructureBuildSizesInfoKHR                  getAccelerationStructureMemoryRequirements(const vk::AccelerationStructureBuildTypeKHR,
+                                                                                                           const vk::AccelerationStructureBuildGeometryInfoKHR&,
+                                                                                                           const uint32_t* maxPrimitives) const;
 
     vk::Instance                                                getParentInstance() const
     {

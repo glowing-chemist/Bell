@@ -71,7 +71,8 @@ if(VULKAN)
 		Source/Core/Vulkan/VulkanShader.cpp
 		Source/Core/Vulkan/VulkanSwapChain.cpp
 		Source/Core/Vulkan/VulkanBarrierManager.cpp
-		Source/Core/Vulkan/VulkanCommandContext.cpp)
+		Source/Core/Vulkan/VulkanCommandContext.cpp
+		Source/Core/Vulkan/VulkanAccelerationStructures.cpp)
 
 	add_definitions(-DVULKAN -DGLM_FORCE_DEPTH_ZERO_TO_ONE)
 elseif(DX_12)
@@ -86,6 +87,7 @@ elseif(DX_12)
 		Source/Core/DX_12/DX_12SwapChain.cpp
 		Source/Core/DX_12/DX_12ShaderResourceSet.cpp
 		Source/Core/DX_12/DX_12Executor.cpp
+		Source/Core/DX_12/DescriptorAllocator.cpp
 		
 		ThirdParty/D3D12MemoryAllocator/src/D3D12MemAlloc.cpp
 		)
@@ -109,6 +111,7 @@ set(BELL_BASE_SOURCE
 	Source/Core/PipelineCache.cpp
 	Source/Core/ShaderResourceSet.cpp
 	Source/Core/CommandContext.cpp
+	Source/Core/AccelerationStructures.cpp
 	
 	${BACKEND_SOURCE}
 

@@ -256,7 +256,8 @@ enum class BufferUsage : uint32_t
 	IndirectArgs = 1 << 4,
 	TransferDest = 1 << 5,
     TransferSrc = 1 << 6,
-    CommandPredication = 1 << 7
+    CommandPredication = 1 << 7,
+    AccelerationStructure = 1 << 8
 };
 
 inline BufferUsage operator|(const BufferUsage& lhs, const BufferUsage& rhs)

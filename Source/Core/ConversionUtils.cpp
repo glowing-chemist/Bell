@@ -213,6 +213,9 @@ vk::BufferUsageFlags getVulkanBufferUsage(const BufferUsage usage)
     if(usage & BufferUsage::CommandPredication)
         vulkanFlags |= vk::BufferUsageFlagBits::eConditionalRenderingEXT;
 
+    if(usage & BufferUsage::AccelerationStructure)
+        vulkanFlags |= vk::BufferUsageFlagBits::eAccelerationStructureStorageKHR;
+
 	return vulkanFlags;
 }
 
