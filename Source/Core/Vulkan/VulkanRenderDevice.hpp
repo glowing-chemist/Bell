@@ -332,9 +332,12 @@ public:
         return mLimits.timestampPeriod;
     }
 
-    vk::AccelerationStructureBuildSizesInfoKHR                  getAccelerationStructureMemoryRequirements(const vk::AccelerationStructureBuildTypeKHR,
-                                                                                                           const vk::AccelerationStructureBuildGeometryInfoKHR&,
-                                                                                                           const std::vector<uint32_t>& maxPrimitives) const;
+    vk::AccelerationStructureBuildSizesInfoKHR                  getAccelerationStructureMemoryRequirements(const vk::AccelerationStructureBuildTypeKHR type,
+                                                                                                           const vk::AccelerationStructureBuildGeometryInfoKHR& geoemtryInfo,
+                                                                                                           const std::vector<uint32_t>& maxPrimitives) const
+    {
+        return mDevice.getAccelerationStructureBuildSizesKHR(type, geoemtryInfo, maxPrimitives);
+    }
 
     vk::Instance                                                getParentInstance() const
     {

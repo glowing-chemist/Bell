@@ -991,17 +991,6 @@ vk::CommandBuffer VulkanRenderDevice::getPrefixCommandBuffer()
 }
 
 
-vk::AccelerationStructureBuildSizesInfoKHR VulkanRenderDevice::getAccelerationStructureMemoryRequirements(
-                                                                      const vk::AccelerationStructureBuildTypeKHR type,
-                                                                      const vk::AccelerationStructureBuildGeometryInfoKHR& geoemtryInfo,
-                                                                      const std::vector<uint32_t>& maxPrimitives) const
-{
-    vk::AccelerationStructureBuildSizesInfoKHR sizeInfo{};
-    sizeInfo = mDevice.getAccelerationStructureBuildSizesKHR(type, geoemtryInfo, maxPrimitives);
-
-    return sizeInfo;
-}
-
 // Memory management functions
 vk::PhysicalDeviceMemoryProperties VulkanRenderDevice::getMemoryProperties() const
 {
