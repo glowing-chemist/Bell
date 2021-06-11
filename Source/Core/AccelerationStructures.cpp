@@ -1,4 +1,5 @@
 #include "AccelerationStructures.hpp"
+#include "Engine/Engine.hpp"
 
 #ifdef VULKAN
 #include "Core/Vulkan/VulkanAccelerationStructures.hpp"
@@ -6,17 +7,26 @@
 // TODO
 #endif
 
-BottomLevelAccelerationStructure::BottomLevelAccelerationStructure(RenderEngine& eng, const StaticMesh& mesh,
+BottomLevelAccelerationStructureBase::BottomLevelAccelerationStructureBase(RenderEngine* eng, const StaticMesh &,
+                                                                           const std::string &) :
+        DeviceChild(eng->getDevice())
+{}
+
+BottomLevelAccelerationStructure::BottomLevelAccelerationStructure(RenderEngine* eng, const StaticMesh& mesh,
                                                                    const std::string& name)
-                                                                   {
+{
 #ifdef VULKAN
         mBase = std::make_shared<VulkanBottomLevelAccelerationStructure>(eng, mesh, name);
 #elif defined(DX_12)
     // TODO
 #endif
-                                                                   }
+}
 
-TopLevelAccelerationStructure::TopLevelAccelerationStructure(RenderEngine& eng)
+TopLevelAccelerationStructureBase::TopLevelAccelerationStructureBase(RenderEngine* engine) :
+        DeviceChild(engine->getDevice())
+{}
+
+TopLevelAccelerationStructure::TopLevelAccelerationStructure(RenderEngine* eng)
 {
 #ifdef VULKAN
     mBase = std::make_shared<VulkanTopLevelAccelerationStructure>(eng);

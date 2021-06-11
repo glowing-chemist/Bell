@@ -74,7 +74,7 @@ if(VULKAN)
 		Source/Core/Vulkan/VulkanCommandContext.cpp
 		Source/Core/Vulkan/VulkanAccelerationStructures.cpp)
 
-	add_definitions(-DVULKAN -DGLM_FORCE_DEPTH_ZERO_TO_ONE)
+	add_definitions(-DVULKAN -DGLM_FORCE_DEPTH_ZERO_TO_ONE -DVULKAN_HPP_DISPATCH_LOADER_DYNAMIC=1)
 elseif(DX_12)
 	set(BACKEND_SOURCE
 		Source/Core/DX_12/DX_12RenderInstance.cpp

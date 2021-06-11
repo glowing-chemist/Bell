@@ -40,6 +40,7 @@ private:
 	bool									  hasSubgroupSupport(vk::PhysicalDevice);
 
     vk::Instance mInstance;
+    vk::DynamicLoader mLoader;
     vk::Device mDevice;
     vk::DebugUtilsMessengerEXT mDebugMessenger;
     vk::SurfaceKHR mWindowSurface;

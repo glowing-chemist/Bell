@@ -15,7 +15,7 @@ struct VulkanAccelerationStructure
 class VulkanBottomLevelAccelerationStructure : public BottomLevelAccelerationStructureBase
 {
 public:
-    VulkanBottomLevelAccelerationStructure(RenderEngine&, const StaticMesh&, const std::string&);
+    VulkanBottomLevelAccelerationStructure(RenderEngine*, const StaticMesh&, const std::string&);
     ~VulkanBottomLevelAccelerationStructure();
 
     const vk::AccelerationStructureKHR& getAccelerationStructureHandle() const
@@ -35,9 +35,8 @@ public:
 
 private:
 
-    VulkanAccelerationStructure constructAccelerationStructure(RenderEngine&, const StaticMesh&, const std::string& name);
+    VulkanAccelerationStructure constructAccelerationStructure(RenderEngine*, const StaticMesh&, const std::string& name);
 
-    RenderEngine& mEng;
     VulkanAccelerationStructure mBVH;
 
 };
@@ -46,7 +45,7 @@ private:
 class VulkanTopLevelAccelerationStructure : public TopLevelAccelerationStructureBase
 {
 public:
-    VulkanTopLevelAccelerationStructure(RenderEngine&);
+    VulkanTopLevelAccelerationStructure(RenderEngine*);
     ~VulkanTopLevelAccelerationStructure();
 
     virtual void addBottomLevelStructure(const BottomLevelAccelerationStructure&) override final;

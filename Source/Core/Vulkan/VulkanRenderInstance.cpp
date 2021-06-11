@@ -15,6 +15,9 @@
 
 #define DUMP_API 0
 
+// Storage for the dynamic dispatcher.
+VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
+
 static VKAPI_ATTR VkBool32 debugCallbackFunc(
         VkDebugUtilsMessageSeverityFlagBitsEXT,
         VkDebugUtilsMessageTypeFlagsEXT,
@@ -66,6 +69,12 @@ VulkanRenderInstance::VulkanRenderInstance(GLFWwindow* window) :
 {
     mWindow = window;
 
+    // Init the dynamic dispatcher.
+    {
+        PFN_vkGetInstanceProcAddr vkGetInstanceProcAddr = mLoader.getProcAddress<PFN_vkGetInstanceProcAddr>("vkGetInstanceProcAddr");
+        VULKAN_HPP_DEFAULT_DISPATCHER.init(vkGetInstanceProcAddr);
+    }
+
     vk::ApplicationInfo appInfo{};
     appInfo.setPApplicationName("Quango");
     appInfo.setApiVersion(VK_MAKE_VERSION(1, 1, 0));
@@ -115,6 +124,7 @@ VulkanRenderInstance::VulkanRenderInstance(GLFWwindow* window) :
 #endif
 
     mInstance = vk::createInstance(instanceInfo);
+    VULKAN_HPP_DEFAULT_DISPATCHER.init(mInstance);
 
 #if BELL_ENABLE_LOGGING // add the debug callback as soon as possible
     addDebugCallback();
@@ -131,8 +141,9 @@ RenderDevice* VulkanRenderInstance::createRenderDevice(const int DeviceFeatureFl
 {
     auto [physDev, dev] = findSuitableDevices(DeviceFeatureFlags);
     mDevice = dev;
+    VULKAN_HPP_DEFAULT_DISPATCHER.init(mDevice);
 
-	return new VulkanRenderDevice{mInstance, physDev, dev, mWindowSurface, mWindow};
+	return new VulkanRenderDevice{mInstance, physDev, dev, mWindowSurface, mWindow, static_cast<uint32_t>(DeviceFeatureFlags)};
 }
 
 

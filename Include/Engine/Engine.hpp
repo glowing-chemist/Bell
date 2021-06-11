@@ -40,7 +40,7 @@ public:
 
     // Set the current Scene, mostly for use by the editor.
     void setScene(Scene*);
-    void setRayTracingScene(RayTracingScene* scene);
+    void setCPURayTracingScene(CPURayTracingScene* scene);
 
     Scene* getScene()
     { return mCurrentScene; }
@@ -243,6 +243,9 @@ public:
     RenderDevice* getDevice()
     { return mRenderDevice; }
 
+    const RenderDevice* getDevice() const
+    { return mRenderDevice; }
+
     struct SkeletalAnimationEntry
     {
 	    std::string mName;
@@ -400,7 +403,7 @@ public:
 
 private:
 
-    CPUImage renderDiffuseCubeMap(const RayTracingScene &scene, const float3 &position, const uint32_t x, const uint32_t y);
+    CPUImage renderDiffuseCubeMap(const CPURayTracingScene &scene, const float3 &position, const uint32_t x, const uint32_t y);
     SphericalHarmonic generateSphericalHarmonic(const float3 &position, const CPUImage& cubemap);
 
     Allocator mDefaultMemoryResource;
@@ -414,7 +417,7 @@ private:
     RenderDevice* mRenderDevice;
 
     Scene* mCurrentScene;
-    RayTracingScene* mRayTracedScene;
+    CPURayTracingScene* mCPURayTracedScene;
 
     bool mDebugCameraActive;
     Camera mDebugCamera;

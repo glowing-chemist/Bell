@@ -93,6 +93,15 @@ const StaticMesh* MeshInstance::getMesh() const
     return mScene->getMesh(mMesh);
 }
 
+BottomLevelAccelerationStructure* MeshInstance::getAccelerationStructure()
+{
+    return mScene->getAccelerationStructure(mMesh);
+}
+
+const BottomLevelAccelerationStructure* MeshInstance::getAccelerationStructure() const
+{
+    return mScene->getAccelerationStructure(mMesh);
+}
 
 void MeshInstance::draw(Executor* exec, UberShaderStateCache* cache, const uint32_t baseVertexOffset, const uint32_t baseIndexOffset) const
 {
@@ -190,6 +199,7 @@ std::vector<InstanceID> Scene::loadFromFile(const int vertAttributes, RenderEngi
     const aiNode* rootNode = scene->mRootNode;
 
     mSceneMeshes.reserve(scene->mNumMeshes);
+    mSceneAccelerationStructures.reserve(scene->mNumMeshes);
 
     MaterialMappings meshMaterials;
     fs::path materialFile{mPath};
@@ -204,7 +214,8 @@ std::vector<InstanceID> Scene::loadFromFile(const int vertAttributes, RenderEngi
     std::vector<InstanceID> instanceIDs;
 
 	// parse node is recursive so will add all meshes to the scene.
-    parseNode(scene,
+    parseNode(eng,
+              scene,
               rootNode,
               glmToAi(mRootTransform),
               kInvalidInstanceID,
@@ -219,7 +230,8 @@ std::vector<InstanceID> Scene::loadFromFile(const int vertAttributes, RenderEngi
 }
 
 
-void Scene::parseNode(const aiScene* scene,
+void Scene::parseNode(RenderEngine* eng,
+                      const aiScene* scene,
                       const aiNode* node,
                       const aiMatrix4x4& parentTransofrmation,
                       const InstanceID parentID,
@@ -254,7 +266,7 @@ void Scene::parseNode(const aiScene* scene,
         {
             StaticMesh mesh{scene, currentMesh, vertAttributes};
 
-            meshID = addMesh(mesh, MeshType::Static);
+            meshID = addMesh(eng, mesh, MeshType::Static);
 
             meshMappings[currentMesh] = meshID;
         }
@@ -276,7 +288,8 @@ void Scene::parseNode(const aiScene* scene,
     // Recurse through all child nodes
     for(uint32_t i = 0; i < node->mNumChildren; ++i)
     {
-        parseNode(scene,
+        parseNode(eng,
+                  scene,
                   node->mChildren[i],
                   currentInstanceID == kInvalidInstanceID ? transformation : aiMatrix4x4{},
                   currentInstanceID,
@@ -635,10 +648,13 @@ void Scene::loadMaterialsExternal(RenderEngine* eng, const aiScene* scene)
 }
 
 
-SceneID Scene::addMesh(const StaticMesh& mesh, MeshType meshType)
+SceneID Scene::addMesh(RenderEngine* eng, const StaticMesh& mesh, MeshType meshType)
 {
     SceneID id = mSceneMeshes.size();
     mSceneMeshes.emplace_back(mesh, meshType);
+
+    if(eng->getDevice()->getDeviceFeatureFlags() & DeviceFeaturesFlags::RayTracing)
+        mSceneAccelerationStructures.emplace_back(eng, mesh);
 
     return id;
 }
@@ -658,7 +674,7 @@ SceneID Scene::loadFile(const std::string &path, MeshType meshType, RenderEngine
 
     StaticMesh newMesh(scene, VertexAttributes::Position4 | VertexAttributes::Normals | VertexAttributes::TextureCoordinates |
                        VertexAttributes::Tangents | VertexAttributes::Albedo);
-    const InstanceID id = addMesh(newMesh, meshType);
+    const InstanceID id = addMesh(eng, newMesh, meshType);
 
     mPath = fs::path(path);
 
@@ -974,6 +990,24 @@ StaticMesh* Scene::getMesh(const SceneID id)
 const StaticMesh* Scene::getMesh(const SceneID id) const
 {
     return &mSceneMeshes[id].first;
+}
+
+
+BottomLevelAccelerationStructure* Scene::getAccelerationStructure(const SceneID id)
+{
+    if(!mSceneAccelerationStructures.empty())
+        return &mSceneAccelerationStructures[id];
+    else
+        return nullptr;
+}
+
+
+const BottomLevelAccelerationStructure* Scene::getAccelerationStructure(const SceneID id) const
+{
+    if(!mSceneAccelerationStructures.empty())
+        return &mSceneAccelerationStructures[id];
+    else
+        return nullptr;
 }
 
 

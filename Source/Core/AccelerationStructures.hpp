@@ -14,14 +14,16 @@ class BottomLevelAccelerationStructureBase : public DeviceChild
 {
 public:
 
-    BottomLevelAccelerationStructureBase(RenderEngine&, const StaticMesh&, const std::string& = "");
+    BottomLevelAccelerationStructureBase(RenderEngine*, const StaticMesh&, const std::string& = "");
     ~BottomLevelAccelerationStructureBase() = default;
 };
 
 
 class BottomLevelAccelerationStructure
 {
-    BottomLevelAccelerationStructure(RenderEngine&, const StaticMesh&, const std::string& = "");
+public:
+
+    BottomLevelAccelerationStructure(RenderEngine*, const StaticMesh&, const std::string& = "");
     ~BottomLevelAccelerationStructure() = default;
 
     BottomLevelAccelerationStructureBase* getBase()
@@ -54,8 +56,8 @@ class TopLevelAccelerationStructureBase : public DeviceChild
 {
 public:
 
-    TopLevelAccelerationStructureBase(RenderEngine&);
-    ~TopLevelAccelerationStructureBase();
+    TopLevelAccelerationStructureBase(RenderEngine*);
+    virtual ~TopLevelAccelerationStructureBase() = default;
 
     virtual void addBottomLevelStructure(const BottomLevelAccelerationStructure&) = 0;
 
@@ -65,7 +67,9 @@ public:
 
 class TopLevelAccelerationStructure
 {
-    TopLevelAccelerationStructure(RenderEngine&);
+public:
+
+    TopLevelAccelerationStructure(RenderEngine*);
     ~TopLevelAccelerationStructure() = default;
 
     TopLevelAccelerationStructureBase* getBase()

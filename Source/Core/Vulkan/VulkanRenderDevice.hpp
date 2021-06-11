@@ -71,7 +71,7 @@ struct ComputePipelineHandles
 class VulkanRenderDevice : public RenderDevice
 {
 public:
-	VulkanRenderDevice(vk::Instance, vk::PhysicalDevice, vk::Device, vk::SurfaceKHR, GLFWwindow*);
+	VulkanRenderDevice(vk::Instance, vk::PhysicalDevice, vk::Device, vk::SurfaceKHR, GLFWwindow*, const uint32_t deviceFeatures);
     ~VulkanRenderDevice();
 
     virtual CommandContextBase*        getCommandContext(const uint32_t index, const QueueType) override;

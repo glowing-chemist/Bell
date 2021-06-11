@@ -52,7 +52,7 @@ public:
 
     // Return true to recompile renderGraph.
     virtual bool renderTab(Scene* currentScene,
-                           RayTracingScene* rayTracedScene,
+                           CPURayTracingScene* rayTracedScene,
                            RenderGraph& gaph,
                            Editor* editor) = 0;
 
@@ -168,7 +168,7 @@ private:
     std::vector<InstanceID> mSceneInstanceIDs;
 
     Scene* mInProgressScene;
-    RayTracingScene* mRayTracingScene;
+    CPURayTracingScene* mRayTracingScene;
 
     std::vector<StaticMeshEntry> mStaticMeshEntries;
     bool mShowMeshFileBrowser;

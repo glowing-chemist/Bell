@@ -24,8 +24,9 @@ VulkanRenderDevice::VulkanRenderDevice(vk::Instance instance,
 						   vk::PhysicalDevice physDev,
 						   vk::Device dev,
 						   vk::SurfaceKHR surface,
-						   GLFWwindow* window) :
-	RenderDevice(),
+						   GLFWwindow* window,
+						   const uint32_t deviceFeatures) :
+	RenderDevice(deviceFeatures),
     mDevice{dev},
     mPhysicalDevice{physDev},
 	mInstance(instance),

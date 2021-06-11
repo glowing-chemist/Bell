@@ -5,6 +5,7 @@
 #include "Core/ImageView.hpp"
 #include "Core/Buffer.hpp"
 #include "Core/BufferView.hpp"
+#include "Core/AccelerationStructures.hpp"
 
 #include "Engine/OctTree.hpp"
 #include "Engine/Camera.hpp"
@@ -127,6 +128,8 @@ public:
 
     StaticMesh* getMesh();
     const StaticMesh* getMesh() const;
+    BottomLevelAccelerationStructure* getAccelerationStructure();
+    const BottomLevelAccelerationStructure* getAccelerationStructure() const;
 
     SceneID getSceneID() const
     {
@@ -223,7 +226,7 @@ public:
     std::vector<InstanceID> loadFromFile(const int vertAttributes, RenderEngine*);
 	void loadSkybox(const std::array<std::string, 6>& path, RenderEngine*);
 
-    SceneID       addMesh(const StaticMesh& mesh, MeshType);
+    SceneID       addMesh(RenderEngine*, const StaticMesh& mesh, MeshType);
     SceneID       loadFile(const std::string& path, MeshType, RenderEngine *eng, const bool loadMaterials = true);
     InstanceID    addMeshInstance(const SceneID,
                                   const InstanceID parentInstance,
@@ -287,6 +290,8 @@ public:
     void   translateInstance(const InstanceID, const float3&);
     StaticMesh*         getMesh(const SceneID);
     const StaticMesh*   getMesh(const SceneID) const;
+    BottomLevelAccelerationStructure*         getAccelerationStructure(const SceneID);
+    const BottomLevelAccelerationStructure*   getAccelerationStructure(const SceneID) const;
     const std::unique_ptr<ImageView>& getSkybox() const
     {
 	return mSkyboxView;
@@ -539,7 +544,8 @@ private:
     // Loads materials at the index specified by the external scene file.
     void loadMaterialsExternal(RenderEngine*, const aiScene *scene);
 
-    void parseNode(const aiScene* scene,
+    void parseNode(RenderEngine* eng,
+                   const aiScene* scene,
                    const aiNode* node,
                    const aiMatrix4x4& parentTransofrmation,
                    const InstanceID parentID,
@@ -553,6 +559,7 @@ private:
     std::filesystem::path mPath;
 
     std::vector<std::pair<StaticMesh, MeshType>> mSceneMeshes;
+    std::vector<BottomLevelAccelerationStructure> mSceneAccelerationStructures;
 
     std::vector<MeshInstance> mStaticMeshInstances;
     std::vector<uint32_t>     mFreeStaticMeshIndicies;

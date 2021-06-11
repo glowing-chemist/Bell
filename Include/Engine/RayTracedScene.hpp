@@ -7,6 +7,7 @@
 #include "GeomUtils.h"
 #include "CPUImage.hpp"
 #include "Engine/RayTracingSamplers.hpp"
+#include "Core/AccelerationStructures.hpp"
 #include "Engine/ThreadPool.hpp"
 
 #include "Core/Buffer.hpp"
@@ -19,12 +20,12 @@ class RenderEngine;
 class Scene;
 class Camera;
 
-class RayTracingScene
+class CPURayTracingScene
 {
 public:
 
-    RayTracingScene(RenderEngine *eng, const Scene*);
-    ~RayTracingScene() = default;
+    CPURayTracingScene(RenderEngine *eng, const Scene*);
+    ~CPURayTracingScene() = default;
 
     void renderSceneToMemory(const Camera&, const uint32_t x, const uint32_t y, uint8_t *, ThreadPool&) const;
     void renderSceneToFile(const Camera&, const uint32_t x, const uint32_t y, const char*, ThreadPool&) const;
@@ -61,11 +62,6 @@ public:
 
     bool intersectsMesh(const nanort::Ray<float>& ray, uint64_t* instanceID);
 
-    const ShaderResourceSet& getGPUBVH() const
-    {
-        return mBVH_SRS;
-    }
-
     void updateCPUAccelerationStructure(const Scene* scene);
 
 private:
@@ -93,16 +89,8 @@ private:
 
     std::vector<MaterialInfo> mPrimitiveMaterialID; // maps prim ID to material ID.
     const Scene* mScene;
-
-    // Gpu resources.
-    std::unique_ptr<Buffer> mNodesBuffer;
-    std::unique_ptr<Buffer> mIndiciesBuffer;
-    std::unique_ptr<Buffer> mPrimToMatIDBuffer;
-    std::unique_ptr<Buffer> mPositionBuffer;
-    std::unique_ptr<Buffer> mUVBuffer;
-    std::unique_ptr<Buffer> mPositionIndexBuffer;
-    ShaderResourceSet mBVH_SRS;
 };
+
 
 
 #endif

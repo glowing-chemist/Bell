@@ -1417,7 +1417,7 @@ void Editor::drawAddInstanceDialog()
             }
             else
             {
-                mRayTracingScene = new RayTracingScene(&mEngine, mInProgressScene);
+                mRayTracingScene = new CPURayTracingScene(&mEngine, mInProgressScene);
                 mMeshPicker.setScene(mRayTracingScene);
             }
 
@@ -1469,8 +1469,8 @@ void Editor::loadScene(const std::string& scene)
     mInProgressScene->getCamera().setMode(CameraMode::Perspective); // HACK to get guizmos working.
 
     mEngine.setScene(mInProgressScene);
-    mRayTracingScene = new RayTracingScene(&mEngine, mInProgressScene);
-    mEngine.setRayTracingScene(mRayTracingScene);
+    mRayTracingScene = new CPURayTracingScene(&mEngine, mInProgressScene);
+    mEngine.setCPURayTracingScene(mRayTracingScene);
 
     mMeshPicker.setScene(mRayTracingScene);
 

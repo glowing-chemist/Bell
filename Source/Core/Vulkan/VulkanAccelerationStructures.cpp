@@ -4,15 +4,14 @@
 
 #include "Core/Vulkan/VulkanRenderDevice.hpp"
 
-VulkanBottomLevelAccelerationStructure::VulkanBottomLevelAccelerationStructure(RenderEngine& engine, const StaticMesh& mesh, const std::string& name) :
+VulkanBottomLevelAccelerationStructure::VulkanBottomLevelAccelerationStructure(RenderEngine* engine, const StaticMesh& mesh, const std::string& name) :
     BottomLevelAccelerationStructureBase(engine, mesh, name),
-    mEng(engine),
     mBVH(constructAccelerationStructure(engine, mesh, name))
 {
 }
 
 
-VulkanAccelerationStructure VulkanBottomLevelAccelerationStructure::constructAccelerationStructure(RenderEngine& eng,
+VulkanAccelerationStructure VulkanBottomLevelAccelerationStructure::constructAccelerationStructure(RenderEngine* eng,
                                                                                                    const StaticMesh& mesh,
                                                                                                    const std::string& name)
 {
@@ -38,7 +37,7 @@ VulkanAccelerationStructure VulkanBottomLevelAccelerationStructure::constructAcc
         vk::AccelerationStructureGeometryDataKHR geomData{};
         geomData.triangles = triangleData;
         vk::AccelerationStructureGeometryKHR geom{};
-        geom.flags = vk::GeometryFlagBitsKHR::eOpaque; // TODO mark all as opaque for now.
+        geom.flags = vk::GeometryFlagBitsKHR::eOpaque; // TODO mark all as opaque for now. add alpha testing later.
         geom.geometryType = vk::GeometryTypeKHR::eTriangles;
         geom.geometry = geomData;
 
@@ -60,12 +59,12 @@ VulkanAccelerationStructure VulkanBottomLevelAccelerationStructure::constructAcc
     geomBuildInfo.ppGeometries = nullptr;
     geomBuildInfo.pGeometries = triangleInfo.data();
 
-    const VulkanRenderDevice* vkDevice =  static_cast<const VulkanRenderDevice*>(mEng.getDevice());
+    const VulkanRenderDevice* vkDevice =  static_cast<const VulkanRenderDevice*>(eng->getDevice());
 
     vk::AccelerationStructureBuildSizesInfoKHR buildSize = vkDevice->getAccelerationStructureMemoryRequirements(vk::AccelerationStructureBuildTypeKHR::eHost,
             geomBuildInfo, primiviteCounts);
 
-    VulkanBuffer backingBuffer(mEng.getDevice(), BufferUsage::AccelerationStructure, buildSize.accelerationStructureSize, buildSize.accelerationStructureSize, name);
+    VulkanBuffer backingBuffer(eng->getDevice(), BufferUsage::AccelerationStructure, buildSize.accelerationStructureSize, buildSize.accelerationStructureSize, name);
 
     vk::AccelerationStructureCreateInfoKHR createInfo{};
     createInfo.createFlags = {};
@@ -94,5 +93,40 @@ VulkanAccelerationStructure VulkanBottomLevelAccelerationStructure::constructAcc
     delete[] geomBuildInfo.scratchData.hostAddress;
 
     return {accelStructure, backingBuffer};
+}
+
+VulkanBottomLevelAccelerationStructure::~VulkanBottomLevelAccelerationStructure()
+{
+    // TODO clean up acceleration structure handle (buffer will clean itself up).
+}
+
+
+VulkanTopLevelAccelerationStructure::VulkanTopLevelAccelerationStructure(RenderEngine* engine) :
+        TopLevelAccelerationStructureBase(engine)
+{
+
+}
+
+
+VulkanTopLevelAccelerationStructure::~VulkanTopLevelAccelerationStructure()
+{
+    // TODO
+}
+
+
+void VulkanTopLevelAccelerationStructure::addBottomLevelStructure(const BottomLevelAccelerationStructure&)
+{
+    // TODO
+}
+
+void VulkanTopLevelAccelerationStructure::buildStructureOnCPU()
+{
+    // TODO
+}
+
+
+void VulkanTopLevelAccelerationStructure::buildStructureOnGPU(Executor*)
+{
+    // TODO
 }
 

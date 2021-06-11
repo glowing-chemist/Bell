@@ -5,7 +5,7 @@
 
 #include "Engine/Scene.h"
 
-class RayTracingScene;
+class CPURayTracingScene;
 class Camera;
 
 
@@ -17,13 +17,13 @@ public:
         mRayTracedScene(nullptr),
         mSelectedMeshInstance(kInvalidInstanceID) {}
 
-    MeshPicker(RayTracingScene* rt) :
+    MeshPicker(CPURayTracingScene* rt) :
         mRayTracedScene(rt),
         mSelectedMeshInstance(kInvalidInstanceID) {}
 
     ~MeshPicker() = default;
 
-    void setScene(RayTracingScene* scene)
+    void setScene(CPURayTracingScene* scene)
     {
         if(scene == nullptr)
             mSelectedMeshInstance = kInvalidInstanceID;
@@ -49,7 +49,7 @@ public:
 
 private:
 
-    RayTracingScene* mRayTracedScene;
+    CPURayTracingScene* mRayTracedScene;
     int64_t mSelectedMeshInstance;
 };
 

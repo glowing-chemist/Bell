@@ -55,67 +55,67 @@
 
 
 RenderEngine::RenderEngine(GLFWwindow* windowPtr) :
-    mDefaultMemoryResource(),
-    mFrameAllocator(100 * 1024 * 1024),
-    mThreadPool(),
+        mDefaultMemoryResource(),
+        mFrameAllocator(100 * 1024 * 1024),
+        mThreadPool(),
 #ifdef VULKAN
-    mRenderInstance( new VulkanRenderInstance(windowPtr)),
+        mRenderInstance( new VulkanRenderInstance(windowPtr)),
 #endif
 #ifdef DX_12
     mRenderInstance(new DX_12RenderInstance(windowPtr)),
 #endif
-    mRenderDevice(mRenderInstance->createRenderDevice(DeviceFeaturesFlags::Compute | DeviceFeaturesFlags::Subgroup | DeviceFeaturesFlags::Geometry | DeviceFeaturesFlags::RayTracing)),
-    mCurrentScene(nullptr),
-    mRayTracedScene(nullptr),
-    mDebugCameraActive(false),
-    mDebugCamera({0.0f, 0.0f, 0.0f}, {1.0f, 0.0f, 0.0f}, 1.0f, 0.1f, 2000.0f),
-    mAnimationVertexSize{0},
-    mAnimationVertexBuilder(),
-    mBoneIndexSize{0},
-    mBoneIndexBuilder(),
-    mBoneWeightSize{0},
-    mBoneWeightBuilder(),
-    mVertexSize{0},
-    mVertexBuilder(),
-    mIndexSize{0},
-    mIndexBuilder(),
-    mMaterials{getDevice(), 200},
-    mLTCMat(getDevice(), Format::RGBA32Float, ImageUsage::Sampled | ImageUsage::TransferDest, 64, 64, 1, 1, 1, 1, "LTC Mat"),
-    mLTCMatView(mLTCMat, ImageViewType::Colour),
-    mLTCAmp(getDevice(), Format::RG32Float, ImageUsage::Sampled | ImageUsage::TransferDest, 64, 64, 1, 1, 1, 1, "LTC Amp"),
-    mLTCAmpView(mLTCAmp, ImageViewType::Colour),
-    mInitialisedTLCTextures(false),
-    mBlueNoise(getDevice(), Format::R8UNorm, ImageUsage::Sampled | ImageUsage::TransferDest, 470, 470, 1, 1, 1, 1, "Blue Noise"),
-    mBlueNoiseView(mBlueNoise, ImageViewType::Colour),
-    mDefaultDiffuseTexture(getDevice(), Format::RGBA8UNorm, ImageUsage::Sampled | ImageUsage::TransferDest, 4, 4, 1, 1, 1, 1, "Default Diffuse"),
-    mDefaultDiffuseView(mDefaultDiffuseTexture, ImageViewType::Colour),
-    mCurrentRenderGraph(),
-    mCompileGraph(true),
-	mTechniques{},
-    mPassesRegisteredThisFrame{0},
-	mCurrentRegistredPasses{0},
-    mShaderPrefix{},
-    mVertexBuffer{getDevice(), BufferUsage::Vertex | BufferUsage::TransferDest | BufferUsage::DataBuffer, 10000000, 10000000, "Vertex Buffer"},
-    mIndexBuffer{getDevice(), BufferUsage::Index | BufferUsage::TransferDest | BufferUsage::DataBuffer, 100000000, 100000000, "Index Buffer"},
-    mTposeVertexBuffer(getDevice(), BufferUsage::DataBuffer | BufferUsage::TransferDest, 10000000, 10000000, "TPose Vertex Buffer"),
-    mBonesWeightsBuffer(getDevice(), BufferUsage::DataBuffer | BufferUsage::TransferDest, sizeof(uint2) * 30000, sizeof(uint2) * 30000, "Bone weights"),
-    mBoneWeightsIndexBuffer(getDevice(), BufferUsage::DataBuffer | BufferUsage::TransferDest, sizeof(uint2) * 30000, sizeof(uint2) * 30000, "Bone weight indicies"),
-    mBoneBuffer(getDevice(), BufferUsage::DataBuffer | BufferUsage::TransferDest, sizeof(float4x4) * 1000, sizeof(float4x4) * 1000, "Bone buffer"),
-    mMeshBoundsBuffer(getDevice(), BufferUsage::DataBuffer | BufferUsage::TransferDest, sizeof(float4) * 1000, sizeof(float4) * 1000, "Bounds buffer"),
-    mDefaultSampler(SamplerType::Linear),
-    mDefaultPointSampler(SamplerType::Point),
-    mTerrainEnable(false),
-    mShowDebugTexture(false),
-    mDebugTextureName(""),
-    mCameraBuffer{},
-	mDeviceCameraBuffer{getDevice(), BufferUsage::Uniform, sizeof(CameraBuffer), sizeof(CameraBuffer), "Camera Buffer"},
-    mShadowCastingLight(getDevice(), BufferUsage::Uniform, sizeof(Scene::ShadowingLight), sizeof(Scene::ShadowingLight), "ShadowingLight"),
-    mAccumilatedFrameUpdates(0),
-    mMaxCommandThreads(1),
-    mLightProbeResourceSet(mRenderDevice, 3),
-    mRecordTasksSync{true},
-    mAsyncTaskContextMappings{},
-    mWindow(windowPtr)
+        mRenderDevice(mRenderInstance->createRenderDevice(DeviceFeaturesFlags::Compute | DeviceFeaturesFlags::Subgroup | DeviceFeaturesFlags::Geometry | DeviceFeaturesFlags::RayTracing)),
+        mCurrentScene(nullptr),
+        mCPURayTracedScene(nullptr),
+        mDebugCameraActive(false),
+        mDebugCamera({0.0f, 0.0f, 0.0f}, {1.0f, 0.0f, 0.0f}, 1.0f, 0.1f, 2000.0f),
+        mAnimationVertexSize{0},
+        mAnimationVertexBuilder(),
+        mBoneIndexSize{0},
+        mBoneIndexBuilder(),
+        mBoneWeightSize{0},
+        mBoneWeightBuilder(),
+        mVertexSize{0},
+        mVertexBuilder(),
+        mIndexSize{0},
+        mIndexBuilder(),
+        mMaterials{getDevice(), 200},
+        mLTCMat(getDevice(), Format::RGBA32Float, ImageUsage::Sampled | ImageUsage::TransferDest, 64, 64, 1, 1, 1, 1, "LTC Mat"),
+        mLTCMatView(mLTCMat, ImageViewType::Colour),
+        mLTCAmp(getDevice(), Format::RG32Float, ImageUsage::Sampled | ImageUsage::TransferDest, 64, 64, 1, 1, 1, 1, "LTC Amp"),
+        mLTCAmpView(mLTCAmp, ImageViewType::Colour),
+        mInitialisedTLCTextures(false),
+        mBlueNoise(getDevice(), Format::R8UNorm, ImageUsage::Sampled | ImageUsage::TransferDest, 470, 470, 1, 1, 1, 1, "Blue Noise"),
+        mBlueNoiseView(mBlueNoise, ImageViewType::Colour),
+        mDefaultDiffuseTexture(getDevice(), Format::RGBA8UNorm, ImageUsage::Sampled | ImageUsage::TransferDest, 4, 4, 1, 1, 1, 1, "Default Diffuse"),
+        mDefaultDiffuseView(mDefaultDiffuseTexture, ImageViewType::Colour),
+        mCurrentRenderGraph(),
+        mCompileGraph(true),
+        mTechniques{},
+        mPassesRegisteredThisFrame{0},
+        mCurrentRegistredPasses{0},
+        mShaderPrefix{},
+        mVertexBuffer{getDevice(), BufferUsage::Vertex | BufferUsage::TransferDest | BufferUsage::DataBuffer, 10000000, 10000000, "Vertex Buffer"},
+        mIndexBuffer{getDevice(), BufferUsage::Index | BufferUsage::TransferDest | BufferUsage::DataBuffer, 100000000, 100000000, "Index Buffer"},
+        mTposeVertexBuffer(getDevice(), BufferUsage::DataBuffer | BufferUsage::TransferDest, 10000000, 10000000, "TPose Vertex Buffer"),
+        mBonesWeightsBuffer(getDevice(), BufferUsage::DataBuffer | BufferUsage::TransferDest, sizeof(uint2) * 30000, sizeof(uint2) * 30000, "Bone weights"),
+        mBoneWeightsIndexBuffer(getDevice(), BufferUsage::DataBuffer | BufferUsage::TransferDest, sizeof(uint2) * 30000, sizeof(uint2) * 30000, "Bone weight indicies"),
+        mBoneBuffer(getDevice(), BufferUsage::DataBuffer | BufferUsage::TransferDest, sizeof(float4x4) * 1000, sizeof(float4x4) * 1000, "Bone buffer"),
+        mMeshBoundsBuffer(getDevice(), BufferUsage::DataBuffer | BufferUsage::TransferDest, sizeof(float4) * 1000, sizeof(float4) * 1000, "Bounds buffer"),
+        mDefaultSampler(SamplerType::Linear),
+        mDefaultPointSampler(SamplerType::Point),
+        mTerrainEnable(false),
+        mShowDebugTexture(false),
+        mDebugTextureName(""),
+        mCameraBuffer{},
+        mDeviceCameraBuffer{getDevice(), BufferUsage::Uniform, sizeof(CameraBuffer), sizeof(CameraBuffer), "Camera Buffer"},
+        mShadowCastingLight(getDevice(), BufferUsage::Uniform, sizeof(Scene::ShadowingLight), sizeof(Scene::ShadowingLight), "ShadowingLight"),
+        mAccumilatedFrameUpdates(0),
+        mMaxCommandThreads(1),
+        mLightProbeResourceSet(mRenderDevice, 3),
+        mRecordTasksSync{true},
+        mAsyncTaskContextMappings{},
+        mWindow(windowPtr)
 {
     // calculate the TAA jitter.
     auto halton_2_3 = [](const uint32_t index) -> float2
@@ -195,9 +195,9 @@ void RenderEngine::setScene(Scene* scene)
 }
 
 
-void RenderEngine::setRayTracingScene(RayTracingScene* scene)
+void RenderEngine::setCPURayTracingScene(CPURayTracingScene* scene)
 {
-    mRayTracedScene = scene;
+    mCPURayTracedScene = scene;
 }
 
 
@@ -551,8 +551,8 @@ void RenderEngine::execute(RenderGraph& graph)
         if(mIrradianceProbeBuffer)
             mCurrentRenderGraph.bindShaderResourceSet(kLightProbes, mLightProbeResourceSet);
 
-        if(mRayTracedScene)
-            mCurrentRenderGraph.bindShaderResourceSet(kBVH, mRayTracedScene->getGPUBVH());
+        //if(mCPURayTracedScene)
+        //   mCurrentRenderGraph.bindShaderResourceSet(kBVH, mCPURayTracedScene->getGPUBVH());
     }
 
     for(const auto& tech : mTechniques)
@@ -995,10 +995,10 @@ bool RenderEngine::isPassRegistered(const PassType pass) const
 
 void RenderEngine::rayTraceScene()
 {
-    if(mRayTracedScene)
+    if(mCPURayTracedScene)
     {
         const ImageExtent extent = getSwapChainImage()->getExtent(0, 0);
-        mRayTracedScene->renderSceneToFile(mCurrentScene->getCamera(), extent.width, extent.height, "./RTNormals.jpg", mThreadPool);
+        mCPURayTracedScene->renderSceneToFile(mCurrentScene->getCamera(), extent.width, extent.height, "./RTNormals.jpg", mThreadPool);
     }
     else
     {
@@ -1007,7 +1007,7 @@ void RenderEngine::rayTraceScene()
 }
 
 
-CPUImage RenderEngine::renderDiffuseCubeMap(const RayTracingScene& scene, const float3 &position, const uint32_t x, const uint32_t y)
+CPUImage RenderEngine::renderDiffuseCubeMap(const CPURayTracingScene& scene, const float3 &position, const uint32_t x, const uint32_t y)
 {
     std::vector<unsigned char> data(x * y * 6 * sizeof(uint32_t));
 
@@ -1057,11 +1057,11 @@ std::vector<RenderEngine::SphericalHarmonic> RenderEngine::generateIrradiancePro
 {
     std::vector<RenderEngine::SphericalHarmonic> harmonics{};
 
-    if(mRayTracedScene)
+    if(mCPURayTracedScene)
     {
         for(const float3& position : positions)
         {
-            const CPUImage cubeMap = renderDiffuseCubeMap(*mRayTracedScene, position, 512, 512);
+            const CPUImage cubeMap = renderDiffuseCubeMap(*mCPURayTracedScene, position, 512, 512);
             const SphericalHarmonic harmonic = generateSphericalHarmonic(position, cubeMap);
 
             harmonics.push_back(harmonic);

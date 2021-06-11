@@ -30,10 +30,11 @@ using PipelineHandle = uint64_t;
 class RenderDevice
 {
 public:
-	RenderDevice() :
+	RenderDevice(const uint32_t enabledFeatured) :
 		mCurrentSubmission{0},
 		mFinishedSubmission{0},
 		mCurrentFrameIndex{0},
+		mDeviceFeatureFlags(enabledFeatured),
 		mSwapChain{nullptr} {}
 
     virtual ~RenderDevice() = default;
@@ -106,6 +107,11 @@ public:
 		return mSwapChain->getNumberOfSwapChainImages();
 	}
 
+	uint32_t getDeviceFeatureFlags() const
+    {
+	    return mDeviceFeatureFlags;
+    }
+
 	// Accessors
 	SwapChainBase* getSwapChain() { return mSwapChain; }
 	const SwapChainBase* getSwapChain() const { return mSwapChain; }
@@ -116,6 +122,8 @@ protected:
     uint64_t mCurrentSubmission;
     uint64_t mFinishedSubmission;
     uint32_t mCurrentFrameIndex;
+
+    uint32_t mDeviceFeatureFlags;
 
     SwapChainBase* mSwapChain;
 };
