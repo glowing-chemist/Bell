@@ -24,6 +24,7 @@ VulkanRenderDevice::VulkanRenderDevice(vk::Instance instance,
 						   vk::PhysicalDevice physDev,
 						   vk::Device dev,
 						   vk::SurfaceKHR surface,
+						   vk::DynamicLoader& loader,
 						   GLFWwindow* window,
 						   const uint32_t deviceFeatures) :
 	RenderDevice(deviceFeatures),
@@ -49,10 +50,12 @@ VulkanRenderDevice::VulkanRenderDevice(vk::Instance instance,
     mProfileDeviceHandle = mDevice;
     mProfilePhysicalDeviceHandle = mPhysicalDevice;
     mProfileGraphicsQueue = mGraphicsQueue;
-#endif
+
+    initProfilerVulkanFunctions(loader);
 
     uint32_t graphicsQueueIndex = mQueueFamilyIndicies.GraphicsQueueIndex;
-    PROFILER_INIT_VULKAN(&mProfileDeviceHandle, &mProfilePhysicalDeviceHandle, &mProfileGraphicsQueue, &graphicsQueueIndex, 1);
+    PROFILER_INIT_VULKAN(&mProfileDeviceHandle, &mProfilePhysicalDeviceHandle, &mProfileGraphicsQueue, &graphicsQueueIndex, 1, &mProfilingVulkanFunctions);
+#endif
 
     mLimits = mPhysicalDevice.getProperties().limits;
 
@@ -171,6 +174,13 @@ VulkanRenderDevice::~VulkanRenderDevice()
 	{
 		mDevice.destroyDescriptorSetLayout(layout);
 	}
+	mSRSPendingDestruction.clear();
+
+    for(auto& [submission, handle] : mAccelerationStructuresPendingDestruction)
+    {
+        mDevice.destroyAccelerationStructureKHR(handle);
+    }
+    mAccelerationStructuresPendingDestruction.clear();
 
     for(auto& fence : mFrameFinished)
     {
@@ -857,6 +867,8 @@ void VulkanRenderDevice::swap()
 
 void VulkanRenderDevice::frameSyncSetup()
 {
+    PROFILER_EVENT()
+
 	mCurrentFrameIndex = mSwapChain->getNextImageIndex();
 
     // wait for the previous frame using this swapchain image to be finished.
@@ -939,6 +951,19 @@ void VulkanRenderDevice::clearDeferredResources()
 		else
 			break;
 	}
+
+    for (uint32_t i = 0; i < mAccelerationStructuresPendingDestruction.size(); ++i)
+    {
+        auto& [submission, handle] = mAccelerationStructuresPendingDestruction.front();
+
+        if (submission <= mFinishedSubmission)
+        {
+            mDevice.destroyAccelerationStructureKHR(handle);
+            mAccelerationStructuresPendingDestruction.pop_front();
+        }
+        else
+            break;
+    }
 }
 
 
@@ -990,6 +1015,30 @@ vk::CommandBuffer VulkanRenderDevice::getPrefixCommandBuffer()
     VulkanCommandContext* VKCmdContext = static_cast<VulkanCommandContext*>(getCommandContext(0, QueueType::Graphics));
     return VKCmdContext->getPrefixCommandBuffer();
 }
+
+#if PROFILE
+void VulkanRenderDevice::initProfilerVulkanFunctions(vk::DynamicLoader& loader)
+{
+    mProfilingVulkanFunctions.vkGetPhysicalDeviceProperties = loader.getProcAddress<PFN_vkGetPhysicalDeviceProperties_>("vkGetPhysicalDeviceProperties");
+    mProfilingVulkanFunctions.vkCreateQueryPool = loader.getProcAddress<PFN_vkCreateQueryPool_>("vkCreateQueryPool");
+    mProfilingVulkanFunctions.vkCreateCommandPool = loader.getProcAddress<PFN_vkCreateCommandPool_>("vkCreateCommandPool");
+    mProfilingVulkanFunctions.vkAllocateCommandBuffers = loader.getProcAddress<PFN_vkAllocateCommandBuffers_>("vkAllocateCommandBuffers");
+    mProfilingVulkanFunctions.vkCreateFence = loader.getProcAddress<PFN_vkCreateFence_>("vkCreateFence");
+    mProfilingVulkanFunctions.vkCmdResetQueryPool = loader.getProcAddress<PFN_vkCmdResetQueryPool_>("vkCmdResetQueryPool");
+    mProfilingVulkanFunctions.vkQueueSubmit = loader.getProcAddress<PFN_vkQueueSubmit_>("vkQueueSubmit");
+    mProfilingVulkanFunctions.vkWaitForFences = loader.getProcAddress<PFN_vkWaitForFences_>("vkWaitForFences");
+    mProfilingVulkanFunctions.vkResetCommandBuffer = loader.getProcAddress<PFN_vkResetCommandBuffer_>("vkResetCommandBuffer");
+    mProfilingVulkanFunctions.vkCmdWriteTimestamp = loader.getProcAddress<PFN_vkCmdWriteTimestamp_>("vkCmdWriteTimestamp");
+    mProfilingVulkanFunctions.vkGetQueryPoolResults = loader.getProcAddress<PFN_vkGetQueryPoolResults_>("vkGetQueryPoolResults");
+    mProfilingVulkanFunctions.vkBeginCommandBuffer = loader.getProcAddress<PFN_vkBeginCommandBuffer_>("vkBeginCommandBuffer");
+    mProfilingVulkanFunctions.vkEndCommandBuffer = loader.getProcAddress<PFN_vkEndCommandBuffer_>("vkEndCommandBuffer");
+    mProfilingVulkanFunctions.vkResetFences = loader.getProcAddress<PFN_vkResetFences_>("vkResetFences");
+    mProfilingVulkanFunctions.vkDestroyCommandPool = loader.getProcAddress<PFN_vkDestroyCommandPool_>("vkDestroyCommandPool");
+    mProfilingVulkanFunctions.vkDestroyQueryPool = loader.getProcAddress<PFN_vkDestroyQueryPool_>("vkDestroyQueryPool");
+    mProfilingVulkanFunctions.vkDestroyFence = loader.getProcAddress<PFN_vkDestroyFence_>("vkDestroyFence");
+    mProfilingVulkanFunctions.vkFreeCommandBuffers = loader.getProcAddress<PFN_vkFreeCommandBuffers_>("vkFreeCommandBuffers");
+}
+#endif
 
 
 // Memory management functions

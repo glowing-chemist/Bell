@@ -48,9 +48,11 @@ public:
     VulkanTopLevelAccelerationStructure(RenderEngine*);
     ~VulkanTopLevelAccelerationStructure();
 
+    virtual void reset() override final;
+
     virtual void addBottomLevelStructure(const BottomLevelAccelerationStructure&) override final;
 
-    virtual void buildStructureOnCPU() override final;
+    virtual void buildStructureOnCPU(RenderEngine*) override final;
     virtual void buildStructureOnGPU(Executor*) override final;
 
     const vk::AccelerationStructureKHR& getAccelerationStructureHandle() const
@@ -70,7 +72,7 @@ public:
 
 private:
 
-    std::vector<VulkanBuffer> mBottomLevelStructures;
+    std::vector<BottomLevelAccelerationStructure> mBottomLevelStructures;
 
     std::optional<VulkanAccelerationStructure> mBVH;
 

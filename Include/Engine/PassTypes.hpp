@@ -188,7 +188,8 @@ enum class AttachmentType
 	PushConstants,
 	ShaderResourceSet,
     TransferSource,
-    TransferDestination
+    TransferDestination,
+    AccelerationStructure
 };
 
 

@@ -97,7 +97,7 @@ VulkanAccelerationStructure VulkanBottomLevelAccelerationStructure::constructAcc
 
 VulkanBottomLevelAccelerationStructure::~VulkanBottomLevelAccelerationStructure()
 {
-    // TODO clean up acceleration structure handle (buffer will clean itself up).
+    getDevice()->destroyBottomLevelAccelerationStructure(*this);
 }
 
 
@@ -110,23 +110,98 @@ VulkanTopLevelAccelerationStructure::VulkanTopLevelAccelerationStructure(RenderE
 
 VulkanTopLevelAccelerationStructure::~VulkanTopLevelAccelerationStructure()
 {
-    // TODO
+    getDevice()->destroyTopLevelAccelerationStructure(*this);
 }
 
 
-void VulkanTopLevelAccelerationStructure::addBottomLevelStructure(const BottomLevelAccelerationStructure&)
+void VulkanTopLevelAccelerationStructure::reset()
 {
-    // TODO
+    getDevice()->destroyTopLevelAccelerationStructure(*this);
+    mBottomLevelStructures.clear();
+    mBVH->mAccelerationHandle = nullptr;
 }
 
-void VulkanTopLevelAccelerationStructure::buildStructureOnCPU()
+
+void VulkanTopLevelAccelerationStructure::addBottomLevelStructure(const BottomLevelAccelerationStructure& accelStruct)
 {
-    // TODO
+    mBottomLevelStructures.push_back(accelStruct);
+}
+
+void VulkanTopLevelAccelerationStructure::buildStructureOnCPU(RenderEngine* eng)
+{
+    std::vector<vk::AccelerationStructureGeometryKHR> instanceInfos(mBottomLevelStructures.size());
+    std::vector<vk::AccelerationStructureBuildRangeInfoKHR> buildRanges(mBottomLevelStructures.size());
+    std::vector<vk::AccelerationStructureKHR> bottomLevelStructures(mBottomLevelStructures.size());
+    std::vector<uint32_t> instanceCount(mBottomLevelStructures.size());
+    for(uint32_t instance_i = 0; instance_i < mBottomLevelStructures.size(); ++instance_i)
+    {
+        vk::AccelerationStructureGeometryInstancesDataKHR instanceData{};
+        instanceData.arrayOfPointers = false;
+        instanceData.data.hostAddress = bottomLevelStructures.data() + instance_i;
+        bottomLevelStructures[instance_i] = static_cast<VulkanBottomLevelAccelerationStructure*>(mBottomLevelStructures[instance_i].getBase())->getAccelerationStructureHandle();
+        instanceCount[instance_i] = 1;
+
+        vk::AccelerationStructureGeometryDataKHR geomData{};
+        geomData.instances = instanceData;
+        vk::AccelerationStructureGeometryKHR geom{};
+        geom.geometryType = vk::GeometryTypeKHR::eInstances;
+        geom.geometry = geomData;
+
+        vk::AccelerationStructureBuildRangeInfoKHR buildRange{};
+        buildRange.primitiveCount = 1;
+        buildRange.transformOffset = 0;
+
+        buildRanges[instance_i] = buildRange;
+        instanceInfos[instance_i] = geom;
+    }
+
+    vk::AccelerationStructureBuildGeometryInfoKHR geomBuildInfo{};
+    geomBuildInfo.type = vk::AccelerationStructureTypeKHR::eTopLevel;
+    geomBuildInfo.mode = vk::BuildAccelerationStructureModeKHR::eBuild;
+    geomBuildInfo.geometryCount = mBottomLevelStructures.size();
+    geomBuildInfo.ppGeometries = nullptr;
+    geomBuildInfo.pGeometries = instanceInfos.data();
+
+    const VulkanRenderDevice* vkDevice =  static_cast<const VulkanRenderDevice*>(eng->getDevice());
+
+    vk::AccelerationStructureBuildSizesInfoKHR buildSize = vkDevice->getAccelerationStructureMemoryRequirements(vk::AccelerationStructureBuildTypeKHR::eHost,
+                                                                                                                geomBuildInfo, instanceCount);
+
+    VulkanBuffer backingBuffer(eng->getDevice(), BufferUsage::AccelerationStructure, buildSize.accelerationStructureSize, buildSize.accelerationStructureSize, "");
+
+    vk::AccelerationStructureCreateInfoKHR createInfo{};
+    createInfo.createFlags = {};
+    createInfo.buffer = backingBuffer.getBuffer();
+    createInfo.offset = 0;
+    createInfo.size = backingBuffer.getSize();
+    createInfo.type = vk::AccelerationStructureTypeKHR::eTopLevel;
+
+    // create acceleration structure.
+    vk::AccelerationStructureKHR accelStructure = vkDevice->createAccelerationStructure(createInfo);
+
+    geomBuildInfo.type = vk::AccelerationStructureTypeKHR::eTopLevel;
+    geomBuildInfo.mode = vk::BuildAccelerationStructureModeKHR::eBuild;
+    geomBuildInfo.srcAccelerationStructure = nullptr;
+    geomBuildInfo.dstAccelerationStructure = accelStructure;
+    geomBuildInfo.geometryCount = mBottomLevelStructures.size();
+    geomBuildInfo.ppGeometries = nullptr;
+    geomBuildInfo.pGeometries = instanceInfos.data();
+    geomBuildInfo.scratchData = new unsigned char[buildSize.buildScratchSize];
+
+    // Build geometry in to it.
+    vk::AccelerationStructureBuildRangeInfoKHR* pRanges = buildRanges.data();
+    vkDevice->buildAccelerationStructure(1, &geomBuildInfo, &pRanges);
+
+    // free scratch data.
+    delete[] geomBuildInfo.scratchData.hostAddress;
+
+    mBVH = {accelStructure, backingBuffer};
 }
 
 
 void VulkanTopLevelAccelerationStructure::buildStructureOnGPU(Executor*)
 {
     // TODO
+    BELL_TRAP;
 }
 

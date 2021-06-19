@@ -114,6 +114,8 @@ void VulkanSwapChain::createSwapChainImageViews()
 
 uint32_t VulkanSwapChain::getNextImageIndex()
 {
+    PROFILER_EVENT()
+
     static_cast<VulkanRenderDevice*>(getDevice())->aquireNextSwapchainImage(mSwapChain, std::numeric_limits<uint64_t>::max(), mImageAquired[mCurrentImageIndex], mCurrentImageIndex);
 	
 	return mCurrentImageIndex;
@@ -122,6 +124,8 @@ uint32_t VulkanSwapChain::getNextImageIndex()
 
 void VulkanSwapChain::present(const QueueType queue)
 {
+    PROFILER_EVENT()
+
 	// needed for calling the C API (in order to handle errors correclty)
 	VkSwapchainKHR tempSwapchain = mSwapChain;
 	VkSemaphore waitSemaphore = mImageRendered[mCurrentImageIndex];

@@ -25,7 +25,7 @@
 
 #define PROFILER_TAG(e, n) OPTICK_TAG(n, e)
 
-#define PROFILER_INIT_VULKAN(dev, physDev, queues, queueFamilies, queueCount) OPTICK_GPU_INIT_VULKAN(dev, physDev, queues, queueFamilies, queueCount, nullptr)
+#define PROFILER_INIT_VULKAN(dev, physDev, queues, queueFamilies, queueCount, functions) OPTICK_GPU_INIT_VULKAN(dev, physDev, queues, queueFamilies, queueCount, functions)
 
 #define PROFILER_GPU_FLIP(swapChain) OPTICK_GPU_FLIP(swapChain)
 
@@ -51,7 +51,7 @@
 
 #define PROFILER_TAG(e, n)
 
-#define PROFILER_INIT_VULKAN(dev, physDev, queues, queueFamilies, queueCount)
+#define PROFILER_INIT_VULKAN(dev, physDev, queues, queueFamilies, queueCount, functions)
 
 #define PROFILER_GPU_FLIP(swapChain)
 

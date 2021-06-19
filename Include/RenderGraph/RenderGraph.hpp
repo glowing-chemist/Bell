@@ -10,6 +10,7 @@
 #include "Core/BufferView.hpp"
 #include "Core/Sampler.hpp"
 #include "Core/ShaderResourceSet.hpp"
+#include "Core/AccelerationStructures.hpp"
 
 #include <iterator>
 #include <string>
@@ -58,6 +59,7 @@ public:
     void bindIndexBuffer(const char* name, const BufferView&, const uint32_t flags = 0);
     void bindSampler(const char* name, const Sampler&);
     void bindShaderResourceSet(const char* name, const ShaderResourceSet&);
+    void bindAccelerationStructure(const char* name, const TopLevelAccelerationStructure&);
     bool isResourceSlotBound(const char* name) const;
 
     //get Task by index.
@@ -101,17 +103,20 @@ public:
         Buffer,
         VertexBuffer,
         IndexBuffer,
-		SRS
+		SRS,
+		AccelerationStructure
     };
     ImageView&		getImageView(const char* name);
     ImageViewArray& getImageArrayViews(const char* mName);
     BufferView&		getBuffer(const char* mName);
     Sampler&		getSampler(const char* mName);
+    TopLevelAccelerationStructure& getAccelerationStructure(const char*);
 
     const ImageView&		getImageView(const char* name) const;
     const ImageViewArray& getImageArrayViews(const char* name) const;
     const BufferView&		getBuffer(const char* name) const;
     const Sampler&		getSampler(const char* name) const;
+    const TopLevelAccelerationStructure& getAccelerationStructure(const char*) const;
 
     struct ResourceInfo
     {
@@ -164,6 +169,7 @@ private:
     std::unordered_map<const char*, BufferView> mBufferViews;
     std::unordered_map<const char*, Sampler> mSamplers;
     std::unordered_map<const char*, ShaderResourceSet> mSRS;
+    std::unordered_map<const char*, TopLevelAccelerationStructure> mAccelerationStructures;
 
 	struct InternalResourceEntry
 	{

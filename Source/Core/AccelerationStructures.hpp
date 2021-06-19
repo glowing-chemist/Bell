@@ -59,9 +59,11 @@ public:
     TopLevelAccelerationStructureBase(RenderEngine*);
     virtual ~TopLevelAccelerationStructureBase() = default;
 
+    virtual void reset() = 0;
+
     virtual void addBottomLevelStructure(const BottomLevelAccelerationStructure&) = 0;
 
-    virtual void buildStructureOnCPU() = 0;
+    virtual void buildStructureOnCPU(RenderEngine*) = 0;
     virtual void buildStructureOnGPU(Executor*) = 0;
 };
 

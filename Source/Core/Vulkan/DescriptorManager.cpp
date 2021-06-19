@@ -68,6 +68,8 @@ void DescriptorManager::writeDescriptors(const RenderGraph& graph, const uint32_
     std::vector<vk::WriteDescriptorSet> descSetWrites;
     std::vector<vk::DescriptorImageInfo> imageInfos;
     std::vector<vk::DescriptorBufferInfo> bufferInfos;
+    std::vector<vk::WriteDescriptorSetAccelerationStructureKHR> accelerationStructureWrites;
+    std::vector<vk::AccelerationStructureKHR> accelerationStructures;
 
     const uint64_t maxDescWrites = std::accumulate(graph.taskBegin(), graph.taskEnd(), 0ull,
                     [&](uint64_t accu, const auto& task) {return accu + std::accumulate(task.getInputAttachments().begin(), task.getInputAttachments().end(), 0ull, [&]
@@ -79,6 +81,8 @@ void DescriptorManager::writeDescriptors(const RenderGraph& graph, const uint32_
 
     imageInfos.reserve(maxDescWrites);
     bufferInfos.reserve(maxDescWrites);
+    accelerationStructures.reserve(maxDescWrites);
+    accelerationStructureWrites.reserve(maxDescWrites);
 
     const RenderTask& task           = graph.getTask(taskIndex);
     const auto& inputBindings = task.getInputAttachments();
@@ -189,6 +193,22 @@ void DescriptorManager::writeDescriptors(const RenderGraph& graph, const uint32_
 
             descWrite.setDescriptorCount(1);
             break;
+        }
+
+        case AttachmentType::AccelerationStructure:
+        {
+            auto& accelerationStructure = graph.getAccelerationStructure(bindingInfo.mName);
+            vk::WriteDescriptorSetAccelerationStructureKHR accelerationWriteInfo{};
+            accelerationWriteInfo.setAccelerationStructureCount(1);
+            accelerationWriteInfo.setPAccelerationStructures(accelerationStructures.data() + accelerationStructures.size());
+
+            accelerationStructures.push_back(static_cast<const VulkanTopLevelAccelerationStructure*>(accelerationStructure.getBase())->getAccelerationStructureHandle());
+
+            descWrite.setDescriptorType(vk::DescriptorType::eAccelerationStructureKHR);
+            descWrite.setDescriptorCount(1);
+            descWrite.pNext = accelerationStructureWrites.data() + accelerationStructureWrites.size();
+
+            accelerationStructureWrites.push_back(accelerationWriteInfo);
         }
 
         default:
@@ -331,6 +351,24 @@ vk::DescriptorSet DescriptorManager::writeShaderResourceSet(const vk::Descriptor
 
 			descWrite.setDescriptorCount(1);
 			break;
+		}
+
+		case AttachmentType::AccelerationStructure:
+		{
+            /*auto& accelerationStructure = graph.getAccelerationStructure(bindingInfo.mName);
+            vk::WriteDescriptorSetAccelerationStructureKHR accelerationWriteInfo{};
+            accelerationWriteInfo.setAccelerationStructureCount(1);
+            accelerationWriteInfo.setPAccelerationStructures(accelerationStructures.data() + accelerationStructures.size());
+
+            accelerationStructures.push_back(static_cast<const VulkanTopLevelAccelerationStructure*>(accelerationStructure.getBase())->getAccelerationStructureHandle());
+
+            descWrite.setDescriptorType(vk::DescriptorType::eAccelerationStructureKHR);
+            descWrite.setDescriptorCount(1);
+            descWrite.pNext = accelerationStructureWrites.data() + accelerationStructureWrites.size();
+
+            accelerationStructureWrites.push_back(accelerationWriteInfo);*/
+            BELL_TRAP;
+            // TODO add support for binding acceleration structures in SRS.
 		}
 
         default:

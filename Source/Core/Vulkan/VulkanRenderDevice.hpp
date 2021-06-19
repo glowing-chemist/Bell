@@ -24,6 +24,7 @@
 #include "VulkanImage.hpp"
 #include "VulkanSwapChain.hpp"
 #include "VulkanRenderInstance.hpp"
+#include "VulkanAccelerationStructures.hpp"
 #include "RenderGraph/GraphicsTask.hpp"
 #include "RenderGraph/ComputeTask.hpp"
 #include "RenderGraph/RenderGraph.hpp"
@@ -71,7 +72,7 @@ struct ComputePipelineHandles
 class VulkanRenderDevice : public RenderDevice
 {
 public:
-	VulkanRenderDevice(vk::Instance, vk::PhysicalDevice, vk::Device, vk::SurfaceKHR, GLFWwindow*, const uint32_t deviceFeatures);
+	VulkanRenderDevice(vk::Instance, vk::PhysicalDevice, vk::Device, vk::SurfaceKHR, vk::DynamicLoader&, GLFWwindow*, const uint32_t deviceFeatures);
     ~VulkanRenderDevice();
 
     virtual CommandContextBase*        getCommandContext(const uint32_t index, const QueueType) override;
@@ -125,6 +126,17 @@ public:
 	vk::AccelerationStructureKHR createAccelerationStructure(const vk::AccelerationStructureCreateInfoKHR& info) const
     {
         return mDevice.createAccelerationStructureKHR(info);
+    }
+
+    virtual void                       destroyBottomLevelAccelerationStructure(BottomLevelAccelerationStructureBase& structure) override
+    {
+        VulkanBottomLevelAccelerationStructure& VKAccel = static_cast<VulkanBottomLevelAccelerationStructure&>(structure);
+        mAccelerationStructuresPendingDestruction.push_back({getCurrentSubmissionIndex(), VKAccel.getAccelerationStructureHandle()});
+    }
+    virtual void                       destroyTopLevelAccelerationStructure(TopLevelAccelerationStructureBase& structure) override
+    {
+        VulkanTopLevelAccelerationStructure& VKAccel = static_cast<VulkanTopLevelAccelerationStructure&>(structure);
+        mAccelerationStructuresPendingDestruction.push_back({getCurrentSubmissionIndex(), VKAccel.getAccelerationStructureHandle()});
     }
 
     void buildAccelerationStructure(const uint32_t count,
@@ -416,6 +428,13 @@ private:
 	};
 	std::deque<ShaderResourceSetsInfo> mSRSPendingDestruction;
 
+	struct AccelerationStructureDestructionInfo
+    {
+	    uint64_t mLastused;
+	    vk::AccelerationStructureKHR mAccelerationStructure;
+    };
+	std::deque<AccelerationStructureDestructionInfo> mAccelerationStructuresPendingDestruction;
+
     std::shared_mutex mResourcesLock;
     std::unordered_map<uint64_t, vulkanResources> mVulkanResources;
 
@@ -428,6 +447,9 @@ private:
     VkDevice mProfileDeviceHandle;
     VkPhysicalDevice mProfilePhysicalDeviceHandle;
     VkQueue mProfileGraphicsQueue;
+
+    Optick::VulkanFunctions mProfilingVulkanFunctions;
+    void initProfilerVulkanFunctions(vk::DynamicLoader&);
 #endif
 
 	vk::Instance mInstance;

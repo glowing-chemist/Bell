@@ -143,7 +143,7 @@ RenderDevice* VulkanRenderInstance::createRenderDevice(const int DeviceFeatureFl
     mDevice = dev;
     VULKAN_HPP_DEFAULT_DISPATCHER.init(mDevice);
 
-	return new VulkanRenderDevice{mInstance, physDev, dev, mWindowSurface, mWindow, static_cast<uint32_t>(DeviceFeatureFlags)};
+	return new VulkanRenderDevice{mInstance, physDev, dev, mWindowSurface, mLoader, mWindow, static_cast<uint32_t>(DeviceFeatureFlags)};
 }
 
 

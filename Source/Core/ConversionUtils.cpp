@@ -751,6 +751,9 @@ const char* getAttachmentName(const AttachmentType type)
     case AttachmentType::IndirectBuffer:
         return "Indirect buffer";
 
+    case AttachmentType::AccelerationStructure:
+	    return "Acceleration structure";
+
 	default:
 		return "Add new conversion!!!!";
 	}

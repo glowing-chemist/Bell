@@ -23,6 +23,8 @@ class Executor;
 class ImageBase;
 class BufferBase;
 class Shader;
+class BottomLevelAccelerationStructureBase;
+class TopLevelAccelerationStructureBase;
 class CommandContextBase;
 
 using PipelineHandle = uint64_t;
@@ -62,6 +64,9 @@ public:
 	virtual void                       destroyBuffer(BufferBase& buffer) = 0;
 
 	virtual void					   destroyShaderResourceSet(const ShaderResourceSetBase& set) = 0;
+
+	virtual void                       destroyBottomLevelAccelerationStructure(BottomLevelAccelerationStructureBase&) = 0;
+    virtual void                       destroyTopLevelAccelerationStructure(TopLevelAccelerationStructureBase&) = 0;
 
     virtual void					   setDebugName(const std::string&, const uint64_t, const uint64_t objectType) = 0;
 

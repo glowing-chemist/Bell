@@ -432,13 +432,23 @@ void RenderGraph::bindShaderResourceSet(const char *name, const ShaderResourceSe
 }
 
 
+void RenderGraph::bindAccelerationStructure(const char *name, const TopLevelAccelerationStructure& structure)
+{
+    mAccelerationStructures.insert_or_assign(name, structure);
+    mResourceInfo[name].mUsages.clear();
+
+    bindResource(name, 0);
+}
+
+
 bool RenderGraph::isResourceSlotBound(const char* name) const
 {
     return  mImageViews.find(name) != mImageViews.end() ||
             mBufferViews.find(name) != mBufferViews.end() ||
             mImageViewArrays.find(name) != mImageViewArrays.end() ||
             mSamplers.find(name) != mSamplers.end() ||
-            mSRS.find(name) != mSRS.end();
+            mSRS.find(name) != mSRS.end() ||
+            mAccelerationStructures.find(name) != mAccelerationStructures.end();
 }
 
 
@@ -693,6 +703,14 @@ Sampler& RenderGraph::getSampler(const char* name)
 }
 
 
+TopLevelAccelerationStructure& RenderGraph::getAccelerationStructure(const char* name)
+{
+    BELL_ASSERT(mAccelerationStructures.find(name) != mAccelerationStructures.end(), " Attempting to fetch non accelerationStruture resource")
+
+    return mAccelerationStructures.find(name)->second;
+}
+
+
 ImageView& RenderGraph::getImageView(const char *name)
 {
     BELL_ASSERT(mImageViews.find(name) != mImageViews.end(), " Attempting to fetch non imageView resource")
@@ -722,6 +740,13 @@ const Sampler& RenderGraph::getSampler(const char* name) const
     BELL_ASSERT(mSamplers.find(name) != mSamplers.end(), " Attempting to fetch non sampler resource")
 
     return mSamplers.find(name)->second;
+}
+
+const TopLevelAccelerationStructure& RenderGraph::getAccelerationStructure(const char* name) const
+{
+BELL_ASSERT(mAccelerationStructures.find(name) != mAccelerationStructures.end(), " Attempting to fetch non accelerationStruture resource")
+
+return mAccelerationStructures.find(name)->second;
 }
 
 

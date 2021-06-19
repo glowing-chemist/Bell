@@ -157,6 +157,8 @@ const std::vector<uint64_t>& VulkanCommandContext::getTimestamps()
 
 void VulkanCommandContext::reset()
 {
+    PROFILER_EVENT()
+
     mCommandPool.reset();
     mDescriptorManager.reset();
 
