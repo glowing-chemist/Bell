@@ -45,8 +45,14 @@ SwapChainSupportDetails VulkanSwapChain::querySwapchainSupport(vk::PhysicalDevic
 
 vk::PresentModeKHR choosePresentMode(const std::vector<vk::PresentModeKHR>& presentModes)
 {
-	BELL_ASSERT(std::find(presentModes.begin(), presentModes.end(), vk::PresentModeKHR::eFifo) != presentModes.end(), "FIFO not present")
-    return vk::PresentModeKHR::eFifo;
+	for(const auto presentMode : presentModes)
+    {
+	    if(presentMode == vk::PresentModeKHR::eMailbox)
+	        return presentMode;
+    }
+
+	// Guaranteed to be present.
+	return vk::PresentModeKHR::eFifo;
 }
 
 
