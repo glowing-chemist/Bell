@@ -51,7 +51,7 @@ InstanceIDTechnique::InstanceIDTechnique(RenderEngine* eng, RenderGraph& graph) 
                         constants.transform = instance->getTransMatrix() * subMesh.mTransform;
                         constants.id = instance->getID();
 
-                        exec->insertPushConsatnt(&constants, sizeof(PushConstants));
+                        exec->insertPushConstant(&constants, sizeof(PushConstants));
                         exec->indexedDraw((vertexOffset / mesh->getVertexStride()) + subMesh.mVertexOffset, (indexOffset / sizeof(uint32_t)) + subMesh.mIndexOffset, subMesh.mIndexCount);
                     }
                 }
@@ -70,7 +70,7 @@ InstanceIDTechnique::InstanceIDTechnique(RenderEngine* eng, RenderGraph& graph) 
                 const RenderTask& task = graph.getTask(taskIndex);
                 exec->setComputeShader(static_cast<const ComputeTask&>(task), graph, mComputeShader);
 
-                exec->insertPushConsatnt(&mCurrentMousePos, sizeof(uint2));
+                exec->insertPushConstant(&mCurrentMousePos, sizeof(uint2));
                 exec->dispatch(1, 1, 1);
             });
 

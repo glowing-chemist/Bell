@@ -94,7 +94,7 @@ RayTracedReflectionTechnique::RayTracedReflectionTechnique(RenderEngine* eng, Re
                     const uint32_t width =  eng->getDevice()->getSwapChain()->getSwapChainImageWidth() / 4;
                     const uint32_t height =  eng->getDevice()->getSwapChain()->getSwapChainImageHeight() / 4;
 
-                    exec->insertPushConsatnt(&mSampleNumber, sizeof(uint32_t));
+                    exec->insertPushConstant(&mSampleNumber, sizeof(uint32_t));
                     mSampleNumber = (mSampleNumber + 1) % 16;
                     exec->dispatch(std::ceil(width / 16.0f), std::ceil(height / 16.0f), 1);
                 }

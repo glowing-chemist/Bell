@@ -35,7 +35,7 @@ public:
 
 	virtual void indexedIndirectDraw(const uint32_t drawCalls, const BufferView&) = 0;
 
-    virtual void insertPushConsatnt(const void* val, const size_t size) = 0;
+    virtual void insertPushConstant(const void* val, const size_t size) = 0;
 
 	virtual void dispatch(const uint32_t x, const uint32_t y, const uint32_t z) = 0;
 

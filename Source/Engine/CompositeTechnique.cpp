@@ -49,7 +49,7 @@ CompositeTechnique::CompositeTechnique(RenderEngine* eng, RenderGraph& graph) :
                 const RenderTask& task = graph.getTask(taskIndex);
                 exec->setGraphicsShaders(static_cast<const GraphicsTask&>(task), graph, vertexShader, nullptr, nullptr, nullptr, fragmentShader);
 
-                exec->insertPushConsatnt(&mConstants, sizeof(ColourConstants));
+                exec->insertPushConstant(&mConstants, sizeof(ColourConstants));
 				exec->draw(0, 3);
 			}
 		);
@@ -97,7 +97,7 @@ CompositeTechnique::CompositeTechnique(RenderEngine* eng, RenderGraph& graph) :
                     const RenderTask& task = graph.getTask(taskIndex);
                     exec->setGraphicsShaders(static_cast<const GraphicsTask&>(task), graph, vertexShader, nullptr, nullptr, nullptr, fragmentShader);
 
-                    exec->insertPushConsatnt(&mConstants, sizeof(ColourConstants));
+                    exec->insertPushConstant(&mConstants, sizeof(ColourConstants));
                     exec->draw(0, 3);
                 }
             );
@@ -133,7 +133,7 @@ CompositeTechnique::CompositeTechnique(RenderEngine* eng, RenderGraph& graph) :
                     const RenderTask& task = graph.getTask(taskIndex);
                     exec->setGraphicsShaders(static_cast<const GraphicsTask&>(task), graph, vertexShader, nullptr, nullptr, nullptr, fragmentShader);
 
-                    exec->insertPushConsatnt(&mConstants, sizeof(ColourConstants));
+                    exec->insertPushConstant(&mConstants, sizeof(ColourConstants));
                     exec->draw(0, 3);
                 }
             );

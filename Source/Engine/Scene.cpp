@@ -114,7 +114,7 @@ void MeshInstance::draw(Executor* exec, UberShaderStateCache* cache, const uint3
         MeshEntry shaderEntry = getMeshShaderEntry(i, subMesh);
         cache->update(shaderEntry.mMaterialFlags);
 
-        exec->insertPushConsatnt(&shaderEntry, sizeof(MeshEntry));
+        exec->insertPushConstant(&shaderEntry, sizeof(MeshEntry));
         exec->indexedDraw((baseVertexOffset / vertesStride) + subMesh.mVertexOffset, (baseIndexOffset / sizeof(uint32_t)) + subMesh.mIndexOffset, subMesh.mIndexCount);
     }
 }

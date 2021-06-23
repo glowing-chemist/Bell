@@ -71,7 +71,7 @@ ViaualizeLightProbesTechnique::ViaualizeLightProbesTechnique(RenderEngine* eng, 
                             pc.transform = glm::translate(float4x4(1.0f), float3(probe.mPosition)) * glm::scale(float3(maxScale, maxScale, maxScale));
                             pc.index = index++;
 
-                            exec->insertPushConsatnt(&pc, sizeof(PushConstants));
+                            exec->insertPushConstant(&pc, sizeof(PushConstants));
                             exec->indexedDraw(0, 0, mIndexCount);
                         }
                     }
@@ -117,7 +117,7 @@ ViaualizeLightProbesTechnique::ViaualizeLightProbesTechnique(RenderEngine* eng, 
                                 pc.transform = glm::translate(float4x4(1.0f), float3(position)) * glm::scale(float3(maxScale, maxScale, maxScale));
                                 pc.index = 0;
 
-                                exec->insertPushConsatnt(&pc, sizeof(PushConstants));
+                                exec->insertPushConstant(&pc, sizeof(PushConstants));
                                 exec->indexedDraw(0, 0, mIndexCount);
                             }
                         }

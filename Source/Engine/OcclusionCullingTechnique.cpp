@@ -61,7 +61,7 @@ OcclusionCullingTechnique::OcclusionCullingTechnique(RenderEngine* eng, RenderGr
                 {
                     const uint32_t meshCount = meshes.size();
 
-                    exec->insertPushConsatnt(&meshCount, sizeof(uint32_t));
+                    exec->insertPushConstant(&meshCount, sizeof(uint32_t));
                     exec->dispatch(std::ceil(meshCount / 64.0f), 1, 1);
                 }
             }

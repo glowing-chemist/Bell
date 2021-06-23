@@ -58,7 +58,7 @@ SkinningTechnique::SkinningTechnique(RenderEngine* eng, RenderGraph& graph) :
                             pushConstants.mBoneIndex = anim.mBoneOffset;
                             pushConstants.mVertexStride = vertesStride;
 
-                            exec->insertPushConsatnt(&pushConstants, sizeof(PushConstant));
+                            exec->insertPushConstant(&pushConstants, sizeof(PushConstant));
                             exec->dispatch(std::ceil(vertexCount / 32.0f), 1, 1);
                         }
                     }
@@ -104,7 +104,7 @@ SkinningTechnique::SkinningTechnique(RenderEngine* eng, RenderGraph& graph) :
 
                             for (const auto& constants : constants)
                             {
-                                exec->insertPushConsatnt(&constants, sizeof(PushConstant));
+                                exec->insertPushConstant(&constants, sizeof(PushConstant));
                                 exec->dispatch(std::ceil(constants.mVertexCount / 32.0f), 1, 1);
                             }
                         }

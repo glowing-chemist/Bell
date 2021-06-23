@@ -105,7 +105,7 @@ DebugAABBTechnique::DebugAABBTechnique(RenderEngine* eng, RenderGraph& graph) :
                             AABB transformedAABB = meshAABB * meshTransformation;
                             float4x4 AABBtransformation = glm::translate(float3(transformedAABB.getCentralPoint())) * glm::scale(transformedAABB.getSideLengths());
 
-                            exec->insertPushConsatnt(&AABBtransformation, sizeof(float4x4));
+                            exec->insertPushConstant(&AABBtransformation, sizeof(float4x4));
                             exec->indexedDraw(0, 0, 24);
                         }
                     }
@@ -114,7 +114,7 @@ DebugAABBTechnique::DebugAABBTechnique(RenderEngine* eng, RenderGraph& graph) :
                     for(const AABB& aabb : debugAABBs)
                     {
                         float4x4 AABBtransformation = glm::translate(float3(aabb.getCentralPoint())) * glm::scale(aabb.getSideLengths());
-                        exec->insertPushConsatnt(&AABBtransformation, sizeof(float4x4));
+                        exec->insertPushConstant(&AABBtransformation, sizeof(float4x4));
                         exec->indexedDraw(0, 0, 24);
                     }
 
@@ -142,7 +142,7 @@ DebugAABBTechnique::DebugAABBTechnique(RenderEngine* eng, RenderGraph& graph) :
                                 float4x4 OBBTransformation =
                                         inst->getTransMatrix() * boneTransform * glm::translate(centralPoint) *
                                         glm::scale(float4x4(1.0f), sideLenghts);
-                                exec->insertPushConsatnt(&OBBTransformation, sizeof(float4x4));
+                                exec->insertPushConstant(&OBBTransformation, sizeof(float4x4));
                                 exec->indexedDraw(0, 0, 24);
                             }
                         }
@@ -155,7 +155,7 @@ DebugAABBTechnique::DebugAABBTechnique(RenderEngine* eng, RenderGraph& graph) :
                         exec->bindVertexBuffer(*mDebugLineVertexBufferView, 0);
 
                         float4x4 identityTransform(1.0f);
-                        exec->insertPushConsatnt(&identityTransform, sizeof(float4x4));
+                        exec->insertPushConstant(&identityTransform, sizeof(float4x4));
                         exec->draw(0, lines.size() * 2);
                     }
 
@@ -189,7 +189,7 @@ DebugAABBTechnique::DebugAABBTechnique(RenderEngine* eng, RenderGraph& graph) :
                 const float4x4& transform = mesh->getTransMatrix();
                 const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->getMesh());
 
-                exec->insertPushConsatnt(&transform, sizeof(float4x4));
+                exec->insertPushConstant(&transform, sizeof(float4x4));
                 exec->indexedDraw(vertexOffset / mesh->getMesh()->getVertexStride(), indexOffset / sizeof(uint32_t), mesh->getMesh()->getIndexData().size());
             }
         }
@@ -241,7 +241,7 @@ DebugAABBTechnique::DebugAABBTechnique(RenderEngine* eng, RenderGraph& graph) :
                     pushPonstants.trans = lightTransform;
                     pushPonstants.index = i;
 
-                    exec->insertPushConsatnt(&pushPonstants, sizeof(LightTransform));
+                    exec->insertPushConstant(&pushPonstants, sizeof(LightTransform));
                     exec->indexedDraw(0, 24, 36);
                 }
                 else if(light.mType == LightType::Strip)
@@ -257,7 +257,7 @@ DebugAABBTechnique::DebugAABBTechnique(RenderEngine* eng, RenderGraph& graph) :
                     pushPonstants.trans = lightTransform;
                     pushPonstants.index = i;
 
-                    exec->insertPushConsatnt(&pushPonstants, sizeof(LightTransform));
+                    exec->insertPushConstant(&pushPonstants, sizeof(LightTransform));
                     exec->indexedDraw(0, 24, 36);
                 }
             }

@@ -232,7 +232,7 @@ RayTracedShadowsTechnique::RayTracedShadowsTechnique(RenderEngine* eng, RenderGr
             exec->setComputeShader(static_cast<const ComputeTask&>(task), graph, mRayTracedShadowsShader);
 
             const uint32_t frameIndex = static_cast<uint32_t>(eng->getDevice()->getCurrentSubmissionIndex() % 64ULL);
-            exec->insertPushConsatnt(&frameIndex, sizeof(uint32_t));
+            exec->insertPushConstant(&frameIndex, sizeof(uint32_t));
 
             const float threadGroupWidth = eng->getSwapChainImageView()->getImageExtent().width / 4;
             const float threadGroupHeight = eng->getSwapChainImageView()->getImageExtent().height / 4;

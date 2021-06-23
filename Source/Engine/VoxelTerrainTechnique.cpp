@@ -88,7 +88,7 @@ VoxelTerrainTechnique::VoxelTerrainTechnique(RenderEngine* eng, RenderGraph& gra
                             mode = -0.01f;
 
                         TerrainModifying constants{uint2{io.MousePos.x, io.MousePos.y}, mode, voxelSize, voxelGridWorldSize};
-                        exec->insertPushConsatnt(&constants, sizeof(TerrainModifying));
+                        exec->insertPushConstant(&constants, sizeof(TerrainModifying));
 
                         const uint32_t modifySize = std::ceil(mModifySize / voxelSize);
                         exec->dispatch(modifySize, modifySize, modifySize);
@@ -169,7 +169,7 @@ VoxelTerrainTechnique::VoxelTerrainTechnique(RenderEngine* eng, RenderGraph& gra
                 uniformBuffer.voxelSize = baseVoxelSize;
                 uniformBuffer.lod = lodFactor;
                 memcpy(&uniformBuffer.frustumPlanes, planes.data(), sizeof(float4) * 6);
-                exec->insertPushConsatnt(&uniformBuffer, sizeof(TerrainVolume));
+                exec->insertPushConstant(&uniformBuffer, sizeof(TerrainVolume));
 
                 float3 volumeMax = terrainVolumeMax;
                 volumeMax = componentWiseMin(volumeMax, gridMax);
@@ -213,7 +213,7 @@ VoxelTerrainTechnique::VoxelTerrainTechnique(RenderEngine* eng, RenderGraph& gra
             exec->bindVertexBuffer(mVertexBufferView, 0);
 
             TerrainTexturing textureInfo{mTextureScale, mMaterialIndexXZ, mMaterialIndexY};
-            exec->insertPushConsatnt(&textureInfo, sizeof(TerrainTexturing));
+            exec->insertPushConstant(&textureInfo, sizeof(TerrainTexturing));
 
             exec->indirectDraw(1, mIndirectArgView);
         });
