@@ -14,6 +14,7 @@
 
 
 class RenderDevice;
+class Executor;
 class ImageViewBase;
 class VulkanBarrierRecorder;
 
@@ -66,6 +67,7 @@ public:
     virtual void clear(const float4&) = 0;
 
     virtual void generateMips() = 0;
+    virtual void generateMips(Executor*) = 0;
 
 	virtual void updateLastAccessed();
 

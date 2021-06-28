@@ -4,8 +4,10 @@
 #include <vulkan/vulkan.hpp>
 
 #include "Core/Image.hpp"
+#include "Core/Executor.hpp"
 #include "MemoryManager.hpp"
 
+class Executor;
 
 class VulkanImage : public ImageBase
 {
@@ -51,6 +53,7 @@ public:
     virtual void clear(const float4&) override;
 
     virtual void generateMips() override;
+    virtual void generateMips(Executor*) override;
 
 	vk::Image getImage() const
 	{

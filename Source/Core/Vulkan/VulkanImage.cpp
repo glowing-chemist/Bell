@@ -1,5 +1,6 @@
 #include "VulkanImage.hpp"
 #include "Core/BellLogging.hpp"
+#include "Core/CommandContext.hpp"
 #include "VulkanRenderDevice.hpp"
 #include "VulkanBarrierManager.hpp"
 #include "Core/ConversionUtils.hpp"
@@ -228,20 +229,15 @@ void VulkanImage::clear(const float4& colour)
 	updateLastAccessed();
 }
 
-
-void VulkanImage::generateMips()
+void VulkanImage::generateMips(Executor* exec)
 {
-    BELL_ASSERT(mNumberOfLevels == 1, "Image arrays not currently supported")
-
-    VulkanRenderDevice* device = static_cast<VulkanRenderDevice*>(getDevice());
-
-    auto CmdBuffer = device->getPrefixCommandBuffer();
+    VulkanExecutor* VKExec = static_cast<VulkanExecutor*>(exec);
+    auto cmdBuffer = VKExec->getCommandBuffer();
 
     vk::ImageLayout srcLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
 
     for(uint32_t i = 1; i < mNumberOfMips; ++i)
     {
-
         auto& srcSubResource = (*mSubResourceInfo)[i - 1];
         auto& dstSubResource = (*mSubResourceInfo)[i];
         ImageExtent srcExtent = srcSubResource.mExtent;
@@ -263,8 +259,8 @@ void VulkanImage::generateMips()
         dstBarrier.setSubresourceRange({ vk::ImageAspectFlagBits::eColor, i, 1, 0, 1 });
         dstBarrier.setImage(mImage);
 
-        CmdBuffer.pipelineBarrier(vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eTransfer,
-            vk::DependencyFlagBits::eByRegion, {}, {}, { srcBarrier, dstBarrier });
+        cmdBuffer.pipelineBarrier(vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eTransfer,
+                                  vk::DependencyFlagBits::eByRegion, {}, {}, { srcBarrier, dstBarrier });
         srcSubResource.mLayout = ImageLayout::TransferSrc;
         dstSubResource.mLayout = ImageLayout::TransferDst;
 
@@ -282,7 +278,7 @@ void VulkanImage::generateMips()
         blit.dstSubresource.baseArrayLayer = 0;
         blit.dstSubresource.layerCount = 1;
 
-        CmdBuffer.blitImage(mImage, vk::ImageLayout::eTransferSrcOptimal, mImage, vk::ImageLayout::eTransferDstOptimal, 1, &blit, vk::Filter::eLinear);
+        cmdBuffer.blitImage(mImage, vk::ImageLayout::eTransferSrcOptimal, mImage, vk::ImageLayout::eTransferDstOptimal, 1, &blit, vk::Filter::eLinear);
 
         srcLayout = vk::ImageLayout::eTransferDstOptimal;
 
@@ -294,8 +290,8 @@ void VulkanImage::generateMips()
         barrier.setSubresourceRange({ vk::ImageAspectFlagBits::eColor, i - 1, 1, 0, 1 });
         barrier.setImage(mImage);
 
-        CmdBuffer.pipelineBarrier(vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eTransfer,
-            vk::DependencyFlagBits::eByRegion, {}, {}, { barrier });
+        cmdBuffer.pipelineBarrier(vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eTransfer,
+                                  vk::DependencyFlagBits::eByRegion, {}, {}, { barrier });
 
         srcSubResource.mLayout = ImageLayout::Sampled;
     }
@@ -309,10 +305,20 @@ void VulkanImage::generateMips()
     endBarrier.setSubresourceRange({ vk::ImageAspectFlagBits::eColor, mNumberOfMips - 1, 1, 0, 1 });
     endBarrier.setImage(mImage);
 
-    CmdBuffer.pipelineBarrier(vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eFragmentShader,
-        vk::DependencyFlagBits::eByRegion, {}, {}, { endBarrier });
+    cmdBuffer.pipelineBarrier(vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eFragmentShader,
+                              vk::DependencyFlagBits::eByRegion, {}, {}, { endBarrier });
 
     (*mSubResourceInfo)[mNumberOfMips - 1].mLayout = ImageLayout::Sampled;
+}
 
+
+void VulkanImage::generateMips()
+{
+    BELL_ASSERT(mNumberOfLevels == 1, "Image arrays not currently supported")
+
+    Executor* exec = getDevice()->getCommandContext(0, QueueType::Graphics)->allocateExecutor();
+    generateMips(exec);
+
+    getDevice()->getCommandContext(0, QueueType::Graphics)->freeExecutor(exec);
 }
 
