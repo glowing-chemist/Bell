@@ -19,7 +19,7 @@ Texture2D<float2> linearDepth;
 Texture2D<float2> Normals;
 
 
-float4 nearestDepthSample(const float2 uv, uint2 outputSize, Texture2D<float4> input, Texture2D<float2> depth)
+float4 nearestDepthSample(const uint2 pixel, uint2 outputSize, Texture2D<float4> input, Texture2D<float2> depth)
 {
 	uint inputWidth, inputHeight;
 	input.GetDimensions(inputWidth, inputWidth);
@@ -31,10 +31,10 @@ float4 nearestDepthSample(const float2 uv, uint2 outputSize, Texture2D<float4> i
 
 	float depthSamples[4] = 
 	{
-		depth.SampleLevel(linearSampler, uv, depthMip, int2(0, 0)).x,
-		depth.SampleLevel(linearSampler, uv, depthMip, int2(0, 1)).x,
-		depth.SampleLevel(linearSampler, uv, depthMip, int2(1, 0)).x,
-		depth.SampleLevel(linearSampler, uv, depthMip, int2(1, 1)).x
+		depth.Load(uint3(pixel + int2(0, 0), depthMip)).x,
+		depth.Load(uint3(pixel + int2(0, 1), depthMip)).x,
+		depth.Load(uint3(pixel + int2(1, 0), depthMip)).x,
+		depth.Load(uint3(pixel + int2(1, 1), depthMip)).x
 	};
 
 	int2 inputOffsets[4] = 
@@ -45,7 +45,7 @@ float4 nearestDepthSample(const float2 uv, uint2 outputSize, Texture2D<float4> i
 		int2(1, 1)
 	};
 
-	float d0 = depth.SampleLevel(linearSampler, uv, 0.0f).x;
+	float d0 = depth.Load(uint3(pixel, 0)).x;
 	float minDist = 1.0f;
 
 	int bestDepthIndex = 0;
@@ -58,7 +58,7 @@ float4 nearestDepthSample(const float2 uv, uint2 outputSize, Texture2D<float4> i
 		}
 	}
 
-	return input.SampleLevel(pointSampler, uv, 0.0f, inputOffsets[bestDepthIndex]);
+	return input.Load(uint3(pixel + inputOffsets[bestDepthIndex], 0));
 }
 
 
@@ -70,8 +70,6 @@ void main(uint3 globalIndex : SV_DispatchThreadID)
 
 	if(globalIndex.x >= width || globalIndex.y >= height)
 		return;
-
-	const float2 uv = float2(globalIndex.xy) / float2(width, height);
 
 	// Sample the normal map to detect face discontinuties.
 	float3 n[4] = 
@@ -89,5 +87,5 @@ void main(uint3 globalIndex : SV_DispatchThreadID)
 	float minDot = min(dot01, min(dot02, dot03));
 	float s = step(0.997, minDot);
 
-	Output[globalIndex.xy] = lerp(nearestDepthSample(uv, uint2(width, height), Input, linearDepth), Input.SampleLevel(linearSampler, uv, 0.0f), s);
+	Output[globalIndex.xy] = lerp(nearestDepthSample(globalIndex.xy / uint2(2, 2), uint2(width, height), Input, linearDepth), Input.Load(uint3(globalIndex.xy / uint2(2, 2), 0)), s);
 } 

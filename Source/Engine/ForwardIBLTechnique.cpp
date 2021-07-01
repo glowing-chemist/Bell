@@ -38,7 +38,9 @@ ForwardIBLTechnique::ForwardIBLTechnique(RenderEngine* eng, RenderGraph& graph) 
     if(eng->isPassRegistered(PassType::OcclusionCulling))
         task.addInput(kOcclusionPredicationBuffer, AttachmentType::CommandPredicationBuffer);
 
-    task.addManagedOutput(kGlobalLighting, AttachmentType::RenderTarget2D, Format::RGBA16Float, SizeClass::Swapchain, LoadOp::Clear_Black);
+    task.addManagedOutput(kGlobalLighting, AttachmentType::RenderTarget2D, Format::RGBA16Float, SizeClass::Swapchain,
+                          LoadOp::Clear_Black, StoreOp::Store,
+                          ImageUsage::ColourAttachment | ImageUsage::Sampled | ImageUsage::TransferSrc);
 	task.addManagedOutput(kGBufferVelocity, AttachmentType::RenderTarget2D, Format::RG16Float, SizeClass::Swapchain, LoadOp::Clear_Black);
 	task.addOutput(kGBufferDepth, AttachmentType::Depth, Format::D32Float);
 
