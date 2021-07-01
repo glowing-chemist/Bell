@@ -58,7 +58,7 @@ float nearestDepthSample(const float2 uv, uint2 outputSize, Texture2D<float> inp
 		}
 	}
 
-	return input.Sample(pointSampler, uv + inputOffsets[bestDepthIndex]);
+	return input.SampleLevel(pointSampler, uv + inputOffsets[bestDepthIndex], 0.0f);
 }
 
 
@@ -89,5 +89,5 @@ void main(uint3 globalIndex : SV_DispatchThreadID)
 	float minDot = min(dot01, min(dot02, dot03));
 	float s = step(0.997, minDot);
 
-	Output[globalIndex.xy] = lerp(nearestDepthSample(uv, uint2(width, height), Input, linearDepth), Input.Sample(linearSampler, uv), s);
+	Output[globalIndex.xy] = lerp(nearestDepthSample(uv, uint2(width, height), Input, linearDepth), Input.SampleLevel(linearSampler, uv, 0.0f), s);
 } 

@@ -25,7 +25,7 @@ void UberShaderMaterialStateCache::update(const uint64_t materialDefines)
     {
         mCurrentMaterialDefines = materialDefines;
 
-        ShaderDefine materialDefine("MATERIAL_FLAGS", mCurrentMaterialDefines);
+        ShaderDefine materialDefine(L"MATERIAL_FLAGS", mCurrentMaterialDefines);
         Shader fragmentShader = mEng->getShader(mFragmentShaderName, materialDefine);
         mExec->setGraphicsShaders(static_cast<const GraphicsTask&>(mTask), mGraph, mVertexShader, nullptr, nullptr, nullptr, fragmentShader);
     }

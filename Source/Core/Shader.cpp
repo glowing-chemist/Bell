@@ -17,18 +17,11 @@
 
 ShaderBase::ShaderBase(RenderDevice* device, const std::string& path, const uint64_t prefixHash) :
     DeviceChild{device},
-    mSource{},
     mFilePath{path},
     mCompiled{false},
     mPrefixHash(prefixHash),
     mCompileDefinesHash(0)
 {
-    // Load the hlsl Source from disk in to mSource.
-
-    std::ifstream sourceFile{ mFilePath };
-    std::vector<char> source{ std::istreambuf_iterator<char>(sourceFile), std::istreambuf_iterator<char>() };
-    mSource = std::move(source);
-
 	mLastFileAccessTime = fs::last_write_time(path);
 }
 

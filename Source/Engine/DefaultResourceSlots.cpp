@@ -53,7 +53,7 @@ const char kTPoseVertexBuffer[] = "TPoseBuffer";
 const char kBoneWeighntsIndiciesBuffer[] = "BoneWeightsIndicies";
 const char kBonesWeights[]      = "BoneWeights";
 const char kBonesBuffer[]        = "BonesBuffer";
-const char kBVH[]               = "BVH";
+const char kMainCameraBVH[]               = "BVH";
 
 const char kFrameBufer[]        = "FrameBuffer";
 const char kGlobalLighting[]	 = "GlobalLighting";

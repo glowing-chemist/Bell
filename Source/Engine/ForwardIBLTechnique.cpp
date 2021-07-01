@@ -118,7 +118,7 @@ void ForwardIBLTechnique::postGraphCompilation(RenderGraph& graph, RenderEngine*
     {
         if(mMaterialPipelineVariants.find(material.mMaterialTypes) == mMaterialPipelineVariants.end())
         {
-            ShaderDefine materialDefine("MATERIAL_FLAGS", material.mMaterialTypes);
+            ShaderDefine materialDefine(L"MATERIAL_FLAGS", material.mMaterialTypes);
             Shader fragmentShader = engine->getShader("./Shaders/ForwardIBL.frag", materialDefine);
 
             const PipelineHandle pipeline = device->compileGraphicsPipeline(static_cast<const GraphicsTask&>(task),

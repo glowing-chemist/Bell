@@ -7,8 +7,8 @@
 
 struct Output
 {
-    float4 colour;
-    float2 velocity;
+    float4 colour : SV_Target0;
+    float2 velocity : SV_Target1;
 };
 
 [[vk::binding(0)]]

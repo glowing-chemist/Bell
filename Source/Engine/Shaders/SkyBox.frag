@@ -10,7 +10,7 @@ TextureCube<float4> skyBox;
 [[vk::binding(2)]]
 SamplerState defaultSampler;
 
-float4 main(PositionAndUVVertOutput vertInput)
+float4 main(PositionAndUVVertOutput vertInput) : SV_Target0
 {
 	const float4 positionNDC = float4((vertInput.uv - 0.5f) * 2.0f, 0.00001f, 1.0f); 
 	float4 worldSpaceFragmentPos = mul(camera.invertedViewProj, positionNDC);

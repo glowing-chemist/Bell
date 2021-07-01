@@ -62,7 +62,7 @@ void main(uint3 globalIndex : SV_DispatchThreadID)
 	if(globalIndex.x >= gbufferSize.x || globalIndex.y >= gbufferSize.y)
 		return;
 
-	const float fragmentDepth = depth.Sample(linearSampler, uv);
+	const float fragmentDepth = depth.SampleLevel(linearSampler, uv, 0.0f);
 
 	float4 worldSpaceFragmentPos = mul(camera.invertedViewProj, float4((uv - 0.5f) * 2.0f, fragmentDepth, 1.0f));
 	worldSpaceFragmentPos /= worldSpaceFragmentPos.w;
@@ -71,14 +71,14 @@ void main(uint3 globalIndex : SV_DispatchThreadID)
 
     const float3 viewDir = normalize(float4(camera.position, 1.0f) - worldSpaceFragmentPos).xyz;
 
-    const float4 specularRoughness = SpecularRoughness.Sample(linearSampler, uv);
+    const float4 specularRoughness = SpecularRoughness.SampleLevel(linearSampler, uv, 0.0f);
 
     MaterialInfo material;
-    material.diffuse = Diffuse.Sample(linearSampler, uv);
+    material.diffuse = Diffuse.SampleLevel(linearSampler, uv, 0.0f);
     material.normal = float4(normal, 1.0f);
     material.specularRoughness = specularRoughness;
 
-    const uint froxelIndex = activeFroxels.Sample(pointSampler, uv);
+    const uint froxelIndex = activeFroxels.Load(uint3(globalIndex.xy, 0));
     const uint2 lightListIndicies = sparseFroxelList[froxelIndex];
 
     float roughness = material.specularRoughness.w;
@@ -89,7 +89,7 @@ void main(uint3 globalIndex : SV_DispatchThreadID)
     float3 dfg;
     initializeLightState(minV, LTCAmp, dfg, DFG, ltcMat, ltcAmp, linearSampler, dot(material.normal.xyz, viewDir), roughness * roughness);
 
-    float4 lighting = float4(0.0f);
+    float4 lighting = float4(0.0f, 0.0f, 0.0f, 0.0f);
 
     for(uint i = 0; i < lightListIndicies.y; ++i)
     {

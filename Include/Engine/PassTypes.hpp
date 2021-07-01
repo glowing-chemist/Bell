@@ -41,7 +41,8 @@
                     RayTracedShadows = 1ULL << 34, \
                     DownSampleColour = 1ULL << 35, \
                     VoxelTerrain = 1ULL << 36,   \
-                    InstanceID = 1ULL << 37
+                    InstanceID = 1ULL << 37,     \
+                    BuildAccelerationStructures = 1ULL << 38
 
 // An enum to keep track of which 
 enum class PassType : uint64_t
@@ -162,6 +163,116 @@ inline const char* passToString(const PassType passType)
     }
 }
 
+inline const wchar_t* passToWString(const PassType passType)
+{
+    switch(passType)
+    {
+        case PassType::DepthPre:
+            return L"Depth_Pre_pass";
+
+        case PassType::GBuffer:
+            return L"GBuffer_pass";
+
+        case PassType::SSAO:
+            return L"SSAO";
+
+        case PassType::GBufferPreDepth:
+            return L"GBuffer_Pre_Depth";
+
+        case PassType::InplaceCombine:
+            return L"Inplace_combine";
+
+        case PassType::InplaceCombineSRGB:
+            return L"Inplace_combineSRGB";
+
+        case PassType::DeferredPBRIBL:
+            return L"Deferred_PBR_IBL";
+
+        case PassType::ForwardIBL:
+            return L"ForwardIBL";
+
+        case PassType::ForwardCombinedLighting:
+            return L"Forward_combined_lighting";
+
+        case PassType::Skybox:
+            return L"Skybox";
+
+        case PassType::ConvolveSkybox:
+            return L"Convolve_skybox";
+
+        case PassType::DFGGeneration:
+            return L"DFGGenration";
+
+        case PassType::LightFroxelation:
+            return L"Light_froxelation";
+
+        case PassType::DeferredAnalyticalLighting:
+            return L"Deferred_analytical_lighting";
+
+        case PassType::Shadow:
+            return L"Shadow_Map";
+
+        case PassType::TAA:
+            return L"TAA";
+
+        case PassType::LineariseDepth:
+            return L"Linearise_depth";
+
+        case PassType::Overlay:
+            return L"Overlay";
+
+        case PassType::SSR:
+            return L"Screen_Space_Reflection";
+
+        case PassType::Composite:
+            return L"Composite";
+
+        case PassType::DebugAABB:
+            return L"DebugAABB";
+
+        case PassType::DebugWireFrame:
+            return L"WireFrame";
+
+        case PassType::Transparent:
+            return L"Transparent";
+
+        case PassType::CascadingShadow:
+            return L"Cascade_Shadow_Map";
+
+        case PassType::ComputeSkinning:
+            return L"Skinning";
+
+        case PassType::Voxelize:
+            return L"Voxalize";
+
+        case PassType::LightProbeDeferredGI:
+            return L"DeferredProbeLighting";
+
+        case PassType::VisualizeLightProbes:
+            return L"VisulizeLightProbes";
+
+        case PassType::OcclusionCulling:
+            return L"OcclusionCulling";
+
+        case PassType::PathTracing:
+            return L"PathTracing";
+
+        case PassType::RayTracedReflections:
+            return L"RayTraced_Reflections";
+
+        case PassType::RayTracedShadows:
+            return L"RayTraced_Shadows";
+
+        case PassType::DownSampleColour:
+            return L"DownSampled_Colour";
+
+        case PassType::VoxelTerrain:
+            return L"Voxel_Terrain";
+
+        default:
+            return L"UNKNOWN_PASS_TYPE";
+    }
+}
 
 enum class AttachmentType
 {

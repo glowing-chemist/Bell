@@ -19,8 +19,8 @@ PathTracingTechnique::PathTracingTechnique(RenderEngine* eng, RenderGraph& graph
     task.addInput(kDefaultSampler, AttachmentType::Sampler);
     task.addInput(kGlobalLighting, AttachmentType::Image2D);
     task.addInput(kSkyBox, AttachmentType::CubeMap);
+    task.addInput(kMainCameraBVH, AttachmentType::AccelerationStructure);
     task.addInput(kMaterials, AttachmentType::ShaderResourceSet);
-    task.addInput(kBVH, AttachmentType::ShaderResourceSet);
 
     task.setRecordCommandsCallback(
                 [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, RenderEngine* eng, const std::vector<const MeshInstance*>&)

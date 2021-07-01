@@ -6,6 +6,7 @@
 
 #include "BarrierManager.hpp"
 #include "SwapChain.hpp"
+#include "ShaderCompiler.hpp"
 #include "Core/ImageView.hpp"
 #include "Core/ShaderResourceSet.hpp"
 
@@ -37,9 +38,13 @@ public:
 		mFinishedSubmission{0},
 		mCurrentFrameIndex{0},
 		mDeviceFeatureFlags(enabledFeatured),
+		mShaderCompiler(new ShaderCompiler()),
 		mSwapChain{nullptr} {}
 
-    virtual ~RenderDevice() = default;
+    virtual ~RenderDevice()
+    {
+	    delete mShaderCompiler;
+    }
 
     virtual CommandContextBase*        getCommandContext(const uint32_t index, const QueueType) = 0;
 
@@ -121,6 +126,8 @@ public:
 	SwapChainBase* getSwapChain() { return mSwapChain; }
 	const SwapChainBase* getSwapChain() const { return mSwapChain; }
 
+	ShaderCompiler* getShaderCompiler() { return mShaderCompiler; }
+
 protected:
 
     // Keep track of when resources can be freed
@@ -130,6 +137,7 @@ protected:
 
     uint32_t mDeviceFeatureFlags;
 
+    ShaderCompiler* mShaderCompiler;
     SwapChainBase* mSwapChain;
 };
 

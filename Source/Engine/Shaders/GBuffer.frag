@@ -8,11 +8,11 @@
 
 struct GBufferFragOutput
 {
-    float4 diffuse;
-    float2 normal;
-    float4 specularRoughness;
-    float2 velocity;
-    float4 emissiveOcclusion;
+    float4 diffuse : SV_Target0;
+    float2 normal : SV_Target1;
+    float4 specularRoughness : SV_Target2;
+    float2 velocity : SV_Target3;
+    float4 emissiveOcclusion : SV_Target4;
 };
 
 [[vk::binding(0)]]

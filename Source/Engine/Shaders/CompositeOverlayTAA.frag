@@ -25,7 +25,7 @@ ConstantBuffer<CameraBuffer> camera;
 [[vk::push_constant]]
 ConstantBuffer<ColourCorrection> constants;
 
-float4 main(PositionAndUVVertOutput vertOutput)
+float4 main(PositionAndUVVertOutput vertOutput) : SV_Target0
 {
 	// Sharpen the taa output.
 	// [ 0.0f, -1.0f, 0.0f
@@ -42,9 +42,9 @@ float4 main(PositionAndUVVertOutput vertOutput)
 	colour = performColourMapping(colour, constants.gamma, constants.exposure);
 
 #if USING_OVERLAY
-	const float4 overlay = overlay.Sample(defaultSampler, vertOutput.uv);
+	const float4 overlayPixel = overlay.Sample(defaultSampler, vertOutput.uv);
 
-	colour = ((1.0f - overlay.w) * colour) + overlay;
+	colour = ((1.0f - overlayPixel.w) * colour) + overlayPixel;
 #endif
 
 	return colour;

@@ -35,7 +35,7 @@ void main(	uint localIndex : SV_GroupIndex,
 
 	float2 uv = float2(globalIndex.xy) / size;
 
-	float depth = linearDepth.Sample(linearSampler, uv);
+	float depth = linearDepth.SampleLevel(linearSampler, uv, 0.0f);
 
 	uint3 froxelPos = getFroxelPosition(globalIndex.xy, depth, size, camera.nearPlane, camera.farPlane, camera.fov);
 	uint froxelIndex = getFroxelIndex(froxelPos, uint2(size));

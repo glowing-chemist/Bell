@@ -11,7 +11,7 @@ RWTexture2D<float2> outImage;
 [[vk::binding(2)]]
 SamplerState linearSampler;
 
-[[numthreads(1, KERNEL_SIZE, 1)]]
+[numthreads(1, KERNEL_SIZE, 1)]
 void main(uint3 localIndex : SV_GroupThreadID, 
 			uint3 globalIndex : SV_DispatchThreadID)
 {

@@ -7,10 +7,11 @@
 #include "Core/GPUResource.hpp"
 
 class StaticMesh;
+class MeshInstance;
 class RenderEngine;
 class Executor;
 
-class BottomLevelAccelerationStructureBase : public DeviceChild
+class BottomLevelAccelerationStructureBase : public DeviceChild, public GPUResource
 {
 public:
 
@@ -52,7 +53,7 @@ private:
 };
 
 
-class TopLevelAccelerationStructureBase : public DeviceChild
+class TopLevelAccelerationStructureBase : public DeviceChild, public GPUResource
 {
 public:
 
@@ -61,7 +62,7 @@ public:
 
     virtual void reset() = 0;
 
-    virtual void addBottomLevelStructure(const BottomLevelAccelerationStructure&) = 0;
+    virtual void addInstance(const MeshInstance*) = 0;
 
     virtual void buildStructureOnCPU(RenderEngine*) = 0;
     virtual void buildStructureOnGPU(Executor*) = 0;

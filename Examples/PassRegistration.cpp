@@ -9,7 +9,7 @@
 
 #include "Engine/Engine.hpp"
 
-#define USE_RAY_TRACING 0
+#define USE_RAY_TRACING 1
 
 struct ImGuiOptions
 {
@@ -201,9 +201,6 @@ int main()
     testScene.uploadData(engine);
     testScene.computeBounds(AccelerationStructure::StaticMesh);
     testScene.computeBounds(AccelerationStructure::DynamicMesh);
-#if USE_RAY_TRACING
-    RayTracingScene rtScene(engine, &testScene);
-#endif
 
     // set camera aspect ratio.
     Camera camera{{0.0f, 0.0f, 0.0f}, {1.0f, 0.0f, 0.0f}, static_cast<float>(windowHeight) / static_cast<float>(windowWidth),
@@ -242,9 +239,6 @@ int main()
     testScene.computeBounds(AccelerationStructure::Lights);
 
     engine->setScene(&testScene);
-#if USE_RAY_TRACING
-    engine->setRayTracingScene(&rtScene);
-#endif
 
     auto lastCPUTime = std::chrono::system_clock::now();
 
@@ -306,8 +300,13 @@ int main()
             engine->registerPass(PassType::Shadow);
 
 #if USE_RAY_TRACING
-        else if(graphicsOptions.mShadows && graphicsOptions.mRayTracedShadows)
-               engine->registerPass(PassType::RayTracedShadows);
+        if(engine->getDevice()->getDeviceFeatureFlags() & DeviceFeaturesFlags::RayTracing)
+        {
+            if (graphicsOptions.mShadows && graphicsOptions.mRayTracedShadows)
+                engine->registerPass(PassType::RayTracedShadows);
+
+            engine->registerPass(PassType::BuildAccelerationStructures);
+        }
 #endif
         if (graphicsOptions.mShowLights)
             engine->registerPass(PassType::LightFroxelation);

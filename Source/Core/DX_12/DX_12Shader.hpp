@@ -4,7 +4,6 @@
 #include "Core/Shader.hpp"
 
 #include <d3d12.h>
-#include <dxcapi.h>
 
 
 class DX_12Shader : public ShaderBase

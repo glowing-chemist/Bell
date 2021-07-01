@@ -1,3 +1,4 @@
+
 #include "VertexOutputs.hlsl"
 #include "ClusteredLighting.hlsl"
 
@@ -15,7 +16,7 @@ struct transformedPosition
 ConstantBuffer<transformedPosition> light;
 
 
-float4 main(PositionOutput input)
+float4 main(PositionOutput input) : SV_Target0
 {
 	return sceneLights[light.lightIndex].albedo;
 }

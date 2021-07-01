@@ -50,13 +50,13 @@ void main(uint3 globalIndex : SV_DispatchThreadID)
 	const float2 gbufferSize = camera.frameBufferSize;
 	const float2 uv = (float2(globalIndex.xy) / gbufferSize);
 
-	float2 currentVelocity = velocity.Sample(linearSampler, uv);
+	float2 currentVelocity = velocity.SampleLevel(linearSampler, uv, 0.0f);
 	currentVelocity = currentVelocity * 0.5f;
 
 	const float2 previousUV = uv - currentVelocity;
 
-	const float d = depth.Sample(linearSampler, uv);
-	float4 currentColour = colour.Sample(linearSampler, uv);
+	const float d = depth.SampleLevel(linearSampler, uv, 0.0f);
+	float4 currentColour = colour.SampleLevel(linearSampler, uv, 0.0f);
 
 	if(d == 0.0f)
 	{
@@ -67,18 +67,18 @@ void main(uint3 globalIndex : SV_DispatchThreadID)
 	const float yDiff = 1.0f / camera.frameBufferSize.y;
 
 	// Calcaulte a AABB in YCoCg colour space for neibourghhood clipping.
-	float3 upColour = colour.Sample(linearSampler, uv + float2(xDiff, 0.0f)).xyz;
-	float3 downColour = colour.Sample(linearSampler, uv + float2(-xDiff, 0.0f)).xyz;
-	float3 leftColour = colour.Sample(linearSampler, uv + float2(0.0f, -yDiff)).xyz;
-	float3 rightColour = colour.Sample(linearSampler, uv + float2(0.0f, yDiff)).xyz;
+	float3 upColour = colour.SampleLevel(linearSampler, uv + float2(xDiff, 0.0f), 0.0f).xyz;
+	float3 downColour = colour.SampleLevel(linearSampler, uv + float2(-xDiff, 0.0f), 0.0f).xyz;
+	float3 leftColour = colour.SampleLevel(linearSampler, uv + float2(0.0f, -yDiff), 0.0f).xyz;
+	float3 rightColour = colour.SampleLevel(linearSampler, uv + float2(0.0f, yDiff), 0.0f).xyz;
 	upColour = calculateYCoCg(upColour);
 	downColour = calculateYCoCg(downColour);
 	leftColour = calculateYCoCg(leftColour);
 	rightColour = calculateYCoCg(rightColour);
 	const float3 currentColourYCocg = calculateYCoCg(currentColour.xyz);
 
-	float3 aabbMin = float3(100000.0f);
-	float3 aabbMax = float3(-100000.0f);
+	float3 aabbMin = float3(100000.0f, 100000.0f, 100000.0f);
+	float3 aabbMax = float3(-100000.0f, -100000.0f, -100000.0f);
 	// Min
 	aabbMin = min(aabbMin, upColour);
 	aabbMin = min(aabbMin, downColour);
@@ -93,7 +93,7 @@ void main(uint3 globalIndex : SV_DispatchThreadID)
 	aabbMax = max(aabbMax, rightColour);
 	aabbMax = max(aabbMax, currentColourYCocg);
 
-	float4 historyColour = history.Sample(linearSampler, previousUV);
+	float4 historyColour = history.SampleLevel(linearSampler, previousUV, 0.0f);
 
 	// Clamp previous colour
 	float3 previousColourYCoCg = calculateYCoCg(historyColour.xyz);

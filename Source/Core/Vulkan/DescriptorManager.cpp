@@ -209,6 +209,7 @@ void DescriptorManager::writeDescriptors(const RenderGraph& graph, const uint32_
             descWrite.pNext = accelerationStructureWrites.data() + accelerationStructureWrites.size();
 
             accelerationStructureWrites.push_back(accelerationWriteInfo);
+            break;
         }
 
         default:
@@ -445,11 +446,16 @@ DescriptorManager::DescriptorPool DescriptorManager::createDescriptorPool(const 
     storageImageDescPoolSize.setType(vk::DescriptorType::eStorageImage);
     storageImageDescPoolSize.setDescriptorCount(100);
 
-    std::array<vk::DescriptorPoolSize, 5> descPoolSizes{uniformBufferDescPoolSize,
+    vk::DescriptorPoolSize accelerationDescPoolSize{};
+    accelerationDescPoolSize.setType(vk::DescriptorType::eAccelerationStructureKHR);
+    accelerationDescPoolSize.setDescriptorCount(10);
+
+    std::array<vk::DescriptorPoolSize, 6> descPoolSizes{uniformBufferDescPoolSize,
                                                         samplerrDescPoolSize,
                                                         dataBufferDescPoolSize,
                                                         imageDescPoolSize,
-                                                        storageImageDescPoolSize};
+                                                        storageImageDescPoolSize,
+                                                        accelerationDescPoolSize};
 
     vk::DescriptorPoolCreateInfo DescPoolInfo{};
 	DescPoolInfo.setPoolSizeCount(descPoolSizes.size());
@@ -464,6 +470,7 @@ DescriptorManager::DescriptorPool DescriptorManager::createDescriptorPool(const 
 		100,
 		100,
 		100,
+		5,
 		static_cast<VulkanRenderDevice*>(getDevice())->createDescriptorPool(DescPoolInfo)
 	};
 
@@ -507,6 +514,7 @@ void DescriptorManager::reset()
 		pool.mStorageBufferCount = 100;
 		pool.mStorageImageCount = 100;
 		pool.mUniformBufferCount = 100;
+		pool.mAccelerationStructureCount = 5;
 	}
 }
 
@@ -518,6 +526,7 @@ DescriptorManager::DescriptorPool& DescriptorManager::findSuitablePool(const std
 	size_t requiredSamplerDescriptors = 0;
 	size_t requiredUniformBufferDescriptors = 0;
 	size_t requiredStorageBufferDescriptors = 0;
+	size_t requiredAccelerationStructureDescriptors = 0;
 
 	for (const auto& attachment : attachments)
 	{
@@ -555,6 +564,10 @@ DescriptorManager::DescriptorPool& DescriptorManager::findSuitablePool(const std
 			requiredSamplerDescriptors++;
 			break;
 
+		case AttachmentType::AccelerationStructure:
+		    requiredAccelerationStructureDescriptors++;
+		    break;
+
 		default:
 			break;
 		}
@@ -566,7 +579,8 @@ DescriptorManager::DescriptorPool& DescriptorManager::findSuitablePool(const std
 					requiredSampledImageDescriptors <= p.mSampledImageCount &&
 					requiredSamplerDescriptors <= p.mSamplerCount &&
 					requiredUniformBufferDescriptors <= p.mUniformBufferCount &&
-					requiredStorageBufferDescriptors <= p.mStorageBufferCount;
+					requiredStorageBufferDescriptors <= p.mStorageBufferCount &&
+					requiredAccelerationStructureDescriptors <= p.mAccelerationStructureCount;
 		});
 
 	if (it != pools.end())
@@ -578,6 +592,7 @@ DescriptorManager::DescriptorPool& DescriptorManager::findSuitablePool(const std
 		pool.mSamplerCount		-= requiredSamplerDescriptors;
 		pool.mUniformBufferCount -= requiredUniformBufferDescriptors;
 		pool.mStorageBufferCount -= requiredStorageBufferDescriptors;
+		pool.mAccelerationStructureCount -= requiredAccelerationStructureDescriptors;
 
 		return pool;
 	}
@@ -592,6 +607,7 @@ DescriptorManager::DescriptorPool& DescriptorManager::findSuitablePool(const std
 		pool.mSamplerCount -= requiredSamplerDescriptors;
 		pool.mUniformBufferCount -= requiredUniformBufferDescriptors;
 		pool.mStorageBufferCount -= requiredStorageBufferDescriptors;
+        pool.mAccelerationStructureCount -= requiredAccelerationStructureDescriptors;
 
 		return pool;
 	}
@@ -605,6 +621,7 @@ DescriptorManager::DescriptorPool& DescriptorManager::findSuitablePool(const std
     size_t requiredSamplerDescriptors = 0;
     size_t requiredUniformBufferDescriptors = 0;
     size_t requiredStorageBufferDescriptors = 0;
+    size_t requiredAccelerationStructureDescriptors = 0;
 
     for (const auto& attachment : attachments)
     {
@@ -644,6 +661,9 @@ DescriptorManager::DescriptorPool& DescriptorManager::findSuitablePool(const std
             requiredSamplerDescriptors++;
             break;
 
+        case AttachmentType::AccelerationStructure:
+            requiredAccelerationStructureDescriptors++;
+
         default:
             break;
         }
@@ -655,7 +675,8 @@ DescriptorManager::DescriptorPool& DescriptorManager::findSuitablePool(const std
                     requiredSampledImageDescriptors <= p.mSampledImageCount &&
                     requiredSamplerDescriptors <= p.mSamplerCount &&
                     requiredUniformBufferDescriptors <= p.mUniformBufferCount &&
-                    requiredStorageBufferDescriptors <= p.mStorageBufferCount;
+                    requiredStorageBufferDescriptors <= p.mStorageBufferCount &&
+                    requiredAccelerationStructureDescriptors <= p.mAccelerationStructureCount;
         });
 
     if (it != pools.end())
@@ -667,6 +688,7 @@ DescriptorManager::DescriptorPool& DescriptorManager::findSuitablePool(const std
         pool.mSamplerCount		-= requiredSamplerDescriptors;
         pool.mUniformBufferCount -= requiredUniformBufferDescriptors;
         pool.mStorageBufferCount -= requiredStorageBufferDescriptors;
+        pool.mAccelerationStructureCount -= requiredAccelerationStructureDescriptors;
 
         return pool;
     }
@@ -681,6 +703,7 @@ DescriptorManager::DescriptorPool& DescriptorManager::findSuitablePool(const std
         pool.mSamplerCount -= requiredSamplerDescriptors;
         pool.mUniformBufferCount -= requiredUniformBufferDescriptors;
         pool.mStorageBufferCount -= requiredStorageBufferDescriptors;
+        pool.mAccelerationStructureCount -= requiredAccelerationStructureDescriptors;
 
         return pool;
     }

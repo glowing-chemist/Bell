@@ -45,6 +45,7 @@
 #include "Engine/DownSampleColourTechnique.hpp"
 #include "Engine/VoxelTerrainTechnique.hpp"
 #include "Engine/InstanceIDTechnique.hpp"
+#include "Engine/BuildAccelerationStructuresTechnique.hpp"
 
 #include "Engine/RayTracedScene.hpp"
 
@@ -263,10 +264,11 @@ Shader RenderEngine::getShader(const std::string& path)
 
 Shader RenderEngine::getShader(const std::string& path, const ShaderDefine& define)
 {
+    std::hash<std::wstring> wpathHasher{};
     std::hash<std::string> pathHasher{};
     uint64_t hashed = pathHasher(path);
-    hashed += pathHasher(define.getName());
-    hashed += pathHasher(define.getValue());
+    hashed += wpathHasher(define.getName());
+    hashed += wpathHasher(define.getValue());
     const uint64_t shaderKey = hashed + mCurrentRegistredPasses;
     
     std::shared_lock<std::shared_mutex> readLock{ mShaderCacheMutex };
@@ -392,6 +394,9 @@ std::unique_ptr<Technique> RenderEngine::getSingleTechnique(const PassType passT
 
         case PassType::InstanceID:
             return std::make_unique<InstanceIDTechnique>(this, mCurrentRenderGraph);
+
+        case PassType::BuildAccelerationStructures:
+            return std::make_unique<BuildAccelerationStructuresTechnique>(this, mCurrentRenderGraph);
 
         default:
         {
@@ -550,9 +555,6 @@ void RenderEngine::execute(RenderGraph& graph)
 
         if(mIrradianceProbeBuffer)
             mCurrentRenderGraph.bindShaderResourceSet(kLightProbes, mLightProbeResourceSet);
-
-        //if(mCPURayTracedScene)
-        //   mCurrentRenderGraph.bindShaderResourceSet(kBVH, mCPURayTracedScene->getGPUBVH());
     }
 
     for(const auto& tech : mTechniques)
@@ -980,7 +982,7 @@ void RenderEngine::registerPass(const PassType pass)
 {
 	if((static_cast<uint64_t>(pass) & mCurrentRegistredPasses) == 0)
 	{
-        mShaderPrefix.push_back(ShaderDefine(std::string(passToString(pass)), 1));
+        mShaderPrefix.push_back(ShaderDefine(std::wstring(passToWString(pass)), 1));
 
         mPassesRegisteredThisFrame |= static_cast<uint64_t>(pass);
 	}

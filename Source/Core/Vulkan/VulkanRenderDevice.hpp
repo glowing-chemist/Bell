@@ -136,7 +136,7 @@ public:
     virtual void                       destroyTopLevelAccelerationStructure(TopLevelAccelerationStructureBase& structure) override
     {
         VulkanTopLevelAccelerationStructure& VKAccel = static_cast<VulkanTopLevelAccelerationStructure&>(structure);
-        mAccelerationStructuresPendingDestruction.push_back({getCurrentSubmissionIndex(), VKAccel.getAccelerationStructureHandle()});
+        mAccelerationStructuresPendingDestruction.push_back({structure.getLastAccessed(), VKAccel.getAccelerationStructureHandle()});
     }
 
     void buildAccelerationStructure(const uint32_t count,

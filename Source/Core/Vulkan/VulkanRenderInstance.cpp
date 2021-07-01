@@ -30,10 +30,9 @@ static VKAPI_ATTR VkBool32 debugCallbackFunc(
 	BELL_TRAP;
 
 	return false;
-
 }
 
-const QueueIndicies getAvailableQueues(vk::SurfaceKHR windowSurface, vk::PhysicalDevice& dev)
+QueueIndicies getAvailableQueues(vk::SurfaceKHR windowSurface, vk::PhysicalDevice& dev)
 {
     int graphics = -1;
     int transfer = -1;
@@ -77,9 +76,9 @@ VulkanRenderInstance::VulkanRenderInstance(GLFWwindow* window) :
 
     vk::ApplicationInfo appInfo{};
     appInfo.setPApplicationName("Quango");
-    appInfo.setApiVersion(VK_MAKE_VERSION(1, 1, 0));
+    appInfo.setApiVersion(VK_MAKE_VERSION(1, 2, 0));
     appInfo.setPEngineName("Bell");
-    appInfo.setEngineVersion(VK_MAKE_VERSION(1, 0, 0));
+    appInfo.setEngineVersion(VK_MAKE_VERSION(1, 1, 0));
 
     uint32_t numExtensions = 0;
     const char* const* requiredExtensions = glfwGetRequiredInstanceExtensions(&numExtensions);
@@ -137,7 +136,7 @@ VulkanRenderInstance::VulkanRenderInstance(GLFWwindow* window) :
 }
 
 
-RenderDevice* VulkanRenderInstance::createRenderDevice(const int DeviceFeatureFlags)
+RenderDevice* VulkanRenderInstance::createRenderDevice(int DeviceFeatureFlags)
 {
     auto [physDev, dev] = findSuitableDevices(DeviceFeatureFlags);
     mDevice = dev;
@@ -147,7 +146,7 @@ RenderDevice* VulkanRenderInstance::createRenderDevice(const int DeviceFeatureFl
 }
 
 
-std::pair<vk::PhysicalDevice, vk::Device> VulkanRenderInstance::findSuitableDevices(int DeviceFeatureFlags)
+std::pair<vk::PhysicalDevice, vk::Device> VulkanRenderInstance::findSuitableDevices(int& DeviceFeatureFlags)
 {
     const bool geometryWanted = DeviceFeatureFlags & DeviceFeaturesFlags::Geometry;
     const bool tessWanted     = DeviceFeatureFlags & DeviceFeaturesFlags::Tessalation;
@@ -217,12 +216,15 @@ std::pair<vk::PhysicalDevice, vk::Device> VulkanRenderInstance::findSuitableDevi
     std::vector<const char*> optionalDeviceExtensions = {VK_EXT_CONDITIONAL_RENDERING_EXTENSION_NAME};
     if (rayTracingWanted) // Ray tracing using compute for now.
     {
+        // extensions needed for ray tracing.
         optionalDeviceExtensions.push_back(VK_KHR_RAY_QUERY_EXTENSION_NAME);
         optionalDeviceExtensions.push_back(VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME);
         optionalDeviceExtensions.push_back(VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME);
         optionalDeviceExtensions.push_back(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME);
         optionalDeviceExtensions.push_back(VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME);
         optionalDeviceExtensions.push_back(VK_KHR_PIPELINE_LIBRARY_EXTENSION_NAME);
+        optionalDeviceExtensions.push_back(VK_KHR_SPIRV_1_4_EXTENSION_NAME);
+        optionalDeviceExtensions.push_back(VK_KHR_SHADER_FLOAT_CONTROLS_EXTENSION_NAME);
     }
 
 
@@ -251,14 +253,15 @@ std::pair<vk::PhysicalDevice, vk::Device> VulkanRenderInstance::findSuitableDevi
 
 	BELL_ASSERT(extensionsToEnable.size() >= requireDeviceExtensions.size(), "Missing required extension!")
 
+	if(std::find_if(extensionsToEnable.begin(), extensionsToEnable.end(), [](auto* extension) {return strcmp(extension, VK_KHR_RAY_QUERY_EXTENSION_NAME) == 0;}) == extensionsToEnable.end())
+        DeviceFeatureFlags &= ~static_cast<int>(DeviceFeaturesFlags::RayTracing);
+
     vk::PhysicalDeviceFeatures physicalFeatures{};
     physicalFeatures.setGeometryShader(geometryWanted);
     physicalFeatures.setFragmentStoresAndAtomics(geometryWanted);
     physicalFeatures.setSamplerAnisotropy(true);
     physicalFeatures.setShaderImageGatherExtended(true);
     physicalFeatures.setFillModeNonSolid(true);
-    if(rayTracingWanted)
-        physicalFeatures.setShaderFloat64(true);
 
 	vk::PhysicalDeviceDescriptorIndexingFeaturesEXT descriptorIndexingInfo{};
 	descriptorIndexingInfo.setShaderSampledImageArrayNonUniformIndexing(true);
@@ -266,6 +269,21 @@ std::pair<vk::PhysicalDevice, vk::Device> VulkanRenderInstance::findSuitableDevi
 
     vk::PhysicalDeviceTimelineSemaphoreFeatures timeLineSepahmoreFeature{};
     timeLineSepahmoreFeature.setTimelineSemaphore(true);
+
+    vk::PhysicalDeviceRayQueryFeaturesKHR rayQueryFeature{};
+    rayQueryFeature.rayQuery = rayTracingWanted;
+    timeLineSepahmoreFeature.setPNext(&rayQueryFeature);
+
+    vk::PhysicalDeviceAccelerationStructureFeaturesKHR accelerationStructureFeature{};
+    accelerationStructureFeature.accelerationStructure = rayTracingWanted;
+    accelerationStructureFeature.accelerationStructureHostCommands = rayTracingWanted;
+    rayQueryFeature.setPNext(&accelerationStructureFeature);
+
+    vk::PhysicalDeviceRayTracingPipelineFeaturesKHR rayPipelineFeature{};
+    rayPipelineFeature.rayTracingPipeline = rayTracingWanted;
+    rayPipelineFeature.rayTraversalPrimitiveCulling = rayTracingWanted;
+    accelerationStructureFeature.setPNext(&rayPipelineFeature);
+
     descriptorIndexingInfo.setPNext(&timeLineSepahmoreFeature);
 
     vk::DeviceCreateInfo deviceInfo{};
@@ -275,6 +293,7 @@ std::pair<vk::PhysicalDevice, vk::Device> VulkanRenderInstance::findSuitableDevi
     deviceInfo.setPQueueCreateInfos(queueInfo.data());
     deviceInfo.setPEnabledFeatures(&physicalFeatures);
 	deviceInfo.setPNext(&descriptorIndexingInfo);
+
 #if BELL_ENABLE_LOGGING
     const char* validationLayers = "VK_LAYER_KHRONOS_validation";
     deviceInfo.setEnabledLayerCount(1);
@@ -309,7 +328,8 @@ void VulkanRenderInstance::addDebugCallback()
 
     auto* createMessenger = reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>(mInstance.getProcAddr("vkCreateDebugUtilsMessengerEXT"));
     BELL_ASSERT(createMessenger, "Unable to create debug utils messenger")
-    if(createMessenger != nullptr) {
+    if(createMessenger != nullptr)
+    {
         BELL_LOG("Inserting debug callback")
 
         auto call = static_cast<VkDebugUtilsMessengerEXT>(mDebugMessenger);

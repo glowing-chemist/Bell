@@ -49,7 +49,7 @@ Texture2D<float> shadowMap;
 Texture2D<float4> reflectionMap;
 #endif
 
-float4 main(UVVertOutput vertInput)
+float4 main(UVVertOutput vertInput) : SV_Target0
 {
     const float2 uv = vertInput.uv;
     const uint2 pixel = vertInput.uv * camera.frameBufferSize;

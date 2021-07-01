@@ -12,7 +12,6 @@
 
 #include "RenderGraph/RenderGraph.hpp"
 
-#include <glslang/Public/ShaderLang.h>
 #include <vulkan/vulkan.hpp>
 
 #include <limits>
@@ -66,11 +65,6 @@ VulkanRenderDevice::VulkanRenderDevice(vk::Instance instance,
     {
         mFrameFinished.push_back(createFence(true));
     }
-
-    // Initialise the glsl compiler here rather than in the first compiled shader to avoid
-    // having to synchronise there.
-    const bool glslInitialised = glslang::InitializeProcess();
-    BELL_ASSERT(glslInitialised, "FAILED TO INITIALISE GLSLANG, we will not be able to compile any shaders from source!")
 
 #ifndef NDEBUG
     vk::EventCreateInfo eventInfo{};
@@ -456,6 +450,9 @@ vk::DescriptorSetLayout VulkanRenderDevice::generateDescriptorSetLayoutBindings(
 
 			case AttachmentType::Sampler:
 				return vk::DescriptorType::eSampler;
+
+			case AttachmentType::AccelerationStructure:
+			    return vk::DescriptorType::eAccelerationStructureKHR;
 
             default:
                 return vk::DescriptorType::eCombinedImageSampler;// For now use this to indicate push_constants (terrible I know)

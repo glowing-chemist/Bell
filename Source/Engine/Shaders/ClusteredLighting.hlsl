@@ -104,8 +104,8 @@ AABB getFroxelAABB(const uint3 froxelPosition, const float FOV, const float2 fra
 	farVerticies[2] = float3(((float2((froxelPosition.xy + uint2(0, 1)) * FROXEL_TILE_SIZE) / framebufferSize) - 0.5f) * farWidthHeight, -farDepth);
 	farVerticies[3] = float3(((float2((froxelPosition.xy + uint2(1, 1)) * FROXEL_TILE_SIZE) / framebufferSize) - 0.5f) * farWidthHeight, -farDepth);
 
-	float3 nearViewSpace = float3(1000000.0f);
-	float3 farViewSpace = float3(-1000000.0f);
+	float3 nearViewSpace = float3(1000000.0f, 1000000.0f, 1000000.0f);
+	float3 farViewSpace = float3(-1000000.0f, -1000000.0f, -1000000.0f);
 
 	for(uint i = 0; i < 4; ++i)
 	{
@@ -116,22 +116,26 @@ AABB getFroxelAABB(const uint3 froxelPosition, const float FOV, const float2 fra
 		farViewSpace = max(farViewSpace, farVerticies[i]);
 	}
 
-	return AABB(float4(nearViewSpace, 1.0f), float4(farViewSpace, 1.0f));
+	AABB froxelBounds;
+	froxelBounds.min = float4(nearViewSpace, 1.0f);
+	froxelBounds.max =  float4(farViewSpace, 1.0f);
+
+	return froxelBounds;
 }
 
 
 void initializeLightState(out float3x3 minv, out float ltcAmp, out float3 dfg, Texture2D<float3> DFG, Texture2D<float4> LTCMat, Texture2D<float2> LTCAmp, SamplerState linearSampler, const float NoV, const float R)
 {
-	dfg = DFG.Sample(linearSampler, float2(NoV, R));
+	dfg = DFG.SampleLevel(linearSampler, float2(NoV, R), 0.0f);
 
-	const float4 t = LTCMat.Sample(linearSampler, float2(R, NoV));
+	const float4 t = LTCMat.SampleLevel(linearSampler, float2(R, NoV), 0.0f);
     minv = float3x3(
             	float3(t.z,   0, t.w),
             	float3(   0, 1,   0),
             	float3(t.y,   0, t.x)
         		);
 
-    ltcAmp = LTCAmp.Sample(linearSampler, float2(R, NoV));
+    ltcAmp = LTCAmp.SampleLevel(linearSampler, float2(R, NoV), 0.0f);
 }
 
 
@@ -260,7 +264,7 @@ float3 LTC_Evaluate(float3 N, float3 V, float3 P, float3x3 Minv, float3 points[4
 
     sum = max(0.0, sum);
 
-    return float3(sum);
+    return float3(sum, sum, sum);
 }
 
 // Strip light imple from Eric Heitz.
@@ -348,7 +352,8 @@ float3 LTC_Evaluate(float3 N, float3 V, float3 P, float R, float3x3 Minv, float3
     float3 p2 = mul(B, linePoints[1] - P);
 
     float Iline = R * I_ltc_line(p1, p2, Minv);
-    return float3(min(1.0, Iline));
+    Iline = min(1.0, Iline);
+    return float3(Iline, Iline, Iline);
 }
 
 float4 areaLightContribution(const Light light, 
@@ -430,16 +435,16 @@ bool sphereAABBIntersection(const float3 centre, const float radius, const AABB 
 							centre.y < aabb.min.y,
 							centre.z < aabb.min.z);
 	const float3 lessDistance = aabb.min.xyz - centre;
-	float3 dmin = lerp(float3(0.0f), lessDistance * lessDistance, lessThan);
+	float3 dmin = lerp(float3(0.0f, 0.0f, 0.0f), lessDistance * lessDistance, lessThan);
 
 	const bool3 greaterThan = bool3(centre.x > aabb.max.x,
 								centre.y > aabb.max.y,
 								centre.z > aabb.max.z);
 	const float3 greaterDistance = centre - aabb.max.xyz;
-	dmin += lerp(float3(0.0f), greaterDistance * greaterDistance, greaterThan);
+	dmin += lerp(float3(0.0f, 0.0f, 0.0f), greaterDistance * greaterDistance, greaterThan);
 
 	// Sum the results.
-	dmin.x = dot(dmin, float3(1.0f));
+	dmin.x = dot(dmin, float3(1.0f, 1.0f, 1.0f));
 
 	return dmin.x <= r2;
 }

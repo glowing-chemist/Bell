@@ -20,7 +20,7 @@ struct QueueIndicies
 	int ComputeQueueIndex;
 };
 
-const QueueIndicies getAvailableQueues(vk::SurfaceKHR windowSurface, vk::PhysicalDevice& dev);
+QueueIndicies getAvailableQueues(vk::SurfaceKHR windowSurface, vk::PhysicalDevice& dev);
 
 class VulkanRenderInstance : public RenderInstance
 {
@@ -28,7 +28,7 @@ public:
     VulkanRenderInstance(GLFWwindow*);
     ~VulkanRenderInstance();
 
-    RenderDevice* createRenderDevice(const int DeviceFeatureFlags = 0) override;
+    RenderDevice* createRenderDevice(int DeviceFeatureFlags = 0) override;
 
     void addDebugCallback();
     void removeDebugCallback();
@@ -36,7 +36,7 @@ public:
     vk::SurfaceKHR getSurface() const;
 
 private:
-    std::pair<vk::PhysicalDevice, vk::Device> findSuitableDevices(const int DeviceFeatureFlags = 0);
+    std::pair<vk::PhysicalDevice, vk::Device> findSuitableDevices(int& DeviceFeatureFlags);
 	bool									  hasSubgroupSupport(vk::PhysicalDevice);
 
     vk::Instance mInstance;

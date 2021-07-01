@@ -36,17 +36,17 @@ struct DepthOnlyOutput
 {
 	float4 position : SV_Position;
 	float2 uv : TEXCOORD0;
-	uint materialIndex;
-	uint materialFlags;
+	uint materialIndex : MATERIALID;
+	uint materialFlags : MATERIAL_TYPES;
 };
 
 struct ShadowMapVertOutput
 {
 	float4 position : SV_Position;
 	float4 positionVS : POSITIONVS;
-	float2 uv;
-	uint materialIndex;
-	uint materialFlags;
+	float2 uv : TEXCOORD0;
+	uint materialIndex : MATERIALID;
+	uint materialFlags : MATERIAL_TYPES;
 };
 
 struct VoxalizeGeometryOutput
@@ -57,8 +57,8 @@ struct VoxalizeGeometryOutput
 	float4 normal : NORMAL0;
 	float4 tangent : TANGENT0;
 	float4 colour : COLOR0;
-	uint materialIndex;
-	uint materialFlags;
+	uint materialIndex : MATERIALID;
+	uint materialFlags : MATERIAL_TYPES;
 };
 
 struct PositionOutput

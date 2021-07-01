@@ -240,9 +240,9 @@ float ssao(const uint2 pixel)
   return A;
 }
 
-float main(const PositionAndUVVertOutput pixel)
+float main(const PositionAndUVVertOutput pixel) : SV_Target0
 {
-  const float currentDepth = depth.Sample(linearSampler, pixel.uv);
+  const float currentDepth = depth.SampleLevel(linearSampler, pixel.uv, 0.0f);
   if(currentDepth == 0.0f)
   {
       historyCounter[pixel.uv * (camera.frameBufferSize / 2)] = 1;
@@ -255,7 +255,7 @@ float main(const PositionAndUVVertOutput pixel)
   float ao = ssao(ssC);
   uint historyCount = 1;
 
-  float2 pixelVelocity = velocity.Sample(linearSampler, pixel.uv);
+  float2 pixelVelocity = velocity.SampleLevel(linearSampler, pixel.uv, 0.0f);
   pixelVelocity *= 0.5f;
   const float2 previousUV = pixel.uv - pixelVelocity;
 
@@ -274,7 +274,7 @@ float main(const PositionAndUVVertOutput pixel)
   {
     uint3 prevPixel = uint3(previousUV * (camera.frameBufferSize / 2), 0);
     historyCount = prevHistoryCounter.Load(prevPixel);
-    const float prevAo = history.Sample(linearSampler, previousUV);
+    const float prevAo = history.SampleLevel(linearSampler, previousUV, 0.0f);
     ao = prevAo + ((ao - prevAo) * (1.0f / historyCount));
 
     historyCount = min(historyCount + 1, 64);

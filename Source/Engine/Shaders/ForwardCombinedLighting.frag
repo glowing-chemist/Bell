@@ -6,8 +6,8 @@
 
 struct Output
 {
-    float4 colour;
-    float velocity;
+    float4 colour : SV_Target0;
+    float2 velocity : SV_Target1;
 };
 
 [[vk::binding(0)]]
@@ -116,7 +116,7 @@ Output main(GBufferVertOutput vertInput)
     float4 lighting = float4(diffuse + specular + material.emissiveOcclusion.xyz, 1.0f) * material.emissiveOcclusion.w;
 
     // Calculate contribution from lights.
-    const uint froxelIndex = activeFroxels.Sample(pointSampler, vertInput.position.xy / camera.frameBufferSize);
+    const uint froxelIndex = activeFroxels.Load(uint3(vertInput.position.xy, 0));
     const uint2 lightListIndicies = sparseFroxelList[froxelIndex];
 
     for(uint i = 0; i < lightListIndicies.y; ++i)

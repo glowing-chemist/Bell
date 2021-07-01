@@ -222,7 +222,7 @@ RayTracedShadowsTechnique::RayTracedShadowsTechnique(RenderEngine* eng, RenderGr
     task.addInput(kPreviousLinearDepth, AttachmentType::Texture2D);
     task.addInput(kGBufferVelocity, AttachmentType::Texture2D);
     task.addInput(kShadowingLights, AttachmentType::UniformBuffer);
-    task.addInput(kBVH, AttachmentType::ShaderResourceSet);
+    task.addInput(kMainCameraBVH, AttachmentType::AccelerationStructure);
     task.addInput("SampleCount", AttachmentType::PushConstants);
 
     task.setRecordCommandsCallback(

@@ -44,7 +44,7 @@ void main(uint3 globalIndex : SV_DispatchThreadID)
 {
 	const float2 uv = (float2(globalIndex.xy) / (camera.frameBufferSize / 2.0f)) + camera.jitter;
 
-	const float fragmentDepth = Depth.Sample(linearSampler, uv);
+	const float fragmentDepth = Depth.SampleLevel(linearSampler, uv, 0.0f);
 
 	if(fragmentDepth == 0.0f) // skybox.
 	{
@@ -77,11 +77,11 @@ void main(uint3 globalIndex : SV_DispatchThreadID)
 
 	// March the ray.
     float2 colourUV = marchRay(position, rayDirection, 30, float2(1.0f, 1.0f) / float2(width, height), START_MIP, camera.nearPlane, camera.farPlane, camera.invertedPerspective);
-    float2 currentVelocity = velocity.Sample(linearSampler, uv);
+    float2 currentVelocity = velocity.SampleLevel(linearSampler, uv, 0.0f);
     currentVelocity = currentVelocity * 0.5f;
     colourUV = colourUV - currentVelocity;
 
-    const float roughness = specularRoughness.Sample(linearSampler, uv).w;
+    const float roughness = specularRoughness.SampleLevel(linearSampler, uv, 0.0f).w;
     const float roughnessMip = roughness * 5.0f;
 
     float4 colour;

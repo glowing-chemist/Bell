@@ -5,15 +5,13 @@
 
 #include <vulkan/vulkan.hpp>
 
-#include "shaderc/shaderc.hpp"
-
 
 class VulkanShader : public ShaderBase
 {
 public:
 
     VulkanShader(RenderDevice*, const std::string&, const uint64_t prefixHash);
-	~VulkanShader();
+	~VulkanShader() override;
 
     virtual bool compile(const std::vector<ShaderDefine>& prefix = {}) override;
 	virtual bool reload() override;
@@ -25,8 +23,8 @@ public:
 
 private:
 
-	shaderc_shader_kind getShaderStage(const std::string&) const;
-	shaderc_shader_kind mShaderStage;
+	const wchar_t * getShaderStage(const std::string&) const;
+    const wchar_t* mShaderProfile;
 
 	vk::ShaderModule mShaderModule;
 

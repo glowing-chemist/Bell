@@ -81,8 +81,8 @@ RayTracedReflectionTechnique::RayTracedReflectionTechnique(RenderEngine* eng, Re
     task.addInput(kReflectionMap, AttachmentType::Image2D);
     task.addInput(kConvolvedSpecularSkyBox, AttachmentType::CubeMap);
     task.addInput("SampleNumber", AttachmentType::PushConstants);
+    task.addInput(kMainCameraBVH, AttachmentType::AccelerationStructure);
     task.addInput(kMaterials, AttachmentType::ShaderResourceSet);
-    task.addInput(kBVH, AttachmentType::ShaderResourceSet);
 
     task.setRecordCommandsCallback(
                 [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, RenderEngine* eng, const std::vector<const MeshInstance*>&)

@@ -11,7 +11,7 @@ Texture2D materials[];
 [[vk::push_constant]]
 ConstantBuffer<ObjectMatracies> model;
 
-float2 main(ShadowMapVertOutput vertInput)
+float2 main(ShadowMapVertOutput vertInput): SV_Target0
 {
 	if(model.materialFlags & kAlphaTested)
 	{

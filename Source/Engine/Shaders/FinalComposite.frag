@@ -45,7 +45,7 @@ SamplerState defaultSampler;
 [[vk::push_constant]]
 ConstantBuffer<ColourCorrection> constants;
 
-float4 main(PositionAndUVVertOutput vertOutput)
+float4 main(PositionAndUVVertOutput vertOutput) : SV_Target0
 {
 	float4 lighting = globalLighting.Sample(defaultSampler, vertOutput.uv);
 
@@ -64,8 +64,8 @@ float4 main(PositionAndUVVertOutput vertOutput)
 #endif
 
 #if USING_OVERLAY
-	const float4 overlay = overlay.Sample(defaultSampler, vertOutput.uv);
-	result = ((1.0f - overlay.w) * result) + overlay;
+	const float4 overlayPixel = overlay.Sample(defaultSampler, vertOutput.uv);
+	result = ((1.0f - overlayPixel.w) * result) + overlayPixel;
 #endif
 
 	return result;

@@ -112,6 +112,7 @@ set(BELL_BASE_SOURCE
 	Source/Core/ShaderResourceSet.cpp
 	Source/Core/CommandContext.cpp
 	Source/Core/AccelerationStructures.cpp
+	Source/Core/ShaderCompiler.cpp
 	
 	${BACKEND_SOURCE}
 
@@ -134,19 +135,7 @@ else()
 endif(WIN32)
 
 if(VULKAN)
-    if(WIN32)
-
-		if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
-			set(SHADERC "$ENV{VULKAN_SDK}/LibDebug/shaderc_combinedd.lib")
-		else()
-			set(SHADERC "$ENV{VULKAN_SDK}/Lib/shaderc_combined.lib")
-		endif()
-
-    else()
-		set(SHADERC shaderc_combined glslang SPIRV SPIRV-Tools SPIRV-Tools-opt)
-    endif()
-
-    list(APPEND BELL_BASE_DEPENDANCIES ${Vulkan_LIBRARIES} ${SHADERC} )
+    list(APPEND BELL_BASE_DEPENDANCIES ${Vulkan_LIBRARIES} $ENV{VULKAN_SDK}/lib/dxcompiler.lib)
 elseif(DX_12)
 	list(APPEND BELL_BASE_DEPENDANCIES D3d12 DXGI dxcompiler)
 endif()
@@ -210,6 +199,7 @@ set(BELL_SOURCE
     Source/Engine/DownSampleColourTechnique.cpp
     Source/Engine/VoxelTerrainTechnique.cpp
 	Source/Engine/InstanceIDTechnique.cpp
+	Source/Engine/BuildAccelerationStructuresTechnique.cpp
 
     # used for texture loading
     ThirdParty/stb_image/stb_image.cpp

@@ -55,7 +55,7 @@ extern const char kTPoseVertexBuffer[];
 extern const char kBoneWeighntsIndiciesBuffer[];
 extern const char kBonesWeights[];
 extern const char kBonesBuffer[];
-extern const char kBVH[];
+extern const char kMainCameraBVH[];
 
 extern const char kFrameBufer[];
 extern const char kGlobalLighting[];

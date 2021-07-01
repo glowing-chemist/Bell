@@ -67,6 +67,7 @@ private:
 		size_t mSamplerCount;
 		size_t mUniformBufferCount;
 		size_t mStorageBufferCount;
+		size_t mAccelerationStructureCount;
 		vk::DescriptorPool mPool;
 	};
 

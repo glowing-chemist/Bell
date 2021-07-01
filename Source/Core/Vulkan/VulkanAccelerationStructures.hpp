@@ -6,10 +6,12 @@
 #include "Core/AccelerationStructures.hpp"
 #include "Core/Vulkan/VulkanBuffer.hpp"
 
+class MeshInstance;
+
 struct VulkanAccelerationStructure
 {
     vk::AccelerationStructureKHR mAccelerationHandle;
-    VulkanBuffer mBackingBuffer;
+    Buffer mBackingBuffer;
 };
 
 class VulkanBottomLevelAccelerationStructure : public BottomLevelAccelerationStructureBase
@@ -23,12 +25,12 @@ public:
         return mBVH.mAccelerationHandle;
     }
 
-    VulkanBuffer& getBackingBuffer()
+    Buffer& getBackingBuffer()
     {
         return mBVH.mBackingBuffer;
     }
 
-    const VulkanBuffer& getBackingBuffer() const
+    const Buffer& getBackingBuffer() const
     {
         return mBVH.mBackingBuffer;
     }
@@ -50,7 +52,7 @@ public:
 
     virtual void reset() override final;
 
-    virtual void addBottomLevelStructure(const BottomLevelAccelerationStructure&) override final;
+    virtual void addInstance(const MeshInstance*) override final;
 
     virtual void buildStructureOnCPU(RenderEngine*) override final;
     virtual void buildStructureOnGPU(Executor*) override final;
@@ -60,19 +62,20 @@ public:
         return (*mBVH).mAccelerationHandle;
     }
 
-    VulkanBuffer& getBackingBuffer()
+    Buffer& getBackingBuffer()
     {
         return (*mBVH).mBackingBuffer;
     }
 
-    const VulkanBuffer& getBackingBuffer() const
+    const Buffer& getBackingBuffer() const
     {
         return (*mBVH).mBackingBuffer;
     }
 
 private:
 
-    std::vector<BottomLevelAccelerationStructure> mBottomLevelStructures;
+    std::vector<const MeshInstance*> mInstances;
+    std::unordered_map<const MeshInstance*, vk::AccelerationStructureKHR> mBottomLevelStructures;
 
     std::optional<VulkanAccelerationStructure> mBVH;
 

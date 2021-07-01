@@ -9,7 +9,8 @@
 
 BottomLevelAccelerationStructureBase::BottomLevelAccelerationStructureBase(RenderEngine* eng, const StaticMesh &,
                                                                            const std::string &) :
-        DeviceChild(eng->getDevice())
+        DeviceChild(eng->getDevice()),
+        GPUResource(getDevice()->getCurrentSubmissionIndex())
 {}
 
 BottomLevelAccelerationStructure::BottomLevelAccelerationStructure(RenderEngine* eng, const StaticMesh& mesh,
@@ -23,7 +24,8 @@ BottomLevelAccelerationStructure::BottomLevelAccelerationStructure(RenderEngine*
 }
 
 TopLevelAccelerationStructureBase::TopLevelAccelerationStructureBase(RenderEngine* engine) :
-        DeviceChild(engine->getDevice())
+        DeviceChild(engine->getDevice()),
+        GPUResource(getDevice()->getCurrentSubmissionIndex())
 {}
 
 TopLevelAccelerationStructure::TopLevelAccelerationStructure(RenderEngine* eng)

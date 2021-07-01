@@ -111,7 +111,7 @@ void GBufferTechnique::postGraphCompilation(RenderGraph& graph, RenderEngine* en
     {
         if(mMaterialPipelineVariants.find(material.mMaterialTypes) == mMaterialPipelineVariants.end())
         {
-            ShaderDefine materialDefine("MATERIAL_FLAGS", material.mMaterialTypes);
+            ShaderDefine materialDefine(L"MATERIAL_FLAGS", material.mMaterialTypes);
             Shader fragmentShader = engine->getShader("./Shaders/GBuffer.frag", materialDefine);
 
             const PipelineHandle pipeline = device->compileGraphicsPipeline(static_cast<const GraphicsTask&>(task),
@@ -233,7 +233,7 @@ void GBufferPreDepthTechnique::postGraphCompilation(RenderGraph& graph, RenderEn
     {
         if(mMaterialPipelineVariants.find(material.mMaterialTypes) == mMaterialPipelineVariants.end())
         {
-            ShaderDefine materialDefine("MATERIAL_FLAGS", material.mMaterialTypes);
+            ShaderDefine materialDefine(L"MATERIAL_FLAGS", material.mMaterialTypes);
             Shader fragmentShader = engine->getShader("./Shaders/GBuffer.frag", materialDefine);
 
             const PipelineHandle pipeline = device->compileGraphicsPipeline(static_cast<const GraphicsTask&>(task),

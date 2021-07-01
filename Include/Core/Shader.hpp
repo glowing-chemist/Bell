@@ -17,24 +17,24 @@ class RenderDevice;
 class ShaderDefine
 {
 public:
-    ShaderDefine(const std::string& name, const uint64_t value) :
+    ShaderDefine(const std::wstring& name, const uint64_t value) :
         mName(name),
-        mValue(std::to_string(value)) {}
+        mValue(std::to_wstring(value)) {}
 
-    const std::string& getName() const
+    const std::wstring& getName() const
     {
         return mName;
     }
 
-    const std::string& getValue() const
+    const std::wstring& getValue() const
     {
         return mValue;
     }
 
     private:
 
-    std::string mName;
-    std::string mValue;
+    std::wstring mName;
+    std::wstring mValue;
 };
 
 class ShaderBase : public DeviceChild
@@ -65,9 +65,6 @@ public:
     }
 
 protected:
-
-    std::vector<char> mSource;
-    std::vector<unsigned int> mSPIRV;
 
 	fs::path mFilePath;
 

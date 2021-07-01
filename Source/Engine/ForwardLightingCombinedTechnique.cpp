@@ -133,7 +133,7 @@ void ForwardCombinedLightingTechnique::postGraphCompilation(RenderGraph& graph, 
     {
         if(mMaterialPipelineVariants.find(material.mMaterialTypes) == mMaterialPipelineVariants.end())
         {
-            ShaderDefine materialDefine("MATERIAL_FLAGS", material.mMaterialTypes);
+            ShaderDefine materialDefine(L"MATERIAL_FLAGS", material.mMaterialTypes);
             Shader fragmentShader = engine->getShader("./Shaders/ForwardCombinedLighting.frag", materialDefine);
 
             const PipelineHandle pipeline = device->compileGraphicsPipeline(static_cast<const GraphicsTask&>(task),

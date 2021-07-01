@@ -27,7 +27,7 @@ void main(uint3 globalIndex : SV_DispatchThreadID)
 	const float2 gbufferSize = camera.frameBufferSize;
 	const float2 uv = (float2(globalIndex.xy) / gbufferSize) + camera.jitter;
 
-	const float fragmentDepth = depth.Sample(linearSampler, uv);
+	const float fragmentDepth = depth.SampleLevel(linearSampler, uv, 0.0f);
 
 	float4 worldSpaceFragmentPos = mul(camera.invertedViewProj, float4((uv - 0.5f) * 2.0f, fragmentDepth, 1.0f));
     worldSpaceFragmentPos /= worldSpaceFragmentPos.w;
@@ -41,7 +41,7 @@ void main(uint3 globalIndex : SV_DispatchThreadID)
     float variance = 0.0f;
     if(lightSpaceUV.x >= 0.0f && lightSpaceUV.x <= 1.0f && lightSpaceUV.y >= 0.0f && lightSpaceUV.y <= 1.0f && fragPositionVS.z <= 0.0f)
     {
-        const float2 moments = shadowMapRaw.Sample(linearSampler, lightSpaceUV);
+        const float2 moments = shadowMapRaw.SampleLevel(linearSampler, lightSpaceUV, 0.0f);
         variance = varianceOcclusionFactor(-fragPositionVS.z, moments);
     }
     variance = clamp(variance, 0.15f, 1.0f);

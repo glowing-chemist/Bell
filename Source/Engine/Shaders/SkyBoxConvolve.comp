@@ -46,7 +46,7 @@ float3 prefilterEnviromentMapSpecular(const float roughness, const float3 R)
 	float3 N = R;
 	float3 V = R;
 
-	float3 prefilteredColor = float3(0.0);
+	float3 prefilteredColor = float3(0.0, 0.0, 0.0);
 
 	float TotalWeight = 0.0;
 
@@ -60,7 +60,7 @@ float3 prefilterEnviromentMapSpecular(const float roughness, const float3 R)
 		float NoL = clamp(dot(N, L), 0.0f, 1.0f);
 		if(NoL > 0.0)
 		{
-			prefilteredColor += skyBox.Sample(defaultSampler, L).xyz * NoL;
+			prefilteredColor += skyBox.SampleLevel(defaultSampler, L, 0.0).xyz * NoL;
 			TotalWeight += NoL;
 		}
 	}
@@ -74,7 +74,7 @@ float3 prefilterEnviromentMapDiffuse(const float roughness, const float3 R)
 	float3 N = R;
 	float3 V = R;
 
-	float3 prefilteredColor = float3(0.0);
+	float3 prefilteredColor = float3(0.0, 0.0, 0.0);
 
 	float TotalWeight = 0.0;
 
@@ -101,7 +101,7 @@ float3 prefilterEnviromentMapDiffuse(const float roughness, const float3 R)
 			float  viewScatter   =   1 + (fd90 -1) * pow(1-NdotV , 5);
 			float f = lightScatter * viewScatter;
 
-			prefilteredColor += skyBox.Sample(defaultSampler, L).xyz * f;
+			prefilteredColor += skyBox.SampleLevel(defaultSampler, L, 0.0).xyz * f;
 			TotalWeight += 1.0f;
 		}
 	}
