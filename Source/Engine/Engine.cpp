@@ -55,7 +55,8 @@
 #include <thread>
 
 
-RenderEngine::RenderEngine(GLFWwindow* windowPtr) :
+RenderEngine::RenderEngine(GLFWwindow* windowPtr, const GraphicsOptions& options) :
+        mOptions(options),
         mDefaultMemoryResource(),
         mFrameAllocator(100 * 1024 * 1024),
         mThreadPool(),
@@ -65,7 +66,7 @@ RenderEngine::RenderEngine(GLFWwindow* windowPtr) :
 #ifdef DX_12
     mRenderInstance(new DX_12RenderInstance(windowPtr)),
 #endif
-        mRenderDevice(mRenderInstance->createRenderDevice(DeviceFeaturesFlags::Compute | DeviceFeaturesFlags::Subgroup | DeviceFeaturesFlags::Geometry | DeviceFeaturesFlags::RayTracing)),
+        mRenderDevice(mRenderInstance->createRenderDevice(mOptions.deviceFeatures, options.vsync)),
         mCurrentScene(nullptr),
         mCPURayTracedScene(nullptr),
         mDebugCameraActive(false),

@@ -24,7 +24,7 @@ public:
     RenderInstance(GLFWwindow*);
     virtual ~RenderInstance() = default;
 
-    virtual RenderDevice* createRenderDevice(const int DeviceFeatureFlags = 0) = 0;
+    virtual RenderDevice* createRenderDevice(const int DeviceFeatureFlags = 0, const bool vsync = false) = 0;
 
 	GLFWwindow* getWindow() const
 	{

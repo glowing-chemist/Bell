@@ -29,12 +29,17 @@
 #include <string>
 #include <variant>
 
+struct GraphicsOptions
+{
+    int deviceFeatures;
+    bool vsync;
+};
 
 class RenderEngine
 {
 public:
 
-    RenderEngine(GLFWwindow*);
+    RenderEngine(GLFWwindow*, const GraphicsOptions&);
 
     void setScene(const std::string& path);
 
@@ -410,6 +415,8 @@ private:
     SlabAllocator mFrameAllocator;
 
     std::unique_ptr<Technique>                   getSingleTechnique(const PassType);
+
+    GraphicsOptions mOptions;
 
     ThreadPool mThreadPool;
 

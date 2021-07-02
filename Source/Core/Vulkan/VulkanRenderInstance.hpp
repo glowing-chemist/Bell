@@ -28,7 +28,7 @@ public:
     VulkanRenderInstance(GLFWwindow*);
     ~VulkanRenderInstance();
 
-    RenderDevice* createRenderDevice(int DeviceFeatureFlags = 0) override;
+    RenderDevice* createRenderDevice(int DeviceFeatureFlags = 0, const bool vsyn = false) override;
 
     void addDebugCallback();
     void removeDebugCallback();

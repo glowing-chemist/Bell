@@ -182,7 +182,16 @@ int main()
         return 5;
     }
 
-    RenderEngine* engine = new RenderEngine{window};
+    GraphicsOptions options
+    {
+        DeviceFeaturesFlags::Compute | DeviceFeaturesFlags::Subgroup | DeviceFeaturesFlags::Discrete
+#if USE_RAY_TRACING
+        | DeviceFeaturesFlags::RayTracing
+#endif
+        ,
+        false
+    };
+    RenderEngine* engine = new RenderEngine{window, options};
     engine->setShadowMapResolution({1920.0f, 1080.0f});
 
     engine->startFrame(std::chrono::microseconds(0));

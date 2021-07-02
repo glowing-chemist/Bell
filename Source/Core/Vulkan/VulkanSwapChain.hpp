@@ -14,7 +14,7 @@ struct SwapChainSupportDetails { // represent swapchain capabilities
 class VulkanSwapChain : public SwapChainBase
 {
 public:
-	VulkanSwapChain(RenderDevice* Device, vk::SurfaceKHR windowSurface, GLFWwindow* window);
+	VulkanSwapChain(RenderDevice* Device, vk::SurfaceKHR windowSurface, GLFWwindow* window, const bool vsync);
 	~VulkanSwapChain();
 
 	virtual void destroy() override;
@@ -44,11 +44,13 @@ public:
 
 private:
 
-	void initialize();
+	void initialize(const bool vsync);
 	void recreateSwapchain();
 	void createSwapChainImageViews();
 
 	SwapChainSupportDetails querySwapchainSupport(vk::PhysicalDevice dev, vk::SurfaceKHR surface);
+
+	bool mUseVsync;
 
 	vk::SurfaceKHR mSurface;
 	vk::SwapchainKHR mSwapChain;

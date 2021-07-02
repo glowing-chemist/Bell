@@ -43,26 +43,30 @@ SwapChainSupportDetails VulkanSwapChain::querySwapchainSupport(vk::PhysicalDevic
     return details;
 }
 
-vk::PresentModeKHR choosePresentMode(const std::vector<vk::PresentModeKHR>& presentModes)
+vk::PresentModeKHR choosePresentMode(const std::vector<vk::PresentModeKHR>& presentModes, const bool vsync)
 {
-	for(const auto presentMode : presentModes)
-    {
-	    if(presentMode == vk::PresentModeKHR::eMailbox)
-	        return presentMode;
-    }
+    if(vsync)
+        return vk::PresentModeKHR::eFifo;
+
+	if(std::find(presentModes.begin(), presentModes.end(), vk::PresentModeKHR::eMailbox) != presentModes.end())
+	    return vk::PresentModeKHR::eMailbox;
+
+    if(std::find(presentModes.begin(), presentModes.end(), vk::PresentModeKHR::eImmediate) != presentModes.end())
+        return vk::PresentModeKHR::eImmediate;
 
 	// Guaranteed to be present.
 	return vk::PresentModeKHR::eFifo;
 }
 
 
-VulkanSwapChain::VulkanSwapChain(RenderDevice* Device, vk::SurfaceKHR windowSurface, GLFWwindow* window) :
+VulkanSwapChain::VulkanSwapChain(RenderDevice* Device, vk::SurfaceKHR windowSurface, GLFWwindow* window, const bool vsync) :
     SwapChainBase{Device, window},
+    mUseVsync(vsync),
 	mSurface{windowSurface}
 {
 	VulkanRenderDevice* device = static_cast<VulkanRenderDevice*>(getDevice());
 
-	initialize();
+	initialize(mUseVsync);
 
 	vk::SemaphoreCreateInfo semInfo{};
 	for (uint32_t i = 0; i < getNumberOfSwapChainImages(); ++i)
@@ -170,15 +174,15 @@ void VulkanSwapChain::recreateSwapchain()
 		glfwWaitEvents();
 	}
 
-	initialize();
+	initialize(mUseVsync);
 }
 
 
-void VulkanSwapChain::initialize()
+void VulkanSwapChain::initialize(const bool vsync)
 {
 	SwapChainSupportDetails swapDetails = querySwapchainSupport(*static_cast<VulkanRenderDevice*>(getDevice())->getPhysicalDevice(), mSurface);
 	vk::SurfaceFormatKHR swapFormat = chooseSurfaceFormat(swapDetails.formats);
-	vk::PresentModeKHR presMode = choosePresentMode(swapDetails.presentModes);
+	vk::PresentModeKHR presMode = choosePresentMode(swapDetails.presentModes, vsync);
 	ImageExtent swapExtent = chooseSwapExtent(mWindow);
 
 	uint32_t images = 0;

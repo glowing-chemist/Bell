@@ -72,7 +72,14 @@ struct ComputePipelineHandles
 class VulkanRenderDevice : public RenderDevice
 {
 public:
-	VulkanRenderDevice(vk::Instance, vk::PhysicalDevice, vk::Device, vk::SurfaceKHR, vk::DynamicLoader&, GLFWwindow*, const uint32_t deviceFeatures);
+	VulkanRenderDevice(vk::Instance,
+                       vk::PhysicalDevice,
+                       vk::Device,
+                       vk::SurfaceKHR,
+                       vk::DynamicLoader&,
+                       GLFWwindow*,
+                       const uint32_t deviceFeatures,
+                       const bool vsync);
     ~VulkanRenderDevice();
 
     virtual CommandContextBase*        getCommandContext(const uint32_t index, const QueueType) override;
@@ -472,9 +479,9 @@ private:
 
 	struct SwapChainInitializer
 	{
-		SwapChainInitializer(RenderDevice* device, vk::SurfaceKHR windowSurface, GLFWwindow* window, SwapChainBase** ptr)
+		SwapChainInitializer(RenderDevice* device, vk::SurfaceKHR windowSurface, GLFWwindow* window, const bool vsync, SwapChainBase** ptr)
 		{
-			*ptr = new VulkanSwapChain(device, windowSurface, window);
+			*ptr = new VulkanSwapChain(device, windowSurface, window, vsync);
 		}
 	} mSwapChainInitializer;
 
