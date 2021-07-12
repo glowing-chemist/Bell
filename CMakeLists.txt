@@ -285,8 +285,6 @@ set(SHADERS
 	DebugAABB.frag
 	Transparent.frag
 	ResolveCascadeVarianceShadowMap.comp
-	Skinning.comp
-	SkinnedBlendShapes.comp
 	RayMarching.hlsl
 	LightProbes.hlsl
 	DeferredProbeGI.frag
