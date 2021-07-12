@@ -5,7 +5,7 @@
 ConstantBuffer<CameraBuffer> camera;
 
 [[vk::binding(2)]]
-StructuredBuffer<ObjectMatracies> instanceTransformations;
+StructuredBuffer<MeshInstanceInfo> instanceTransformations;
 
 
 GBufferVertOutput main(Vertex vertInput, uint instanceID : SV_InstanceID)

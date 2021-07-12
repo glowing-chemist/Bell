@@ -9,7 +9,7 @@ SamplerState linearSampler;
 Texture2D materials[];
 
 [[vk::push_constant]]
-ConstantBuffer<ObjectMatracies> model;
+ConstantBuffer<MeshInstanceInfo> model;
 
 void main(DepthOnlyOutput vertInput)
 {

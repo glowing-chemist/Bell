@@ -65,12 +65,6 @@ public:
         return mDebugCameraActive;
     }
 
-    BufferBuilder& getVertexBufferBuilder()
-    { return mVertexBuilder; }
-
-    BufferBuilder& getIndexBufferBuilder()
-    { return mIndexBuilder; }
-
 	Image&  getSwapChainImage()
 		{ return mRenderDevice->getSwapChainImage(); }
 
@@ -126,7 +120,7 @@ public:
 	{
 		mTechniques.clear();
         mShaderPrefix.clear();
-		mCurrentRegistredPasses = 0;
+        mCurrentRegisteredPasses = 0;
         mCurrentRenderGraph.reset();
         mCompileGraph = true;
         mRecordTasksSync = true; // Need to regenerate async task order info, so record task synchronously once.
@@ -160,45 +154,7 @@ public:
     }
 
     // returns an vertex and index buffer offset.
-    std::pair<uint64_t, uint64_t> addMeshToBuffer(const StaticMesh*);
-    std::pair<uint64_t, uint64_t> addMeshToAnimationBuffer(const StaticMesh*);
     uint64_t                      getMeshBoundsIndex(const MeshInstance*);
-
-	uint64_t					  addVertexData(const void* ptr, const size_t size)
-		{ return mVertexBuilder.addData(ptr, size); }
-
-	uint64_t					  addIndexData(const std::vector<uint32_t>& idx)
-		{ return mIndexBuilder.addData(idx); }
-
-    void clearVertexCache() // To be used before uploading new vertex data.
-    {
-        mVertexCache.clear();
-        mTposeVertexCache.clear();
-    }
-
-	void setVertexBufferforScene(const Buffer& vertBuf)
-        { mVertexBuffer = vertBuf; }
-
-	void setIndexBufferforScene(const Buffer& indexBuf)
-        { mIndexBuffer = indexBuf; }
-
-    Buffer& getVertexBuffer()
-    {  return mVertexBuffer; }
-
-    const Buffer& getVertexBuffer() const
-    {
-        return mVertexBuffer;
-    }
-
-    Buffer& getIndexBuffer()
-    {
-        return mIndexBuffer;
-    }
-
-    const Buffer& getIndexBuffer() const
-    {
-        return mIndexBuffer;
-    }
 
     void startAnimation(const InstanceID id, const std::string& name, const bool loop = false, const float speedModifer = 1.0f);
     void terimateAnimation(const InstanceID id, const std::string& name);
@@ -431,14 +387,6 @@ private:
 
     uint32_t mAnimationVertexSize;
     BufferBuilder mAnimationVertexBuilder;
-    uint32_t mBoneIndexSize;
-    BufferBuilder mBoneIndexBuilder;
-    uint32_t mBoneWeightSize;
-    BufferBuilder mBoneWeightBuilder;
-    uint32_t mVertexSize;
-    BufferBuilder mVertexBuilder;
-    uint32_t mIndexSize;
-    BufferBuilder mIndexBuilder;
 
     ShaderResourceSet mMaterials;
 
@@ -452,26 +400,19 @@ private:
     Image mDefaultDiffuseTexture;
     ImageView mDefaultDiffuseView;
 
-    std::unordered_map < const StaticMesh*, std::pair<uint64_t, uint64_t>> mVertexCache;
-    std::unordered_map < const StaticMesh*, std::pair<uint64_t, uint64_t>> mTposeVertexCache;
     std::unordered_map < const MeshInstance*, uint64_t>                    mMeshBoundsCache;
 
     RenderGraph mCurrentRenderGraph;
     bool mCompileGraph;
     std::vector<std::unique_ptr<Technique>> mTechniques;
     uint64_t mPassesRegisteredThisFrame;
-    uint64_t mCurrentRegistredPasses;
-    std::vector<ShaderDefine> mShaderPrefix; // Containes defines for currently registered passes.
+    uint64_t mCurrentRegisteredPasses;
+    std::vector<ShaderDefine> mShaderPrefix; // Contains defines for currently registered passes.
 
     std::shared_mutex mShaderCacheMutex;
     std::unordered_map<uint64_t, Shader> mShaderCache;
 
-    Buffer mVertexBuffer;
-    Buffer mIndexBuffer;
     // Animation data.
-    Buffer mTposeVertexBuffer; // a "clean" copy of animated meshed verticies.
-    Buffer mBonesWeightsBuffer;
-    Buffer mBoneWeightsIndexBuffer;
     PerFrameResource<Buffer> mBoneBuffer;
     Buffer mMeshBoundsBuffer;
 

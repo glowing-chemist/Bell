@@ -55,8 +55,7 @@ public:
     void bindImage(const char* name, const ImageView&, const uint32_t flags = 0);
     void bindImageArray(const char* name, const ImageViewArray&, const uint32_t flags = 0);
     void bindBuffer(const char* name, const BufferView&, const uint32_t flags = 0);
-    void bindVertexBuffer(const char* name, const BufferView&, const uint32_t flags = 0);
-    void bindIndexBuffer(const char* name, const BufferView&, const uint32_t flags = 0);
+    void bindBufferArray(const char*, const BufferViewArray&, const uint32_t flags = 0);
     void bindSampler(const char* name, const Sampler&);
     void bindShaderResourceSet(const char* name, const ShaderResourceSet&);
     void bindAccelerationStructure(const char* name, const TopLevelAccelerationStructure&);
@@ -109,12 +108,14 @@ public:
     ImageView&		getImageView(const char* name);
     ImageViewArray& getImageArrayViews(const char* mName);
     BufferView&		getBuffer(const char* mName);
+    BufferViewArray&		getBufferArrayViews(const char* name);
     Sampler&		getSampler(const char* mName);
     TopLevelAccelerationStructure& getAccelerationStructure(const char*);
 
     const ImageView&		getImageView(const char* name) const;
     const ImageViewArray& getImageArrayViews(const char* name) const;
     const BufferView&		getBuffer(const char* name) const;
+    const BufferViewArray&		getBufferArrayViews(const char* name) const;
     const Sampler&		getSampler(const char* name) const;
     const TopLevelAccelerationStructure& getAccelerationStructure(const char*) const;
 
@@ -167,6 +168,7 @@ private:
     std::unordered_map<const char*, ImageView> mImageViews;
     std::unordered_map<const char*, ImageViewArray> mImageViewArrays;
     std::unordered_map<const char*, BufferView> mBufferViews;
+    std::unordered_map<const char*, BufferViewArray> mBufferViewArrays;
     std::unordered_map<const char*, Sampler> mSamplers;
     std::unordered_map<const char*, ShaderResourceSet> mSRS;
     std::unordered_map<const char*, TopLevelAccelerationStructure> mAccelerationStructures;

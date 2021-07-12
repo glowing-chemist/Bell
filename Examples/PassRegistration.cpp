@@ -9,7 +9,7 @@
 
 #include "Engine/Engine.hpp"
 
-#define USE_RAY_TRACING 1
+#define USE_RAY_TRACING 0
 
 struct ImGuiOptions
 {
@@ -189,7 +189,7 @@ int main()
         | DeviceFeaturesFlags::RayTracing
 #endif
         ,
-        false
+        true
     };
     RenderEngine* engine = new RenderEngine{window, options};
     engine->setShadowMapResolution({1920.0f, 1080.0f});
@@ -207,7 +207,6 @@ int main()
     testScene.setRootTransform(glm::scale(float3(0.01f, 0.01f, 0.01f)));
     testScene.loadFromFile(VertexAttributes::Position4 | VertexAttributes::Normals | VertexAttributes::Tangents | VertexAttributes::TextureCoordinates | VertexAttributes::Albedo, engine);
     testScene.loadSkybox(skybox, engine);
-    testScene.uploadData(engine);
     testScene.computeBounds(AccelerationStructure::StaticMesh);
     testScene.computeBounds(AccelerationStructure::DynamicMesh);
 

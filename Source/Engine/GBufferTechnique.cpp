@@ -18,10 +18,9 @@ GBufferTechnique::GBufferTechnique(RenderEngine* eng, RenderGraph& graph) :
 
     task.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
     task.addInput(kDefaultSampler, AttachmentType::Sampler);
+    task.addInput(kBoneTransforms, AttachmentType::DataBufferRO);
     task.addInput(kMaterials, AttachmentType::ShaderResourceSet);
     task.addInput("Model Matrix", AttachmentType::PushConstants);
-    task.addInput(kSceneVertexBuffer, AttachmentType::VertexBuffer);
-    task.addInput(kSceneIndexBuffer, AttachmentType::IndexBuffer);
 
     task.addManagedOutput(kGBufferDiffuse,    AttachmentType::RenderTarget2D, Format::RGBA8UNorm, SizeClass::Swapchain, LoadOp::Clear_Black);
     task.addManagedOutput(kGBufferNormals,     AttachmentType::RenderTarget2D, Format::RG8UNorm, SizeClass::Swapchain, LoadOp::Clear_Black);
@@ -39,12 +38,9 @@ GBufferTechnique::GBufferTechnique(RenderEngine* eng, RenderGraph& graph) :
                 PROFILER_GPU_TASK(exec);
                 PROFILER_GPU_EVENT("gbuffer fill");
 
-                exec->bindIndexBuffer(eng->getIndexBuffer(), 0);
-                exec->bindVertexBuffer(eng->getVertexBuffer(), 0);
-
                 const BufferView& pred = eng->getRenderGraph().getBuffer(kOcclusionPredicationBuffer);
 
-                UberShaderCachedMaterialStateCache stateCache(exec, mMaterialPipelineVariants);
+                UberShaderCachedPipelineStateCache stateCache(exec, mMaterialPipelineVariants);
 
                 for (uint32_t i = 0; i < meshes.size(); ++i)
                 {
@@ -53,11 +49,9 @@ GBufferTechnique::GBufferTechnique(RenderEngine* eng, RenderGraph& graph) :
                     if (!(mesh->getInstanceFlags() & InstanceFlags::Draw))
                         continue;
 
-                    const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->getMesh());
-
                     exec->startCommandPredication(pred, i);
 
-                    mesh->draw(exec, &stateCache, vertexOffset, indexOffset);
+                    mesh->draw(exec, &stateCache);
 
                     exec->endCommandPredication();
                 }
@@ -75,18 +69,14 @@ GBufferTechnique::GBufferTechnique(RenderEngine* eng, RenderGraph& graph) :
                 PROFILER_GPU_TASK(exec);
                 PROFILER_GPU_EVENT("gbuffer fill");
 
-                exec->bindIndexBuffer(eng->getIndexBuffer(), 0);
-                exec->bindVertexBuffer(eng->getVertexBuffer(), 0);
-
-                UberShaderCachedMaterialStateCache stateCache(exec, mMaterialPipelineVariants);
+                UberShaderCachedPipelineStateCache stateCache(exec, mMaterialPipelineVariants);
 
                 for (const auto& mesh : meshes)
                 {
                     if (!(mesh->getInstanceFlags() & InstanceFlags::Draw))
                         continue;
 
-                    const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->getMesh());
-                    mesh->draw(exec, &stateCache, vertexOffset, indexOffset);
+                    mesh->draw(exec, &stateCache);
 
                    }
 
@@ -109,16 +99,19 @@ void GBufferTechnique::postGraphCompilation(RenderGraph& graph, RenderEngine* en
     Shader vertexShader = engine->getShader("./Shaders/GBufferPassThrough.vert");
     for(const auto& material : materials)
     {
-        if(mMaterialPipelineVariants.find(material.mMaterialTypes) == mMaterialPipelineVariants.end())
+        for(uint32_t skinning = 0; skinning < 2; ++skinning)
         {
-            ShaderDefine materialDefine(L"MATERIAL_FLAGS", material.mMaterialTypes);
-            Shader fragmentShader = engine->getShader("./Shaders/GBuffer.frag", materialDefine);
+            const uint64_t shadeflags = material.mMaterialTypes | (skinning ? kShade_Skinning : 0);
+            if (mMaterialPipelineVariants.find(shadeflags) == mMaterialPipelineVariants.end()) {
+                ShaderDefine materialDefine(L"SHADE_FLAGS", shadeflags);
+                Shader fragmentShader = engine->getShader("./Shaders/GBuffer.frag", materialDefine);
 
-            const PipelineHandle pipeline = device->compileGraphicsPipeline(static_cast<const GraphicsTask&>(task),
-                                                                            graph, vertexShader, nullptr,
-                                                                            nullptr, nullptr, fragmentShader);
+                const PipelineHandle pipeline = device->compileGraphicsPipeline(static_cast<const GraphicsTask &>(task),
+                                                                                graph, vertexShader, nullptr,
+                                                                                nullptr, nullptr, fragmentShader);
 
-            mMaterialPipelineVariants.insert({material.mMaterialTypes, pipeline});
+                mMaterialPipelineVariants.insert({shadeflags, pipeline});
+            }
         }
     }
 }
@@ -141,8 +134,6 @@ GBufferPreDepthTechnique::GBufferPreDepthTechnique(RenderEngine* eng, RenderGrap
     task.addInput(kDefaultSampler, AttachmentType::Sampler);
     task.addInput(kMaterials, AttachmentType::ShaderResourceSet);
     task.addInput("Model Matrix", AttachmentType::PushConstants);
-    task.addInput(kSceneVertexBuffer, AttachmentType::VertexBuffer);
-    task.addInput(kSceneIndexBuffer, AttachmentType::IndexBuffer);
 
     task.addManagedOutput(kGBufferDiffuse, AttachmentType::RenderTarget2D, Format::RGBA8UNorm, SizeClass::Swapchain, LoadOp::Clear_Black);
     task.addManagedOutput(kGBufferNormals, AttachmentType::RenderTarget2D, Format::RG8UNorm, SizeClass::Swapchain, LoadOp::Clear_Black);
@@ -160,12 +151,9 @@ GBufferPreDepthTechnique::GBufferPreDepthTechnique(RenderEngine* eng, RenderGrap
                 PROFILER_GPU_TASK(exec);
                 PROFILER_GPU_EVENT("gbuffer fill");
 
-                exec->bindIndexBuffer(eng->getIndexBuffer(), 0);
-                exec->bindVertexBuffer(eng->getVertexBuffer(), 0);
-
                 const BufferView& pred = eng->getRenderGraph().getBuffer(kOcclusionPredicationBuffer);
 
-                UberShaderCachedMaterialStateCache stateCache(exec, mMaterialPipelineVariants);
+                UberShaderCachedPipelineStateCache stateCache(exec, mMaterialPipelineVariants);
 
                 for (uint32_t i = 0; i < meshes.size(); ++i)
                 {
@@ -174,12 +162,9 @@ GBufferPreDepthTechnique::GBufferPreDepthTechnique(RenderEngine* eng, RenderGrap
                     if (!(mesh->getInstanceFlags() & InstanceFlags::Draw))
                         continue;
 
-                    const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->getMesh());
-
-
                     exec->startCommandPredication(pred, i);
 
-                    mesh->draw(exec, &stateCache, vertexOffset, indexOffset);
+                    mesh->draw(exec, &stateCache);
 
                     exec->endCommandPredication();
                 }
@@ -197,19 +182,14 @@ GBufferPreDepthTechnique::GBufferPreDepthTechnique(RenderEngine* eng, RenderGrap
                 PROFILER_GPU_TASK(exec);
                 PROFILER_GPU_EVENT("gbuffer fill");
 
-                exec->bindIndexBuffer(eng->getIndexBuffer(), 0);
-                exec->bindVertexBuffer(eng->getVertexBuffer(), 0);
-
-                UberShaderCachedMaterialStateCache stateCache(exec, mMaterialPipelineVariants);
+                UberShaderCachedPipelineStateCache stateCache(exec, mMaterialPipelineVariants);
 
                 for (const auto& mesh : meshes)
                 {
                     if (!(mesh->getInstanceFlags() & InstanceFlags::Draw))
                         continue;
 
-                    const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->getMesh());
-
-                    mesh->draw(exec, &stateCache, vertexOffset, indexOffset);
+                    mesh->draw(exec, &stateCache);
                   }
 
                 exec->setSubmitFlag();
@@ -233,7 +213,7 @@ void GBufferPreDepthTechnique::postGraphCompilation(RenderGraph& graph, RenderEn
     {
         if(mMaterialPipelineVariants.find(material.mMaterialTypes) == mMaterialPipelineVariants.end())
         {
-            ShaderDefine materialDefine(L"MATERIAL_FLAGS", material.mMaterialTypes);
+            ShaderDefine materialDefine(L"SHADE_FLAGS", material.mMaterialTypes);
             Shader fragmentShader = engine->getShader("./Shaders/GBuffer.frag", materialDefine);
 
             const PipelineHandle pipeline = device->compileGraphicsPipeline(static_cast<const GraphicsTask&>(task),

@@ -6,7 +6,6 @@
 
 #define PASS_TYPES  DepthPre = 1ULL, \
                     GBuffer = 1ULL << 1, \
-                    ComputeSkinning = 1ULL << 2, \
                     Shadow = 1ULL << 3, \
                     CascadingShadow = 1ULL << 4, \
                     SSAO = 1ULL << 5, \
@@ -128,9 +127,6 @@ inline const char* passToString(const PassType passType)
         case PassType::CascadingShadow:
             return "Cascade_Shadow_Map";
 
-        case PassType::ComputeSkinning:
-            return "Skinning";
-
         case PassType::Voxelize:
             return "Voxalize";
 
@@ -239,9 +235,6 @@ inline const wchar_t* passToWString(const PassType passType)
         case PassType::CascadingShadow:
             return L"Cascade_Shadow_Map";
 
-        case PassType::ComputeSkinning:
-            return L"Skinning";
-
         case PassType::Voxelize:
             return L"Voxalize";
 
@@ -292,6 +285,7 @@ enum class AttachmentType
     DataBufferRO,
     DataBufferWO,
     DataBufferRW,
+    DataBufferROArray,
 	IndirectBuffer,
     VertexBuffer,
     IndexBuffer,
@@ -369,7 +363,8 @@ enum class BufferUsage : uint32_t
 	TransferDest = 1 << 5,
     TransferSrc = 1 << 6,
     CommandPredication = 1 << 7,
-    AccelerationStructure = 1 << 8
+    AccelerationStructure = 1 << 8,
+    DeviceAddress = 1 << 9
 };
 
 inline BufferUsage operator|(const BufferUsage& lhs, const BufferUsage& rhs)

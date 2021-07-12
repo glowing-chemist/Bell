@@ -198,7 +198,8 @@ std::pair<vk::PhysicalDevice, vk::Device> VulkanRenderInstance::findSuitableDevi
 
     std::set<int> uniqueQueues{queueIndices.GraphicsQueueIndex, queueIndices.TransferQueueIndex, queueIndices.ComputeQueueIndex};
     std::vector<vk::DeviceQueueCreateInfo> queueInfo{};
-    for(auto& queueIndex : uniqueQueues) {
+    for(auto& queueIndex : uniqueQueues)
+    {
         vk::DeviceQueueCreateInfo info{};
         info.setQueueCount(1);
         info.setQueueFamilyIndex(queueIndex);
@@ -210,7 +211,8 @@ std::pair<vk::PhysicalDevice, vk::Device> VulkanRenderInstance::findSuitableDevi
 	const std::vector<const char*> requireDeviceExtensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME,
 															  VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME,
 															  VK_KHR_MAINTENANCE2_EXTENSION_NAME,
-															  VK_KHR_MAINTENANCE3_EXTENSION_NAME
+															  VK_KHR_MAINTENANCE3_EXTENSION_NAME,
+                                                              VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME
 															 };
 
     std::vector<const char*> optionalDeviceExtensions = {VK_EXT_CONDITIONAL_RENDERING_EXTENSION_NAME};
@@ -220,7 +222,6 @@ std::pair<vk::PhysicalDevice, vk::Device> VulkanRenderInstance::findSuitableDevi
         optionalDeviceExtensions.push_back(VK_KHR_RAY_QUERY_EXTENSION_NAME);
         optionalDeviceExtensions.push_back(VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME);
         optionalDeviceExtensions.push_back(VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME);
-        optionalDeviceExtensions.push_back(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME);
         optionalDeviceExtensions.push_back(VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME);
         optionalDeviceExtensions.push_back(VK_KHR_PIPELINE_LIBRARY_EXTENSION_NAME);
         optionalDeviceExtensions.push_back(VK_KHR_SPIRV_1_4_EXTENSION_NAME);
@@ -262,6 +263,7 @@ std::pair<vk::PhysicalDevice, vk::Device> VulkanRenderInstance::findSuitableDevi
     physicalFeatures.setSamplerAnisotropy(true);
     physicalFeatures.setShaderImageGatherExtended(true);
     physicalFeatures.setFillModeNonSolid(true);
+    physicalFeatures.setFragmentStoresAndAtomics(true);
 
 	vk::PhysicalDeviceDescriptorIndexingFeaturesEXT descriptorIndexingInfo{};
 	descriptorIndexingInfo.setShaderSampledImageArrayNonUniformIndexing(true);

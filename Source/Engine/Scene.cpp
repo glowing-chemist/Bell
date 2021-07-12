@@ -44,7 +44,8 @@ MeshInstance::MeshInstance(Scene* scene,
         mMesh(meshID),
         mID{id},
         mMaterials{},
-        mInstanceFlags{InstanceFlags::Draw}
+        mInstanceFlags{InstanceFlags::Draw},
+        mGlobalBoneBufferOffset(0)
 {
     const StaticMesh* mesh = scene->getMesh(meshID);
     const std::vector<SubMesh>& submeshes = mesh->getSubMeshes();
@@ -70,7 +71,8 @@ MeshInstance::MeshInstance(Scene* scene,
         mMesh(meshID),
         mID{id},
         mMaterials{},
-        mInstanceFlags{InstanceFlags::Draw}
+        mInstanceFlags{InstanceFlags::Draw},
+        mGlobalBoneBufferOffset(0)
 {
     const StaticMesh* mesh = scene->getMesh(meshID);
     const std::vector<SubMesh>& submeshes = mesh->getSubMeshes();
@@ -103,20 +105,31 @@ const BottomLevelAccelerationStructure* MeshInstance::getAccelerationStructure()
     return mScene->getAccelerationStructure(mMesh);
 }
 
-void MeshInstance::draw(Executor* exec, UberShaderStateCache* cache, const uint32_t baseVertexOffset, const uint32_t baseIndexOffset) const
+void MeshInstance::draw(Executor* exec, UberShaderStateCache* cache) const
 {
     const StaticMesh* mesh = getMesh();
     const uint32_t vertesStride = mesh->getVertexStride();
     const std::vector<SubMesh>& subMeshes = mesh->getSubMeshes();
-    for(uint32_t i = 0; i < subMeshes.size(); ++i)
+
+    exec->bindVertexBuffer(*(mesh->getVertexBufferView()), 0);
+    exec->bindIndexBuffer(*(mesh->getIndexBufferView()), 0);
+
+    for(uint32_t subMesh_i = 0; subMesh_i < subMeshes.size(); ++subMesh_i)
     {
-        const SubMesh& subMesh = subMeshes[i];
-        MeshEntry shaderEntry = getMeshShaderEntry(i, subMesh);
-        cache->update(shaderEntry.mMaterialFlags);
+        const SubMesh& subMesh = subMeshes[subMesh_i];
+        MeshEntry shaderEntry = getMeshShaderEntry(subMesh_i, subMesh);
+        const uint64_t shadeFlags = getShadeFlags(subMesh_i);
+        cache->update(shadeFlags);
 
         exec->insertPushConstant(&shaderEntry, sizeof(MeshEntry));
-        exec->indexedDraw((baseVertexOffset / vertesStride) + subMesh.mVertexOffset, (baseIndexOffset / sizeof(uint32_t)) + subMesh.mIndexOffset, subMesh.mIndexCount);
+        exec->indexedDraw(subMesh.mVertexOffset, subMesh.mIndexOffset, subMesh.mIndexCount);
     }
+}
+
+uint64_t MeshInstance::getShadeFlags(const uint32_t subMesh_i) const
+{
+    BELL_ASSERT(subMesh_i < mMaterials.size(), "submesh out of index")
+    return mMaterials[subMesh_i].mMaterialFlags | (mScene->getMesh(mMesh)->getSkeleton().empty() ? 0 : kShade_Skinning);
 }
 
 
@@ -674,6 +687,7 @@ SceneID Scene::loadFile(const std::string &path, MeshType meshType, RenderEngine
 
     StaticMesh newMesh(scene, VertexAttributes::Position4 | VertexAttributes::Normals | VertexAttributes::TextureCoordinates |
                        VertexAttributes::Tangents | VertexAttributes::Albedo);
+    newMesh.initializeDeviceBuffers(eng);
     const InstanceID id = addMesh(eng, newMesh, meshType);
 
     mPath = fs::path(path);
@@ -799,23 +813,6 @@ void Scene::removeInstance(const InstanceID id)
     }
 
     mInstanceMap.erase(id);
-}
-
-
-void Scene::uploadData(RenderEngine* eng)
-{
-    PROFILER_EVENT();
-
-    eng->flushWait();
-    eng->clearVertexCache();
-
-    for(const auto& [mesh, meshType] : mSceneMeshes)
-    {
-        eng->addMeshToBuffer(&mesh);
-
-        if(mesh.hasAnimations())
-            eng->addMeshToAnimationBuffer(&mesh);
-    }
 }
 
 
@@ -1008,6 +1005,16 @@ const BottomLevelAccelerationStructure* Scene::getAccelerationStructure(const Sc
         return &mSceneAccelerationStructures[id];
     else
         return nullptr;
+}
+
+
+void Scene::initializeDeviceBuffers(RenderEngine* eng)
+{
+    for(auto& [mesh, type] : mSceneMeshes)
+    {
+        if(!mesh.getVertexBuffer() || !mesh.getIndexBuffer())
+            mesh.initializeDeviceBuffers(eng);
+    }
 }
 
 

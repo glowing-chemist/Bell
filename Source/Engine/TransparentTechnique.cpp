@@ -28,8 +28,6 @@ TransparentTechnique::TransparentTechnique(RenderEngine* eng, RenderGraph& graph
 
     task.addInput(kMaterials, AttachmentType::ShaderResourceSet);
     task.addInput("model", AttachmentType::PushConstants);
-    task.addInput(kSceneVertexBuffer, AttachmentType::VertexBuffer);
-    task.addInput(kSceneIndexBuffer, AttachmentType::IndexBuffer);
 
     task.addOutput(kGlobalLighting, AttachmentType::RenderTarget2D, Format::RGBA8UNorm);
     task.addOutput(kGBufferDepth, AttachmentType::Depth, Format::D32Float);
@@ -41,9 +39,6 @@ TransparentTechnique::TransparentTechnique(RenderEngine* eng, RenderGraph& graph
                     PROFILER_GPU_TASK(exec);
                     PROFILER_GPU_EVENT("transparent render");
 
-                    exec->bindIndexBuffer(eng->getIndexBuffer(), 0);
-                    exec->bindVertexBuffer(eng->getVertexBuffer(), 0);
-
                     const RenderTask& task = graph.getTask(taskIndex);
                     exec->setGraphicsShaders(static_cast<const GraphicsTask&>(task), graph, mTransparentVertexShader, nullptr, nullptr, nullptr, mTransparentFragmentShader);
 
@@ -54,9 +49,7 @@ TransparentTechnique::TransparentTechnique(RenderEngine* eng, RenderGraph& graph
                         if (!(mesh->getInstanceFlags() & InstanceFlags::Draw))
                             continue;
 
-                        const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->getMesh());
-
-                        mesh->draw(exec, &stateCache, vertexOffset, indexOffset);
+                        mesh->draw(exec, &stateCache);
                     }
                 }
     );

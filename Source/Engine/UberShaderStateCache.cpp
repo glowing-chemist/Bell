@@ -16,36 +16,36 @@ UberShaderMaterialStateCache::UberShaderMaterialStateCache(Executor* exec,
                                                            mTask{task},
                                                            mVertexShader(vertShader),
                                                            mFragmentShaderName(fragShader),
-                                                           mCurrentMaterialDefines(~0ULL) {}
+                                                           mCurrentShadeFlags(~0ULL) {}
 
 
-void UberShaderMaterialStateCache::update(const uint64_t materialDefines)
+void UberShaderMaterialStateCache::update(const uint64_t shadeFlags)
 {
-    if(mCurrentMaterialDefines != materialDefines)
+    if(mCurrentShadeFlags != shadeFlags)
     {
-        mCurrentMaterialDefines = materialDefines;
+        mCurrentShadeFlags = shadeFlags;
 
-        ShaderDefine materialDefine(L"MATERIAL_FLAGS", mCurrentMaterialDefines);
+        ShaderDefine materialDefine(L"SHADE_FLAGS", mCurrentShadeFlags);
         Shader fragmentShader = mEng->getShader(mFragmentShaderName, materialDefine);
         mExec->setGraphicsShaders(static_cast<const GraphicsTask&>(mTask), mGraph, mVertexShader, nullptr, nullptr, nullptr, fragmentShader);
     }
 }
 
 
-UberShaderCachedMaterialStateCache::UberShaderCachedMaterialStateCache(Executor* exec, std::unordered_map<uint64_t, uint64_t>& pipelineCache) :
+UberShaderCachedPipelineStateCache::UberShaderCachedPipelineStateCache(Executor* exec, std::unordered_map<uint64_t, uint64_t>& pipelineCache) :
     UberShaderStateCache(exec),
     mPipelineHandles(pipelineCache),
-    mCurrentMaterialDefines(~0ULL)
+    mCurrentShadeFlags(~0ULL)
 {}
 
 
-void UberShaderCachedMaterialStateCache::update(const uint64_t materialDefines)
+void UberShaderCachedPipelineStateCache::update(const uint64_t shadeFlags)
 {
-    if(mCurrentMaterialDefines != materialDefines)
+    if(mCurrentShadeFlags != shadeFlags)
     {
-        mCurrentMaterialDefines = materialDefines;
+        mCurrentShadeFlags = shadeFlags;
 
-        BELL_ASSERT(mPipelineHandles.find(mCurrentMaterialDefines) != mPipelineHandles.end(), "Pipeline not cached")
-        mExec->setGraphicsPipeline(mPipelineHandles[mCurrentMaterialDefines]);
+        BELL_ASSERT(mPipelineHandles.find(mCurrentShadeFlags) != mPipelineHandles.end(), "Pipeline not cached")
+        mExec->setGraphicsPipeline(mPipelineHandles[mCurrentShadeFlags]);
     }
 }

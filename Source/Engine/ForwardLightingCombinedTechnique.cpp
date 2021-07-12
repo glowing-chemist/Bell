@@ -42,9 +42,6 @@ ForwardCombinedLightingTechnique::ForwardCombinedLightingTechnique(RenderEngine*
 	task.addInput(kMaterials, AttachmentType::ShaderResourceSet);
 	task.addInput(kLightBuffer, AttachmentType::ShaderResourceSet);
 	task.addInput("model", AttachmentType::PushConstants);
-	task.addInput(kSceneVertexBuffer, AttachmentType::VertexBuffer);
-	task.addInput(kSceneIndexBuffer, AttachmentType::IndexBuffer);
-
 
     task.addManagedOutput(kGlobalLighting, AttachmentType::RenderTarget2D, Format::RGBA16Float, SizeClass::Swapchain, LoadOp::Clear_Black);
 	task.addManagedOutput(kGBufferVelocity, AttachmentType::RenderTarget2D, Format::RG16Float, SizeClass::Swapchain, LoadOp::Clear_Black);
@@ -58,13 +55,10 @@ ForwardCombinedLightingTechnique::ForwardCombinedLightingTechnique(RenderEngine*
                 PROFILER_EVENT("Forward combiuned lighting");
                 PROFILER_GPU_TASK(exec);
                 PROFILER_GPU_EVENT("Forward combiuned lighting");
-            
-                exec->bindIndexBuffer(eng->getIndexBuffer(), 0);
-                exec->bindVertexBuffer(eng->getVertexBuffer(), 0);
 
                 const BufferView& pred = eng->getRenderGraph().getBuffer(kOcclusionPredicationBuffer);
 
-                UberShaderCachedMaterialStateCache stateCache(exec, mMaterialPipelineVariants);
+                UberShaderCachedPipelineStateCache stateCache(exec, mMaterialPipelineVariants);
 
                 for (uint32_t i = 0; i < meshes.size(); ++i)
                 {
@@ -73,11 +67,9 @@ ForwardCombinedLightingTechnique::ForwardCombinedLightingTechnique(RenderEngine*
                     if (!(mesh->getInstanceFlags() & InstanceFlags::Draw))
                         continue;
 
-                    const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->getMesh());
-
                     exec->startCommandPredication(pred, i);
 
-                    mesh->draw(exec, &stateCache, vertexOffset, indexOffset);
+                    mesh->draw(exec, &stateCache);
 
                     exec->endCommandPredication();
                 }
@@ -93,19 +85,14 @@ ForwardCombinedLightingTechnique::ForwardCombinedLightingTechnique(RenderEngine*
                 PROFILER_GPU_TASK(exec);
                 PROFILER_GPU_EVENT("Forward combiuned lighting");
 
-                exec->bindIndexBuffer(eng->getIndexBuffer(), 0);
-                exec->bindVertexBuffer(eng->getVertexBuffer(), 0);
-
-                UberShaderCachedMaterialStateCache stateCache(exec, mMaterialPipelineVariants);
+                UberShaderCachedPipelineStateCache stateCache(exec, mMaterialPipelineVariants);
 
                 for (const auto& mesh : meshes)
                 {
                     if (!(mesh->getInstanceFlags() & InstanceFlags::Draw))
                         continue;
 
-                    const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->getMesh());
-
-                    mesh->draw(exec, &stateCache, vertexOffset, indexOffset);
+                    mesh->draw(exec, &stateCache);
                 }
             }
         );
@@ -133,7 +120,7 @@ void ForwardCombinedLightingTechnique::postGraphCompilation(RenderGraph& graph, 
     {
         if(mMaterialPipelineVariants.find(material.mMaterialTypes) == mMaterialPipelineVariants.end())
         {
-            ShaderDefine materialDefine(L"MATERIAL_FLAGS", material.mMaterialTypes);
+            ShaderDefine materialDefine(L"SHADE_FLAGS", material.mMaterialTypes);
             Shader fragmentShader = engine->getShader("./Shaders/ForwardCombinedLighting.frag", materialDefine);
 
             const PipelineHandle pipeline = device->compileGraphicsPipeline(static_cast<const GraphicsTask&>(task),

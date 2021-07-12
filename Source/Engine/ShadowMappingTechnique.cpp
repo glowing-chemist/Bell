@@ -59,8 +59,6 @@ ShadowMappingTechnique::ShadowMappingTechnique(RenderEngine* eng, RenderGraph& g
     shadowTask.addInput(kDefaultSampler, AttachmentType::Sampler);
     shadowTask.addInput(kMaterials, AttachmentType::ShaderResourceSet);
     shadowTask.addInput("lightMatrix", AttachmentType::PushConstants);
-    shadowTask.addInput(kSceneVertexBuffer, AttachmentType::VertexBuffer);
-    shadowTask.addInput(kSceneIndexBuffer, AttachmentType::IndexBuffer);
 
     shadowTask.addOutput(kShadowMapRaw, AttachmentType::RenderTarget2D, Format::RG32Float, LoadOp::Clear_Float_Max);
     shadowTask.addOutput(kShadowMapDepth, AttachmentType::Depth, Format::D32Float, LoadOp::Clear_White, StoreOp::Discard);
@@ -127,9 +125,6 @@ void ShadowMappingTechnique::render(RenderGraph& graph, RenderEngine*)
                 return leftDistance < rightDistance;
             });
 
-            exec->bindIndexBuffer(eng->getIndexBuffer(), 0);
-            exec->bindVertexBuffer(eng->getVertexBuffer(), 0);
-
             const RenderTask& task = graph.getTask(taskIndex);
             exec->setGraphicsShaders(static_cast<const GraphicsTask&>(task), graph, mShadowMapVertexShader, nullptr, nullptr, nullptr, mShadowMapFragmentShader);
 
@@ -141,9 +136,7 @@ void ShadowMappingTechnique::render(RenderGraph& graph, RenderEngine*)
                 if (!(mesh->getInstanceFlags() & InstanceFlags::Draw))
                     continue;
 
-                const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->getMesh());
-
-                mesh->draw(exec, &stateCache, vertexOffset, indexOffset);
+                mesh->draw(exec, &stateCache);
             }
         }
     );

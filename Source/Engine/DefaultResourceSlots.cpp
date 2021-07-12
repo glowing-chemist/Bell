@@ -47,12 +47,7 @@ const char kLightBuffer[]	    = "LightBuffer";
 const char kMaterialMappings[] = "MaterialMappings";
 const char kSparseFroxels[]    = "SparseFroxles";
 const char kLightIndicies[]    = "LightIndicies";
-const char kSceneVertexBuffer[] = "SceneVertexBuffer";
-const char kSceneIndexBuffer[]  = "SceneIndexBuffer";
-const char kTPoseVertexBuffer[] = "TPoseBuffer";
-const char kBoneWeighntsIndiciesBuffer[] = "BoneWeightsIndicies";
-const char kBonesWeights[]      = "BoneWeights";
-const char kBonesBuffer[]        = "BonesBuffer";
+const char kBoneTransforms[]        = "BonesBuffer";
 const char kMainCameraBVH[]               = "BVH";
 
 const char kFrameBufer[]        = "FrameBuffer";

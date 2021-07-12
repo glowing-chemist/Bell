@@ -12,7 +12,7 @@
 
 class ImageView;
 using ImageViewArray = std::vector<ImageView>;
-
+using BufferViewArray = std::vector<BufferView>;
 
 class ShaderResourceSetBase : public DeviceChild, public GPUResource
 {
@@ -27,6 +27,7 @@ public:
     void addDataBufferRO(const BufferView&);
     void addDataBufferRW(const BufferView&);
     void addDataBufferWO(const BufferView&);
+    void addDataBufferROArray(const BufferViewArray&);
 
     void updateLastAccessed();
 
@@ -46,6 +47,7 @@ protected:
 	std::vector<ImageView> mImageViews;
 	std::vector<BufferView> mBufferViews;
 	std::vector<ImageViewArray> mImageArrays;
+    std::vector<BufferViewArray> mBufferArrays;
 
 	std::vector<ResourceInfo> mResources;
 };

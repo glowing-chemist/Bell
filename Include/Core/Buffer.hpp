@@ -42,6 +42,8 @@ public:
 	uint32_t getSize() const
 		{ return mSize;}
 
+	virtual uint64_t getDeviceAddress() const = 0;
+
     virtual void setContents(const void* data,
                      const uint32_t size,
                      const uint32_t offset = 0) = 0;

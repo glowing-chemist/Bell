@@ -65,27 +65,32 @@ std::vector<vk::DescriptorSet> DescriptorManager::getDescriptors(const RenderGra
 
 void DescriptorManager::writeDescriptors(const RenderGraph& graph, const uint32_t taskIndex, vk::DescriptorSet descSet)
 {
+    const RenderTask& task           = graph.getTask(taskIndex);
+    const auto& inputBindings = task.getInputAttachments();
+
     std::vector<vk::WriteDescriptorSet> descSetWrites;
     std::vector<vk::DescriptorImageInfo> imageInfos;
     std::vector<vk::DescriptorBufferInfo> bufferInfos;
     std::vector<vk::WriteDescriptorSetAccelerationStructureKHR> accelerationStructureWrites;
     std::vector<vk::AccelerationStructureKHR> accelerationStructures;
 
-    const uint64_t maxDescWrites = std::accumulate(graph.taskBegin(), graph.taskEnd(), 0ull,
-                    [&](uint64_t accu, const auto& task) {return accu + std::accumulate(task.getInputAttachments().begin(), task.getInputAttachments().end(), 0ull, [&]
+    const uint64_t maxImageWrites = std::accumulate(task.getInputAttachments().begin(), task.getInputAttachments().end(), 0ull, [&]
                                                                                       (uint64_t accu, const RenderTask::InputAttachmentInfo& info)
 		{
             return accu + (info.mType == AttachmentType::TextureArray ? graph.getImageArrayViews(info.mName).size() : 1ull);
 		});
-	});
 
-    imageInfos.reserve(maxDescWrites);
-    bufferInfos.reserve(maxDescWrites);
-    accelerationStructures.reserve(maxDescWrites);
-    accelerationStructureWrites.reserve(maxDescWrites);
+    const uint64_t maxBufferWrites = std::accumulate(task.getInputAttachments().begin(), task.getInputAttachments().end(), 0ull, [&]
+            (uint64_t accu, const RenderTask::InputAttachmentInfo& info)
+    {
+        return accu + (info.mType == AttachmentType::DataBufferROArray ? graph.getImageArrayViews(info.mName).size() : 1ull);
+    });
 
-    const RenderTask& task           = graph.getTask(taskIndex);
-    const auto& inputBindings = task.getInputAttachments();
+    imageInfos.reserve(maxImageWrites);
+    bufferInfos.reserve(maxBufferWrites);
+    accelerationStructures.reserve(inputBindings.size());
+    accelerationStructureWrites.reserve(inputBindings.size());
+
 
     uint32_t bindingIndex = 0;
     for(const auto& bindingInfo : inputBindings)
@@ -195,6 +200,21 @@ void DescriptorManager::writeDescriptors(const RenderGraph& graph, const uint32_
             break;
         }
 
+        case AttachmentType::DataBufferROArray:
+        {
+            const auto& bufferViews = graph.getBufferArrayViews(bindingInfo.mName);
+
+            for(auto& view : bufferViews)
+            {
+                bufferInfos.push_back(generateDescriptorBufferInfo(view));
+            }
+
+            descWrite.setPBufferInfo(&bufferInfos[bufferInfos.size() - bufferViews.size()]);
+            descWrite.setDescriptorType(vk::DescriptorType::eStorageBuffer);
+            descWrite.setDescriptorCount(static_cast<uint32_t>(bufferViews.size()));
+            break;
+        }
+
         case AttachmentType::AccelerationStructure:
         {
             auto& accelerationStructure = graph.getAccelerationStructure(bindingInfo.mName);
@@ -236,12 +256,16 @@ vk::DescriptorSet DescriptorManager::writeShaderResourceSet(const vk::Descriptor
             return accu + (info.mType == AttachmentType::TextureArray ? info.mArraySize : 1ull);
 		});
 
-	imageInfos.reserve(maxImages);
-	bufferInfos.reserve(writes.size());
+    const auto maxBuffers = std::accumulate(writes.begin(), writes.end(), 0ull, []
+            (uint64_t accu, const WriteShaderResourceSet& info)
+    {
+        return accu + (info.mType == AttachmentType::DataBufferROArray ? info.mArraySize : 1ull);
+    });
 
-    vk::DescriptorPool allocatedPool;
-    vk::DescriptorSet descSet = allocatePersistentDescriptorSet(layout, writes, allocatedPool);
-    outPool = allocatedPool;
+	imageInfos.reserve(maxImages);
+	bufferInfos.reserve(maxBuffers);
+
+    vk::DescriptorSet descSet = allocatePersistentDescriptorSet(layout, writes, outPool);
 
 	for (uint32_t i = 0; i < writes.size(); ++i)
 	{
@@ -354,6 +378,22 @@ vk::DescriptorSet DescriptorManager::writeShaderResourceSet(const vk::Descriptor
 			break;
 		}
 
+		case AttachmentType::DataBufferROArray:
+		{
+		    BELL_ASSERT(writes[i].mBuffer, "Attachment type set incorrectly")
+		    const auto* bufferViews = writes[i].mBuffer;
+
+		    for(uint32_t k = 0; k < writes[i].mArraySize; ++k)
+		    {
+		        bufferInfos.push_back(generateDescriptorBufferInfo(bufferViews[k]));
+		    }
+
+		    descWrite.setPBufferInfo(&bufferInfos[bufferInfos.size() - writes[i].mArraySize]);
+		    descWrite.setDescriptorType(vk::DescriptorType::eStorageBuffer);
+		    descWrite.setDescriptorCount(static_cast<uint32_t>(writes[i].mArraySize));
+		    break;
+		}
+
 		case AttachmentType::AccelerationStructure:
 		{
             /*auto& accelerationStructure = graph.getAccelerationStructure(bindingInfo.mName);
@@ -434,9 +474,9 @@ DescriptorManager::DescriptorPool DescriptorManager::createDescriptorPool(const 
     dataBufferDescPoolSize.setType(vk::DescriptorType::eStorageBuffer);
     dataBufferDescPoolSize.setDescriptorCount(100);
 
-    vk::DescriptorPoolSize samplerrDescPoolSize{};
-    samplerrDescPoolSize.setType(vk::DescriptorType::eSampler);
-    samplerrDescPoolSize.setDescriptorCount(100);
+    vk::DescriptorPoolSize samplerDescPoolSize{};
+    samplerDescPoolSize.setType(vk::DescriptorType::eSampler);
+    samplerDescPoolSize.setDescriptorCount(100);
 
     vk::DescriptorPoolSize imageDescPoolSize{};
     imageDescPoolSize.setType(vk::DescriptorType::eSampledImage);
@@ -451,7 +491,7 @@ DescriptorManager::DescriptorPool DescriptorManager::createDescriptorPool(const 
     accelerationDescPoolSize.setDescriptorCount(10);
 
     std::array<vk::DescriptorPoolSize, 6> descPoolSizes{uniformBufferDescPoolSize,
-                                                        samplerrDescPoolSize,
+                                                        samplerDescPoolSize,
                                                         dataBufferDescPoolSize,
                                                         imageDescPoolSize,
                                                         storageImageDescPoolSize,
@@ -470,7 +510,7 @@ DescriptorManager::DescriptorPool DescriptorManager::createDescriptorPool(const 
 		100,
 		100,
 		100,
-		5,
+		10,
 		static_cast<VulkanRenderDevice*>(getDevice())->createDescriptorPool(DescPoolInfo)
 	};
 
@@ -538,6 +578,10 @@ DescriptorManager::DescriptorPool& DescriptorManager::findSuitablePool(const std
         case AttachmentType::DataBufferWO:
 			requiredStorageBufferDescriptors++;
 			break;
+
+		case AttachmentType::DataBufferROArray:
+		    requiredStorageBufferDescriptors += attachment.mArraySize;
+		    break;
 
 		case AttachmentType::UniformBuffer:
 			requiredUniformBufferDescriptors++;
@@ -636,6 +680,10 @@ DescriptorManager::DescriptorPool& DescriptorManager::findSuitablePool(const std
 
         case AttachmentType::UniformBuffer:
             requiredUniformBufferDescriptors++;
+            break;
+
+        case AttachmentType::DataBufferROArray:
+            requiredStorageBufferDescriptors += attachment.mArraySize;
             break;
 
         case AttachmentType::Texture1D:

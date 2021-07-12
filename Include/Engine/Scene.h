@@ -59,7 +59,7 @@ enum class LightType : uint32_t
 	Strip = 3
 };
 
-enum class MaterialType
+enum class MaterialType : uint32_t
 {
     Albedo = 1,
     Diffuse = 1 << 1,
@@ -89,6 +89,25 @@ inline uint32_t operator|(const uint32_t lhs, const MaterialType rhs)
 {
     return lhs | static_cast<uint32_t>(rhs);
 }
+enum ShadeFlags
+{
+    kMaterial_Albedo = static_cast<uint32_t>(MaterialType::Albedo),
+    kMaterial_Diffuse = static_cast<uint32_t>(MaterialType::Diffuse),
+    kMaterial_Normals = static_cast<uint32_t>(MaterialType::Normals),
+    kMaterial_Roughness = static_cast<uint32_t>(MaterialType::Roughness),
+    kMaterial_Gloss = static_cast<uint32_t>(MaterialType::Gloss),
+    kMaterial_Metalness = static_cast<uint32_t>(MaterialType::Metalness),
+    kMaterial_Specular = static_cast<uint32_t>(MaterialType::Specular),
+    kMaterial_CombinedMetalnessRoughness = static_cast<uint32_t>(MaterialType::CombinedMetalnessRoughness),
+    kMaterial_AmbientOcclusion = static_cast<uint32_t>(MaterialType::AmbientOcclusion),
+    kMaterial_Emisive = static_cast<uint32_t>(MaterialType::Emisive),
+    kMaterial_CombinesSpecularGloss = static_cast<uint32_t>(MaterialType::CombinedSpecularGloss),
+    kMaterial_Height = static_cast<uint32_t>(MaterialType::HeightMap),
+    kMaterial_AlphaTested = static_cast<uint32_t>(MaterialType::AlphaTested),
+    kMaterial_Transparent = static_cast<uint32_t>(MaterialType::Transparent),
+
+    kShade_Skinning = 1 << 22
+};
 
 enum class PBRType
 {
@@ -177,7 +196,24 @@ public:
         mMaterials[subMesh].mMaterialFlags = flags;
     }
 
-    void draw(Executor*, UberShaderStateCache*, const uint32_t baseVertexOffset, const uint32_t baseIndexOffset) const;
+    void setGlobalBoneBufferOffset(const uint32_t offset)
+    {
+        mGlobalBoneBufferOffset = offset;
+    }
+
+    void setBoneCountBufferIndex(const uint32_t index)
+    {
+        mBoneCountBufferIndex = index;
+    }
+
+    void setBoneWeightBufferIndex(const uint32_t index)
+    {
+        mBoneWeightBufferIndex = index;
+    }
+
+    void draw(Executor*, UberShaderStateCache*) const;
+
+    uint64_t getShadeFlags(const uint32_t subMesh_i) const;
 
 private:
 
@@ -188,6 +224,9 @@ private:
         entry.mPreviousTransformation = transpose(float4x3(getPreviousTransMatrix() * submesh.mTransform));
         entry.mMaterialIndex = mMaterials[submesh_i].mMaterialIndex;
         entry.mMaterialFlags = mMaterials[submesh_i].mMaterialFlags;
+        entry.mGlobalBoneBufferOffset = mGlobalBoneBufferOffset;
+        entry.mBoneCountBufferIndex = mBoneCountBufferIndex;
+        entry.mBoneWeightBufferIndex = mBoneWeightBufferIndex;
 
         return entry;
     }
@@ -202,6 +241,9 @@ private:
     };
     std::vector<MaterialEntry> mMaterials;
     uint32_t mInstanceFlags;
+    uint32_t mGlobalBoneBufferOffset;
+    uint32_t mBoneCountBufferIndex;
+    uint32_t mBoneWeightBufferIndex;
 };
 
 
@@ -245,7 +287,6 @@ public:
                                   const std::string& name = "");
     void          removeInstance(const InstanceID);
 
-    void          uploadData(RenderEngine*);
     void          computeBounds(const AccelerationStructure);
 
     struct Light
@@ -521,10 +562,7 @@ public:
         return mTerrain;
     }
 
-    void testPrint() const
-    {
-        printf("Lua test hook\n");
-    }
+    void initializeDeviceBuffers(RenderEngine*);
 
 private:
 
@@ -573,7 +611,6 @@ private:
 
     float4x4 mRootTransform;
     AABB mSceneAABB;
-
 
 	Camera* mSceneCamera;
 

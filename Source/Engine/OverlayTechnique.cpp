@@ -142,6 +142,6 @@ void OverlayTechnique::bindResources(RenderGraph& graph)
 {
 	graph.bindImage(kDefaultFontTexture, mFontImageView);
 	graph.bindBuffer(kOverlayOBU, *mOverlayerBufferView);
-	graph.bindVertexBuffer(kOverlayVertex, mOverlayerVertexBufferView.get());
-	graph.bindIndexBuffer(kOverlayIndex, mOverlayerIndexBufferView.get());
+	graph.bindBuffer(kOverlayVertex, mOverlayerVertexBufferView.get());
+	graph.bindBuffer(kOverlayIndex, mOverlayerIndexBufferView.get());
 }

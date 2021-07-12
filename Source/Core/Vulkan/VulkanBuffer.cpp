@@ -188,6 +188,12 @@ bool VulkanBuffer::resize(const uint32_t newSize, const bool preserContents)
 }
 
 
+uint64_t VulkanBuffer::getDeviceAddress() const
+{
+    return static_cast<const VulkanRenderDevice*>(getDevice())->getBufferDeviceAddress(this);
+}
+
+
 void VulkanBuffer::resizePreserveContents(const uint32_t newSize)
 {
 	VulkanRenderDevice* device = static_cast<VulkanRenderDevice*>(getDevice());

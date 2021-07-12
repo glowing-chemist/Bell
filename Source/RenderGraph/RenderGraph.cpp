@@ -398,18 +398,9 @@ void RenderGraph::bindBuffer(const char *name , const BufferView& buffer, const 
 }
 
 
-void RenderGraph::bindVertexBuffer(const char *name, const BufferView& buffer, const uint32_t flags)
+void RenderGraph::bindBufferArray(const char* name, const BufferViewArray& bufferArray, const uint32_t flags)
 {
-    mBufferViews.insert_or_assign(name, buffer);
-    mResourceInfo[name].mUsages.clear();
-
-    bindResource(name, flags);
-}
-
-
-void RenderGraph::bindIndexBuffer(const char *name, const BufferView& buffer, const uint32_t flags)
-{
-    mBufferViews.insert_or_assign(name, buffer);
+    mBufferViewArrays.insert_or_assign(name, bufferArray);
     mResourceInfo[name].mUsages.clear();
 
     bindResource(name, flags);
@@ -734,6 +725,12 @@ BufferView& RenderGraph::getBuffer(const char* name)
     return mBufferViews.find(name)->second;
 }
 
+BufferViewArray& RenderGraph::getBufferArrayViews(const char* name)
+{
+    BELL_ASSERT(mBufferViewArrays.find(name) != mBufferViewArrays.end(), " Attempting to fetch non buffer resource")
+
+    return mBufferViewArrays.find(name)->second;
+}
 
 const Sampler& RenderGraph::getSampler(const char* name) const
 {
@@ -771,6 +768,14 @@ const BufferView& RenderGraph::getBuffer(const char* name) const
     BELL_ASSERT(mBufferViews.find(name) != mBufferViews.end(), " Attempting to fetch non buffer resource")
 
     return mBufferViews.find(name)->second;
+}
+
+
+const BufferViewArray& RenderGraph::getBufferArrayViews(const char* name) const
+{
+    BELL_ASSERT(mBufferViewArrays.find(name) != mBufferViewArrays.end(), " Attempting to fetch non buffer resource")
+
+    return mBufferViewArrays.find(name)->second;
 }
 
 

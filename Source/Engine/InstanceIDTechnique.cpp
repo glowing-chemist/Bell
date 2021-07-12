@@ -24,8 +24,6 @@ InstanceIDTechnique::InstanceIDTechnique(RenderEngine* eng, RenderGraph& graph) 
     GraphicsTask task{"InstanceID", mPipeline};
     task.setVertexAttributes(VertexAttributes::Position4 | VertexAttributes::Normals | VertexAttributes::Tangents | VertexAttributes::TextureCoordinates | VertexAttributes::Albedo);
     task.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
-    task.addInput(kSceneVertexBuffer, AttachmentType::VertexBuffer);
-    task.addInput(kSceneIndexBuffer, AttachmentType::IndexBuffer);
     task.addInput("instanceInfo", AttachmentType::PushConstants);
     task.addManagedOutput(kInstanceIDBuffer, AttachmentType::RenderTarget2D, Format::R16UInt, SizeClass::Swapchain,
                           LoadOp::Clear_White);
@@ -34,16 +32,15 @@ InstanceIDTechnique::InstanceIDTechnique(RenderEngine* eng, RenderGraph& graph) 
     task.setRecordCommandsCallback(
             [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, RenderEngine* eng, const std::vector<const MeshInstance*>& meshes)
             {
-                exec->bindIndexBuffer(eng->getIndexBuffer(), 0);
-                exec->bindVertexBuffer(eng->getVertexBuffer(), 0);
-
                 const RenderTask& task = graph.getTask(taskIndex);
                 exec->setGraphicsShaders(static_cast<const GraphicsTask&>(task), graph, mVertexShader, nullptr, nullptr, nullptr, mFragmentShader);
 
                 for(const auto* instance : meshes)
                 {
                     const StaticMesh* mesh = instance->getMesh();
-                    const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh);
+                    exec->bindVertexBuffer(*(mesh->getVertexBufferView()), 0);
+                    exec->bindIndexBuffer(*(mesh->getIndexBufferView()), 0);
+
                     const std::vector<SubMesh>& subMeshes = mesh->getSubMeshes();
                     for(const auto& subMesh : subMeshes)
                     {
@@ -52,7 +49,7 @@ InstanceIDTechnique::InstanceIDTechnique(RenderEngine* eng, RenderGraph& graph) 
                         constants.id = instance->getID();
 
                         exec->insertPushConstant(&constants, sizeof(PushConstants));
-                        exec->indexedDraw((vertexOffset / mesh->getVertexStride()) + subMesh.mVertexOffset, (indexOffset / sizeof(uint32_t)) + subMesh.mIndexOffset, subMesh.mIndexCount);
+                        exec->indexedDraw(subMesh.mVertexOffset / mesh->getVertexStride(), subMesh.mIndexOffset / sizeof(uint32_t), subMesh.mIndexCount);
                     }
                 }
             });
@@ -63,7 +60,7 @@ InstanceIDTechnique::InstanceIDTechnique(RenderEngine* eng, RenderGraph& graph) 
     ComputeTask pickerTask{"InstancePicker"};
     pickerTask.addInput(kInstanceIDBuffer, AttachmentType::Texture2D);
     pickerTask.addInput(kSelectedInstanceBuffer, AttachmentType::DataBufferWO);
-    pickerTask.addInput("MousPos", AttachmentType::PushConstants);
+    pickerTask.addInput("MousePos", AttachmentType::PushConstants);
     pickerTask.setRecordCommandsCallback(
             [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, RenderEngine* eng, const std::vector<const MeshInstance*>& meshes)
             {

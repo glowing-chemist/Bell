@@ -52,7 +52,7 @@ MaterialInfo calculateMaterialInfo(	const float4 vertexNormal,
 	// calcaulte the tbn matrix used for normalmapping and parralax occlusion mapping.
 	float3x3 tbv = tangentSpaceMatrix(vertexNormal, tangent);
 
-#if MATERIAL_FLAGS & kMaterial_HeightMap
+#if SHADE_FLAGS & kMaterial_HeightMap
 	{
 		const float3 tangentView = mul(-view, transpose(tbv));
 		Texture2D<float> heightMap = materials[materialIndex];
@@ -63,18 +63,18 @@ MaterialInfo calculateMaterialInfo(	const float4 vertexNormal,
 	}
 #endif
 
-#if MATERIAL_FLAGS & kMaterial_Diffuse
+#if SHADE_FLAGS & kMaterial_Diffuse
 	{
 		mat.diffuse = materials[materialIndex + nextMaterialSlot].Sample(linearSampler, uv);
 		++nextMaterialSlot;
 	}
 #endif
 
-# if MATERIAL_FLAGS & kMaterial_Albedo
+# if SHADE_FLAGS & kMaterial_Albedo
 		++nextMaterialSlot;
 #endif
 
-#if MATERIAL_FLAGS & kMaterial_Normals
+#if SHADE_FLAGS & kMaterial_Normals
 	{
 		float3 normal = materials[materialIndex + nextMaterialSlot].Sample(linearSampler, uv).xyz;
 		++nextMaterialSlot;
@@ -94,7 +94,7 @@ MaterialInfo calculateMaterialInfo(	const float4 vertexNormal,
 #endif
 
 	float metalness = 0.0f;
-#if MATERIAL_FLAGS & kMaterial_CombinedMetalnessRoughness
+#if SHADE_FLAGS & kMaterial_CombinedMetalnessRoughness
 	{
 		const float2 metalnessRoughness = materials[materialIndex + nextMaterialSlot].Sample(linearSampler, uv).zy;
 		metalness = metalnessRoughness.x;
@@ -103,28 +103,28 @@ MaterialInfo calculateMaterialInfo(	const float4 vertexNormal,
 	}
 #else
 	{
-#if 	MATERIAL_FLAGS & kMaterial_Roughness
+#if 	SHADE_FLAGS & kMaterial_Roughness
 		{
 			mat.specularRoughness.w = materials[materialIndex + nextMaterialSlot].Sample(linearSampler, uv).x;
 			++nextMaterialSlot;
 		}
 #endif
 
-#if MATERIAL_FLAGS & kMaterial_Gloss
+#if SHADE_FLAGS & kMaterial_Gloss
 		{
 			mat.specularRoughness.w = 1.0f - materials[materialIndex + nextMaterialSlot].Sample(linearSampler, uv).x;
 			++nextMaterialSlot;
 		}
 #endif
 
-#if MATERIAL_FLAGS & kMaterial_Specular
+#if SHADE_FLAGS & kMaterial_Specular
 		{
 			mat.specularRoughness.xyz= materials[materialIndex + nextMaterialSlot].Sample(linearSampler, uv).xyz;
 			++nextMaterialSlot;
 		}
 #endif
 		
-#if MATERIAL_FLAGS & kMaterial_CombinedSpecularGloss
+#if SHADE_FLAGS & kMaterial_CombinedSpecularGloss
 		{
 			mat.specularRoughness = materials[materialIndex + nextMaterialSlot].Sample(linearSampler, uv);
 			mat.specularRoughness.w = 1.0f - mat.specularRoughness.w;
@@ -132,7 +132,7 @@ MaterialInfo calculateMaterialInfo(	const float4 vertexNormal,
 		}
 #endif
 
-#if MATERIAL_FLAGS & kMaterial_Metalness
+#if SHADE_FLAGS & kMaterial_Metalness
 		{
 			metalness = materials[materialIndex + nextMaterialSlot].Sample(linearSampler, uv).x;
 			++nextMaterialSlot;
@@ -141,7 +141,7 @@ MaterialInfo calculateMaterialInfo(	const float4 vertexNormal,
 	}
 #endif
 
-#if MATERIAL_FLAGS & kMaterial_Albedo
+#if SHADE_FLAGS & kMaterial_Albedo
 	{
 		const float4 albedo = materials[materialIndex].Sample(linearSampler, uv);
 		mat.diffuse = albedo * (1.0 - DIELECTRIC_SPECULAR) * (1.0 - metalness);
@@ -153,14 +153,14 @@ MaterialInfo calculateMaterialInfo(	const float4 vertexNormal,
 	}
 #endif
 
-#if MATERIAL_FLAGS & kMaterial_AmbientOcclusion
+#if SHADE_FLAGS & kMaterial_AmbientOcclusion
 	{
 		mat.emissiveOcclusion.w = materials[materialIndex + nextMaterialSlot].Sample(linearSampler, uv).x;
 		++nextMaterialSlot;
 	}
 #endif
 
-#if MATERIAL_FLAGS & kMaterial_Emissive
+#if SHADE_FLAGS & kMaterial_Emissive
 	{
 		mat.emissiveOcclusion.xyz = materials[materialIndex + nextMaterialSlot].Sample(linearSampler, uv).xyz;
 	}

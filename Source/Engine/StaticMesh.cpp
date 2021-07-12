@@ -1,6 +1,8 @@
 #include "Engine/StaticMesh.h"
+#include "Engine/Engine.hpp"
 #include "Core/BellLogging.hpp"
 #include "Core/ConversionUtils.hpp"
+#include "Core/Buffer.hpp"
 
 #include "assimp/Importer.hpp"
 #include "assimp/postprocess.h"
@@ -28,6 +30,14 @@ namespace
 StaticMesh::StaticMesh(const std::string& path, const int vertAttributes, const bool globalScaling) :
 	mVertexData{},
 	mIndexData{},
+    mVertexBuffer(nullptr),
+    mVertexBufferView(nullptr),
+    mIndexBuffer(nullptr),
+    mIndexBufferView(nullptr),
+    mBonePerVertexBuffer(nullptr),
+    mBonePerVertexBufferView(nullptr),
+    mBoneIndexWeightBuffer(nullptr),
+    mBoneIndexWeightBufferView(nullptr),
     mAABB{{INFINITY, INFINITY, INFINITY, INFINITY}, {-INFINITY, -INFINITY, -INFINITY, -INFINITY}},
 	mVertexCount(0),
     mVertexAttributes(vertAttributes),
@@ -53,6 +63,14 @@ StaticMesh::StaticMesh(const std::string& path, const int vertAttributes, const 
 
 
 StaticMesh::StaticMesh(const aiScene *scene, const aiMesh* mesh, const int vertexAttributes) :
+    mVertexBuffer(nullptr),
+    mVertexBufferView(nullptr),
+    mIndexBuffer(nullptr),
+    mIndexBufferView(nullptr),
+    mBonePerVertexBuffer(nullptr),
+    mBonePerVertexBufferView(nullptr),
+    mBoneIndexWeightBuffer(nullptr),
+    mBoneIndexWeightBufferView(nullptr),
     mAABB{{INFINITY, INFINITY, INFINITY, INFINITY}, {-INFINITY, -INFINITY, -INFINITY, -INFINITY}},
     mVertexAttributes(vertexAttributes),
     mVertexCount(0),
@@ -65,6 +83,14 @@ StaticMesh::StaticMesh(const aiScene *scene, const aiMesh* mesh, const int verte
 
 
 StaticMesh::StaticMesh(const aiScene* scene, const int vertexAttributes) :
+        mVertexBuffer(nullptr),
+        mVertexBufferView(nullptr),
+        mIndexBuffer(nullptr),
+        mIndexBufferView(nullptr),
+        mBonePerVertexBuffer(nullptr),
+        mBonePerVertexBufferView(nullptr),
+        mBoneIndexWeightBuffer(nullptr),
+        mBoneIndexWeightBufferView(nullptr),
         mAABB{{INFINITY, INFINITY, INFINITY, INFINITY}, {-INFINITY, -INFINITY, -INFINITY, -INFINITY}},
         mVertexAttributes(vertexAttributes),
         mVertexCount(0),
@@ -76,6 +102,55 @@ StaticMesh::StaticMesh(const aiScene* scene, const int vertexAttributes) :
               vertexAttributes);
 
     loadAnimations(scene);
+}
+
+StaticMesh::~StaticMesh()
+{
+    delete mVertexBuffer;
+    delete mVertexBufferView;
+    delete mIndexBuffer;
+    delete mIndexBufferView;
+    delete mBonePerVertexBuffer;
+    delete mBonePerVertexBufferView;
+    delete mBoneIndexWeightBuffer;
+    delete mBoneIndexWeightBufferView;
+}
+
+
+void StaticMesh::initializeDeviceBuffers(RenderEngine* eng)
+{
+    RenderDevice* device = eng->getDevice();
+    if(!mVertexBuffer)
+    {
+        mVertexBuffer = new Buffer(device, BufferUsage::TransferDest | BufferUsage::Vertex | BufferUsage::DataBuffer, mVertexStride * mVertexCount, mVertexStride * mVertexCount, "Vertex buffer");
+        (*mVertexBuffer)->setContents(mVertexData.getVertexBuffer().data(), mVertexData.getVertexBuffer().size());
+
+        mVertexBufferView = new BufferView(*mVertexBuffer);
+    }
+
+    if(!mIndexBuffer)
+    {
+        mIndexBuffer = new Buffer(device, BufferUsage::TransferDest | BufferUsage::Index, mIndexData.size() * sizeof(uint32_t), mIndexData.size() * sizeof(uint32_t), "Index buffer");
+        (*mIndexBuffer)->setContents(mIndexData.data() , mIndexData.size() * sizeof(uint32_t));
+
+        mIndexBufferView = new BufferView(*mIndexBuffer);
+    }
+
+    if(!mBonePerVertexBuffer && !mBonesPerVertex.empty())
+    {
+        mBonePerVertexBuffer = new Buffer(device, BufferUsage::TransferDest | BufferUsage::DataBuffer | BufferUsage::DeviceAddress, mBonesPerVertex.size() * sizeof(uint2), mBonesPerVertex.size() * sizeof(uint2));
+        (*mBonePerVertexBuffer)->setContents(mBonesPerVertex.data(), mBonesPerVertex.size() * sizeof(uint2));
+
+        mBonePerVertexBufferView = new BufferView(*mBonePerVertexBuffer);
+    }
+
+    if(!mBoneIndexWeightBuffer && !mBoneWeights.empty())
+    {
+        mBoneIndexWeightBuffer = new Buffer(device, BufferUsage::TransferDest | BufferUsage::DataBuffer | BufferUsage::DeviceAddress, mBoneWeights.size() * sizeof(uint2), mBoneWeights.size() * sizeof(uint2));
+        (*mBoneIndexWeightBuffer)->setContents(mBoneWeights.data(), mBoneWeights.size() * sizeof(uint2));
+
+        mBoneIndexWeightBufferView = new BufferView(*mBoneIndexWeightBuffer);
+    }
 }
 
 
@@ -249,7 +324,7 @@ void StaticMesh::loadSkeleton(const aiScene* scene, const aiMesh* mesh)
     {
         std::vector<BoneIndicies> bonesPerVertex;
         bonesPerVertex.resize(mVertexCount);
-        mBoneWeightsIndicies.resize(mVertexCount);
+        mBonesPerVertex.resize(mVertexCount);
 
         const aiNode* rootNode = scene->mRootNode;
 
@@ -305,7 +380,7 @@ void StaticMesh::loadSkeleton(const aiScene* scene, const aiMesh* mesh)
         {
             const BoneIndicies& index = bonesPerVertex[i];
 
-            uint2& indexSize = mBoneWeightsIndicies[i];
+            uint2& indexSize = mBonesPerVertex[i];
             indexSize.x = mBoneWeights.size();
             indexSize.y = index.mBoneIndices.size();
 

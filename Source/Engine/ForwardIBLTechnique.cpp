@@ -32,8 +32,6 @@ ForwardIBLTechnique::ForwardIBLTechnique(RenderEngine* eng, RenderGraph& graph) 
 
 	task.addInput(kMaterials, AttachmentType::ShaderResourceSet);
 	task.addInput("model", AttachmentType::PushConstants);
-	task.addInput(kSceneVertexBuffer, AttachmentType::VertexBuffer);
-	task.addInput(kSceneIndexBuffer, AttachmentType::IndexBuffer);
 
     if(eng->isPassRegistered(PassType::OcclusionCulling))
         task.addInput(kOcclusionPredicationBuffer, AttachmentType::CommandPredicationBuffer);
@@ -53,12 +51,9 @@ ForwardIBLTechnique::ForwardIBLTechnique(RenderEngine* eng, RenderGraph& graph) 
                 PROFILER_GPU_TASK(exec);
                 PROFILER_GPU_EVENT("Forward IBL");
 
-                exec->bindIndexBuffer(eng->getIndexBuffer(), 0);
-                exec->bindVertexBuffer(eng->getVertexBuffer(), 0);
-
                 const BufferView& pred = eng->getRenderGraph().getBuffer(kOcclusionPredicationBuffer);
 
-                UberShaderCachedMaterialStateCache stateCache(exec, mMaterialPipelineVariants);
+                UberShaderCachedPipelineStateCache stateCache(exec, mMaterialPipelineVariants);
 
                 for (uint32_t i = 0; i < meshes.size(); ++i)
                 {
@@ -67,11 +62,9 @@ ForwardIBLTechnique::ForwardIBLTechnique(RenderEngine* eng, RenderGraph& graph) 
                     if (!(mesh->getInstanceFlags() & InstanceFlags::Draw))
                         continue;
 
-                    const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->getMesh());
-
                     exec->startCommandPredication(pred, i);
 
-                    mesh->draw(exec, &stateCache, vertexOffset, indexOffset);
+                    mesh->draw(exec, &stateCache);
 
                     exec->endCommandPredication();
                 }
@@ -87,18 +80,14 @@ ForwardIBLTechnique::ForwardIBLTechnique(RenderEngine* eng, RenderGraph& graph) 
                 PROFILER_GPU_TASK(exec);
                 PROFILER_GPU_EVENT("Forward IBL");
 
-                exec->bindIndexBuffer(eng->getIndexBuffer(), 0);
-                exec->bindVertexBuffer(eng->getVertexBuffer(), 0);
-
-                UberShaderCachedMaterialStateCache stateCache(exec, mMaterialPipelineVariants);
+                UberShaderCachedPipelineStateCache stateCache(exec, mMaterialPipelineVariants);
 
                 for (const auto& mesh : meshes)
                 {
                     if (!(mesh->getInstanceFlags() & InstanceFlags::Draw))
                         continue;
 
-                    const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->getMesh());
-                    mesh->draw(exec, &stateCache, vertexOffset, indexOffset);
+                    mesh->draw(exec, &stateCache);
                 }
             }
         );
@@ -120,7 +109,7 @@ void ForwardIBLTechnique::postGraphCompilation(RenderGraph& graph, RenderEngine*
     {
         if(mMaterialPipelineVariants.find(material.mMaterialTypes) == mMaterialPipelineVariants.end())
         {
-            ShaderDefine materialDefine(L"MATERIAL_FLAGS", material.mMaterialTypes);
+            ShaderDefine materialDefine(L"SHADE_FLAGS", material.mMaterialTypes);
             Shader fragmentShader = engine->getShader("./Shaders/ForwardIBL.frag", materialDefine);
 
             const PipelineHandle pipeline = device->compileGraphicsPipeline(static_cast<const GraphicsTask&>(task),

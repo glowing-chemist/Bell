@@ -150,8 +150,9 @@ public:
                                     const vk::AccelerationStructureBuildGeometryInfoKHR* pInfos,
                                     const vk::AccelerationStructureBuildRangeInfoKHR* const* ppBuildRangeInfos) const
     {
-        mDevice.buildAccelerationStructuresKHR(vk::DeferredOperationKHR(), count,
+        vk::Result result = mDevice.buildAccelerationStructuresKHR(vk::DeferredOperationKHR(), count,
                                                pInfos, ppBuildRangeInfos);
+        BELL_ASSERT(result == vk::Result::eSuccess, "Failed to build acceleration structure")
     }
 
     void                               destroyFrameBuffer(vk::Framebuffer& frameBuffer, uint64_t frameIndex)
@@ -231,6 +232,17 @@ public:
 
     vk::Sampler                        createSampler(const vk::SamplerCreateInfo& info)
                                             { return mDevice.createSampler(info); }
+
+    vk::DeviceAddress                  getBufferDeviceAddress(const BufferBase* base) const
+    {
+	    const VulkanBuffer* vkBuffer = static_cast<const VulkanBuffer*>(base);
+	    vk::Buffer bufferHandle = vkBuffer->getBuffer();
+
+	    vk::BufferDeviceAddressInfoKHR info{};
+	    info.buffer = bufferHandle;
+
+	    return mDevice.getBufferAddress(info);
+    }
 
     vk::SwapchainKHR                   createSwapchain(const vk::SwapchainCreateInfoKHR& info)
                                             { return mDevice.createSwapchainKHR(info); }

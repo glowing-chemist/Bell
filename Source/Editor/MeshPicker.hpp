@@ -5,8 +5,7 @@
 
 #include "Engine/Scene.h"
 
-class CPURayTracingScene;
-class Camera;
+class InstanceIDTechnique;
 
 
 class MeshPicker
@@ -14,25 +13,25 @@ class MeshPicker
 public:
 
     MeshPicker()  :
-        mRayTracedScene(nullptr),
+            mFirstFrame(true),
+            mIDTechnique(nullptr),
         mSelectedMeshInstance(kInvalidInstanceID) {}
 
-    MeshPicker(CPURayTracingScene* rt) :
-        mRayTracedScene(rt),
+    MeshPicker(InstanceIDTechnique* tech) :
+            mFirstFrame(true),
+            mIDTechnique(tech),
         mSelectedMeshInstance(kInvalidInstanceID) {}
+
+    void setIDTechnique(InstanceIDTechnique* tech)
+    {
+        mIDTechnique = tech;
+    }
 
     ~MeshPicker() = default;
 
-    void setScene(CPURayTracingScene* scene)
-    {
-        if(scene == nullptr)
-            mSelectedMeshInstance = kInvalidInstanceID;
-        mRayTracedScene = scene;
-    }
+    void tick(const uint2& pos);
 
-    void tick(const Camera& cam);
-
-    int64_t getCurrentlySelectedMesh() const
+    InstanceID getCurrentlySelectedMesh() const
     {
         return mSelectedMeshInstance;
     }
@@ -49,8 +48,9 @@ public:
 
 private:
 
-    CPURayTracingScene* mRayTracedScene;
-    int64_t mSelectedMeshInstance;
+    bool mFirstFrame;
+    InstanceIDTechnique* mIDTechnique;
+    InstanceID mSelectedMeshInstance;
 };
 
 #endif

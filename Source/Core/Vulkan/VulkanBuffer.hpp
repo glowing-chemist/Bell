@@ -24,6 +24,8 @@ public:
 	// returns whether or not the buffer was resized (and views need to be recreated)
 	virtual bool resize(const uint32_t newSize, const bool preserContents) override;
 
+    virtual uint64_t getDeviceAddress() const override;
+
 	virtual void setContents(const void* data,
 		const uint32_t size,
 		const uint32_t offset = 0) override;

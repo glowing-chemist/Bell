@@ -98,12 +98,15 @@ struct TerrainVertexOutput
 	float3 normal : NORMAL;
 };
 
-struct ObjectMatracies
+struct MeshInstanceInfo
 {
 	float4x3 meshMatrix;
 	float4x3 prevMeshMatrix;
 	uint materialIndex;
 	uint materialFlags;
+	uint boneBufferOffset;
+	uint boneCountBufferIndex;
+	uint boneWeightBufferIndex;
 };
 
 struct InstanceIDOutput
@@ -127,7 +130,7 @@ void recreateMeshMatracies(in float4x3 meshMat, in float4x3 prevMeshMat, out flo
 }
 
 
-void recreateMeshMatracies(ObjectMatracies objectinfo, out float4x4 mat, out float4x4 prevMat)
+void recreateMeshMatracies(MeshInstanceInfo objectinfo, out float4x4 mat, out float4x4 prevMat)
 {
 	mat = float4x4( float4(objectinfo.meshMatrix[0], 0.0f), 
 									float4(objectinfo.meshMatrix[1], 0.0f), 

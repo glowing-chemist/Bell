@@ -90,7 +90,7 @@ protected:
 
 // Alias array of images (will split this in to a separate class if we need any  more functionality).
 using ImageViewArray = std::vector<ImageView>;
-
+using BufferViewArray = std::vector<BufferView>;
 
 class ImageView
 {

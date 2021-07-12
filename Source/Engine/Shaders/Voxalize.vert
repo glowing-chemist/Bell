@@ -3,7 +3,7 @@
 
 
 [[vk::push_constant]]
-ConstantBuffer<ObjectMatracies> model;
+ConstantBuffer<MeshInstanceInfo> model;
 
 
 [[vk::binding(0)]]

@@ -1,4 +1,5 @@
 #include "Editor/Editor.h"
+#include "Engine/InstanceIDTechnique.hpp"
 #include "Engine/DefaultResourceSlots.hpp"
 #include "Engine/VisualizeLightProbesTechnique.hpp"
 #include "Engine/TextureUtil.hpp"
@@ -233,12 +234,6 @@ namespace
                 return newNode;
             }
 
-            case NodeTypes::ComputeSkinning:
-            {
-                std::shared_ptr<EditorNode> newNode = std::make_shared<PassNode>("Skinning", passType);
-                return newNode;
-            }
-
             case NodeTypes::Voxelize:
             {
                 std::shared_ptr<EditorNode> newNode = std::make_shared<PassNode>("Voxalize", passType);
@@ -321,7 +316,7 @@ Editor::Editor(GLFWwindow* window) :
     mNodeEditor{"render graph editor", createPassNode},
     mRegisteredNodes{0},
     mImGuiSetupNeeded(true),
-    mEngine{mWindow},
+    mEngine{mWindow, {DeviceFeaturesFlags::Compute | DeviceFeaturesFlags::Subgroup, true}},
     mSceneInstanceIDs{},
     mInProgressScene{new Scene("Default")},
     mRayTracingScene(nullptr),
@@ -445,7 +440,13 @@ void Editor::renderScene()
 
     mInProgressScene->updateMaterialsLastAccess();
     mEngine.registerPass(PassType::DebugAABB);
-	mNodeEditor.addPasses(mEngine);
+    mEngine.registerPass(PassType::InstanceID);
+    mNodeEditor.addPasses(mEngine);
+
+	if(Technique* tech = mEngine.getRegisteredTechnique(PassType::InstanceID); tech)
+    {
+	    mMeshPicker.setIDTechnique(static_cast<InstanceIDTechnique*>(tech));
+    }
 }
 
 
@@ -621,7 +622,7 @@ void Editor::pumpInputQueue()
             camera.rotateWorldUp(-mCursorPosDelta.x);
         }
 
-        mMeshPicker.tick(camera);
+        mMeshPicker.tick(uint2{mCurrentCursorPos.x, mCurrentCursorPos.y});
 	}
     else // Add key presses for text input.
     {
@@ -662,7 +663,6 @@ void Editor::drawMenuBar()
 				if(ImGui::MenuItem("Close current Scene"))
 				{
                     mResetSceneAtEndOfFrame = true;
-                    mMeshPicker.setScene(nullptr);
                     mSelectedMesh = kInvalidInstanceID;
                 }
                 if(ImGui::MenuItem("Load mesh"))
@@ -754,7 +754,6 @@ void Editor::drawAssistantWindow()
            drawPassContextMenu(PassType::SSR);
            drawPassContextMenu(PassType::RayTracedReflections);
            drawPassContextMenu(PassType::Transparent);
-           drawPassContextMenu(PassType::ComputeSkinning);
            drawPassContextMenu(PassType::Voxelize);
            drawPassContextMenu(PassType::VisualizeLightProbes);
            drawPassContextMenu(PassType::OcclusionCulling);
@@ -1418,7 +1417,6 @@ void Editor::drawAddInstanceDialog()
             else
             {
                 mRayTracingScene = new CPURayTracingScene(&mEngine, mInProgressScene);
-                mMeshPicker.setScene(mRayTracingScene);
             }
 
             ImGui::GetIO().ClearInputCharacters();
@@ -1455,7 +1453,6 @@ void Editor::loadScene(const std::string& scene)
 {
     mInProgressScene->setPath(scene);
     mSceneInstanceIDs = mInProgressScene->loadFromFile(VertexAttributes::Position4 | VertexAttributes::Normals | VertexAttributes::Tangents | VertexAttributes::TextureCoordinates | VertexAttributes::Albedo, &mEngine);
-    mInProgressScene->uploadData(&mEngine);
     mInProgressScene->computeBounds(AccelerationStructure::StaticMesh);
     mInProgressScene->computeBounds(AccelerationStructure::DynamicMesh);
 
@@ -1471,8 +1468,6 @@ void Editor::loadScene(const std::string& scene)
     mEngine.setScene(mInProgressScene);
     mRayTracingScene = new CPURayTracingScene(&mEngine, mInProgressScene);
     mEngine.setCPURayTracingScene(mRayTracingScene);
-
-    mMeshPicker.setScene(mRayTracingScene);
 
     if(std::filesystem::exists(scene + ".irradianceProbes"))
     {
@@ -1509,6 +1504,7 @@ void Editor::updateMeshInstancePicker()
 {
     // update the selected mesh flags.
     const InstanceID selectedMesh = mMeshPicker.getCurrentlySelectedMesh();
+    BELL_LOG_ARGS("invali mesh instance %zu", kInvalidInstanceID)
     if(selectedMesh != kInvalidInstanceID)
     {
        MeshInstance* instance = mInProgressScene->getMeshInstance(selectedMesh);
@@ -1519,7 +1515,6 @@ void Editor::updateMeshInstancePicker()
 
            if(mSelectedMesh != kInvalidInstanceID)
            {
-               MeshInstance* instance = mInProgressScene->getMeshInstance(mSelectedMesh);
                instance->setInstanceFlags(InstanceFlags::Draw);
            }
 

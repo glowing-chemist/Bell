@@ -25,7 +25,7 @@ Texture2D materials[];
 [[vk::push_constant]]
 ConstantBuffer<TerrainTextureing> constants;
 
-#define MATERIAL_FLAGS kMaterial_Diffuse
+#define SHADE_FLAGS kMaterial_Diffuse
 
 #include "Materials.hlsl"
 

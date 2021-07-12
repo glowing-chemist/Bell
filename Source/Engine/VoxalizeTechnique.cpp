@@ -64,8 +64,6 @@ VoxalizeTechnique::VoxalizeTechnique(RenderEngine* eng, RenderGraph& graph) :
         task.addInput(kLightBuffer, AttachmentType::ShaderResourceSet);
 
     task.addInput("ModelInfo", AttachmentType::PushConstants);
-    task.addInput(kSceneVertexBuffer, AttachmentType::VertexBuffer);
-    task.addInput(kSceneIndexBuffer, AttachmentType::IndexBuffer);
 
     mTaskID = graph.addTask(task);
 
@@ -110,7 +108,7 @@ void VoxalizeTechnique::postGraphCompilation(RenderGraph& graph, RenderEngine* e
     {
         if(mMaterialPipelineVariants.find(material.mMaterialTypes) == mMaterialPipelineVariants.end())
         {
-            ShaderDefine materialDefine(L"MATERIAL_FLAGS", material.mMaterialTypes);
+            ShaderDefine materialDefine(L"SHADE_FLAGS", material.mMaterialTypes);
             Shader fragmentShader = engine->getShader("./Shaders/Voxalize.frag", materialDefine);
 
             const PipelineHandle pipeline = device->compileGraphicsPipeline(static_cast<const GraphicsTask&>(task),
@@ -157,19 +155,14 @@ void VoxalizeTechnique::render(RenderGraph& graph, RenderEngine* eng)
     task.setRecordCommandsCallback(
         [this](const RenderGraph&, const uint32_t, Executor* exec, RenderEngine* eng, const std::vector<const MeshInstance*>& meshes)
         {
-            exec->bindIndexBuffer(eng->getIndexBuffer(), 0);
-            exec->bindVertexBuffer(eng->getVertexBuffer(), 0);
-
-            UberShaderCachedMaterialStateCache stateCache(exec, mMaterialPipelineVariants);
+            UberShaderCachedPipelineStateCache stateCache(exec, mMaterialPipelineVariants);
 
             for (const auto& mesh : meshes)
             {
                 if (!(mesh->getInstanceFlags() & InstanceFlags::Draw))
                     continue;
 
-                const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->getMesh());
-
-                mesh->draw(exec, &stateCache, vertexOffset, indexOffset);
+                mesh->draw(exec, &stateCache);
             }
         }
     );

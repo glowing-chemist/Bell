@@ -449,6 +449,9 @@ vk::DescriptorSetLayout VulkanRenderDevice::generateDescriptorSetLayoutBindings(
 			case AttachmentType::UniformBuffer:
 				return vk::DescriptorType::eUniformBuffer;
 
+			case AttachmentType::DataBufferROArray:
+			    return vk::DescriptorType::eStorageBuffer;
+
 			case AttachmentType::Sampler:
 				return vk::DescriptorType::eSampler;
 

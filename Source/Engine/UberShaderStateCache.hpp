@@ -40,22 +40,22 @@ private:
     const RenderTask& mTask;
     Shader& mVertexShader;
     std::string mFragmentShaderName;
-    uint64_t mCurrentMaterialDefines;
+    uint64_t mCurrentShadeFlags;
 
 };
 
-class UberShaderCachedMaterialStateCache : public UberShaderStateCache
+class UberShaderCachedPipelineStateCache : public UberShaderStateCache
 {
 public:
-    UberShaderCachedMaterialStateCache(Executor*, std::unordered_map<uint64_t, uint64_t>& cache);
-    ~UberShaderCachedMaterialStateCache() = default;
+    UberShaderCachedPipelineStateCache(Executor*, std::unordered_map<uint64_t, uint64_t>& cache);
+    ~UberShaderCachedPipelineStateCache() = default;
 
     virtual void update(const uint64_t) override final;
 
 private:
 
     std::unordered_map<uint64_t, uint64_t>& mPipelineHandles;
-    uint64_t mCurrentMaterialDefines;
+    uint64_t mCurrentShadeFlags;
 
 };
 

@@ -15,12 +15,18 @@
 #include <string>
 #include <vector>
 
+class Buffer;
+class BufferView;
+
 struct MeshEntry
 {
     float3x4 mTransformation;
     float3x4 mPreviousTransformation;
     uint32_t mMaterialIndex;
     uint32_t mMaterialFlags;
+    uint32_t mGlobalBoneBufferOffset;
+    uint32_t mBoneCountBufferIndex;
+    uint32_t mBoneWeightBufferIndex;
 };
 static_assert (sizeof(MeshEntry) <= 128, "Mesh Entry will no longer fit inside push constants");
 
@@ -99,6 +105,7 @@ public:
     StaticMesh(const std::string& filePath, const int vertexAttributes, const bool globalScaling = false);
     StaticMesh(const aiScene* scene, const aiMesh* mesh, const int vertexAttributes);
     StaticMesh(const aiScene* scene, const int vertexAttributes);
+    ~StaticMesh();
 
 
     const AABB& getAABB() const
@@ -119,6 +126,46 @@ public:
     const std::vector<uint32_t>& getIndexData() const
     {
         return mIndexData;
+    }
+
+    Buffer* getVertexBuffer()
+    {
+        return mVertexBuffer;
+    }
+
+    const Buffer* getVertexBuffer() const
+    {
+        return mVertexBuffer;
+    }
+
+    const BufferView* getVertexBufferView() const
+    {
+        return mVertexBufferView;
+    }
+
+    Buffer* getIndexBuffer()
+    {
+        return mIndexBuffer;
+    }
+
+    const Buffer* getIndexBuffer() const
+    {
+        return mIndexBuffer;
+    }
+
+    const BufferView* getIndexBufferView() const
+    {
+        return mIndexBufferView;
+    }
+
+    const BufferView* getBonesPerVertexBufferView() const
+    {
+        return mBonePerVertexBufferView;
+    }
+
+    const BufferView* getBoneIndexWeightBufferView() const
+    {
+        return mBoneIndexWeightBufferView;
     }
 
     int getVertexAttributes() const
@@ -207,8 +254,10 @@ public:
 
     const std::vector<uint2>& getBoneIndicies() const
     {
-        return mBoneWeightsIndicies;
+        return mBonesPerVertex;
     }
+
+    void initializeDeviceBuffers(RenderEngine*);
 
 private:
 
@@ -232,10 +281,22 @@ private:
     std::unordered_map<std::string, uint32_t> mBoneIndexMap;
     std::vector<Bone> mSkeleton;
     std::vector<BoneIndex> mBoneWeights;
-    std::vector<uint2> mBoneWeightsIndicies;
+    std::vector<uint2> mBonesPerVertex;
 
     VertexBuffer         mVertexData;
     std::vector<uint32_t> mIndexData;
+
+    Buffer* mVertexBuffer;
+    BufferView* mVertexBufferView;
+    Buffer* mIndexBuffer;
+    BufferView* mIndexBufferView;
+
+    // Animation buffers.
+    Buffer* mBonePerVertexBuffer;
+    BufferView* mBonePerVertexBufferView;
+    Buffer* mBoneIndexWeightBuffer;
+    BufferView* mBoneIndexWeightBufferView;
+    // Bone transforms buffer will be per instance.
 
     std::vector<MeshBlend> mBlendMeshes;
 

@@ -216,6 +216,9 @@ vk::BufferUsageFlags getVulkanBufferUsage(const BufferUsage usage)
     if(usage & BufferUsage::AccelerationStructure)
         vulkanFlags |= vk::BufferUsageFlagBits::eAccelerationStructureStorageKHR;
 
+    if(usage & BufferUsage::DeviceAddress)
+        vulkanFlags |= vk::BufferUsageFlagBits::eShaderDeviceAddressKHR;
+
 	return vulkanFlags;
 }
 

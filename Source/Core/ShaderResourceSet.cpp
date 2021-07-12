@@ -82,6 +82,15 @@ void ShaderResourceSetBase::addDataBufferWO(const BufferView& view)
 }
 
 
+void ShaderResourceSetBase::addDataBufferROArray(const BufferViewArray& views)
+{
+    const auto index = mBufferArrays.size();
+    mBufferArrays.push_back(views);
+
+    mResources.push_back({ index, AttachmentType::DataBufferROArray, views.size() });
+}
+
+
 void ShaderResourceSetBase::updateLastAccessed()
 {
     const uint64_t submissionIndex = getDevice()->getCurrentSubmissionIndex();

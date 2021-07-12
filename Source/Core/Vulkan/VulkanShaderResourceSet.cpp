@@ -59,6 +59,12 @@ void VulkanShaderResourceSet::finalise()
 			break;
 		}
 
+		case AttachmentType::DataBufferROArray:
+		{
+		    writes.emplace_back(resource.mType, binding, mBufferArrays[resource.mIndex].size(), nullptr, mBufferArrays[resource.mIndex].data(), nullptr);
+		    break;
+		}
+
         default:
             // THis attachment type doesn't make sense to add to a SRS.
             BELL_TRAP;

@@ -5,7 +5,7 @@
 ConstantBuffer<ShadowingLight> light;
 
 [[vk::push_constant]]
-ConstantBuffer<ObjectMatracies> model;
+ConstantBuffer<MeshInstanceInfo> model;
 
 
 ShadowMapVertOutput main(Vertex vertex)

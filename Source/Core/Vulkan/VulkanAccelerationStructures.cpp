@@ -26,13 +26,13 @@ VulkanAccelerationStructure VulkanBottomLevelAccelerationStructure::constructAcc
         const SubMesh& subMesh = mesh.getSubMeshes()[subMesh_i];
 
         vk::AccelerationStructureGeometryTrianglesDataKHR triangleData{};
-        triangleData.vertexFormat = vk::Format::eR32G32B32Sfloat;
+        triangleData.vertexFormat = vk::Format::eR32G32B32A32Sfloat;
         triangleData.vertexData.hostAddress = vertexData;
         triangleData.vertexStride = stride;
         triangleData.maxVertex = subMesh.mVertexCount;
         triangleData.indexType = vk::IndexType::eUint32;
         triangleData.indexData.hostAddress = indexData;
-        triangleData.transformData.hostAddress = glm::value_ptr(subMesh.mTransform);
+        triangleData.transformData.hostAddress = nullptr;//glm::value_ptr(subMesh.mTransform);
 
         vk::AccelerationStructureGeometryDataKHR geomData{};
         geomData.triangles = triangleData;
@@ -76,14 +76,9 @@ VulkanAccelerationStructure VulkanBottomLevelAccelerationStructure::constructAcc
     // create acceleration structure.
     vk::AccelerationStructureKHR accelStructure = vkDevice->createAccelerationStructure(createInfo);
 
-    geomBuildInfo.type = vk::AccelerationStructureTypeKHR::eBottomLevel;
-    geomBuildInfo.mode = vk::BuildAccelerationStructureModeKHR::eBuild;
     geomBuildInfo.srcAccelerationStructure = nullptr;
     geomBuildInfo.dstAccelerationStructure = accelStructure;
-    geomBuildInfo.geometryCount = mesh.getSubMeshCount();
-    geomBuildInfo.ppGeometries = nullptr;
-    geomBuildInfo.pGeometries = triangleInfo.data();
-    geomBuildInfo.scratchData = new unsigned char[buildSize.buildScratchSize];
+    geomBuildInfo.scratchData.hostAddress = new unsigned char[buildSize.buildScratchSize];
 
     // Build geometry in to it.
     vk::AccelerationStructureBuildRangeInfoKHR* pRanges = buildRanges.data();
@@ -136,13 +131,14 @@ void VulkanTopLevelAccelerationStructure::buildStructureOnCPU(RenderEngine* eng)
     std::vector<vk::AccelerationStructureBuildRangeInfoKHR> buildRanges(mInstances.size());
     std::vector<vk::AccelerationStructureInstanceKHR> instances(mInstances.size());
     uint32_t instance_i = 0;
-    for(const MeshInstance* instance : mInstances) {
+    for(const MeshInstance* instance : mInstances)
+    {
         vk::AccelerationStructureInstanceKHR &instanceInfo = instances[instance_i];
         instanceInfo.accelerationStructureReference = *reinterpret_cast<const uint64_t *>(&mBottomLevelStructures[instance]);
         instanceInfo.flags = {};
         instanceInfo.instanceCustomIndex = instance->getID();
         instanceInfo.instanceShaderBindingTableRecordOffset = 0; // TODO figure out how to handle this.
-        instanceInfo.mask = 0;
+        instanceInfo.mask = 0xFF;
         vk::TransformMatrixKHR transform{};
         {
             float3x4 trans = glm::transpose(instance->getTransMatrix());
@@ -195,8 +191,6 @@ void VulkanTopLevelAccelerationStructure::buildStructureOnCPU(RenderEngine* eng)
     // create acceleration structure.
     vk::AccelerationStructureKHR accelStructure = vkDevice->createAccelerationStructure(createInfo);
 
-    geomBuildInfo.type = vk::AccelerationStructureTypeKHR::eTopLevel;
-    geomBuildInfo.mode = vk::BuildAccelerationStructureModeKHR::eBuild;
     geomBuildInfo.srcAccelerationStructure = nullptr;
     geomBuildInfo.dstAccelerationStructure = accelStructure;
     geomBuildInfo.geometryCount = 1;

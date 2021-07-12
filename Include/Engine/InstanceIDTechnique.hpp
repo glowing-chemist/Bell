@@ -28,7 +28,7 @@ public:
 
     InstanceID getCurrentlySelectedInstanceID() const
     {
-        return mSelectedInstanceID;
+        return mSelectedInstanceID == 0xFFFF ? kInvalidInstanceID : mSelectedInstanceID;
     }
 
 private:

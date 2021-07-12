@@ -21,8 +21,6 @@ PreDepthTechnique::PreDepthTechnique(RenderEngine* eng, RenderGraph& graph) :
     task.addInput(kDefaultSampler, AttachmentType::Sampler);
     task.addInput(kMaterials, AttachmentType::ShaderResourceSet);
     task.addInput("Matrix", AttachmentType::PushConstants);
-    task.addInput(kSceneVertexBuffer, AttachmentType::VertexBuffer);
-    task.addInput(kSceneIndexBuffer, AttachmentType::IndexBuffer);
 
     if(eng->isPassRegistered(PassType::OcclusionCulling))
         task.addInput(kOcclusionPredicationBuffer, AttachmentType::CommandPredicationBuffer);
@@ -38,9 +36,6 @@ PreDepthTechnique::PreDepthTechnique(RenderEngine* eng, RenderGraph& graph) :
                 PROFILER_GPU_TASK(exec);
                 PROFILER_GPU_EVENT("Pre-Z");
 
-                exec->bindIndexBuffer(eng->getIndexBuffer(), 0);
-                exec->bindVertexBuffer(eng->getVertexBuffer(), 0);
-
                 const RenderTask& task = graph.getTask(taskIndex);
                 exec->setGraphicsShaders(static_cast<const GraphicsTask&>(task), graph, mPreDepthVertexShader, nullptr, nullptr, nullptr, mPreDepthFragmentShader);
 
@@ -55,11 +50,9 @@ PreDepthTechnique::PreDepthTechnique(RenderEngine* eng, RenderGraph& graph) :
                     if (!(mesh->getInstanceFlags() & InstanceFlags::Draw))
                         continue;
 
-                    const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->getMesh());
-
                     exec->startCommandPredication(pred, i);
 
-                    mesh->draw(exec, &stateCache, vertexOffset, indexOffset);
+                    mesh->draw(exec, &stateCache);
 
                     exec->endCommandPredication();
                 }
@@ -75,9 +68,6 @@ PreDepthTechnique::PreDepthTechnique(RenderEngine* eng, RenderGraph& graph) :
                 PROFILER_GPU_TASK(exec);
                 PROFILER_GPU_EVENT("Pre-Z");
 
-                exec->bindIndexBuffer(eng->getIndexBuffer(), 0);
-                exec->bindVertexBuffer(eng->getVertexBuffer(), 0);
-
                 const RenderTask& task = graph.getTask(taskIndex);
                 exec->setGraphicsShaders(static_cast<const GraphicsTask&>(task), graph, mPreDepthVertexShader, nullptr, nullptr, nullptr, mPreDepthFragmentShader);
 
@@ -89,9 +79,7 @@ PreDepthTechnique::PreDepthTechnique(RenderEngine* eng, RenderGraph& graph) :
                     if (!(mesh->getInstanceFlags() & InstanceFlags::Draw))
                         continue;
 
-                    const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->getMesh());
-
-                    mesh->draw(exec, &stateCache, vertexOffset, indexOffset);
+                    mesh->draw(exec, &stateCache);
                 }
             }
         );

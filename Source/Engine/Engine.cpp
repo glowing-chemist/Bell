@@ -37,7 +37,6 @@
 #include "Engine/DebugVisualizationTechnique.hpp"
 #include "Engine/TransparentTechnique.hpp"
 #include "Engine/CascadeShadowMappingTechnique.hpp"
-#include "Engine/SkinningTechnique.hpp"
 #include "Engine/DeferredProbeGITechnique.hpp"
 #include "Engine/VisualizeLightProbesTechnique.hpp"
 #include "Engine/OcclusionCullingTechnique.hpp"
@@ -73,14 +72,6 @@ RenderEngine::RenderEngine(GLFWwindow* windowPtr, const GraphicsOptions& options
         mDebugCamera({0.0f, 0.0f, 0.0f}, {1.0f, 0.0f, 0.0f}, 1.0f, 0.1f, 2000.0f),
         mAnimationVertexSize{0},
         mAnimationVertexBuilder(),
-        mBoneIndexSize{0},
-        mBoneIndexBuilder(),
-        mBoneWeightSize{0},
-        mBoneWeightBuilder(),
-        mVertexSize{0},
-        mVertexBuilder(),
-        mIndexSize{0},
-        mIndexBuilder(),
         mMaterials{getDevice(), 200},
         mLTCMat(getDevice(), Format::RGBA32Float, ImageUsage::Sampled | ImageUsage::TransferDest, 64, 64, 1, 1, 1, 1, "LTC Mat"),
         mLTCMatView(mLTCMat, ImageViewType::Colour),
@@ -95,13 +86,8 @@ RenderEngine::RenderEngine(GLFWwindow* windowPtr, const GraphicsOptions& options
         mCompileGraph(true),
         mTechniques{},
         mPassesRegisteredThisFrame{0},
-        mCurrentRegistredPasses{0},
+        mCurrentRegisteredPasses{0},
         mShaderPrefix{},
-        mVertexBuffer{getDevice(), BufferUsage::Vertex | BufferUsage::TransferDest | BufferUsage::DataBuffer, 10000000, 10000000, "Vertex Buffer"},
-        mIndexBuffer{getDevice(), BufferUsage::Index | BufferUsage::TransferDest | BufferUsage::DataBuffer, 100000000, 100000000, "Index Buffer"},
-        mTposeVertexBuffer(getDevice(), BufferUsage::DataBuffer | BufferUsage::TransferDest, 10000000, 10000000, "TPose Vertex Buffer"),
-        mBonesWeightsBuffer(getDevice(), BufferUsage::DataBuffer | BufferUsage::TransferDest, sizeof(uint2) * 30000, sizeof(uint2) * 30000, "Bone weights"),
-        mBoneWeightsIndexBuffer(getDevice(), BufferUsage::DataBuffer | BufferUsage::TransferDest, sizeof(uint2) * 30000, sizeof(uint2) * 30000, "Bone weight indicies"),
         mBoneBuffer(getDevice(), BufferUsage::DataBuffer | BufferUsage::TransferDest, sizeof(float4x4) * 1000, sizeof(float4x4) * 1000, "Bone buffer"),
         mMeshBoundsBuffer(getDevice(), BufferUsage::DataBuffer | BufferUsage::TransferDest, sizeof(float4) * 1000, sizeof(float4) * 1000, "Bounds buffer"),
         mDefaultSampler(SamplerType::Linear),
@@ -146,6 +132,7 @@ RenderEngine::RenderEngine(GLFWwindow* windowPtr, const GraphicsOptions& options
 
     // load default meshes.
     mUnitSphere = std::make_unique<StaticMesh>("./Assets/unitSphere.fbx", VertexAttributes::Position4 | VertexAttributes::Normals);
+    mUnitSphere->initializeDeviceBuffers(this);
 
     // initialize debug camera
     int width, height;
@@ -159,7 +146,6 @@ void RenderEngine::setScene(const std::string& path)
     mCurrentScene = new Scene(path);
     mCurrentScene->loadFromFile(VertexAttributes::Position4 | VertexAttributes::TextureCoordinates | VertexAttributes::Normals | VertexAttributes::Albedo, this);
 
-    mCurrentScene->uploadData(this);
     mCurrentScene->computeBounds(AccelerationStructure::StaticMesh);
     mCurrentScene->computeBounds(AccelerationStructure::DynamicMesh);
     mCurrentScene->computeBounds(AccelerationStructure::Lights);
@@ -183,13 +169,14 @@ void RenderEngine::setScene(Scene* scene)
 
         std::vector<Scene::Material>& materialDescs = mCurrentScene->getMaterialDescriptions();
         materialDescs.push_back(Scene::Material{"Default material", nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, offset, static_cast<uint32_t>(MaterialType::Diffuse)});
+
+        // Build mesh index + vertex device buffers.
+        scene->initializeDeviceBuffers(this);
     }
     else // We're clearing the scene so need to destroy the materials.
     {
         mMaterials.reset(mRenderDevice, 200);
         mActiveSkeletalAnimations.clear();
-        mVertexCache.clear();
-        mTposeVertexCache.clear();
         mMeshBoundsCache.clear();
         // need to invalidate render pipelines as the number of materials could change.
         mRenderDevice->invalidatePipelines();
@@ -235,7 +222,7 @@ Shader RenderEngine::getShader(const std::string& path)
 {
     std::hash<std::string> pathHasher{};
     const uint64_t hashedPath = pathHasher(path);
-    const uint64_t shaderKey = hashedPath + mCurrentRegistredPasses;
+    const uint64_t shaderKey = hashedPath + mCurrentRegisteredPasses;
 
     std::shared_lock<std::shared_mutex> readLock{ mShaderCacheMutex };
 
@@ -250,7 +237,7 @@ Shader RenderEngine::getShader(const std::string& path)
 
     std::unique_lock<std::shared_mutex> writeLock{ mShaderCacheMutex };
 
-    Shader newShader{mRenderDevice, path, mCurrentRegistredPasses};
+    Shader newShader{mRenderDevice, path, mCurrentRegisteredPasses};
 
 	const bool compiled = newShader->compile(mShaderPrefix);
 
@@ -270,7 +257,7 @@ Shader RenderEngine::getShader(const std::string& path, const ShaderDefine& defi
     uint64_t hashed = pathHasher(path);
     hashed += wpathHasher(define.getName());
     hashed += wpathHasher(define.getValue());
-    const uint64_t shaderKey = hashed + mCurrentRegistredPasses;
+    const uint64_t shaderKey = hashed + mCurrentRegisteredPasses;
     
     std::shared_lock<std::shared_mutex> readLock{ mShaderCacheMutex };
 
@@ -281,7 +268,7 @@ Shader RenderEngine::getShader(const std::string& path, const ShaderDefine& defi
 
     std::unique_lock<std::shared_mutex> writeLock{ mShaderCacheMutex };
 
-    Shader newShader{mRenderDevice, path, mCurrentRegistredPasses};
+    Shader newShader{mRenderDevice, path, mCurrentRegisteredPasses};
 
     std::vector<ShaderDefine> allDefines = mShaderPrefix;
     allDefines.push_back(define);
@@ -366,9 +353,6 @@ std::unique_ptr<Technique> RenderEngine::getSingleTechnique(const PassType passT
         case PassType::CascadingShadow:
             return std::make_unique<CascadeShadowMappingTechnique>(this, mCurrentRenderGraph);
 
-        case PassType::ComputeSkinning:
-            return std::make_unique<SkinningTechnique>(this, mCurrentRenderGraph);
-
         case PassType::LightProbeDeferredGI:
             return std::make_unique<DeferredProbeGITechnique>(this, mCurrentRenderGraph);
 
@@ -407,48 +391,6 @@ std::unique_ptr<Technique> RenderEngine::getSingleTechnique(const PassType passT
     }
 }
 
-std::pair<uint64_t, uint64_t> RenderEngine::addMeshToBuffer(const StaticMesh* mesh)
-{
-	const auto it = mVertexCache.find(mesh);
-	if (it != mVertexCache.end())
-		return it->second;
-
-    const auto& vertexData = mesh->getVertexData();
-    const auto& indexData = mesh->getIndexData();
-
-	const auto vertexOffset = mVertexSize + mVertexBuilder.addData(vertexData);
-
-    const auto indexOffset = mIndexSize + mIndexBuilder.addData(indexData);
-
-	mVertexCache.insert(std::make_pair( mesh, std::pair<uint64_t, uint64_t>{vertexOffset, indexOffset}));
-
-    return {vertexOffset, indexOffset};
-}
-
-
-std::pair<uint64_t, uint64_t> RenderEngine::addMeshToAnimationBuffer(const StaticMesh* mesh)
-{
-    const auto it = mTposeVertexCache.find(mesh);
-    if(it != mTposeVertexCache.end())
-        return it->second;
-
-    const auto& vertexData = mesh->getVertexData();
-    const auto vertexOffset = mAnimationVertexSize + mAnimationVertexBuilder.addData(vertexData);
-
-    const std::vector<SubMesh>& subMeshes = mesh->getSubMeshes();
-    uint32_t boneWeightsOffset = 0;
-
-    const auto &boneIndicies = mesh->getBoneIndicies();
-    mBoneIndexBuilder.addData(boneIndicies);
-
-    const auto &boneWeights = mesh->getBoneWeights();
-    boneWeightsOffset += mBoneWeightSize + mBoneWeightBuilder.addData(boneWeights);
-
-    mTposeVertexCache.insert(std::make_pair( mesh, std::pair<uint64_t, uint64_t>{vertexOffset, boneWeightsOffset}));
-
-    return {vertexOffset, boneWeightsOffset};
-}
-
 
 uint64_t RenderEngine::getMeshBoundsIndex(const MeshInstance* inst)
 {
@@ -462,19 +404,8 @@ void RenderEngine::execute(RenderGraph& graph)
 {
     PROFILER_EVENT();
 
-    // Upload vertex/index data if required.
-    auto& vertexData = mVertexBuilder.finishRecording();
-    auto& indexData = mIndexBuilder.finishRecording();
-    if(!vertexData.empty() || !indexData.empty())
+    // Upload bounds data if required.
     {
-        mVertexBuffer->resize(static_cast<uint32_t>(vertexData.size()), true);
-        mIndexBuffer->resize(static_cast<uint32_t>(indexData.size()), true);
-
-        mVertexBuffer->resize(vertexData.size(), false);
-        mVertexBuffer->setContents(vertexData.data(), static_cast<uint32_t>(vertexData.size()), mVertexSize);
-        mIndexBuffer->resize(indexData.size(), false);
-        mIndexBuffer->setContents(indexData.data(), static_cast<uint32_t>(indexData.size()), mIndexSize);
-
         // upload mesh instance bounds info.
         static_assert(sizeof(AABB) == (sizeof(float4) * 2), "Sizes need to match");
         std::vector<AABB> bounds{};
@@ -494,35 +425,9 @@ void RenderEngine::execute(RenderGraph& graph)
             mMeshBoundsBuffer->resize(bounds.size() * sizeof(AABB), false);
             mMeshBoundsBuffer->setContents(bounds.data(), sizeof(AABB) * bounds.size());
         }
-
-        mVertexSize += vertexData.size();
-        mIndexSize += indexData.size();
-
-        mVertexBuilder.reset();
-        mIndexBuilder.reset();
     }
 
-    auto& animationVerticies = mAnimationVertexBuilder.finishRecording();
-    auto& boneWeights = mBoneWeightBuilder.finishRecording();
-    auto& boneIndicies = mBoneIndexBuilder.finishRecording();
-    if(!animationVerticies.empty() || !boneWeights.empty() || !boneIndicies.empty())
-    {
-        mTposeVertexBuffer->resize(static_cast<uint32_t>(mAnimationVertexSize + animationVerticies.size()), true);
-        mBoneWeightsIndexBuffer->resize(static_cast<uint32_t>(mBoneIndexSize + boneIndicies.size()), true);
-        mBonesWeightsBuffer->resize(static_cast<uint32_t>(mBoneWeightSize + boneWeights.size()), true);
-
-        mTposeVertexBuffer->setContents(animationVerticies.data(), static_cast<uint32_t>(animationVerticies.size()), mAnimationVertexSize);
-        mBoneWeightsIndexBuffer->setContents(boneIndicies.data(), static_cast<uint32_t>(boneIndicies.size()), mBoneIndexSize);
-        mBonesWeightsBuffer->setContents(boneWeights.data(), static_cast<uint32_t>(boneWeights.size()), mBoneWeightSize);
-
-        mAnimationVertexSize += animationVerticies.size();
-        mBoneWeightSize += boneWeights.size();
-        mBoneIndexSize += boneIndicies.size();
-
-        mAnimationVertexBuilder.reset();
-        mBoneWeightBuilder.reset();
-        mBoneIndexBuilder.reset();
-    }
+    updateGlobalBuffers();
 
     // Finalize graph internal state.
     if(mCompileGraph)
@@ -535,13 +440,6 @@ void RenderEngine::execute(RenderGraph& graph)
         mCurrentRenderGraph.bindImage(kBlueNoise, mBlueNoiseView);
         mCurrentRenderGraph.bindSampler(kDefaultSampler, mDefaultSampler);
         mCurrentRenderGraph.bindSampler(kPointSampler, mDefaultPointSampler);
-        mCurrentRenderGraph.bindVertexBuffer(kSceneVertexBuffer, mVertexBuffer);
-        mCurrentRenderGraph.bindIndexBuffer(kSceneIndexBuffer, mIndexBuffer);
-
-        mCurrentRenderGraph.bindBuffer(kTPoseVertexBuffer, mTposeVertexBuffer);
-        mCurrentRenderGraph.bindBuffer(kBonesWeights, mBonesWeightsBuffer);
-        mCurrentRenderGraph.bindBuffer(kBoneWeighntsIndiciesBuffer, mBoneWeightsIndexBuffer);
-        mCurrentRenderGraph.bindBuffer(kBonesBuffer, *mBoneBuffer);
 
         mCurrentRenderGraph.bindBuffer(kMeshBoundsBuffer, mMeshBoundsBuffer);
 
@@ -563,23 +461,17 @@ void RenderEngine::execute(RenderGraph& graph)
         tech->bindResources(mCurrentRenderGraph);
     }
 
+    mMaterials->updateLastAccessed();
+    mCurrentRenderGraph.bindBuffer(kCameraBuffer, *mDeviceCameraBuffer);
+    mCurrentRenderGraph.bindBuffer(kShadowingLights, *mShadowCastingLight);
+    mCurrentRenderGraph.bindBuffer(kBoneTransforms, *mBoneBuffer);
+
     if(mCompileGraph)
     {
         for(auto& technique : mTechniques)
             technique->postGraphCompilation(graph, this);
 
         mCompileGraph = false;
-    }
-
-    updateGlobalBuffers();
-
-    mMaterials->updateLastAccessed();
-    mCurrentRenderGraph.bindBuffer(kCameraBuffer, *mDeviceCameraBuffer);
-    mCurrentRenderGraph.bindBuffer(kShadowingLights, *mShadowCastingLight);
-
-    if(!mActiveSkeletalAnimations.empty())
-    {
-        mCurrentRenderGraph.bindBuffer(kBonesBuffer, *mBoneBuffer);
     }
 
     if(mCurrentScene && mCurrentScene->getSkybox())
@@ -635,7 +527,7 @@ void RenderEngine::execute(RenderGraph& graph)
             CommandContextBase* context = mRenderDevice->getCommandContext(currentContextIndex, queueType);
             Executor* exec = context->allocateExecutor(GPU_PROFILING);
             exec->recordBarriers(*barrier);
-            context->setupState(graph, taskIndex, exec, mCurrentRegistredPasses);
+            context->setupState(graph, taskIndex, exec, mCurrentRegisteredPasses);
 
             task.executeRecordCommandsCallback(graph, taskIndex, exec, this, meshes);
 
@@ -678,7 +570,7 @@ void RenderEngine::execute(RenderGraph& graph)
 
                 Executor* exec = context->allocateExecutor(GPU_PROFILING);
                 exec->recordBarriers(barriers[taskIndex]);
-                context->setupState(graph, taskIndex, exec, mCurrentRegistredPasses);
+                context->setupState(graph, taskIndex, exec, mCurrentRegisteredPasses);
 
                 task.executeRecordCommandsCallback(graph, taskIndex, exec, this, meshes);
 
@@ -782,6 +674,7 @@ void RenderEngine::tickAnimations()
     elapsedTime /= 1000000.0;
     uint64_t boneOffset = 0;
     std::vector<float4x4> boneMatracies{};
+    std::unordered_map<const StaticMesh*, std::pair<uint32_t, uint32_t>> skinningBufferMap{};
 
     for(auto& animEntry : mActiveSkeletalAnimations)
     {
@@ -790,6 +683,7 @@ void RenderEngine::tickAnimations()
         double ticksPerSec = animation.getTicksPerSec();
         animEntry.mTick += elapsedTime * ticksPerSec * animEntry.mSpeedModifier;
         animEntry.mBoneOffset = boneOffset;
+        instance->setGlobalBoneBufferOffset(animEntry.mBoneOffset);
 
         if((animation.getTotalTicks() - animEntry.mTick) > 0.00001)
         {
@@ -839,7 +733,7 @@ void RenderEngine::recordScene()
     // Add new techniques
     if (mPassesRegisteredThisFrame > 0)
     {
-        mCurrentRegistredPasses |= mPassesRegisteredThisFrame;
+        mCurrentRegisteredPasses |= mPassesRegisteredThisFrame;
 
         while (mPassesRegisteredThisFrame > 0)
         {
@@ -981,7 +875,7 @@ void RenderEngine::updateGlobalBuffers()
 
 void RenderEngine::registerPass(const PassType pass)
 {
-	if((static_cast<uint64_t>(pass) & mCurrentRegistredPasses) == 0)
+	if((static_cast<uint64_t>(pass) & mCurrentRegisteredPasses) == 0)
 	{
         mShaderPrefix.push_back(ShaderDefine(std::wstring(passToWString(pass)), 1));
 
@@ -992,7 +886,7 @@ void RenderEngine::registerPass(const PassType pass)
 
 bool RenderEngine::isPassRegistered(const PassType pass) const
 {
-	return (static_cast<uint64_t>(pass) & mCurrentRegistredPasses) > 0;
+	return (static_cast<uint64_t>(pass) & mCurrentRegisteredPasses) > 0;
 }
 
 
@@ -1319,7 +1213,7 @@ void RenderEngine::loadIrradianceProbes(const std::string& probesPath, const std
 
 Technique* RenderEngine::getRegisteredTechnique(const PassType pass)
 {
-    if(mCurrentRegistredPasses & static_cast<uint64_t>(pass))
+    if(mCurrentRegisteredPasses & static_cast<uint64_t>(pass))
     {
         const auto& technique = std::find_if(mTechniques.begin(), mTechniques.end(), [=](const auto& t)
         {

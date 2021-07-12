@@ -13,7 +13,7 @@ struct InstanceInfo
 [[vk::push_constant]]
 ConstantBuffer<InstanceInfo> model;
 
-uint main(InstanceIDOutput vertInput)
+uint main(InstanceIDOutput vertInput) : SV_Target0
 {
 	return vertInput.id;
 }

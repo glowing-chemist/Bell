@@ -57,8 +57,6 @@ CascadeShadowMappingTechnique::CascadeShadowMappingTechnique(RenderEngine* eng, 
            cascade0Task.addInput(kDefaultSampler, AttachmentType::Sampler);
            cascade0Task.addInput(kMaterials, AttachmentType::ShaderResourceSet);
            cascade0Task.addInput("lightMatrix", AttachmentType::PushConstants);
-           cascade0Task.addInput(kSceneVertexBuffer, AttachmentType::VertexBuffer);
-           cascade0Task.addInput(kSceneIndexBuffer, AttachmentType::IndexBuffer);
            cascade0Task.addOutput(kCascadeShadowMapRaw0, AttachmentType::RenderTarget2D, Format::RG32Float, LoadOp::Clear_Float_Max);
            cascade0Task.addManagedOutput("ShadowMapDepth0", AttachmentType::Depth, Format::D32Float, SizeClass::DoubleSwapchain, LoadOp::Clear_White, StoreOp::Discard, ImageUsage::DepthStencil);
            mRenderCascade0 = graph.addTask(cascade0Task);
@@ -75,8 +73,6 @@ CascadeShadowMappingTechnique::CascadeShadowMappingTechnique(RenderEngine* eng, 
            cascade1Task.addInput(kDefaultSampler, AttachmentType::Sampler);
            cascade1Task.addInput(kMaterials, AttachmentType::ShaderResourceSet);
            cascade1Task.addInput("lightMatrix", AttachmentType::PushConstants);
-           cascade1Task.addInput(kSceneVertexBuffer, AttachmentType::VertexBuffer);
-           cascade1Task.addInput(kSceneIndexBuffer, AttachmentType::IndexBuffer);
            cascade1Task.addOutput(kCascadeShadowMapRaw1, AttachmentType::RenderTarget2D, Format::RG32Float, LoadOp::Clear_Float_Max);
            cascade1Task.addManagedOutput("ShadowMapDepth1", AttachmentType::Depth, Format::D32Float, SizeClass::Swapchain, LoadOp::Clear_White, StoreOp::Discard, ImageUsage::DepthStencil);
            mRenderCascade1 = graph.addTask(cascade1Task);
@@ -93,8 +89,6 @@ CascadeShadowMappingTechnique::CascadeShadowMappingTechnique(RenderEngine* eng, 
            cascade2Task.addInput(kDefaultSampler, AttachmentType::Sampler);
            cascade2Task.addInput(kMaterials, AttachmentType::ShaderResourceSet);
            cascade2Task.addInput("lightMatrix", AttachmentType::PushConstants);
-           cascade2Task.addInput(kSceneVertexBuffer, AttachmentType::VertexBuffer);
-           cascade2Task.addInput(kSceneIndexBuffer, AttachmentType::IndexBuffer);
            cascade2Task.addOutput(kCascadeShadowMapRaw2, AttachmentType::RenderTarget2D, Format::RG32Float, LoadOp::Clear_Float_Max);
            cascade2Task.addManagedOutput("ShadowMapDepth2", AttachmentType::Depth, Format::D32Float, SizeClass::HalfSwapchain, LoadOp::Clear_White, StoreOp::Discard, ImageUsage::DepthStencil);
            mRenderCascade2 = graph.addTask(cascade2Task);
@@ -336,9 +330,6 @@ void CascadeShadowMappingTechnique::render(RenderGraph& graph, RenderEngine* eng
     cascade0Task.setRecordCommandsCallback(
                 [nearCascadeMeshes](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, RenderEngine* eng, const std::vector<const MeshInstance*>&)
                 {
-                    exec->bindIndexBuffer(eng->getIndexBuffer(), 0);
-                    exec->bindVertexBuffer(eng->getVertexBuffer(), 0);
-
                     Shader vertexShader = eng->getShader("./Shaders/ShadowMap.vert");
                     Shader fragmentShader = eng->getShader("./Shaders/VarianceShadowMap.frag");
                     const RenderTask& task = graph.getTask(taskIndex);
@@ -352,8 +343,7 @@ void CascadeShadowMappingTechnique::render(RenderGraph& graph, RenderEngine* eng
                         if (!(mesh->getInstanceFlags() & InstanceFlags::Draw))
                             continue;
 
-                        const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->getMesh());
-                        mesh->draw(exec, &stateCache, vertexOffset, indexOffset);
+                        mesh->draw(exec, &stateCache);
                     }
                 }
     );
@@ -362,9 +352,6 @@ void CascadeShadowMappingTechnique::render(RenderGraph& graph, RenderEngine* eng
     cascade1Task.setRecordCommandsCallback(
                 [midCascadeMeshes](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, RenderEngine* eng, const std::vector<const MeshInstance*>&)
                 {
-                    exec->bindIndexBuffer(eng->getIndexBuffer(), 0);
-                    exec->bindVertexBuffer(eng->getVertexBuffer(), 0);
-
                     Shader vertexShader = eng->getShader("./Shaders/ShadowMap.vert");
                     Shader fragmentShader = eng->getShader("./Shaders/VarianceShadowMap.frag");
                     const RenderTask& task = graph.getTask(taskIndex);
@@ -378,9 +365,7 @@ void CascadeShadowMappingTechnique::render(RenderGraph& graph, RenderEngine* eng
                         if (!(mesh->getInstanceFlags() & InstanceFlags::Draw))
                             continue;
 
-                        const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->getMesh());
-
-                        mesh->draw(exec, &stateCache, vertexOffset, indexOffset);
+                        mesh->draw(exec, &stateCache);
                     }
                 }
     );
@@ -389,9 +374,6 @@ void CascadeShadowMappingTechnique::render(RenderGraph& graph, RenderEngine* eng
     cascade2Task.setRecordCommandsCallback(
                 [farCascadeMeshes](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, RenderEngine* eng, const std::vector<const MeshInstance*>&)
                 {
-                    exec->bindIndexBuffer(eng->getIndexBuffer(), 0);
-                    exec->bindVertexBuffer(eng->getVertexBuffer(), 0);
-
                     Shader vertexShader = eng->getShader("./Shaders/ShadowMap.vert");
                     Shader fragmentShader = eng->getShader("./Shaders/VarianceShadowMap.frag");
                     const RenderTask& task = graph.getTask(taskIndex);
@@ -405,8 +387,7 @@ void CascadeShadowMappingTechnique::render(RenderGraph& graph, RenderEngine* eng
                         if (!(mesh->getInstanceFlags() & InstanceFlags::Draw))
                             continue;
 
-                        const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->getMesh());
-                        mesh->draw(exec, &stateCache, vertexOffset, indexOffset);
+                        mesh->draw(exec, &stateCache);
                     }
                 }
     );

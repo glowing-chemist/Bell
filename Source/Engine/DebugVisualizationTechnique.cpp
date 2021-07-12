@@ -1,6 +1,7 @@
 #include "Engine/DebugVisualizationTechnique.hpp"
 #include "Engine/Engine.hpp"
 #include "Engine/DefaultResourceSlots.hpp"
+#include "Engine/UberShaderStateCache.hpp"
 #include "Core/Executor.hpp"
 
 #include "glm/gtx/transform.hpp"
@@ -176,21 +177,26 @@ DebugAABBTechnique::DebugAABBTechnique(RenderEngine* eng, RenderGraph& graph) :
         PROFILER_GPU_TASK(exec);
         PROFILER_GPU_EVENT("debug wireframe");
 
-        exec->bindIndexBuffer(eng->getIndexBuffer(), 0);
-        exec->bindVertexBuffer(eng->getVertexBuffer(), 0);
-
         const RenderTask& task = graph.getTask(taskIndex);
         exec->setGraphicsShaders(static_cast<const GraphicsTask&>(task), graph, mAABBDebugVisVertexShader, nullptr, nullptr, nullptr, mAABBDebugVisFragmentShader);
 
-        for(const auto* mesh : meshes)
+        for(const auto* instance : meshes)
         {
-            if(mesh->getInstanceFlags() & InstanceFlags::DrawWireFrame && mesh->getInstanceFlags() & InstanceFlags::Draw)
+            if(instance->getInstanceFlags() & InstanceFlags::DrawWireFrame && instance->getInstanceFlags() & InstanceFlags::Draw)
             {
-                const float4x4& transform = mesh->getTransMatrix();
-                const auto [vertexOffset, indexOffset] = eng->addMeshToBuffer(mesh->getMesh());
+                const StaticMesh* mesh = instance->getMesh();
+                const float4x4& transform = instance->getTransMatrix();
 
-                exec->insertPushConstant(&transform, sizeof(float4x4));
-                exec->indexedDraw(vertexOffset / mesh->getMesh()->getVertexStride(), indexOffset / sizeof(uint32_t), mesh->getMesh()->getIndexData().size());
+                exec->bindVertexBuffer(*(mesh->getVertexBufferView()), 0);
+                exec->bindIndexBuffer(*(mesh->getIndexBufferView()), 0);
+
+                const auto& subMeshes = mesh->getSubMeshes();
+                for(const auto& subMesh : subMeshes)
+                {
+                    const float4x4 finalTransform = transform * subMesh.mTransform;
+                    exec->insertPushConstant(&finalTransform, sizeof(float4x4));
+                    exec->indexedDraw(subMesh.mVertexOffset / mesh->getVertexStride(), subMesh.mIndexOffset / sizeof(uint32_t), subMesh.mIndexCount);
+                }
             }
         }
     });

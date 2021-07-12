@@ -191,7 +191,6 @@ set(BELL_SOURCE
     Source/Engine/DebugVisualizationTechnique.cpp
     Source/Engine/TransparentTechnique.cpp
     Source/Engine/CascadeShadowMappingTechnique.cpp
-    Source/Engine/SkinningTechnique.cpp
     Source/Engine/DeferredProbeGITechnique.cpp
     Source/Engine/VisualizeLightProbesTechnique.cpp
     Source/Engine/OcclusionCullingTechnique.cpp
@@ -312,6 +311,7 @@ set(SHADERS
 	InstanceID.vert
 	InstanceID.frag
 	SetPickedInstance.comp
+	Skinning.hlsl
     )
 
 message(STATUS "shader directory ${BELL_SHADER_DIR}Shaders")

@@ -49,12 +49,8 @@ extern const char kLightBuffer[];
 extern const char kMaterialMappings[];
 extern const char kSparseFroxels[];
 extern const char kLightIndicies[];
-extern const char kSceneVertexBuffer[];
-extern const char kSceneIndexBuffer[];
-extern const char kTPoseVertexBuffer[];
-extern const char kBoneWeighntsIndiciesBuffer[];
-extern const char kBonesWeights[];
-extern const char kBonesBuffer[];
+extern const char kBoneTransforms[];
+extern const char kSkinningBuffers[];
 extern const char kMainCameraBVH[];
 
 extern const char kFrameBufer[];
