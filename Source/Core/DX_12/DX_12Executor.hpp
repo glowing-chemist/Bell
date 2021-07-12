@@ -24,7 +24,7 @@ public:
 
     virtual void indexedIndirectDraw(const uint32_t drawCalls, const BufferView&) override final;
 
-    virtual void insertPushConsatnt(const void* val, const size_t size) override final;
+    virtual void insertPushConstant(const void* val, const size_t size) override final;
 
     virtual void dispatch(const uint32_t x, const uint32_t y, const uint32_t z) override final;
 
