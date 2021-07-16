@@ -49,6 +49,8 @@ const char kSparseFroxels[]    = "SparseFroxles";
 const char kLightIndicies[]    = "LightIndicies";
 const char kBoneTransforms[]        = "BonesBuffer";
 const char kMainCameraBVH[]               = "BVH";
+const char kInstanceTransformsBuffer[] = "InstanceTransforms";
+const char kPreviousInstanceTransformsBuffer[] = "PrevInstanceTransforms";
 
 const char kFrameBufer[]        = "FrameBuffer";
 const char kGlobalLighting[]	 = "GlobalLighting";

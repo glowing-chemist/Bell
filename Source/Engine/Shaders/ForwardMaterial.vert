@@ -9,17 +9,24 @@ ConstantBuffer<MeshInstanceInfo> model;
 [[vk::binding(0)]]
 ConstantBuffer<CameraBuffer> camera;
 
+[[vk::binding(1)]]
+StructuredBuffer<float4x4> skinningBones;
+
+[[vk::binding(2)]]
+StructuredBuffer<float4x3> instanceTransforms;
+
+[[vk::binding(3)]]
+StructuredBuffer<float4x3> prevInstanceTransforms;
 
 GBufferVertOutput main(Vertex vertex)
 {
 	GBufferVertOutput output;
 
-	float4x4 meshMatrix;
-	float4x4 prevMeshMatrix;
-	recreateMeshMatracies(model.meshMatrix, model.prevMeshMatrix, meshMatrix, prevMeshMatrix);
-	float4 transformedPositionWS = mul(vertex.position, meshMatrix);
+	float4x3 meshMatrix = instanceTransforms[model.transformsIndex];
+	float4x3 prevMeshMatrix = prevInstanceTransforms[model.transformsIndex];
+	float4 transformedPositionWS = float4(mul(vertex.position, meshMatrix), 1.0f);
 	float4 transformedPosition = mul(camera.viewProj, transformedPositionWS);
-	float4 prevTransformedPositionWS = mul(vertex.position, prevMeshMatrix);
+	float4 prevTransformedPositionWS = float4(mul(vertex.position, prevMeshMatrix), 1.0f);
 	float4 prevTransformedPosition = mul(camera.previousFrameViewProj, prevTransformedPositionWS);
 
 	output.position = transformedPosition;

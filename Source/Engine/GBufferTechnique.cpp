@@ -19,6 +19,8 @@ GBufferTechnique::GBufferTechnique(RenderEngine* eng, RenderGraph& graph) :
     task.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
     task.addInput(kDefaultSampler, AttachmentType::Sampler);
     task.addInput(kBoneTransforms, AttachmentType::DataBufferRO);
+    task.addInput(kInstanceTransformsBuffer, AttachmentType::DataBufferRO);
+    task.addInput(kPreviousInstanceTransformsBuffer, AttachmentType::DataBufferRO);
     task.addInput(kMaterials, AttachmentType::ShaderResourceSet);
     task.addInput("Model Matrix", AttachmentType::PushConstants);
 
@@ -132,6 +134,9 @@ GBufferPreDepthTechnique::GBufferPreDepthTechnique(RenderEngine* eng, RenderGrap
 
     task.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
     task.addInput(kDefaultSampler, AttachmentType::Sampler);
+    task.addInput(kBoneTransforms, AttachmentType::DataBufferRO);
+    task.addInput(kInstanceTransformsBuffer, AttachmentType::DataBufferRO);
+    task.addInput(kPreviousInstanceTransformsBuffer, AttachmentType::DataBufferRO);
     task.addInput(kMaterials, AttachmentType::ShaderResourceSet);
     task.addInput("Model Matrix", AttachmentType::PushConstants);
 

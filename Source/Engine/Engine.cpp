@@ -88,6 +88,10 @@ RenderEngine::RenderEngine(GLFWwindow* windowPtr, const GraphicsOptions& options
         mPassesRegisteredThisFrame{0},
         mCurrentRegisteredPasses{0},
         mShaderPrefix{},
+        mInstanceTransformsBuffer(getDevice(), BufferUsage::DataBuffer | BufferUsage::TransferDest, sizeof(float3x4) * 500, sizeof(float3x4) * 500, "Instance transforms"),
+        mInstanceTransformsBufferView(mInstanceTransformsBuffer),
+        mPrevInstanceTransformsBuffer(getDevice(), BufferUsage::DataBuffer | BufferUsage::TransferDest, sizeof(float3x4) * 500, sizeof(float3x4) * 500, "Instance transforms"),
+        mPrevInstanceTransformsBufferView(mInstanceTransformsBuffer),
         mBoneBuffer(getDevice(), BufferUsage::DataBuffer | BufferUsage::TransferDest, sizeof(float4x4) * 1000, sizeof(float4x4) * 1000, "Bone buffer"),
         mMeshBoundsBuffer(getDevice(), BufferUsage::DataBuffer | BufferUsage::TransferDest, sizeof(float4) * 1000, sizeof(float4) * 1000, "Bounds buffer"),
         mDefaultSampler(SamplerType::Linear),
@@ -465,6 +469,8 @@ void RenderEngine::execute(RenderGraph& graph)
     mCurrentRenderGraph.bindBuffer(kCameraBuffer, *mDeviceCameraBuffer);
     mCurrentRenderGraph.bindBuffer(kShadowingLights, *mShadowCastingLight);
     mCurrentRenderGraph.bindBuffer(kBoneTransforms, *mBoneBuffer);
+    mCurrentRenderGraph.bindBuffer(kInstanceTransformsBuffer, *mInstanceTransformsBufferView);
+    mCurrentRenderGraph.bindBuffer(kPreviousInstanceTransformsBuffer, *mPrevInstanceTransformsBufferView);
 
     if(mCompileGraph)
     {
@@ -477,11 +483,11 @@ void RenderEngine::execute(RenderGraph& graph)
     if(mCurrentScene && mCurrentScene->getSkybox())
         (*mCurrentScene->getSkybox())->updateLastAccessed();
 
-    std::vector<const MeshInstance*> meshes{};
+    std::vector<MeshInstance*> meshes{};
 
     if(mCurrentScene)
     {
-        meshes = mCurrentScene ? mCurrentScene->getVisibleMeshes(mCurrentScene->getCamera().getFrustum()) : std::vector<const MeshInstance*>{};
+        meshes = mCurrentScene ? mCurrentScene->getVisibleMeshes(mCurrentScene->getCamera().getFrustum()) : std::vector<MeshInstance*>{};
         PROFILER_EVENT("sort meshes");
         std::sort(meshes.begin(), meshes.end(), [camera = mCurrentScene->getCamera()](const MeshInstance* lhs, const MeshInstance* rhs)
         {
@@ -493,8 +499,12 @@ void RenderEngine::execute(RenderGraph& graph)
             return leftDistance < rightDistance;
         });
     }
-
     //printf("Meshes %zu\n", meshes.size());
+
+    // upload culled instances transforms
+    updateInstanceTransformBuffers(meshes);
+    std::vector<const MeshInstance*> constMeshes(meshes.size());
+    std::memcpy(constMeshes.data(), meshes.data(), meshes.size() * sizeof(MeshInstance*));
 
     auto barriers = graph.generateBarriers(mRenderDevice);
 	
@@ -529,7 +539,7 @@ void RenderEngine::execute(RenderGraph& graph)
             exec->recordBarriers(*barrier);
             context->setupState(graph, taskIndex, exec, mCurrentRegisteredPasses);
 
-            task.executeRecordCommandsCallback(graph, taskIndex, exec, this, meshes);
+            task.executeRecordCommandsCallback(graph, taskIndex, exec, this, constMeshes);
 
             context->freeExecutor(exec);
             ++barrier;
@@ -572,7 +582,7 @@ void RenderEngine::execute(RenderGraph& graph)
                 exec->recordBarriers(barriers[taskIndex]);
                 context->setupState(graph, taskIndex, exec, mCurrentRegisteredPasses);
 
-                task.executeRecordCommandsCallback(graph, taskIndex, exec, this, meshes);
+                task.executeRecordCommandsCallback(graph, taskIndex, exec, this, constMeshes);
 
                 exec->resetRecordedCommandCount();
 
@@ -1252,4 +1262,34 @@ std::vector<float3> RenderEngine::IrradianceProbeVolume::getProbePositions() con
     }
 
     return positions;
+}
+
+
+void RenderEngine::updateInstanceTransformBuffers(const std::vector<MeshInstance*>& meshes)
+{
+    std::vector<float3x4> instanceTransforms{};
+    std::vector<float3x4> prevInstanceTransforms{};
+
+    for(MeshInstance* inst : meshes)
+    {
+        inst->setBaseTransformsIndex(instanceTransforms.size());
+
+        float4x4 instanceTransform = inst->getTransMatrix();
+        float4x4 prevInstanceTransform = inst->getPreviousTransMatrix();
+        const std::vector<SubMesh>& subMeshes = inst->getMesh()->getSubMeshes();
+        for(auto& subMesh : subMeshes)
+        {
+            instanceTransforms.push_back(transpose(float4x3(instanceTransform * subMesh.mTransform)));
+            prevInstanceTransforms.push_back(transpose(float4x3(prevInstanceTransform * subMesh.mTransform)));
+        }
+    }
+    Buffer& instanceTransformsBuffer = *mInstanceTransformsBuffer;
+    Buffer& prevInstanceTransformsBuffer = *mPrevInstanceTransformsBuffer;
+    if((instanceTransforms.size() * sizeof(float3x4)) > instanceTransformsBuffer->getSize())
+        instanceTransformsBuffer->resize(instanceTransforms.size() * sizeof(float3x4), false);
+    if((instanceTransforms.size() * sizeof(float3x4)) > prevInstanceTransformsBuffer->getSize())
+        prevInstanceTransformsBuffer->resize(instanceTransforms.size() * sizeof(float3x4), false);
+
+    (*mInstanceTransformsBuffer)->setContents(instanceTransforms.data(), instanceTransforms.size() * sizeof(float3x4));
+    (*mPrevInstanceTransformsBuffer)->setContents(prevInstanceTransforms.data(), prevInstanceTransforms.size() * sizeof(float3x4));
 }

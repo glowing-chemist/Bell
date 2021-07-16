@@ -20,8 +20,7 @@ class BufferView;
 
 struct MeshEntry
 {
-    float3x4 mTransformation;
-    float3x4 mPreviousTransformation;
+    uint32_t mTransformsIndex;
     uint32_t mMaterialIndex;
     uint32_t mMaterialFlags;
     uint32_t mGlobalBoneBufferOffset;

@@ -7,16 +7,22 @@ ConstantBuffer<CameraBuffer> camera;
 [[vk::binding(2)]]
 StructuredBuffer<MeshInstanceInfo> instanceTransformations;
 
+[[vk::binding(3)]]
+StructuredBuffer<float4x4> skinningBones;
+
+[[vk::binding(4)]]
+StructuredBuffer<float4x3> instanceTransforms;
+
+[[vk::binding(5)]]
+StructuredBuffer<float4x3> prevInstanceTransforms;
 
 GBufferVertOutput main(Vertex vertInput, uint instanceID : SV_InstanceID)
 {
 	GBufferVertOutput output;
 
-	float4x4 meshMatrix;
-	float4x4 prevMeshMatrix;
-	recreateMeshMatracies(instanceTransformations[instanceID], meshMatrix, prevMeshMatrix);
-	float4 transformedPositionWS = mul(vertInput.position, meshMatrix);
-	transformedPositionWS.w = 1.0f;
+	float4x3 meshMatrix = instanceTransforms[model.transformsIndex];
+	float4x3 prevMeshMatrix = prevInstanceTransforms[model.transformsIndex];
+	float4 transformedPositionWS = float4(mul(vertInput.position, meshMatrix), 1.0f);
 	float4 transformedPosition = mul(camera.viewProj, transformedPositionWS);
 
 	output.position = transformedPosition;
@@ -31,8 +37,7 @@ GBufferVertOutput main(Vertex vertInput, uint instanceID : SV_InstanceID)
 	// Calculate screen space velocity.
 	// Calculate screen space velocity.
 	transformedPosition /= transformedPosition.w;
-	float4 previousPositionWS = mul(vertInput.position, prevMeshMatrix);
-	previousPositionWS.w = 1.0f;
+	float4 previousPositionWS = float4(mul(vertInput.position, prevMeshMatrix), 1.0f);
 	float4 previousPosition = mul(camera.previousFrameViewProj, previousPositionWS);
 	previousPosition /= previousPosition.w;
 	output.velocity = transformedPosition.xy - previousPosition.xy;

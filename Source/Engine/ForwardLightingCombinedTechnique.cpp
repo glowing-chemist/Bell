@@ -22,6 +22,9 @@ ForwardCombinedLightingTechnique::ForwardCombinedLightingTechnique(RenderEngine*
         VertexAttributes::Normals | VertexAttributes::TextureCoordinates | VertexAttributes::Albedo | VertexAttributes::Tangents);
 
 	task.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
+    task.addInput(kBoneTransforms, AttachmentType::DataBufferRO);
+    task.addInput(kInstanceTransformsBuffer, AttachmentType::DataBufferRO);
+    task.addInput(kPreviousInstanceTransformsBuffer, AttachmentType::DataBufferRO);
 	task.addInput(kDFGLUT, AttachmentType::Texture2D);
 	task.addInput(kLTCMat, AttachmentType::Texture2D);
 	task.addInput(kLTCAmp, AttachmentType::Texture2D);
@@ -32,6 +35,7 @@ ForwardCombinedLightingTechnique::ForwardCombinedLightingTechnique(RenderEngine*
 	task.addInput(kForwardPoitnSampler, AttachmentType::Sampler);
 	task.addInput(kSparseFroxels, AttachmentType::DataBufferRO);
 	task.addInput(kLightIndicies, AttachmentType::DataBufferRO);
+
 
     if (eng->isPassRegistered(PassType::Shadow) || eng->isPassRegistered(PassType::CascadingShadow) || eng->isPassRegistered(PassType::RayTracedShadows))
 		task.addInput(kShadowMap, AttachmentType::Texture2D);

@@ -19,6 +19,9 @@ ForwardIBLTechnique::ForwardIBLTechnique(RenderEngine* eng, RenderGraph& graph) 
         VertexAttributes::Normals | VertexAttributes::Tangents | VertexAttributes::TextureCoordinates | VertexAttributes::Albedo);
 
 	task.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
+    task.addInput(kBoneTransforms, AttachmentType::DataBufferRO);
+    task.addInput(kInstanceTransformsBuffer, AttachmentType::DataBufferRO);
+    task.addInput(kPreviousInstanceTransformsBuffer, AttachmentType::DataBufferRO);
 	task.addInput(kDFGLUT, AttachmentType::Texture2D);
     task.addInput(kConvolvedSpecularSkyBox, AttachmentType::CubeMap);
     task.addInput(kConvolvedDiffuseSkyBox, AttachmentType::CubeMap);

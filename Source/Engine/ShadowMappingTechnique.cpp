@@ -57,6 +57,8 @@ ShadowMappingTechnique::ShadowMappingTechnique(RenderEngine* eng, RenderGraph& g
 
     shadowTask.addInput(kShadowingLights, AttachmentType::UniformBuffer);
     shadowTask.addInput(kDefaultSampler, AttachmentType::Sampler);
+    shadowTask.addInput(kBoneTransforms, AttachmentType::DataBufferRO);
+    shadowTask.addInput(kInstanceTransformsBuffer, AttachmentType::DataBufferRO);
     shadowTask.addInput(kMaterials, AttachmentType::ShaderResourceSet);
     shadowTask.addInput("lightMatrix", AttachmentType::PushConstants);
 
@@ -113,7 +115,7 @@ void ShadowMappingTechnique::render(RenderGraph& graph, RenderEngine*)
             PROFILER_GPU_EVENT("Render shadow maps");
 
             const Frustum lightFrustum = eng->getScene()->getShadowingLightFrustum();
-            std::vector<const MeshInstance*> meshes = eng->getScene()->getVisibleMeshes(lightFrustum);
+            std::vector<MeshInstance*> meshes = eng->getScene()->getVisibleMeshes(lightFrustum);
             std::sort(meshes.begin(), meshes.end(), [lightPosition = eng->getScene()->getShadowingLight().mPosition](const MeshInstance* lhs, const MeshInstance* rhs)
             {
                 const float3 centralLeft = lhs->getMesh()->getAABB().getCentralPoint();

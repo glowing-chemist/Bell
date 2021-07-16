@@ -13,16 +13,21 @@ ConstantBuffer<CameraBuffer> camera;
 [[vk::binding(2)]]
 StructuredBuffer<float4x4> skinningBones;
 
+[[vk::binding(3)]]
+StructuredBuffer<float4x3> instanceTransforms;
+
+[[vk::binding(4)]]
+StructuredBuffer<float4x3> prevInstanceTransforms;
+
 GBufferVertOutput main(Vertex vertInput, uint vertexID : SV_VertexID)
 {
 	GBufferVertOutput output;
 
-	float4x4 meshMatrix;
-	float4x4 prevMeshMatrix;
-	recreateMeshMatracies(model.meshMatrix, model.prevMeshMatrix, meshMatrix, prevMeshMatrix);
-	float4 transformedPositionWS = mul(vertInput.position, meshMatrix);
+	float4x3 meshMatrix = instanceTransforms[model.transformsIndex];
+	float4x3 prevMeshMatrix = prevInstanceTransforms[model.transformsIndex];
+	float4 transformedPositionWS = float4(mul(vertInput.position, meshMatrix), 1.0f);
 	float4 transformedPosition = mul(camera.viewProj, transformedPositionWS);
-	float4 prevTransformedPositionWS = mul(vertInput.position, prevMeshMatrix);
+	float4 prevTransformedPositionWS = float4(mul(vertInput.position, prevMeshMatrix), 1.0f);
 	float4 prevTransformedPosition = mul(camera.previousFrameViewProj, prevTransformedPositionWS);
 
 #if 0 //SHADE_FLAGS & ShadeFlag_Skinning

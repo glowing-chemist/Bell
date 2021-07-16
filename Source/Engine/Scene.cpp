@@ -117,7 +117,7 @@ void MeshInstance::draw(Executor* exec, UberShaderStateCache* cache) const
     for(uint32_t subMesh_i = 0; subMesh_i < subMeshes.size(); ++subMesh_i)
     {
         const SubMesh& subMesh = subMeshes[subMesh_i];
-        MeshEntry shaderEntry = getMeshShaderEntry(subMesh_i, subMesh);
+        MeshEntry shaderEntry = getMeshShaderEntry(subMesh_i);
         const uint64_t shadeFlags = getShadeFlags(subMesh_i);
         cache->update(shadeFlags);
 
@@ -886,11 +886,11 @@ void Scene::computeBounds(const AccelerationStructure type)
 }
 
 
-std::vector<const MeshInstance *> Scene::getVisibleMeshes(const Frustum& frustum) const
+std::vector<MeshInstance*> Scene::getVisibleMeshes(const Frustum& frustum) const
 {
     PROFILER_EVENT();
 
-    std::vector<const MeshInstance*> instances;
+    std::vector<MeshInstance*> instances;
 
     std::vector<MeshInstance*> staticMeshes = mStaticMeshBoundingVolume.containedWithin(frustum);
     std::vector<MeshInstance*> dynamicMeshes = mDynamicMeshBoundingVolume.containedWithin(frustum);

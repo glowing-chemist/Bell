@@ -100,8 +100,7 @@ struct TerrainVertexOutput
 
 struct MeshInstanceInfo
 {
-	float4x3 meshMatrix;
-	float4x3 prevMeshMatrix;
+	uint transformsIndex;
 	uint materialIndex;
 	uint materialFlags;
 	uint boneBufferOffset;
@@ -114,34 +113,6 @@ struct InstanceIDOutput
 	float4 position : SV_Position;
 	uint id : ID;
 };
-
-
-void recreateMeshMatracies(in float4x3 meshMat, in float4x3 prevMeshMat, out float4x4 mat, out float4x4 prevMat)
-{
-	mat = float4x4( float4(meshMat[0], 0.0f), 
-					float4(meshMat[1], 0.0f), 
-					float4(meshMat[2], 0.0f),
-					float4(meshMat[3], 1.0f));
-
-	prevMat = float4x4( float4(prevMeshMat[0], 0.0f), 
-						float4(prevMeshMat[1], 0.0f), 
-						float4(prevMeshMat[2], 0.0f),
-						float4(prevMeshMat[3], 1.0f));
-}
-
-
-void recreateMeshMatracies(MeshInstanceInfo objectinfo, out float4x4 mat, out float4x4 prevMat)
-{
-	mat = float4x4( float4(objectinfo.meshMatrix[0], 0.0f), 
-									float4(objectinfo.meshMatrix[1], 0.0f), 
-									float4(objectinfo.meshMatrix[2], 0.0f),
-									float4(objectinfo.meshMatrix[3], 1.0f));
-
-	prevMat = float4x4( float4(objectinfo.prevMeshMatrix[0], 0.0f), 
-						float4(objectinfo.prevMeshMatrix[1], 0.0f), 
-						float4(objectinfo.prevMeshMatrix[2], 0.0f),
-						float4(objectinfo.prevMeshMatrix[3], 1.0f));
-}
 
 uint packNormals(const float4 normal)
 {

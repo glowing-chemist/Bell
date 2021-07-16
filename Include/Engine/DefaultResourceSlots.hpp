@@ -52,6 +52,8 @@ extern const char kLightIndicies[];
 extern const char kBoneTransforms[];
 extern const char kSkinningBuffers[];
 extern const char kMainCameraBVH[];
+extern const char kInstanceTransformsBuffer[];
+extern const char kPreviousInstanceTransformsBuffer[];
 
 extern const char kFrameBufer[];
 extern const char kGlobalLighting[];

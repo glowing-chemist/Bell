@@ -19,6 +19,8 @@ PreDepthTechnique::PreDepthTechnique(RenderEngine* eng, RenderGraph& graph) :
 
     task.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
     task.addInput(kDefaultSampler, AttachmentType::Sampler);
+    task.addInput(kBoneTransforms, AttachmentType::DataBufferRO);
+    task.addInput(kInstanceTransformsBuffer, AttachmentType::DataBufferRO);
     task.addInput(kMaterials, AttachmentType::ShaderResourceSet);
     task.addInput("Matrix", AttachmentType::PushConstants);
 

@@ -14,21 +14,21 @@ struct Output
 [[vk::binding(0)]]
 ConstantBuffer<CameraBuffer> camera;
 
-[[vk::binding(1)]]
+[[vk::binding(4)]]
 Texture2D<float3> DFG;
 
-[[vk::binding(2)]]
+[[vk::binding(5)]]
 TextureCube<float4> ConvolvedSkyboxSpecular;
 
-[[vk::binding(3)]]
+[[vk::binding(6)]]
 TextureCube<float4> ConvolvedSkyboxDiffuse;
 
-[[vk::binding(4)]]
+[[vk::binding(7)]]
 SamplerState linearSampler;
 
 #if defined(Shadow_Map) || defined(Cascade_Shadow_Map) || defined(RayTraced_Shadows)
 #define USING_SHADOWS 1
-[[vk::binding(5)]]
+[[vk::binding(8)]]
 Texture2D<float> shadowMap;
 #else
 #define USING_SHADOWS 0
@@ -36,7 +36,7 @@ Texture2D<float> shadowMap;
 
 #if defined(Screen_Space_Reflection) || defined(RayTraced_Reflections)
 #define USING_SSR
-[[vk::binding(4 + USING_SHADOWS + 1)]]
+[[vk::binding(7 + USING_SHADOWS + 1)]]
 Texture2D<float4> reflectionMap;
 #endif
 

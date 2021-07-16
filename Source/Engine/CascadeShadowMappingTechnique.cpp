@@ -286,7 +286,7 @@ void CascadeShadowMappingTechnique::render(RenderGraph& graph, RenderEngine* eng
     (*mCascadesBuffer)->setContents(&cascades, sizeof(Scene::ShadowCascades));
 
     const Frustum lightFrustum = eng->getScene()->getShadowingLightFrustum();
-    std::vector<const MeshInstance*> meshes = eng->getScene()->getVisibleMeshes(lightFrustum);
+    std::vector<MeshInstance*> meshes = eng->getScene()->getVisibleMeshes(lightFrustum);
 
     std::sort(meshes.begin(), meshes.end(), [lightPosition = eng->getScene()->getShadowingLight().mPosition](const MeshInstance* lhs, const MeshInstance* rhs)
     {
@@ -299,7 +299,7 @@ void CascadeShadowMappingTechnique::render(RenderGraph& graph, RenderEngine* eng
         return leftDistance < rightDistance;
     });
 
-    std::vector<const MeshInstance*> nearCascadeMeshes;
+    std::vector<MeshInstance*> nearCascadeMeshes;
     std::copy_if(meshes.begin(), meshes.end(), std::back_inserter(nearCascadeMeshes), [cascades, farPlane, cameraPosition = eng->getScene()->getCamera().getPosition()](const MeshInstance* inst)
     {
          const float3 central = (inst->getMesh()->getAABB() * inst->getTransMatrix()).getCentralPoint();
@@ -308,7 +308,7 @@ void CascadeShadowMappingTechnique::render(RenderGraph& graph, RenderEngine* eng
          return distance <= cascades.mNearEnd * farPlane;
     });
 
-    std::vector<const MeshInstance*> midCascadeMeshes;
+    std::vector<MeshInstance*> midCascadeMeshes;
     std::copy_if(meshes.begin(), meshes.end(), std::back_inserter(midCascadeMeshes), [cascades, farPlane, cameraPosition = eng->getScene()->getCamera().getPosition()](const MeshInstance* inst)
     {
          const float3 central = (inst->getMesh()->getAABB() * inst->getTransMatrix()).getCentralPoint();
@@ -317,7 +317,7 @@ void CascadeShadowMappingTechnique::render(RenderGraph& graph, RenderEngine* eng
          return distance <= cascades.mMidEnd * farPlane && distance >= cascades.mNearEnd * farPlane;
     });
 
-    std::vector<const MeshInstance*> farCascadeMeshes;
+    std::vector<MeshInstance*> farCascadeMeshes;
     std::copy_if(meshes.begin(), meshes.end(), std::back_inserter(farCascadeMeshes), [cascades, farPlane, cameraPosition = eng->getScene()->getCamera().getPosition()](const MeshInstance* inst)
     {
          const float3 central = (inst->getMesh()->getAABB() * inst->getTransMatrix()).getCentralPoint();

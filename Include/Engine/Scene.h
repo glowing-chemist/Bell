@@ -211,17 +211,21 @@ public:
         mBoneWeightBufferIndex = index;
     }
 
+    void setBaseTransformsIndex(const uint32_t index)
+    {
+        mBaseTransformsIndex = index;
+    }
+
     void draw(Executor*, UberShaderStateCache*) const;
 
     uint64_t getShadeFlags(const uint32_t subMesh_i) const;
 
 private:
 
-    MeshEntry getMeshShaderEntry(const uint32_t submesh_i, const SubMesh& submesh) const
+    MeshEntry getMeshShaderEntry(const uint32_t submesh_i) const
     {
         MeshEntry entry{};
-        entry.mTransformation = transpose(float4x3(getTransMatrix() * submesh.mTransform));
-        entry.mPreviousTransformation = transpose(float4x3(getPreviousTransMatrix() * submesh.mTransform));
+        entry.mTransformsIndex = mBaseTransformsIndex + submesh_i;
         entry.mMaterialIndex = mMaterials[submesh_i].mMaterialIndex;
         entry.mMaterialFlags = mMaterials[submesh_i].mMaterialFlags;
         entry.mGlobalBoneBufferOffset = mGlobalBoneBufferOffset;
@@ -241,6 +245,7 @@ private:
     };
     std::vector<MaterialEntry> mMaterials;
     uint32_t mInstanceFlags;
+    uint32_t mBaseTransformsIndex;
     uint32_t mGlobalBoneBufferOffset;
     uint32_t mBoneCountBufferIndex;
     uint32_t mBoneWeightBufferIndex;
@@ -310,7 +315,7 @@ public:
         uint32_t _padding;
     };
 
-    std::vector<const MeshInstance*> getVisibleMeshes(const Frustum&) const;
+    std::vector<MeshInstance*> getVisibleMeshes(const Frustum&) const;
     std::vector<Scene::Light*> getVisibleLights(const Frustum&) const;
 
     const std::vector<MeshInstance>& getStaticMeshInstances() const

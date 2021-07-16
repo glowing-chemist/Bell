@@ -367,6 +367,8 @@ private:
     CPUImage renderDiffuseCubeMap(const CPURayTracingScene &scene, const float3 &position, const uint32_t x, const uint32_t y);
     SphericalHarmonic generateSphericalHarmonic(const float3 &position, const CPUImage& cubemap);
 
+    void updateInstanceTransformBuffers(const std::vector<MeshInstance*>&);
+
     Allocator mDefaultMemoryResource;
     SlabAllocator mFrameAllocator;
 
@@ -411,6 +413,12 @@ private:
 
     std::shared_mutex mShaderCacheMutex;
     std::unordered_map<uint64_t, Shader> mShaderCache;
+
+    // Instance transforms buffers.
+    PerFrameResource<Buffer> mInstanceTransformsBuffer;
+    PerFrameResource<BufferView> mInstanceTransformsBufferView;
+    PerFrameResource<Buffer> mPrevInstanceTransformsBuffer;
+    PerFrameResource<BufferView> mPrevInstanceTransformsBufferView;
 
     // Animation data.
     PerFrameResource<Buffer> mBoneBuffer;

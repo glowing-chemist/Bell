@@ -56,6 +56,16 @@ public:
             return createTransMatrix();
     }
 
+    float4x4 getPreviousTransMatrix() const
+    {
+        if(mParent)
+        {
+            return mPreviousTransformation * mParent->getPreviousTransMatrix();
+        }
+        else
+            return mPreviousTransformation;
+    }
+
     void setPosition(const float3& pos)
     {
         mPosition = pos;
@@ -97,16 +107,6 @@ public:
     }
 
 protected:
-
-    float4x4 getPreviousTransMatrix() const
-    {
-        if(mParent)
-        {
-            return mPreviousTransformation * mParent->getPreviousTransMatrix();
-        }
-        else
-            return mPreviousTransformation;
-    }
 
     float4x4 createTransMatrix() const
     {
