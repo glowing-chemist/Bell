@@ -101,3 +101,70 @@ TaskID addBlurYTaskR8(const char* name, const char* input, const char* output, c
 
     return graph.addTask(blurYTask);
 }
+
+
+void compileShadeFlagsPipelines(std::unordered_map<uint64_t, uint64_t>& pipelineMap,
+                                const std::string& vertexPath,
+                                const std::string& fragmentPath,
+                                RenderEngine* engine,
+                                const RenderGraph& graph,
+                                const TaskID id)
+{
+    const Scene* scene = engine->getScene();
+    RenderDevice* device = engine->getDevice();
+    const std::vector<Scene::Material>& materials = scene->getMaterialDescriptions();
+    // compile pipelines for all material variants.
+    const RenderTask& task = graph.getTask(id);
+    for(const auto& material : materials)
+    {
+        for(uint8_t skinning = 0; skinning < 2; ++skinning)
+        {
+            const uint64_t shadeflags = material.mMaterialTypes | (skinning ? kShade_Skinning : 0);
+            if (pipelineMap.find(shadeflags) == pipelineMap.end())
+            {
+                ShaderDefine fragmentShadeDefines(L"SHADE_FLAGS", shadeflags);
+                Shader fragmentShader = engine->getShader(fragmentPath, fragmentShadeDefines);
+                ShaderDefine vertexShadeDefine(L"SHADE_FLAGS", (skinning ? kShade_Skinning : 0));
+                Shader vertexShader = engine->getShader(vertexPath, vertexShadeDefine);
+
+                const auto& graphicsTask = static_cast<const GraphicsTask &>(task);
+                const PipelineHandle pipeline = device->compileGraphicsPipeline(graphicsTask,
+                                                                                graph,
+                                                                                graphicsTask.getVertexAttributes() | (skinning > 0 ? (VertexAttributes::BoneWeights | VertexAttributes::BoneIndices) : 0),
+                                                                                vertexShader, nullptr,
+                                                                                nullptr, nullptr, fragmentShader);
+
+                pipelineMap.insert({shadeflags, pipeline});
+            }
+        }
+    }
+}
+
+void compileSkinnedPipelineVariants(PipelineHandle* array,
+                                    const std::string& vertexPath,
+                                    const std::string& fragmentPath,
+                                    RenderEngine* engine,
+                                    const RenderGraph& graph,
+                                    const TaskID id)
+{
+    RenderDevice* device = engine->getDevice();
+    const RenderTask& task = graph.getTask(id);
+    Shader fragmentShader = engine->getShader(fragmentPath);
+    for(uint8_t skinning = 0; skinning < 2; ++skinning)
+    {
+        ShaderDefine vertexShadeDefine(L"SHADE_FLAGS", (skinning ? kShade_Skinning : 0));
+        Shader vertexShader = engine->getShader(vertexPath, vertexShadeDefine);
+
+        const auto& graphicsTask = static_cast<const GraphicsTask &>(task);
+        const PipelineHandle pipeline = device->compileGraphicsPipeline(graphicsTask,
+                                                                        graph,
+                                                                        graphicsTask.getVertexAttributes() |
+                                                                        (skinning > 0 ? (VertexAttributes::BoneWeights |
+                                                                                         VertexAttributes::BoneIndices)
+                                                                                      : 0),
+                                                                        vertexShader, nullptr,
+                                                                        nullptr, nullptr, fragmentShader);
+
+        array[skinning] = pipeline;
+    }
+}

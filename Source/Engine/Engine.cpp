@@ -180,7 +180,6 @@ void RenderEngine::setScene(Scene* scene)
     else // We're clearing the scene so need to destroy the materials.
     {
         mMaterials.reset(mRenderDevice, 200);
-        mActiveSkeletalAnimations.clear();
         mMeshBoundsCache.clear();
         // need to invalidate render pipelines as the number of materials could change.
         mRenderDevice->invalidatePipelines();
@@ -503,6 +502,7 @@ void RenderEngine::execute(RenderGraph& graph)
 
     // upload culled instances transforms
     updateInstanceTransformBuffers(meshes);
+    tickAnimations(meshes);
     std::vector<const MeshInstance*> constMeshes(meshes.size());
     std::memcpy(constMeshes.data(), meshes.data(), meshes.size() * sizeof(MeshInstance*));
 
@@ -643,40 +643,7 @@ void RenderEngine::execute(RenderGraph& graph)
 }
 
 
-void RenderEngine::startAnimation(const InstanceID id, const std::string& name, const bool loop, const float speedModifer)
-{
-    BELL_ASSERT(mCurrentScene, "No scene set")
-    const MeshInstance* inst = mCurrentScene->getMeshInstance(id);
-
-    if(inst->getMesh()->isSkeletalAnimation(name))
-        mActiveSkeletalAnimations.push_back({name, id, speedModifer, 0, 0.0, loop});
-
-    if(inst->getMesh()->isBlendMeshAnimation(name))
-        mActiveBlendShapeAnimations.push_back({name, id, speedModifer, 0.0, loop});
-}
-
-
-void RenderEngine::terimateAnimation(const InstanceID id, const std::string& name)
-{
-    if(!mActiveSkeletalAnimations.empty())
-    {
-        mActiveSkeletalAnimations.erase(std::remove_if(mActiveSkeletalAnimations.begin(), mActiveSkeletalAnimations.end(), [id, name](const SkeletalAnimationEntry& entry)
-        {
-            return entry.mName == name && entry.mMesh == id;
-        }), mActiveSkeletalAnimations.end());
-    }
-
-    if(!mActiveBlendShapeAnimations.empty())
-    {
-        mActiveBlendShapeAnimations.erase(std::remove_if(mActiveBlendShapeAnimations.begin(), mActiveBlendShapeAnimations.end(), [id, name](const BlendShapeAnimationEntry& entry)
-        {
-            return entry.mName == name && entry.mMesh == id;
-        }), mActiveBlendShapeAnimations.end());
-    }
-}
-
-
-void RenderEngine::tickAnimations()
+void RenderEngine::tickAnimations(const std::vector<MeshInstance*>& instances)
 {
     PROFILER_EVENT();
 
@@ -684,55 +651,20 @@ void RenderEngine::tickAnimations()
     elapsedTime /= 1000000.0;
     uint64_t boneOffset = 0;
     std::vector<float4x4> boneMatracies{};
-    std::unordered_map<const StaticMesh*, std::pair<uint32_t, uint32_t>> skinningBufferMap{};
 
-    for(auto& animEntry : mActiveSkeletalAnimations)
+    for(auto* instance : instances)
     {
-        MeshInstance* instance = mCurrentScene->getMeshInstance(animEntry.mMesh);
-        SkeletalAnimation& animation = instance->getMesh()->getSkeletalAnimation(animEntry.mName);
-        double ticksPerSec = animation.getTicksPerSec();
-        animEntry.mTick += elapsedTime * ticksPerSec * animEntry.mSpeedModifier;
-        animEntry.mBoneOffset = boneOffset;
-        instance->setGlobalBoneBufferOffset(animEntry.mBoneOffset);
+        if(!instance->isSkinned())
+            continue;
 
-        if((animation.getTotalTicks() - animEntry.mTick) > 0.00001)
-        {
-            std::vector<float4x4> matracies  = animation.calculateBoneMatracies(*instance->getMesh(), animEntry.mTick);
-            boneOffset += matracies.size();
-            boneMatracies.insert(boneMatracies.end(), matracies.begin(), matracies.end());
-        }
-        else if(animEntry.mLoop)
-            animEntry.mTick = 0.0;
-    }
-
-    for(auto& animEntry : mActiveBlendShapeAnimations)
-    {
-        MeshInstance* instance = mCurrentScene->getMeshInstance(animEntry.mMesh);
-        BlendMeshAnimation& animation = instance->getMesh()->getBlendMeshAnimation(animEntry.mName);
-        double ticksPerSec = animation.getTicksPerSec();
-        animEntry.mTick += elapsedTime * ticksPerSec * animEntry.mSpeedModifier;
-
-        if((animation.getTotalTicks() - animEntry.mTick) > 0.00001)
-        {
-        }
-        else if(animEntry.mLoop)
-            animEntry.mTick = 0.0;
+        instance->setGlobalBoneBufferOffset(boneOffset);
+        std::vector<float4x4> matracies  = instance->tickAnimation(elapsedTime);
+        boneOffset += matracies.size();
+        boneMatracies.insert(boneMatracies.end(), matracies.begin(), matracies.end());
     }
 
     if(!boneMatracies.empty())
         (*mBoneBuffer)->setContents(boneMatracies.data(), boneMatracies.size() * sizeof(float4x4));
-
-    mActiveSkeletalAnimations.erase(std::remove_if(mActiveSkeletalAnimations.begin(), mActiveSkeletalAnimations.end(), [this](const SkeletalAnimationEntry& entry)
-    {
-        SkeletalAnimation& animation = mCurrentScene->getSkeletalAnimation(entry.mMesh, entry.mName);
-        return (entry.mTick - animation.getTotalTicks()) > 0.00001;
-    }), mActiveSkeletalAnimations.end());
-
-    mActiveBlendShapeAnimations.erase(std::remove_if(mActiveBlendShapeAnimations.begin(), mActiveBlendShapeAnimations.end(), [this](const BlendShapeAnimationEntry& entry)
-    {
-        BlendMeshAnimation& animation = mCurrentScene->getBlendMeshAnimation(entry.mMesh, entry.mName);
-        return (entry.mTick - animation.getTotalTicks()) > 0.00001;
-    }), mActiveBlendShapeAnimations.end());
 }
 
 
@@ -873,11 +805,6 @@ void RenderEngine::updateGlobalBuffers()
                 std::memcpy(dst, &shadowingLight, sizeof(Scene::ShadowingLight));
 
             mShadowCastingLight.get()->unmap();
-        }
-
-        if(!mActiveSkeletalAnimations.empty())
-        {
-            tickAnimations();
         }
     }
 }
@@ -1267,6 +1194,9 @@ std::vector<float3> RenderEngine::IrradianceProbeVolume::getProbePositions() con
 
 void RenderEngine::updateInstanceTransformBuffers(const std::vector<MeshInstance*>& meshes)
 {
+    if(meshes.empty())
+        return;
+
     std::vector<float3x4> instanceTransforms{};
     std::vector<float3x4> prevInstanceTransforms{};
 

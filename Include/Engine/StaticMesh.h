@@ -24,8 +24,6 @@ struct MeshEntry
     uint32_t mMaterialIndex;
     uint32_t mMaterialFlags;
     uint32_t mGlobalBoneBufferOffset;
-    uint32_t mBoneCountBufferIndex;
-    uint32_t mBoneWeightBufferIndex;
 };
 static_assert (sizeof(MeshEntry) <= 128, "Mesh Entry will no longer fit inside push constants");
 
@@ -43,9 +41,11 @@ public:
     }
 
     void writeVertexVector4(const aiVector3D&);
+    void writeVertexVector4(const float4&);
     void writeVertexVector2(const aiVector2D&);
     void writeVertexFloat(const float);
     void WriteVertexInt(const uint32_t);
+    void WriteVertexInt4as16Bit(const uint4&);
     void WriteVertexChar4(const char4&);
 
     const std::vector<unsigned char>& getVertexBuffer() const
@@ -157,16 +157,6 @@ public:
         return mIndexBufferView;
     }
 
-    const BufferView* getBonesPerVertexBufferView() const
-    {
-        return mBonePerVertexBufferView;
-    }
-
-    const BufferView* getBoneIndexWeightBufferView() const
-    {
-        return mBoneIndexWeightBufferView;
-    }
-
     int getVertexAttributes() const
     {
         return mVertexAttributes;
@@ -198,6 +188,13 @@ public:
     }
 
     SkeletalAnimation& getSkeletalAnimation(const std::string& name)
+    {
+        BELL_ASSERT(mSkeletalAnimations.find(name) != mSkeletalAnimations.end(), "Unable to find animation");
+        auto it = mSkeletalAnimations.find(name);
+        return it->second;
+    }
+
+    const SkeletalAnimation& getSkeletalAnimation(const std::string& name) const
     {
         BELL_ASSERT(mSkeletalAnimations.find(name) != mSkeletalAnimations.end(), "Unable to find animation");
         auto it = mSkeletalAnimations.find(name);
@@ -246,16 +243,6 @@ public:
         return mSkeleton;
     }
 
-    const std::vector<BoneIndex>& getBoneWeights() const
-    {
-        return mBoneWeights;
-    }
-
-    const std::vector<uint2>& getBoneIndicies() const
-    {
-        return mBonesPerVertex;
-    }
-
     void initializeDeviceBuffers(RenderEngine*);
 
 private:
@@ -279,6 +266,7 @@ private:
 
     std::unordered_map<std::string, uint32_t> mBoneIndexMap;
     std::vector<Bone> mSkeleton;
+    // Only needed for loading.
     std::vector<BoneIndex> mBoneWeights;
     std::vector<uint2> mBonesPerVertex;
 
@@ -289,13 +277,6 @@ private:
     BufferView* mVertexBufferView;
     Buffer* mIndexBuffer;
     BufferView* mIndexBufferView;
-
-    // Animation buffers.
-    Buffer* mBonePerVertexBuffer;
-    BufferView* mBonePerVertexBufferView;
-    Buffer* mBoneIndexWeightBuffer;
-    BufferView* mBoneIndexWeightBufferView;
-    // Bone transforms buffer will be per instance.
 
     std::vector<MeshBlend> mBlendMeshes;
 

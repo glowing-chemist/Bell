@@ -119,8 +119,9 @@ DebugAABBTechnique::DebugAABBTechnique(RenderEngine* eng, RenderGraph& graph) :
                         exec->indexedDraw(0, 0, 24);
                     }
 
+                    // TODO get working with new vertex skinning.
                     // Check all active animations and draw bone OBBs
-                    const std::vector<RenderEngine::SkeletalAnimationEntry>& activeAnims = eng->getActiveSkeletalAnimations();
+                    /*const std::vector<RenderEngine::SkeletalAnimationEntry>& activeAnims = eng->getActiveSkeletalAnimations();
                     for(const RenderEngine::SkeletalAnimationEntry& entry : activeAnims)
                     {
                         MeshInstance* inst = eng->getScene()->getMeshInstance(entry.mMesh);
@@ -147,7 +148,7 @@ DebugAABBTechnique::DebugAABBTechnique(RenderEngine* eng, RenderGraph& graph) :
                                 exec->indexedDraw(0, 0, 24);
                             }
                         }
-                    }
+                    }*/
 
                     // Draw debug lines.
                     const std::vector<Line>& lines = eng->getDebugLines();

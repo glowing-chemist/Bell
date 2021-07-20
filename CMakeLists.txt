@@ -231,7 +231,6 @@ set(SHADERS
 	SkyBox.vert
 	BlurX_Base.hlsl                            
 	DeferredDFGIBL.frag                 
-	GBufferPassThroughInstanced.vert          
 	SkyBoxConvolve.comp
 	blurX_SRGB.comp                            
 	DepthOnly.vert                      

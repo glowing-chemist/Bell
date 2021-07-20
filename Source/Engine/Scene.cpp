@@ -45,7 +45,9 @@ MeshInstance::MeshInstance(Scene* scene,
         mID{id},
         mMaterials{},
         mInstanceFlags{InstanceFlags::Draw},
-        mGlobalBoneBufferOffset(0)
+        mGlobalBoneBufferOffset(0),
+        mIsSkinned(false),
+        mAnimationActive(false)
 {
     const StaticMesh* mesh = scene->getMesh(meshID);
     const std::vector<SubMesh>& submeshes = mesh->getSubMeshes();
@@ -55,6 +57,8 @@ MeshInstance::MeshInstance(Scene* scene,
         materialIndex = materialID;
         materialFlags = materialFLags;
     }
+
+    mIsSkinned = mesh->hasAnimations();
 }
 
 MeshInstance::MeshInstance(Scene* scene,
@@ -72,7 +76,9 @@ MeshInstance::MeshInstance(Scene* scene,
         mID{id},
         mMaterials{},
         mInstanceFlags{InstanceFlags::Draw},
-        mGlobalBoneBufferOffset(0)
+        mGlobalBoneBufferOffset(0),
+        mIsSkinned(false),
+        mAnimationActive(false)
 {
     const StaticMesh* mesh = scene->getMesh(meshID);
     const std::vector<SubMesh>& submeshes = mesh->getSubMeshes();
@@ -82,6 +88,8 @@ MeshInstance::MeshInstance(Scene* scene,
         materialIndex = materialID;
         materialFlags = materialFLags;
     }
+
+    mIsSkinned = mesh->hasAnimations();
 }
 
 
@@ -103,6 +111,26 @@ BottomLevelAccelerationStructure* MeshInstance::getAccelerationStructure()
 const BottomLevelAccelerationStructure* MeshInstance::getAccelerationStructure() const
 {
     return mScene->getAccelerationStructure(mMesh);
+}
+
+std::vector<float4x4> MeshInstance::tickAnimation(const double time)
+{
+    const SkeletalAnimation* activeAnim = getActiveAnimation();
+    if(!activeAnim || !mAnimationActive)
+        return std::vector<float4x4>(getMesh()->getSkeleton().size(), float4x4(1.0f));
+
+    mTick += time * activeAnim->getTicksPerSec();
+
+    if(mTick >= activeAnim->getTotalTicks() && !mLoop)
+    {
+        mAnimationActive = false;
+        return std::vector<float4x4>(getMesh()->getSkeleton().size(), float4x4(1.0f));
+    }
+
+    if(mLoop)
+        mTick = fmod(mTick, activeAnim->getTotalTicks());
+
+    return activeAnim->calculateBoneMatracies(*getMesh(), mTick);
 }
 
 void MeshInstance::draw(Executor* exec, UberShaderStateCache* cache) const
@@ -130,6 +158,17 @@ uint64_t MeshInstance::getShadeFlags(const uint32_t subMesh_i) const
 {
     BELL_ASSERT(subMesh_i < mMaterials.size(), "submesh out of index")
     return mMaterials[subMesh_i].mMaterialFlags | (mScene->getMesh(mMesh)->getSkeleton().empty() ? 0 : kShade_Skinning);
+}
+
+const SkeletalAnimation* MeshInstance::getActiveAnimation() const
+{
+    if(!mAnimationActive && mActiveAnimationName == "")
+        return nullptr;
+
+    const StaticMesh* mesh = getMesh();
+    const SkeletalAnimation& anim = mesh->getSkeletalAnimation(mActiveAnimationName);
+
+    return &anim;
 }
 
 
@@ -916,6 +955,7 @@ Frustum Scene::getShadowingLightFrustum() const
 
 MeshInstance* Scene::getMeshInstance(const InstanceID id)
 {
+    BELL_ASSERT(mInstanceMap.find(id) != mInstanceMap.end(), "Invalid instanceID")
     BELL_ASSERT(mInstanceMap.find(id) != mInstanceMap.end(), "Invalid instanceID")
 
     const InstanceInfo&  entry = mInstanceMap[id];

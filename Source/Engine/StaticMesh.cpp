@@ -34,10 +34,6 @@ StaticMesh::StaticMesh(const std::string& path, const int vertAttributes, const 
     mVertexBufferView(nullptr),
     mIndexBuffer(nullptr),
     mIndexBufferView(nullptr),
-    mBonePerVertexBuffer(nullptr),
-    mBonePerVertexBufferView(nullptr),
-    mBoneIndexWeightBuffer(nullptr),
-    mBoneIndexWeightBufferView(nullptr),
     mAABB{{INFINITY, INFINITY, INFINITY, INFINITY}, {-INFINITY, -INFINITY, -INFINITY, -INFINITY}},
 	mVertexCount(0),
     mVertexAttributes(vertAttributes),
@@ -67,10 +63,7 @@ StaticMesh::StaticMesh(const aiScene *scene, const aiMesh* mesh, const int verte
     mVertexBufferView(nullptr),
     mIndexBuffer(nullptr),
     mIndexBufferView(nullptr),
-    mBonePerVertexBuffer(nullptr),
-    mBonePerVertexBufferView(nullptr),
-    mBoneIndexWeightBuffer(nullptr),
-    mBoneIndexWeightBufferView(nullptr),
+
     mAABB{{INFINITY, INFINITY, INFINITY, INFINITY}, {-INFINITY, -INFINITY, -INFINITY, -INFINITY}},
     mVertexAttributes(vertexAttributes),
     mVertexCount(0),
@@ -87,10 +80,6 @@ StaticMesh::StaticMesh(const aiScene* scene, const int vertexAttributes) :
         mVertexBufferView(nullptr),
         mIndexBuffer(nullptr),
         mIndexBufferView(nullptr),
-        mBonePerVertexBuffer(nullptr),
-        mBonePerVertexBufferView(nullptr),
-        mBoneIndexWeightBuffer(nullptr),
-        mBoneIndexWeightBufferView(nullptr),
         mAABB{{INFINITY, INFINITY, INFINITY, INFINITY}, {-INFINITY, -INFINITY, -INFINITY, -INFINITY}},
         mVertexAttributes(vertexAttributes),
         mVertexCount(0),
@@ -110,10 +99,6 @@ StaticMesh::~StaticMesh()
     delete mVertexBufferView;
     delete mIndexBuffer;
     delete mIndexBufferView;
-    delete mBonePerVertexBuffer;
-    delete mBonePerVertexBufferView;
-    delete mBoneIndexWeightBuffer;
-    delete mBoneIndexWeightBufferView;
 }
 
 
@@ -134,22 +119,6 @@ void StaticMesh::initializeDeviceBuffers(RenderEngine* eng)
         (*mIndexBuffer)->setContents(mIndexData.data() , mIndexData.size() * sizeof(uint32_t));
 
         mIndexBufferView = new BufferView(*mIndexBuffer);
-    }
-
-    if(!mBonePerVertexBuffer && !mBonesPerVertex.empty())
-    {
-        mBonePerVertexBuffer = new Buffer(device, BufferUsage::TransferDest | BufferUsage::DataBuffer | BufferUsage::DeviceAddress, mBonesPerVertex.size() * sizeof(uint2), mBonesPerVertex.size() * sizeof(uint2));
-        (*mBonePerVertexBuffer)->setContents(mBonesPerVertex.data(), mBonesPerVertex.size() * sizeof(uint2));
-
-        mBonePerVertexBufferView = new BufferView(*mBonePerVertexBuffer);
-    }
-
-    if(!mBoneIndexWeightBuffer && !mBoneWeights.empty())
-    {
-        mBoneIndexWeightBuffer = new Buffer(device, BufferUsage::TransferDest | BufferUsage::DataBuffer | BufferUsage::DeviceAddress, mBoneWeights.size() * sizeof(uint2), mBoneWeights.size() * sizeof(uint2));
-        (*mBoneIndexWeightBuffer)->setContents(mBoneWeights.data(), mBoneWeights.size() * sizeof(uint2));
-
-        mBoneIndexWeightBufferView = new BufferView(*mBoneIndexWeightBuffer);
     }
 }
 
@@ -172,13 +141,18 @@ void StaticMesh::configure(const aiScene* scene, const aiMesh* mesh, const float
 
     const bool albedoNeeded = (mesh->GetNumColorChannels() > 0) && (vertAttributes & VertexAttributes::Albedo);
 
+    const bool boneIndexNeeded = mesh->HasBones() || (vertAttributes & VertexAttributes::BoneIndices);
+    const bool boneWeightsNeeded = boneIndexNeeded || (vertAttributes & VertexAttributes::BoneWeights);
+
     // relys on float and MaterialID beingn the same size (should always be true).
     static_assert(sizeof(float) == sizeof(uint32_t), "Material ID doesn't match sizeof(float");
     const uint32_t vertexStride =   ((positionNeeded ? primitiveSize : 0) +
                                     ((vertAttributes & VertexAttributes::TextureCoordinates) ? 2 : 0) +
                                     (normalsNeeded ? 1 : 0) +
                                     (vertAttributes & VertexAttributes::Tangents ? 1 : 0) +
-                                    ((vertAttributes & VertexAttributes::Albedo) ? 1 : 0)) * sizeof(float);
+                                    ((vertAttributes & VertexAttributes::Albedo) ? 1 : 0) +
+                                    (boneIndexNeeded ? 2 : 0) +
+                                    (boneWeightsNeeded ? 4 : 0)) * sizeof(float);
 
     BELL_ASSERT(mVertexStride == 0 || mVertexStride == vertexStride, "Submeshes must have the same stride")
 	mVertexStride = vertexStride;
@@ -209,6 +183,9 @@ void StaticMesh::configure(const aiScene* scene, const aiMesh* mesh, const float
 
     float4 topLeft{std::numeric_limits<float>::infinity(), std::numeric_limits<float>::infinity(), std::numeric_limits<float>::infinity(), 1.0f};
     float4 bottumRight{-std::numeric_limits<float>::infinity(), -std::numeric_limits<float>::infinity(), -std::numeric_limits<float>::infinity(), 1.0f};
+
+    loadSkeleton(scene, mesh);
+    loadBlendMeshed(mesh);
 
     // Copy the vertex buffer data.
     for(uint32_t i = 0; i < mesh->mNumVertices; ++i)
@@ -288,14 +265,39 @@ void StaticMesh::configure(const aiScene* scene, const aiMesh* mesh, const float
 
             mVertexData.WriteVertexInt(packedDiffuse);
         }
+
+        if(boneIndexNeeded)
+        {
+            const uint2 bonesOffsetAndCount = mBonesPerVertex[i];
+            //BELL_ASSERT(bonesOffsetAndCount.y <= 4, "Max 4 bones per vertex supported")
+            uint4 boneOffset{0, 0, 0, 0};
+            for(uint32_t bone_i = 0; bone_i < std::min(4u, bonesOffsetAndCount.y); ++bone_i)
+            {
+                boneOffset[bone_i] = mBoneWeights[bonesOffsetAndCount.x + bone_i].mBone;
+            }
+
+            mVertexData.WriteVertexInt4as16Bit(boneOffset);
+        }
+
+        if(boneWeightsNeeded)
+        {
+            const uint2 bonesOffsetAndCount = mBonesPerVertex[i];
+            float4 boneWeights{0.0f, 0.0f, 0.0f, 0.0f};
+            for(uint32_t bone_i = 0; bone_i < std::min(4u, bonesOffsetAndCount.y); ++bone_i)
+            {
+                boneWeights[bone_i] = mBoneWeights[bonesOffsetAndCount.x + bone_i].mWeight;
+            }
+
+            mVertexData.writeVertexVector4(boneWeights);
+        }
     }
+
+    mBoneWeights.clear();
+    mBonesPerVertex.clear();
 
     AABB submeshAABB{topLeft, bottumRight};
     submeshAABB = submeshAABB * transform;
     mAABB = AABB{componentWiseMin(submeshAABB.getMin(), mAABB.getMin()), componentWiseMax(submeshAABB.getMax(), mAABB.getMax())};
-
-    loadSkeleton(scene, mesh);
-    loadBlendMeshed(mesh);
 
     mSubMeshes.push_back(newSubMesh);
 }
@@ -505,6 +507,26 @@ void VertexBuffer::WriteVertexInt(const uint32_t value)
 	*reinterpret_cast<uint32_t*>(&mBuffer[mCurrentOffset]) = value;
 
     mCurrentOffset += sizeof(uint32_t);
+}
+
+void VertexBuffer::WriteVertexInt4as16Bit(const uint4& vector)
+{
+    *reinterpret_cast<uint16_t *>(&mBuffer[mCurrentOffset]) = uint16_t(vector.x);
+    *reinterpret_cast<uint16_t*>(&mBuffer[mCurrentOffset] + sizeof(uint16_t)) = uint16_t(vector.y);
+    *reinterpret_cast<uint16_t*>(&mBuffer[mCurrentOffset] + 2 * sizeof(uint16_t)) = uint16_t(vector.z);
+    *reinterpret_cast<uint16_t*>(&mBuffer[mCurrentOffset] + 3 * sizeof(uint16_t)) = uint16_t(vector.w);
+
+    mCurrentOffset += sizeof(uint16_t) * 4;
+}
+
+void VertexBuffer::writeVertexVector4(const float4& vector)
+{
+    *reinterpret_cast<float*>(&mBuffer[mCurrentOffset]) = vector.x;
+    *reinterpret_cast<float*>(&mBuffer[mCurrentOffset] + sizeof(float)) = vector.y;
+    *reinterpret_cast<float*>(&mBuffer[mCurrentOffset] + 2 * sizeof(float)) = vector.z;
+    *reinterpret_cast<float*>(&mBuffer[mCurrentOffset] + 3 * sizeof(float)) = vector.w;
+
+    mCurrentOffset += sizeof(float4);
 }
 
 void VertexBuffer::WriteVertexChar4(const char4& value)

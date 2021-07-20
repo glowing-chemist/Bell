@@ -61,9 +61,15 @@ class PipelineTemplate : public DeviceChild
 public:
     PipelineTemplate(RenderDevice*, const GraphicsPipelineDescription*, const vk::PipelineLayout layout);
 
-    std::shared_ptr<Pipeline> instanciateGraphicsPipeline(const GraphicsTask&, const uint64_t hashPrefix,
+    std::shared_ptr<Pipeline> instanciateGraphicsPipeline(const GraphicsTask&,
+                                                          const uint64_t hashPrefix,
                                                           const vk::RenderPass rp,
-                                                          const Shader& vertexShader, const Shader* geometryShader, const Shader* tessControl, const Shader* tessEval, const Shader& fragmentShader);
+                                                          const int vertexAttributes,
+                                                          const Shader& vertexShader,
+                                                          const Shader* geometryShader,
+                                                          const Shader* tessControl,
+                                                          const Shader* tessEval,
+                                                          const Shader& fragmentShader);
 
     std::shared_ptr<Pipeline> instanciateComputePipeline(const ComputeTask &task, const uint64_t hashPrefix, const Shader& computeShader);
 

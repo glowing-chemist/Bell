@@ -1,5 +1,6 @@
 #include "Engine/GBufferTechnique.hpp"
 #include "Engine/UberShaderStateCache.hpp"
+#include "Engine/UtilityTasks.hpp"
 #include "Core/Executor.hpp"
 
 
@@ -80,7 +81,7 @@ GBufferTechnique::GBufferTechnique(RenderEngine* eng, RenderGraph& graph) :
 
                     mesh->draw(exec, &stateCache);
 
-                   }
+                }
 
                 exec->setSubmitFlag();
             }
@@ -93,29 +94,7 @@ GBufferTechnique::GBufferTechnique(RenderEngine* eng, RenderGraph& graph) :
 
 void GBufferTechnique::postGraphCompilation(RenderGraph& graph, RenderEngine* engine)
 {
-    const Scene* scene = engine->getScene();
-    RenderDevice* device = engine->getDevice();
-    const std::vector<Scene::Material>& materials = scene->getMaterialDescriptions();
-    // compile pipelines for all material variants.
-    const RenderTask& task = graph.getTask(mTaskID);
-    Shader vertexShader = engine->getShader("./Shaders/GBufferPassThrough.vert");
-    for(const auto& material : materials)
-    {
-        for(uint32_t skinning = 0; skinning < 2; ++skinning)
-        {
-            const uint64_t shadeflags = material.mMaterialTypes | (skinning ? kShade_Skinning : 0);
-            if (mMaterialPipelineVariants.find(shadeflags) == mMaterialPipelineVariants.end()) {
-                ShaderDefine materialDefine(L"SHADE_FLAGS", shadeflags);
-                Shader fragmentShader = engine->getShader("./Shaders/GBuffer.frag", materialDefine);
-
-                const PipelineHandle pipeline = device->compileGraphicsPipeline(static_cast<const GraphicsTask &>(task),
-                                                                                graph, vertexShader, nullptr,
-                                                                                nullptr, nullptr, fragmentShader);
-
-                mMaterialPipelineVariants.insert({shadeflags, pipeline});
-            }
-        }
-    }
+    compileShadeFlagsPipelines(mMaterialPipelineVariants, "./Shaders/GBufferPassThrough.vert", "./Shaders/GBuffer.frag", engine, graph, mTaskID);
 }
 
 
@@ -208,25 +187,6 @@ GBufferPreDepthTechnique::GBufferPreDepthTechnique(RenderEngine* eng, RenderGrap
 
 void GBufferPreDepthTechnique::postGraphCompilation(RenderGraph& graph, RenderEngine* engine)
 {
-    const Scene* scene = engine->getScene();
-    RenderDevice* device = engine->getDevice();
-    const std::vector<Scene::Material>& materials = scene->getMaterialDescriptions();
-    // compile pipelines for all material variants.
-    const RenderTask& task = graph.getTask(mTaskID);
-    Shader vertexShader = engine->getShader("./Shaders/GBufferPassThrough.vert");
-    for(const auto& material : materials)
-    {
-        if(mMaterialPipelineVariants.find(material.mMaterialTypes) == mMaterialPipelineVariants.end())
-        {
-            ShaderDefine materialDefine(L"SHADE_FLAGS", material.mMaterialTypes);
-            Shader fragmentShader = engine->getShader("./Shaders/GBuffer.frag", materialDefine);
-
-            const PipelineHandle pipeline = device->compileGraphicsPipeline(static_cast<const GraphicsTask&>(task),
-                                                                            graph, vertexShader, nullptr,
-                                                                            nullptr, nullptr, fragmentShader);
-
-            mMaterialPipelineVariants.insert({material.mMaterialTypes, pipeline});
-        }
-    }
+    compileShadeFlagsPipelines(mMaterialPipelineVariants, "./Shaders/GBufferPassThrough.vert", "./Shaders/GBuffer.frag", engine, graph, mTaskID);
 }
 

@@ -111,8 +111,10 @@ void VoxalizeTechnique::postGraphCompilation(RenderGraph& graph, RenderEngine* e
             ShaderDefine materialDefine(L"SHADE_FLAGS", material.mMaterialTypes);
             Shader fragmentShader = engine->getShader("./Shaders/Voxalize.frag", materialDefine);
 
-            const PipelineHandle pipeline = device->compileGraphicsPipeline(static_cast<const GraphicsTask&>(task),
-                                                                            graph, vertexShader, &geometryShader,
+            const auto& graphicsTask = static_cast<const GraphicsTask &>(task);
+            const PipelineHandle pipeline = device->compileGraphicsPipeline(graphicsTask,
+                                                                            graph, graphicsTask.getVertexAttributes(),
+                                                                            vertexShader, &geometryShader,
                                                                             nullptr, nullptr, fragmentShader);
 
             mMaterialPipelineVariants.insert({material.mMaterialTypes, pipeline});

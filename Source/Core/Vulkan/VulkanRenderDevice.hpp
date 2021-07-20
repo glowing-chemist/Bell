@@ -86,6 +86,7 @@ public:
 
     virtual PipelineHandle             compileGraphicsPipeline(const GraphicsTask& task,
                                                                const RenderGraph& graph,
+                                                               const int vertexAttributes,
                                                                const Shader& vertexShader,
                                                                const Shader* geometryShader,
                                                                const Shader* tessControl,

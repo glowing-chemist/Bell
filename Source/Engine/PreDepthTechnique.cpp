@@ -1,5 +1,6 @@
 #include "Engine/PreDepthTechnique.hpp"
 #include "Engine/UberShaderStateCache.hpp"
+#include "Engine/UtilityTasks.hpp"
 #include "Core/Executor.hpp"
 
 
@@ -38,10 +39,7 @@ PreDepthTechnique::PreDepthTechnique(RenderEngine* eng, RenderGraph& graph) :
                 PROFILER_GPU_TASK(exec);
                 PROFILER_GPU_EVENT("Pre-Z");
 
-                const RenderTask& task = graph.getTask(taskIndex);
-                exec->setGraphicsShaders(static_cast<const GraphicsTask&>(task), graph, mPreDepthVertexShader, nullptr, nullptr, nullptr, mPreDepthFragmentShader);
-
-                UberShaderStateCache stateCache(exec);
+                UberShaderSkinnedStateCache stateCache(exec, mPipelines);
 
                 const BufferView& pred = eng->getRenderGraph().getBuffer(kOcclusionPredicationBuffer);
 
@@ -70,10 +68,7 @@ PreDepthTechnique::PreDepthTechnique(RenderEngine* eng, RenderGraph& graph) :
                 PROFILER_GPU_TASK(exec);
                 PROFILER_GPU_EVENT("Pre-Z");
 
-                const RenderTask& task = graph.getTask(taskIndex);
-                exec->setGraphicsShaders(static_cast<const GraphicsTask&>(task), graph, mPreDepthVertexShader, nullptr, nullptr, nullptr, mPreDepthFragmentShader);
-
-                UberShaderStateCache stateCache(exec);
+                UberShaderSkinnedStateCache stateCache(exec, mPipelines);
 
                 for (const auto& mesh : meshes)
                 {
@@ -88,4 +83,9 @@ PreDepthTechnique::PreDepthTechnique(RenderEngine* eng, RenderGraph& graph) :
     }
 
     mTaskID = graph.addTask(task);
+}
+
+void PreDepthTechnique::postGraphCompilation(RenderGraph& graph, RenderEngine* engine)
+{
+    compileSkinnedPipelineVariants(mPipelines, "./Shaders/DepthOnly.vert", "./Shaders/AlphaTestDepthOnly.frag", engine, graph, mTaskID);
 }

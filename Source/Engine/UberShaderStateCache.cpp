@@ -32,6 +32,28 @@ void UberShaderMaterialStateCache::update(const uint64_t shadeFlags)
 }
 
 
+UberShaderSkinnedStateCache::UberShaderSkinnedStateCache(Executor* exec, uint64_t* pipelines) :
+        UberShaderStateCache(exec),
+        mSkinned(false),
+        mFirst(true)
+{
+    memcpy(mPipelines, pipelines, sizeof(PipelineHandle) * 2);
+}
+
+
+void UberShaderSkinnedStateCache::update(const uint64_t shadeFlags)
+{
+    const bool skinned = (shadeFlags & kShade_Skinning) > 0;
+    if(skinned != mSkinned || mFirst)
+    {
+        mSkinned = skinned;
+        mFirst = false;
+
+        mExec->setGraphicsPipeline(mPipelines[size_t(mSkinned)]);
+    }
+}
+
+
 UberShaderCachedPipelineStateCache::UberShaderCachedPipelineStateCache(Executor* exec, std::unordered_map<uint64_t, uint64_t>& pipelineCache) :
     UberShaderStateCache(exec),
     mPipelineHandles(pipelineCache),

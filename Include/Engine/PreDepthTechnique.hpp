@@ -26,6 +26,7 @@ public:
 
     virtual void render(RenderGraph&, RenderEngine*) override final {}
 
+    virtual void postGraphCompilation(RenderGraph& graph, RenderEngine* engine) override final;
 
 private:
 
@@ -33,6 +34,7 @@ private:
 
     Shader mPreDepthVertexShader;
     Shader mPreDepthFragmentShader;
+    PipelineHandle mPipelines[2]; // For skinned and non-skinned.
 
     TaskID mTaskID;
 };

@@ -1,5 +1,6 @@
 #include "VertexOutputs.hlsl"
 #include "UniformBuffers.hlsl"
+#include "Skinning.hlsl"
 
 
 [[vk::push_constant]]
@@ -18,15 +19,33 @@ StructuredBuffer<float4x3> instanceTransforms;
 [[vk::binding(3)]]
 StructuredBuffer<float4x3> prevInstanceTransforms;
 
+#if SHADE_FLAGS & ShadeFlag_Skinning
+GBufferVertOutput main(SkinnedVertex vertex)
+#else
 GBufferVertOutput main(Vertex vertex)
+#endif
 {
 	GBufferVertOutput output;
 
 	float4x3 meshMatrix = instanceTransforms[model.transformsIndex];
 	float4x3 prevMeshMatrix = prevInstanceTransforms[model.transformsIndex];
+
+#if SHADE_FLAGS & ShadeFlag_Skinning
+	const float4x4 skinningMatrix = calculateSkinningTransform(vertex, model.boneBufferOffset, skinningBones);
+
+	float4 transformedPositionWS = mul(skinningMatrix, vertex.position);
+	float4 prevTransformedPositionWS = mul(skinningMatrix, vertex.position);
+
+	transformedPositionWS = float4(mul(transformedPositionWS, meshMatrix), 1.0f);
+	prevTransformedPositionWS = float4(mul(prevTransformedPositionWS, prevMeshMatrix), 1.0f);
+#else
+
 	float4 transformedPositionWS = float4(mul(vertex.position, meshMatrix), 1.0f);
-	float4 transformedPosition = mul(camera.viewProj, transformedPositionWS);
 	float4 prevTransformedPositionWS = float4(mul(vertex.position, prevMeshMatrix), 1.0f);
+
+#endif
+
+	float4 transformedPosition = mul(camera.viewProj, transformedPositionWS);
 	float4 prevTransformedPosition = mul(camera.previousFrameViewProj, prevTransformedPositionWS);
 
 	output.position = transformedPosition;

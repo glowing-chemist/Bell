@@ -211,6 +211,7 @@ CommandContextBase* VulkanRenderDevice::getCommandContext(const uint32_t index, 
 
 PipelineHandle VulkanRenderDevice::compileGraphicsPipeline(const GraphicsTask& task,
                                                            const RenderGraph& graph,
+                                                           const int vertexAttributes,
                                                            const Shader& vertexShader,
                                                            const Shader* geometryShader,
                                                            const Shader* tessControl,
@@ -221,7 +222,14 @@ PipelineHandle VulkanRenderDevice::compileGraphicsPipeline(const GraphicsTask& t
 
     vulkanResources handles = getTaskResources(graph, task, vertexShader->getPrefixHash());
 
-    std::shared_ptr<Pipeline> pipeline = handles.mPipelineTemplate->instanciateGraphicsPipeline(task, vertexShader->getPrefixHash() ^ vertexShader->getCompiledDefinesHash() ^ fragmentShader->getCompiledDefinesHash(), *handles.mRenderPass, vertexShader, geometryShader, tessControl, tessEval, fragmentShader);
+    std::shared_ptr<Pipeline> pipeline = handles.mPipelineTemplate->instanciateGraphicsPipeline(task, vertexShader->getPrefixHash() ^ vertexShader->getCompiledDefinesHash() ^ fragmentShader->getCompiledDefinesHash(),
+                                                                                                *handles.mRenderPass,
+                                                                                                vertexAttributes,
+                                                                                                vertexShader,
+                                                                                                geometryShader,
+                                                                                                tessControl,
+                                                                                                tessEval,
+                                                                                                fragmentShader);
 
     return reinterpret_cast<uint64_t>(VkPipeline(pipeline->getHandle()));
 }

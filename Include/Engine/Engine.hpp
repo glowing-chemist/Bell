@@ -156,9 +156,6 @@ public:
     // returns an vertex and index buffer offset.
     uint64_t                      getMeshBoundsIndex(const MeshInstance*);
 
-    void startAnimation(const InstanceID id, const std::string& name, const bool loop = false, const float speedModifer = 1.0f);
-    void terimateAnimation(const InstanceID id, const std::string& name);
-
     void recordScene();
 
     void execute(RenderGraph&);
@@ -207,16 +204,6 @@ public:
     const RenderDevice* getDevice() const
     { return mRenderDevice; }
 
-    struct SkeletalAnimationEntry
-    {
-	    std::string mName;
-	    InstanceID mMesh;
-	    float mSpeedModifier;
-	    uint64_t mBoneOffset;
-	    double mTick;
-	    bool mLoop;
-    };
-
     struct BlendShapeAnimationEntry
     {
         std::string mName;
@@ -226,16 +213,6 @@ public:
         bool mLoop;
 
     };
-
-    const std::vector<SkeletalAnimationEntry>& getActiveSkeletalAnimations() const
-    {
-        return mActiveSkeletalAnimations;
-    }
-
-    const std::vector<BlendShapeAnimationEntry>& getActiveBlendShapesAnimations() const
-    {
-        return mActiveBlendShapeAnimations;
-    }
 
     std::chrono::microseconds getLastFrameTime() const
     {
@@ -447,9 +424,7 @@ private:
 
     float2 mTAAJitter[16];
 
-    std::vector<SkeletalAnimationEntry> mActiveSkeletalAnimations;
-    std::vector<BlendShapeAnimationEntry> mActiveBlendShapeAnimations;
-    void tickAnimations();
+    void tickAnimations(const std::vector<MeshInstance*>&);
 
     std::chrono::system_clock::time_point mFrameStartTime;
     std::chrono::microseconds mLastFrameTime;

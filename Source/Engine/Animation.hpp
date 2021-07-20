@@ -17,7 +17,7 @@ public:
     SkeletalAnimation(const StaticMesh &mesh, const aiAnimation*, const aiScene*);
     ~SkeletalAnimation() = default;
 
-    std::vector<float4x4> calculateBoneMatracies(const StaticMesh&, const double tick);
+    std::vector<float4x4> calculateBoneMatracies(const StaticMesh&, const double tick) const;
 
     double getTicksPerSec() const
     {
@@ -36,7 +36,7 @@ public:
             mScales{},
             mRotations{} {}
 
-        float4x4 getBoneTransform(const double tick);
+        float4x4 getBoneTransform(const double tick) const;
 
         struct PositionKey
         {
@@ -62,9 +62,9 @@ public:
 
     private:
 
-        float3 interpolateScale(double time);
-        float3 interpolateTranslation(double time);
-        quat interpolateRotation(double time);
+        float3 interpolateScale(double time) const;
+        float3 interpolateTranslation(double time) const;
+        quat interpolateRotation(double time) const;
 
     };
 

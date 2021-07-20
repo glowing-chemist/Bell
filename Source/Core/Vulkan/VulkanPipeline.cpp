@@ -17,6 +17,7 @@ PipelineTemplate::PipelineTemplate(RenderDevice* dev, const GraphicsPipelineDesc
 std::shared_ptr<Pipeline> PipelineTemplate::instanciateGraphicsPipeline(const GraphicsTask& task,
                                                       const uint64_t hashPrefix,
                                                       const vk::RenderPass rp,
+                                                      const int vertexAttributes,
                                                       const Shader& vertexShader,
                                                       const Shader* geometryShader,
                                                       const Shader* tessControl,
@@ -24,7 +25,7 @@ std::shared_ptr<Pipeline> PipelineTemplate::instanciateGraphicsPipeline(const Gr
                                                       const Shader& fragmentShader)
 {
     std::hash<std::string> stringHasher{};
-    uint64_t hash = hashPrefix;
+    uint64_t hash = (hashPrefix ^ vertexAttributes) + vertexAttributes;
     hash  += stringHasher(vertexShader->getFilePath());
     if(geometryShader)
         hash  += stringHasher((*geometryShader)->getFilePath());
@@ -49,7 +50,7 @@ std::shared_ptr<Pipeline> PipelineTemplate::instanciateGraphicsPipeline(const Gr
                                                                                        fragmentShader);
         graphicsPipeline->setLayout(mPipelineLayout);
         graphicsPipeline->setRenderPass(rp);
-        graphicsPipeline->setVertexAttributes(task.getVertexAttributes());
+        graphicsPipeline->setVertexAttributes(vertexAttributes);
         graphicsPipeline->setFrameBufferBlendStates(task);
         graphicsPipeline->setDebugName(task.getName());
         graphicsPipeline->compile(task);
@@ -316,6 +317,7 @@ void GraphicsPipeline::setVertexAttributes(const int vertexInputs)
 	const bool hasNormals = vertexInputs & VertexAttributes::Normals;
 	const bool hasTangents = vertexInputs & VertexAttributes::Tangents;
 	const bool hasAlbedo = vertexInputs & VertexAttributes::Albedo;
+	const bool hasBones = (vertexInputs & VertexAttributes::BoneIndices) && (vertexInputs & VertexAttributes::BoneWeights);
 
 	uint32_t positionSize = 0;
 	if (hasPosition2)
@@ -325,7 +327,8 @@ void GraphicsPipeline::setVertexAttributes(const int vertexInputs)
 	else if (hasPosition4)
 		positionSize = 16;
 
-    const uint32_t vertexStride = positionSize + (hasTextureCoords ? 8 : 0) + (hasNormals ? 4 : 0) + (hasTangents ? 4 : 0) + (hasAlbedo ? 4 : 0);
+    const uint32_t vertexStride = positionSize + (hasTextureCoords ? 8 : 0) + (hasNormals ? 4 : 0) + (hasTangents ? 4 : 0) + (hasAlbedo ? 4 : 0)
+                                    + (hasBones ? 24 : 0);
 
 	vk::VertexInputBindingDescription bindingDesc{};
 	bindingDesc.setStride(vertexStride);
@@ -423,7 +426,34 @@ void GraphicsPipeline::setVertexAttributes(const int vertexInputs)
 		attribDescAlbedo.setOffset(currentOffset);
 
 		attribs.push_back(attribDescAlbedo);
+        currentOffset += 4;
+        ++currentLocation;
 	}
+
+	if(hasBones)
+    {
+	    // Bone indices.
+        vk::VertexInputAttributeDescription attribDescBoneIndices{};
+        attribDescBoneIndices.setBinding(0);
+        attribDescBoneIndices.setLocation(currentLocation);
+        attribDescBoneIndices.setFormat(vk::Format::eR16G16B16A16Uint);
+        attribDescBoneIndices.setOffset(currentOffset);
+
+        attribs.push_back(attribDescBoneIndices);
+        currentOffset += 8;
+        ++currentLocation;
+
+        // boneWeights
+        vk::VertexInputAttributeDescription attribDescBoneWeights{};
+        attribDescBoneWeights.setBinding(0);
+        attribDescBoneWeights.setLocation(currentLocation);
+        attribDescBoneWeights.setFormat(vk::Format::eR32G32B32A32Sfloat);
+        attribDescBoneWeights.setOffset(currentOffset);
+
+        attribs.push_back(attribDescBoneWeights);
+        currentOffset += 16;
+        ++currentLocation;
+    }
 
 	mVertexAttribs = std::move(attribs);
 	mVertexDescription = std::move(bindingDesc);

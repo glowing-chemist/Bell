@@ -25,6 +25,7 @@ class BottomLevelAccelerationStructure
 public:
 
     BottomLevelAccelerationStructure(RenderEngine*, const StaticMesh&, const std::string& = "");
+    BottomLevelAccelerationStructure(Executor*, const StaticMesh&, const std::string& = "");
     ~BottomLevelAccelerationStructure() = default;
 
     BottomLevelAccelerationStructureBase* getBase()

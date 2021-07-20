@@ -18,6 +18,7 @@ class VulkanBottomLevelAccelerationStructure : public BottomLevelAccelerationStr
 {
 public:
     VulkanBottomLevelAccelerationStructure(RenderEngine*, const StaticMesh&, const std::string&);
+    VulkanBottomLevelAccelerationStructure(Executor*, const StaticMesh&, const std::string& = "");
     ~VulkanBottomLevelAccelerationStructure();
 
     const vk::AccelerationStructureKHR& getAccelerationStructureHandle() const

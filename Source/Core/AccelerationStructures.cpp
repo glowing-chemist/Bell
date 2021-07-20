@@ -1,4 +1,5 @@
 #include "AccelerationStructures.hpp"
+#include "Core/Executor.hpp"
 #include "Engine/Engine.hpp"
 
 #ifdef VULKAN
@@ -12,6 +13,16 @@ BottomLevelAccelerationStructureBase::BottomLevelAccelerationStructureBase(Rende
         DeviceChild(eng->getDevice()),
         GPUResource(getDevice()->getCurrentSubmissionIndex())
 {}
+
+BottomLevelAccelerationStructure::BottomLevelAccelerationStructure(Executor* exec, const StaticMesh& mesh,
+                                                                   const std::string& name)
+{
+#ifdef VULKAN
+    //mBase = std::make_shared<VulkanBottomLevelAccelerationStructure>(exec, mesh, name);
+#elif defined(DX_12)
+    // TODO
+#endif
+}
 
 BottomLevelAccelerationStructure::BottomLevelAccelerationStructure(RenderEngine* eng, const StaticMesh& mesh,
                                                                    const std::string& name)

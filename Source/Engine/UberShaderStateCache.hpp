@@ -44,6 +44,21 @@ private:
 
 };
 
+class UberShaderSkinnedStateCache : public UberShaderStateCache
+{
+public:
+    UberShaderSkinnedStateCache(Executor*, uint64_t* pipelines);
+    ~UberShaderSkinnedStateCache() = default;
+
+    virtual void update(const uint64_t) override final;
+
+private:
+
+    uint64_t mPipelines[2];
+    bool mSkinned;
+    bool mFirst;
+};
+
 class UberShaderCachedPipelineStateCache : public UberShaderStateCache
 {
 public:

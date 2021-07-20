@@ -47,7 +47,7 @@ SkeletalAnimation::SkeletalAnimation(const StaticMesh& mesh, const aiAnimation* 
 }
 
 
-std::vector<float4x4> SkeletalAnimation::calculateBoneMatracies(const StaticMesh& mesh, const double tick)
+std::vector<float4x4> SkeletalAnimation::calculateBoneMatracies(const StaticMesh& mesh, const double tick) const
 {
     const std::vector<SubMesh>& subMeshes = mesh.getSubMeshes();
     std::vector<float4x4> boneTransforms{};
@@ -57,7 +57,7 @@ std::vector<float4x4> SkeletalAnimation::calculateBoneMatracies(const StaticMesh
     for (const auto &bone : bones)
     {
         BELL_ASSERT(mBones.find(bone.mName) != mBones.end(), "Bone not found")
-        BoneTransform &transforms = mBones[bone.mName];
+        const BoneTransform &transforms = mBones.find(bone.mName)->second;
         float4x4 transform{};
         float4x4 rootTransform(1.0f);
         if(transforms.mScales.empty() && transforms.mPositions.empty() && transforms.mRotations.empty())
@@ -72,7 +72,7 @@ std::vector<float4x4> SkeletalAnimation::calculateBoneMatracies(const StaticMesh
         while(parent != 0xFFFF)
         {
             const Bone& parentBone = bones[parent];
-            BoneTransform &parentTransforms = mBones[parentBone.mName];
+            const BoneTransform &parentTransforms = mBones.find(parentBone.mName)->second;
             float4x4 parentTransform = parentTransforms.getBoneTransform(tick);
 
             transform = parentTransform * transform;
@@ -137,7 +137,7 @@ const aiNodeAnim* SkeletalAnimation::findNodeAnim(const aiAnimation* animation, 
 }
 
 
-float4x4 SkeletalAnimation::BoneTransform::getBoneTransform(const double tick)
+float4x4 SkeletalAnimation::BoneTransform::getBoneTransform(const double tick) const
 {
     const float3 scale = interpolateScale(tick);
     const float3 position = interpolateTranslation(tick);
@@ -147,7 +147,7 @@ float4x4 SkeletalAnimation::BoneTransform::getBoneTransform(const double tick)
 }
 
 
-float3 SkeletalAnimation::BoneTransform::interpolateScale(double time)
+float3 SkeletalAnimation::BoneTransform::interpolateScale(double time) const
 {
     float3 scale;
 
@@ -189,7 +189,7 @@ float3 SkeletalAnimation::BoneTransform::interpolateScale(double time)
 }
 
 
-float3 SkeletalAnimation::BoneTransform::interpolateTranslation(double time)
+float3 SkeletalAnimation::BoneTransform::interpolateTranslation(double time) const
 {
     float3 translation;
 
@@ -231,7 +231,7 @@ float3 SkeletalAnimation::BoneTransform::interpolateTranslation(double time)
 }
 
 
-quat SkeletalAnimation::BoneTransform::interpolateRotation(double time)
+quat SkeletalAnimation::BoneTransform::interpolateRotation(double time) const
 {
     quat rotation;
 

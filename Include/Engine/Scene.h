@@ -201,26 +201,38 @@ public:
         mGlobalBoneBufferOffset = offset;
     }
 
-    void setBoneCountBufferIndex(const uint32_t index)
-    {
-        mBoneCountBufferIndex = index;
-    }
-
-    void setBoneWeightBufferIndex(const uint32_t index)
-    {
-        mBoneWeightBufferIndex = index;
-    }
-
     void setBaseTransformsIndex(const uint32_t index)
     {
         mBaseTransformsIndex = index;
     }
+
+    bool isSkinned() const
+    {
+        return mIsSkinned;
+    }
+
+    void setActiveAnimation(const std::string& name, const bool loop)
+    {
+        mAnimationActive = true;
+        mActiveAnimationName = name;
+        mLoop = loop;
+        mTick = 0.0;
+    }
+
+    void endActiveAnimation()
+    {
+        mAnimationActive = false;
+    }
+
+    std::vector<float4x4> tickAnimation(const double);
 
     void draw(Executor*, UberShaderStateCache*) const;
 
     uint64_t getShadeFlags(const uint32_t subMesh_i) const;
 
 private:
+
+    const SkeletalAnimation* getActiveAnimation() const;
 
     MeshEntry getMeshShaderEntry(const uint32_t submesh_i) const
     {
@@ -229,8 +241,6 @@ private:
         entry.mMaterialIndex = mMaterials[submesh_i].mMaterialIndex;
         entry.mMaterialFlags = mMaterials[submesh_i].mMaterialFlags;
         entry.mGlobalBoneBufferOffset = mGlobalBoneBufferOffset;
-        entry.mBoneCountBufferIndex = mBoneCountBufferIndex;
-        entry.mBoneWeightBufferIndex = mBoneWeightBufferIndex;
 
         return entry;
     }
@@ -247,8 +257,13 @@ private:
     uint32_t mInstanceFlags;
     uint32_t mBaseTransformsIndex;
     uint32_t mGlobalBoneBufferOffset;
-    uint32_t mBoneCountBufferIndex;
-    uint32_t mBoneWeightBufferIndex;
+
+    // Animation info.
+    bool mIsSkinned;
+    std::string mActiveAnimationName;
+    bool mAnimationActive;
+    bool mLoop;
+    double mTick;
 };
 
 

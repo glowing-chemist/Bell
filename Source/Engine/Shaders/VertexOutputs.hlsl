@@ -76,6 +76,18 @@ struct Vertex
 	float4 colour : COLOR0;
 };
 
+struct SkinnedVertex
+{
+	float4 position : POSITION;
+	float2 uv : TEXCOORD0;
+	float4 normal : NORMAL0;
+	float4 tangent : TANGENT0;
+	float4 colour : COLOR0;
+	uint4  boneIndicies : BONE_INDEX;
+	float4 boneWeights : BONE_WEIGHTS;
+};
+
+
 struct BasicVertex
 {
 	float4 position : POSITION;
@@ -104,8 +116,6 @@ struct MeshInstanceInfo
 	uint materialIndex;
 	uint materialFlags;
 	uint boneBufferOffset;
-	uint boneCountBufferIndex;
-	uint boneWeightBufferIndex;
 };
 
 struct InstanceIDOutput

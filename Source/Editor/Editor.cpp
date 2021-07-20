@@ -1123,7 +1123,7 @@ void Editor::drawMeshSelctorWindow()
                     sprintf(nameBuffer, name.empty() ? "Animation %d\n" : name.c_str(), i);
                     if(ImGui::Button(nameBuffer))
                     {
-                        mEngine.startAnimation(mSelectedMesh, name, false, mAnimationSpeed);
+                        instance->setActiveAnimation(name, false);
                     }
                     ++i;
                 }
@@ -1504,7 +1504,6 @@ void Editor::updateMeshInstancePicker()
 {
     // update the selected mesh flags.
     const InstanceID selectedMesh = mMeshPicker.getCurrentlySelectedMesh();
-    BELL_LOG_ARGS("invali mesh instance %zu", kInvalidInstanceID)
     if(selectedMesh != kInvalidInstanceID)
     {
        MeshInstance* instance = mInProgressScene->getMeshInstance(selectedMesh);

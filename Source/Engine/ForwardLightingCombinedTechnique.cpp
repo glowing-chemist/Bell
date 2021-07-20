@@ -3,6 +3,7 @@
 #include "Engine/Engine.hpp"
 #include "Engine/UberShaderStateCache.hpp"
 #include "Engine/DefaultResourceSlots.hpp"
+#include "Engine/UtilityTasks.hpp"
 #include "Core/Executor.hpp"
 
 constexpr const char kForwardPoitnSampler[] = "ForwardPointSampler";
@@ -114,24 +115,5 @@ void ForwardCombinedLightingTechnique::bindResources(RenderGraph& graph)
 
 void ForwardCombinedLightingTechnique::postGraphCompilation(RenderGraph& graph, RenderEngine* engine)
 {
-    const Scene* scene = engine->getScene();
-    RenderDevice* device = engine->getDevice();
-    const std::vector<Scene::Material>& materials = scene->getMaterialDescriptions();
-    // compile pipelines for all material variants.
-    const RenderTask& task = graph.getTask(mTaskID);
-    Shader vertexShader = engine->getShader("./Shaders/ForwardMaterial.vert");
-    for(const auto& material : materials)
-    {
-        if(mMaterialPipelineVariants.find(material.mMaterialTypes) == mMaterialPipelineVariants.end())
-        {
-            ShaderDefine materialDefine(L"SHADE_FLAGS", material.mMaterialTypes);
-            Shader fragmentShader = engine->getShader("./Shaders/ForwardCombinedLighting.frag", materialDefine);
-
-            const PipelineHandle pipeline = device->compileGraphicsPipeline(static_cast<const GraphicsTask&>(task),
-                                                                            graph, vertexShader, nullptr,
-                                                                            nullptr, nullptr, fragmentShader);
-
-            mMaterialPipelineVariants.insert({material.mMaterialTypes, pipeline});
-        }
-    }
+    compileShadeFlagsPipelines(mMaterialPipelineVariants, "./Shaders/ForwardMaterial.vert", "./Shaders/ForwardCombinedMaterial.frag", engine, graph, mTaskID);
 }
