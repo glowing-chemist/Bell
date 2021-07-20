@@ -30,6 +30,9 @@ GBufferVertOutput main(Vertex vertInput)
 	float4x3 meshMatrix = instanceTransforms[model.transformsIndex];
 	float4x3 prevMeshMatrix = prevInstanceTransforms[model.transformsIndex];
 
+	float3 normals = vertInput.normal.xyz;
+	float3 tangents = vertInput.tangent.xyz;
+
 #if SHADE_FLAGS & ShadeFlag_Skinning
 	const float4x4 skinningMatrix = calculateSkinningTransform(vertInput, model.boneBufferOffset, skinningBones);
 
@@ -38,6 +41,9 @@ GBufferVertOutput main(Vertex vertInput)
 
 	transformedPositionWS = float4(mul(transformedPositionWS, meshMatrix), 1.0f);
 	prevTransformedPositionWS = float4(mul(prevTransformedPositionWS, prevMeshMatrix), 1.0f);
+
+	normals = mul((float3x3)skinningMatrix, normals);
+	tangents = mul((float3x3)skinningMatrix, tangents);
 #else
 
 	float4 transformedPositionWS = float4(mul(vertInput.position, meshMatrix), 1.0f);
@@ -53,8 +59,8 @@ GBufferVertOutput main(Vertex vertInput)
 	output.prevPosition = prevTransformedPosition;
 	output.positionWS = transformedPositionWS;
 	output.uv = vertInput.uv;
-	output.normal = float4(normalize(mul(vertInput.normal.xyz, (float3x3)meshMatrix)), 1.0f);
-	output.tangent = float4(normalize(mul(vertInput.tangent.xyz, (float3x3)meshMatrix)), vertInput.tangent.w);
+	output.normal = float4(normalize(mul(normals, (float3x3)meshMatrix)), 1.0f);
+	output.tangent = float4(normalize(mul(tangents, (float3x3)meshMatrix)), vertInput.tangent.w);
 	output.colour = vertInput.colour;
 	output.materialIndex =  model.materialIndex;
 	output.materialFlags = model.materialFlags;

@@ -18,18 +18,20 @@ public:
         return PassType::DebugAABB;
     }
 
-    virtual void render(RenderGraph&, RenderEngine*);
+    virtual void render(RenderGraph&, RenderEngine*) override final;
 
-    virtual void bindResources(RenderGraph&) {}
+    virtual void bindResources(RenderGraph&) override final {}
+
+    virtual void postGraphCompilation(RenderGraph&, RenderEngine*) override final;
 
 private:
     TaskID mTaskID;
+    TaskID mWireFrameTaskID;
     GraphicsPipelineDescription mAABBPipelineDesc;
     Shader mAABBDebugVisVertexShader;
     Shader mAABBDebugVisFragmentShader;
 
     GraphicsPipelineDescription mWireFramePipelineDesc;
-    Shader mSimpleTransformShader;
 
     GraphicsPipelineDescription mDebugLightsPipeline;
     Shader mLightDebugFragmentShader;
@@ -42,6 +44,8 @@ private:
 
     Buffer mIndexBuffer;
     BufferView mIndexBufferView;
+
+    PipelineHandle mWireFramePipelines[2];
 };
 
 #endif

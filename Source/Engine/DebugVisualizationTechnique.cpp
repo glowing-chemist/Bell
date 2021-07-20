@@ -2,6 +2,7 @@
 #include "Engine/Engine.hpp"
 #include "Engine/DefaultResourceSlots.hpp"
 #include "Engine/UberShaderStateCache.hpp"
+#include "Engine/UtilityTasks.hpp"
 #include "Core/Executor.hpp"
 
 #include "glm/gtx/transform.hpp"
@@ -21,7 +22,6 @@ DebugAABBTechnique::DebugAABBTechnique(RenderEngine* eng, RenderGraph& graph) :
                   Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
                   getDevice()->getSwapChain()->getSwapChainImageHeight()},
                   FaceWindingOrder::None, BlendMode::None, BlendMode::None, false, DepthTest::GreaterEqual, FillMode::Line, Primitive::TriangleList},
-    mSimpleTransformShader(eng->getShader("./Shaders/BasicVertexTransform.vert")),
     mDebugLightsPipeline{Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
                         getDevice()->getSwapChain()->getSwapChainImageHeight()},
                   Rect{getDevice()->getSwapChain()->getSwapChainImageWidth(),
@@ -169,6 +169,8 @@ DebugAABBTechnique::DebugAABBTechnique(RenderEngine* eng, RenderGraph& graph) :
     GraphicsTask wireFrameTask("WireFrame", mWireFramePipelineDesc);
     wireFrameTask.setVertexAttributes(VertexAttributes::Position4 | VertexAttributes::Normals | VertexAttributes::Tangents | VertexAttributes::TextureCoordinates | VertexAttributes::Albedo);
     wireFrameTask.addInput(kCameraBuffer, AttachmentType::UniformBuffer);
+    wireFrameTask.addInput(kBoneTransforms, AttachmentType::DataBufferRO);
+    wireFrameTask.addInput(kInstanceTransformsBuffer, AttachmentType::DataBufferRO);
     wireFrameTask.addInput("Wireframe transforms", AttachmentType::PushConstants);
     wireFrameTask.addOutput(kGlobalLighting, AttachmentType::RenderTarget2D, Format::RGBA16Float);
     wireFrameTask.addOutput(kGBufferDepth, AttachmentType::Depth, Format::D32Float);
@@ -178,31 +180,18 @@ DebugAABBTechnique::DebugAABBTechnique(RenderEngine* eng, RenderGraph& graph) :
         PROFILER_GPU_TASK(exec);
         PROFILER_GPU_EVENT("debug wireframe");
 
-        const RenderTask& task = graph.getTask(taskIndex);
-        exec->setGraphicsShaders(static_cast<const GraphicsTask&>(task), graph, mAABBDebugVisVertexShader, nullptr, nullptr, nullptr, mAABBDebugVisFragmentShader);
+        UberShaderSkinnedStateCache stateCache(exec, mWireFramePipelines);
 
         for(const auto* instance : meshes)
         {
             if(instance->getInstanceFlags() & InstanceFlags::DrawWireFrame && instance->getInstanceFlags() & InstanceFlags::Draw)
             {
-                const StaticMesh* mesh = instance->getMesh();
-                const float4x4& transform = instance->getTransMatrix();
-
-                exec->bindVertexBuffer(*(mesh->getVertexBufferView()), 0);
-                exec->bindIndexBuffer(*(mesh->getIndexBufferView()), 0);
-
-                const auto& subMeshes = mesh->getSubMeshes();
-                for(const auto& subMesh : subMeshes)
-                {
-                    const float4x4 finalTransform = transform * subMesh.mTransform;
-                    exec->insertPushConstant(&finalTransform, sizeof(float4x4));
-                    exec->indexedDraw(subMesh.mVertexOffset / mesh->getVertexStride(), subMesh.mIndexOffset / sizeof(uint32_t), subMesh.mIndexCount);
-                }
+                instance->draw(exec, &stateCache);
             }
         }
     });
 
-    graph.addTask(wireFrameTask);
+    mWireFrameTaskID = graph.addTask(wireFrameTask);
 
     if(eng->isPassRegistered(PassType::LightFroxelation))
     {
@@ -280,4 +269,11 @@ void DebugAABBTechnique::render(RenderGraph &, RenderEngine* renderEngine)
     const std::vector<Line>& lines = renderEngine->getDebugLines();
     if(!lines.empty())
         (*mDebugLineVertexBuffer)->setContents(lines.data(), lines.size() * sizeof(Line));
+}
+
+
+void DebugAABBTechnique::postGraphCompilation(RenderGraph& graph, RenderEngine* engine)
+{
+    compileSkinnedPipelineVariants(mWireFramePipelines,"./Shaders/BasicVertexTransform.vert",  "./Shaders/DebugAABB.frag",
+                                   engine, graph, mWireFrameTaskID);
 }
