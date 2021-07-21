@@ -25,7 +25,7 @@ std::shared_ptr<Pipeline> PipelineTemplate::instanciateGraphicsPipeline(const Gr
                                                       const Shader& fragmentShader)
 {
     std::hash<std::string> stringHasher{};
-    uint64_t hash = (hashPrefix ^ vertexAttributes) + vertexAttributes;
+    uint64_t hash = hashPrefix ^ vertexAttributes;
     hash  += stringHasher(vertexShader->getFilePath());
     if(geometryShader)
         hash  += stringHasher((*geometryShader)->getFilePath());

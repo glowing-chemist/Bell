@@ -154,7 +154,7 @@ void StaticMesh::configure(const aiScene* scene, const aiMesh* mesh, const float
                                     (boneIndexNeeded ? 2 : 0) +
                                     (boneWeightsNeeded ? 4 : 0)) * sizeof(float);
 
-    BELL_ASSERT(mVertexStride == 0 || mVertexStride == vertexStride, "Submeshes must have the same stride")
+    //BELL_ASSERT(mVertexStride == 0 || mVertexStride == vertexStride, "Submeshes must have the same stride")
 	mVertexStride = vertexStride;
 	mVertexCount += mesh->mNumVertices;
 

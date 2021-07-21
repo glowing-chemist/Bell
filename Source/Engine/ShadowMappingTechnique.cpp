@@ -22,8 +22,6 @@ ShadowMappingTechnique::ShadowMappingTechnique(RenderEngine* eng, RenderGraph& g
           Rect{static_cast<uint32_t>(eng->getShadowMapResolution().x),
           static_cast<uint32_t>(eng->getShadowMapResolution().y)},
         FaceWindingOrder::CW, BlendMode::None, BlendMode::None, true, DepthTest::LessEqual, FillMode::Fill, Primitive::TriangleList),
-    mShadowMapVertexShader(eng->getShader("./Shaders/ShadowMap.vert")),
-    mShadowMapFragmentShader(eng->getShader("./Shaders/VarianceShadowMap.frag")),
     mBlurXShader( eng->getShader("Shaders/blurXrg32f.comp") ),
     mBlurYShader( eng->getShader("Shaders/blurYrg32f.comp") ),
     mResolveShader(eng->getShader("./Shaders/ResolveVarianceShadowMap.comp")),
@@ -127,10 +125,7 @@ void ShadowMappingTechnique::render(RenderGraph& graph, RenderEngine*)
                 return leftDistance < rightDistance;
             });
 
-            const RenderTask& task = graph.getTask(taskIndex);
-            exec->setGraphicsShaders(static_cast<const GraphicsTask&>(task), graph, mShadowMapVertexShader, nullptr, nullptr, nullptr, mShadowMapFragmentShader);
-
-            UberShaderStateCache stateCache(exec);
+            UberShaderSkinnedStateCache stateCache(exec, mShadowMappingPipelines);
 
             for (const auto& mesh : meshes)
             {
@@ -187,6 +182,13 @@ void ShadowMappingTechnique::render(RenderGraph& graph, RenderEngine*)
                             1);
         }
     );
+}
+
+
+void ShadowMappingTechnique::postGraphCompilation(RenderGraph& graph, RenderEngine* eng)
+{
+    compileSkinnedPipelineVariants(mShadowMappingPipelines, "./Shaders/ShadowMap.vert", "./Shaders/VarianceShadowMap.frag",
+                                   eng, graph, mShadowTask);
 }
 
 

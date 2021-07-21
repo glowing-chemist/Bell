@@ -3,6 +3,7 @@
 #include "Core/BellLogging.hpp"
 #include "Core/Executor.hpp"
 #include "Core/ContainerUtils.hpp"
+#include "Core/HashUtils.hpp"
 
 #ifdef VULKAN
 #include "Core/Vulkan/VulkanRenderInstance.hpp" 
@@ -223,9 +224,8 @@ Buffer RenderEngine::createBuffer(const uint32_t size,
 
 Shader RenderEngine::getShader(const std::string& path)
 {
-    std::hash<std::string> pathHasher{};
-    const uint64_t hashedPath = pathHasher(path);
-    const uint64_t shaderKey = hashedPath + mCurrentRegisteredPasses;
+    uint64_t shaderKey = 0;
+    hash_combine(shaderKey, path, mCurrentRegisteredPasses);
 
     std::shared_lock<std::shared_mutex> readLock{ mShaderCacheMutex };
 
@@ -240,7 +240,7 @@ Shader RenderEngine::getShader(const std::string& path)
 
     std::unique_lock<std::shared_mutex> writeLock{ mShaderCacheMutex };
 
-    Shader newShader{mRenderDevice, path, mCurrentRegisteredPasses};
+    Shader newShader{mRenderDevice, path};
 
 	const bool compiled = newShader->compile(mShaderPrefix);
 
@@ -255,12 +255,8 @@ Shader RenderEngine::getShader(const std::string& path)
 
 Shader RenderEngine::getShader(const std::string& path, const ShaderDefine& define)
 {
-    std::hash<std::wstring> wpathHasher{};
-    std::hash<std::string> pathHasher{};
-    uint64_t hashed = pathHasher(path);
-    hashed += wpathHasher(define.getName());
-    hashed += wpathHasher(define.getValue());
-    const uint64_t shaderKey = hashed + mCurrentRegisteredPasses;
+    uint64_t shaderKey = 0;
+    hash_combine(shaderKey, path, define.getValue(), define.getName(), mCurrentRegisteredPasses);
     
     std::shared_lock<std::shared_mutex> readLock{ mShaderCacheMutex };
 
@@ -271,7 +267,7 @@ Shader RenderEngine::getShader(const std::string& path, const ShaderDefine& defi
 
     std::unique_lock<std::shared_mutex> writeLock{ mShaderCacheMutex };
 
-    Shader newShader{mRenderDevice, path, mCurrentRegisteredPasses};
+    Shader newShader{mRenderDevice, path};
 
     std::vector<ShaderDefine> allDefines = mShaderPrefix;
     allDefines.push_back(define);
@@ -408,6 +404,7 @@ void RenderEngine::execute(RenderGraph& graph)
     PROFILER_EVENT();
 
     // Upload bounds data if required.
+    if(mCurrentScene)
     {
         // upload mesh instance bounds info.
         static_assert(sizeof(AABB) == (sizeof(float4) * 2), "Sizes need to match");

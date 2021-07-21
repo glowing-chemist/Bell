@@ -38,13 +38,13 @@ public:
         }
     }
 
+    virtual void postGraphCompilation(RenderGraph&, RenderEngine*) override final;
+
 private:
     GraphicsPipelineDescription mDesc;
     TaskID                      mShadowTask;
 
-    Shader mShadowMapVertexShader;
-    Shader mShadowMapFragmentShader;
-
+    uint64_t mShadowMappingPipelines[2];
 
     Shader                     mBlurXShader;
     TaskID                     mBlurXTaskID;

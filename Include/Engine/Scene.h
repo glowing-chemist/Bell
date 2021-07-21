@@ -230,9 +230,9 @@ public:
 
     uint64_t getShadeFlags(const uint32_t subMesh_i) const;
 
-private:
-
     const SkeletalAnimation* getActiveAnimation() const;
+
+private:
 
     MeshEntry getMeshShaderEntry(const uint32_t submesh_i) const
     {

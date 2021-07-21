@@ -157,7 +157,7 @@ void MeshInstance::draw(Executor* exec, UberShaderStateCache* cache) const
 uint64_t MeshInstance::getShadeFlags(const uint32_t subMesh_i) const
 {
     BELL_ASSERT(subMesh_i < mMaterials.size(), "submesh out of index")
-    return mMaterials[subMesh_i].mMaterialFlags | (mScene->getMesh(mMesh)->getSkeleton().empty() ? 0 : kShade_Skinning);
+    return mMaterials[subMesh_i].mMaterialFlags | (isSkinned() ? kShade_Skinning : 0u);
 }
 
 const SkeletalAnimation* MeshInstance::getActiveAnimation() const

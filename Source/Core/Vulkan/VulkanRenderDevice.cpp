@@ -9,6 +9,7 @@
 #include "VulkanCommandContext.hpp"
 #include "Core/ContainerUtils.hpp"
 #include "Core/Profiling.hpp"
+#include "Core/HashUtils.hpp"
 
 #include "RenderGraph/RenderGraph.hpp"
 
@@ -218,11 +219,12 @@ PipelineHandle VulkanRenderDevice::compileGraphicsPipeline(const GraphicsTask& t
                                                            const Shader* tessEval,
                                                            const Shader& fragmentShader)
 {
-    BELL_ASSERT(vertexShader->getPrefixHash() == fragmentShader->getPrefixHash(), "Shaders compiled with different prefix hashes")
+    uint64_t pipelineKey = 0;
+    hash_combine(pipelineKey, vertexShader->getCompiledDefinesHash(), fragmentShader->getCompiledDefinesHash());
 
-    vulkanResources handles = getTaskResources(graph, task, vertexShader->getPrefixHash());
+    vulkanResources handles = getTaskResources(graph, task, pipelineKey);
 
-    std::shared_ptr<Pipeline> pipeline = handles.mPipelineTemplate->instanciateGraphicsPipeline(task, vertexShader->getPrefixHash() ^ vertexShader->getCompiledDefinesHash() ^ fragmentShader->getCompiledDefinesHash(),
+    std::shared_ptr<Pipeline> pipeline = handles.mPipelineTemplate->instanciateGraphicsPipeline(task, pipelineKey,
                                                                                                 *handles.mRenderPass,
                                                                                                 vertexAttributes,
                                                                                                 vertexShader,
@@ -238,9 +240,9 @@ PipelineHandle VulkanRenderDevice::compileComputePipeline(const ComputeTask& tas
                                                           const RenderGraph& graph,
                                                           const Shader& computeShader)
 {
-    vulkanResources handles = getTaskResources(graph, task, computeShader->getPrefixHash());
+    vulkanResources handles = getTaskResources(graph, task, computeShader->getCompiledDefinesHash());
 
-    std::shared_ptr<Pipeline> pipeline = handles.mPipelineTemplate->instanciateComputePipeline(task, computeShader->getPrefixHash() ^ computeShader->getCompiledDefinesHash(), computeShader);
+    std::shared_ptr<Pipeline> pipeline = handles.mPipelineTemplate->instanciateComputePipeline(task, computeShader->getCompiledDefinesHash(), computeShader);
 
     return reinterpret_cast<uint64_t>(VkPipeline(pipeline->getHandle()));
 }

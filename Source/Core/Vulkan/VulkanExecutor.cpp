@@ -6,6 +6,7 @@
 #include "VulkanRenderDevice.hpp"
 #include "VulkanBarrierManager.hpp"
 #include "Core/ConversionUtils.hpp"
+#include "Core/HashUtils.hpp"
 
 
 VulkanExecutor::VulkanExecutor(RenderDevice *dev, vk::CommandBuffer cmdBuffer) :
@@ -235,13 +236,16 @@ void VulkanExecutor::setGraphicsShaders(const GraphicsTask& task,
                                         const Shader* tessEval,
                                         const Shader& fragmentShader)
 {
-    BELL_ASSERT(vertexShader->getPrefixHash() == fragmentShader->getPrefixHash(), "Shaders compiled with different prefix hashes")
+    BELL_ASSERT(vertexShader->getCompiledDefinesHash() == fragmentShader->getCompiledDefinesHash(), "Shaders compiled with different prefix hashes")
+
+    uint64_t pipelineKey = 0;
+    hash_combine(pipelineKey, vertexShader->getCompiledDefinesHash(), fragmentShader->getCompiledDefinesHash());
 
     VulkanRenderDevice* device = static_cast<VulkanRenderDevice*>(getDevice());
-    vulkanResources handles = device->getTaskResources(graph, task, vertexShader->getPrefixHash());
+    vulkanResources handles = device->getTaskResources(graph, task, pipelineKey);
 
     std::shared_ptr<Pipeline> pipeline = handles.mPipelineTemplate->instanciateGraphicsPipeline(task,
-                                                                                                vertexShader->getPrefixHash() ^ vertexShader->getCompiledDefinesHash() ^ fragmentShader->getCompiledDefinesHash(),
+                                                                                                pipelineKey,
                                                                                                 *handles.mRenderPass,
                                                                                                 task.getVertexAttributes(),
                                                                                                 vertexShader,
@@ -259,9 +263,9 @@ void VulkanExecutor::setComputeShader(const ComputeTask& task,
                                       const Shader& computeShader)
 {
     VulkanRenderDevice* device = static_cast<VulkanRenderDevice*>(getDevice());
-    vulkanResources handles = device->getTaskResources(graph, task, computeShader->getPrefixHash());
+    vulkanResources handles = device->getTaskResources(graph, task, computeShader->getCompiledDefinesHash());
 
-    std::shared_ptr<Pipeline> pipeline = handles.mPipelineTemplate->instanciateComputePipeline(task, computeShader->getPrefixHash() ^ computeShader->getCompiledDefinesHash(), computeShader);
+    std::shared_ptr<Pipeline> pipeline = handles.mPipelineTemplate->instanciateComputePipeline(task, computeShader->getCompiledDefinesHash(), computeShader);
 
     mCommandBuffer.bindPipeline(vk::PipelineBindPoint::eCompute, pipeline->getHandle());
 }

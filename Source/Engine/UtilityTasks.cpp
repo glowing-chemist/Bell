@@ -119,18 +119,18 @@ void compileShadeFlagsPipelines(std::unordered_map<uint64_t, uint64_t>& pipeline
     {
         for(uint8_t skinning = 0; skinning < 2; ++skinning)
         {
-            const uint64_t shadeflags = material.mMaterialTypes | (skinning ? kShade_Skinning : 0);
+            const uint64_t shadeflags = material.mMaterialTypes | (skinning ? kShade_Skinning : 0u);
             if (pipelineMap.find(shadeflags) == pipelineMap.end())
             {
                 ShaderDefine fragmentShadeDefines(L"SHADE_FLAGS", shadeflags);
                 Shader fragmentShader = engine->getShader(fragmentPath, fragmentShadeDefines);
-                ShaderDefine vertexShadeDefine(L"SHADE_FLAGS", (skinning ? kShade_Skinning : 0));
+                ShaderDefine vertexShadeDefine(L"SHADE_FLAGS", (skinning ? kShade_Skinning : 0u));
                 Shader vertexShader = engine->getShader(vertexPath, vertexShadeDefine);
 
                 const auto& graphicsTask = static_cast<const GraphicsTask &>(task);
                 const PipelineHandle pipeline = device->compileGraphicsPipeline(graphicsTask,
                                                                                 graph,
-                                                                                graphicsTask.getVertexAttributes() | (skinning > 0 ? (VertexAttributes::BoneWeights | VertexAttributes::BoneIndices) : 0),
+                                                                                graphicsTask.getVertexAttributes() | (skinning ? (VertexAttributes::BoneWeights | VertexAttributes::BoneIndices) : 0u),
                                                                                 vertexShader, nullptr,
                                                                                 nullptr, nullptr, fragmentShader);
 
@@ -152,14 +152,14 @@ void compileSkinnedPipelineVariants(PipelineHandle* array,
     Shader fragmentShader = engine->getShader(fragmentPath);
     for(uint8_t skinning = 0; skinning < 2; ++skinning)
     {
-        ShaderDefine vertexShadeDefine(L"SHADE_FLAGS", (skinning ? kShade_Skinning : 0));
+        ShaderDefine vertexShadeDefine(L"SHADE_FLAGS", (skinning ? kShade_Skinning : 0u));
         Shader vertexShader = engine->getShader(vertexPath, vertexShadeDefine);
 
         const auto& graphicsTask = static_cast<const GraphicsTask &>(task);
         const PipelineHandle pipeline = device->compileGraphicsPipeline(graphicsTask,
                                                                         graph,
                                                                         graphicsTask.getVertexAttributes() |
-                                                                        (skinning > 0 ? (VertexAttributes::BoneWeights |
+                                                                        (skinning ? (VertexAttributes::BoneWeights |
                                                                                          VertexAttributes::BoneIndices)
                                                                                       : 0),
                                                                         vertexShader, nullptr,

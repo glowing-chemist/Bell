@@ -10,7 +10,7 @@ class VulkanShader : public ShaderBase
 {
 public:
 
-    VulkanShader(RenderDevice*, const std::string&, const uint64_t prefixHash);
+    VulkanShader(RenderDevice*, const std::string&);
 	~VulkanShader() override;
 
     virtual bool compile(const std::vector<ShaderDefine>& prefix = {}) override;

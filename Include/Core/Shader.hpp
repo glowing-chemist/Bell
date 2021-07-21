@@ -41,7 +41,7 @@ class ShaderBase : public DeviceChild
 {
 public:
 
-    ShaderBase(RenderDevice*, const std::string&, const uint64_t prefixHash);
+    ShaderBase(RenderDevice*, const std::string&);
     virtual ~ShaderBase() = default;
 
     virtual bool compile(const std::vector<ShaderDefine>& prefix = {}) = 0;
@@ -54,11 +54,6 @@ public:
 	std::string getFilePath() const
         { return mFilePath.string(); }
 
-    uint64_t getPrefixHash() const
-    {
-        return mPrefixHash;
-    }
-
     uint64_t getCompiledDefinesHash() const
     {
         return mCompileDefinesHash;
@@ -66,13 +61,14 @@ public:
 
 protected:
 
+    void updateCompiledDefineHash(const std::vector<ShaderDefine>&);
+
 	fs::path mFilePath;
 
     bool mCompiled;
 
 	fs::file_time_type mLastFileAccessTime;
 
-    uint64_t mPrefixHash; // The prefix hash when this shader was compiled.
     uint64_t mCompileDefinesHash;
 };
 
@@ -81,7 +77,7 @@ class Shader
 {
 public:
 
-    Shader(RenderDevice*, const std::string&, const uint64_t prefixHash);
+    Shader(RenderDevice*, const std::string&);
 	~Shader() = default;
 
 	ShaderBase* getBase()
@@ -109,5 +105,16 @@ private:
 	std::shared_ptr<ShaderBase> mBase;
 
 };
+
+
+// std::hash for shader define.
+namespace std
+{
+    template<>
+    struct hash<ShaderDefine>
+    {
+        size_t operator()(const ShaderDefine&) const noexcept;
+    };
+}
 
 #endif

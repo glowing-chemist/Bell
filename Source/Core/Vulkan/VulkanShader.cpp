@@ -11,8 +11,8 @@
 
 
 
-VulkanShader::VulkanShader(RenderDevice* device, const std::string& path, const uint64_t prefixHash) :
-    ShaderBase{device, path, prefixHash},
+VulkanShader::VulkanShader(RenderDevice* device, const std::string& path) :
+    ShaderBase{device, path},
 	mShaderProfile{getShaderStage(mFilePath.string())}
 {
 }
@@ -51,6 +51,7 @@ bool VulkanShader::compile(const std::vector<ShaderDefine> &prefix)
     }
 
     binaryBlob->Release();
+    updateCompiledDefineHash(prefix);
 
     return true;
 }
