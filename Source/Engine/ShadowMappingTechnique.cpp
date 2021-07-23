@@ -52,6 +52,7 @@ ShadowMappingTechnique::ShadowMappingTechnique(RenderEngine* eng, RenderGraph& g
     GraphicsTask shadowTask{ "ShadowMapping", mDesc };
     shadowTask.setVertexAttributes(VertexAttributes::Position4 |
                               VertexAttributes::Normals |VertexAttributes::Tangents | VertexAttributes::TextureCoordinates | VertexAttributes::Albedo);
+    shadowTask.setInputRenderQueue(kRenderView_Shadow);
 
     shadowTask.addInput(kShadowingLights, AttachmentType::UniformBuffer);
     shadowTask.addInput(kDefaultSampler, AttachmentType::Sampler);
@@ -87,7 +88,7 @@ ShadowMappingTechnique::ShadowMappingTechnique(RenderEngine* eng, RenderGraph& g
 }
 
 
-void ShadowMappingTechnique::render(RenderGraph& graph, RenderEngine*)
+void ShadowMappingTechnique::render(RenderGraph& graph, RenderEngine* eng)
 {
     (mShadowMapDepth)->updateLastAccessed();
     (mShadowMapDepthView)->updateLastAccessed();
@@ -104,6 +105,10 @@ void ShadowMappingTechnique::render(RenderGraph& graph, RenderEngine*)
     ComputeTask& blurXTask = static_cast<ComputeTask&>(graph.getTask(mBlurXTaskID));
     ComputeTask& blurYTask = static_cast<ComputeTask&>(graph.getTask(mBlurYTaskID));
     ComputeTask& resolveTask = static_cast<ComputeTask&>(graph.getTask(mResolveTaskID));
+
+    // update renderView that feeds these tasks.
+    RenderView& renderView = eng->getRenderView(kRenderView_Shadow);
+    renderView.updateView(eng->getScene()->getShadowLightCamera());
 
     shadowTask.setRecordCommandsCallback(
         [this](const RenderGraph& graph, const uint32_t taskIndex, Executor* exec, RenderEngine* eng, const std::vector<const MeshInstance*>&)

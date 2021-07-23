@@ -17,6 +17,7 @@
 #include "Engine/ThreadPool.hpp"
 #include "Core/Profiling.hpp"
 #include "Engine/Allocators.hpp"
+#include "Engine/RenderQueue.hpp"
 
 #include "imgui.h"
 
@@ -63,6 +64,11 @@ public:
     bool getDebugCameraActive() const
     {
         return mDebugCameraActive;
+    }
+
+    RenderView& getRenderView(const uint32_t index)
+    {
+        return mRenderViews[index];
     }
 
 	Image&  getSwapChainImage()
@@ -360,6 +366,8 @@ private:
 
     Scene* mCurrentScene;
     CPURayTracingScene* mCPURayTracedScene;
+
+    RenderView mRenderViews[kRenderView_Count];
 
     bool mDebugCameraActive;
     Camera mDebugCamera;

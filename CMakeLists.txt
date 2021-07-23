@@ -166,6 +166,7 @@ set(BELL_SOURCE
     Source/Engine/SceneNavigator.cpp
 	Source/Engine/UberShaderStateCache.cpp
 	Source/Engine/Allocators.cpp
+	Source/Engine/RenderQueue.cpp
 
     # Techniques
     Source/Engine/SSAOTechnique.cpp

@@ -58,7 +58,7 @@ enum class TaskType
 class RenderTask 
 {
 public:
-    RenderTask(const std::string& name) : mName{name} {}
+    RenderTask(const std::string& name) : mName{name}, mRenderQueueIndex{0} {}
 	virtual ~RenderTask() = default;
 
     virtual void addInput(const char* name, const AttachmentType attachmentType, const size_t arraySize = 0)
@@ -116,6 +116,12 @@ public:
     const std::string& getName() const
         { return mName; }
 
+    void setInputRenderQueue(const uint8_t index)
+        { mRenderQueueIndex = index; }
+
+    uint8_t getInputRenderQueueIndex() const
+        { return mRenderQueueIndex; }
+
     void setRecordCommandsCallback(const CommandCallbackFunc& callback)
     {
         mRecordCommandsCallback = callback;
@@ -133,6 +139,7 @@ protected:
     std::vector<OutputAttachmentInfo> mOutputAttachments;
     std::vector<InputAttachmentInfo> mInputAttachments;
 
+    uint8_t mRenderQueueIndex;
     CommandCallbackFunc mRecordCommandsCallback;
 };
 

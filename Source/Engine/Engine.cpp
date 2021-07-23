@@ -69,6 +69,7 @@ RenderEngine::RenderEngine(GLFWwindow* windowPtr, const GraphicsOptions& options
         mRenderDevice(mRenderInstance->createRenderDevice(mOptions.deviceFeatures, options.vsync)),
         mCurrentScene(nullptr),
         mCPURayTracedScene(nullptr),
+        mRenderViews{{this}, {this}, {this}, {this}, {this}},
         mDebugCameraActive(false),
         mDebugCamera({0.0f, 0.0f, 0.0f}, {1.0f, 0.0f, 0.0f}, 1.0f, 0.1f, 2000.0f),
         mAnimationVertexSize{0},
@@ -479,29 +480,21 @@ void RenderEngine::execute(RenderGraph& graph)
     if(mCurrentScene && mCurrentScene->getSkybox())
         (*mCurrentScene->getSkybox())->updateLastAccessed();
 
-    std::vector<MeshInstance*> meshes{};
+    mRenderViews[kRenderView_Main].updateView(mCurrentScene->getCamera());
 
-    if(mCurrentScene)
+    // Get a deduplicated list of all meshes across all views to generate skinning info and transforms for.
+    std::vector<MeshInstance*> dedupedMeshInstances{};
     {
-        meshes = mCurrentScene ? mCurrentScene->getVisibleMeshes(mCurrentScene->getCamera().getFrustum()) : std::vector<MeshInstance*>{};
-        PROFILER_EVENT("sort meshes");
-        std::sort(meshes.begin(), meshes.end(), [camera = mCurrentScene->getCamera()](const MeshInstance* lhs, const MeshInstance* rhs)
-        {
-            const float3 centralLeft = (lhs->getMesh()->getAABB() *  lhs->getTransMatrix()).getCentralPoint();
-            const float leftDistance = glm::length(centralLeft - camera.getPosition());
+        std::set<MeshInstance*> meshInstanceSet{};
+        for(uint8_t queue_i = 0; queue_i < kRenderView_Count; ++queue_i)
+            meshInstanceSet.insert(mRenderViews[queue_i].getViewInstances().begin(), mRenderViews[queue_i].getViewInstances().end());
 
-            const float3 centralright = (rhs->getMesh()->getAABB() * rhs->getTransMatrix()).getCentralPoint();
-            const float rightDistance = glm::length(centralright - camera.getPosition());
-            return leftDistance < rightDistance;
-        });
+        dedupedMeshInstances.insert(dedupedMeshInstances.end(), meshInstanceSet.begin(), meshInstanceSet.end());
     }
-    //printf("Meshes %zu\n", meshes.size());
 
     // upload culled instances transforms
-    updateInstanceTransformBuffers(meshes);
-    tickAnimations(meshes);
-    std::vector<const MeshInstance*> constMeshes(meshes.size());
-    std::memcpy(constMeshes.data(), meshes.data(), meshes.size() * sizeof(MeshInstance*));
+    updateInstanceTransformBuffers(dedupedMeshInstances);
+    tickAnimations(dedupedMeshInstances);
 
     auto barriers = graph.generateBarriers(mRenderDevice);
 	
@@ -536,7 +529,7 @@ void RenderEngine::execute(RenderGraph& graph)
             exec->recordBarriers(*barrier);
             context->setupState(graph, taskIndex, exec, mCurrentRegisteredPasses);
 
-            task.executeRecordCommandsCallback(graph, taskIndex, exec, this, constMeshes);
+            task.executeRecordCommandsCallback(graph, taskIndex, exec, this, getRenderView(task.getInputRenderQueueIndex()).getViewConstInstances());
 
             context->freeExecutor(exec);
             ++barrier;
@@ -579,7 +572,7 @@ void RenderEngine::execute(RenderGraph& graph)
                 exec->recordBarriers(barriers[taskIndex]);
                 context->setupState(graph, taskIndex, exec, mCurrentRegisteredPasses);
 
-                task.executeRecordCommandsCallback(graph, taskIndex, exec, this, constMeshes);
+                task.executeRecordCommandsCallback(graph, taskIndex, exec, this, getRenderView(task.getInputRenderQueueIndex()).getViewConstInstances());
 
                 exec->resetRecordedCommandCount();
 
